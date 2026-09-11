@@ -744,6 +744,9 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `reg_doc.status` | ACTIVE, EXPIRING, EXPIRED, REVOKED, RENEWAL_PENDING, DRAFT |
 | `proposal` | `startDate`, `endDate` (Thời hạn hiệu lực ngày bắt đầu và kết thúc) |
 | `transfer_order_lines` | `vintage` (Niên vụ chọn khi lập phiếu chuyển kho) |
+| `sales_visits` | `visitNo`, `customerId`, `salespersonId`, `status`, `purpose`, `activityType`, `scheduleId`, `isUnplanned`, `checkInTime`/`checkOutTime`, `checkInPhoto`/`checkOutPhoto`, `durationMinutes`, `notes` |
+| `weekly_visit_plans` | `salesRepId`, `weekNumber`, `year`, `status`, `note`, `selfReview`, `managerFeedback`, `submittedAt`, `reviewedAt` |
+| `sales_visit_schedules` | `planId`, `customerId`, `visitDate`, `purpose`, `status`, `isUnplanned`, `salesVisitId`, `resultNotes` |
 
 ### D. Indexes Quan Trọng
 ```sql

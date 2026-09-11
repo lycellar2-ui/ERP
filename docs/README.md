@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-10 | Wine ERP v10.20 — BUG-096 Fix TRF Lot Sequence Collision on Transfer Order Receipt*
+*Last updated: 2026-09-11 | Wine ERP v10.21 — Nâng cấp toàn diện phân hệ Sales Field Visit (SFV): Kế hoạch tuần, Check-in di động, Báo cáo & Review tuần, Sửa lỗi Permissions-Policy Camera & GPS*
 

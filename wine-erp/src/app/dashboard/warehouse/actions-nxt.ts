@@ -172,7 +172,7 @@ export async function getWarehouseNXTReport(filters: {
     if (warehouseId) {
         const openingTrfIn = await prisma.transferOrderLine.groupBy({
             by: ['productId'],
-            _sum: { qtyTransferred: true },
+            _sum: { qtyReceived: true },
             where: {
                 transferOrder: {
                     status: 'RECEIVED',
@@ -181,7 +181,7 @@ export async function getWarehouseNXTReport(filters: {
                 },
             },
         })
-        openingTrfIn.forEach(item => openingTrfInMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
+        openingTrfIn.forEach(item => openingTrfInMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
     }
 
     // B1. Opening DO (SHIPPED/DELIVERED before fromDate)
@@ -249,7 +249,7 @@ export async function getWarehouseNXTReport(filters: {
     if (warehouseId) {
         const periodTrfIn = await prisma.transferOrderLine.groupBy({
             by: ['productId'],
-            _sum: { qtyTransferred: true },
+            _sum: { qtyReceived: true },
             where: {
                 transferOrder: {
                     status: 'RECEIVED',
@@ -258,7 +258,7 @@ export async function getWarehouseNXTReport(filters: {
                 },
             },
         })
-        periodTrfIn.forEach(item => periodTrfInMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
+        periodTrfIn.forEach(item => periodTrfInMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
     }
 
     // D1. Period DO (SHIPPED/DELIVERED between fromDate and toDate)
@@ -488,9 +488,9 @@ export async function getStockMovements(filters: {
                           toWarehouseId: warehouseId,
                       },
                   },
-                  _sum: { qtyTransferred: true },
+                  _sum: { qtyReceived: true },
               })
-            : Promise.resolve({ _sum: { qtyTransferred: null } }),
+            : Promise.resolve({ _sum: { qtyReceived: null } }),
         warehouseId
             ? prisma.transferOrderLine.aggregate({
                   where: {
@@ -506,7 +506,7 @@ export async function getStockMovements(filters: {
             : Promise.resolve({ _sum: { qtyTransferred: null } }),
     ])
 
-    const opIn = Number(opLots._sum.qtyReceived ?? 0) + Number(opTrfIn._sum?.qtyTransferred ?? 0)
+    const opIn = Number(opLots._sum.qtyReceived ?? 0) + Number(opTrfIn._sum?.qtyReceived ?? 0)
     const opOut = Number(opDo._sum.qtyShipped ?? 0) + Number(opPos._sum?.qtyOrdered ?? 0) + Number(opTrfOut._sum?.qtyTransferred ?? 0)
     const openingBalance = Math.max(0, opIn - opOut)
 
@@ -578,7 +578,10 @@ export async function getStockMovements(filters: {
             })
 
             // Only count qtyIn if filtering a specific warehouse; for 'All Warehouses', it is internal movement (qtyIn=0)
-            const qtyInVal = warehouseId ? Number(line.qtyTransferred) : 0
+            const actualQty = Number(line.qtyReceived ?? line.qtyTransferred)
+            const qtyInVal = warehouseId ? actualQty : 0
+            const expectedQty = Number(line.qtyTransferred)
+            const lossText = actualQty < expectedQty ? ` [Thiếu ${expectedQty - actualQty} chai]` : ''
 
             movements.push({
                 id: `trf-in-${line.id}`,
@@ -594,8 +597,8 @@ export async function getStockMovements(filters: {
                 qtyOut: 0,
                 balance: 0,
                 unitCost: Number(lot?.unitLandedCost ?? 0),
-                reference: `Nhận điều chuyển từ: ${line.transferOrder.fromWarehouse.name}`,
-                note: warehouseId ? (line.transferOrder.notes || '') : `Luân chuyển nội bộ kho (${Number(line.qtyTransferred)} chai)`,
+                reference: `Nhận điều chuyển từ: ${line.transferOrder.fromWarehouse.name}${lossText}`,
+                note: warehouseId ? (line.transferOrder.notes || '') : `Luân chuyển nội bộ kho (${actualQty} chai)`,
             })
         }
     }

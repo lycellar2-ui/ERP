@@ -1,23 +1,30 @@
 import { Suspense } from 'react'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session'
 import { getSalesVisits } from './actions'
 import { SalesVisitsClient } from './SalesVisitsClient'
 
 export const metadata = {
-    title: 'Check-in Đi Thị Trường | Wine ERP',
-    description: 'Module Check-in / Check-out đi thị trường dành cho Salesman',
+    title: 'Hành Trình Thị Trường & Check-in | Wine ERP',
+    description: 'Quản trị kế hoạch tuần, check-in thực địa và review cuối tuần cho Sales',
 }
 
 export default async function SalesVisitsPage() {
-    // Get current logged in user (Default to first active salesman or admin user)
-    const currentUser = await prisma.user.findFirst({
-        where: { status: 'ACTIVE' },
-        include: { roles: { include: { role: true } } }
-    })
+    const sessionUser = await getCurrentUser().catch(() => null)
+    
+    // If not authenticated via session, fallback to first active user
+    let user = sessionUser
+    if (!user) {
+        user = await prisma.user.findFirst({
+            where: { status: 'ACTIVE' },
+            include: { roles: { include: { role: true } } }
+        }) as any
+    }
 
-    const isManager = currentUser?.roles.some((r: any) =>
-        ['Admin', 'Sales Manager', 'CEO', 'Manager'].includes(r.role.name)
-    ) ?? true
+    const isManager = user?.roles?.some((r: any) => {
+        const roleName = r.role?.name || r
+        return ['Admin', 'Sales Manager', 'CEO', 'Manager', 'Ban Giám Đốc'].includes(roleName)
+    }) ?? true
 
     const todayStr = new Date().toISOString().slice(0, 10)
 
@@ -42,8 +49,8 @@ export default async function SalesVisitsPage() {
                 initialVisits={visits}
                 customers={customers}
                 users={users}
-                currentUserId={currentUser?.id || 'sys-user'}
-                currentUserName={currentUser?.name || 'Sales Rep'}
+                currentUserId={user?.id || 'sys-user'}
+                currentUserName={user?.name || 'Sales Rep'}
                 isManager={isManager}
             />
         </Suspense>

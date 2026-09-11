@@ -367,33 +367,72 @@ export async function dispatchTransferOrder(id: string): Promise<{ success: bool
 }
 
 // ── Thủ Kho Nhận Hàng (IN_TRANSIT -> RECEIVED) ────
-export async function receiveTransferOrder(id: string): Promise<{ success: boolean; error?: string }> {
+export interface ReceiveTransferLineInput {
+    lineId: string
+    qtyReceived: number
+    locationId?: string
+}
+
+export interface ReceiveTransferInput {
+    transferOrderId: string
+    lines?: ReceiveTransferLineInput[]
+    receiptNotes?: string
+}
+
+export async function getWarehouseLocations(warehouseId: string): Promise<Array<{ id: string; locationCode: string; zone?: string | null; rack?: string | null }>> {
+    try {
+        await requireAuth()
+        return await prisma.location.findMany({
+            where: { warehouseId },
+            select: { id: true, locationCode: true, zone: true, rack: true },
+            orderBy: { locationCode: 'asc' },
+        })
+    } catch {
+        return []
+    }
+}
+
+export async function receiveTransferOrder(idOrInput: string | ReceiveTransferInput): Promise<{ success: boolean; error?: string }> {
     try {
         await requireAuth()
 
+        const input: ReceiveTransferInput = typeof idOrInput === 'string'
+            ? { transferOrderId: idOrInput }
+            : idOrInput
+
         const result = await prisma.$transaction(async (tx) => {
             const to = await tx.transferOrder.findUnique({
-                where: { id },
-                include: { lines: { include: { product: { select: { skuCode: true } } } } },
+                where: { id: input.transferOrderId },
+                include: {
+                    toWarehouse: true,
+                    fromWarehouse: true,
+                    lines: {
+                        include: {
+                            product: { select: { skuCode: true, productName: true } },
+                        },
+                    },
+                },
             })
             if (!to) throw new Error('Không tìm thấy phiếu chuyển kho')
             if (to.status !== 'IN_TRANSIT') throw new Error('Phiếu chuyển kho phải ở trạng thái Đang vận chuyển')
 
-            // Lấy location đầu tiên ở kho nhận để nhập hàng vào
-            const destLocation = await tx.location.findFirst({
+            // Lấy location đầu tiên ở kho nhận để làm dự phòng mặc định
+            const defaultDestLocation = await tx.location.findFirst({
                 where: { warehouseId: to.toWarehouseId },
                 orderBy: { locationCode: 'asc' },
             })
-            if (!destLocation) throw new Error('Kho nhận chưa có vị trí kệ (Location) nào')
+            if (!defaultDestLocation) throw new Error('Kho nhận chưa có vị trí kệ (Location) nào')
 
-            // Lấy danh sách mã lô TRF hiện tại để tính max sequence theo số (tránh lỗi sắp xếp chuỗi khi độ dài khác nhau)
-            const existingTrfLots = await tx.stockLot.findMany({
-                where: { lotNo: { startsWith: 'TRF-' } },
+            const whCode = to.toWarehouse.code ? to.toWarehouse.code.replace(/^WH-/, '') : 'DEST'
+
+            // Lấy danh sách tất cả các lotNo hiện có trong hệ thống để đảm bảo tính duy nhất
+            const allExistingLots = await tx.stockLot.findMany({
                 select: { lotNo: true },
             })
-            const existingLotNos = new Set(existingTrfLots.map((l) => l.lotNo))
+            const existingLotNos = new Set(allExistingLots.map((l) => l.lotNo))
+
             let maxTrfSeq = 0
-            for (const l of existingTrfLots) {
+            for (const l of allExistingLots) {
                 const match = l.lotNo.match(/TRF-(\d+)/)
                 if (match) {
                     const parsed = parseInt(match[1], 10)
@@ -404,8 +443,48 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
             }
             let currentTrfSeq = maxTrfSeq
 
+            let totalExpected = 0
+            let totalActual = 0
+            const discrepancies: string[] = []
+
             for (const line of to.lines) {
-                // Ước tính giá vốn từ kho xuất
+                const lineInput = input.lines?.find((l) => l.lineId === line.id)
+                const expectedQty = Number(line.qtyTransferred)
+                const actualQty = lineInput != null ? Math.max(0, Number(lineInput.qtyReceived)) : expectedQty
+
+                if (actualQty > expectedQty) {
+                    throw new Error(`Số lượng thực nhận cho SKU ${line.product.skuCode} (${actualQty} chai) không được lớn hơn số lượng xuất (${expectedQty} chai)`)
+                }
+
+                totalExpected += expectedQty
+                totalActual += actualQty
+
+                if (actualQty < expectedQty) {
+                    discrepancies.push(`${line.product.skuCode}: xuất ${expectedQty}, nhận ${actualQty} (thiếu ${expectedQty - actualQty} chai)`)
+                }
+
+                // Cập nhật số lượng thực nhận trên dòng phiếu chuyển
+                await tx.transferOrderLine.update({
+                    where: { id: line.id },
+                    data: { qtyReceived: actualQty },
+                })
+
+                // Nếu số lượng thực nhận = 0 (ví dụ bể vỡ toàn bộ), bỏ qua việc tạo/cộng tồn kho
+                if (actualQty <= 0) continue
+
+                // Xác thực an toàn: Vị trí kệ nhận BẮT BUỘC phải thuộc về Kho Nhận (toWarehouseId)
+                let destLocationId = defaultDestLocation.id
+                if (lineInput?.locationId) {
+                    const validLoc = await tx.location.findFirst({
+                        where: { id: lineInput.locationId, warehouseId: to.toWarehouseId },
+                        select: { id: true },
+                    })
+                    if (validLoc) {
+                        destLocationId = validLoc.id
+                    }
+                }
+
+                // Truy tìm lô hàng nguồn ở kho xuất theo thứ tự FIFO (đồng bộ với thứ tự xuất kho)
                 const whereSource: any = {
                     productId: line.productId,
                     location: { warehouseId: to.fromWarehouseId },
@@ -415,7 +494,7 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                 }
                 const sourceLot = await tx.stockLot.findFirst({
                     where: whereSource,
-                    orderBy: { receivedDate: 'desc' },
+                    orderBy: { receivedDate: 'asc' },
                 })
                 const avgCost = sourceLot ? Number(sourceLot.unitLandedCost) : 0
 
@@ -426,34 +505,83 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                     ownerEntityId = firstLE.id
                 }
 
-                let lotNo = ''
-                do {
-                    currentTrfSeq++
-                    lotNo = `TRF-${String(currentTrfSeq).padStart(6, '0')}`
-                } while (existingLotNos.has(lotNo))
-                existingLotNos.add(lotNo)
+                const shipmentId = sourceLot?.shipmentId ?? null
+                const vintage = line.vintage ?? sourceLot?.vintage ?? null
 
-                await tx.stockLot.create({
-                    data: {
-                        lotNo,
-                        ownerEntityId,
+                // Kiểm tra xem tại vị trí kệ nhận đã có sẵn lô cùng sản phẩm, niên vụ, shipment và pháp nhân chưa
+                const existingLotAtLocation = await tx.stockLot.findFirst({
+                    where: {
                         productId: line.productId,
-                        locationId: destLocation.id,
-                        qtyReceived: line.qtyTransferred,
-                        qtyAvailable: line.qtyTransferred,
-                        unitLandedCost: avgCost,
-                        receivedDate: new Date(),
-                        vintage: line.vintage ?? sourceLot?.vintage ?? null,
+                        locationId: destLocationId,
+                        vintage,
+                        ownerEntityId,
+                        shipmentId,
                         status: 'AVAILABLE',
                     },
                 })
+
+                if (existingLotAtLocation) {
+                    // Nếu đã có sẵn cùng lô/shipment tại kệ này: cộng dồn tồn kho
+                    await tx.stockLot.update({
+                        where: { id: existingLotAtLocation.id },
+                        data: {
+                            qtyReceived: { increment: actualQty },
+                            qtyAvailable: { increment: actualQty },
+                        },
+                    })
+                } else {
+                    // Tạo lô mới bắt đầu bằng tiền tố 'TRF-' (tương thích báo cáo NXT) nhưng bảo toàn định danh lô gốc
+                    const cleanLot = sourceLot?.lotNo ? sourceLot.lotNo.replace(/^TRF-/, '') : ''
+                    let baseLotNo = cleanLot
+                        ? `TRF-${cleanLot}/${whCode}`
+                        : `TRF-${String(++currentTrfSeq).padStart(6, '0')}`
+                    let candidateLotNo = baseLotNo
+                    let suffix = 1
+                    while (existingLotNos.has(candidateLotNo)) {
+                        suffix++
+                        candidateLotNo = `${baseLotNo}-${suffix}`
+                    }
+                    existingLotNos.add(candidateLotNo)
+
+                    await tx.stockLot.create({
+                        data: {
+                            lotNo: candidateLotNo,
+                            ownerEntityId,
+                            productId: line.productId,
+                            locationId: destLocationId,
+                            shipmentId,
+                            qtyReceived: actualQty,
+                            qtyAvailable: actualQty,
+                            unitLandedCost: avgCost,
+                            receivedDate: new Date(),
+                            vintage,
+                            status: 'AVAILABLE',
+                        },
+                    })
+                }
+            }
+
+            // Ghi chú biên bản nhận kho nếu có chênh lệch hoặc có ghi chú của thủ kho nhận
+            let updatedNotes = to.notes || ''
+            if (discrepancies.length > 0 || input.receiptNotes?.trim()) {
+                const nowStr = new Date().toLocaleString('vi-VN')
+                const reportParts = [`[Biên bản nhận kho ${nowStr}]: Thực nhận ${totalActual}/${totalExpected} chai`]
+                if (discrepancies.length > 0) {
+                    reportParts.push(`Hao hụt/vỡ: ${discrepancies.join('; ')}`)
+                }
+                if (input.receiptNotes?.trim()) {
+                    reportParts.push(`Ghi chú thủ kho: ${input.receiptNotes.trim()}`)
+                }
+                const reportStr = reportParts.join(' | ')
+                updatedNotes = updatedNotes ? `${updatedNotes}\n${reportStr}` : reportStr
             }
 
             await tx.transferOrder.update({
-                where: { id },
+                where: { id: input.transferOrderId },
                 data: {
                     status: 'RECEIVED',
                     receivedAt: new Date(),
+                    notes: updatedNotes,
                 },
             })
 
@@ -461,6 +589,7 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
         })
 
         revalidateCache('transfers')
+        revalidateCache('wms')
         revalidatePath('/dashboard/transfers')
         revalidatePath('/dashboard/warehouse')
         return result
@@ -564,7 +693,7 @@ export async function cancelTransferOrder(id: string): Promise<{ success: boolea
         const user = await requireAuth()
         const to = await prisma.transferOrder.findUnique({ where: { id } })
         if (!to) return { success: false, error: 'Không tìm thấy phiếu' }
-        if (to.status !== 'DRAFT' && to.status !== 'PENDING_ACCOUNTING') {
+        if (to.status !== 'DRAFT' && to.status !== 'PENDING_ACCOUNTING' && to.status !== 'CONFIRMED') {
             return { success: false, error: 'Chỉ có thể hủy phiếu khi chưa xuất kho' }
         }
 

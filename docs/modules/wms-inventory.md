@@ -135,15 +135,26 @@ Thủ Kho Nhận (Kho Đến): Kiểm hàng thực nhận & bấm "Xác Nhận N
   1. **Phiếu Chuyển Kho Nội Bộ A4**: 4 ô ký tên bằng tay ở chân phiếu dành cho: **Người Lập Phiếu**, **Kế Toán Phê Duyệt**, **Thủ Kho Xuất (Kho Đi)**, **Thủ Kho Nhận (Kho Đến)**.
   2. **Danh Sách Nhặt Hàng (Pick List A4)**: Mẫu in chuyên dụng cho thủ kho di chuyển nhặt hàng tại các kệ kho, hiển thị nổi bật Cột Vị Trí Kệ, Mã Lô, SL Cần Nhặt và ô tích xác nhận nhặt.
 
-### 5.3 Xử Lý Tồn Kho Trong Quá Trình Transfer
+### 5.3 Xử Lý Tồn Kho & Kiểm Đếm Thực Nhận (Actual Receipt & Loss Handling)
 
-| Trạng thái | Kho A | Kho B | Ghi Chú |
+| Trạng thái | Kho Đi (fromWarehouse) | Kho Đến (toWarehouse) | Ghi Chú & Tồn Kho |
 |---|---|---|---|
-| TO Draft | Còn đủ | Chưa có | Chưa di chuyển |
-| TO Confirmed (Picking) | Reserved | Chưa có | Đang chuẩn bị |
-| IN_TRANSIT | Đã xuất (-) | IN_TRANSIT slot | Đang trên đường |
-| Received | Đã xuất (-) | Nhập kho (+) | Hoàn tất |
-| Partial receive | Đã xuất (-) | Nhập 1 phần | Phần thiếu → Quarantine TO |
+| **DRAFT** | Còn đủ | Chưa có | Phiếu nháp, có thể chỉnh sửa/xóa dòng hoặc hủy |
+| **PENDING_ACCOUNTING** | Còn đủ | Chưa có | Kế toán kiểm tra & duyệt phiếu hoặc từ chối |
+| **CONFIRMED** | Còn đủ (chưa trừ) | Chưa có | Đã duyệt; có thể hủy nếu kho chưa kịp xuất hàng |
+| **IN_TRANSIT** | Đã xuất (-) theo FIFO | Đang vận chuyển | Hàng rời kho xuất, trừ tồn kho khả dụng tại Kho Đi |
+| **RECEIVED** | Đã xuất (-) | Nhập kho (+) theo thực nhận | Nhận đủ hoặc ghi nhận hao hụt |
+
+**Quy trình Kiểm Đếm Thực Nhận & Chọn Vị Trí Kệ Nhận:**
+1. **Kiểm đếm thực nhận từng SKU (`qtyReceived`)**: Thủ kho nhận kiểm đếm thực tế; `0 <= qtyReceived <= qtyTransferred`. Nghiêm cấm nhận vượt quá số xuất.
+2. **Chọn Vị Trí Kệ Nhận (`destLocationId`)**: Cho phép chọn linh hoạt vị trí kệ (Zone/Rack/Bin) tại Kho Đến cho từng SKU. Xác thực an toàn: Location bắt buộc thuộc về `toWarehouseId`.
+3. **Bảo toàn Nguồn Gốc Lô Gốc & Định Danh An Toàn NXT**:
+   - Nếu tại kệ nhận đã có sẵn lô cùng sản phẩm, niên vụ, shipment và pháp nhân: tự động cộng dồn tồn kho.
+   - Nếu chưa có: tạo lô mới với mã `TRF-${cleanLot}/${whCode}` (ví dụ `TRF-LOT-2608-0005/TA-GVM`). Giữ nguyên `shipmentId`, `unitLandedCost`, `ownerEntityId` và `vintage`. Tiền tố `TRF-` ngăn double-counting trong Báo Cáo Nhập Xuất Tồn (NXT).
+4. **Biên Bản Hao Hụt & Chênh Lệch Vận Chuyển**:
+   - Nếu phát hiện vỡ, hỏng hoặc thiếu hàng (`qtyReceived < qtyTransferred`), hệ thống tự động sinh biên bản chênh lệch kèm mốc thời gian và ghi chú của thủ kho, lưu trực tiếp vào trường `notes` của chứng từ chuyển kho.
+5. **Đồng Bộ Sổ Cái Nhập Xuất Tồn (NXT Ledger)**:
+   - Sổ cái NXT (`actions-nxt.ts`) tính Nhập Chuyển Kho (`Transfer IN`) theo chính xác `qtyReceived` thực tế, bảo đảm số dư tồn kho cuối kỳ khớp 100% với tồn kho khả dụng thực tế trên kệ.
 
 ### 5.4 Database Design (Transfer)
 
@@ -580,6 +591,13 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Tạo Phiếu Chuyển Kho 1-Click** | `CreateTransferDrawer.tsx`, `ReplenishmentTab.tsx` | Nút `[⚡ Tạo Lệnh Chuyển]` tự động điền sẵn Kho đi, Kho đến, SKU và số lượng đề xuất chẵn thùng (6 hoặc 12 chai/thùng) vào drawer chuyển kho |
 | **Liên kết nhanh từ Chuyển Kho Nội Bộ** | `TransfersClient.tsx` | Nút `[⚡ Gợi Ý Điều Chuyển]` trên toolbar trang Chuyển Kho điều hướng tức thì về phân hệ Gợi ý |
 
+#### Phase 11: Nâng Cấp Quy Trình Nhận Kho Điều Chuyển (10/09/2026)
+
+| Tính năng | File | Chi tiết |
+|---|---|---|
+| **Kiểm Đếm Thực Nhận & Xử Lý Hao Hụt/Vỡ** | `TransferDetailDrawer.tsx`, `transfers/actions.ts` | Bổ sung popup kiểm đếm thực nhận cho từng SKU khi hàng đến kho nhận. Cho phép thủ kho điều chỉnh số lượng thực tế, chọn vị trí kệ lưu kho cụ thể tại kho đến, và ghi nhận biên bản hao hụt/vỡ hỏng vào lịch sử phiếu |
+| **Bảo Toàn Truy Xuất Nguồn Gốc Lô Hàng (Lot Traceability)** | `transfers/actions.ts` | Khi nhận kho, kế thừa định danh từ lô gốc (`[Mã Lô Gốc]/[Mã Kho Đến]`), liên kết trọn vẹn `shipmentId`, `unitLandedCost`, `vintage` và pháp nhân sở hữu `ownerEntityId`. Cộng dồn tồn kho nếu cùng lô/kệ thay vì sinh lô rác |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -590,6 +608,6 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-31 | Wine ERP v10.4 — Stock Replenishment & Rebalance Suggestions*
+*Last updated: 2026-09-10 | Wine ERP v10.21 — Enhanced Transfer Order Receipt & Lot Traceability*
 
 

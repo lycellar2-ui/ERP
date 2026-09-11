@@ -7,6 +7,9 @@ export interface CheckInPayload {
     customerId: string
     salespersonId: string
     purpose?: string
+    activityType?: string
+    scheduleId?: string
+    isUnplanned?: boolean
     lat?: number
     lng?: number
     address?: string
@@ -16,11 +19,116 @@ export interface CheckInPayload {
 export interface CheckOutPayload {
     visitId: string
     salespersonId: string
-    notes?: string
+    notes: string // Mandatory result notes
     lat?: number
     lng?: number
     address?: string
     photoBase64: string // Mandatory camera photo URL/base64
+}
+
+// Reverse Geocoding via Server Action to bypass browser CORS & User-Agent restrictions
+export async function reverseGeocodeAction(lat: number, lng: number): Promise<{ address?: string }> {
+    try {
+        if (!lat || !lng) return {}
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi&zoom=18`
+        const res = await fetch(url, {
+            headers: {
+                'User-Agent': 'WineERP-FieldOperations/1.0 (info@lyscellars.com)',
+                'Accept': 'application/json'
+            },
+            next: { revalidate: 3600 } // Cache results for 1 hour
+        })
+        if (res.ok) {
+            const data = await res.json()
+            if (data && data.display_name) {
+                return { address: data.display_name }
+            }
+        }
+    } catch (err) {
+        console.warn('reverseGeocodeAction server warning:', err)
+    }
+    return { address: `Toạ độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}` }
+}
+
+// Quick create prospect / lead customer by sales rep on the field
+export async function quickCreateProspectCustomer(data: {
+    name: string
+    contactName?: string
+    phone?: string
+    address?: string
+    city?: string
+    channel?: string
+    salespersonId: string
+}) {
+    try {
+        if (!data.name || !data.name.trim()) {
+            return { success: false, error: 'Vui lòng nhập tên khách hàng / nhà hàng / đại lý' }
+        }
+
+        const now = new Date()
+        const ym = now.toISOString().slice(0, 7).replace('-', '')
+        const count = await prisma.customer.count({
+            where: {
+                createdAt: {
+                    gte: new Date(now.getFullYear(), now.getMonth(), 1)
+                }
+            }
+        })
+        const code = `LEAD-${ym}-${String(count + 1).padStart(4, '0')}`
+
+        const customer = await prisma.customer.create({
+            data: {
+                code,
+                name: data.name.trim(),
+                channel: (data.channel as any) || 'HORECA',
+                customerType: 'HORECA',
+                status: 'ACTIVE',
+                salesRepId: data.salespersonId,
+                paymentTerm: 'COD',
+            }
+        })
+
+        // Add contact info if provided
+        if (data.phone || data.contactName) {
+            await prisma.customerContact.create({
+                data: {
+                    customerId: customer.id,
+                    name: data.contactName?.trim() || data.name.trim(),
+                    phone: data.phone?.trim() || null,
+                    isPrimary: true,
+                }
+            })
+        }
+
+        // Add address if provided
+        if (data.address) {
+            await prisma.customerAddress.create({
+                data: {
+                    customerId: customer.id,
+                    label: 'Địa chỉ điểm bán',
+                    address: data.address.trim(),
+                    city: data.city?.trim() || 'Hồ Chí Minh',
+                    isDefault: true,
+                }
+            })
+        }
+
+        revalidatePath('/dashboard/sales/visits')
+        return {
+            success: true,
+            customer: {
+                id: customer.id,
+                code: customer.code,
+                name: customer.name,
+                channel: customer.channel,
+                phone: data.phone || null,
+                address: data.address || null,
+            }
+        }
+    } catch (err: any) {
+        console.error('quickCreateProspectCustomer error:', err)
+        return { success: false, error: err.message || 'Không thể tạo nhanh khách hàng' }
+    }
 }
 
 export async function getActiveVisit(salespersonId: string) {
@@ -69,19 +177,37 @@ export async function checkInSalesVisit(data: CheckInPayload) {
         })
         const visitNo = `VIS-${ym}-${String(count + 1).padStart(4, '0')}`
 
-        const visit = await prisma.salesVisit.create({
-            data: {
-                visitNo,
-                customerId: data.customerId,
-                salespersonId: data.salespersonId,
-                status: 'IN_PROGRESS',
-                purpose: data.purpose || 'Viếng thăm & Chăm sóc định kỳ',
-                checkInTime: now,
-                checkInLat: data.lat,
-                checkInLng: data.lng,
-                checkInAddress: data.address,
-                checkInPhoto: data.photoBase64,
+        const visit = await prisma.$transaction(async (tx) => {
+            const newVisit = await tx.salesVisit.create({
+                data: {
+                    visitNo,
+                    customerId: data.customerId,
+                    salespersonId: data.salespersonId,
+                    status: 'IN_PROGRESS',
+                    purpose: data.purpose || 'Chăm sóc khách hàng định kỳ',
+                    activityType: data.activityType || 'PERIODIC_CARE',
+                    scheduleId: data.scheduleId || null,
+                    isUnplanned: !!data.isUnplanned,
+                    checkInTime: now,
+                    checkInLat: data.lat,
+                    checkInLng: data.lng,
+                    checkInAddress: data.address,
+                    checkInPhoto: data.photoBase64,
+                }
+            })
+
+            // If checked in from a planned schedule, link and mark IN_PROGRESS
+            if (data.scheduleId) {
+                await tx.salesVisitSchedule.update({
+                    where: { id: data.scheduleId },
+                    data: {
+                        status: 'IN_PROGRESS',
+                        salesVisitId: newVisit.id,
+                    }
+                }).catch(() => {})
             }
+
+            return newVisit
         })
 
         revalidatePath('/dashboard/sales/visits')
@@ -96,6 +222,9 @@ export async function checkOutSalesVisit(data: CheckOutPayload) {
     try {
         if (!data.visitId) return { success: false, error: 'Mã lượt viếng thăm không hợp lệ' }
         if (!data.photoBase64) return { success: false, error: 'Bắt buộc phải chụp ảnh camera điểm bán khi Check-out' }
+        if (!data.notes || data.notes.trim().length < 5) {
+            return { success: false, error: 'Bắt buộc nhập ghi chú kết quả làm việc với khách hàng (tối thiểu 5 ký tự)' }
+        }
 
         const visit = await prisma.salesVisit.findUnique({
             where: { id: data.visitId }
@@ -106,17 +235,31 @@ export async function checkOutSalesVisit(data: CheckOutPayload) {
         const checkOutTime = new Date()
         const durationMinutes = Math.round((checkOutTime.getTime() - new Date(visit.checkInTime).getTime()) / (1000 * 60))
 
-        await prisma.salesVisit.update({
-            where: { id: data.visitId },
-            data: {
-                status: 'COMPLETED',
-                checkOutTime,
-                checkOutLat: data.lat,
-                checkOutLng: data.lng,
-                checkOutAddress: data.address,
-                checkOutPhoto: data.photoBase64,
-                durationMinutes: Math.max(1, durationMinutes),
-                notes: data.notes,
+        await prisma.$transaction(async (tx) => {
+            await tx.salesVisit.update({
+                where: { id: data.visitId },
+                data: {
+                    status: 'COMPLETED',
+                    checkOutTime,
+                    checkOutLat: data.lat,
+                    checkOutLng: data.lng,
+                    checkOutAddress: data.address,
+                    checkOutPhoto: data.photoBase64,
+                    durationMinutes: Math.max(1, durationMinutes),
+                    notes: data.notes.trim(),
+                }
+            })
+
+            // If visit has a linked schedule, mark it COMPLETED
+            if (visit.scheduleId) {
+                await tx.salesVisitSchedule.update({
+                    where: { id: visit.scheduleId },
+                    data: {
+                        status: 'COMPLETED',
+                        resultNotes: data.notes.trim(),
+                        salesVisitId: visit.id,
+                    }
+                }).catch(() => {})
             }
         })
 
@@ -159,13 +302,16 @@ export async function getSalesVisits(filters?: {
             id: v.id,
             visitNo: v.visitNo,
             customerId: v.customerId,
-            customerCode: v.customer.code,
-            customerName: v.customer.name,
-            customerChannel: v.customer.channel,
+            customerCode: v.customer?.code || '',
+            customerName: v.customer?.name || '',
+            customerChannel: v.customer?.channel || 'HORECA',
             salespersonId: v.salespersonId,
-            salespersonName: v.salesperson.name,
+            salespersonName: v.salesperson?.name || '',
             status: v.status,
             purpose: v.purpose,
+            activityType: v.activityType || 'PERIODIC_CARE',
+            isUnplanned: v.isUnplanned || false,
+            scheduleId: v.scheduleId || null,
             checkInTime: v.checkInTime.toISOString(),
             checkInLat: v.checkInLat,
             checkInLng: v.checkInLng,
@@ -204,5 +350,267 @@ export async function getVisitStats() {
     } catch (e: any) {
         console.error('getVisitStats error', e)
         return { totalToday: 0, inProgressToday: 0, completedToday: 0 }
+    }
+}
+
+// -------------------------------------------------------------
+// WEEKLY PLANNING & REVIEW ACTIONS
+// -------------------------------------------------------------
+
+export async function getWeeklyPlanWithVisits(salespersonId: string, weekNumber: number, year: number) {
+    try {
+        let plan = await prisma.weeklyVisitPlan.findUnique({
+            where: {
+                salesRepId_weekNumber_year: {
+                    salesRepId: salespersonId,
+                    weekNumber,
+                    year,
+                }
+            },
+            include: {
+                visits: {
+                    include: {
+                        customer: {
+                            select: { id: true, code: true, name: true, channel: true }
+                        }
+                    },
+                    orderBy: { visitDate: 'asc' }
+                }
+            }
+        })
+
+        // Compute Monday - Sunday dates for the week
+        const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7)
+        const dow = simple.getDay()
+        const ISOweekStart = new Date(simple)
+        if (dow <= 4) {
+            ISOweekStart.setDate(simple.getDate() - (simple.getDay() || 7) + 1)
+        } else {
+            ISOweekStart.setDate(simple.getDate() + 8 - (simple.getDay() || 7))
+        }
+        
+        const start = new Date(ISOweekStart.getFullYear(), ISOweekStart.getMonth(), ISOweekStart.getDate(), 0, 0, 0)
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+        end.setHours(23, 59, 59, 999)
+
+        // Also fetch all actual sales visits for this salesperson in this week range
+        const actualVisits = await prisma.salesVisit.findMany({
+            where: {
+                salespersonId,
+                checkInTime: {
+                    gte: start,
+                    lte: end,
+                }
+            },
+            include: {
+                customer: {
+                    select: { id: true, code: true, name: true, channel: true }
+                }
+            },
+            orderBy: { checkInTime: 'asc' }
+        })
+
+        return {
+            success: true,
+            plan: plan ? {
+                id: plan.id,
+                salesRepId: plan.salesRepId,
+                weekNumber: plan.weekNumber,
+                year: plan.year,
+                status: plan.status,
+                note: plan.note || '',
+                selfReview: plan.selfReview || '',
+                managerFeedback: plan.managerFeedback || '',
+                submittedAt: plan.submittedAt?.toISOString() || null,
+                reviewedAt: plan.reviewedAt?.toISOString() || null,
+                visits: plan.visits.map(v => ({
+                    id: v.id,
+                    planId: v.planId,
+                    customerId: v.customerId,
+                    customer: v.customer,
+                    visitDate: v.visitDate.toISOString().split('T')[0],
+                    purpose: v.purpose,
+                    status: v.status,
+                    isUnplanned: v.isUnplanned,
+                    salesVisitId: v.salesVisitId,
+                    resultNotes: v.resultNotes,
+                }))
+            } : null,
+            actualVisits: actualVisits.map(v => ({
+                id: v.id,
+                visitNo: v.visitNo,
+                customerId: v.customerId,
+                customer: v.customer,
+                status: v.status,
+                purpose: v.purpose,
+                activityType: v.activityType,
+                scheduleId: v.scheduleId,
+                isUnplanned: v.isUnplanned,
+                checkInTime: v.checkInTime.toISOString(),
+                checkOutTime: v.checkOutTime?.toISOString() || null,
+                durationMinutes: v.durationMinutes || 0,
+                notes: v.notes || '',
+            }))
+        }
+    } catch (err: any) {
+        console.error('getWeeklyPlanWithVisits error:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function saveWeeklyPlanAction(input: {
+    salespersonId: string
+    weekNumber: number
+    year: number
+    note?: string
+    visits: Array<{
+        id?: string
+        customerId: string
+        visitDate: string
+        purpose: string
+        status?: string
+    }>
+}) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            let plan = await tx.weeklyVisitPlan.findUnique({
+                where: {
+                    salesRepId_weekNumber_year: {
+                        salesRepId: input.salespersonId,
+                        weekNumber: input.weekNumber,
+                        year: input.year,
+                    }
+                }
+            })
+
+            if (!plan) {
+                plan = await tx.weeklyVisitPlan.create({
+                    data: {
+                        salesRepId: input.salespersonId,
+                        weekNumber: input.weekNumber,
+                        year: input.year,
+                        note: input.note || null,
+                        status: 'DRAFT',
+                    }
+                })
+            } else {
+                plan = await tx.weeklyVisitPlan.update({
+                    where: { id: plan.id },
+                    data: {
+                        note: input.note || null,
+                    }
+                })
+            }
+
+            // Sync visits safely: keep existing items that have id or are COMPLETED
+            const existingVisits = await tx.salesVisitSchedule.findMany({
+                where: { planId: plan.id }
+            })
+
+            const incomingIds = input.visits.filter(v => v.id).map(v => v.id)
+            // Delete only visits that are NOT completed and NOT in the incoming list
+            const toDelete = existingVisits.filter(v => !incomingIds.includes(v.id) && v.status !== 'COMPLETED' && v.status !== 'IN_PROGRESS')
+            if (toDelete.length > 0) {
+                await tx.salesVisitSchedule.deleteMany({
+                    where: { id: { in: toDelete.map(d => d.id) } }
+                })
+            }
+
+            // Upsert / Create incoming
+            for (const v of input.visits) {
+                const visitDate = new Date(`${v.visitDate}T09:00:00.000Z`)
+                if (v.id && existingVisits.some(e => e.id === v.id)) {
+                    await tx.salesVisitSchedule.update({
+                        where: { id: v.id },
+                        data: {
+                            customerId: v.customerId,
+                            visitDate,
+                            purpose: v.purpose,
+                        }
+                    })
+                } else {
+                    await tx.salesVisitSchedule.create({
+                        data: {
+                            planId: plan.id,
+                            customerId: v.customerId,
+                            visitDate,
+                            purpose: v.purpose,
+                            status: 'PLANNED',
+                        }
+                    })
+                }
+            }
+
+            return plan
+        })
+
+        revalidatePath('/dashboard/sales/visits')
+        return { success: true, planId: result.id }
+    } catch (err: any) {
+        console.error('saveWeeklyPlanAction error:', err)
+        return { success: false, error: err.message || 'Không thể lưu kế hoạch tuần' }
+    }
+}
+
+export async function submitWeeklyReportAction(input: {
+    planId: string
+    salespersonId: string
+    selfReview: string
+}) {
+    try {
+        if (!input.selfReview || input.selfReview.trim().length < 5) {
+            return { success: false, error: 'Vui lòng nhập nội dung tự đánh giá kết quả tuần (tối thiểu 5 ký tự)' }
+        }
+
+        const plan = await prisma.weeklyVisitPlan.findUnique({
+            where: { id: input.planId }
+        })
+        if (!plan) return { success: false, error: 'Không tìm thấy kế hoạch tuần' }
+        if (plan.salesRepId !== input.salespersonId) return { success: false, error: 'Bạn không có quyền chốt kế hoạch này' }
+
+        const updated = await prisma.weeklyVisitPlan.update({
+            where: { id: input.planId },
+            data: {
+                status: 'SUBMITTED',
+                selfReview: input.selfReview.trim(),
+                submittedAt: new Date(),
+            }
+        })
+
+        revalidatePath('/dashboard/sales/visits')
+        return { success: true, plan: updated }
+    } catch (err: any) {
+        console.error('submitWeeklyReportAction error:', err)
+        return { success: false, error: err.message || 'Không thể chốt báo cáo tuần' }
+    }
+}
+
+export async function saveManagerFeedbackAction(input: {
+    planId: string
+    managerFeedback: string
+    managerId: string
+}) {
+    try {
+        const plan = await prisma.weeklyVisitPlan.findUnique({
+            where: { id: input.planId }
+        })
+        if (!plan) return { success: false, error: 'Không tìm thấy kế hoạch tuần' }
+
+        const updated = await prisma.weeklyVisitPlan.update({
+            where: { id: input.planId },
+            data: {
+                status: 'APPROVED',
+                managerFeedback: input.managerFeedback.trim(),
+                reviewedAt: new Date(),
+                reviewedById: input.managerId,
+            }
+        })
+
+        revalidatePath('/dashboard/sales/visits')
+        return { success: true, plan: updated }
+    } catch (err: any) {
+        console.error('saveManagerFeedbackAction error:', err)
+        return { success: false, error: err.message || 'Không thể lưu nhận xét của quản lý' }
     }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Printer, CheckCircle2, ArrowRightLeft, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, Loader2, MapPin, Layers, Boxes, ListChecks, RotateCw, Sparkles } from 'lucide-react'
+import { X, Printer, CheckCircle2, ArrowRightLeft, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, AlertTriangle, Loader2, MapPin, Layers, Boxes, ListChecks, RotateCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type TransferOrderDetail,
@@ -12,6 +12,7 @@ import {
     accountingRejectTransfer,
     dispatchTransferOrder,
     receiveTransferOrder,
+    getWarehouseLocations,
     submitTransferForAccounting,
     updateTransferLineVintage,
     autoFixTransferVintages,
@@ -43,6 +44,22 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
     const [showRejectInput, setShowRejectInput] = useState(false)
     const [printModalOpen, setPrintModalOpen] = useState(false)
     const [printDocType, setPrintDocType] = useState<'VOUCHER' | 'PICK_LIST'>('VOUCHER')
+
+    // Actual receipt verification state
+    const [showReceiveModal, setShowReceiveModal] = useState(false)
+    const [destLocations, setDestLocations] = useState<Array<{ id: string; locationCode: string; zone?: string | null; rack?: string | null }>>([])
+    const [receiveLines, setReceiveLines] = useState<Array<{
+        lineId: string
+        productName: string
+        skuCode: string
+        vintage: number | null
+        qtyTransferred: number
+        qtyReceived: number
+        locationId: string
+    }>>([])
+    const [receiptNotes, setReceiptNotes] = useState('')
+    const [loadingLocations, setLoadingLocations] = useState(false)
+    const [bulkLocationId, setBulkLocationId] = useState('')
 
     // Vintage editing states
     const [editingVintageLineId, setEditingVintageLineId] = useState<string | null>(null)
@@ -131,12 +148,50 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
     }
 
     // Handle Receive (Nhận hàng tại Kho Đến)
-    const handleReceive = async () => {
+    const openReceiveModal = async () => {
+        if (!detail) return
+        setLoadingLocations(true)
+        try {
+            const locs = await getWarehouseLocations(detail.toWarehouseId)
+            setDestLocations(locs)
+            const defaultLocId = locs[0]?.id || ''
+            setBulkLocationId(defaultLocId)
+            setReceiveLines(
+                detail.lines.map(l => ({
+                    lineId: l.id,
+                    productName: l.productName,
+                    skuCode: l.skuCode,
+                    vintage: l.vintage,
+                    qtyTransferred: l.qtyTransferred,
+                    qtyReceived: l.qtyTransferred,
+                    locationId: defaultLocId,
+                }))
+            )
+            setReceiptNotes('')
+            setShowReceiveModal(true)
+        } catch (err: any) {
+            toast.error('Lỗi tải vị trí kho nhận: ' + err.message)
+        } finally {
+            setLoadingLocations(false)
+        }
+    }
+
+    const handleConfirmReceive = async () => {
+        if (!transferId) return
         setActionLoading(true)
         try {
-            const res = await receiveTransferOrder(transferId)
+            const res = await receiveTransferOrder({
+                transferOrderId: transferId,
+                lines: receiveLines.map(r => ({
+                    lineId: r.lineId,
+                    qtyReceived: Number(r.qtyReceived),
+                    locationId: r.locationId || undefined,
+                })),
+                receiptNotes,
+            })
             if (!res.success) throw new Error(res.error)
-            toast.success('📥 Đã xác nhận nhận đủ hàng & tạo Stock Lot tại Kho Nhận thành công!')
+            toast.success('📥 Đã xác nhận kiểm đếm & nhận kho thành công!')
+            setShowReceiveModal(false)
             loadData(transferId)
             onRefresh()
         } catch (err: any) {
@@ -144,6 +199,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         } finally {
             setActionLoading(false)
         }
+    }
+
+    const handleApplyBulkLocation = (locId: string) => {
+        setBulkLocationId(locId)
+        setReceiveLines(prev => prev.map(l => ({ ...l, locationId: locId })))
     }
 
     // Handle Submit Draft
@@ -385,16 +445,17 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
                                             </p>
                                             <p className="text-[11px] text-blue-700 mt-0.5">
-                                                Khi hàng đến Kho Nhận, Thủ kho đến kiểm đếm và bấm "Xác Nhận Nhận Hàng"
+                                                Khi hàng đến Kho Nhận, Thủ kho kiểm đếm thực tế và bấm &quot;Kiểm Đếm &amp; Nhận Hàng&quot;
                                             </p>
                                         </div>
                                         <button
-                                            disabled={actionLoading}
-                                            onClick={handleReceive}
+                                            disabled={actionLoading || loadingLocations}
+                                            onClick={openReceiveModal}
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                             style={{ background: '#87CBB9', color: '#0A1926' }}
                                         >
-                                            <PackageCheck size={15} /> Xác Nhận Đã Nhận Hàng
+                                            {loadingLocations ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
+                                            Kiểm Đếm &amp; Nhận Hàng
                                         </button>
                                     </div>
                                 )}
@@ -1035,6 +1096,212 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Kiểm Đếm Thực Nhận & Chọn Vị Trí Kệ */}
+            {showReceiveModal && detail && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800">
+                                        <PackageCheck size={18} />
+                                    </span>
+                                    <h3 className="text-base font-bold text-slate-900">
+                                        Kiểm Đếm Thực Nhận &amp; Chọn Vị Trí Kệ Lưu Kho
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-slate-600 mt-1">
+                                    Phiếu: <span className="font-mono font-bold text-amber-800">{detail.transferNo}</span> &nbsp;|&nbsp; 
+                                    Kho nhận: <strong className="text-emerald-700">{detail.toWarehouse}</strong>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowReceiveModal(false)}
+                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Guide banner & Bulk location selector */}
+                        {destLocations.length === 0 ? (
+                            <div className="p-4 bg-rose-50 border-b border-rose-200 text-xs text-rose-900 flex items-center gap-2">
+                                <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                                <span>
+                                    <strong>Cảnh báo:</strong> Kho nhận <em>{detail.toWarehouse}</em> chưa có vị trí kệ (Location) nào. Vui lòng vào Quản lý Vị Trí Kho để tạo vị trí kệ trước khi nhận hàng.
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="p-4 bg-amber-50/70 border-b border-amber-200 text-xs text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle size={16} className="text-amber-700 shrink-0" />
+                                    <span>
+                                        Kiểm tra số chai thực tế nguyên vẹn khi dỡ hàng. Nếu bị nứt vỡ hoặc thiếu, vui lòng sửa cột <strong>SL Thực Nhận</strong>.
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[11px] font-bold text-slate-700">Gán nhanh kệ nhận:</span>
+                                    <select
+                                        value={bulkLocationId}
+                                        onChange={e => handleApplyBulkLocation(e.target.value)}
+                                        className="px-2.5 py-1 text-xs rounded-lg border border-slate-300 bg-white font-mono font-medium outline-none focus:border-emerald-500"
+                                    >
+                                        {destLocations.map(loc => (
+                                            <option key={loc.id} value={loc.id}>
+                                                {loc.locationCode} {loc.zone ? `(${loc.zone})` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Items Table */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                        <th className="px-3 py-2.5 w-10 text-center">STT</th>
+                                        <th className="px-3 py-2.5">Sản Phẩm</th>
+                                        <th className="px-3 py-2.5 w-16 text-center">Niên Vụ</th>
+                                        <th className="px-3 py-2.5 w-24 text-right">SL Xuất</th>
+                                        <th className="px-3 py-2.5 w-32 text-center">SL Thực Nhận</th>
+                                        <th className="px-3 py-2.5 w-32 text-center">Trạng Thái</th>
+                                        <th className="px-3 py-2.5 w-44">Vị Trí Kệ Nhận</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {receiveLines.map((line, idx) => {
+                                        const diff = line.qtyTransferred - line.qtyReceived
+                                        return (
+                                            <tr key={line.lineId} className="hover:bg-slate-50/80 transition-colors">
+                                                <td className="px-3 py-3 text-center text-slate-500 font-mono">{idx + 1}</td>
+                                                <td className="px-3 py-3">
+                                                    <span className="font-mono font-bold text-amber-800 text-[11px] mr-1.5">[{line.skuCode}]</span>
+                                                    <span className="font-bold text-slate-900">{line.productName}</span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center font-mono text-slate-600">{line.vintage || 'NV'}</td>
+                                                <td className="px-3 py-3 text-right font-mono font-bold text-slate-700">
+                                                    {line.qtyTransferred} <span className="text-[10px] text-slate-400">chai</span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center">
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        max={line.qtyTransferred}
+                                                        value={line.qtyReceived === 0 ? '' : line.qtyReceived}
+                                                        placeholder="0"
+                                                        onChange={e => {
+                                                            const raw = e.target.value
+                                                            if (raw === '') {
+                                                                setReceiveLines(prev => prev.map(l => l.lineId === line.lineId ? { ...l, qtyReceived: 0 } : l))
+                                                                return
+                                                            }
+                                                            const parsed = parseInt(raw, 10)
+                                                            if (!isNaN(parsed)) {
+                                                                const clamped = Math.min(line.qtyTransferred, Math.max(0, parsed))
+                                                                setReceiveLines(prev => prev.map(l => l.lineId === line.lineId ? { ...l, qtyReceived: clamped } : l))
+                                                            }
+                                                        }}
+                                                        className="w-24 px-2 py-1 text-center font-mono font-extrabold text-xs rounded border border-slate-300 bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    />
+                                                </td>
+                                                <td className="px-3 py-3 text-center">
+                                                    {diff === 0 ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                                            <CheckCircle2 size={11} /> Đủ 100%
+                                                        </span>
+                                                    ) : diff > 0 ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                                            <AlertTriangle size={11} /> Thiếu {diff} chai
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                                                            Thừa {Math.abs(diff)} chai
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {destLocations.length > 0 ? (
+                                                        <select
+                                                            value={line.locationId}
+                                                            onChange={e => {
+                                                                const locId = e.target.value
+                                                                setReceiveLines(prev => prev.map(l => l.lineId === line.lineId ? { ...l, locationId: locId } : l))
+                                                            }}
+                                                            className="w-full px-2 py-1 text-xs rounded border border-slate-300 bg-white font-mono outline-none focus:border-emerald-500"
+                                                        >
+                                                            {destLocations.map(loc => (
+                                                                <option key={loc.id} value={loc.id}>
+                                                                    {loc.locationCode} {loc.zone ? `(${loc.zone})` : ''}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-[11px] text-rose-500 italic">Chưa có vị trí</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+
+                            {/* Receipt Notes / Damage Report */}
+                            <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                <label className="block text-xs font-bold text-slate-800">
+                                    📝 Ghi Chú Kiểm Đếm / Biên Bản Hao Hụt (nếu có chênh lệch hoặc vỡ hỏng):
+                                </label>
+                                <textarea
+                                    value={receiptNotes}
+                                    onChange={e => setReceiptNotes(e.target.value)}
+                                    rows={2}
+                                    placeholder="Ví dụ: Vỡ 2 chai do rung lắc khi vận chuyển; đã lập biên bản xác nhận với lái xe..."
+                                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white outline-none focus:border-emerald-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Footer Summary & Action */}
+                        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 text-xs">
+                                <div>
+                                    <span className="text-slate-500">Tổng xuất: </span>
+                                    <strong className="font-mono text-slate-900">{receiveLines.reduce((s, l) => s + l.qtyTransferred, 0)} chai</strong>
+                                </div>
+                                <div>
+                                    <span className="text-slate-500">Thực nhận: </span>
+                                    <strong className="font-mono text-emerald-700">{receiveLines.reduce((s, l) => s + l.qtyReceived, 0)} chai</strong>
+                                </div>
+                                {receiveLines.reduce((s, l) => s + (l.qtyTransferred - l.qtyReceived), 0) > 0 && (
+                                    <div className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">
+                                        Hao hụt: -{receiveLines.reduce((s, l) => s + (l.qtyTransferred - l.qtyReceived), 0)} chai
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                                <button
+                                    onClick={() => setShowReceiveModal(false)}
+                                    disabled={actionLoading}
+                                    className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    onClick={handleConfirmReceive}
+                                    disabled={actionLoading || destLocations.length === 0}
+                                    className="px-5 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                                >
+                                    {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                                    Xác Nhận Nhận Kho
+                                </button>
                             </div>
                         </div>
                     </div>

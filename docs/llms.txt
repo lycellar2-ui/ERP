@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-10 16:45
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, BUG-096 Fix TRF Lot Sequence Collision on Transfer Order Receipt
+> Last updated: 2026-09-11 15:20
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, SFV Sales Field Operations 3-Stage Cycle & Camera/GPS Fix
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

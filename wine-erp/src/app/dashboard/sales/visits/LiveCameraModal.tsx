@@ -6,11 +6,14 @@ import { Camera, X, RefreshCw, CheckCircle2, ShieldCheck, VideoOff, Upload } fro
 interface Props {
     title: string
     subtitle?: string
+    customerName?: string
+    salespersonName?: string
+    locationInfo?: string
     onCapture: (photoBase64: string) => void
     onClose: () => void
 }
 
-export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) {
+export function LiveCameraModal({ title, subtitle, customerName, salespersonName, locationInfo, onCapture, onClose }: Props) {
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
@@ -33,6 +36,12 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
         setCameraError(null)
         stopActiveStream()
 
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setCameraError('Trình duyệt chưa mở Camera trực tiếp. Bạn bấm nút bên dưới để chụp bằng Camera của máy!')
+            setStarting(false)
+            return
+        }
+
         try {
             let newStream: MediaStream | null = null
             try {
@@ -48,7 +57,6 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                 newStream = await navigator.mediaDevices.getUserMedia(constraints)
             } catch (err1) {
                 console.warn('HD Camera constraint failed, trying basic video:', err1)
-                // Fallback: Try basic video constraint (works on all devices/browsers)
                 newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             }
 
@@ -61,11 +69,11 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
         } catch (e: any) {
             console.warn('Camera access warning:', e)
             if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn hãy bấm nút bên dưới để mở ứng dụng Camera máy chụp ảnh!')
+                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn hãy bấm nút bên dưới để mở Camera máy!')
             } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setCameraError('Không tìm thấy luồng Camera trực tiếp. Bạn hãy bấm nút bên dưới để mở ứng dụng Camera máy!')
+                setCameraError('Không tìm thấy luồng Camera trực tiếp. Bấm nút bên dưới để dùng Camera thiết bị!')
             } else {
-                setCameraError('Chưa thể mở Camera trực tiếp. Bấm nút bên dưới để dùng ứng dụng Camera máy chụp!')
+                setCameraError('Chưa thể mở Camera trực tiếp. Bấm nút bên dưới để dùng Camera thiết bị chụp ảnh!')
             }
         }
         setStarting(false)
@@ -78,30 +86,63 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
         }
     }, [facingMode, startCamera])
 
+    const drawWatermarkAndSetImage = (canvas: HTMLCanvasElement) => {
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        const nowStr = new Date().toLocaleString('vi-VN')
+        const bannerHeight = 46
+        
+        // Semi-transparent bottom banner
+        ctx.fillStyle = 'rgba(10, 25, 38, 0.82)'
+        ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight)
+
+        // Line 1: Brand & Customer & Time
+        ctx.fillStyle = '#87CBB9'
+        ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        const line1 = `LYS CELLARS ERP | ${customerName ? customerName + ' | ' : ''}${nowStr}`
+        ctx.fillText(line1, 14, canvas.height - 25)
+
+        // Line 2: Sale name & Location/GPS
+        ctx.fillStyle = '#E2E8F0'
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        const parts = []
+        if (salespersonName) parts.push(`Sale: ${salespersonName}`)
+        if (locationInfo) parts.push(locationInfo)
+        const line2 = parts.join(' • ') || 'Ảnh chụp thực địa thị trường'
+        ctx.fillText(line2, 14, canvas.height - 10)
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+        setCapturedImage(dataUrl)
+    }
+
     const takeSnapshot = () => {
         if (!videoRef.current || !canvasRef.current) return
 
         const video = videoRef.current
         const canvas = canvasRef.current
 
-        canvas.width = video.videoWidth || 640
-        canvas.height = video.videoHeight || 480
+        let w = video.videoWidth || 640
+        let h = video.videoHeight || 480
+        const maxDim = 1280
+        if (w > maxDim || h > maxDim) {
+            if (w > h) {
+                h = Math.round((h * maxDim) / w)
+                w = maxDim
+            } else {
+                w = Math.round((w * maxDim) / h)
+                h = maxDim
+            }
+        }
+
+        canvas.width = w
+        canvas.height = h
 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-        // Add Watermark
-        const nowStr = new Date().toLocaleString('vi-VN')
-        ctx.font = 'bold 16px sans-serif'
-        ctx.fillStyle = '#87CBB9'
-        ctx.shadowColor = 'black'
-        ctx.shadowBlur = 4
-        ctx.fillText(`LYS CELLARS ERP | Check-in Photo: ${nowStr}`, 16, canvas.height - 20)
-
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
-        setCapturedImage(dataUrl)
+        ctx.drawImage(video, 0, 0, w, h)
+        drawWatermarkAndSetImage(canvas)
         stopActiveStream()
     }
 
@@ -115,18 +156,24 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
             const img = new Image()
             img.onload = () => {
                 const canvas = canvasRef.current || document.createElement('canvas')
-                canvas.width = img.width || 800
-                canvas.height = img.height || 600
+                let w = img.width || 800
+                let h = img.height || 600
+                const maxDim = 1280
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) {
+                        h = Math.round((h * maxDim) / w)
+                        w = maxDim
+                    } else {
+                        w = Math.round((w * maxDim) / h)
+                        h = maxDim
+                    }
+                }
+                canvas.width = w
+                canvas.height = h
                 const ctx = canvas.getContext('2d')
                 if (ctx) {
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-                    const nowStr = new Date().toLocaleString('vi-VN')
-                    ctx.font = 'bold 16px sans-serif'
-                    ctx.fillStyle = '#87CBB9'
-                    ctx.shadowColor = 'black'
-                    ctx.shadowBlur = 4
-                    ctx.fillText(`LYS CELLARS ERP | Check-in Photo: ${nowStr}`, 16, canvas.height - 20)
-                    setCapturedImage(canvas.toDataURL('image/jpeg', 0.85))
+                    ctx.drawImage(img, 0, 0, w, h)
+                    drawWatermarkAndSetImage(canvas)
                 }
             }
             img.src = event.target?.result as string

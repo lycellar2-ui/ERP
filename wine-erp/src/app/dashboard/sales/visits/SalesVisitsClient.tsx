@@ -1,13 +1,19 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
-    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus, X, Download
+    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
+    ExternalLink, Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
+    Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare
 } from 'lucide-react'
-import { checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit } from './actions'
+import {
+    checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
+    reverseGeocodeAction, quickCreateProspectCustomer, getWeeklyPlanWithVisits,
+    saveWeeklyPlanAction, submitWeeklyReportAction, saveManagerFeedbackAction
+} from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
-import { DebouncedTextarea } from '@/components/DebouncedInput'
+import { toast } from 'sonner'
 
 interface Props {
     initialVisits: any[]
@@ -18,22 +24,51 @@ interface Props {
     isManager: boolean
 }
 
+// Activity Presets for Wine ERP
+export const ACTIVITY_PRESETS = [
+    { value: 'PERIODIC_CARE', label: 'Chăm sóc khách hàng định kỳ', icon: '🤝', color: '#87CBB9' },
+    { value: 'WINE_TASTING', label: 'Thử rượu & Giới thiệu mẫu mới', icon: '🍷', color: '#D4A853' },
+    { value: 'MERCHANDISE_CHECK', label: 'Kiểm tra tồn kho & Trưng bày điểm bán', icon: '📦', color: '#4A8FAB' },
+    { value: 'DEBT_COLLECTION', label: 'Thu hồi công nợ / Đối soát hóa đơn', icon: '💵', color: '#E57373' },
+    { value: 'CONTRACT_NEGOTIATION', label: 'Ký kết hợp đồng / Đàm phán giá', icon: '📝', color: '#BA68C8' },
+    { value: 'COMPLAINT_HANDLING', label: 'Xử lý khiếu nại & Hậu mãi', icon: '⚠️', color: '#FFB74D' },
+    { value: 'OTHER', label: 'Mục đích khác', icon: '📌', color: '#90A4AE' },
+]
+
+const DAY_NAMES = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật']
+
+function getWeekNumber(d: Date): { week: number; year: number } {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+    date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+    const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+    return { week: weekNo, year: date.getUTCFullYear() }
+}
+
+function getDayOfWeek(dateStr: string): number {
+    const d = new Date(dateStr)
+    const day = d.getDay() // 0 = Sun, 1 = Mon ...
+    return day === 0 ? 6 : day - 1 // 0 = Mon, 6 = Sun
+}
+
 // Searchable Customer Combobox
 function SearchableCustomerCombobox({
     customers,
     selectedCustomerId,
-    onSelect
+    onSelect,
+    onOpenQuickCreate
 }: {
     customers: { id: string; code: string; name: string; channel: string | null }[]
     selectedCustomerId: string
     onSelect: (customer: any) => void
+    onOpenQuickCreate?: () => void
 }) {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
 
     const selectedCust = customers.find(c => c.id === selectedCustomerId)
 
-    const filtered = React.useMemo(() => {
+    const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
         if (!q) return customers.slice(0, 50)
         return customers.filter(c =>
@@ -44,55 +79,76 @@ function SearchableCustomerCombobox({
 
     return (
         <div className="relative">
-            {/* Display Input Button Trigger */}
             <div
                 onClick={() => setOpen(true)}
-                className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white hover:border-[#87CBB9] cursor-pointer flex items-center justify-between transition group shadow-inner"
+                className="w-full p-2.5 sm:p-3 text-xs outline-none rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-800 dark:text-white hover:border-[#87CBB9] cursor-pointer flex items-center justify-between transition group shadow-xs"
             >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Search size={14} className="text-[#87CBB9] shrink-0" />
                     {selectedCust ? (
-                        <span className="font-semibold text-white truncate">
-                            <strong className="text-[#87CBB9] font-mono mr-1.5">[{selectedCust.code}]</strong>
+                        <span className="font-semibold text-slate-900 dark:text-white truncate">
+                            <strong className="text-[#0D8275] dark:text-[#87CBB9] font-mono mr-1.5">[{selectedCust.code}]</strong>
                             {selectedCust.name}
                         </span>
                     ) : (
-                        <span className="text-[#8AAEBB] font-medium truncate">🔍 Bấm vào đây để chọn khách hàng...</span>
+                        <span className="text-slate-400 dark:text-[#8AAEBB] font-medium truncate">🔍 Bấm chọn khách hàng...</span>
                     )}
                 </div>
                 {selectedCust ? (
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect({ id: '' }); }}
-                        className="p-1 text-gray-400 hover:text-white"
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"
                     >
                         <X size={14} />
                     </button>
                 ) : (
-                    <ChevronRight size={14} className="text-[#8AAEBB] group-hover:text-white transition rotate-90 shrink-0" />
+                    <ChevronRight size={14} className="text-slate-400 dark:text-[#8AAEBB] group-hover:text-slate-700 dark:group-hover:text-white transition rotate-90 shrink-0" />
                 )}
             </div>
 
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl shadow-2xl p-2 space-y-2 border border-[#2A4355] bg-[#142433]">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                autoFocus
-                                value={query}
-                                onChange={e => setQuery(e.target.value)}
-                                placeholder="Gõ tên hoặc mã khách hàng..."
-                                className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-cyan-600 placeholder:text-slate-400"
-                                style={{ color: '#0F172A' }}
-                            />
-                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8AAEBB]" />
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl shadow-2xl p-2 space-y-2 border border-slate-200 dark:border-[#2A4355] bg-white dark:bg-[#142433]">
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={query}
+                                    onChange={e => setQuery(e.target.value)}
+                                    placeholder="Gõ tên hoặc mã khách hàng..."
+                                    className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-slate-100 dark:bg-[#0D1A24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-[#87CBB9] placeholder:text-slate-400"
+                                />
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                            </div>
+                            {onOpenQuickCreate && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setOpen(false); onOpenQuickCreate(); }}
+                                    className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#87CBB9] text-[#0A1926] hover:bg-[#72bca9] flex items-center gap-1 shrink-0 cursor-pointer"
+                                    title="Tạo khách mới"
+                                >
+                                    <Plus size={13} /> Khách mới
+                                </button>
+                            )}
                         </div>
 
                         <div className="max-h-60 overflow-y-auto space-y-1">
                             {filtered.length === 0 ? (
-                                <div className="p-3 text-xs text-center text-[#8AAEBB]">Không tìm thấy khách hàng khớp "{query}"</div>
+                                <div className="p-3 text-xs text-center text-slate-500 dark:text-[#8AAEBB]">
+                                    Không tìm thấy khách hàng khớp "{query}"
+                                    {onOpenQuickCreate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setOpen(false); onOpenQuickCreate(); }}
+                                            className="mt-2 block mx-auto text-xs text-[#0D8275] dark:text-[#87CBB9] font-bold underline cursor-pointer"
+                                        >
+                                            + Tạo nhanh khách mới ngay
+                                        </button>
+                                    )}
+                                </div>
                             ) : (
                                 filtered.map(c => (
                                     <button
@@ -103,14 +159,14 @@ function SearchableCustomerCombobox({
                                             setOpen(false)
                                             setQuery('')
                                         }}
-                                        className={`w-full text-left p-2.5 rounded-lg transition flex items-center justify-between text-xs ${selectedCustomerId === c.id ? 'bg-[#87CBB9]/20 text-[#87CBB9] font-bold' : 'hover:bg-[#1B2E3D] text-gray-200'}`}
+                                        className={`w-full text-left p-2.5 rounded-lg transition flex items-center justify-between text-xs cursor-pointer ${selectedCustomerId === c.id ? 'bg-[#87CBB9]/20 text-[#0D8275] dark:text-[#87CBB9] font-bold' : 'hover:bg-slate-100 dark:hover:bg-[#1B2E3D] text-slate-700 dark:text-gray-200'}`}
                                     >
                                         <div className="min-w-0 flex-1 pr-2">
-                                            <span className="font-mono font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
-                                            <span className="font-semibold text-white">{c.name}</span>
+                                            <span className="font-mono font-bold text-[#0D8275] dark:text-[#87CBB9] mr-2">[{c.code}]</span>
+                                            <span className="font-semibold">{c.name}</span>
                                         </div>
                                         {c.channel && (
-                                            <span className="text-[10px] text-[#4A6A7A] uppercase bg-[#1B2E3D] px-2 py-0.5 rounded font-mono">
+                                            <span className="text-[10px] uppercase bg-slate-200 dark:bg-[#1B2E3D] px-2 py-0.5 rounded font-mono text-slate-600 dark:text-[#8AAEBB]">
                                                 {c.channel}
                                             </span>
                                         )}
@@ -126,36 +182,137 @@ function SearchableCustomerCombobox({
 }
 
 export function SalesVisitsClient({ initialVisits, customers, users, currentUserId, currentUserName, isManager }: Props) {
-    const [activeTab, setActiveTab] = useState<'CHECKIN' | 'HISTORY'>('CHECKIN')
-    const [visits, setVisits] = useState(initialVisits)
+    const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
+    const [localCustomers, setLocalCustomers] = useState(customers)
     const [selectedSalespersonId, setSelectedSalespersonId] = useState(currentUserId)
     const [activeVisit, setActiveVisit] = useState<any | null>(null)
     const [loadingActive, setLoadingActive] = useState(true)
 
-    // Checkin Form
-    const [selectedCustomerId, setSelectedCustomerId] = useState('')
-    const [customerSearch, setCustomerSearch] = useState('')
-    const [purpose, setPurpose] = useState('Viếng thăm & Chăm sóc định kỳ')
-    const [submitting, setSubmitting] = useState(false)
+    // Current Week state
+    const today = useMemo(() => new Date(), [])
+    const todayStr = useMemo(() => today.toISOString().slice(0, 10), [today])
+    const initialWeekInfo = useMemo(() => getWeekNumber(today), [today])
+    const [currentWeek, setCurrentWeek] = useState(initialWeekInfo)
 
-    // Checkout Form
-    const [checkoutNotes, setCheckoutNotes] = useState('')
+    // Weekly Plan state
+    const [weeklyPlan, setWeeklyPlan] = useState<any | null>(null)
+    const [planVisits, setPlanVisits] = useState<any[]>([])
+    const [weekActualVisits, setWeekActualVisits] = useState<any[]>([])
+    const [loadingPlan, setLoadingPlan] = useState(false)
+    const [savingPlan, setSavingPlan] = useState(false)
+    const [planNote, setPlanNote] = useState('')
 
-    // Camera Modal
-    const [cameraMode, setCameraMode] = useState<'CHECKIN' | 'CHECKOUT' | null>(null)
+    // Self review & Manager feedback state
+    const [selfReviewText, setSelfReviewText] = useState('')
+    const [submittingReport, setSubmittingReport] = useState(false)
+    const [managerFeedbackText, setManagerFeedbackText] = useState('')
+    const [savingFeedback, setSavingFeedback] = useState(false)
 
-    // Location State
-    const [coords, setCoords] = useState<{ lat?: number; lng?: number; address?: string }>({})
-    const [gettingLocation, setGettingLocation] = useState(false)
-
-    // Filters
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10))
+    // Daily visits & history
+    const [historyVisits, setHistoryVisits] = useState(initialVisits)
+    const [filterDate, setFilterDate] = useState(todayStr)
     const [filterStatus, setFilterStatus] = useState('ALL')
     const [filterSearch, setFilterSearch] = useState('')
 
-    // Detail drawer photo modal
+    // Location / GPS State
+    const [coords, setCoords] = useState<{ lat?: number; lng?: number; address?: string }>({})
+    const [gettingLocation, setGettingLocation] = useState(false)
+    const [gpsError, setGpsError] = useState<string | null>(null)
+
+    // Active Visit Timer
+    const [elapsedMinutes, setElapsedMinutes] = useState(0)
+
+    // Camera Modal
+    const [cameraTarget, setCameraTarget] = useState<{
+        mode: 'CHECKIN' | 'CHECKOUT'
+        customerId?: string
+        customerName?: string
+        purpose?: string
+        activityType?: string
+        scheduleId?: string
+        isUnplanned?: boolean
+        notes?: string
+    } | null>(null)
+
+    // Checkout Flow Modal (enter result notes first)
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false)
+    const [checkoutResultNotes, setCheckoutResultNotes] = useState('')
+    const [submittingAction, setSubmittingAction] = useState(false)
+
+    // Quick Add Visit to Plan Modal
+    const [quickAddModal, setQuickAddModal] = useState<{ open: boolean; dateStr: string; dayName: string } | null>(null)
+    const [addCustomerId, setAddCustomerId] = useState('')
+    const [addActivityType, setAddActivityType] = useState('PERIODIC_CARE')
+    const [addCustomPurpose, setAddCustomPurpose] = useState('')
+
+    // Unplanned Check-in Modal
+    const [showUnplannedModal, setShowUnplannedModal] = useState(false)
+    const [unplannedCustomerId, setUnplannedCustomerId] = useState('')
+    const [unplannedActivityType, setUnplannedActivityType] = useState('PERIODIC_CARE')
+    const [unplannedPurpose, setUnplannedPurpose] = useState('')
+
+    // Quick Create Prospect Customer Modal
+    const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
+    const [quickCustName, setQuickCustName] = useState('')
+    const [quickCustChannel, setQuickCustChannel] = useState('HORECA')
+    const [quickCustContact, setQuickCustContact] = useState('')
+    const [quickCustPhone, setQuickCustPhone] = useState('')
+    const [quickCustAddress, setQuickCustAddress] = useState('')
+    const [creatingCustomer, setCreatingCustomer] = useState(false)
+
+    // Photo Viewer Modal
     const [viewPhoto, setViewPhoto] = useState<{ title: string; url: string } | null>(null)
 
+    // -----------------------------------------------------------------
+    // GPS & LOCATION RETRIEVAL
+    // -----------------------------------------------------------------
+    const requestGPS = useCallback(async (): Promise<{ lat?: number; lng?: number; address?: string }> => {
+        if (typeof window === 'undefined' || !navigator.geolocation) {
+            setGpsError('Trình duyệt không hỗ trợ Geolocation.')
+            return {}
+        }
+
+        setGettingLocation(true)
+        setGpsError(null)
+
+        return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude
+                    const lng = pos.coords.longitude
+                    let address = `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                    try {
+                        const geoRes = await reverseGeocodeAction(lat, lng)
+                        if (geoRes.address) address = geoRes.address
+                    } catch (e) {
+                        console.warn('Geocode warning', e)
+                    }
+                    const loc = { lat, lng, address }
+                    setCoords(loc)
+                    setGettingLocation(false)
+                    resolve(loc)
+                },
+                (err) => {
+                    console.warn('GPS error', err)
+                    let msg = 'Không thể lấy GPS. Bạn hãy kiểm tra quyền Vị trí trên trình duyệt/điện thoại!'
+                    if (err.code === 1) msg = 'Quyền GPS đã bị từ chối trong Cài đặt trình duyệt!'
+                    if (err.code === 3) msg = 'Hết thời gian chờ lấy toạ độ GPS (Timeout).'
+                    setGpsError(msg)
+                    setGettingLocation(false)
+                    resolve({})
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            )
+        })
+    }, [])
+
+    useEffect(() => {
+        requestGPS()
+    }, [requestGPS])
+
+    // -----------------------------------------------------------------
+    // ACTIVE VISIT & POLLING TIMER
+    // -----------------------------------------------------------------
     const fetchActive = useCallback(async () => {
         setLoadingActive(true)
         const active = await getActiveVisit(selectedSalespersonId)
@@ -163,188 +320,15 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         setLoadingActive(false)
     }, [selectedSalespersonId])
 
-    const fetchVisitsList = useCallback(async () => {
-        const data = await getSalesVisits({ date: filterDate, status: filterStatus })
-        setVisits(data)
-    }, [filterDate, filterStatus])
-
-    const [gpsError, setGpsError] = useState<string | null>(null)
-
-    // Reverse Geocoding (Convert lat/lng -> Street address)
-    const fetchAddressFromCoords = async (lat: number, lng: number): Promise<string | undefined> => {
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi`, {
-                headers: { 'User-Agent': 'WineERP/1.0' }
-            })
-            if (res.ok) {
-                const data = await res.json()
-                if (data && data.display_name) {
-                    return data.display_name
-                }
-            }
-        } catch (e) {
-            console.warn('Reverse geocode error:', e)
-        }
-        return undefined
-    }
-
-    // IP-based Location Fallback when GPS is blocked or unavailable
-    const fetchIPLocationFallback = async (): Promise<{ lat?: number; lng?: number; address?: string }> => {
-        try {
-            const res = await fetch('https://ipwho.is/')
-            if (res.ok) {
-                const data = await res.json()
-                if (data && data.success && data.latitude && data.longitude) {
-                    const lat = data.latitude
-                    const lng = data.longitude
-                    const address = `📍 Mạng IP: ${data.city || ''}, ${data.region || 'Việt Nam'}`
-                    return { lat, lng, address }
-                }
-            }
-        } catch (e) {
-            console.warn('IP location fallback failed:', e)
-        }
-        return {}
-    }
-
-    // Robust multi-tier GPS capture with automatic IP fallback
-    const captureGPSLocation = useCallback((): Promise<{ lat?: number; lng?: number; address?: string }> => {
-        return new Promise((resolve) => {
-            const handleFailure = async (errMsg: string) => {
-                const ipLoc = await fetchIPLocationFallback()
-                setGettingLocation(false)
-                if (ipLoc.lat && ipLoc.lng) {
-                    setCoords(ipLoc)
-                    setGpsError(null)
-                    resolve(ipLoc)
-                } else {
-                    setGpsError(errMsg)
-                    resolve({})
-                }
-            }
-
-            if (!navigator.geolocation) {
-                handleFailure('Trình duyệt không hỗ trợ định vị GPS. Đã chuyển sang mạng IP dự phòng.')
-                return
-            }
-
-            setGettingLocation(true)
-            setGpsError(null)
-
-            const handleSuccess = async (pos: GeolocationPosition) => {
-                const lat = pos.coords.latitude
-                const lng = pos.coords.longitude
-                setCoords({ lat, lng })
-                const address = await fetchAddressFromCoords(lat, lng)
-                const res = { lat, lng, address }
-                setCoords(res)
-                setGettingLocation(false)
-                setGpsError(null)
-                resolve(res)
-            }
-
-            // Strategy 1: High Accuracy with 5s timeout
-            navigator.geolocation.getCurrentPosition(
-                handleSuccess,
-                (err1) => {
-                    console.warn('GPS High Accuracy failed, falling back to standard:', err1)
-                    // Strategy 2: Low Accuracy fallback with 7s timeout
-                    navigator.geolocation.getCurrentPosition(
-                        handleSuccess,
-                        (err2) => {
-                            console.warn('GPS Low Accuracy failed, using IP fallback:', err2)
-                            let msg = 'Chưa thể lấy vị trí GPS trực tiếp. Đã dùng định vị mạng dự phòng!'
-                            if (err2.code === 1) msg = 'Quyền GPS bị từ chối. Đã chuyển sang định vị mạng dự phòng!'
-                            handleFailure(msg)
-                        },
-                        { enableHighAccuracy: false, timeout: 7000, maximumAge: 300000 }
-                    )
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
-            )
-        })
-    }, [])
-
     useEffect(() => {
         fetchActive()
     }, [fetchActive])
 
     useEffect(() => {
-        fetchVisitsList()
-    }, [fetchVisitsList])
-
-    // Auto-request GPS location on page mount
-    useEffect(() => {
-        captureGPSLocation()
-    }, [captureGPSLocation])
-
-    // Filtered customers for select
-    const filteredCustomers = React.useMemo(() => {
-        const q = customerSearch.trim().toLowerCase()
-        if (!q) return customers.slice(0, 100)
-        return customers.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)).slice(0, 100)
-    }, [customers, customerSearch])
-
-    // Handle Check-in photo capture confirmation
-    const handleConfirmCheckInPhoto = async (photoBase64: string) => {
-        const gps = await captureGPSLocation()
-
-        const res = await checkInSalesVisit({
-            customerId: selectedCustomerId,
-            salespersonId: selectedSalespersonId,
-            purpose,
-            lat: gps.lat || coords.lat,
-            lng: gps.lng || coords.lng,
-            address: gps.address || coords.address,
-            photoBase64,
-        })
-
-        if (res.success) {
-            setSelectedCustomerId('')
-            setCustomerSearch('')
-            await fetchActive()
-            await fetchVisitsList()
-        } else {
-            alert('Lỗi Check-in: ' + res.error)
-        }
-        setSubmitting(false)
-    }
-
-    // Handle Check-out photo capture confirmation
-    const handleConfirmCheckOutPhoto = async (photoBase64: string) => {
-        if (!activeVisit) return
-        setCameraMode(null)
-        setSubmitting(true)
-        const gps = await captureGPSLocation()
-
-        const res = await checkOutSalesVisit({
-            visitId: activeVisit.id,
-            salespersonId: selectedSalespersonId,
-            notes: checkoutNotes,
-            lat: gps.lat || coords.lat,
-            lng: gps.lng || coords.lng,
-            address: gps.address || coords.address,
-            photoBase64,
-        })
-
-        if (res.success) {
-            setCheckoutNotes('')
-            await fetchActive()
-            await fetchVisitsList()
-        } else {
-            alert('Lỗi Check-out: ' + res.error)
-        }
-        setSubmitting(false)
-    }
-
-    // Live timer for active visit
-    const [elapsedMinutes, setElapsedMinutes] = useState(0)
-
-    useEffect(() => {
         if (!activeVisit) return
         const checkInDate = new Date(activeVisit.checkInTime).getTime()
         const updateTimer = () => {
-            const now = new Date().getTime()
+            const now = Date.now()
             const diff = Math.max(1, Math.round((now - checkInDate) / (1000 * 60)))
             setElapsedMinutes(diff)
         }
@@ -353,511 +337,1352 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         return () => clearInterval(interval)
     }, [activeVisit])
 
-    // Filtered visits list for history view
-    const filteredVisits = visits.filter(v => {
-        if (!filterSearch) return true
-        const q = filterSearch.toLowerCase()
-        return v.customerName.toLowerCase().includes(q) ||
-            v.customerCode.toLowerCase().includes(q) ||
-            v.salespersonName.toLowerCase().includes(q) ||
-            v.visitNo.toLowerCase().includes(q)
-    })
+    // -----------------------------------------------------------------
+    // LOAD WEEKLY PLAN & REVIEWS
+    // -----------------------------------------------------------------
+    const loadWeeklyData = useCallback(async () => {
+        setLoadingPlan(true)
+        const res = await getWeeklyPlanWithVisits(selectedSalespersonId, currentWeek.week, currentWeek.year)
+        if (res.success) {
+            setWeeklyPlan(res.plan || null)
+            setPlanVisits(res.plan?.visits || [])
+            setPlanNote(res.plan?.note || '')
+            setSelfReviewText(res.plan?.selfReview || '')
+            setManagerFeedbackText(res.plan?.managerFeedback || '')
+            setWeekActualVisits(res.actualVisits || [])
+        }
+        setLoadingPlan(false)
+    }, [selectedSalespersonId, currentWeek])
+
+    useEffect(() => {
+        loadWeeklyData()
+    }, [loadWeeklyData])
+
+    // Load History
+    const fetchHistoryVisits = useCallback(async () => {
+        const data = await getSalesVisits({
+            salespersonId: isManager ? undefined : selectedSalespersonId,
+            date: filterDate,
+            status: filterStatus
+        })
+        setHistoryVisits(data)
+    }, [isManager, selectedSalespersonId, filterDate, filterStatus])
+
+    useEffect(() => {
+        fetchHistoryVisits()
+    }, [fetchHistoryVisits])
+
+    // Compute dates for current selected week (Monday to Sunday)
+    const weekDates = useMemo(() => {
+        const simple = new Date(currentWeek.year, 0, 1 + (currentWeek.week - 1) * 7)
+        const dow = simple.getDay()
+        const ISOweekStart = new Date(simple)
+        if (dow <= 4) {
+            ISOweekStart.setDate(simple.getDate() - (simple.getDay() || 7) + 1)
+        } else {
+            ISOweekStart.setDate(simple.getDate() + 8 - (simple.getDay() || 7))
+        }
+        
+        const dates: { dateStr: string; dayName: string; dayIndex: number; isToday: boolean }[] = []
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(ISOweekStart)
+            d.setDate(ISOweekStart.getDate() + i)
+            const dateStr = d.toISOString().split('T')[0]
+            dates.push({
+                dateStr,
+                dayName: DAY_NAMES[i],
+                dayIndex: i,
+                isToday: dateStr === todayStr,
+            })
+        }
+        return dates
+    }, [currentWeek, todayStr])
+
+    // Today's scheduled visits
+    const todayPlanVisits = useMemo(() => {
+        return planVisits.filter(v => v.visitDate === todayStr)
+    }, [planVisits, todayStr])
+
+    // Change week helper
+    const handlePrevWeek = () => {
+        setCurrentWeek(prev => {
+            if (prev.week <= 1) return { week: 52, year: prev.year - 1 }
+            return { week: prev.week - 1, year: prev.year }
+        })
+    }
+
+    const handleNextWeek = () => {
+        setCurrentWeek(prev => {
+            if (prev.week >= 52) return { week: 1, year: prev.year + 1 }
+            return { week: prev.week + 1, year: prev.year }
+        })
+    }
+
+    const handleCurrentWeek = () => {
+        setCurrentWeek(initialWeekInfo)
+    }
+
+    // -----------------------------------------------------------------
+    // QUICK CREATE PROSPECT CUSTOMER
+    // -----------------------------------------------------------------
+    const handleQuickCreateCustomer = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!quickCustName.trim()) {
+            toast.error('Vui lòng nhập tên khách hàng')
+            return
+        }
+
+        setCreatingCustomer(true)
+        const res = await quickCreateProspectCustomer({
+            name: quickCustName,
+            channel: quickCustChannel,
+            contactName: quickCustContact,
+            phone: quickCustPhone,
+            address: quickCustAddress,
+            salespersonId: selectedSalespersonId,
+        })
+
+        if (res.success && res.customer) {
+            toast.success(`Đã tạo nhanh khách hàng tiềm năng: ${res.customer.name}`)
+            setLocalCustomers(prev => [res.customer, ...prev])
+            
+            // Auto-select if in quick add modal or unplanned modal
+            if (quickAddModal) {
+                setAddCustomerId(res.customer.id)
+            }
+            if (showUnplannedModal) {
+                setUnplannedCustomerId(res.customer.id)
+            }
+
+            // Reset form
+            setQuickCustName('')
+            setQuickCustContact('')
+            setQuickCustPhone('')
+            setQuickCustAddress('')
+            setShowQuickCreateModal(false)
+        } else {
+            toast.error(res.error || 'Lỗi tạo khách hàng mới')
+        }
+        setCreatingCustomer(false)
+    }
+
+    // -----------------------------------------------------------------
+    // WEEKLY PLAN OPERATIONS
+    // -----------------------------------------------------------------
+    const handleAddVisitToPlan = () => {
+        if (!quickAddModal || !addCustomerId) {
+            toast.error('Vui lòng chọn khách hàng')
+            return
+        }
+
+        const selectedCust = localCustomers.find(c => c.id === addCustomerId)
+        const preset = ACTIVITY_PRESETS.find(p => p.value === addActivityType)
+        const purpose = addCustomPurpose.trim() || preset?.label || 'Chăm sóc khách hàng định kỳ'
+
+        const newScheduleItem = {
+            id: `temp_${Date.now()}`,
+            customerId: addCustomerId,
+            customer: selectedCust ? { id: selectedCust.id, code: selectedCust.code, name: selectedCust.name, channel: selectedCust.channel } : undefined,
+            visitDate: quickAddModal.dateStr,
+            purpose,
+            status: 'PLANNED',
+        }
+
+        setPlanVisits(prev => [...prev, newScheduleItem])
+        toast.success(`Đã thêm vào lịch ${quickAddModal.dayName}`)
+        setQuickAddModal(null)
+        setAddCustomerId('')
+        setAddCustomPurpose('')
+    }
+
+    const handleRemovePlanVisit = (visitId: string) => {
+        setPlanVisits(prev => prev.filter(v => v.id !== visitId))
+        toast.info('Đã xóa điểm viếng thăm khỏi kế hoạch')
+    }
+
+    const handleSavePlan = async () => {
+        setSavingPlan(true)
+        const res = await saveWeeklyPlanAction({
+            salespersonId: selectedSalespersonId,
+            weekNumber: currentWeek.week,
+            year: currentWeek.year,
+            note: planNote,
+            visits: planVisits.map(v => ({
+                id: v.id?.startsWith('temp_') ? undefined : v.id,
+                customerId: v.customerId,
+                visitDate: v.visitDate,
+                purpose: v.purpose,
+                status: v.status,
+            }))
+        })
+
+        if (res.success) {
+            toast.success('Đã lưu thành công kế hoạch tuần!')
+            await loadWeeklyData()
+        } else {
+            toast.error('Lỗi khi lưu kế hoạch: ' + res.error)
+        }
+        setSavingPlan(false)
+    }
+
+    // -----------------------------------------------------------------
+    // CHECK-IN ACTIONS
+    // -----------------------------------------------------------------
+    const startCheckInPlanned = (item: any) => {
+        const cust = item.customer || localCustomers.find(c => c.id === item.customerId)
+        setCameraTarget({
+            mode: 'CHECKIN',
+            customerId: item.customerId,
+            customerName: cust?.name,
+            purpose: item.purpose,
+            scheduleId: item.id?.startsWith('temp_') ? undefined : item.id,
+            isUnplanned: false,
+        })
+    }
+
+    const startCheckInUnplanned = () => {
+        if (!unplannedCustomerId) {
+            toast.error('Vui lòng chọn khách hàng')
+            return
+        }
+        const cust = localCustomers.find(c => c.id === unplannedCustomerId)
+        const preset = ACTIVITY_PRESETS.find(p => p.value === unplannedActivityType)
+        const purpose = unplannedPurpose.trim() || preset?.label || 'Chăm sóc khách hàng định kỳ'
+
+        setShowUnplannedModal(false)
+        setCameraTarget({
+            mode: 'CHECKIN',
+            customerId: unplannedCustomerId,
+            customerName: cust?.name,
+            purpose,
+            activityType: unplannedActivityType,
+            isUnplanned: true,
+        })
+    }
+
+    const handleConfirmCheckInPhoto = async (photoBase64: string) => {
+        if (!cameraTarget || !cameraTarget.customerId) return
+        setCameraTarget(null)
+        setSubmittingAction(true)
+
+        // Capture fresh GPS
+        const loc = await requestGPS()
+
+        const res = await checkInSalesVisit({
+            customerId: cameraTarget.customerId,
+            salespersonId: selectedSalespersonId,
+            purpose: cameraTarget.purpose,
+            activityType: cameraTarget.activityType,
+            scheduleId: cameraTarget.scheduleId,
+            isUnplanned: cameraTarget.isUnplanned,
+            lat: loc.lat || coords.lat,
+            lng: loc.lng || coords.lng,
+            address: loc.address || coords.address,
+            photoBase64,
+        })
+
+        if (res.success) {
+            toast.success(`Check-in thành công tại ${cameraTarget.customerName || 'điểm bán'}!`)
+            await fetchActive()
+            await loadWeeklyData()
+            await fetchHistoryVisits()
+        } else {
+            toast.error('Lỗi Check-in: ' + res.error)
+        }
+        setSubmittingAction(false)
+    }
+
+    // -----------------------------------------------------------------
+    // CHECK-OUT ACTIONS
+    // -----------------------------------------------------------------
+    const handleOpenCheckoutModal = () => {
+        if (!activeVisit) return
+        setCheckoutResultNotes('')
+        setShowCheckoutModal(true)
+    }
+
+    const handleProceedToCheckoutCamera = () => {
+        if (!checkoutResultNotes.trim() || checkoutResultNotes.trim().length < 5) {
+            toast.error('Vui lòng ghi chú chi tiết kết quả làm việc với khách (tối thiểu 5 ký tự)')
+            return
+        }
+        setShowCheckoutModal(false)
+        setCameraTarget({
+            mode: 'CHECKOUT',
+            customerName: activeVisit.customer?.name,
+            notes: checkoutResultNotes.trim(),
+        })
+    }
+
+    const handleConfirmCheckOutPhoto = async (photoBase64: string) => {
+        if (!activeVisit || !cameraTarget) return
+        setCameraTarget(null)
+        setSubmittingAction(true)
+
+        const loc = await requestGPS()
+
+        const res = await checkOutSalesVisit({
+            visitId: activeVisit.id,
+            salespersonId: selectedSalespersonId,
+            notes: cameraTarget.notes || checkoutResultNotes,
+            lat: loc.lat || coords.lat,
+            lng: loc.lng || coords.lng,
+            address: loc.address || coords.address,
+            photoBase64,
+        })
+
+        if (res.success) {
+            toast.success('Check-out thành công! Đã ghi nhận kết quả viếng thăm.')
+            setActiveVisit(null)
+            await fetchActive()
+            await loadWeeklyData()
+            await fetchHistoryVisits()
+        } else {
+            toast.error('Lỗi Check-out: ' + res.error)
+        }
+        setSubmittingAction(false)
+    }
+
+    // -----------------------------------------------------------------
+    // WEEKLY REPORT SUBMISSION & MANAGER FEEDBACK
+    // -----------------------------------------------------------------
+    const handleSubmitWeeklyReport = async () => {
+        if (!weeklyPlan?.id) {
+            toast.error('Bạn cần bấm "Lưu Kế Hoạch" trước khi nộp báo cáo tuần')
+            return
+        }
+        if (!selfReviewText.trim() || selfReviewText.trim().length < 5) {
+            toast.error('Vui lòng nhập nội dung tự đánh giá tuần (tối thiểu 5 ký tự)')
+            return
+        }
+
+        setSubmittingReport(true)
+        const res = await submitWeeklyReportAction({
+            planId: weeklyPlan.id,
+            salespersonId: selectedSalespersonId,
+            selfReview: selfReviewText,
+        })
+
+        if (res.success) {
+            toast.success('Đã nộp chốt báo cáo tuần thành công!')
+            await loadWeeklyData()
+        } else {
+            toast.error('Lỗi chốt báo cáo: ' + res.error)
+        }
+        setSubmittingReport(false)
+    }
+
+    const handleSaveManagerFeedback = async () => {
+        if (!weeklyPlan?.id) {
+            toast.error('Chưa có dữ liệu kế hoạch tuần để nhận xét')
+            return
+        }
+        if (!managerFeedbackText.trim()) {
+            toast.error('Vui lòng nhập nội dung nhận xét')
+            return
+        }
+
+        setSavingFeedback(true)
+        const res = await saveManagerFeedbackAction({
+            planId: weeklyPlan.id,
+            managerFeedback: managerFeedbackText,
+            managerId: currentUserId,
+        })
+
+        if (res.success) {
+            toast.success('Đã lưu nhận xét và phê duyệt tuần cho Sale!')
+            await loadWeeklyData()
+        } else {
+            toast.error('Lỗi lưu nhận xét: ' + res.error)
+        }
+        setSavingFeedback(false)
+    }
+
+    // -----------------------------------------------------------------
+    // REVIEW CALCULATIONS (Planned vs Actual)
+    // -----------------------------------------------------------------
+    const reviewStats = useMemo(() => {
+        const plannedCount = planVisits.length
+        const completedActual = weekActualVisits.filter(v => v.status === 'COMPLETED')
+        const completedCount = completedActual.length
+        const unplannedCount = weekActualVisits.filter(v => v.isUnplanned).length
+        const rate = plannedCount > 0 ? Math.round((completedCount / plannedCount) * 100) : (completedCount > 0 ? 100 : 0)
+        
+        // Count new leads
+        const newLeads = weekActualVisits.filter(v => v.customer?.code?.startsWith('LEAD-')).length
+        
+        // Avg duration
+        const totalDuration = completedActual.reduce((acc, v) => acc + (v.durationMinutes || 0), 0)
+        const avgDuration = completedCount > 0 ? Math.round(totalDuration / completedCount) : 0
+
+        return {
+            plannedCount,
+            completedCount,
+            unplannedCount,
+            rate,
+            newLeads,
+            avgDuration,
+        }
+    }, [planVisits, weekActualVisits])
 
     return (
-        <div className="space-y-6 max-w-screen-xl">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-6 max-w-screen-xl mx-auto pb-16">
+            {/* Top Header & Navigation */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#111C24] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-xs">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#E8F1F2] flex items-center gap-2">
-                        <MapPin className="text-[#87CBB9]" size={24} />
-                        Check-in Đi Thị Trường (Sales Visit)
-                    </h2>
-                    <p className="text-sm text-[#4A6A7A] mt-0.5">
-                        Ghi nhận thời gian viếng thăm, tọa độ GPS & ảnh chụp trực tiếp từ camera tại điểm bán
-                    </p>
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9]">
+                            <MapPin size={22} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                                Quản Trị Hành Trình Thị Trường (Sales Field Operations)
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-[#8AAEBB] mt-0.5">
+                                Chu trình 3 bước: Lập kế hoạch tuần ➔ Check-in thực địa ➔ Tổng kết & Review KPI
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-[#142433] p-1 rounded-xl border border-[#2A4355]">
+                {/* Salesperson Selector (For Managers) & Quick Lead button */}
+                <div className="flex items-center flex-wrap gap-2.5">
+                    {isManager && users && users.length > 0 && (
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#16232F] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#2A4355] text-xs">
+                            <User size={14} className="text-slate-400 dark:text-[#87CBB9]" />
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">Xem Sale:</span>
+                            <select
+                                value={selectedSalespersonId}
+                                onChange={e => setSelectedSalespersonId(e.target.value)}
+                                className="bg-transparent font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                            >
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id} className="bg-white dark:bg-[#111C24] text-slate-900 dark:text-white">
+                                        {u.name} {u.id === currentUserId ? '(Tôi)' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <button
-                        onClick={() => setActiveTab('CHECKIN')}
-                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-[0.98] ${activeTab === 'CHECKIN' ? 'bg-[#87CBB9] text-[#0A1926] shadow-sm' : 'text-[#8AAEBB] hover:text-white'}`}
+                        type="button"
+                        onClick={() => setShowQuickCreateModal(true)}
+                        className="px-3.5 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                     >
-                        📸 Check-in Điểm Bán
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('HISTORY')}
-                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-[0.98] ${activeTab === 'HISTORY' ? 'bg-[#87CBB9] text-[#0A1926] shadow-sm' : 'text-[#8AAEBB] hover:text-white'}`}
-                    >
-                        📋 Lịch Sử Viếng Thăm ({visits.length})
+                        <Plus size={15} /> Tạo Nhanh Khách Mới
                     </button>
                 </div>
             </div>
 
-            {/* TAB 1: CHECKIN / CHECKOUT FOR SALES */}
-            {activeTab === 'CHECKIN' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Active Status & Main Action Panel */}
-                    <div className="lg:col-span-7 space-y-6">
-                        {loadingActive ? (
-                            <div className="p-8 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] text-center text-xs text-[#4A6A7A]">
-                                <RefreshCw className="animate-spin mx-auto mb-2 text-[#87CBB9]" size={24} />
-                                Đang tải trạng thái viếng thăm...
+            {/* GPS Status Indicator Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Navigation size={14} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Định vị GPS:</span>
+                    {gettingLocation ? (
+                        <span className="text-slate-500 dark:text-slate-400 italic">Đang dò tìm toạ độ GPS chính xác...</span>
+                    ) : coords.lat ? (
+                        <span className="font-mono text-slate-900 dark:text-white truncate" title={coords.address}>
+                            {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
+                        </span>
+                    ) : (
+                        <span className="text-amber-600 dark:text-amber-400">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                    <button
+                        type="button"
+                        onClick={requestGPS}
+                        disabled={gettingLocation}
+                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-50 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+                    >
+                        <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
+                        Lấy Lại Toạ Độ
+                    </button>
+                </div>
+            </div>
+
+            {/* Active Visit Banner (If currently in progress) */}
+            {activeVisit && (
+                <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border-2 border-emerald-500/40 shadow-lg animate-in fade-in duration-300">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                            <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md">
+                                <Building2 size={24} />
                             </div>
-                        ) : activeVisit ? (
-                            /* IN-PROGRESS ACTIVE VISIT CARD */
-                            <div className="p-6 rounded-2xl space-y-5 bg-[#1B2E3D] border-2 border-[#87CBB9] shadow-xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 bg-[#87CBB9] text-[#0A1926] px-4 py-1 text-[11px] font-bold rounded-bl-xl uppercase tracking-wider flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-                                    Đang Ở Tại Điểm Bán
-                                </div>
-
-                                <div>
-                                    <span className="text-xs font-mono text-[#87CBB9] font-semibold">{activeVisit.visitNo}</span>
-                                    <h3 className="text-xl font-bold text-white mt-1">
-                                        {activeVisit.customer?.name}
-                                    </h3>
-                                    <p className="text-xs text-[#8AAEBB] font-mono mt-0.5">
-                                        Mã KH: {activeVisit.customer?.code} • Kênh: {activeVisit.customer?.channel || 'HORECA'}
-                                    </p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 bg-[#142433] p-4 rounded-xl border border-[#2A4355]">
-                                    <div>
-                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Thời Gian Check-in</span>
-                                        <span className="text-sm font-bold text-[#E8F1F2]">
-                                            {new Date(activeVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
+                                        ĐANG Ở ĐIỂM BÁN
+                                    </span>
+                                    <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                                        {activeVisit.visitNo}
+                                    </span>
+                                    {activeVisit.isUnplanned && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                            Đột xuất
                                         </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Thời Gian Lưu Lại</span>
-                                        <span className="text-sm font-bold text-[#D4A853] flex items-center gap-1">
-                                            <Clock size={14} /> {elapsedMinutes} Phút
+                                    )}
+                                </div>
+                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+                                    {activeVisit.customer?.name}
+                                </h3>
+                                <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-300 mt-1 flex-wrap">
+                                    <span className="flex items-center gap-1 font-mono">
+                                        <Clock size={13} className="text-emerald-600 dark:text-emerald-400" />
+                                        Bắt đầu: {new Date(activeVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <span className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300">
+                                        ⏱️ Đã ở điểm: {elapsedMinutes} phút
+                                    </span>
+                                    {activeVisit.purpose && (
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                            Mục tiêu: {activeVisit.purpose}
                                         </span>
-                                    </div>
+                                    )}
                                 </div>
-
-                                {/* Checkin Photo Thumbnail */}
-                                {activeVisit.checkInPhoto && (
-                                    <div className="space-y-1">
-                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Ảnh Chụp Thực Tế Check-in</span>
-                                        <div className="flex items-center gap-3 bg-[#142433] p-2 rounded-xl border border-[#2A4355]">
-                                            <img
-                                                src={activeVisit.checkInPhoto}
-                                                alt="Checkin Photo"
-                                                className="w-16 h-16 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
-                                                onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${activeVisit.customer?.name}`, url: activeVisit.checkInPhoto })}
-                                            />
-                                            <div className="text-xs text-[#8AAEBB]">
-                                                <p className="font-semibold text-white">Xác nhận camera thành công</p>
-                                                <p className="text-[10px] text-[#4A6A7A] mt-0.5">Bắt buộc chụp tại chỗ</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Notes Input */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        Ghi Chú Kết Quả Buổi Làm Việc *
-                                    </label>
-                                    <DebouncedTextarea
-                                        value={checkoutNotes}
-                                        onChange={setCheckoutNotes}
-                                        rows={3}
-                                        placeholder="Nhập ghi chú kết quả (VD: Khách lấy 2 thùng Amarone, đề xuất giảm 5%, hẹn quay lại vào tuần sau...)"
-                                        className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9] transition"
-                                    />
-                                </div>
-
-                                {/* Checkout Button */}
-                                <button
-                                    onClick={() => setCameraMode('CHECKOUT')}
-                                    disabled={submitting}
-                                    className="w-full py-3.5 rounded-xl text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
-                                >
-                                    <Camera size={16} /> 📸 Bật Camera Chụp Ảnh & Check-out Kết Thúc
-                                </button>
                             </div>
-                        ) : (
-                            /* NEW CHECK-IN FORM */
-                            <div className="p-6 rounded-2xl space-y-5 bg-[#1B2E3D] border border-[#2A4355]">
-                                <div className="flex items-center gap-2 border-b border-[#2A4355] pb-3">
-                                    <Building2 className="text-[#87CBB9]" size={20} />
-                                    <h3 className="text-base font-bold text-white">Tạo Lượt Check-in Viếng Thăm Mới</h3>
-                                </div>
-
-                                {/* Salesperson Picker (For Admin / Manager) */}
-                                {users && users.length > 0 && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                            1. Nhân Viên Kinh Doanh Thực Hiện *
-                                        </label>
-                                        <select
-                                            value={selectedSalespersonId}
-                                            onChange={e => setSelectedSalespersonId(e.target.value)}
-                                            className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-[#87CBB9] font-bold hover:border-[#87CBB9] transition"
-                                            style={{ backgroundColor: '#142433', color: '#87CBB9' }}
-                                        >
-                                            {users.map(u => (
-                                                <option key={u.id} value={u.id} className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>
-                                                    👤 {u.name} ({u.email}) {u.id === currentUserId ? ' - (Tài khoản hiện tại)' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                {/* Customer Combobox Picker */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        2. Chọn Khách Hàng Viếng Thăm *
-                                    </label>
-
-                                    <SearchableCustomerCombobox
-                                        customers={customers}
-                                        selectedCustomerId={selectedCustomerId}
-                                        onSelect={c => setSelectedCustomerId(c.id)}
-                                    />
-                                </div>
-
-                                {/* Purpose Selection */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        3. Mục Đích Viếng Thăm
-                                    </label>
-                                    <select
-                                        value={purpose}
-                                        onChange={e => setPurpose(e.target.value)}
-                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium hover:border-[#87CBB9] transition"
-                                        style={{ backgroundColor: '#142433', color: '#FFFFFF' }}
-                                    >
-                                        <option value="Viếng thăm & Chăm sóc định kỳ" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Viếng thăm & Chăm sóc định kỳ</option>
-                                        <option value="Thử mẫu rượu (Wine Tasting)" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Thử mẫu rượu (Wine Tasting)</option>
-                                        <option value="Đề xuất cơ chế giá đặc biệt" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Đề xuất cơ chế giá đặc biệt</option>
-                                        <option value="Thu hồi công nợ / Hóa đơn" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Thu hồi công nợ / Hóa đơn</option>
-                                        <option value="Giao hợp đồng & Hồ sơ TCB" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Giao hợp đồng & Hồ sơ TCB</option>
-                                    </select>
-                                </div>
-
-                                {/* GPS Location Status Card */}
-                                <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] flex items-center justify-between gap-3 text-xs">
-                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <MapPin size={18} className={coords.lat && coords.lng ? 'text-[#87CBB9] shrink-0' : 'text-[#D4A853] shrink-0'} />
-                                        <div className="min-w-0 flex-1">
-                                            <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Trạng Thái Định Vị & Địa Chỉ GPS</span>
-                                            {gettingLocation ? (
-                                                <span className="text-[#87CBB9] animate-pulse flex items-center gap-1 text-xs">
-                                                    <RefreshCw size={12} className="animate-spin inline" /> Đang quét tọa độ & tra địa chỉ...
-                                                </span>
-                                            ) : coords.lat && coords.lng ? (
-                                                <div>
-                                                    <span className="font-mono font-bold text-[#87CBB9] text-xs block">
-                                                        {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} ✅
-                                                    </span>
-                                                    {coords.address && (
-                                                        <span className="text-[11px] text-[#E8F1F2] block font-medium mt-0.5 truncate max-w-sm" title={coords.address}>
-                                                            🏠 {coords.address}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-red-400 text-[11px] block font-medium">
-                                                    {gpsError || 'Chưa định vị được GPS. Hãy bấm nút thử lại!'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => captureGPSLocation()}
-                                        disabled={gettingLocation}
-                                        className="px-2.5 py-1.5 rounded-lg bg-[#1B2E3D] hover:bg-[#2A4355] text-xs font-semibold text-[#87CBB9] border border-[#2A4355] whitespace-nowrap flex items-center gap-1 shrink-0"
-                                    >
-                                        <RefreshCw size={12} className={gettingLocation ? 'animate-spin' : ''} /> {coords.lat ? 'Cập Nhật GPS' : '📍 Lấy GPS'}
-                                    </button>
-                                </div>
-
-                                {/* Rules Notice */}
-                                <div className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] text-xs text-[#8AAEBB] space-y-1">
-                                    <p className="font-semibold text-[#87CBB9] flex items-center gap-1">
-                                        <AlertCircle size={14} /> Bắt buộc khi Check-in:
-                                    </p>
-                                    <ul className="list-disc pl-5 text-[11px] space-y-0.5 text-gray-300">
-                                        <li>Cấp quyền định vị GPS thời gian thực.</li>
-                                        <li>Bắt buộc bật ống kính Camera chụp ảnh thực tế điểm bán.</li>
-                                    </ul>
-                                </div>
-
-                                {/* Checkin Trigger Button */}
-                                <button
-                                    onClick={() => {
-                                        if (!selectedCustomerId) {
-                                            alert('Vui lòng chọn Khách Hàng viếng thăm trước khi Check-in!')
-                                            return
-                                        }
-                                        setCameraMode('CHECKIN')
-                                    }}
-                                    disabled={submitting || !selectedCustomerId}
-                                    className="w-full py-3.5 rounded-xl text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40"
-                                >
-                                    <Camera size={16} /> 📸 Bật Camera Chụp Ảnh & Check-in Viếng Thăm
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Info & Quick History Column */}
-                    <div className="lg:col-span-5 space-y-4">
-                        <div className="p-5 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#87CBB9]">Quy Định Check-in Thị Trường</h4>
-                            <p className="text-xs text-[#8AAEBB] leading-relaxed">
-                                Hệ thống ERP bắt buộc chụp ảnh camera trực tiếp tại chỗ để bảo đảm tính chính xác của hoạt động thị trường.
-                            </p>
                         </div>
 
-                        {/* Recent Visit Logs */}
-                        <div className="p-5 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lượt Viếng Thăm Mới Nhất</h4>
-                            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                                {visits.slice(0, 5).map(v => (
-                                    <div key={v.id} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1 text-xs">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-bold text-white">{v.customerName}</span>
-                                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${v.status === 'COMPLETED' ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'bg-[#D4A853]/20 text-[#D4A853]'}`}>
-                                                {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
-                                            </span>
-                                        </div>
-                                        <p className="text-[10px] text-[#4A6A7A]">{v.salespersonName} • {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="flex items-center gap-2.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={handleOpenCheckoutModal}
+                                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-500/20 transition-all cursor-pointer"
+                            >
+                                <CheckCircle2 size={18} />
+                                Check-out & Báo Cáo Kết Quả
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* TAB 2: VISIT HISTORY & AUDIT LOG FOR MANAGERS */}
+            {/* Navigation Tabs (4 TABS) */}
+            <div className="flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] gap-1 overflow-x-auto">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('CHECKIN')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'CHECKIN'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <MapPin size={15} className={activeTab === 'CHECKIN' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Check-in Hôm Nay</span>
+                    {todayPlanVisits.length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-mono">
+                            {todayPlanVisits.length}
+                        </span>
+                    )}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('PLANNING')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'PLANNING'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <Calendar size={15} className={activeTab === 'PLANNING' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Kế Hoạch Tuần</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
+                        {planVisits.length}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('REVIEW')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'REVIEW'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <TrendingUp size={15} className={activeTab === 'REVIEW' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Tổng Kết & Review Tuần</span>
+                    {weeklyPlan?.status === 'SUBMITTED' && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    )}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('HISTORY')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'HISTORY'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <FileText size={15} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Lịch Sử & Hình Ảnh</span>
+                </button>
+            </div>
+
+            {/* ============================================================== */}
+            {/* TAB 1: CHECK-IN HÔM NAY (DAILY FIELD WORK) */}
+            {/* ============================================================== */}
+            {activeTab === 'CHECKIN' && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Header Controls for Today */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
+                        <div>
+                            <span className="text-[11px] uppercase tracking-wider text-teal-600 dark:text-[#87CBB9] font-black font-mono">
+                                HÔM NAY: {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                            </span>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                                Danh Sách Điểm Viếng Thăm Trong Ngày
+                            </h3>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setUnplannedCustomerId('')
+                                    setUnplannedPurpose('')
+                                    setShowUnplannedModal(true)
+                                }}
+                                className="px-4 py-2.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                            >
+                                <Sparkles size={14} /> Check-in Đột Xuất (Ngoài Kế Hoạch)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Today's Scheduled Visits Cards */}
+                    {todayPlanVisits.length === 0 ? (
+                        <div className="p-8 text-center bg-white dark:bg-[#111C24] rounded-2xl border border-dashed border-slate-300 dark:border-[#223645] space-y-3">
+                            <Calendar size={36} className="mx-auto text-slate-400 dark:text-slate-500" />
+                            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                Chưa có điểm viếng thăm nào trong kế hoạch ngày hôm nay
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-[#8AAEBB] max-w-md mx-auto">
+                                Bạn có thể chuyển sang tab <strong>Kế Hoạch Tuần</strong> để lên lịch các điểm cần đi, hoặc bấm nút <strong>Check-in Đột Xuất</strong> bên trên để ghé thăm khách phát sinh.
+                            </p>
+                            <div className="flex items-center justify-center gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('PLANNING')}
+                                    className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-800 dark:text-white transition cursor-pointer"
+                                >
+                                    📅 Lập Kế Hoạch Tuần
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUnplannedModal(true)}
+                                    className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition cursor-pointer"
+                                >
+                                    ⚡ Check-in Ngay
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {todayPlanVisits.map((item, idx) => {
+                                const cust = item.customer || localCustomers.find(c => c.id === item.customerId)
+                                const isItemActive = activeVisit && activeVisit.customerId === item.customerId && activeVisit.status === 'IN_PROGRESS'
+                                const isItemCompleted = item.status === 'COMPLETED' || weekActualVisits.some(v => v.customerId === item.customerId && v.status === 'COMPLETED')
+
+                                return (
+                                    <div
+                                        key={item.id || idx}
+                                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 bg-white dark:bg-[#111C24] ${
+                                            isItemActive
+                                                ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md'
+                                                : isItemCompleted
+                                                ? 'border-slate-200 dark:border-[#223645] opacity-80'
+                                                : 'border-slate-200 dark:border-[#223645] hover:border-teal-500/50 shadow-xs'
+                                        }`}
+                                    >
+                                        <div className="space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="font-mono text-[11px] font-bold text-teal-600 dark:text-[#87CBB9]">
+                                                            [{cust?.code || 'KH'}]
+                                                        </span>
+                                                        {cust?.channel && (
+                                                            <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1B2E3D] text-slate-500 dark:text-[#8AAEBB] font-mono">
+                                                                {cust.channel}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1 line-clamp-1" title={cust?.name}>
+                                                        {cust?.name || 'Khách hàng'}
+                                                    </h4>
+                                                </div>
+
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                                    isItemCompleted
+                                                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                                        : isItemActive
+                                                        ? 'bg-emerald-500 text-white animate-pulse'
+                                                        : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-500 dark:text-slate-400'
+                                                }`}>
+                                                    {isItemCompleted ? '✓ Đã xong' : isItemActive ? 'Đang ở điểm' : 'Chưa đi'}
+                                                </span>
+                                            </div>
+
+                                            {/* Purpose & Activity */}
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-100 dark:border-[#223645]/60 text-xs">
+                                                <div className="text-slate-400 text-[10px] font-semibold uppercase">Hoạt động dự kiến:</div>
+                                                <div className="font-medium text-slate-800 dark:text-slate-200 mt-0.5 flex items-center gap-1.5">
+                                                    <span>{item.purpose || 'Chăm sóc khách hàng định kỳ'}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Completed result notes if any */}
+                                            {item.resultNotes && (
+                                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300">
+                                                    <div className="font-bold text-[10px] uppercase flex items-center gap-1">
+                                                        <Check size={11} /> Kết quả làm việc:
+                                                    </div>
+                                                    <p className="mt-0.5">{item.resultNotes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Button */}
+                                        <div>
+                                            {isItemActive ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleOpenCheckoutModal}
+                                                    className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-700 shadow transition cursor-pointer"
+                                                >
+                                                    <CheckCircle2 size={15} /> Check-out Điểm Này
+                                                </button>
+                                            ) : isItemCompleted ? (
+                                                <div className="py-2 text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+                                                    <CheckCircle2 size={14} /> Hoàn thành viếng thăm
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    disabled={!!activeVisit || submittingAction}
+                                                    onClick={() => startCheckInPlanned(item)}
+                                                    className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                                >
+                                                    <Camera size={15} /> Check-in Điểm Này
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB 2: KẾ HOẠCH TUẦN (WEEKLY PLANNING) */}
+            {/* ============================================================== */}
+            {activeTab === 'PLANNING' && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Week Navigation Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                                <button
+                                    type="button"
+                                    onClick={handlePrevWeek}
+                                    className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                    title="Tuần trước"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCurrentWeek}
+                                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                >
+                                    Tuần Này
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleNextWeek}
+                                    className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                    title="Tuần kế"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>Tuần {currentWeek.week} / Năm {currentWeek.year}</span>
+                                    {weeklyPlan?.status && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                            weeklyPlan.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                                            weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                                            'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                        }`}>
+                                            {weeklyPlan.status === 'APPROVED' ? 'Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? 'Đã nộp chốt' : 'Bản nháp'}
+                                        </span>
+                                    )}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-[#8AAEBB]">
+                                    Từ {weekDates[0]?.dateStr} đến {weekDates[6]?.dateStr} • Tổng cộng {planVisits.length} điểm lên lịch
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleSavePlan}
+                                disabled={savingPlan}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                            >
+                                <Check size={15} />
+                                {savingPlan ? 'Đang lưu kế hoạch...' : 'Lưu Kế Hoạch Tuần'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Note of the week */}
+                    <div className="bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645] space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <MessageSquare size={13} className="text-teal-600 dark:text-[#87CBB9]" />
+                            Mục tiêu & Trọng tâm tuần này (Sales Focus):
+                        </label>
+                        <input
+                            type="text"
+                            value={planNote}
+                            onChange={e => setPlanNote(e.target.value)}
+                            placeholder="Ví dụ: Tập trung đẩy dòng vang Ý mới cho các nhà hàng Thảo Điền, chốt công nợ tháng trước..."
+                            className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    {/* 7 Days of the Week Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {weekDates.map(day => {
+                            const dayVisits = planVisits.filter(v => v.visitDate === day.dateStr)
+
+                            return (
+                                <div
+                                    key={day.dateStr}
+                                    className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 bg-white dark:bg-[#111C24] transition-all ${
+                                        day.isToday
+                                            ? 'border-teal-500/60 ring-2 ring-teal-500/20 shadow-sm'
+                                            : 'border-slate-200 dark:border-[#223645]'
+                                    }`}
+                                >
+                                    <div className="space-y-3">
+                                        {/* Day Header */}
+                                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#223645] pb-2.5">
+                                            <div>
+                                                <span className={`text-xs font-black ${day.isToday ? 'text-teal-600 dark:text-[#87CBB9]' : 'text-slate-800 dark:text-white'}`}>
+                                                    {day.dayName} {day.isToday ? '(Hôm nay)' : ''}
+                                                </span>
+                                                <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                                                    {day.dateStr}
+                                                </div>
+                                            </div>
+
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-[#1B2E3D] text-slate-600 dark:text-slate-300 font-mono">
+                                                {dayVisits.length} điểm
+                                            </span>
+                                        </div>
+
+                                        {/* Visits List in this day */}
+                                        <div className="space-y-2 min-h-[140px]">
+                                            {dayVisits.length === 0 ? (
+                                                <div className="h-full flex items-center justify-center text-center p-4 text-[11px] text-slate-400 dark:text-slate-500 italic">
+                                                    Chưa lên lịch điểm nào
+                                                </div>
+                                            ) : (
+                                                dayVisits.map((item, vIdx) => {
+                                                    const cust = item.customer || localCustomers.find(c => c.id === item.customerId)
+                                                    return (
+                                                        <div
+                                                            key={item.id || vIdx}
+                                                            className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs space-y-1 relative group"
+                                                        >
+                                                            <div className="flex items-start justify-between gap-1">
+                                                                <div className="font-bold text-slate-900 dark:text-white line-clamp-1 pr-4" title={cust?.name}>
+                                                                    <span className="font-mono text-[10px] text-teal-600 dark:text-[#87CBB9] mr-1">
+                                                                        [{cust?.code || 'KH'}]
+                                                                    </span>
+                                                                    {cust?.name || 'Khách hàng'}
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemovePlanVisit(item.id)}
+                                                                    className="text-slate-400 hover:text-red-500 p-0.5 transition cursor-pointer"
+                                                                    title="Xóa khỏi lịch"
+                                                                >
+                                                                    <X size={13} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-500 dark:text-[#8AAEBB] line-clamp-1">
+                                                                {item.purpose}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Add button for this day */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setQuickAddModal({ open: true, dateStr: day.dateStr, dayName: day.dayName })
+                                            setAddCustomerId('')
+                                            setAddActivityType('PERIODIC_CARE')
+                                            setAddCustomPurpose('')
+                                        }}
+                                        className="w-full py-2 rounded-xl bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] font-bold text-xs flex items-center justify-center gap-1 transition cursor-pointer"
+                                    >
+                                        <Plus size={13} /> Thêm Điểm
+                                    </button>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB 3: TỔNG KẾT & REVIEW TUẦN (WEEKLY REVIEW & AUDIT) */}
+            {/* ============================================================== */}
+            {activeTab === 'REVIEW' && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Header Controls for Review */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                                <button type="button" onClick={handlePrevWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button type="button" onClick={handleCurrentWeek} className="px-3 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    Tuần Này
+                                </button>
+                                <button type="button" onClick={handleNextWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Báo Cáo Tổng Kết Tuần {currentWeek.week} / {currentWeek.year}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-[#8AAEBB]">
+                                    Đối soát Kế Hoạch vs Thực Tế (Planned vs Actual)
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Status badge */}
+                        <div className="flex items-center gap-2">
+                            <span className={`px-3 py-1 rounded-xl text-xs font-black ${
+                                weeklyPlan?.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                                weeklyPlan?.status === 'SUBMITTED' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                                'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                            }`}>
+                                {weeklyPlan?.status === 'APPROVED' ? '✓ QUẢN LÝ ĐÃ PHÊ DUYỆT' :
+                                 weeklyPlan?.status === 'SUBMITTED' ? '⏳ ĐÃ CHỐT - ĐANG CHỜ DUYỆT' :
+                                 '📝 CHƯA CHỐT BÁO CÁO'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* KPI Metrics Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Kế hoạch</span>
+                            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+                                {reviewStats.plannedCount}
+                            </div>
+                            <span className="text-[10px] text-slate-400">Điểm đã lên lịch</span>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Đã đi thực tế</span>
+                            <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                                {reviewStats.completedCount}
+                            </div>
+                            <span className="text-[10px] text-slate-400">Điểm đã check-out</span>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ lệ hoàn thành</span>
+                            <div className="text-xl sm:text-2xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
+                                {reviewStats.rate}%
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">
+                                <div className="bg-teal-500 h-full rounded-full" style={{ width: `${Math.min(100, reviewStats.rate)}%` }} />
+                            </div>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Đi đột xuất</span>
+                            <div className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                                {reviewStats.unplannedCount}
+                            </div>
+                            <span className="text-[10px] text-slate-400">Ngoài kế hoạch</span>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">Khách mới mở</span>
+                            <div className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 font-mono">
+                                {reviewStats.newLeads}
+                            </div>
+                            <span className="text-[10px] text-slate-400">Leads tiềm năng</span>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                            <span className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">Thời gian TB</span>
+                            <div className="text-xl sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 font-mono">
+                                {reviewStats.avgDuration}p
+                            </div>
+                            <span className="text-[10px] text-slate-400">Ở tại điểm bán</span>
+                        </div>
+                    </div>
+
+                    {/* Detailed Comparison: Planned vs Actual by Day */}
+                    <div className="bg-white dark:bg-[#111C24] rounded-2xl border border-slate-200 dark:border-[#223645] overflow-hidden shadow-xs">
+                        <div className="p-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                Chi Tiết Đối Soát Lịch Trình Tuần
+                            </h4>
+                        </div>
+
+                        <div className="divide-y divide-slate-200 dark:divide-[#223645]">
+                            {weekDates.map(day => {
+                                const dayPlanned = planVisits.filter(v => v.visitDate === day.dateStr)
+                                const dayActual = weekActualVisits.filter(v => v.checkInTime.startsWith(day.dateStr))
+
+                                return (
+                                    <div key={day.dateStr} className="p-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-black text-xs text-slate-900 dark:text-white">
+                                                    {day.dayName} ({day.dateStr})
+                                                </span>
+                                                {day.isToday && (
+                                                    <span className="px-2 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-bold">
+                                                        Hôm nay
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                                                Kế hoạch: {dayPlanned.length} • Thực tế: {dayActual.length}
+                                            </span>
+                                        </div>
+
+                                        {dayPlanned.length === 0 && dayActual.length === 0 ? (
+                                            <div className="text-[11px] text-slate-400 dark:text-slate-500 italic pl-2">
+                                                Không có hoạt động trong ngày này
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {/* Planned Column */}
+                                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-2">
+                                                    <div className="text-[11px] font-bold text-slate-500 uppercase">📋 Kế hoạch dự kiến</div>
+                                                    {dayPlanned.length === 0 ? (
+                                                        <div className="text-[11px] text-slate-400 italic">Không lên lịch trước</div>
+                                                    ) : (
+                                                        dayPlanned.map((p, idx) => {
+                                                            const cust = p.customer || localCustomers.find(c => c.id === p.customerId)
+                                                            const isDone = dayActual.some(a => a.customerId === p.customerId && a.status === 'COMPLETED')
+                                                            return (
+                                                                <div key={p.id || idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0">
+                                                                    <div className="min-w-0 flex-1 pr-2">
+                                                                        <span className="font-semibold text-slate-900 dark:text-white">
+                                                                            {cust?.name || 'Khách hàng'}
+                                                                        </span>
+                                                                        <div className="text-[10px] text-slate-500">{p.purpose}</div>
+                                                                    </div>
+                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${isDone ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}`}>
+                                                                        {isDone ? '✓ Đã đi' : 'Bỏ lỡ'}
+                                                                    </span>
+                                                                </div>
+                                                            )
+                                                        })
+                                                    )}
+                                                </div>
+
+                                                {/* Actual Column */}
+                                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-2">
+                                                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">📍 Thực tế thực hiện</div>
+                                                    {dayActual.length === 0 ? (
+                                                        <div className="text-[11px] text-slate-400 italic">Chưa có lượt check-in nào</div>
+                                                    ) : (
+                                                        dayActual.map(a => (
+                                                            <div key={a.id} className="text-xs py-1.5 border-b border-slate-200/60 dark:border-[#223645] last:border-0 space-y-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                                        {a.customer?.name}
+                                                                        {a.isUnplanned && (
+                                                                            <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600">
+                                                                                ĐỘT XUẤT
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-mono text-emerald-600 font-bold">
+                                                                        {a.durationMinutes ? `${a.durationMinutes} phút` : 'Đang ở tại chỗ'}
+                                                                    </span>
+                                                                </div>
+                                                                {a.notes && (
+                                                                    <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B2E3D] p-1.5 rounded border border-slate-200 dark:border-[#2A4355]">
+                                                                        💬 {a.notes}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Section: Sale Self-Review (Sale Tự Chốt Báo Cáo Tuần) */}
+                    <div className="p-5 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-3 shadow-xs">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <Award size={16} className="text-teal-600 dark:text-[#87CBB9]" />
+                                Báo Cáo Tự Đánh Giá Tuần Của Sale (Weekly Self-Evaluation)
+                            </h4>
+                            {weeklyPlan?.submittedAt && (
+                                <span className="text-[11px] font-mono text-slate-400">
+                                    Đã nộp: {new Date(weeklyPlan.submittedAt).toLocaleString('vi-VN')}
+                                </span>
+                            )}
+                        </div>
+
+                        <textarea
+                            rows={4}
+                            value={selfReviewText}
+                            onChange={e => setSelfReviewText(e.target.value)}
+                            placeholder="Sale tự tổng kết tuần: Những điểm làm tốt, kết quả đạt được, khó khăn tại thị trường HORECA, đề xuất chính sách giá / hỗ trợ mẫu rượu..."
+                            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 resize-y"
+                        />
+
+                        <div className="flex items-center justify-between pt-1">
+                            <span className="text-[11px] text-slate-400">
+                                Bắt buộc sale tự chốt vào cuối mỗi tuần để Trưởng phòng phê duyệt.
+                            </span>
+
+                            <button
+                                type="button"
+                                onClick={handleSubmitWeeklyReport}
+                                disabled={submittingReport}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                            >
+                                <Send size={14} />
+                                {submittingReport ? 'Đang nộp...' : 'Chốt Báo Cáo Tuần'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Section: Manager Feedback & Approval */}
+                    <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-3">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <ShieldCheck size={16} className="text-teal-600 dark:text-[#87CBB9]" />
+                            Nhận Xét & Chỉ Đạo Của Quản Lý (Manager Feedback)
+                        </h4>
+
+                        {isManager ? (
+                            <div className="space-y-3">
+                                <textarea
+                                    rows={3}
+                                    value={managerFeedbackText}
+                                    onChange={e => setManagerFeedbackText(e.target.value)}
+                                    placeholder="Quản lý nhập nhận xét, khen thưởng hoặc chỉ đạo bổ sung cho nhân viên..."
+                                    className="w-full p-3 text-xs rounded-xl bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                                />
+                                <div className="flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveManagerFeedback}
+                                        disabled={savingFeedback}
+                                        className="px-5 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                    >
+                                        <Check size={14} />
+                                        {savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Phê Duyệt Tuần'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 rounded-xl bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-xs">
+                                {managerFeedbackText ? (
+                                    <div className="space-y-1">
+                                        <p className="font-semibold text-slate-800 dark:text-white">{managerFeedbackText}</p>
+                                        {weeklyPlan?.reviewedAt && (
+                                            <span className="text-[10px] text-slate-400 font-mono">
+                                                Đã duyệt lúc: {new Date(weeklyPlan.reviewedAt).toLocaleString('vi-VN')}
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-slate-400 italic">Quản lý chưa để lại nhận xét cho tuần này.</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB 4: LỊCH SỬ & HÌNH ẢNH (HISTORY & PHOTOS) */}
+            {/* ============================================================== */}
             {activeTab === 'HISTORY' && (
-                <div className="space-y-4">
-                    {/* Filters bar */}
-                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
+                <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Filters Bar */}
+                    <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-1 max-w-md">
+                            <div className="relative flex-1">
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
-                                    placeholder="Tìm khách hàng hoặc Salesman..."
-                                    className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-white border border-slate-300 text-slate-900"
-                                    style={{ color: '#0F172A' }}
+                                    placeholder="Tìm mã visit, tên khách, tên sale..."
+                                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
                                 />
                             </div>
-                            <input
-                                type="date"
-                                value={filterDate}
-                                onChange={e => setFilterDate(e.target.value)}
-                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-white border border-slate-300 text-slate-900"
-                                style={{ color: '#0F172A' }}
-                            />
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 dark:bg-[#142433] px-3 py-2 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                                <Calendar size={13} className="text-slate-400" />
+                                <input
+                                    type="date"
+                                    value={filterDate}
+                                    onChange={e => setFilterDate(e.target.value)}
+                                    className="bg-transparent text-slate-800 dark:text-white font-bold outline-none cursor-pointer"
+                                />
+                            </div>
+
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-white border border-slate-300 text-slate-900"
-                                style={{ color: '#0F172A' }}
+                                className="px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
                             >
-                                <option value="ALL">Tất cả Trạng Thái</option>
-                                <option value="IN_PROGRESS">Đang Viếng Thăm</option>
-                                <option value="COMPLETED">Đã Kết Thúc</option>
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="IN_PROGRESS">Đang viếng thăm</option>
+                                <option value="COMPLETED">Đã hoàn thành</option>
                             </select>
                         </div>
                     </div>
 
-                    {/* Mobile View: Card List (sm:hidden) */}
-                    <div className="block md:hidden space-y-3">
-                        {filteredVisits.length === 0 ? (
-                            <div className="p-8 text-center text-xs text-gray-500 bg-[#1B2E3D] rounded-2xl border border-[#2A4355]">
-                                Chưa có lượt viếng thăm nào khớp bộ lọc.
-                            </div>
-                        ) : filteredVisits.map(v => (
-                            <div key={v.id} className="p-4 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3 shadow-md">
-                                <div className="flex items-start justify-between gap-2 border-b border-[#2A4355] pb-2.5">
-                                    <div>
-                                        <span className="font-mono text-[11px] font-bold text-[#87CBB9] block">{v.visitNo}</span>
-                                        <h4 className="text-sm font-bold text-white mt-0.5">{v.customerName}</h4>
-                                        <p className="text-[10px] text-[#4A6A7A]">KH: {v.customerCode} • Sales: <strong className="text-gray-300">{v.salespersonName}</strong></p>
-                                    </div>
-                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${v.status === 'COMPLETED' ? 'bg-[#87CBB9]/20 text-[#87CBB9] border border-[#87CBB9]/40' : 'bg-[#D4A853]/20 text-[#D4A853] border border-[#D4A853]/40'}`}>
-                                        {v.status === 'COMPLETED' ? 'Hoàn Thành' : 'Đang Tại Chỗ'}
-                                    </span>
-                                </div>
-
-                                {/* 3 Time Badges */}
-                                <div className="grid grid-cols-3 gap-2 bg-[#142433] p-2.5 rounded-xl border border-[#2A4355] text-center">
-                                    <div>
-                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">🟢 Giờ Đến</span>
-                                        <span className="text-xs font-bold text-[#87CBB9]">
-                                            {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">🔴 Giờ Đi</span>
-                                        <span className="text-xs font-bold text-[#E8F1F2]">
-                                            {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—'}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">⏱️ Ở Lại</span>
-                                        <span className="text-xs font-bold text-[#D4A853]">
-                                            {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Photos */}
-                                <div className="flex items-center gap-3 bg-[#142433] p-2 rounded-xl border border-[#2A4355]">
-                                    <div className="flex-1 text-center">
-                                        <span className="text-[9px] text-[#4A6A7A] block mb-1">Ảnh Check-in</span>
-                                        {v.checkInPhoto ? (
-                                            <img
-                                                src={v.checkInPhoto}
-                                                alt="Checkin"
-                                                className="w-14 h-14 object-cover rounded-lg mx-auto border border-[#2A4355]"
-                                                onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
-                                            />
-                                        ) : <span className="text-gray-500 text-[10px]">Chưa chụp</span>}
-                                    </div>
-                                    <div className="w-[1px] h-10 bg-[#2A4355]" />
-                                    <div className="flex-1 text-center">
-                                        <span className="text-[9px] text-[#4A6A7A] block mb-1">Ảnh Check-out</span>
-                                        {v.checkOutPhoto ? (
-                                            <img
-                                                src={v.checkOutPhoto}
-                                                alt="Checkout"
-                                                className="w-14 h-14 object-cover rounded-lg mx-auto border border-[#2A4355]"
-                                                onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
-                                            />
-                                        ) : <span className="text-gray-500 text-[10px]">Chưa Check-out</span>}
-                                    </div>
-                                </div>
-
-                                {/* Address & GPS */}
-                                {v.checkInLat && v.checkInLng && (
-                                    <div className="text-xs space-y-0.5 pt-1">
-                                        <a
-                                            href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 text-[#87CBB9] font-mono text-[11px] font-semibold"
-                                        >
-                                            <Navigation size={12} /> Google Maps ({v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)})
-                                        </a>
-                                        {v.checkInAddress && (
-                                            <p className="text-[10px] text-gray-300">🏠 {v.checkInAddress}</p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {v.notes && (
-                                    <p className="text-xs text-gray-300 bg-[#142433] p-2 rounded-lg border border-[#2A4355]/50">
-                                        💬 {v.notes}
-                                    </p>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Desktop View: 9-Column Table (hidden md:block) */}
-                    <div className="hidden md:block rounded-2xl overflow-hidden border border-[#2A4355] bg-[#1B2E3D]">
+                    {/* Table View */}
+                    <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs text-left">
                                 <thead>
-                                    <tr className="bg-[#142433] text-[#4A6A7A]">
-                                        <th className="p-3.5 font-semibold">Mã Viếng Thăm</th>
-                                        <th className="p-3.5 font-semibold">Khách Hàng & Salesman</th>
-                                        <th className="p-3.5 font-semibold text-center">Ảnh Check-in</th>
-                                        <th className="p-3.5 font-semibold text-center">Ảnh Check-out</th>
-                                        <th className="p-3.5 font-semibold text-center">🟢 Giờ Đến</th>
-                                        <th className="p-3.5 font-semibold text-center">🔴 Giờ Đi</th>
-                                        <th className="p-3.5 font-semibold text-center">⏱️ Tổng Thời Gian</th>
-                                        <th className="p-3.5 font-semibold">Định Vị GPS & Địa Chỉ</th>
-                                        <th className="p-3.5 font-semibold">Ghi Chú Kết Quả</th>
+                                    <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
+                                        <th className="p-3.5 font-bold">Mã Visit</th>
+                                        <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
+                                        <th className="p-3.5 font-bold text-center">Ảnh Check-in</th>
+                                        <th className="p-3.5 font-bold text-center">Ảnh Check-out</th>
+                                        <th className="p-3.5 font-bold text-center">Đến Lúc</th>
+                                        <th className="p-3.5 font-bold text-center">Về Lúc</th>
+                                        <th className="p-3.5 font-bold text-center">Thời Lượng</th>
+                                        <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
+                                        <th className="p-3.5 font-bold">Kết Quả Công Việc</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {filteredVisits.length === 0 ? (
+                                <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
+                                    {historyVisits.filter(v => {
+                                        if (!filterSearch) return true
+                                        const q = filterSearch.toLowerCase()
+                                        return v.customerName.toLowerCase().includes(q) ||
+                                            v.customerCode.toLowerCase().includes(q) ||
+                                            v.salespersonName.toLowerCase().includes(q) ||
+                                            v.visitNo.toLowerCase().includes(q)
+                                    }).length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="text-center py-12 text-gray-500">
-                                                Chưa có lượt viếng thăm nào khớp bộ lọc.
+                                            <td colSpan={9} className="text-center py-12 text-slate-400">
+                                                Không có lượt viếng thăm nào khớp bộ lọc.
                                             </td>
                                         </tr>
-                                    ) : filteredVisits.map(v => (
-                                        <tr key={v.id} className="border-t border-[#2A4355] hover:bg-[#1f3445] transition">
-                                            <td className="p-3.5 font-mono font-bold text-[#87CBB9]">{v.visitNo}</td>
+                                    ) : historyVisits.map(v => (
+                                        <tr key={v.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16232F] transition">
+                                            <td className="p-3.5 font-mono font-bold text-teal-600 dark:text-[#87CBB9]">
+                                                {v.visitNo}
+                                                {v.isUnplanned && (
+                                                    <span className="block text-[9px] font-sans font-bold text-amber-500">
+                                                        Đột xuất
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="p-3.5">
-                                                <div className="font-semibold text-white">{v.customerName}</div>
-                                                <div className="text-[10px] text-[#4A6A7A] font-mono">KH: {v.customerCode} • Sales: {v.salespersonName}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white">{v.customerName}</div>
+                                                <div className="text-[10px] text-slate-500 font-mono">
+                                                    [{v.customerCode}] • {v.salespersonName}
+                                                </div>
                                             </td>
                                             <td className="p-3.5 text-center">
                                                 {v.checkInPhoto ? (
                                                     <img
                                                         src={v.checkInPhoto}
-                                                        alt="Checkin"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer mx-auto"
+                                                        alt="Check-in"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:opacity-80 transition"
                                                         onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
                                                     />
-                                                ) : <span className="text-gray-500">N/A</span>}
+                                                ) : <span className="text-slate-400">N/A</span>}
                                             </td>
                                             <td className="p-3.5 text-center">
                                                 {v.checkOutPhoto ? (
                                                     <img
                                                         src={v.checkOutPhoto}
-                                                        alt="Checkout"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer mx-auto"
+                                                        alt="Check-out"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:opacity-80 transition"
                                                         onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
                                                     />
-                                                ) : <span className="text-gray-500">—</span>}
+                                                ) : <span className="text-slate-400">—</span>}
                                             </td>
-                                            
-                                            {/* 🟢 Giờ Đến */}
-                                            <td className="p-3.5 text-center font-bold text-[#87CBB9] whitespace-nowrap">
+                                            <td className="p-3.5 text-center font-bold text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
                                                 {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                             </td>
-
-                                            {/* 🔴 Giờ Đi */}
-                                            <td className="p-3.5 text-center font-bold text-[#E8F1F2] whitespace-nowrap">
-                                                {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : <span className="text-gray-500">—</span>}
+                                            <td className="p-3.5 text-center whitespace-nowrap text-slate-700 dark:text-slate-200">
+                                                {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—'}
                                             </td>
-
-                                            {/* ⏱️ Tổng Thời Gian */}
                                             <td className="p-3.5 text-center whitespace-nowrap">
-                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${v.status === 'COMPLETED' ? 'bg-[#D4A853]/20 text-[#D4A853]' : 'bg-[#87CBB9]/20 text-[#87CBB9]'}`}>
-                                                    {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                    v.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'
+                                                }`}>
+                                                    {v.status === 'COMPLETED' ? `${v.durationMinutes}p` : 'Đang ở điểm'}
                                                 </span>
                                             </td>
-
                                             <td className="p-3.5 max-w-xs">
                                                 {v.checkInLat && v.checkInLng ? (
-                                                    <div className="space-y-1">
+                                                    <div className="space-y-0.5">
                                                         <a
                                                             href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="inline-flex items-center gap-1 text-[#87CBB9] hover:underline font-mono text-[11px]"
+                                                            className="inline-flex items-center gap-1 text-teal-600 dark:text-[#87CBB9] hover:underline font-mono text-[11px]"
                                                         >
-                                                            <Navigation size={12} /> Google Maps ({v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)})
+                                                            <Navigation size={11} /> {v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)}
                                                         </a>
                                                         {v.checkInAddress && (
-                                                            <p className="text-[10px] text-gray-300 truncate" title={v.checkInAddress}>
-                                                                🏠 {v.checkInAddress}
+                                                            <p className="text-[10px] text-slate-500 truncate" title={v.checkInAddress}>
+                                                                {v.checkInAddress}
                                                             </p>
                                                         )}
                                                     </div>
-                                                ) : <span className="text-gray-500">Không có GPS</span>}
+                                                ) : <span className="text-slate-400">Không có GPS</span>}
                                             </td>
-                                            <td className="p-3.5 max-w-xs truncate text-gray-300 text-xs" title={v.notes}>
-                                                {v.notes || 'Chưa có ghi chú'}
+                                            <td className="p-3.5 max-w-xs truncate text-slate-700 dark:text-slate-200 text-xs" title={v.notes}>
+                                                {v.notes || <span className="text-slate-400 italic">Chưa có</span>}
                                             </td>
                                         </tr>
                                     ))}
@@ -868,57 +1693,402 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                 </div>
             )}
 
-            {/* Live Camera Modal */}
-            {cameraMode && (
+            {/* ============================================================== */}
+            {/* MODAL: CHECK-OUT RESULT NOTES */}
+            {/* ============================================================== */}
+            {showCheckoutModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
+                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <CheckCircle2 size={18} className="text-emerald-500" />
+                                Báo Cáo Kết Quả Làm Việc
+                            </h3>
+                            <button onClick={() => setShowCheckoutModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Điểm viếng thăm:
+                                </label>
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] text-slate-800 dark:text-white font-semibold">
+                                    {activeVisit?.customer?.name} ({elapsedMinutes} phút tại điểm)
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Ghi chú kết quả thực tế (Bắt buộc):
+                                </label>
+                                <textarea
+                                    rows={4}
+                                    value={checkoutResultNotes}
+                                    onChange={e => setCheckoutResultNotes(e.target.value)}
+                                    placeholder="Nội dung đã làm việc: Khách phản hồi gì? Mẫu rượu thử thế nào? Tồn kho còn bao nhiêu? Dự kiến chốt đơn ngày nào?..."
+                                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                                />
+                            </div>
+
+                            {/* Quick suggestion chips */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] text-slate-400">Gợi ý nhanh:</span>
+                                {[
+                                    'Khách hài lòng mẫu vang mới',
+                                    'Hẹn quay lại chốt đơn tuần tới',
+                                    'Đã đối soát & thu công nợ',
+                                    'Kiểm tra trưng bày menu đạt',
+                                    'Khách đề xuất giảm giá thêm',
+                                ].map(chip => (
+                                    <button
+                                        key={chip}
+                                        type="button"
+                                        onClick={() => setCheckoutResultNotes(prev => prev ? `${prev}. ${chip}` : chip)}
+                                        className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-[10px] text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                                    >
+                                        + {chip}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#223645]">
+                            <button
+                                type="button"
+                                onClick={() => setShowCheckoutModal(false)}
+                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleProceedToCheckoutCamera}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
+                            >
+                                <Camera size={15} /> Chụp Ảnh Check-out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* MODAL: UNPLANNED CHECK-IN */}
+            {/* ============================================================== */}
+            {showUnplannedModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
+                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <Sparkles size={18} className="text-amber-500" />
+                                Check-in Đột Xuất Ngoài Kế Hoạch
+                            </h3>
+                            <button onClick={() => setShowUnplannedModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3.5 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Chọn khách hàng:
+                                </label>
+                                <SearchableCustomerCombobox
+                                    customers={localCustomers}
+                                    selectedCustomerId={unplannedCustomerId}
+                                    onSelect={c => setUnplannedCustomerId(c.id)}
+                                    onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Loại hoạt động:
+                                </label>
+                                <select
+                                    value={unplannedActivityType}
+                                    onChange={e => setUnplannedActivityType(e.target.value)}
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium"
+                                >
+                                    {ACTIVITY_PRESETS.map(p => (
+                                        <option key={p.value} value={p.value}>
+                                            {p.icon} {p.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Mục đích cụ thể (tùy chọn):
+                                </label>
+                                <input
+                                    type="text"
+                                    value={unplannedPurpose}
+                                    onChange={e => setUnplannedPurpose(e.target.value)}
+                                    placeholder="Ghi rõ việc sẽ làm tại khách này..."
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#223645]">
+                            <button
+                                type="button"
+                                onClick={() => setShowUnplannedModal(false)}
+                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={startCheckInUnplanned}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
+                            >
+                                <Camera size={15} /> Mở Camera Check-in
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* MODAL: QUICK ADD VISIT TO PLANNING DAY */}
+            {/* ============================================================== */}
+            {quickAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
+                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    Thêm Điểm Đến: {quickAddModal.dayName}
+                                </h3>
+                                <p className="text-[11px] font-mono text-slate-400">{quickAddModal.dateStr}</p>
+                            </div>
+                            <button onClick={() => setQuickAddModal(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3.5 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Chọn khách hàng:
+                                </label>
+                                <SearchableCustomerCombobox
+                                    customers={localCustomers}
+                                    selectedCustomerId={addCustomerId}
+                                    onSelect={c => setAddCustomerId(c.id)}
+                                    onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Hoạt động dự kiến:
+                                </label>
+                                <select
+                                    value={addActivityType}
+                                    onChange={e => setAddActivityType(e.target.value)}
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium"
+                                >
+                                    {ACTIVITY_PRESETS.map(p => (
+                                        <option key={p.value} value={p.value}>
+                                            {p.icon} {p.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Ghi chú bổ sung (tùy chọn):
+                                </label>
+                                <input
+                                    type="text"
+                                    value={addCustomPurpose}
+                                    onChange={e => setAddCustomPurpose(e.target.value)}
+                                    placeholder="Ví dụ: Giới thiệu vang trắng mới, thu công nợ 5 triệu..."
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#223645]">
+                            <button
+                                type="button"
+                                onClick={() => setQuickAddModal(null)}
+                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleAddVisitToPlan}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
+                            >
+                                <Plus size={15} /> Thêm Vào Lịch
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* MODAL: QUICK CREATE PROSPECT CUSTOMER */}
+            {/* ============================================================== */}
+            {showQuickCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
+                    <form onSubmit={handleQuickCreateCustomer} className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <Plus size={18} className="text-teal-600 dark:text-[#87CBB9]" />
+                                Tạo Nhanh Khách Hàng Tiềm Năng
+                            </h3>
+                            <button type="button" onClick={() => setShowQuickCreateModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Tên nhà hàng / Khách hàng <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={quickCustName}
+                                    onChange={e => setQuickCustName(e.target.value)}
+                                    placeholder="Ví dụ: Nhà hàng La Maison, Wine Bar 1985..."
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                        Kênh kinh doanh:
+                                    </label>
+                                    <select
+                                        value={quickCustChannel}
+                                        onChange={e => setQuickCustChannel(e.target.value)}
+                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                    >
+                                        <option value="HORECA">HORECA (Nhà hàng/Bar)</option>
+                                        <option value="WHOLESALE_DISTRIBUTOR">Đại lý phân phối</option>
+                                        <option value="VIP_RETAIL">Bán lẻ VIP</option>
+                                        <option value="RETAIL">Bán lẻ thông thường</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                        Người liên hệ:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={quickCustContact}
+                                        onChange={e => setQuickCustContact(e.target.value)}
+                                        placeholder="Quản lý, Sommelier..."
+                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Số điện thoại liên hệ:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={quickCustPhone}
+                                    onChange={e => setQuickCustPhone(e.target.value)}
+                                    placeholder="0901234567"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-mono"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Địa chỉ điểm bán:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={quickCustAddress}
+                                    onChange={e => setQuickCustAddress(e.target.value)}
+                                    placeholder="Số nhà, đường, phường, quận..."
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#223645]">
+                            <button
+                                type="button"
+                                onClick={() => setShowQuickCreateModal(false)}
+                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={creatingCustomer}
+                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer disabled:opacity-50"
+                            >
+                                <Plus size={15} />
+                                {creatingCustomer ? 'Đang tạo...' : 'Tạo Khách Tiềm Năng'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* LIVE CAMERA MODAL */}
+            {/* ============================================================== */}
+            {cameraTarget && (
                 <LiveCameraModal
-                    title={cameraMode === 'CHECKIN' ? 'Check-in Viếng Thăm Điểm Bán' : 'Check-out Kết Thúc Viếng Thăm'}
-                    subtitle={cameraMode === 'CHECKIN' ? 'Chụp ảnh thực tế mặt tiền hoặc bảng hiệu nhà hàng' : 'Chụp ảnh thực tế xác nhận kết thúc công việc'}
+                    title={cameraTarget.mode === 'CHECKIN' ? 'Check-in Viếng Thăm Điểm Bán' : 'Check-out Xác Nhận Hoàn Thành'}
+                    subtitle={cameraTarget.mode === 'CHECKIN' ? 'Chụp ảnh thực tế mặt tiền hoặc quầy trưng bày rượu' : 'Chụp ảnh thực tế xác nhận kết thúc buổi viếng thăm'}
+                    customerName={cameraTarget.customerName}
+                    salespersonName={currentUserName}
+                    locationInfo={coords.address}
                     onCapture={photo => {
-                        if (cameraMode === 'CHECKIN') handleConfirmCheckInPhoto(photo)
+                        if (cameraTarget.mode === 'CHECKIN') handleConfirmCheckInPhoto(photo)
                         else handleConfirmCheckOutPhoto(photo)
                     }}
-                    onClose={() => setCameraMode(null)}
+                    onClose={() => setCameraTarget(null)}
                 />
             )}
 
-            {/* Photo Zoom & Download Modal */}
+            {/* ============================================================== */}
+            {/* PHOTO VIEWER MODAL */}
+            {/* ============================================================== */}
             {viewPhoto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur" onClick={() => setViewPhoto(null)}>
-                    <div className="w-full max-w-3xl max-h-[92vh] bg-[#142433] p-5 rounded-2xl border border-[#2A4355] space-y-4 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between border-b border-[#2A4355] pb-3">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs" onClick={() => setViewPhoto(null)}>
+                    <div className="w-full max-w-3xl max-h-[92vh] bg-white dark:bg-[#142433] p-5 rounded-2xl border border-slate-200 dark:border-[#2A4355] space-y-4 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#2A4355] pb-3">
                             <div>
-                                <h4 className="text-base font-bold text-white flex items-center gap-2">
-                                    <Camera size={18} className="text-[#87CBB9]" />
+                                <h4 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Camera size={18} className="text-teal-600 dark:text-[#87CBB9]" />
                                     {viewPhoto.title}
                                 </h4>
-                                <p className="text-[11px] text-[#4A6A7A] mt-0.5">Ảnh chụp camera thực tế tại điểm bán</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Ảnh chụp camera thực tế tại điểm bán</p>
                             </div>
                             
                             <div className="flex items-center gap-2">
                                 <a
                                     href={viewPhoto.url}
-                                    download={`Checkin_Photo_${Date.now()}.jpg`}
-                                    className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0] flex items-center gap-1.5 transition shadow"
-                                    title="Tải ảnh gốc về máy"
+                                    download={`Sales_Visit_${Date.now()}.jpg`}
+                                    className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] hover:opacity-90 flex items-center gap-1.5 transition shadow-xs"
                                 >
-                                    <Download size={14} /> Tải Ảnh Về Máy
+                                    <Download size={14} /> Tải Ảnh
                                 </a>
 
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const win = window.open('')
-                                        if (win) {
-                                            win.document.write(`<title>${viewPhoto.title}</title><img src="${viewPhoto.url}" style="max-width:100%;height:auto;"/>`)
-                                        }
-                                    }}
-                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#2A4355] border border-[#2A4355] flex items-center gap-1.5 transition"
-                                    title="Mở ảnh trong cửa sổ trình duyệt mới"
-                                >
-                                    <ExternalLink size={14} /> Mở Thẻ Mới
-                                </button>
-
-                                <button onClick={() => setViewPhoto(null)} className="p-1.5 rounded-lg text-gray-400 hover:bg-[#1B2E3D] hover:text-white transition">
+                                <button onClick={() => setViewPhoto(null)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer">
                                     <X size={20} />
                                 </button>
                             </div>
