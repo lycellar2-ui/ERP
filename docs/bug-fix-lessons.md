@@ -53,6 +53,7 @@
 44. [BUG-097: Không Xem Được Lịch Sử & Ảnh Check-in Trong Ngày (Timezone Desync)](#bug-097-không-xem-được-lịch-sử--ảnh-check-in-trong-ngày-timezone-desync-thiếu-feed-tab-hôm-nay--lỗi-lọc-ngày-client)
 45. [BUG-098: Lệch Thứ Trong Tuần, Quy Trình Check-in 2 Bước Rườm Rà & Chữ Watermark GPS Bị Nhỏ](#bug-098-lệch-thứ-trong-tuần-thứ-6-hiển-thị-thứ-7-do-utc-shift-quy-trình-check-in-2-bước-rườm-rà--chữ-watermark-gps-thời-gian-bị-nhỏ)
 46. [BUG-099: Build Fail Trên Vercel — Exported Function Phải Là Async Trong File 'use server' (Turbopack Server Actions)](#bug-099-build-fail-trên-vercel--exported-function-phải-là-async-trong-file-use-server-turbopack-server-actions)
+47. [BUG-100: Ảnh Phóng To (Preview Modal) Ở Tab Check-in Hôm Nay Bị Mờ Do Thiếu visitId Để Lazy Load Ảnh Gốc HD](#bug-100-ảnh-phóng-to-preview-modal-ở-tab-check-in-hôm-nay-bị-mờ-do-thiếu-visitid-để-lazy-load-ảnh-gốc-hd)
 
 ---
 
@@ -2629,6 +2630,37 @@ Server Actions must be async functions.
 ### Bài học
 
 > ⚠️ **RULE 99: Trong bất kỳ file nào có chỉ thị `'use server'`, TUYỆT ĐỐI KHÔNG `export` các hàm helper đồng bộ (non-async functions). Mọi hàm được `export` trong file `'use server'` đều được Next.js App Router coi là Server Action. Nếu là helper dùng nội bộ, giữ nguyên phạm vi module (bỏ `export`); nếu cần chia sẻ dùng chung ở client hoặc các module khác, phải tách ra file tiện ích riêng (ví dụ `lib/utils.ts` hoặc `helpers.ts`) KHÔNG có `'use server'`.**
+
+---
+
+## BUG-100: Ảnh Phóng To (Preview Modal) Ở Tab Check-in Hôm Nay Bị Mờ Do Thiếu visitId Để Lazy Load Ảnh Gốc HD
+
+### Triệu chứng
+- Khi người dùng bấm vào ảnh chụp thực địa trong tab **Check-in Hôm Nay** (`activeTab === 'CHECKIN'`), modal phóng to ảnh hiện lên nhưng ảnh bị mờ căm, vỡ hạt, không thể đọc rõ bảng hiệu hoặc nhãn chai rượu vang.
+
+### Nguyên nhân gốc rễ
+1. Hệ thống sử dụng kiến trúc nén 2 tầng: khi chụp ảnh bằng camera thực địa, `LiveCameraModal` sinh đồng thời 1 ảnh gốc phân giải cao HD (1280px) và 1 ảnh thumbnail nhỏ để tối ưu 90%+ băng thông mạng và dung lượng payload khi tải danh sách.
+2. Hàm server action `getSalesVisits()` chỉ trả về thumbnail (`parseVisitPhoto(v.checkInPhoto).thumb`).
+3. Khi người dùng bấm vào ảnh để phóng to, `PhotoViewerModal` có một `useEffect` tự động gọi server action `getSalesVisitFullPhoto(viewPhoto.visitId)` để tải ảnh gốc nét HD đè lên thumbnail.
+4. Tuy nhiên, tại thẻ hiển thị ảnh của tab Hôm Nay (`SalesVisitsClient.tsx` dòng ~2197), sự kiện `onClick` chỉ truyền `title` và `url` mà quên truyền `visitId: v.id`. Do thiếu `visitId`, `useEffect` không kích hoạt, dẫn đến modal hiển thị ảnh thumbnail kéo dãn to ra toàn màn hình, gây mờ và vỡ nét.
+5. Ngoài ra, độ phân giải thumbnail cũ là 240px @ 0.5 chất lượng nén, quá nhỏ so với kích thước thẻ card trên màn hình điện thoại Retina.
+
+### Cách fix
+1. Trong [SalesVisitsClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/sales/visits/SalesVisitsClient.tsx), bổ sung `visitId: v.id` vào `setViewPhoto(...)`:
+   ```typescript
+   onClick={() => setViewPhoto({
+       title: `Ảnh Check-in: ${v.customerName}`,
+       url: (v.checkInPhoto || v.checkOutPhoto)!,
+       visitId: v.id
+   })}
+   ```
+2. Trong [actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/sales/visits/actions.ts), trong hàm `getSalesVisitFullPhoto`: dự phòng `visit.checkInPhoto || visit.checkOutPhoto` để đảm bảo tìm thấy ảnh gốc trong mọi trường hợp.
+3. Trong [LiveCameraModal.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/sales/visits/LiveCameraModal.tsx), nâng cấp thumbnail lên 480px với chất lượng 0.7 JPEG, giúp ảnh thumbnail hiển thị sắc nét trên cả màn hình di động Retina trước khi ảnh gốc nạp xong.
+4. Cải tiến giao diện `PhotoViewerModal`: hiển thị trạng thái `Đang tải ảnh gốc phân giải cao HD...` rõ ràng với spinner và đổi sang `✓ Ảnh chụp camera thực tế tại điểm bán (Độ nét cao HD)` khi hoàn tất.
+
+### Bài học
+> ⚠️ **RULE 100: Khi áp dụng kiến trúc Thumbnail + Lazy Full Resolution, MỌI điểm kích hoạt xem ảnh phóng to (preview modal) trên Client PHẢI truyền kèm định danh bản ghi (`visitId`/`recordId`). Không được để sót bất kỳ vị trí hiển thị nào chỉ truyền thumbnail URL mà thiếu ID nạp ảnh gốc.**
+
 
 
 

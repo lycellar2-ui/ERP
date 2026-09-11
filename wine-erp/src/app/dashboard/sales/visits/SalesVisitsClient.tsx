@@ -385,8 +385,16 @@ function PhotoViewerModal({
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">
                             {viewPhoto.title}
                         </h4>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                            {loadingFullPhoto ? 'Đang tải ảnh gốc phân giải cao HD...' : 'Ảnh chụp camera thực tế tại điểm bán'}
+                        <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                            {loadingFullPhoto ? (
+                                <span className="text-amber-500 font-medium flex items-center gap-1">
+                                    <RefreshCw size={11} className="animate-spin" /> Đang tải ảnh gốc phân giải cao HD...
+                                </span>
+                            ) : (
+                                <span className="text-emerald-500 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                    ✓ Ảnh chụp camera thực tế tại điểm bán (Độ nét cao HD)
+                                </span>
+                            )}
                         </p>
                     </div>
 
@@ -394,7 +402,7 @@ function PhotoViewerModal({
                         <a
                             href={viewPhoto.url}
                             download={`Sales_Visit_${Date.now()}.jpg`}
-                            className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] hover:opacity-90 flex items-center gap-1.5 transition shadow-xs"
+                            className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] hover:opacity-90 flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                         >
                             <Download size={14} /> Tải Ảnh
                         </a>
@@ -404,12 +412,16 @@ function PhotoViewerModal({
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/60 rounded-xl p-2 border border-[#2A4355] relative">
-                    <img src={viewPhoto.url} alt="Enlarged" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+                <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/70 rounded-xl p-2 border border-[#2A4355] relative min-h-[260px]">
+                    <img
+                        src={viewPhoto.url}
+                        alt="Enlarged"
+                        className="max-w-full max-h-[72vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
+                    />
                     {loadingFullPhoto && (
-                        <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur text-white text-[10px] font-semibold flex items-center gap-1.5 border border-white/20">
-                            <RefreshCw size={12} className="animate-spin text-teal-400" />
-                            Đang nạp ảnh nét HD...
+                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-amber-500/40 shadow-xl animate-pulse">
+                            <RefreshCw size={13} className="animate-spin text-amber-400" />
+                            <span>Đang nạp ảnh nét HD...</span>
                         </div>
                     )}
                 </div>
@@ -2194,7 +2206,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 {v.checkInPhoto || v.checkOutPhoto ? (
                                                     <div
                                                         className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
-                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)! })}
+                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
                                                     >
                                                         <img
                                                             src={v.checkInPhoto || v.checkOutPhoto}
@@ -2202,7 +2214,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                             className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                         />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
-                                                            <Eye size={16} /> Bấm để phóng to ảnh
+                                                            <Eye size={16} /> Bấm xem ảnh nét HD gốc
                                                         </div>
                                                     </div>
                                                 ) : (

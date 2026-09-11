@@ -156,17 +156,17 @@ export function LiveCameraModal({
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
         setCapturedImage(dataUrl)
 
-        // Micro-thumbnail generation (~240px wide, ~5-8KB) to save 95%+ DB & network bandwidth
+        // Crisp thumbnail generation (~480px wide, ~25-35KB) for sharp mobile cards while saving 90%+ DB & network bandwidth
         try {
             const thumbCanvas = document.createElement('canvas')
-            const thumbW = 240
+            const thumbW = 480
             const thumbH = Math.round((canvas.height * thumbW) / canvas.width)
             thumbCanvas.width = thumbW
             thumbCanvas.height = thumbH
             const tCtx = thumbCanvas.getContext('2d')
             if (tCtx) {
                 tCtx.drawImage(canvas, 0, 0, thumbW, thumbH)
-                const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.5)
+                const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7)
                 setThumbnailImage(thumbDataUrl)
             }
         } catch (e) {

@@ -68,7 +68,7 @@ export async function getSalesVisitFullPhoto(visitId: string): Promise<{ success
             select: { checkInPhoto: true, checkOutPhoto: true }
         })
         if (!visit) return { success: false, error: 'Không tìm thấy lượt viếng thăm' }
-        const parsed = parseVisitPhoto(visit.checkInPhoto)
+        const parsed = parseVisitPhoto(visit.checkInPhoto || visit.checkOutPhoto)
         return { success: true, photo: parsed.full || parsed.thumb }
     } catch (e: any) {
         return { success: false, error: e.message || 'Lỗi khi tải ảnh gốc' }
