@@ -52,6 +52,7 @@
 43. [BUG-057: Lỗi Chữ Trắng Khi Gõ Tên Khách Hàng Trên Màn Hình Đơn Hàng & Ô Tìm Kiếm (Inline Style Specificity vs Light Mode)](#bug-057-lỗi-chữ-trắng-khi-gõ-tên-khách-hàng-trên-màn-hình-đơn-hàng--ô-tìm-kiếm-inline-style-specificity-vs-light-mode)
 44. [BUG-097: Không Xem Được Lịch Sử & Ảnh Check-in Trong Ngày (Timezone Desync)](#bug-097-không-xem-được-lịch-sử--ảnh-check-in-trong-ngày-timezone-desync-thiếu-feed-tab-hôm-nay--lỗi-lọc-ngày-client)
 45. [BUG-098: Lệch Thứ Trong Tuần, Quy Trình Check-in 2 Bước Rườm Rà & Chữ Watermark GPS Bị Nhỏ](#bug-098-lệch-thứ-trong-tuần-thứ-6-hiển-thị-thứ-7-do-utc-shift-quy-trình-check-in-2-bước-rườm-rà--chữ-watermark-gps-thời-gian-bị-nhỏ)
+46. [BUG-099: Build Fail Trên Vercel — Exported Function Phải Là Async Trong File 'use server' (Turbopack Server Actions)](#bug-099-build-fail-trên-vercel--exported-function-phải-là-async-trong-file-use-server-turbopack-server-actions)
 
 ---
 
@@ -2587,6 +2588,48 @@ Khi người dùng bấm "Xác Nhận Đã Nhận Hàng" trên phiếu chuyển 
 ### Bài học
 
 > ⚠️ **RULE 98: Khi xây dựng tính năng chụp ảnh thực địa (Field Operations / Proof of Visit), watermark GPS và thời gian BẮT BUỘC phải tự động scale tỷ lệ thuận với độ phân giải ảnh để luôn rõ ràng sắc nét khi xem trên mọi màn hình; đồng thời luồng check-in phải tối giản 1 thao tác (1 ảnh hoàn thành ngay), không áp đặt workflow 2 bước (check-in/check-out) gây cản trở và lãng phí thời gian của nhân viên thị trường.**
+
+---
+
+## BUG-099: Build Fail Trên Vercel — Exported Function Phải Là Async Trong File 'use server' (Turbopack Server Actions)
+
+**Severity:** 🔴 High / Deployment Blocker  
+**Date:** 2026-09-11  
+**Affected Modules:** `Sales Field Visits` (`/dashboard/sales/visits/actions.ts`)
+
+### Triệu chứng
+Khi build dự án trên Vercel (Commit `9d0efae`), quá trình `next build` (Turbopack) bị crash với lỗi:
+```
+Error: Turbopack build failed with 1 errors:
+./wine-erp/src/app/dashboard/sales/visits/actions.ts:43:17
+Ecmascript file had an error
+  41 |  * Keeps list queries lightweight while allowing on-demand full resolution viewing.
+  42 |  */
+> 43 | export function parseVisitPhoto(rawPhoto: string | null | undefined): { thumb: string; full: string; hasFull: boolean } {
+     |                 ^^^^^^^^^^^^^^^
+Server Actions must be async functions.
+```
+
+### Nguyên nhân gốc rễ
+1. File `actions.ts` có chỉ thị `'use server'` ở đầu file.
+2. Theo cơ chế của Next.js (đặc biệt là Next.js 15/16 và Turbopack), **MỌI function được `export`** từ một file có `'use server'` đều được compiler coi là một **Server Action** RPC endpoint có thể gọi từ client.
+3. Server Action bắt buộc phải là một hàm bất đồng bộ (`async function`).
+4. Hàm helper `parseVisitPhoto` được viết dạng đồng bộ (`export function parseVisitPhoto(...)`) chỉ để bóc tách chuỗi JSON `{ thumb, full }` nội bộ trong file, nhưng do có từ khóa `export`, Turbopack đã cố gắng biên dịch nó thành một Server Action và ném lỗi `Server Actions must be async functions`.
+
+### Cách fix
+1. Xóa từ khóa `export` khỏi `parseVisitPhoto`, chuyển thành hàm helper nội bộ:
+   ```typescript
+   function parseVisitPhoto(rawPhoto: string | null | undefined): { thumb: string; full: string; hasFull: boolean } {
+       // ...
+   }
+   ```
+2. Đã commit và push bản vá tại commit `688ad96`.
+3. Kiểm tra lại local build: `npm run build` hoàn tất thành công trong 30.0s (66/66 routes generated).
+
+### Bài học
+
+> ⚠️ **RULE 99: Trong bất kỳ file nào có chỉ thị `'use server'`, TUYỆT ĐỐI KHÔNG `export` các hàm helper đồng bộ (non-async functions). Mọi hàm được `export` trong file `'use server'` đều được Next.js App Router coi là Server Action. Nếu là helper dùng nội bộ, giữ nguyên phạm vi module (bỏ `export`); nếu cần chia sẻ dùng chung ở client hoặc các module khác, phải tách ra file tiện ích riêng (ví dụ `lib/utils.ts` hoặc `helpers.ts`) KHÔNG có `'use server'`.**
+
 
 
 
