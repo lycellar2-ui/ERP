@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { Camera, X, RefreshCw, CheckCircle2, ShieldCheck, VideoOff, Upload } from 'lucide-react'
+import { Camera, X, RefreshCw, CheckCircle2, ShieldCheck, VideoOff, Upload, AlertCircle } from 'lucide-react'
 
 interface Props {
     title: string
@@ -9,17 +9,30 @@ interface Props {
     customerName?: string
     salespersonName?: string
     locationInfo?: string
-    onCapture: (photoBase64: string) => void
+    onCapture: (photoBase64: string, thumbnailBase64?: string) => void
     onClose: () => void
+    onOpenGpsGuide?: () => void
+    gpsError?: string | null
 }
 
-export function LiveCameraModal({ title, subtitle, customerName, salespersonName, locationInfo, onCapture, onClose }: Props) {
+export function LiveCameraModal({
+    title,
+    subtitle,
+    customerName,
+    salespersonName,
+    locationInfo,
+    onCapture,
+    onClose,
+    onOpenGpsGuide,
+    gpsError,
+}: Props) {
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
+    const [thumbnailImage, setThumbnailImage] = useState<string | null>(null)
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
     const [cameraError, setCameraError] = useState<string | null>(null)
     const [starting, setStarting] = useState(true)
@@ -142,6 +155,23 @@ export function LiveCameraModal({ title, subtitle, customerName, salespersonName
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
         setCapturedImage(dataUrl)
+
+        // Micro-thumbnail generation (~240px wide, ~5-8KB) to save 95%+ DB & network bandwidth
+        try {
+            const thumbCanvas = document.createElement('canvas')
+            const thumbW = 240
+            const thumbH = Math.round((canvas.height * thumbW) / canvas.width)
+            thumbCanvas.width = thumbW
+            thumbCanvas.height = thumbH
+            const tCtx = thumbCanvas.getContext('2d')
+            if (tCtx) {
+                tCtx.drawImage(canvas, 0, 0, thumbW, thumbH)
+                const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.5)
+                setThumbnailImage(thumbDataUrl)
+            }
+        } catch (e) {
+            console.warn('Could not generate thumbnail', e)
+        }
     }
 
     const takeSnapshot = () => {
@@ -212,11 +242,12 @@ export function LiveCameraModal({ title, subtitle, customerName, salespersonName
     const handleConfirm = () => {
         if (!capturedImage) return
         stopActiveStream()
-        onCapture(capturedImage)
+        onCapture(capturedImage, thumbnailImage || undefined)
     }
 
     const retakePhoto = () => {
         setCapturedImage(null)
+        setThumbnailImage(null)
         startCamera(facingMode)
     }
 
@@ -272,6 +303,23 @@ export function LiveCameraModal({ title, subtitle, customerName, salespersonName
                             >
                                 <RefreshCw size={16} />
                             </button>
+
+                            {/* GPS Guidance Overlay Button if missing or errored */}
+                            {(!locationInfo || gpsError) && onOpenGpsGuide && (
+                                <button
+                                    type="button"
+                                    onClick={onOpenGpsGuide}
+                                    className="absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-xl bg-amber-500/90 hover:bg-amber-600 text-white backdrop-blur text-xs font-semibold flex items-center justify-between shadow-lg border border-amber-400/60 transition z-20 cursor-pointer animate-pulse"
+                                >
+                                    <span className="flex items-center gap-1.5 truncate">
+                                        <AlertCircle size={14} className="shrink-0 text-amber-100" />
+                                        <span className="truncate">Chưa có GPS ({gpsError || 'bị tắt hoặc từ chối'})</span>
+                                    </span>
+                                    <span className="shrink-0 text-[11px] underline font-bold ml-1 bg-amber-700/60 px-2 py-0.5 rounded-md">
+                                        Xem cách bật ➔
+                                    </span>
+                                </button>
+                            )}
                         </>
                     )}
 

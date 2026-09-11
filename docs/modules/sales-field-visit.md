@@ -45,7 +45,8 @@ Module Hành trình thị trường (Sales Field Operations) quản lý toàn b�
 - **Nhận xét của Quản lý:** Trưởng phòng/Admin xem báo cáo tuần của từng nhân viên và lưu nhận xét chỉ đạo (`saveManagerFeedbackAction`, trạng thái `APPROVED`).
 
 ### 4. Lịch Sử & Tra Cứu Hình Ảnh
-- Bảng lịch sử đa cột: Mã Visit, Khách hàng, Ảnh check-in, Giờ đến, Toạ độ Google Maps, Ghi chú kết quả.
+- Bảng lịch sử đa cột: Mã Visit, Khách hàng, Ảnh check-in (hiển thị micro-thumbnail tối ưu), Giờ đến, Toạ độ Google Maps, Ghi chú kết quả.
+- **Tối ưu Payload DB (>95%):** Ảnh check-in lưu dạng cặp `{ thumb, full }`. Các truy vấn danh sách (`getSalesVisits`, `getWeeklyPlanWithVisits`, `getTeamWeeklySalesOverview`) chỉ tải micro-thumbnail (~5-8KB) thay vì chuỗi ảnh lớn 200KB-500KB. Khi người dùng nhấp xem chi tiết/phóng to, Server Action `getSalesVisitFullPhoto()` mới tải ảnh gốc phân giải cao theo cơ chế on-demand.
 - Modal phóng to ảnh gốc, hỗ trợ tải ảnh về máy.
 
 ### 5. 👑 Giám Sát Thị Trường Dành Cho Quản Lý & CEO (Executive Field Operations Board)
@@ -63,18 +64,30 @@ Module Hành trình thị trường (Sales Field Operations) quản lý toàn b�
   - Trạng thái báo cáo tuần: Đã nộp (Chờ duyệt) / Đã duyệt / Chưa nộp.
   - Nút bấm `Kiểm Tra Kế Hoạch & Soi Ảnh` mở cửa sổ thẩm định chi tiết.
 - **Cửa Sổ Soi Xét Toàn Diện (Field Inspection Drill-down Modal):**
-  - **Sub-tab 1: 📸 Soi Ảnh & Định Vị GPS:** Hiển thị lưới hình ảnh chụp thực địa của nhân viên, nhấp phóng to xem chi tiết watermark (tên điểm bán, ngày giờ, toạ độ GPS nét to), có link `Mở Google Maps` kiểm tra vị trí thực tế tại điểm bán.
+  - **Sub-tab 1: 📸 Soi Ảnh & Định Vị GPS:** Hiển thị lưới hình ảnh chụp thực địa của nhân viên (tải thumbnail nhẹ), nhấp phóng to xem chi tiết watermark (tên điểm bán, ngày giờ, toạ độ GPS nét to) tải ảnh HD on-demand, có link `Mở Google Maps` kiểm tra vị trí thực tế tại điểm bán.
   - **Sub-tab 2: 📅 Lịch Trình Tuần:** Bảng kê 7 ngày chi tiết của nhân sự, trạng thái từng điểm hẹn, mục đích đi khách.
   - **Sub-tab 3: ✍️ Phê Duyệt & Đánh Giá:** Đọc bản tự đánh giá của Sale, Quản lý/CEO nhập nhận xét chỉ đạo trực tiếp và ấn nút `Phê Duyệt Kế Hoạch Tuần & Lưu Đánh Giá`.
+
+### 6. Khả Năng Vận Hành Ngoại Tuyến (Offline Drafts) & Cấp Quyền GPS
+- **Offline Draft Queue (Chống mất sóng 4G ở hầm rượu):**
+  - Khi sale tác nghiệp ở hầm rượu, tầng hầm nhà hàng bị mất kết nối Internet, hệ thống tự động bắt lỗi và lưu bản ghi check-in cùng ảnh chụp vào `localStorage` (`SALES_VISITS_OFFLINE_DRAFTS_V1`).
+  - Thanh thông báo trạng thái ngoại tuyến hiển thị rõ số lượt check-in đang chờ đồng bộ kèm nút "Đồng bộ ngay".
+  - Tự động bắt sự kiện `window.addEventListener('online')` để đẩy các bản ghi offline lên máy chủ ngay khi thiết bị có sóng 4G/Wifi trở lại mà không cần nhập lại.
+- **Hướng Dẫn Cấp Quyền GPS 1-Chạm:**
+  - Modal hướng dẫn trực quan chia tab riêng cho **iOS Safari** (Cài đặt -> Safari -> Vị trí -> Cho phép) và **Android Chrome** (Biểu tượng ổ khoá/Cài đặt trang web -> Quyền vị trí -> Cho phép).
+  - Nút bấm "Xem hướng dẫn bật GPS" tích hợp trực tiếp trên thanh trạng thái định vị và ngay trên kính ngắm camera khi phát hiện thiết bị chưa cấp toạ độ.
+- **Bảo Mật Server Actions (Auth Guard):**
+  - Toàn bộ 10 Server Actions trong `actions.ts` được bảo vệ bằng `requireAuth()`.
+  - Nghiêm cấm nhận `salespersonId` từ client mà không đối chiếu quyền hạn; chỉ cho phép người dùng thao tác trên dữ liệu của chính mình (hoặc quyền Quản lý đối với các tác vụ duyệt kế hoạch/xem tổng quan).
 
 ## Files
 
 | File | Vai trò |
 |---|---|
 | `next.config.ts` | Cấu hình `Permissions-Policy: camera=(self), geolocation=(self)` cho phép trình duyệt sử dụng Camera và GPS |
-| `actions.ts` | `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `checkOutSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()` |
-| `SalesVisitsClient.tsx` | Client component 5-tab: Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh, và Tab 5 Giám Sát Thị Trường (CEO / Manager) |
-| `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, watermark chân thực, hỗ trợ native camera fallback |
+| `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `checkOutSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()` |
+| `SalesVisitsClient.tsx` | Client component 5-tab: Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh, Tab 5 Giám Sát Thị Trường (CEO / Manager), tích hợp Offline Draft Queue và Modal hướng dẫn bật GPS |
+| `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, tạo micro-thumbnail song song, watermark chân thực, cảnh báo GPS trong kính ngắm, hỗ trợ native camera fallback |
 | `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ |
 
 ## Prisma Models

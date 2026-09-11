@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 15:55 | Wine ERP v10.23 — Bảng Giám Sát Thị Trường Dành Cho Quản Lý & CEO (Executive Field Operations Board, Ma trận Kế hoạch vs Thực tế, Soi ảnh GPS & Phê duyệt tuần)*
+*Last updated: 2026-09-11 16:15 | Wine ERP v10.24 — Tối ưu SFV: Thumbnail & On-demand HD Photo (>95% Payload Reduction), Auth Guard Server Actions, Offline Draft Queue (Hầm Rượu) & Modal Hướng Dẫn GPS 1-Chạm*
 

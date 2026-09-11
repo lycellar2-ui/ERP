@@ -2,10 +2,17 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { requireAuth, SessionUser } from '@/lib/session'
+
+const MANAGER_ROLES = ['Admin', 'ADMIN', 'Sales Manager', 'SALES_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC']
+
+function checkIsManager(user: SessionUser): boolean {
+    return user.roles?.some(r => MANAGER_ROLES.includes(r)) || false
+}
 
 export interface CheckInPayload {
     customerId: string
-    salespersonId: string
+    salespersonId?: string
     purpose?: string
     activityType?: string
     scheduleId?: string
@@ -15,16 +22,57 @@ export interface CheckInPayload {
     lng?: number
     address?: string
     photoBase64: string // Mandatory camera photo URL/base64
+    thumbnailBase64?: string // Micro-thumbnail (~5-8KB) to reduce DB query payload by 95%+
 }
 
 export interface CheckOutPayload {
     visitId: string
-    salespersonId: string
+    salespersonId?: string
     notes: string // Mandatory result notes
     lat?: number
     lng?: number
     address?: string
     photoBase64: string // Mandatory camera photo URL/base64
+}
+
+/**
+ * Parses raw checkInPhoto which can be either a legacy Base64 string or
+ * a JSON bundle: { thumb: string, full: string }.
+ * Keeps list queries lightweight while allowing on-demand full resolution viewing.
+ */
+export function parseVisitPhoto(rawPhoto: string | null | undefined): { thumb: string; full: string; hasFull: boolean } {
+    if (!rawPhoto) return { thumb: '', full: '', hasFull: false }
+    if (rawPhoto.startsWith('{') && rawPhoto.includes('"thumb"')) {
+        try {
+            const parsed = JSON.parse(rawPhoto)
+            return {
+                thumb: parsed.thumb || parsed.full || '',
+                full: parsed.full || parsed.thumb || '',
+                hasFull: !!parsed.full,
+            }
+        } catch {
+            return { thumb: rawPhoto, full: rawPhoto, hasFull: true }
+        }
+    }
+    return { thumb: rawPhoto, full: rawPhoto, hasFull: true }
+}
+
+/**
+ * On-demand query to fetch high-resolution original check-in photo for zoom modal or CEO inspection.
+ */
+export async function getSalesVisitFullPhoto(visitId: string): Promise<{ success: boolean; photo?: string; error?: string }> {
+    try {
+        await requireAuth()
+        const visit = await prisma.salesVisit.findUnique({
+            where: { id: visitId },
+            select: { checkInPhoto: true, checkOutPhoto: true }
+        })
+        if (!visit) return { success: false, error: 'Không tìm thấy lượt viếng thăm' }
+        const parsed = parseVisitPhoto(visit.checkInPhoto)
+        return { success: true, photo: parsed.full || parsed.thumb }
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Lỗi khi tải ảnh gốc' }
+    }
 }
 
 // Reverse Geocoding via Server Action to bypass browser CORS & User-Agent restrictions
@@ -59,9 +107,13 @@ export async function quickCreateProspectCustomer(data: {
     address?: string
     city?: string
     channel?: string
-    salespersonId: string
+    salespersonId?: string
 }) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+        const targetRepId = (isMgr && data.salespersonId) ? data.salespersonId : user.id
+
         if (!data.name || !data.name.trim()) {
             return { success: false, error: 'Vui lòng nhập tên khách hàng / nhà hàng / đại lý' }
         }
@@ -84,7 +136,7 @@ export async function quickCreateProspectCustomer(data: {
                 channel: (data.channel as any) || 'HORECA',
                 customerType: 'HORECA',
                 status: 'ACTIVE',
-                salesRepId: data.salespersonId,
+                salesRepId: targetRepId,
                 paymentTerm: 'COD',
             }
         })
@@ -132,11 +184,15 @@ export async function quickCreateProspectCustomer(data: {
     }
 }
 
-export async function getActiveVisit(salespersonId: string) {
+export async function getActiveVisit(salespersonId?: string) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+        const targetRepId = (isMgr && salespersonId && salespersonId !== 'ALL') ? salespersonId : user.id
+
         const visit = await prisma.salesVisit.findFirst({
             where: {
-                salespersonId,
+                salespersonId: targetRepId,
                 status: 'IN_PROGRESS',
             },
             include: {
@@ -155,8 +211,17 @@ export async function getActiveVisit(salespersonId: string) {
 
 export async function checkInSalesVisit(data: CheckInPayload) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+        const targetRepId = (isMgr && data.salespersonId) ? data.salespersonId : user.id
+
         if (!data.customerId) return { success: false, error: 'Vui lòng chọn khách hàng viếng thăm' }
         if (!data.photoBase64) return { success: false, error: 'Bắt buộc phải chụp ảnh camera điểm bán khi Check-in' }
+
+        // Store photo as JSON bundle (thumbnail + full photo) if thumbnail is provided
+        const photoStorageValue = data.thumbnailBase64
+            ? JSON.stringify({ thumb: data.thumbnailBase64, full: data.photoBase64 })
+            : data.photoBase64
 
         // Generate visitNo e.g. VIS-202607-0001
         const now = new Date()
@@ -172,12 +237,12 @@ export async function checkInSalesVisit(data: CheckInPayload) {
         const visitNotes = (data.notes || data.purpose || 'Đã viếng thăm và chăm sóc điểm bán').trim()
 
         const visit = await prisma.$transaction(async (tx) => {
-            // 1-step check-in: immediately marks COMPLETED with photo and GPS
+            // 1-step check-in: marks COMPLETED with photo and GPS
             const newVisit = await tx.salesVisit.create({
                 data: {
                     visitNo,
                     customerId: data.customerId,
-                    salespersonId: data.salespersonId,
+                    salespersonId: targetRepId,
                     status: 'COMPLETED',
                     purpose: data.purpose || 'Chăm sóc khách hàng định kỳ',
                     activityType: data.activityType || 'PERIODIC_CARE',
@@ -187,7 +252,7 @@ export async function checkInSalesVisit(data: CheckInPayload) {
                     checkInLat: data.lat,
                     checkInLng: data.lng,
                     checkInAddress: data.address,
-                    checkInPhoto: data.photoBase64,
+                    checkInPhoto: photoStorageValue,
                     checkOutTime: now,
                     checkOutLat: data.lat,
                     checkOutLng: data.lng,
@@ -222,6 +287,9 @@ export async function checkInSalesVisit(data: CheckInPayload) {
 
 export async function checkOutSalesVisit(data: CheckOutPayload) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+
         if (!data.visitId) return { success: false, error: 'Mã lượt viếng thăm không hợp lệ' }
         if (!data.photoBase64) return { success: false, error: 'Bắt buộc phải chụp ảnh camera điểm bán khi Check-out' }
         if (!data.notes || data.notes.trim().length < 5) {
@@ -232,6 +300,9 @@ export async function checkOutSalesVisit(data: CheckOutPayload) {
             where: { id: data.visitId }
         })
         if (!visit) return { success: false, error: 'Không tìm thấy lượt viếng thăm' }
+        if (!isMgr && visit.salespersonId !== user.id) {
+            return { success: false, error: 'Bạn không có quyền check-out lượt viếng thăm của nhân viên khác' }
+        }
         if (visit.status !== 'IN_PROGRESS') return { success: false, error: 'Lượt viếng thăm này đã được Check-out hoặc hủy trước đó' }
 
         const checkOutTime = new Date()
@@ -280,10 +351,16 @@ export async function getSalesVisits(filters?: {
     date?: string
 }) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+
         const where: any = {}
         if (filters?.salespersonId && filters.salespersonId !== 'ALL') {
-            where.salespersonId = filters.salespersonId
+            where.salespersonId = isMgr ? filters.salespersonId : user.id
+        } else if (!isMgr) {
+            where.salespersonId = user.id
         }
+
         if (filters?.customerId && filters.customerId !== 'ALL') {
             where.customerId = filters.customerId
         }
@@ -326,12 +403,13 @@ export async function getSalesVisits(filters?: {
             checkInLat: v.checkInLat,
             checkInLng: v.checkInLng,
             checkInAddress: v.checkInAddress,
-            checkInPhoto: v.checkInPhoto,
+            // Return lightweight thumbnail to reduce JSON payload by 95%+
+            checkInPhoto: parseVisitPhoto(v.checkInPhoto).thumb,
             checkOutTime: v.checkOutTime?.toISOString() || null,
             checkOutLat: v.checkOutLat || null,
             checkOutLng: v.checkOutLng || null,
             checkOutAddress: v.checkOutAddress || null,
-            checkOutPhoto: v.checkOutPhoto || null,
+            checkOutPhoto: parseVisitPhoto(v.checkOutPhoto).thumb,
             durationMinutes: v.durationMinutes || 0,
             notes: v.notes || '',
         }))
@@ -369,10 +447,14 @@ export async function getVisitStats() {
 
 export async function getWeeklyPlanWithVisits(salespersonId: string, weekNumber: number, year: number) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+        const targetRepId = (isMgr && salespersonId && salespersonId !== 'ALL') ? salespersonId : user.id
+
         let plan = await prisma.weeklyVisitPlan.findUnique({
             where: {
                 salesRepId_weekNumber_year: {
-                    salesRepId: salespersonId,
+                    salesRepId: targetRepId,
                     weekNumber,
                     year,
                 }
@@ -407,7 +489,7 @@ export async function getWeeklyPlanWithVisits(salespersonId: string, weekNumber:
         // Also fetch all actual sales visits for this salesperson in this week range
         const actualVisits = await prisma.salesVisit.findMany({
             where: {
-                salespersonId,
+                salespersonId: targetRepId,
                 checkInTime: {
                     gte: start,
                     lte: end,
@@ -458,6 +540,7 @@ export async function getWeeklyPlanWithVisits(salespersonId: string, weekNumber:
                 scheduleId: v.scheduleId,
                 isUnplanned: v.isUnplanned,
                 checkInTime: v.checkInTime.toISOString(),
+                checkInPhoto: parseVisitPhoto(v.checkInPhoto).thumb,
                 checkOutTime: v.checkOutTime?.toISOString() || null,
                 durationMinutes: v.durationMinutes || 0,
                 notes: v.notes || '',
@@ -470,7 +553,7 @@ export async function getWeeklyPlanWithVisits(salespersonId: string, weekNumber:
 }
 
 export async function saveWeeklyPlanAction(input: {
-    salespersonId: string
+    salespersonId?: string
     weekNumber: number
     year: number
     note?: string
@@ -483,11 +566,15 @@ export async function saveWeeklyPlanAction(input: {
     }>
 }) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+        const targetRepId = (isMgr && input.salespersonId) ? input.salespersonId : user.id
+
         const result = await prisma.$transaction(async (tx) => {
             let plan = await tx.weeklyVisitPlan.findUnique({
                 where: {
                     salesRepId_weekNumber_year: {
-                        salesRepId: input.salespersonId,
+                        salesRepId: targetRepId,
                         weekNumber: input.weekNumber,
                         year: input.year,
                     }
@@ -497,7 +584,7 @@ export async function saveWeeklyPlanAction(input: {
             if (!plan) {
                 plan = await tx.weeklyVisitPlan.create({
                     data: {
-                        salesRepId: input.salespersonId,
+                        salesRepId: targetRepId,
                         weekNumber: input.weekNumber,
                         year: input.year,
                         note: input.note || null,
@@ -565,10 +652,13 @@ export async function saveWeeklyPlanAction(input: {
 
 export async function submitWeeklyReportAction(input: {
     planId: string
-    salespersonId: string
+    salespersonId?: string
     selfReview: string
 }) {
     try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+
         if (!input.selfReview || input.selfReview.trim().length < 5) {
             return { success: false, error: 'Vui lòng nhập nội dung tự đánh giá kết quả tuần (tối thiểu 5 ký tự)' }
         }
@@ -577,7 +667,7 @@ export async function submitWeeklyReportAction(input: {
             where: { id: input.planId }
         })
         if (!plan) return { success: false, error: 'Không tìm thấy kế hoạch tuần' }
-        if (plan.salesRepId !== input.salespersonId) return { success: false, error: 'Bạn không có quyền chốt kế hoạch này' }
+        if (!isMgr && plan.salesRepId !== user.id) return { success: false, error: 'Bạn không có quyền chốt kế hoạch này' }
 
         const updated = await prisma.weeklyVisitPlan.update({
             where: { id: input.planId },
@@ -599,9 +689,14 @@ export async function submitWeeklyReportAction(input: {
 export async function saveManagerFeedbackAction(input: {
     planId: string
     managerFeedback: string
-    managerId: string
+    managerId?: string
 }) {
     try {
+        const user = await requireAuth()
+        if (!checkIsManager(user)) {
+            return { success: false, error: 'Chỉ Quản lý / Ban Giám Đốc mới có quyền đánh giá và phê duyệt kế hoạch tuần' }
+        }
+
         const plan = await prisma.weeklyVisitPlan.findUnique({
             where: { id: input.planId }
         })
@@ -613,7 +708,7 @@ export async function saveManagerFeedbackAction(input: {
                 status: 'APPROVED',
                 managerFeedback: input.managerFeedback.trim(),
                 reviewedAt: new Date(),
-                reviewedById: input.managerId,
+                reviewedById: user.id,
             }
         })
 
@@ -630,6 +725,11 @@ export async function saveManagerFeedbackAction(input: {
 // -------------------------------------------------------------
 export async function getTeamWeeklySalesOverview(weekNumber: number, year: number) {
     try {
+        const user = await requireAuth()
+        if (!checkIsManager(user)) {
+            return { success: false, error: 'Chỉ Quản lý / Ban Giám Đốc mới có quyền xem bảng giám sát đội ngũ' }
+        }
+
         // Compute Monday - Sunday dates for the week
         const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7)
         const dow = simple.getDay()
@@ -724,7 +824,8 @@ export async function getTeamWeeklySalesOverview(weekNumber: number, year: numbe
                     checkInAddress: av.checkInAddress,
                     checkInLat: av.checkInLat,
                     checkInLng: av.checkInLng,
-                    checkInPhoto: av.checkInPhoto,
+                    // Return lightweight thumbnail to reduce JSON payload by 95%+
+                    checkInPhoto: parseVisitPhoto(av.checkInPhoto).thumb,
                     status: av.status,
                     isUnplanned: av.isUnplanned,
                     purpose: av.purpose,

@@ -5,13 +5,14 @@ import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
     Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
     ExternalLink, Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
-    Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare
+    Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare,
+    Wifi, WifiOff, UploadCloud
 } from 'lucide-react'
 import {
     checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
     reverseGeocodeAction, quickCreateProspectCustomer, getWeeklyPlanWithVisits,
     saveWeeklyPlanAction, submitWeeklyReportAction, saveManagerFeedbackAction,
-    getTeamWeeklySalesOverview
+    getTeamWeeklySalesOverview, getSalesVisitFullPhoto
 } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
 import { toast } from 'sonner'
@@ -194,6 +195,175 @@ function SearchableCustomerCombobox({
     )
 }
 
+function GpsPermissionGuideModal({
+    isOpen,
+    onClose,
+    onRetryGps,
+    gettingLocation,
+}: {
+    isOpen: boolean
+    onClose: () => void
+    onRetryGps: () => Promise<any>
+    gettingLocation: boolean
+}) {
+    const [tab, setTab] = useState<'IOS' | 'ANDROID'>('IOS')
+    if (!isOpen) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
+            <div className="w-full max-w-md bg-white dark:bg-[#111C24] rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="p-4 border-b border-slate-200 dark:border-[#223645] flex items-center justify-between bg-amber-500/10">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-amber-500 text-white font-bold">
+                            📍
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                Hướng Dẫn Bật Quyền Vị Trí (GPS)
+                            </h3>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Bắt buộc để gắn toạ độ thực địa vào ảnh check-in
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Device Selector Tabs */}
+                <div className="p-3 border-b border-slate-100 dark:border-[#1E3040] flex gap-2 bg-slate-50 dark:bg-[#142330]">
+                    <button
+                        type="button"
+                        onClick={() => setTab('IOS')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                            tab === 'IOS'
+                                ? 'bg-amber-500 text-white shadow-xs'
+                                : 'bg-white dark:bg-[#1E2E3D] text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                        }`}
+                    >
+                        🍎 iPhone (Safari)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTab('ANDROID')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                            tab === 'ANDROID'
+                                ? 'bg-amber-500 text-white shadow-xs'
+                                : 'bg-white dark:bg-[#1E2E3D] text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                        }`}
+                    >
+                        🤖 Android (Chrome)
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-3.5 text-xs text-slate-700 dark:text-slate-200">
+                    {tab === 'IOS' ? (
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    1
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Bấm nút "aA" hoặc biểu tượng trang web</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Nằm ở góc trái trên thanh nhập địa chỉ URL của trình duyệt Safari.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    2
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Chọn "Cài đặt trang web" (Website Settings)</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Tìm mục <strong>Vị trí (Location)</strong> ➔ Chuyển thành <strong>Cho phép (Allow)</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    3
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Bật dịch vụ định vị của máy</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Vào Cài đặt máy ➔ Quyền riêng tư & Bảo mật ➔ Dịch vụ định vị ➔ Gạt BẬT.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    1
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Bấm vào biểu tượng 🔒 (Khóa) hoặc ⚙️</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Nằm ngay bên trái thanh địa chỉ URL của Google Chrome.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    2
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Chọn "Quyền" (Permissions) ➔ "Vị trí"</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Bật công tắc <strong>Vị trí</strong> thành <strong>Cho phép</strong> (màu xanh).
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-[#162534] border border-slate-200/60 dark:border-[#223645]">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
+                                    3
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-white">Bật GPS của điện thoại</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Kéo thanh thông báo từ trên xuống, chạm bật biểu tượng <strong>Vị trí (GPS)</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Action button */}
+                    <div className="pt-2">
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const loc = await onRetryGps()
+                                if (loc?.lat) {
+                                    toast.success('Đã lấy được toạ độ GPS chính xác!')
+                                    onClose()
+                                } else {
+                                    toast.warning('Vẫn chưa nhận được toạ độ GPS. Hãy chắc chắn bạn đã bật định vị trên máy!')
+                                }
+                            }}
+                            disabled={gettingLocation}
+                            className="w-full py-3 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
+                        >
+                            <RefreshCw size={15} className={gettingLocation ? 'animate-spin' : ''} />
+                            {gettingLocation ? 'Đang dò tìm toạ độ vệ tinh...' : '🔄 Thử lại định vị GPS ngay'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export function SalesVisitsClient({ initialVisits, customers, users, currentUserId, currentUserName, isManager }: Props) {
     const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY' | 'MANAGEMENT'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
@@ -323,7 +493,65 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
     const [creatingCustomer, setCreatingCustomer] = useState(false)
 
     // Photo Viewer Modal
-    const [viewPhoto, setViewPhoto] = useState<{ title: string; url: string } | null>(null)
+    const [viewPhoto, setViewPhoto] = useState<{ title: string; url: string; visitId?: string } | null>(null)
+    const [loadingFullPhoto, setLoadingFullPhoto] = useState(false)
+
+    // GPS Permission Guide Modal State
+    const [showGpsGuideModal, setShowGpsGuideModal] = useState(false)
+
+    // Offline Queue / Drafts State (for basement wine cellars / network loss)
+    const [offlineDrafts, setOfflineDrafts] = useState<any[]>([])
+    const [syncingOffline, setSyncingOffline] = useState(false)
+    const [isNetworkOnline, setIsNetworkOnline] = useState(true)
+
+    // Load offline drafts from localStorage on mount & listen to online/offline network events
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        setIsNetworkOnline(navigator.onLine)
+        try {
+            const raw = localStorage.getItem('SALES_VISITS_OFFLINE_DRAFTS_V1')
+            if (raw) {
+                const parsed = JSON.parse(raw)
+                if (Array.isArray(parsed)) setOfflineDrafts(parsed)
+            }
+        } catch (e) {
+            console.warn('Error reading offline drafts', e)
+        }
+
+        const handleOnline = () => {
+            setIsNetworkOnline(true)
+            toast.success('📶 Đã có kết nối mạng trở lại! Hệ thống đang tự động kiểm tra đồng bộ...')
+        }
+        const handleOffline = () => {
+            setIsNetworkOnline(false)
+            toast.warning('📶 Bạn đã mất kết nối mạng. Các lượt check-in hầm rượu sẽ được lưu ngoại tuyến trên máy.')
+        }
+
+        window.addEventListener('online', handleOnline)
+        window.addEventListener('offline', handleOffline)
+        return () => {
+            window.removeEventListener('online', handleOnline)
+            window.removeEventListener('offline', handleOffline)
+        }
+    }, [])
+
+    // Lazy load full HD photo on demand when viewing enlarged photo
+    useEffect(() => {
+        if (!viewPhoto?.visitId) return
+        let active = true
+        setLoadingFullPhoto(true)
+        getSalesVisitFullPhoto(viewPhoto.visitId)
+            .then(res => {
+                if (active && res.success && res.photo && res.photo !== viewPhoto.url) {
+                    setViewPhoto(prev => prev ? { ...prev, url: res.photo! } : null)
+                }
+            })
+            .catch(err => console.warn('Could not fetch full photo', err))
+            .finally(() => {
+                if (active) setLoadingFullPhoto(false)
+            })
+        return () => { active = false }
+    }, [viewPhoto?.visitId])
 
     // -----------------------------------------------------------------
     // GPS & LOCATION RETRIEVAL
@@ -352,12 +580,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                     const loc = { lat, lng, address }
                     setCoords(loc)
                     setGettingLocation(false)
+                    setGpsError(null)
                     resolve(loc)
                 },
                 (err) => {
                     console.warn('GPS error', err)
                     let msg = 'Không thể lấy GPS. Bạn hãy kiểm tra quyền Vị trí trên trình duyệt/điện thoại!'
                     if (err.code === 1) msg = 'Quyền GPS đã bị từ chối trong Cài đặt trình duyệt!'
+                    if (err.code === 2) msg = 'Thiết bị đang tắt định vị GPS. Vui lòng bật GPS trên máy!'
                     if (err.code === 3) msg = 'Hết thời gian chờ lấy toạ độ GPS (Timeout).'
                     setGpsError(msg)
                     setGettingLocation(false)
@@ -695,34 +925,165 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         })
     }
 
-    const handleConfirmCheckInPhoto = async (photoBase64: string) => {
+    // -----------------------------------------------------------------
+    // OFFLINE SYNC ENGINE (AUTO-SYNC WHEN BACK ONLINE)
+    // -----------------------------------------------------------------
+    const syncOfflineDrafts = useCallback(async () => {
+        if (typeof window === 'undefined' || !navigator.onLine) return
+        const raw = localStorage.getItem('SALES_VISITS_OFFLINE_DRAFTS_V1')
+        if (!raw) return
+        let drafts: any[] = []
+        try {
+            drafts = JSON.parse(raw)
+        } catch {
+            return
+        }
+        if (!drafts.length) return
+
+        setSyncingOffline(true)
+        let successCount = 0
+        const remainingDrafts: any[] = []
+
+        for (const draft of drafts) {
+            if (!draft.customerId) continue
+            try {
+                const res = await checkInSalesVisit({
+                    customerId: draft.customerId,
+                    salespersonId: selectedSalespersonId,
+                    purpose: draft.purpose,
+                    activityType: draft.activityType,
+                    scheduleId: draft.scheduleId,
+                    isUnplanned: draft.isUnplanned,
+                    lat: draft.lat,
+                    lng: draft.lng,
+                    address: draft.address,
+                    photoBase64: draft.photoBase64,
+                    thumbnailBase64: draft.thumbnailBase64,
+                })
+                if (res.success) {
+                    successCount++
+                } else {
+                    remainingDrafts.push({
+                        ...draft,
+                        retryCount: (draft.retryCount || 0) + 1,
+                        lastError: res.error,
+                    })
+                }
+            } catch (err: any) {
+                remainingDrafts.push({
+                    ...draft,
+                    retryCount: (draft.retryCount || 0) + 1,
+                    lastError: err.message,
+                })
+            }
+        }
+
+        localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(remainingDrafts))
+        setOfflineDrafts(remainingDrafts)
+        setSyncingOffline(false)
+
+        if (successCount > 0) {
+            toast.success(`✓ Đã tự động đồng bộ thành công ${successCount} lượt check-in ngoại tuyến lên hệ thống!`)
+            await fetchActive()
+            await loadWeeklyData()
+            await fetchHistoryVisits()
+        }
+    }, [selectedSalespersonId, fetchActive, loadWeeklyData, fetchHistoryVisits])
+
+    // Auto-sync offline drafts when network recovers or when mounted online
+    useEffect(() => {
+        if (isNetworkOnline && offlineDrafts.length > 0 && !syncingOffline) {
+            syncOfflineDrafts()
+        }
+    }, [isNetworkOnline, offlineDrafts.length, syncingOffline, syncOfflineDrafts])
+
+    const handleConfirmCheckInPhoto = async (photoBase64: string, thumbnailBase64?: string) => {
         if (!cameraTarget || !cameraTarget.customerId) return
+        const customerId = cameraTarget.customerId
+        const customerName = cameraTarget.customerName || 'Khách hàng'
+        const purpose = cameraTarget.purpose
+        const activityType = cameraTarget.activityType
+        const scheduleId = cameraTarget.scheduleId
+        const isUnplanned = cameraTarget.isUnplanned
+
         setCameraTarget(null)
         setSubmittingAction(true)
 
         // Capture fresh GPS
         const loc = await requestGPS()
 
-        const res = await checkInSalesVisit({
-            customerId: cameraTarget.customerId,
+        const payload = {
+            customerId,
             salespersonId: selectedSalespersonId,
-            purpose: cameraTarget.purpose,
-            activityType: cameraTarget.activityType,
-            scheduleId: cameraTarget.scheduleId,
-            isUnplanned: cameraTarget.isUnplanned,
+            purpose,
+            activityType,
+            scheduleId,
+            isUnplanned,
             lat: loc.lat || coords.lat,
             lng: loc.lng || coords.lng,
             address: loc.address || coords.address,
             photoBase64,
-        })
+            thumbnailBase64,
+        }
 
-        if (res.success) {
-            toast.success(`Check-in thành công tại ${cameraTarget.customerName || 'điểm bán'}!`)
-            await fetchActive()
-            await loadWeeklyData()
-            await fetchHistoryVisits()
-        } else {
-            toast.error('Lỗi Check-in: ' + res.error)
+        // 1. Check if offline right now (e.g. In wine cellar without 4G)
+        if (typeof window !== 'undefined' && !navigator.onLine) {
+            const draft = {
+                id: `draft_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                timestamp: Date.now(),
+                customerName,
+                ...payload,
+                retryCount: 0,
+            }
+            try {
+                const existingRaw = localStorage.getItem('SALES_VISITS_OFFLINE_DRAFTS_V1')
+                const existing = existingRaw ? JSON.parse(existingRaw) : []
+                const updated = [draft, ...existing]
+                localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
+                setOfflineDrafts(updated)
+                toast.warning(`📶 Bạn đang mất sóng 4G (hầm rượu). Đã lưu tạm lượt check-in tại ${customerName} vào bộ nhớ máy! Hệ thống sẽ tự động đồng bộ khi có sóng trở lại.`, {
+                    duration: 8000
+                })
+            } catch (e) {
+                console.error('Offline draft save error', e)
+            }
+            setSubmittingAction(false)
+            return
+        }
+
+        // 2. Online attempt with network error fallback
+        try {
+            const res = await checkInSalesVisit(payload)
+            if (res.success) {
+                toast.success(`Check-in thành công tại ${customerName}!`)
+                await fetchActive()
+                await loadWeeklyData()
+                await fetchHistoryVisits()
+            } else {
+                toast.error('Lỗi Check-in: ' + res.error)
+            }
+        } catch (err: any) {
+            console.warn('Network error during checkin, saving to offline draft', err)
+            const draft = {
+                id: `draft_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                timestamp: Date.now(),
+                customerName,
+                ...payload,
+                retryCount: 0,
+                lastError: err.message,
+            }
+            try {
+                const existingRaw = localStorage.getItem('SALES_VISITS_OFFLINE_DRAFTS_V1')
+                const existing = existingRaw ? JSON.parse(existingRaw) : []
+                const updated = [draft, ...existing]
+                localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
+                setOfflineDrafts(updated)
+                toast.warning(`📶 Lỗi đường truyền mạng (hầm rượu/mất sóng). Đã lưu an toàn lượt check-in tại ${customerName} trên máy!`, {
+                    duration: 8000
+                })
+            } catch (e) {
+                console.error('Offline draft save error', e)
+            }
         }
         setSubmittingAction(false)
     }
@@ -953,6 +1314,48 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* ============================================================== */}
             {activeTab === 'CHECKIN' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* OFFLINE QUEUE STATUS BANNER (hầm rượu / mất sóng 4G) */}
+                    {(offlineDrafts.length > 0 || !isNetworkOnline) && (
+                        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+                            <div className="flex items-start sm:items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-amber-500 text-white font-bold shrink-0">
+                                    {!isNetworkOnline ? <WifiOff size={18} /> : <UploadCloud size={18} />}
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>
+                                            {!isNetworkOnline
+                                                ? 'Đang mất kết nối mạng (Khu vực hầm rượu)'
+                                                : `Có ${offlineDrafts.length} lượt check-in ngoại tuyến đang chờ đồng bộ`}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono">
+                                            {offlineDrafts.length} bản ghi
+                                        </span>
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        {!isNetworkOnline
+                                            ? 'Ảnh và GPS đã được lưu tạm an toàn trong bộ nhớ máy. Khi có 4G/Wifi trở lại, hệ thống sẽ tự động gửi lên server.'
+                                            : 'Bản ghi ngoại tuyến sẵn sàng. Hệ thống sẽ tự động gửi hoặc bạn có thể bấm đồng bộ ngay.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                {offlineDrafts.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={syncOfflineDrafts}
+                                        disabled={syncingOffline || !isNetworkOnline}
+                                        className="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                    >
+                                        <RefreshCw size={13} className={syncingOffline ? 'animate-spin' : ''} />
+                                        {syncingOffline ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Header Controls for Today & Integrated GPS Bar */}
                     <div className="bg-white dark:bg-[#111C24] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#223645] space-y-3.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -982,7 +1385,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
                         {/* GPS Status Indicator embedded in Today's view */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
                                 <Navigation size={13} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
                                 <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Vị trí hiện tại:</span>
                                 {gettingLocation ? (
@@ -992,19 +1395,39 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
                                     </span>
                                 ) : (
-                                    <span className="text-amber-600 dark:text-amber-400 text-[11px]">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-amber-600 dark:text-amber-400 text-[11px] font-medium">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowGpsGuideModal(true)}
+                                            className="text-amber-600 dark:text-amber-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer bg-amber-500/10 px-2 py-0.5 rounded-md"
+                                        >
+                                            <AlertCircle size={12} /> Xem cách bật quyền GPS
+                                        </button>
+                                    </div>
                                 )}
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={requestGPS}
-                                disabled={gettingLocation}
-                                className="self-end sm:self-auto px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-100 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
-                            >
-                                <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
-                                Làm mới GPS
-                            </button>
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                                {(!coords.lat || gpsError) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowGpsGuideModal(true)}
+                                        className="hidden sm:flex text-amber-600 dark:text-amber-400 hover:underline font-bold text-[11px] items-center gap-1 cursor-pointer"
+                                    >
+                                        <AlertCircle size={12} /> Hướng dẫn GPS
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={requestGPS}
+                                    disabled={gettingLocation}
+                                    className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-100 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+                                >
+                                    <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
+                                    Làm mới GPS
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -2677,11 +3100,23 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                     locationInfo={coords.address}
                     onCapture={handleConfirmCheckInPhoto}
                     onClose={() => setCameraTarget(null)}
+                    onOpenGpsGuide={() => setShowGpsGuideModal(true)}
+                    gpsError={gpsError}
                 />
             )}
 
             {/* ============================================================== */}
-            {/* PHOTO VIEWER MODAL */}
+            {/* GPS PERMISSION GUIDE MODAL (1-TOUCH MOBILE SAFARI / CHROME) */}
+            {/* ============================================================== */}
+            <GpsPermissionGuideModal
+                isOpen={showGpsGuideModal}
+                onClose={() => setShowGpsGuideModal(false)}
+                onRetryGps={requestGPS}
+                gettingLocation={gettingLocation}
+            />
+
+            {/* ============================================================== */}
+            {/* PHOTO VIEWER MODAL (WITH ON-DEMAND FULL HD RESOLUTION) */}
             {/* ============================================================== */}
             {viewPhoto && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs" onClick={() => setViewPhoto(null)}>
@@ -2692,7 +3127,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     <Camera size={18} className="text-teal-600 dark:text-[#87CBB9]" />
                                     {viewPhoto.title}
                                 </h4>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Ảnh chụp camera thực tế tại điểm bán</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                    {loadingFullPhoto ? 'Đang tải ảnh gốc phân giải cao HD...' : 'Ảnh chụp camera thực tế tại điểm bán'}
+                                </p>
                             </div>
                             
                             <div className="flex items-center gap-2">
@@ -2710,8 +3147,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/60 rounded-xl p-2 border border-[#2A4355]">
+                        <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/60 rounded-xl p-2 border border-[#2A4355] relative">
                             <img src={viewPhoto.url} alt="Enlarged" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+                            {loadingFullPhoto && (
+                                <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur text-white text-[10px] font-semibold flex items-center gap-1.5 border border-white/20">
+                                    <RefreshCw size={12} className="animate-spin text-teal-400" />
+                                    Đang nạp ảnh nét HD...
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
