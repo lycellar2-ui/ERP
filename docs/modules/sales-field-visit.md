@@ -52,7 +52,7 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 ### 7. Giao Diện Ứng Dụng Di Động Chuyên Nghiệp (Mobile-First Native App Experience)
 - **Fixed Bottom Navigation Bar (Thanh điều hướng cố định đáy):**
   - Cố định ở mép dưới điện thoại (`fixed bottom-0 z-40`), kính mờ `backdrop-blur-lg`, phân cách nhẹ chuẩn app di động (Grab/Shopee/Zalo).
-  - 5 Tab tiện dụng: 📍 Hôm nay (kèm số điểm cần đi), 📅 Lịch tuần (kèm tổng điểm lên lịch), 📊 Tổng kết, 📸 Hình ảnh, 👑 Giám sát (dành cho Quản lý).
+  - 4 Tab tiện dụng: 📍 Hôm nay (kèm số điểm cần đi), 📅 Lịch tuần (kèm tổng điểm lên lịch), 📊 Tổng kết, 📸 Hình ảnh.
   - Tự động ẩn thanh tab trên đầu khi xem trên mobile (`md:hidden`), bổ sung khoảng đệm an toàn `pb-28 md:pb-16` chống che khuất nội dung.
 - **Thẻ Khách Hàng Thực Địa Hôm Nay (Touch-Friendly Native Cards):**
   - Tích hợp nút 1-chạm **[🗺️ Chỉ đường Maps]** mở trực tiếp Google Maps App dẫn đường tới quán.
@@ -61,6 +61,16 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 - **Thanh Chọn Ngày Ngang (Horizontal Date Strip T2 ➔ CN):**
   - Màn hình Kế hoạch tuần trên di động hiển thị thanh cuộn ngang 7 ngày với tên thứ, ngày tháng và số điểm đã lên lịch.
   - Chạm chọn ngày nào hiển thị ngay danh sách điểm đến của ngày đó bên dưới kèm nút **[+ Thêm Điểm]**, không phải cuộn trang dọc qua 7 khối bảng dài.
+
+### 8. Bảng Đối Soát Tuần Hợp Nhất Theo Từng Khách Hàng (Unified Review Audit)
+- **Hợp nhất Kế hoạch & Thực tế trên cùng 1 khách hàng:**
+  - Loại bỏ hoàn toàn mô hình tách 2 cột rời rạc ("Kế hoạch dự kiến" và "Thực tế thực hiện") gây khó khăn khi đối soát chéo.
+  - Mỗi khách hàng trong ngày được thể hiện bằng **1 thẻ duy nhất**, bao gồm:
+    - **Huy hiệu phân loại rõ ràng:** `📋 THEO KẾ HOẠCH` (điểm có lên lịch trước) vs `⚡ ĐỘT XUẤT` (điểm phát sinh thực địa ngoài kế hoạch).
+    - **Trạng thái thực hiện:** `✓ Đã hoàn thành` vs `Chưa đi / Bỏ lỡ`.
+    - **Đối soát song song bên trong thẻ:**
+      - **🎯 Kế hoạch:** Mục tiêu công việc đã đặt ra ban đầu (hoặc ghi chú "Không có trong kế hoạch ban đầu").
+      - **📍 Thực tế:** Giờ check-in, số phút làm việc, ghi chú kết quả thị trường và nút xem ảnh camera phân giải cao.
 
 ## Files
 
