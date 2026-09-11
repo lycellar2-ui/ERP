@@ -72,6 +72,23 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
       - **🎯 Kế hoạch:** Mục tiêu công việc đã đặt ra ban đầu (hoặc ghi chú "Không có trong kế hoạch ban đầu").
       - **📍 Thực tế:** Giờ check-in, số phút làm việc, ghi chú kết quả thị trường và nút xem ảnh camera phân giải cao.
 
+### 9. Thư Viện Hình Ảnh Check-in Trực Quan (Visual Photo Gallery Grid)
+- **Chuyển đổi giao diện Tab Hình ảnh:**
+  - Thay thế bảng table thô cũ bằng **Lưới thẻ ảnh trực quan (Photo Card Grid)** tỉ lệ 4:3 sắc nét, bo góc chuẩn mực và hiệu ứng hover zoom.
+  - **Huy hiệu thông tin trên ảnh:**
+    - Huy hiệu thời gian và ngày chụp rõ ràng trên góc ảnh.
+    - Phân loại `⚡ ĐỘT XUẤT` / `📋 KẾ HOẠCH`.
+    - Dải gradient đen mờ bên dưới ảnh hiển thị thông tin địa chỉ/toạ độ GPS thực tế.
+  - **Thông tin chi tiết thẻ ảnh:**
+    - Tên khách hàng, mã khách hàng `[KH...]` và kênh bán hàng.
+    - Thời lượng viếng thăm thực tế và ghi chú kết quả thực địa.
+    - Nút mở Google Maps dẫn đường tới toạ độ thực tế và nút xem ảnh toàn màn hình với bộ giải mã HD lazy loading.
+  - **Thanh công cụ lọc & Chuyển đổi linh hoạt:**
+    - Tìm kiếm nhanh theo tên khách, mã khách hoặc nội dung ghi chú.
+    - Bộ lọc nhanh ngày: Tất cả / Hôm nay hoặc chọn ngày bất kỳ.
+    - Lọc trạng thái check-in (Đang diễn ra / Hoàn tất).
+    - Nút chuyển đổi nhanh 2 chế độ hiển thị: **Lưới ảnh (Visual Grid)** và **Bảng kê (Audit Table)**.
+
 ## Files
 
 | File | Vai trò |

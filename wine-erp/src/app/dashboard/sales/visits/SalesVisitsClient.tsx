@@ -6,7 +6,7 @@ import {
     Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
     ExternalLink, Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
     Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare,
-    Wifi, WifiOff, UploadCloud, Target, Save
+    Wifi, WifiOff, UploadCloud, Target, Save, LayoutGrid, List
 } from 'lucide-react'
 import {
     checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
@@ -466,6 +466,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
     const [filterDate, setFilterDate] = useState('')
     const [filterStatus, setFilterStatus] = useState('ALL')
     const [filterSearch, setFilterSearch] = useState('')
+    const [historyViewMode, setHistoryViewMode] = useState<'GRID' | 'TABLE'>('GRID')
 
     // Actual check-ins done today (for Today's feed & photo display)
     const todayActualVisits = useMemo(() => {
@@ -2998,9 +2999,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* TAB 4: LỊCH SỬ & HÌNH ẢNH (HISTORY & PHOTOS) */}
             {/* ============================================================== */}
             {activeTab === 'HISTORY' && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                    {/* Filters Bar */}
-                    <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+                <div className="space-y-3.5 sm:space-y-4 animate-in fade-in duration-200">
+                    {/* 1. Header Toolbar & Filters */}
+                    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs">
                         <div className="flex items-center gap-2 flex-1 max-w-md">
                             <div className="relative flex-1">
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -3008,14 +3009,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     type="text"
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
-                                    placeholder="Tìm mã visit, tên khách, tên sale..."
-                                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                                    placeholder="Tìm theo tên khách, mã KH, ghi chú..."
+                                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 transition"
                                 />
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 flex-wrap">
-                            {/* Quick Date Chips */}
+                            {/* Quick Date Filter Chips */}
                             <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355] text-xs">
                                 <button
                                     type="button"
@@ -3041,7 +3042,8 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 dark:bg-[#142433] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                            {/* Date Picker Input */}
+                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 dark:bg-[#142433] px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#2A4355]">
                                 <Calendar size={13} className="text-slate-400" />
                                 <input
                                     type="date"
@@ -3061,16 +3063,48 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 )}
                             </div>
 
+                            {/* Status Filter */}
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                className="px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
+                                className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
                             >
                                 <option value="ALL">Tất cả trạng thái</option>
                                 <option value="IN_PROGRESS">Đang viếng thăm</option>
                                 <option value="COMPLETED">Đã hoàn thành</option>
                             </select>
 
+                            {/* View Switcher: Grid vs Table */}
+                            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                                <button
+                                    type="button"
+                                    onClick={() => setHistoryViewMode('GRID')}
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                        historyViewMode === 'GRID'
+                                            ? 'bg-white dark:bg-[#1F3342] text-teal-600 dark:text-[#87CBB9] shadow-xs'
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                    title="Chế độ Lưới ảnh trực quan"
+                                >
+                                    <LayoutGrid size={13} />
+                                    <span className="hidden sm:inline">Lưới ảnh</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setHistoryViewMode('TABLE')}
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                        historyViewMode === 'TABLE'
+                                            ? 'bg-white dark:bg-[#1F3342] text-teal-600 dark:text-[#87CBB9] shadow-xs'
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                    title="Chế độ Bảng danh sách"
+                                >
+                                    <List size={13} />
+                                    <span className="hidden sm:inline">Bảng</span>
+                                </button>
+                            </div>
+
+                            {/* Refresh button */}
                             <button
                                 type="button"
                                 onClick={fetchHistoryVisits}
@@ -3082,112 +3116,295 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         </div>
                     </div>
 
-                    {/* Table View */}
-                    <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-xs">
-                        <div className="p-3 bg-slate-50/50 dark:bg-[#142433]/50 border-b border-slate-200 dark:border-[#223645] flex items-center justify-between text-xs text-slate-500 dark:text-[#8AAEBB]">
+                    {/* 2. Sub-summary & Quick Stats */}
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8AAEBB] px-1">
+                        <div className="flex items-center gap-2">
                             <span>Hiển thị <strong>{filteredHistoryVisits.length}</strong> lượt viếng thăm</span>
-                            {filterDate && (
-                                <span className="font-mono">Ngày: <strong>{filterDate}</strong></span>
+                            <span>•</span>
+                            <span className="text-teal-600 dark:text-[#87CBB9] font-bold">
+                                {filteredHistoryVisits.filter(v => !!(v.checkInPhoto || v.checkOutPhoto)).length} có ảnh chụp thực tế
+                            </span>
+                        </div>
+                        {filterDate && (
+                            <span className="font-mono text-[11px] bg-slate-100 dark:bg-[#142433] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#2A4355]">
+                                Ngày: {filterDate}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* 3. Main Content: Grid Mode vs Table Mode */}
+                    {filteredHistoryVisits.length === 0 ? (
+                        <div className="py-16 text-center rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] p-6 space-y-3 shadow-xs">
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1E3040] text-slate-400 flex items-center justify-center mx-auto">
+                                <Camera size={24} />
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Không tìm thấy hình ảnh hoặc lượt check-in nào phù hợp bộ lọc.</p>
+                            {(filterDate || filterSearch || filterStatus !== 'ALL') && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFilterDate('')
+                                        setFilterSearch('')
+                                        setFilterStatus('ALL')
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9] text-xs font-bold cursor-pointer hover:underline"
+                                >
+                                    Xóa bộ lọc để xem tất cả
+                                </button>
                             )}
                         </div>
+                    ) : historyViewMode === 'GRID' ? (
+                        /* ================== GRID PHOTO GALLERY ================== */
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
+                            {filteredHistoryVisits.map(v => {
+                                const photoUrl = v.checkInPhoto || v.checkOutPhoto
+                                const timeStr = v.checkInTime ? new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''
+                                const dateStr = v.checkInTime ? new Date(v.checkInTime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : ''
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left">
-                                <thead>
-                                    <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
-                                        <th className="p-3.5 font-bold">Mã Visit</th>
-                                        <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
-                                        <th className="p-3.5 font-bold text-center">Ảnh Thực Tế (GPS)</th>
-                                        <th className="p-3.5 font-bold text-center">Giờ Check-in</th>
-                                        <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
-                                        <th className="p-3.5 font-bold">Hoạt Động & Ghi Chú</th>
-                                        <th className="p-3.5 font-bold text-center">Trạng Thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
-                                    {filteredHistoryVisits.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={7} className="text-center py-12 text-slate-400 space-y-2">
-                                                <p>Không có lượt viếng thăm nào khớp với bộ lọc hiện tại.</p>
-                                                {(filterDate || filterSearch || filterStatus !== 'ALL') && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setFilterDate('')
-                                                            setFilterSearch('')
-                                                            setFilterStatus('ALL')
-                                                        }}
-                                                        className="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9] text-xs font-bold hover:underline cursor-pointer"
-                                                    >
-                                                        Xóa bộ lọc để xem tất cả
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ) : filteredHistoryVisits.map(v => (
-                                        <tr key={v.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16232F] transition">
-                                            <td className="p-3.5 font-mono font-bold text-teal-600 dark:text-[#87CBB9]">
-                                                {v.visitNo}
-                                                {v.isUnplanned && (
-                                                    <span className="block text-[9px] font-sans font-bold text-amber-500">
-                                                        Đột xuất
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-3.5">
-                                                <div className="font-bold text-slate-900 dark:text-white">{v.customerName}</div>
-                                                <div className="text-[10px] text-slate-500 font-mono">
-                                                    [{v.customerCode}] • {v.salespersonName}
-                                                </div>
-                                            </td>
-                                            <td className="p-3.5 text-center">
-                                                {v.checkInPhoto || v.checkOutPhoto ? (
+                                return (
+                                    <div
+                                        key={v.id}
+                                        className="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-xs hover:shadow-md transition-all flex flex-col group"
+                                    >
+                                        {/* Photo Box with Overlay and Watermark */}
+                                        <div
+                                            className="relative aspect-4/3 bg-slate-900 overflow-hidden cursor-pointer flex items-center justify-center"
+                                            onClick={() => {
+                                                if (photoUrl) {
+                                                    setViewPhoto({
+                                                        title: `Ảnh Check-in: ${v.customerName}`,
+                                                        url: photoUrl,
+                                                        visitId: v.id
+                                                    })
+                                                }
+                                            }}
+                                        >
+                                            {photoUrl ? (
+                                                <>
                                                     <img
-                                                        src={v.checkInPhoto || v.checkOutPhoto}
-                                                        alt="Check-in"
-                                                        className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
-                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)! })}
+                                                        src={photoUrl}
+                                                        alt={v.customerName}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        loading="lazy"
                                                     />
-                                                ) : <span className="text-slate-400 italic">Chưa có</span>}
-                                            </td>
-                                            <td className="p-3.5 text-center font-bold font-mono text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
-                                                {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className="p-3.5 max-w-xs">
-                                                {v.checkInLat && v.checkInLng ? (
-                                                    <div className="space-y-0.5">
+
+                                                    {/* Shadow Gradient */}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+
+                                                    {/* Top Badges */}
+                                                    <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-1.5 pointer-events-none">
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/60 backdrop-blur-xs text-white border border-white/10 flex items-center gap-1 shadow-xs">
+                                                            <Clock size={10} className="text-teal-400" />
+                                                            <span>{timeStr} • {dateStr}</span>
+                                                        </span>
+
+                                                        {v.isUnplanned ? (
+                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs">
+                                                                ⚡ ĐỘT XUẤT
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white shadow-xs">
+                                                                📋 KẾ HOẠCH
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Bottom Location Overlay */}
+                                                    <div className="absolute bottom-2.5 inset-x-2.5 text-white pointer-events-none space-y-0.5">
+                                                        {v.checkInAddress ? (
+                                                            <p className="text-[10px] truncate text-slate-200 flex items-center gap-1" title={v.checkInAddress}>
+                                                                <MapPin size={10} className="text-teal-400 shrink-0" />
+                                                                <span className="truncate">{v.checkInAddress}</span>
+                                                            </p>
+                                                        ) : v.checkInLat && v.checkInLng ? (
+                                                            <p className="text-[10px] font-mono text-slate-300 flex items-center gap-1">
+                                                                <MapPin size={10} className="text-teal-400 shrink-0" />
+                                                                <span>{v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)}</span>
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+
+                                                    {/* Hover Overlay Zoom Icon */}
+                                                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1">
+                                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center shadow-lg">
+                                                            <Eye size={18} />
+                                                        </div>
+                                                        <span className="text-[10px] font-bold tracking-wide">Phóng to ảnh HD</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
+                                                    <Camera size={26} className="opacity-40" />
+                                                    <span className="text-[10px] italic">Chưa có ảnh check-in</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Card Details Body */}
+                                        <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                                            <div className="space-y-1.5">
+                                                {/* Customer title & Channel */}
+                                                <div className="flex items-start justify-between gap-1.5">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-1 flex-wrap">
+                                                            {v.customerCode && (
+                                                                <span className="text-[10px] font-mono text-teal-600 dark:text-[#87CBB9] font-bold">
+                                                                    [{v.customerCode}]
+                                                                </span>
+                                                            )}
+                                                            <span className="font-bold text-xs text-slate-900 dark:text-white truncate" title={v.customerName}>
+                                                                {v.customerName}
+                                                            </span>
+                                                        </div>
+                                                        {v.customerChannel && (
+                                                            <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-[#1A2C3A] text-slate-500 dark:text-slate-400">
+                                                                {v.customerChannel}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {v.durationMinutes > 0 && (
+                                                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded shrink-0">
+                                                            {v.durationMinutes}p
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Notes or Purpose */}
+                                                {v.notes ? (
+                                                    <div className="text-[11px] text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#162534] p-1.5 rounded-lg border border-slate-100 dark:border-[#223645] line-clamp-2" title={v.notes}>
+                                                        💬 {v.notes}
+                                                    </div>
+                                                ) : v.purpose ? (
+                                                    <div className="text-[11px] text-slate-400 italic line-clamp-1" title={v.purpose}>
+                                                        🎯 {v.purpose}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+
+                                            {/* Action Footer */}
+                                            <div className="pt-2 border-t border-slate-100 dark:border-[#1E3040] flex items-center justify-between gap-2 text-xs">
+                                                <span className="text-[10px] text-slate-400 font-mono truncate">
+                                                    #{v.visitNo || v.id?.slice(-6)}
+                                                </span>
+
+                                                <div className="flex items-center gap-2">
+                                                    {v.checkInLat && v.checkInLng && (
                                                         <a
                                                             href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="inline-flex items-center gap-1 text-teal-600 dark:text-[#87CBB9] hover:underline font-mono text-[11px]"
+                                                            className="text-[10px] font-bold text-slate-500 hover:text-teal-600 dark:hover:text-[#87CBB9] flex items-center gap-0.5 transition"
+                                                            title="Xem vị trí trên Google Maps"
                                                         >
-                                                            <Navigation size={11} /> {v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)}
+                                                            <Navigation size={10} />
+                                                            <span>Maps</span>
                                                         </a>
-                                                        {v.checkInAddress && (
-                                                            <p className="text-[10px] text-slate-500 truncate" title={v.checkInAddress}>
-                                                                {v.checkInAddress}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                ) : <span className="text-slate-400">Không có GPS</span>}
-                                            </td>
-                                            <td className="p-3.5 max-w-xs text-slate-700 dark:text-slate-200 text-xs">
-                                                <div className="line-clamp-2" title={v.notes || v.purpose}>
-                                                    {v.notes || v.purpose || <span className="text-slate-400 italic">Chưa có</span>}
+                                                    )}
+
+                                                    {photoUrl && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setViewPhoto({
+                                                                title: `Ảnh Check-in: ${v.customerName}`,
+                                                                url: photoUrl,
+                                                                visitId: v.id
+                                                            })}
+                                                            className="text-[10px] font-bold text-teal-600 dark:text-[#87CBB9] hover:underline flex items-center gap-0.5 cursor-pointer"
+                                                        >
+                                                            <Eye size={11} />
+                                                            <span>Xem ảnh</span>
+                                                        </button>
+                                                    )}
                                                 </div>
-                                            </td>
-                                            <td className="p-3.5 text-center whitespace-nowrap">
-                                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                                                    ✓ Hoàn thành
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
-                    </div>
+                    ) : (
+                        /* ================== TABLE VIEW (AUDIT MODE) ================== */
+                        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-xs">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left">
+                                    <thead>
+                                        <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
+                                            <th className="p-3.5 font-bold">Mã Visit</th>
+                                            <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
+                                            <th className="p-3.5 font-bold text-center">Ảnh Thực Tế (GPS)</th>
+                                            <th className="p-3.5 font-bold text-center">Giờ Check-in</th>
+                                            <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
+                                            <th className="p-3.5 font-bold">Hoạt Động & Ghi Chú</th>
+                                            <th className="p-3.5 font-bold text-center">Trạng Thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
+                                        {filteredHistoryVisits.map(v => (
+                                            <tr key={v.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16232F] transition">
+                                                <td className="p-3.5 font-mono font-bold text-teal-600 dark:text-[#87CBB9]">
+                                                    {v.visitNo}
+                                                    {v.isUnplanned && (
+                                                        <span className="block text-[9px] font-sans font-bold text-amber-500">
+                                                            Đột xuất
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3.5">
+                                                    <div className="font-bold text-slate-900 dark:text-white">{v.customerName}</div>
+                                                    <div className="text-[10px] text-slate-500 font-mono">
+                                                        [{v.customerCode}] • {v.salespersonName}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3.5 text-center">
+                                                    {v.checkInPhoto || v.checkOutPhoto ? (
+                                                        <img
+                                                            src={v.checkInPhoto || v.checkOutPhoto}
+                                                            alt="Check-in"
+                                                            className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
+                                                            onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
+                                                        />
+                                                    ) : <span className="text-slate-400 italic">Chưa có</span>}
+                                                </td>
+                                                <td className="p-3.5 text-center font-bold font-mono text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
+                                                    {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                </td>
+                                                <td className="p-3.5 max-w-xs">
+                                                    {v.checkInLat && v.checkInLng ? (
+                                                        <div className="space-y-0.5">
+                                                            <a
+                                                                href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 text-teal-600 dark:text-[#87CBB9] hover:underline font-mono text-[11px]"
+                                                            >
+                                                                <Navigation size={11} /> {v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)}
+                                                            </a>
+                                                            {v.checkInAddress && (
+                                                                <p className="text-[10px] text-slate-500 truncate" title={v.checkInAddress}>
+                                                                    {v.checkInAddress}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ) : <span className="text-slate-400">Không có GPS</span>}
+                                                </td>
+                                                <td className="p-3.5 max-w-xs text-slate-700 dark:text-slate-200 text-xs">
+                                                    <div className="line-clamp-2" title={v.notes || v.purpose}>
+                                                        {v.notes || v.purpose || <span className="text-slate-400 italic">Chưa có</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3.5 text-center whitespace-nowrap">
+                                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                                        ✓ Hoàn thành
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
