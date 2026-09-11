@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 16:25 | Wine ERP v10.25 — Giao Diện Ứng Dụng Di Động Chuyên Nghiệp (Mobile-First Native App Experience) cho SFV: Fixed Bottom Navigation Bar, 1-Chạm Chỉ Đường Maps & Gọi Điện, Thanh Chọn Ngày Ngang Tuần (T2-CN)*
+*Last updated: 2026-09-11 16:34 | Wine ERP v10.26 — Phân Tách Tuyệt Đối Vai Trò Quản Lý (Báo Cáo Chung, Ẩn Tab Check-in) vs Sales Thực Địa ("Tài Khoản Nào Biết Tài Khoản Đó"), Chuẩn Hoá Tiêu Đề Header "Quản Lý Check-in Thị Trường"*
 

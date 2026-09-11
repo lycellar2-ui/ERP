@@ -166,6 +166,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/warehouse', title: 'Kho Hàng' },
             { path: '/dashboard/transfers', title: 'Chuyển Kho' },
             { path: '/dashboard/stock-count', title: 'Kiểm Kê' },
+            { path: '/dashboard/sales/visits', title: 'Quản Lý Check-in Thị Trường' },
             { path: '/dashboard/sales', title: 'Đơn Bán Hàng' },
             { path: '/dashboard/quotations', title: 'Báo Giá' },
             { path: '/dashboard/price-list', title: 'Bảng Giá' },

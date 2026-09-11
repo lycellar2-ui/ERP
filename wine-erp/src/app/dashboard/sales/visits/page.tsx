@@ -21,10 +21,13 @@ export default async function SalesVisitsPage() {
         }) as any
     }
 
-    const isManager = user?.roles?.some((r: any) => {
-        const roleName = r.role?.name || r
-        return ['Admin', 'Sales Manager', 'CEO', 'Manager', 'Ban Giám Đốc'].includes(roleName)
-    }) ?? true
+    const managerRoleKeywords = ['admin', 'sales manager', 'ceo', 'manager', 'ban giám đốc', 'system admin']
+    const isManager = Boolean(
+        user?.roles?.some((r: any) => {
+            const roleName = typeof r === 'string' ? r : r.role?.name || r.name
+            return typeof roleName === 'string' && managerRoleKeywords.includes(roleName.trim().toLowerCase())
+        })
+    )
 
     const todayStr = new Date().toISOString().slice(0, 10)
 
