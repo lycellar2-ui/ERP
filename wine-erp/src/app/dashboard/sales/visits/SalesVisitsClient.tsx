@@ -727,34 +727,32 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
     return (
         <div className="space-y-6 max-w-screen-xl mx-auto pb-16">
-            {/* Top Header & Navigation */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#111C24] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-xs">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9]">
-                            <MapPin size={22} />
-                        </div>
-                        <div>
-                            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                Quản Trị Hành Trình Thị Trường (Sales Field Operations)
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-[#8AAEBB] mt-0.5">
-                                Chu trình 3 bước: Lập kế hoạch tuần ➔ Check-in thực địa ➔ Tổng kết & Review KPI
-                            </p>
-                        </div>
+            {/* 1. TOP HEADER & ACTIONS */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-xs">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9]">
+                        <MapPin size={20} />
+                    </div>
+                    <div>
+                        <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                            Quản Trị Hành Trình Thị Trường
+                        </h2>
+                        <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
+                            Kế hoạch tuần ➔ Check-in thực địa ➔ Tổng kết & Đánh giá KPI
+                        </p>
                     </div>
                 </div>
 
                 {/* Salesperson Selector (For Managers) & Quick Lead button */}
-                <div className="flex items-center flex-wrap gap-2.5">
+                <div className="flex items-center flex-wrap gap-2">
                     {isManager && users && users.length > 0 && (
-                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#16232F] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#2A4355] text-xs">
-                            <User size={14} className="text-slate-400 dark:text-[#87CBB9]" />
-                            <span className="text-slate-500 dark:text-slate-400 font-medium">Xem Sale:</span>
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#16232F] px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#2A4355] text-xs">
+                            <User size={13} className="text-slate-400 dark:text-[#87CBB9]" />
+                            <span className="text-slate-500 dark:text-slate-400 font-medium text-[11px]">Sale:</span>
                             <select
                                 value={selectedSalespersonId}
                                 onChange={e => setSelectedSalespersonId(e.target.value)}
-                                className="bg-transparent font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                                className="bg-transparent font-bold text-slate-800 dark:text-white text-xs outline-none cursor-pointer"
                             >
                                 {users.map(u => (
                                     <option key={u.id} value={u.id} className="bg-white dark:bg-[#111C24] text-slate-900 dark:text-white">
@@ -768,43 +766,80 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                     <button
                         type="button"
                         onClick={() => setShowQuickCreateModal(true)}
-                        className="px-3.5 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                        className="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                     >
-                        <Plus size={15} /> Tạo Nhanh Khách Mới
+                        <Plus size={14} /> Tạo Khách Mới
                     </button>
                 </div>
             </div>
 
-            {/* GPS Status Indicator Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Navigation size={14} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Định vị GPS:</span>
-                    {gettingLocation ? (
-                        <span className="text-slate-500 dark:text-slate-400 italic">Đang dò tìm toạ độ GPS chính xác...</span>
-                    ) : coords.lat ? (
-                        <span className="font-mono text-slate-900 dark:text-white truncate" title={coords.address}>
-                            {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
+            {/* 2. NAVIGATION TABS (PROMINENT AT TOP) */}
+            <div className="flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] gap-1 overflow-x-auto shadow-xs">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('CHECKIN')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'CHECKIN'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <MapPin size={15} className={activeTab === 'CHECKIN' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Check-in Hôm Nay</span>
+                    {todayPlanVisits.length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-mono">
+                            {todayPlanVisits.length}
                         </span>
-                    ) : (
-                        <span className="text-amber-600 dark:text-amber-400">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
                     )}
-                </div>
+                </button>
 
-                <div className="flex items-center gap-2 shrink-0">
-                    <button
-                        type="button"
-                        onClick={requestGPS}
-                        disabled={gettingLocation}
-                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-50 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
-                    >
-                        <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
-                        Lấy Lại Toạ Độ
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('PLANNING')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'PLANNING'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <Calendar size={15} className={activeTab === 'PLANNING' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Kế Hoạch Tuần</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
+                        {planVisits.length}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('REVIEW')}
+                    className={`flex-1 min-w-[135px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'REVIEW'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <TrendingUp size={15} className={activeTab === 'REVIEW' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Tổng Kết & Review Tuần</span>
+                    {weeklyPlan?.status === 'SUBMITTED' && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    )}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('HISTORY')}
+                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        activeTab === 'HISTORY'
+                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
+                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                    <FileText size={15} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
+                    <span>Lịch Sử & Hình Ảnh</span>
+                </button>
             </div>
 
-            {/* Active Visit Banner (If currently in progress) */}
+            {/* 3. ACTIVE VISIT BANNER (If ongoing) */}
             {activeVisit && (
                 <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border-2 border-emerald-500/40 shadow-lg animate-in fade-in duration-300">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -860,99 +895,62 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                 </div>
             )}
 
-            {/* Navigation Tabs (4 TABS) */}
-            <div className="flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] gap-1 overflow-x-auto">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('CHECKIN')}
-                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        activeTab === 'CHECKIN'
-                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
-                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                >
-                    <MapPin size={15} className={activeTab === 'CHECKIN' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                    <span>Check-in Hôm Nay</span>
-                    {todayPlanVisits.length > 0 && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-mono">
-                            {todayPlanVisits.length}
-                        </span>
-                    )}
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('PLANNING')}
-                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        activeTab === 'PLANNING'
-                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
-                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                >
-                    <Calendar size={15} className={activeTab === 'PLANNING' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                    <span>Kế Hoạch Tuần</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
-                        {planVisits.length}
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('REVIEW')}
-                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        activeTab === 'REVIEW'
-                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
-                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                >
-                    <TrendingUp size={15} className={activeTab === 'REVIEW' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                    <span>Tổng Kết & Review Tuần</span>
-                    {weeklyPlan?.status === 'SUBMITTED' && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    )}
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('HISTORY')}
-                    className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        activeTab === 'HISTORY'
-                            ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-[#2A4355]'
-                            : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                >
-                    <FileText size={15} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                    <span>Lịch Sử & Hình Ảnh</span>
-                </button>
-            </div>
-
             {/* ============================================================== */}
             {/* TAB 1: CHECK-IN HÔM NAY (DAILY FIELD WORK) */}
             {/* ============================================================== */}
             {activeTab === 'CHECKIN' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                    {/* Header Controls for Today */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
-                        <div>
-                            <span className="text-[11px] uppercase tracking-wider text-teal-600 dark:text-[#87CBB9] font-black font-mono">
-                                HÔM NAY: {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
-                            </span>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
-                                Danh Sách Điểm Viếng Thăm Trong Ngày
-                            </h3>
+                    {/* Header Controls for Today & Integrated GPS Bar */}
+                    <div className="bg-white dark:bg-[#111C24] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#223645] space-y-3.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <span className="text-[11px] uppercase tracking-wider text-teal-600 dark:text-[#87CBB9] font-black font-mono">
+                                    HÔM NAY: {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                </span>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                                    Danh Sách Điểm Viếng Thăm Trong Ngày
+                                </h3>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setUnplannedCustomerId('')
+                                        setUnplannedPurpose('')
+                                        setShowUnplannedModal(true)
+                                    }}
+                                    className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                                >
+                                    <Sparkles size={14} /> Check-in Đột Xuất (Ngoài Kế Hoạch)
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        {/* GPS Status Indicator embedded in Today's view */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <Navigation size={13} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Vị trí hiện tại:</span>
+                                {gettingLocation ? (
+                                    <span className="text-slate-500 dark:text-slate-400 italic">Đang dò tìm toạ độ GPS...</span>
+                                ) : coords.lat ? (
+                                    <span className="font-mono text-slate-900 dark:text-white truncate text-[11px]" title={coords.address}>
+                                        {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
+                                    </span>
+                                ) : (
+                                    <span className="text-amber-600 dark:text-amber-400 text-[11px]">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
+                                )}
+                            </div>
+
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setUnplannedCustomerId('')
-                                    setUnplannedPurpose('')
-                                    setShowUnplannedModal(true)
-                                }}
-                                className="px-4 py-2.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                                onClick={requestGPS}
+                                disabled={gettingLocation}
+                                className="self-end sm:self-auto px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-100 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
                             >
-                                <Sparkles size={14} /> Check-in Đột Xuất (Ngoài Kế Hoạch)
+                                <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
+                                Làm mới GPS
                             </button>
                         </div>
                     </div>
