@@ -2275,122 +2275,122 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* ============================================================== */}
             {activeTab === 'PLANNING' && (
                 <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
-                    {/* Compact Unified Week Navigation & Focus Goal Bar */}
-                    <div className="bg-white dark:bg-[#111C24] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs space-y-2">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                            {/* Left: Week Switcher + Info Tags */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-lg border border-slate-200 dark:border-[#2A4355]">
+                    {/* Ultra-compact Week Navigation & Focus Goal Bar */}
+                    <div className="bg-white dark:bg-[#111C24] p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                            {/* Left: Quick Week Switcher & Range */}
+                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                <div className="flex items-center bg-slate-100 dark:bg-[#142433] rounded-lg border border-slate-200 dark:border-[#2A4355] p-0.5">
                                     <button
                                         type="button"
                                         onClick={handlePrevWeek}
-                                        className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                        className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
                                         title="Tuần trước"
                                     >
-                                        <ChevronLeft size={14} />
+                                        <ChevronLeft size={13} />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleCurrentWeek}
-                                        className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                        className="px-2 py-0.5 text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
                                     >
-                                        Tuần {currentWeek.week} / {currentWeek.year}
+                                        Tuần {currentWeek.week}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleNextWeek}
-                                        className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                        className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
                                         title="Tuần sau"
                                     >
-                                        <ChevronRight size={14} />
+                                        <ChevronRight size={13} />
                                     </button>
                                 </div>
 
-                                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#142433] px-2 py-1 rounded-md border border-slate-200 dark:border-[#2A4355]">
+                                <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
                                     {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
                                 </span>
 
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9] font-mono">
+                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9] font-mono">
                                     {planVisits.length} điểm
                                 </span>
 
                                 {weeklyPlan?.status && (
-                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                                        weeklyPlan.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' :
-                                        weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' :
-                                        'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
+                                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                                        weeklyPlan.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                        weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
+                                        'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     }`}>
-                                        {weeklyPlan.status === 'APPROVED' ? '✓ Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? '⏳ Đã nộp' : '📝 Nháp'}
+                                        {weeklyPlan.status === 'APPROVED' ? 'Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? 'Chờ duyệt' : 'Nháp'}
                                     </span>
                                 )}
                             </div>
 
                             {/* Right: Save Plan Button */}
-                            <div className="flex items-center gap-2 self-end md:self-auto">
-                                <button
-                                    type="button"
-                                    onClick={handleSavePlan}
-                                    disabled={savingPlan}
-                                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
-                                >
-                                    <Save size={13} className={savingPlan ? "animate-spin" : ""} />
-                                    <span>{savingPlan ? 'Đang lưu...' : 'Lưu Kế Hoạch'}</span>
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleSavePlan}
+                                disabled={savingPlan}
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1 shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
+                            >
+                                <Save size={13} className={savingPlan ? "animate-spin" : ""} />
+                                <span>{savingPlan ? 'Đang lưu...' : 'Lưu'}</span>
+                            </button>
                         </div>
 
                         {/* Inline Focus Goal Row */}
-                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-[#1E3040]">
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-[#8AAEBB] flex items-center gap-1 shrink-0">
-                                <Target size={13} className="text-teal-600 dark:text-[#87CBB9]" />
-                                <span className="hidden sm:inline">Trọng tâm tuần:</span>
-                            </span>
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/70 dark:border-[#223645] focus-within:border-teal-500 transition">
+                            <Target size={13} className="text-teal-600 dark:text-[#87CBB9] shrink-0" />
                             <input
                                 type="text"
                                 value={planNote}
                                 onChange={e => setPlanNote(e.target.value)}
-                                placeholder="Mục tiêu trọng tâm tuần này (ví dụ: chào vang Ý mới, kiểm tra công nợ...)"
-                                className="w-full py-1 px-2.5 text-base sm:text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/80 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
+                                placeholder="Mục tiêu tuần (chào hàng, công nợ...)"
+                                className="w-full text-base sm:text-xs bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
                             />
                         </div>
                     </div>
 
                     {/* MOBILE HORIZONTAL DATE STRIP + ACTIVE DAY SCHEDULE */}
-                    <div className="md:hidden space-y-4">
-                        {/* Horizontal Date Strip with Snap Scroll */}
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x snap-mandatory">
+                    <div className="md:hidden space-y-2.5">
+                        {/* Horizontal Date Strip with Snap Scroll (Sleek Calendar Chips) */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
                             {weekDates.map(day => {
                                 const dayVisits = planVisits.filter(v => v.visitDate === day.dateStr)
                                 const isSelected = (mobileSelectedDate || todayStr) === day.dateStr
+                                const shortDay = day.dayName.replace('Thứ ', 'T').replace('Chủ Nhật', 'CN')
+                                const dayNum = day.dateStr.split('-')[2]
+                                const monthNum = day.dateStr.split('-')[1]
 
                                 return (
                                     <button
                                         key={day.dateStr}
                                         type="button"
                                         onClick={() => setMobileSelectedDate(day.dateStr)}
-                                        className={`shrink-0 snap-center flex flex-col items-center py-2.5 px-3.5 rounded-2xl border transition-all text-center min-w-[76px] cursor-pointer active:scale-95 ${
+                                        className={`shrink-0 snap-center flex flex-col items-center py-1.5 px-2.5 rounded-xl border transition-all text-center min-w-[50px] cursor-pointer active:scale-95 ${
                                             isSelected
-                                                ? 'bg-teal-600 text-white border-teal-600 shadow-md ring-2 ring-teal-500/30 font-bold'
+                                                ? 'bg-teal-600 text-white border-teal-600 shadow-sm font-bold'
                                                 : day.isToday
-                                                    ? 'bg-teal-500/10 border-teal-500/40 text-teal-700 dark:text-[#87CBB9]'
+                                                    ? 'bg-teal-500/10 border-teal-500/30 text-teal-700 dark:text-[#87CBB9]'
                                                     : 'bg-white dark:bg-[#111C24] border-slate-200 dark:border-[#223645] text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
-                                        <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-teal-100' : 'text-slate-400 dark:text-slate-400'}`}>
-                                            {day.dayName}
+                                        <span className={`text-[10px] font-bold uppercase ${isSelected ? 'text-teal-100' : 'text-slate-400'}`}>
+                                            {shortDay}
                                         </span>
-                                        <span className="text-sm font-black mt-0.5">
-                                            {day.dateStr.split('-').slice(1).reverse().join('/')}
+                                        <span className="text-xs font-black font-mono mt-0.5">
+                                            {dayNum}/{monthNum}
                                         </span>
-                                        <span className={`mt-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono ${
-                                            isSelected
-                                                ? 'bg-white/20 text-white'
-                                                : dayVisits.length > 0
-                                                    ? 'bg-teal-500/20 text-teal-600 dark:text-[#87CBB9]'
-                                                    : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-400'
-                                        }`}>
-                                            {dayVisits.length} điểm
-                                        </span>
+                                        {dayVisits.length > 0 ? (
+                                            <span className={`mt-0.5 px-1 py-0.1 rounded-full text-[9px] font-bold font-mono ${
+                                                isSelected
+                                                    ? 'bg-white/25 text-white'
+                                                    : 'bg-teal-500/20 text-teal-600 dark:text-[#87CBB9]'
+                                            }`}>
+                                                {dayVisits.length}
+                                            </span>
+                                        ) : (
+                                            <span className="mt-0.5 text-[9px] text-transparent select-none">-</span>
+                                        )}
                                     </button>
                                 )
                             })}
@@ -2404,19 +2404,20 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             const dayVisits = planVisits.filter(v => v.visitDate === currentSelectedDay.dateStr)
 
                             return (
-                                <div className="p-4 rounded-2xl border border-teal-500/30 bg-white dark:bg-[#111C24] space-y-3.5 shadow-xs">
-                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#223645] pb-2.5">
+                                <div className="p-3 rounded-xl border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] space-y-2.5 shadow-xs">
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#223645] pb-2">
                                         <div>
-                                            <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                                                <span>{currentSelectedDay.dayName} ({currentSelectedDay.dateStr})</span>
+                                            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                <span>{currentSelectedDay.dayName}</span>
+                                                <span className="text-[11px] font-mono text-slate-400 font-normal">({currentSelectedDay.dateStr.slice(5).replace('-', '/')})</span>
                                                 {currentSelectedDay.isToday && (
-                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9]">
+                                                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9]">
                                                         Hôm nay
                                                     </span>
                                                 )}
                                             </h4>
-                                            <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
-                                                Có {dayVisits.length} điểm viếng thăm đã lên lịch
+                                            <p className="text-[10px] text-slate-400">
+                                                {dayVisits.length} điểm đã lên lịch
                                             </p>
                                         </div>
 
@@ -2428,15 +2429,15 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 setAddActivityType('PERIODIC_CARE')
                                                 setAddCustomPurpose('')
                                             }}
-                                            className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 transition cursor-pointer shadow-xs"
+                                            className="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-xs min-h-[34px]"
                                         >
-                                            <Plus size={14} /> Thêm Điểm
+                                            <Plus size={13} /> Thêm Điểm
                                         </button>
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                         {dayVisits.length === 0 ? (
-                                            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-[#142433] rounded-xl border border-dashed border-slate-200 dark:border-[#2A4355]">
+                                            <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-[#142433] rounded-xl border border-dashed border-slate-200 dark:border-[#2A4355]">
                                                 Chưa lên lịch điểm nào cho ngày {currentSelectedDay.dayName}. Bấm "Thêm Điểm" để lên lịch.
                                             </div>
                                         ) : (
@@ -2445,7 +2446,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 return (
                                                     <div
                                                         key={item.id || vIdx}
-                                                        className="p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs flex items-start justify-between gap-2"
+                                                        className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/80 dark:border-[#2A4355] text-xs flex items-start justify-between gap-2"
                                                     >
                                                         <div className="min-w-0 flex-1 space-y-0.5">
                                                             <div className="font-bold text-slate-900 dark:text-white line-clamp-1">
