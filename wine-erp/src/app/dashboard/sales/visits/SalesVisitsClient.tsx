@@ -6,7 +6,7 @@ import {
     Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
     ExternalLink, Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
     Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare,
-    Wifi, WifiOff, UploadCloud
+    Wifi, WifiOff, UploadCloud, Target, Save
 } from 'lucide-react'
 import {
     checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
@@ -2251,81 +2251,85 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* TAB 2: KẾ HOẠCH TUẦN (WEEKLY PLANNING) */}
             {/* ============================================================== */}
             {activeTab === 'PLANNING' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                    {/* Week Navigation Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355]">
-                                <button
-                                    type="button"
-                                    onClick={handlePrevWeek}
-                                    className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
-                                    title="Tuần trước"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCurrentWeek}
-                                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
-                                >
-                                    Tuần Này
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleNextWeek}
-                                    className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
-                                    title="Tuần kế"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
+                <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
+                    {/* Compact Unified Week Navigation & Focus Goal Bar */}
+                    <div className="bg-white dark:bg-[#111C24] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs space-y-2">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            {/* Left: Week Switcher + Info Tags */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-lg border border-slate-200 dark:border-[#2A4355]">
+                                    <button
+                                        type="button"
+                                        onClick={handlePrevWeek}
+                                        className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                        title="Tuần trước"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleCurrentWeek}
+                                        className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                    >
+                                        Tuần {currentWeek.week} / {currentWeek.year}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleNextWeek}
+                                        className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
+                                        title="Tuần sau"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+
+                                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#142433] px-2 py-1 rounded-md border border-slate-200 dark:border-[#2A4355]">
+                                    {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
+                                </span>
+
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9] font-mono">
+                                    {planVisits.length} điểm
+                                </span>
+
+                                {weeklyPlan?.status && (
+                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                        weeklyPlan.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' :
+                                        weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' :
+                                        'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
+                                    }`}>
+                                        {weeklyPlan.status === 'APPROVED' ? '✓ Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? '⏳ Đã nộp' : '📝 Nháp'}
+                                    </span>
+                                )}
                             </div>
 
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                    <span>Tuần {currentWeek.week} / Năm {currentWeek.year}</span>
-                                    {weeklyPlan?.status && (
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                            weeklyPlan.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                                            weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                                            'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                        }`}>
-                                            {weeklyPlan.status === 'APPROVED' ? 'Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? 'Đã nộp chốt' : 'Bản nháp'}
-                                        </span>
-                                    )}
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-[#8AAEBB]">
-                                    Từ {weekDates[0]?.dateStr} đến {weekDates[6]?.dateStr} • Tổng cộng {planVisits.length} điểm lên lịch
-                                </p>
+                            {/* Right: Save Plan Button */}
+                            <div className="flex items-center gap-2 self-end md:self-auto">
+                                <button
+                                    type="button"
+                                    onClick={handleSavePlan}
+                                    disabled={savingPlan}
+                                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
+                                >
+                                    <Save size={13} className={savingPlan ? "animate-spin" : ""} />
+                                    <span>{savingPlan ? 'Đang lưu...' : 'Lưu Kế Hoạch'}</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={handleSavePlan}
-                                disabled={savingPlan}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
-                            >
-                                <Check size={15} />
-                                {savingPlan ? 'Đang lưu kế hoạch...' : 'Lưu Kế Hoạch Tuần'}
-                            </button>
+                        {/* Inline Focus Goal Row */}
+                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-[#1E3040]">
+                            <span className="text-[11px] font-bold text-slate-500 dark:text-[#8AAEBB] flex items-center gap-1 shrink-0">
+                                <Target size={13} className="text-teal-600 dark:text-[#87CBB9]" />
+                                <span className="hidden sm:inline">Trọng tâm tuần:</span>
+                            </span>
+                            <input
+                                type="text"
+                                value={planNote}
+                                onChange={e => setPlanNote(e.target.value)}
+                                placeholder="Mục tiêu trọng tâm tuần này (ví dụ: chào vang Ý mới, kiểm tra công nợ...)"
+                                className="w-full py-1 px-2.5 text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/80 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
+                            />
                         </div>
-                    </div>
-
-                    {/* Note of the week */}
-                    <div className="bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645] space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                            <MessageSquare size={13} className="text-teal-600 dark:text-[#87CBB9]" />
-                            Mục tiêu & Trọng tâm tuần này (Sales Focus):
-                        </label>
-                        <input
-                            type="text"
-                            value={planNote}
-                            onChange={e => setPlanNote(e.target.value)}
-                            placeholder="Ví dụ: Tập trung đẩy dòng vang Ý mới cho các nhà hàng Thảo Điền, chốt công nợ tháng trước..."
-                            className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
-                        />
                     </div>
 
                     {/* MOBILE HORIZONTAL DATE STRIP + ACTIVE DAY SCHEDULE */}
@@ -2544,95 +2548,95 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* TAB 3: TỔNG KẾT & REVIEW TUẦN (WEEKLY REVIEW & AUDIT) */}
             {/* ============================================================== */}
             {activeTab === 'REVIEW' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
                     {/* Header Controls for Review */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 rounded-2xl border border-slate-200 dark:border-[#223645]">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355]">
-                                <button type="button" onClick={handlePrevWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
-                                    <ChevronLeft size={16} />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-[#111C24] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-lg border border-slate-200 dark:border-[#2A4355]">
+                                <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title="Tuần trước">
+                                    <ChevronLeft size={14} />
                                 </button>
-                                <button type="button" onClick={handleCurrentWeek} className="px-3 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
-                                    Tuần Này
+                                <button type="button" onClick={handleCurrentWeek} className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    Tuần {currentWeek.week} / {currentWeek.year}
                                 </button>
-                                <button type="button" onClick={handleNextWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
-                                    <ChevronRight size={16} />
+                                <button type="button" onClick={handleNextWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title="Tuần sau">
+                                    <ChevronRight size={14} />
                                 </button>
                             </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                    Báo Cáo Tổng Kết Tuần {currentWeek.week} / {currentWeek.year}
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-[#8AAEBB]">
-                                    Đối soát Kế Hoạch vs Thực Tế (Planned vs Actual)
-                                </p>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                    Báo Cáo Tổng Kết Tuần
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-normal hidden md:inline">
+                                    • Đối soát Kế Hoạch vs Thực Tế
+                                </span>
                             </div>
                         </div>
 
                         {/* Status badge */}
-                        <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-xl text-xs font-black ${
-                                weeklyPlan?.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                                weeklyPlan?.status === 'SUBMITTED' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                                'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${
+                                weeklyPlan?.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' :
+                                weeklyPlan?.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' :
+                                'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                             }`}>
-                                {weeklyPlan?.status === 'APPROVED' ? '✓ QUẢN LÝ ĐÃ PHÊ DUYỆT' :
-                                 weeklyPlan?.status === 'SUBMITTED' ? '⏳ ĐÃ CHỐT - ĐANG CHỜ DUYỆT' :
+                                {weeklyPlan?.status === 'APPROVED' ? '✓ QUẢN LÝ ĐÃ DUYỆT' :
+                                 weeklyPlan?.status === 'SUBMITTED' ? '⏳ ĐANG CHỜ DUYỆT' :
                                  '📝 CHƯA CHỐT BÁO CÁO'}
                             </span>
                         </div>
                     </div>
 
                     {/* KPI Metrics Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Kế hoạch</span>
-                            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Kế hoạch</span>
+                            <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-mono">
                                 {reviewStats.plannedCount}
                             </div>
-                            <span className="text-[10px] text-slate-400">Điểm đã lên lịch</span>
+                            <span className="text-[9px] text-slate-400">Điểm lên lịch</span>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Đã đi thực tế</span>
-                            <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Đã đi thực tế</span>
+                            <div className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                                 {reviewStats.completedCount}
                             </div>
-                            <span className="text-[10px] text-slate-400">Điểm đã check-out</span>
+                            <span className="text-[9px] text-slate-400">Điểm check-in</span>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ lệ hoàn thành</span>
-                            <div className="text-xl sm:text-2xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ lệ hoàn thành</span>
+                            <div className="text-lg sm:text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
                                 {reviewStats.rate}%
                             </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden mt-1">
                                 <div className="bg-teal-500 h-full rounded-full" style={{ width: `${Math.min(100, reviewStats.rate)}%` }} />
                             </div>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Đi đột xuất</span>
-                            <div className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Đi đột xuất</span>
+                            <div className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
                                 {reviewStats.unplannedCount}
                             </div>
-                            <span className="text-[10px] text-slate-400">Ngoài kế hoạch</span>
+                            <span className="text-[9px] text-slate-400">Ngoài kế hoạch</span>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Khách mới mở</span>
-                            <div className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">Khách mới mở</span>
+                            <div className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
                                 {reviewStats.newLeads}
                             </div>
-                            <span className="text-[10px] text-slate-400">Leads tiềm năng</span>
+                            <span className="text-[9px] text-slate-400">Leads tiềm năng</span>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
-                            <span className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">Thời gian TB</span>
-                            <div className="text-xl sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 font-mono">
+                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
+                            <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400">Thời gian TB</span>
+                            <div className="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400 font-mono">
                                 {reviewStats.avgDuration}p
                             </div>
-                            <span className="text-[10px] text-slate-400">Ở tại điểm bán</span>
+                            <span className="text-[9px] text-slate-400">Ở tại điểm bán</span>
                         </div>
                     </div>
 
