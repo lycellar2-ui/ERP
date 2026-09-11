@@ -279,13 +279,21 @@ export async function getSalesVisits(filters?: {
 }) {
     try {
         const where: any = {}
-        if (filters?.salespersonId) where.salespersonId = filters.salespersonId
-        if (filters?.customerId) where.customerId = filters.customerId
-        if (filters?.status && filters.status !== 'ALL') where.status = filters.status
-        if (filters?.date) {
-            const start = new Date(`${filters.date}T00:00:00.000Z`)
-            const end = new Date(`${filters.date}T23:59:59.999Z`)
-            where.checkInTime = { gte: start, lte: end }
+        if (filters?.salespersonId && filters.salespersonId !== 'ALL') {
+            where.salespersonId = filters.salespersonId
+        }
+        if (filters?.customerId && filters.customerId !== 'ALL') {
+            where.customerId = filters.customerId
+        }
+        if (filters?.status && filters.status !== 'ALL') {
+            where.status = filters.status
+        }
+        if (filters?.date && filters.date.trim() !== '') {
+            const start = new Date(`${filters.date}T00:00:00+07:00`)
+            const end = new Date(`${filters.date}T23:59:59.999+07:00`)
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                where.checkInTime = { gte: start, lte: end }
+            }
         }
 
         const visits = await prisma.salesVisit.findMany({
@@ -295,7 +303,7 @@ export async function getSalesVisits(filters?: {
                 salesperson: { select: { id: true, name: true, email: true } },
             },
             orderBy: { checkInTime: 'desc' },
-            take: 100,
+            take: 200,
         })
 
         return visits.map((v: any) => ({

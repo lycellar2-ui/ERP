@@ -29,7 +29,7 @@ export default async function SalesVisitsPage() {
     const todayStr = new Date().toISOString().slice(0, 10)
 
     const [visits, customers, users] = await Promise.all([
-        getSalesVisits({ date: todayStr }),
+        getSalesVisits(), // Load recent visits so history and photos are immediately available
         prisma.customer.findMany({
             where: { deletedAt: null },
             select: { id: true, code: true, name: true, channel: true },
