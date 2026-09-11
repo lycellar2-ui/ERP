@@ -80,6 +80,19 @@ Module Hành trình thị trường (Sales Field Operations) quản lý toàn b�
   - Toàn bộ 10 Server Actions trong `actions.ts` được bảo vệ bằng `requireAuth()`.
   - Nghiêm cấm nhận `salespersonId` từ client mà không đối chiếu quyền hạn; chỉ cho phép người dùng thao tác trên dữ liệu của chính mình (hoặc quyền Quản lý đối với các tác vụ duyệt kế hoạch/xem tổng quan).
 
+### 7. Giao Diện Ứng Dụng Di Động Chuyên Nghiệp (Mobile-First Native App Experience)
+- **Fixed Bottom Navigation Bar (Thanh điều hướng cố định đáy):**
+  - Cố định ở mép dưới điện thoại (`fixed bottom-0 z-40`), kính mờ `backdrop-blur-lg`, phân cách nhẹ chuẩn app di động (Grab/Shopee/Zalo).
+  - 5 Tab tiện dụng: 📍 Hôm nay (kèm số điểm cần đi), 📅 Lịch tuần (kèm tổng điểm lên lịch), 📊 Tổng kết, 📸 Hình ảnh, 👑 Giám sát (dành cho Quản lý).
+  - Tự động ẩn thanh tab trên đầu khi xem trên mobile (`md:hidden`), bổ sung khoảng đệm an toàn `pb-28 md:pb-16` chống che khuất nội dung.
+- **Thẻ Khách Hàng Thực Địa Hôm Nay (Touch-Friendly Native Cards):**
+  - Tích hợp nút 1-chạm **[🗺️ Chỉ đường Maps]** mở trực tiếp Google Maps App dẫn đường tới quán.
+  - Tích hợp nút 1-chạm **[📞 Gọi điện]** (`tel:`) liên hệ nhanh với chủ quán / phụ trách mua hàng.
+  - Nút bấm chính **`[📸 CHECK-IN & CHỤP 1 ẢNH]`** kích thước lớn tối thiểu 48px, hiệu ứng active scale mượt mà, tối ưu bấm bằng 1 ngón tay cái khi đứng trước điểm bán.
+- **Thanh Chọn Ngày Ngang (Horizontal Date Strip T2 ➔ CN):**
+  - Màn hình Kế hoạch tuần trên di động hiển thị thanh cuộn ngang 7 ngày với tên thứ, ngày tháng và số điểm đã lên lịch.
+  - Chạm chọn ngày nào hiển thị ngay danh sách điểm đến của ngày đó bên dưới kèm nút **[+ Thêm Điểm]**, không phải cuộn trang dọc qua 7 khối bảng dài.
+
 ## Files
 
 | File | Vai trò |

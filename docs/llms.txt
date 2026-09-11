@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-11 16:15
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, SFV v10.24 (Offline Sync, Payload Thumbnail Optimization, Auth Guard, GPS Guidance)
+> Last updated: 2026-09-11 16:25
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, SFV v10.25 (Mobile-First Native App Experience, Bottom Nav, Date Strip, 1-Tap Maps & Call)
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

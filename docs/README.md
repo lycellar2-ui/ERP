@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 16:15 | Wine ERP v10.24 — Tối ưu SFV: Thumbnail & On-demand HD Photo (>95% Payload Reduction), Auth Guard Server Actions, Offline Draft Queue (Hầm Rượu) & Modal Hướng Dẫn GPS 1-Chạm*
+*Last updated: 2026-09-11 16:25 | Wine ERP v10.25 — Giao Diện Ứng Dụng Di Động Chuyên Nghiệp (Mobile-First Native App Experience) cho SFV: Fixed Bottom Navigation Bar, 1-Chạm Chỉ Đường Maps & Gọi Điện, Thanh Chọn Ngày Ngang Tuần (T2-CN)*
 

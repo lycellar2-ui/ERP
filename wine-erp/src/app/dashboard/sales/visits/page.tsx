@@ -28,11 +28,22 @@ export default async function SalesVisitsPage() {
 
     const todayStr = new Date().toISOString().slice(0, 10)
 
-    const [visits, customers, users] = await Promise.all([
+    const [visits, rawCustomers, users] = await Promise.all([
         getSalesVisits(), // Load recent visits so history and photos are immediately available
         prisma.customer.findMany({
             where: { deletedAt: null },
-            select: { id: true, code: true, name: true, channel: true },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                channel: true,
+                purchasingPhone: true,
+                addresses: {
+                    where: { isDefault: true },
+                    select: { address: true, city: true },
+                    take: 1,
+                },
+            },
             orderBy: { name: 'asc' },
             take: 500,
         }),
@@ -42,6 +53,15 @@ export default async function SalesVisitsPage() {
             orderBy: { name: 'asc' },
         })
     ])
+
+    const customers = rawCustomers.map(c => ({
+        id: c.id,
+        code: c.code,
+        name: c.name,
+        channel: c.channel,
+        phone: c.purchasingPhone || null,
+        address: c.addresses?.[0]?.address || null,
+    }))
 
     return (
         <Suspense fallback={<div className="p-8 text-[#8AAEBB] text-xs">Đang tải giao diện Check-in Thị Trường...</div>}>
