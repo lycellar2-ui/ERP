@@ -2667,12 +2667,20 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         <div className="divide-y divide-slate-100 dark:divide-[#223645]">
                             {weekDates.map(day => {
                                 const dayPlanned = planVisits.filter(v => v.visitDate === day.dateStr)
-                                const dayActual = weekActualVisits.filter(v => v.checkInTime.startsWith(day.dateStr))
+                                const dayActual = weekActualVisits.filter(v => {
+                                    if (!v.checkInTime) return false
+                                    try {
+                                        const vnDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(v.checkInTime))
+                                        return vnDate === day.dateStr
+                                    } catch {
+                                        return v.checkInTime.slice(0, 10) === day.dateStr
+                                    }
+                                })
                                 const hasActivity = dayPlanned.length > 0 || dayActual.length > 0
 
                                 if (!hasActivity) {
                                     return (
-                                        <div key={day.dateStr} className="px-3.5 py-1.5 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 bg-slate-50/20 dark:bg-[#142433]/20">
+                                        <div key={day.dateStr} className="px-3.5 py-2 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 bg-slate-50/20 dark:bg-[#142433]/20">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold text-slate-500 dark:text-slate-400">{day.dayName}</span>
                                                 <span className="text-[11px] font-mono">({day.dateStr.slice(5).replace('-', '/')})</span>
@@ -2682,16 +2690,63 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[10px] italic">Không có lịch trình & check-in</span>
+                                            <span className="text-[10px] italic text-slate-400">Không có lịch trình & check-in</span>
                                         </div>
                                     )
                                 }
 
+                                // Gộp Kế hoạch và Thực tế thành danh sách khách hàng duy nhất trong ngày
+                                const matchedActualIds = new Set<string>()
+
+                                const plannedRows = dayPlanned.map((p, idx) => {
+                                    const cust = p.customer || localCustomers.find(c => c.id === p.customerId)
+                                    // Tìm lượt check-in thực tế khớp theo scheduleId hoặc customerId
+                                    const actual = dayActual.find(a =>
+                                        !matchedActualIds.has(a.id) &&
+                                        ((a.scheduleId && a.scheduleId === p.id) || a.customerId === p.customerId)
+                                    )
+                                    if (actual) matchedActualIds.add(actual.id)
+
+                                    return {
+                                        key: p.id || `plan_${idx}`,
+                                        customerId: p.customerId,
+                                        customerName: cust?.name || 'Khách hàng',
+                                        customerCode: cust?.code || '',
+                                        customerChannel: cust?.channel || null,
+                                        isPlanned: true,
+                                        plannedPurpose: p.purpose || 'Chăm sóc khách hàng định kỳ',
+                                        actualVisit: actual || null,
+                                        isCompleted: !!actual && (actual.status === 'COMPLETED' || !!actual.checkInTime),
+                                    }
+                                })
+
+                                const unplannedRows = dayActual
+                                    .filter(a => !matchedActualIds.has(a.id))
+                                    .map(a => {
+                                        const cust = a.customer || localCustomers.find(c => c.id === a.customerId)
+                                        return {
+                                            key: a.id,
+                                            customerId: a.customerId,
+                                            customerName: cust?.name || a.customerName || 'Khách hàng',
+                                            customerCode: cust?.code || a.customerCode || '',
+                                            customerChannel: cust?.channel || a.customerChannel || null,
+                                            isPlanned: false,
+                                            plannedPurpose: '',
+                                            actualVisit: a,
+                                            isCompleted: true,
+                                        }
+                                    })
+
+                                const unifiedItems = [...plannedRows, ...unplannedRows]
+                                const completedCount = unifiedItems.filter(i => i.isCompleted).length
+                                const unplannedCount = unplannedRows.length
+
                                 return (
                                     <div key={day.dateStr} className="p-3 sm:p-3.5 space-y-2.5">
-                                        <div className="flex items-center justify-between">
+                                        {/* Tiêu đề ngày & Tóm tắt số liệu */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-1 border-b border-slate-100 dark:border-[#1E3040]">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-black text-xs text-slate-900 dark:text-white">
+                                                <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white">
                                                     {day.dayName} ({day.dateStr.slice(5).replace('-', '/')})
                                                 </span>
                                                 {day.isToday && (
@@ -2699,69 +2754,152 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                         Hôm nay
                                                     </span>
                                                 )}
+                                                <span className="text-[10px] text-slate-400 font-mono">
+                                                    ({unifiedItems.length} khách)
+                                                </span>
                                             </div>
-                                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                                Kế hoạch: <strong className="text-slate-800 dark:text-slate-200">{dayPlanned.length}</strong> • Thực tế: <strong className="text-emerald-600 dark:text-emerald-400">{dayActual.length}</strong>
-                                            </span>
+
+                                            <div className="flex items-center gap-2 text-[11px] font-mono flex-wrap">
+                                                <span className="text-slate-500 dark:text-slate-400">
+                                                    Kế hoạch: <strong className="text-slate-800 dark:text-slate-200">{dayPlanned.length}</strong>
+                                                </span>
+                                                <span className="text-slate-300 dark:text-slate-600">•</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400">
+                                                    Thực tế: <strong>{completedCount}</strong>
+                                                </span>
+                                                {unplannedCount > 0 && (
+                                                    <>
+                                                        <span className="text-slate-300 dark:text-slate-600">•</span>
+                                                        <span className="text-amber-600 dark:text-amber-400 font-bold">
+                                                            +{unplannedCount} đột xuất
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                            {/* Planned Column */}
-                                            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-1.5">
-                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">📋 Kế hoạch dự kiến ({dayPlanned.length})</div>
-                                                {dayPlanned.length === 0 ? (
-                                                    <div className="text-[11px] text-slate-400 italic">Không lên lịch trước</div>
-                                                ) : (
-                                                    dayPlanned.map((p, idx) => {
-                                                        const cust = p.customer || localCustomers.find(c => c.id === p.customerId)
-                                                        const isDone = dayActual.some(a => a.customerId === p.customerId && a.status === 'COMPLETED')
-                                                        return (
-                                                            <div key={p.id || idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0">
-                                                                <div className="min-w-0 flex-1 pr-2">
-                                                                    <span className="font-semibold text-slate-900 dark:text-white truncate block">
-                                                                        {cust?.name || 'Khách hàng'}
-                                                                    </span>
-                                                                    <div className="text-[10px] text-slate-500 truncate">{p.purpose}</div>
-                                                                </div>
-                                                                <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${isDone ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}`}>
-                                                                    {isDone ? '✓ Đã đi' : 'Bỏ lỡ'}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    })
-                                                )}
-                                            </div>
+                                        {/* Danh sách khách hàng hợp nhất trong ngày */}
+                                        <div className="space-y-2">
+                                            {unifiedItems.map(item => {
+                                                const visitTime = item.actualVisit?.checkInTime
+                                                    ? new Date(item.actualVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                                                    : null
 
-                                            {/* Actual Column */}
-                                            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-1.5">
-                                                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">📍 Thực tế thực hiện ({dayActual.length})</div>
-                                                {dayActual.length === 0 ? (
-                                                    <div className="text-[11px] text-slate-400 italic">Chưa có lượt check-in nào</div>
-                                                ) : (
-                                                    dayActual.map(a => (
-                                                        <div key={a.id} className="text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0 space-y-0.5">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="font-bold text-slate-900 dark:text-white truncate pr-2">
-                                                                    {a.customer?.name}
-                                                                    {a.isUnplanned && (
-                                                                        <span className="ml-1.5 px-1 py-0.2 rounded text-[8px] font-bold bg-amber-500/20 text-amber-600">
-                                                                            ĐỘT XUẤT
-                                                                        </span>
-                                                                    )}
+                                                return (
+                                                    <div
+                                                        key={item.key}
+                                                        className={`p-2.5 sm:p-3 rounded-xl border transition-all text-xs ${
+                                                            item.isCompleted
+                                                                ? 'bg-white dark:bg-[#142433] border-slate-200 dark:border-[#243B4D] shadow-2xs'
+                                                                : 'bg-slate-50/50 dark:bg-[#101A22]/50 border-dashed border-slate-200 dark:border-[#223645]'
+                                                        }`}
+                                                    >
+                                                        {/* Dòng đầu: Phân loại, Mã, Tên khách, Kênh & Trạng thái hoàn thành */}
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
+                                                                {item.isPlanned ? (
+                                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shrink-0">
+                                                                        📋 THEO KẾ HOẠCH
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
+                                                                        ⚡ ĐỘT XUẤT
+                                                                    </span>
+                                                                )}
+
+                                                                {item.customerCode && (
+                                                                    <span className="text-[10px] font-mono text-teal-600 dark:text-[#87CBB9] font-bold shrink-0">
+                                                                        [{item.customerCode}]
+                                                                    </span>
+                                                                )}
+
+                                                                <span className="font-bold text-slate-900 dark:text-white truncate" title={item.customerName}>
+                                                                    {item.customerName}
                                                                 </span>
-                                                                <span className="text-[10px] font-mono text-emerald-600 font-bold shrink-0">
-                                                                    {a.durationMinutes ? `${a.durationMinutes}p` : '✓ Check-in'}
-                                                                </span>
+
+                                                                {item.customerChannel && (
+                                                                    <span className="text-[9px] px-1 py-0.2 rounded bg-slate-100 dark:bg-[#1C2E3D] text-slate-500 dark:text-slate-400 shrink-0">
+                                                                        {item.customerChannel}
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            {a.notes && (
-                                                                <div className="text-[10px] text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B2E3D] p-1 rounded border border-slate-200 dark:border-[#2A4355] truncate">
-                                                                    💬 {a.notes}
-                                                                </div>
-                                                            )}
+
+                                                            <div className="shrink-0">
+                                                                {item.isCompleted ? (
+                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                                        <CheckCircle2 size={11} />
+                                                                        <span>Đã hoàn thành</span>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                                                        <Clock size={11} />
+                                                                        <span>Chưa đi / Bỏ lỡ</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    ))
-                                                )}
-                                            </div>
+
+                                                        {/* Lưới con: Mục tiêu kế hoạch vs Kết quả thực tế của khách hàng này */}
+                                                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-100 dark:border-[#1E3040]">
+                                                            {/* Cột Kế hoạch dự kiến */}
+                                                            <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70 dark:bg-[#111C24]/60">
+                                                                <span className="text-slate-400 shrink-0 font-bold">🎯 Kế hoạch:</span>
+                                                                {item.isPlanned ? (
+                                                                    <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                                        {item.plannedPurpose}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-amber-600 dark:text-amber-400 italic">
+                                                                        Không có trong kế hoạch ban đầu (Phát sinh tại thị trường)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Cột Thực tế thực hiện */}
+                                                            <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70 dark:bg-[#111C24]/60">
+                                                                <span className="text-slate-400 shrink-0 font-bold">📍 Thực tế:</span>
+                                                                {item.actualVisit ? (
+                                                                    <div className="space-y-1 flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                                                                Giờ vào: {visitTime}
+                                                                            </span>
+                                                                            {item.actualVisit.durationMinutes > 0 && (
+                                                                                <span className="text-slate-500 dark:text-slate-400 font-mono">
+                                                                                    • {item.actualVisit.durationMinutes} phút
+                                                                                </span>
+                                                                            )}
+                                                                            {item.actualVisit.checkInPhoto && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setViewPhoto({
+                                                                                        title: `Ảnh Check-in: ${item.customerName}`,
+                                                                                        url: item.actualVisit.checkInPhoto,
+                                                                                        visitId: item.actualVisit.id
+                                                                                    })}
+                                                                                    className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[10px] font-bold hover:underline cursor-pointer ml-auto"
+                                                                                    title="Xem ảnh check-in thực tế"
+                                                                                >
+                                                                                    <Camera size={10} /> Xem ảnh
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        {item.actualVisit.notes && (
+                                                                            <div className="text-[10px] text-slate-600 dark:text-slate-300 bg-white dark:bg-[#172633] p-1.5 rounded border border-slate-200/80 dark:border-[#243B4D] break-words">
+                                                                                💬 {item.actualVisit.notes}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-slate-400 italic">
+                                                                        Chưa có lượt check-in thực tế nào
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 )
