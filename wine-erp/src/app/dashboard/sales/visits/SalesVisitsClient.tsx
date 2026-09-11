@@ -2549,9 +2549,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* ============================================================== */}
             {activeTab === 'REVIEW' && (
                 <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
-                    {/* Header Controls for Review */}
+                    {/* 1. Header Controls for Review */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-[#111C24] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs">
-                        <div className="flex items-center gap-2.5 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-lg border border-slate-200 dark:border-[#2A4355]">
                                 <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title="Tuần trước">
                                     <ChevronLeft size={14} />
@@ -2563,9 +2563,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     <ChevronRight size={14} />
                                 </button>
                             </div>
+
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#142433] px-2 py-1 rounded-md border border-slate-200 dark:border-[#2A4355]">
+                                {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
+                            </span>
+
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                    Báo Cáo Tổng Kết Tuần
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                    Tổng Kết Tuần
                                 </span>
                                 <span className="text-[11px] text-slate-400 font-normal hidden md:inline">
                                     • Đối soát Kế Hoạch vs Thực Tế
@@ -2587,229 +2592,252 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         </div>
                     </div>
 
-                    {/* KPI Metrics Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Kế hoạch</span>
-                            <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-mono">
-                                {reviewStats.plannedCount}
+                    {/* 2. Compact KPI Metrics Ribbon (Thanh chỉ số KPI liền mạch) */}
+                    <div className="bg-white dark:bg-[#111C24] rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs p-2 sm:p-2.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-[#1E3040]">
+                            {/* 1. Kế hoạch */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Kế hoạch</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-mono">{reviewStats.plannedCount}</span>
+                                    <span className="text-[10px] text-slate-400">điểm</span>
+                                </div>
                             </div>
-                            <span className="text-[9px] text-slate-400">Điểm lên lịch</span>
-                        </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Đã đi thực tế</span>
-                            <div className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                                {reviewStats.completedCount}
+                            {/* 2. Thực tế */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Đã thực tế</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{reviewStats.completedCount}</span>
+                                    <span className="text-[10px] text-slate-400">điểm</span>
+                                </div>
                             </div>
-                            <span className="text-[9px] text-slate-400">Điểm check-in</span>
-                        </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ lệ hoàn thành</span>
-                            <div className="text-lg sm:text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
-                                {reviewStats.rate}%
+                            {/* 3. Tỷ lệ hoàn thành */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9] uppercase tracking-wider">Tỷ lệ đạt</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">{reviewStats.rate}%</span>
+                                    <div className="flex-1 max-w-[48px] bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-teal-500 h-full rounded-full transition-all" style={{ width: `${Math.min(100, reviewStats.rate)}%` }} />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden mt-1">
-                                <div className="bg-teal-500 h-full rounded-full" style={{ width: `${Math.min(100, reviewStats.rate)}%` }} />
-                            </div>
-                        </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Đi đột xuất</span>
-                            <div className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
-                                {reviewStats.unplannedCount}
+                            {/* 4. Đi đột xuất */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Đi đột xuất</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono">{reviewStats.unplannedCount}</span>
+                                    <span className="text-[10px] text-slate-400">ngoài KH</span>
+                                </div>
                             </div>
-                            <span className="text-[9px] text-slate-400">Ngoài kế hoạch</span>
-                        </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">Khách mới mở</span>
-                            <div className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                                {reviewStats.newLeads}
+                            {/* 5. Khách mới mở */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Khách mới</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">{reviewStats.newLeads}</span>
+                                    <span className="text-[10px] text-slate-400">leads</span>
+                                </div>
                             </div>
-                            <span className="text-[9px] text-slate-400">Leads tiềm năng</span>
-                        </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400">Thời gian TB</span>
-                            <div className="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400 font-mono">
-                                {reviewStats.avgDuration}p
+                            {/* 6. Thời gian TB */}
+                            <div className="px-3 py-1.5 flex flex-col justify-center">
+                                <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">Thời gian TB</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400 font-mono">{reviewStats.avgDuration}</span>
+                                    <span className="text-[10px] text-slate-400">phút/điểm</span>
+                                </div>
                             </div>
-                            <span className="text-[9px] text-slate-400">Ở tại điểm bán</span>
                         </div>
                     </div>
 
-                    {/* Detailed Comparison: Planned vs Actual by Day */}
-                    <div className="bg-white dark:bg-[#111C24] rounded-2xl border border-slate-200 dark:border-[#223645] overflow-hidden shadow-xs">
-                        <div className="p-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {/* 3. Detailed Comparison: Planned vs Actual by Day */}
+                    <div className="bg-white dark:bg-[#111C24] rounded-xl border border-slate-200 dark:border-[#223645] overflow-hidden shadow-xs">
+                        <div className="px-3.5 py-2.5 border-b border-slate-200 dark:border-[#223645] bg-slate-50/60 dark:bg-[#16232F]/60 flex items-center justify-between">
+                            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                                 Chi Tiết Đối Soát Lịch Trình Tuần
                             </h4>
+                            <span className="text-[11px] text-slate-400 font-mono">
+                                {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
+                            </span>
                         </div>
 
-                        <div className="divide-y divide-slate-200 dark:divide-[#223645]">
+                        <div className="divide-y divide-slate-100 dark:divide-[#223645]">
                             {weekDates.map(day => {
                                 const dayPlanned = planVisits.filter(v => v.visitDate === day.dateStr)
                                 const dayActual = weekActualVisits.filter(v => v.checkInTime.startsWith(day.dateStr))
+                                const hasActivity = dayPlanned.length > 0 || dayActual.length > 0
 
-                                return (
-                                    <div key={day.dateStr} className="p-4 space-y-3">
-                                        <div className="flex items-center justify-between">
+                                if (!hasActivity) {
+                                    return (
+                                        <div key={day.dateStr} className="px-3.5 py-1.5 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 bg-slate-50/20 dark:bg-[#142433]/20">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-black text-xs text-slate-900 dark:text-white">
-                                                    {day.dayName} ({day.dateStr})
-                                                </span>
+                                                <span className="font-semibold text-slate-500 dark:text-slate-400">{day.dayName}</span>
+                                                <span className="text-[11px] font-mono">({day.dateStr.slice(5).replace('-', '/')})</span>
                                                 {day.isToday && (
-                                                    <span className="px-2 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-bold">
+                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-[#87CBB9]">
                                                         Hôm nay
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                                                Kế hoạch: {dayPlanned.length} • Thực tế: {dayActual.length}
+                                            <span className="text-[10px] italic">Không có lịch trình & check-in</span>
+                                        </div>
+                                    )
+                                }
+
+                                return (
+                                    <div key={day.dateStr} className="p-3 sm:p-3.5 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-black text-xs text-slate-900 dark:text-white">
+                                                    {day.dayName} ({day.dateStr.slice(5).replace('-', '/')})
+                                                </span>
+                                                {day.isToday && (
+                                                    <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-bold">
+                                                        Hôm nay
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                                Kế hoạch: <strong className="text-slate-800 dark:text-slate-200">{dayPlanned.length}</strong> • Thực tế: <strong className="text-emerald-600 dark:text-emerald-400">{dayActual.length}</strong>
                                             </span>
                                         </div>
 
-                                        {dayPlanned.length === 0 && dayActual.length === 0 ? (
-                                            <div className="text-[11px] text-slate-400 dark:text-slate-500 italic pl-2">
-                                                Không có hoạt động trong ngày này
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {/* Planned Column */}
-                                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-2">
-                                                    <div className="text-[11px] font-bold text-slate-500 uppercase">📋 Kế hoạch dự kiến</div>
-                                                    {dayPlanned.length === 0 ? (
-                                                        <div className="text-[11px] text-slate-400 italic">Không lên lịch trước</div>
-                                                    ) : (
-                                                        dayPlanned.map((p, idx) => {
-                                                            const cust = p.customer || localCustomers.find(c => c.id === p.customerId)
-                                                            const isDone = dayActual.some(a => a.customerId === p.customerId && a.status === 'COMPLETED')
-                                                            return (
-                                                                <div key={p.id || idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0">
-                                                                    <div className="min-w-0 flex-1 pr-2">
-                                                                        <span className="font-semibold text-slate-900 dark:text-white">
-                                                                            {cust?.name || 'Khách hàng'}
-                                                                        </span>
-                                                                        <div className="text-[10px] text-slate-500">{p.purpose}</div>
-                                                                    </div>
-                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${isDone ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}`}>
-                                                                        {isDone ? '✓ Đã đi' : 'Bỏ lỡ'}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                            {/* Planned Column */}
+                                            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-1.5">
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">📋 Kế hoạch dự kiến ({dayPlanned.length})</div>
+                                                {dayPlanned.length === 0 ? (
+                                                    <div className="text-[11px] text-slate-400 italic">Không lên lịch trước</div>
+                                                ) : (
+                                                    dayPlanned.map((p, idx) => {
+                                                        const cust = p.customer || localCustomers.find(c => c.id === p.customerId)
+                                                        const isDone = dayActual.some(a => a.customerId === p.customerId && a.status === 'COMPLETED')
+                                                        return (
+                                                            <div key={p.id || idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0">
+                                                                <div className="min-w-0 flex-1 pr-2">
+                                                                    <span className="font-semibold text-slate-900 dark:text-white truncate block">
+                                                                        {cust?.name || 'Khách hàng'}
                                                                     </span>
+                                                                    <div className="text-[10px] text-slate-500 truncate">{p.purpose}</div>
                                                                 </div>
-                                                            )
-                                                        })
-                                                    )}
-                                                </div>
-
-                                                {/* Actual Column */}
-                                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-2">
-                                                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">📍 Thực tế thực hiện</div>
-                                                    {dayActual.length === 0 ? (
-                                                        <div className="text-[11px] text-slate-400 italic">Chưa có lượt check-in nào</div>
-                                                    ) : (
-                                                        dayActual.map(a => (
-                                                            <div key={a.id} className="text-xs py-1.5 border-b border-slate-200/60 dark:border-[#223645] last:border-0 space-y-1">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="font-bold text-slate-900 dark:text-white">
-                                                                        {a.customer?.name}
-                                                                        {a.isUnplanned && (
-                                                                            <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600">
-                                                                                ĐỘT XUẤT
-                                                                            </span>
-                                                                        )}
-                                                                    </span>
-                                                                    <span className="text-[10px] font-mono text-emerald-600 font-bold">
-                                                                        {a.durationMinutes ? `${a.durationMinutes} phút` : 'Đang ở tại chỗ'}
-                                                                    </span>
-                                                                </div>
-                                                                {a.notes && (
-                                                                    <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B2E3D] p-1.5 rounded border border-slate-200 dark:border-[#2A4355]">
-                                                                        💬 {a.notes}
-                                                                    </div>
-                                                                )}
+                                                                <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${isDone ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}`}>
+                                                                    {isDone ? '✓ Đã đi' : 'Bỏ lỡ'}
+                                                                </span>
                                                             </div>
-                                                        ))
-                                                    )}
-                                                </div>
+                                                        )
+                                                    })
+                                                )}
                                             </div>
-                                        )}
+
+                                            {/* Actual Column */}
+                                            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-1.5">
+                                                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">📍 Thực tế thực hiện ({dayActual.length})</div>
+                                                {dayActual.length === 0 ? (
+                                                    <div className="text-[11px] text-slate-400 italic">Chưa có lượt check-in nào</div>
+                                                ) : (
+                                                    dayActual.map(a => (
+                                                        <div key={a.id} className="text-xs py-1 border-b border-slate-200/60 dark:border-[#223645] last:border-0 space-y-0.5">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-bold text-slate-900 dark:text-white truncate pr-2">
+                                                                    {a.customer?.name}
+                                                                    {a.isUnplanned && (
+                                                                        <span className="ml-1.5 px-1 py-0.2 rounded text-[8px] font-bold bg-amber-500/20 text-amber-600">
+                                                                            ĐỘT XUẤT
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                                <span className="text-[10px] font-mono text-emerald-600 font-bold shrink-0">
+                                                                    {a.durationMinutes ? `${a.durationMinutes}p` : '✓ Check-in'}
+                                                                </span>
+                                                            </div>
+                                                            {a.notes && (
+                                                                <div className="text-[10px] text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B2E3D] p-1 rounded border border-slate-200 dark:border-[#2A4355] truncate">
+                                                                    💬 {a.notes}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 )
                             })}
                         </div>
                     </div>
 
-                    {/* Section: Sale Self-Review (Sale Tự Chốt Báo Cáo Tuần) */}
-                    <div className="p-5 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-3 shadow-xs">
+                    {/* 4. Section: Sale Self-Review (Sale Tự Chốt Báo Cáo Tuần) */}
+                    <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-2.5 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                <Award size={16} className="text-teal-600 dark:text-[#87CBB9]" />
-                                Báo Cáo Tự Đánh Giá Tuần Của Sale (Weekly Self-Evaluation)
+                            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <Award size={15} className="text-teal-600 dark:text-[#87CBB9]" />
+                                Báo Cáo Tự Đánh Giá Tuần Của Sale
                             </h4>
                             {weeklyPlan?.submittedAt && (
-                                <span className="text-[11px] font-mono text-slate-400">
+                                <span className="text-[10px] font-mono text-slate-400">
                                     Đã nộp: {new Date(weeklyPlan.submittedAt).toLocaleString('vi-VN')}
                                 </span>
                             )}
                         </div>
 
                         <textarea
-                            rows={4}
+                            rows={3}
                             value={selfReviewText}
                             onChange={e => setSelfReviewText(e.target.value)}
                             placeholder="Sale tự tổng kết tuần: Những điểm làm tốt, kết quả đạt được, khó khăn tại thị trường HORECA, đề xuất chính sách giá / hỗ trợ mẫu rượu..."
-                            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 resize-y"
+                            className="w-full p-2.5 text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition resize-y"
                         />
 
-                        <div className="flex items-center justify-between pt-1">
-                            <span className="text-[11px] text-slate-400">
-                                Bắt buộc sale tự chốt vào cuối mỗi tuần để Trưởng phòng phê duyệt.
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+                            <span className="text-[10px] text-slate-400">
+                                Bắt buộc sale tự chốt vào cuối mỗi tuần để Trưởng phòng / Giám đốc kinh doanh phê duyệt.
                             </span>
 
                             <button
                                 type="button"
                                 onClick={handleSubmitWeeklyReport}
                                 disabled={submittingReport}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                className="self-end sm:self-auto px-4 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                             >
-                                <Send size={14} />
-                                {submittingReport ? 'Đang nộp...' : 'Chốt Báo Cáo Tuần'}
+                                <Send size={13} />
+                                <span>{submittingReport ? 'Đang nộp...' : 'Chốt Báo Cáo Tuần'}</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Section: Manager Feedback & Approval */}
-                    <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] space-y-3">
-                        <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                            <ShieldCheck size={16} className="text-teal-600 dark:text-[#87CBB9]" />
-                            Nhận Xét & Chỉ Đạo Của Quản Lý (Manager Feedback)
+                    {/* 5. Section: Manager Feedback & Approval */}
+                    <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50/60 dark:bg-[#142433]/60 border border-slate-200 dark:border-[#2A4355] space-y-2 shadow-xs">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <ShieldCheck size={15} className="text-teal-600 dark:text-[#87CBB9]" />
+                            Nhận Xét & Chỉ Đạo Của Quản Lý
                         </h4>
 
                         {isManager ? (
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 <textarea
-                                    rows={3}
+                                    rows={2}
                                     value={managerFeedbackText}
                                     onChange={e => setManagerFeedbackText(e.target.value)}
                                     placeholder="Quản lý nhập nhận xét, khen thưởng hoặc chỉ đạo bổ sung cho nhân viên..."
-                                    className="w-full p-3 text-xs rounded-xl bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                                    className="w-full p-2.5 text-xs rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                                 />
                                 <div className="flex justify-end">
                                     <button
                                         type="button"
                                         onClick={handleSaveManagerFeedback}
                                         disabled={savingFeedback}
-                                        className="px-5 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                        className="px-4 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                                     >
-                                        <Check size={14} />
-                                        {savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Phê Duyệt Tuần'}
+                                        <Check size={13} />
+                                        <span>{savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Phê Duyệt'}</span>
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-4 rounded-xl bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-xs">
+                            <div className="p-3 rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-xs">
                                 {managerFeedbackText ? (
                                     <div className="space-y-1">
                                         <p className="font-semibold text-slate-800 dark:text-white">{managerFeedbackText}</p>
