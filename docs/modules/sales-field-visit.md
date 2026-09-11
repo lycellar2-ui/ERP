@@ -54,12 +54,20 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
   - Cố định ở mép dưới điện thoại (`fixed bottom-0 z-40`), kính mờ `backdrop-blur-lg`, phân cách nhẹ chuẩn app di động (Grab/Shopee/Zalo).
   - 4 Tab tiện dụng: 📍 Hôm nay (kèm số điểm cần đi), 📅 Lịch tuần (kèm tổng điểm lên lịch), 📊 Tổng kết, 📸 Hình ảnh.
   - Tự động ẩn thanh tab trên đầu khi xem trên mobile (`md:hidden`), bổ sung khoảng đệm an toàn `pb-28 md:pb-16` chống che khuất nội dung.
+- **Mobile Bottom Sheets (Ngăn kéo vuốt từ đáy màn hình):**
+  - Chuyển đổi toàn bộ 3 modal tác vụ thực địa (`Check-in đột xuất`, `Thêm điểm vào lịch`, `Tạo nhanh khách hàng tiềm năng`) từ hộp thoại ở giữa màn hình thành **Native Bottom Sheet** trên di động (`rounded-t-3xl sm:rounded-2xl`).
+  - Tích hợp thanh gờ kéo trực quan (`pull indicator drag bar`), hiệu ứng trượt từ đáy mượt mà (`slide-in-from-bottom-6`) và chạm vùng nền backdrop để đóng nhanh.
+- **Floating Action Button (FAB) Check-in 1-Chạm:**
+  - Nút bấm tròn nổi bật cố định góc dưới phải (`fixed bottom-20 right-4 md:hidden z-30`) trên tab Hôm nay. Cho phép nhân viên bấm check-in đột xuất ngay lập tức từ bất kỳ vị trí cuộn trang nào mà không cần kéo ngược lên đầu.
+- **Chống Auto-Zoom trên iOS Safari:**
+  - Cỡ chữ toàn bộ các ô nhập liệu `<input>`, `<select>`, `<textarea>` và Searchable Customer Combobox trên mobile được thiết lập tối thiểu 16px (`text-base sm:text-xs`) loại bỏ triệt để lỗi Safari tự động phóng to trang web làm vỡ khung nhìn khi gõ phím.
 - **Thẻ Khách Hàng Thực Địa Hôm Nay (Touch-Friendly Native Cards):**
   - Tích hợp nút 1-chạm **[🗺️ Chỉ đường Maps]** mở trực tiếp Google Maps App dẫn đường tới quán.
   - Tích hợp nút 1-chạm **[📞 Gọi điện]** (`tel:`) liên hệ nhanh với chủ quán / phụ trách mua hàng.
   - Nút bấm chính **`[📸 CHECK-IN & CHỤP 1 ẢNH]`** kích thước lớn tối thiểu 48px, hiệu ứng active scale mượt mà, tối ưu bấm bằng 1 ngón tay cái khi đứng trước điểm bán.
 - **Thanh Chọn Ngày Ngang (Horizontal Date Strip T2 ➔ CN):**
   - Màn hình Kế hoạch tuần trên di động hiển thị thanh cuộn ngang 7 ngày với tên thứ, ngày tháng và số điểm đã lên lịch.
+  - Hỗ trợ cuộn hít từng ngày **`snap-x snap-mandatory`** kết hợp hiệu ứng nén xúc giác `active:scale-95`.
   - Chạm chọn ngày nào hiển thị ngay danh sách điểm đến của ngày đó bên dưới kèm nút **[+ Thêm Điểm]**, không phải cuộn trang dọc qua 7 khối bảng dài.
 
 ### 8. Bảng Đối Soát Tuần Hợp Nhất Theo Từng Khách Hàng (Unified Review Audit)

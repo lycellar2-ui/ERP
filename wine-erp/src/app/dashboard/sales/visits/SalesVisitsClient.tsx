@@ -133,7 +133,7 @@ function SearchableCustomerCombobox({
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
                                     placeholder="Gõ tên hoặc mã khách hàng..."
-                                    className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-slate-100 dark:bg-[#0D1A24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-[#87CBB9] placeholder:text-slate-400"
+                                    className="w-full pl-8 pr-3 py-2 text-base sm:text-xs outline-none rounded-lg bg-slate-100 dark:bg-[#0D1A24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-[#87CBB9] placeholder:text-slate-400"
                                 />
                                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             </div>
@@ -2063,18 +2063,18 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressStr)}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="flex-1 py-1.5 px-2.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-[#87CBB9] font-bold text-[11px] flex items-center justify-center gap-1 transition"
+                                                                className="flex-1 py-2 px-3 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/25 text-teal-700 dark:text-[#87CBB9] font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
                                                             >
-                                                                <Navigation size={12} /> Chỉ đường Maps
+                                                                <Navigation size={13} /> Chỉ đường Maps
                                                             </a>
                                                         )}
                                                         {phoneStr && (
                                                             <a
                                                                 href={`tel:${phoneStr}`}
-                                                                className="py-1.5 px-3 rounded-lg bg-slate-200 dark:bg-[#1F3342] hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold text-[11px] flex items-center justify-center gap-1 transition"
+                                                                className="py-2 px-3.5 rounded-xl bg-slate-200 dark:bg-[#1F3342] hover:bg-slate-300 active:bg-slate-400/50 text-slate-800 dark:text-slate-100 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
                                                                 title={`Gọi ${phoneStr}`}
                                                             >
-                                                                <Phone size={12} className="text-emerald-500" /> Gọi điện
+                                                                <Phone size={13} className="text-emerald-500" /> Gọi điện
                                                             </a>
                                                         )}
                                                     </div>
@@ -2234,9 +2234,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                             href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-teal-600 dark:text-[#87CBB9] hover:underline font-mono text-[10px] shrink-0 font-bold ml-1"
+                                                            className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/30 text-teal-700 dark:text-[#87CBB9] font-bold text-[11px] shrink-0 active:scale-95 transition min-h-[32px]"
                                                         >
-                                                            [Bản đồ]
+                                                            <Navigation size={11} /> Bản đồ
                                                         </a>
                                                     )}
                                                 </div>
@@ -2257,6 +2257,21 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             </div>
                         )}
                     </div>
+
+                    {/* Mobile Floating Action Button (FAB): Check-in Đột Xuất Quick Trigger */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setUnplannedCustomerId('')
+                            setUnplannedPurpose('')
+                            setShowUnplannedModal(true)
+                        }}
+                        className="md:hidden fixed bottom-20 right-4 z-30 flex items-center gap-2 px-4 py-3 rounded-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-black text-xs shadow-2xl ring-4 ring-amber-500/25 active:scale-95 transition-all cursor-pointer"
+                        aria-label="Check-in Đột Xuất"
+                    >
+                        <Sparkles size={16} />
+                        <span>+ Check-in Đột Xuất</span>
+                    </button>
                 </div>
             )}
 
@@ -2340,15 +2355,15 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 value={planNote}
                                 onChange={e => setPlanNote(e.target.value)}
                                 placeholder="Mục tiêu trọng tâm tuần này (ví dụ: chào vang Ý mới, kiểm tra công nợ...)"
-                                className="w-full py-1 px-2.5 text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/80 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
+                                className="w-full py-1 px-2.5 text-base sm:text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200/80 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                             />
                         </div>
                     </div>
 
                     {/* MOBILE HORIZONTAL DATE STRIP + ACTIVE DAY SCHEDULE */}
                     <div className="md:hidden space-y-4">
-                        {/* Horizontal Date Strip */}
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                        {/* Horizontal Date Strip with Snap Scroll */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x snap-mandatory">
                             {weekDates.map(day => {
                                 const dayVisits = planVisits.filter(v => v.visitDate === day.dateStr)
                                 const isSelected = (mobileSelectedDate || todayStr) === day.dateStr
@@ -2358,7 +2373,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         key={day.dateStr}
                                         type="button"
                                         onClick={() => setMobileSelectedDate(day.dateStr)}
-                                        className={`shrink-0 flex flex-col items-center py-2.5 px-3.5 rounded-2xl border transition-all text-center min-w-[76px] cursor-pointer ${
+                                        className={`shrink-0 snap-center flex flex-col items-center py-2.5 px-3.5 rounded-2xl border transition-all text-center min-w-[76px] cursor-pointer active:scale-95 ${
                                             isSelected
                                                 ? 'bg-teal-600 text-white border-teal-600 shadow-md ring-2 ring-teal-500/30 font-bold'
                                                 : day.isToday
@@ -2939,7 +2954,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             value={selfReviewText}
                             onChange={e => setSelfReviewText(e.target.value)}
                             placeholder="Sale tự tổng kết tuần: Những điểm làm tốt, kết quả đạt được, khó khăn tại thị trường HORECA, đề xuất chính sách giá / hỗ trợ mẫu rượu..."
-                            className="w-full p-2.5 text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition resize-y"
+                            className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition resize-y"
                         />
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
@@ -2973,7 +2988,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={managerFeedbackText}
                                     onChange={e => setManagerFeedbackText(e.target.value)}
                                     placeholder="Quản lý nhập nhận xét, khen thưởng hoặc chỉ đạo bổ sung cho nhân viên..."
-                                    className="w-full p-2.5 text-xs rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
+                                    className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                                 />
                                 <div className="flex justify-end">
                                     <button
@@ -3022,7 +3037,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
                                     placeholder="Tìm theo tên khách, mã KH, ghi chú..."
-                                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 transition"
+                                    className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 transition"
                                 />
                             </div>
                         </div>
@@ -3061,7 +3076,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     type="date"
                                     value={filterDate}
                                     onChange={e => setFilterDate(e.target.value)}
-                                    className="bg-transparent text-slate-800 dark:text-white font-bold outline-none cursor-pointer text-xs"
+                                    className="bg-transparent text-slate-800 dark:text-white font-bold outline-none cursor-pointer text-base sm:text-xs"
                                 />
                                 {filterDate && (
                                     <button
@@ -3079,7 +3094,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
+                                className="px-2.5 py-1.5 text-base sm:text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
                             >
                                 <option value="ALL">Tất cả trạng thái</option>
                                 <option value="IN_PROGRESS">Đang viếng thăm</option>
@@ -3421,17 +3436,23 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             )}
 
             {/* ============================================================== */}
-            {/* MODAL: UNPLANNED CHECK-IN */}
+            {/* MODAL: UNPLANNED CHECK-IN (BOTTOM SHEET ON MOBILE) */}
             {/* ============================================================== */}
             {showUnplannedModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
-                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in" onClick={() => setShowUnplannedModal(false)}>
+                    <div
+                        className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Mobile Pull Handle Indicator */}
+                        <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto sm:hidden -mt-1 mb-1" />
+
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <Sparkles size={18} className="text-amber-500" />
                                 Check-in Đột Xuất Ngoài Kế Hoạch
                             </h3>
-                            <button onClick={() => setShowUnplannedModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                            <button onClick={() => setShowUnplannedModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                                 <X size={18} />
                             </button>
                         </div>
@@ -3456,7 +3477,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 <select
                                     value={unplannedActivityType}
                                     onChange={e => setUnplannedActivityType(e.target.value)}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium text-base sm:text-xs"
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
@@ -3475,7 +3496,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={unplannedPurpose}
                                     onChange={e => setUnplannedPurpose(e.target.value)}
                                     placeholder="Ghi rõ việc sẽ làm tại khách này..."
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -3484,16 +3505,16 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             <button
                                 type="button"
                                 onClick={() => setShowUnplannedModal(false)}
-                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
                                 Hủy
                             </button>
                             <button
                                 type="button"
                                 onClick={startCheckInUnplanned}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer min-h-[44px]"
                             >
-                                <Camera size={15} /> Mở Camera Check-in
+                                <Camera size={16} /> Mở Camera Check-in
                             </button>
                         </div>
                     </div>
@@ -3503,9 +3524,21 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* ============================================================== */}
             {/* MODAL: QUICK ADD VISIT TO PLANNING DAY */}
             {/* ============================================================== */}
+            {/* ============================================================== */}
+            {/* MODAL: QUICK ADD VISIT TO PLANNING DAY */}
+            {/* ============================================================== */}
             {quickAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
-                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                <div 
+                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in"
+                    onClick={() => setQuickAddModal(null)}
+                >
+                    <div 
+                        className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Mobile Drag Indicator Bar */}
+                        <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto sm:hidden -mt-1 mb-1" />
+
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -3513,7 +3546,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 </h3>
                                 <p className="text-[11px] font-mono text-slate-400">{quickAddModal.dateStr}</p>
                             </div>
-                            <button onClick={() => setQuickAddModal(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                            <button onClick={() => setQuickAddModal(null)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center">
                                 <X size={18} />
                             </button>
                         </div>
@@ -3538,7 +3571,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 <select
                                     value={addActivityType}
                                     onChange={e => setAddActivityType(e.target.value)}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-medium text-base sm:text-xs"
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
@@ -3557,7 +3590,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={addCustomPurpose}
                                     onChange={e => setAddCustomPurpose(e.target.value)}
                                     placeholder="Ví dụ: Giới thiệu vang trắng mới, thu công nợ 5 triệu..."
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -3566,14 +3599,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             <button
                                 type="button"
                                 onClick={() => setQuickAddModal(null)}
-                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
                                 Hủy
                             </button>
                             <button
                                 type="button"
                                 onClick={handleAddVisitToPlan}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer min-h-[44px]"
                             >
                                 <Plus size={15} /> Thêm Vào Lịch
                             </button>
@@ -3586,14 +3619,24 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* MODAL: QUICK CREATE PROSPECT CUSTOMER */}
             {/* ============================================================== */}
             {showQuickCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
-                    <form onSubmit={handleQuickCreateCustomer} className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
+                <div 
+                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in"
+                    onClick={() => setShowQuickCreateModal(false)}
+                >
+                    <form 
+                        onSubmit={handleQuickCreateCustomer} 
+                        className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Mobile Drag Indicator Bar */}
+                        <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto sm:hidden -mt-1 mb-1" />
+
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <Plus size={18} className="text-teal-600 dark:text-[#87CBB9]" />
                                 Tạo Nhanh Khách Hàng Tiềm Năng
                             </h3>
-                            <button type="button" onClick={() => setShowQuickCreateModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                            <button type="button" onClick={() => setShowQuickCreateModal(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center">
                                 <X size={18} />
                             </button>
                         </div>
@@ -3609,7 +3652,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={quickCustName}
                                     onChange={e => setQuickCustName(e.target.value)}
                                     placeholder="Ví dụ: Nhà hàng La Maison, Wine Bar 1985..."
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 text-base sm:text-xs"
                                 />
                             </div>
 
@@ -3621,7 +3664,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     <select
                                         value={quickCustChannel}
                                         onChange={e => setQuickCustChannel(e.target.value)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                     >
                                         <option value="HORECA">HORECA (Nhà hàng/Bar)</option>
                                         <option value="WHOLESALE_DISTRIBUTOR">Đại lý phân phối</option>
@@ -3639,7 +3682,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         value={quickCustContact}
                                         onChange={e => setQuickCustContact(e.target.value)}
                                         placeholder="Quản lý, Sommelier..."
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                     />
                                 </div>
                             </div>
@@ -3653,7 +3696,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={quickCustPhone}
                                     onChange={e => setQuickCustPhone(e.target.value)}
                                     placeholder="0901234567"
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-mono"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none font-mono text-base sm:text-xs"
                                 />
                             </div>
 
@@ -3666,7 +3709,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     value={quickCustAddress}
                                     onChange={e => setQuickCustAddress(e.target.value)}
                                     placeholder="Số nhà, đường, phường, quận..."
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none"
+                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -3675,14 +3718,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             <button
                                 type="button"
                                 onClick={() => setShowQuickCreateModal(false)}
-                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer"
+                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
                                 Hủy
                             </button>
                             <button
                                 type="submit"
                                 disabled={creatingCustomer}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow cursor-pointer disabled:opacity-50"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer disabled:opacity-50 min-h-[44px]"
                             >
                                 <Plus size={15} />
                                 {creatingCustomer ? 'Đang tạo...' : 'Tạo Khách Tiềm Năng'}
