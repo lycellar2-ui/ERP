@@ -102,10 +102,10 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 | File | Vai trò |
 |---|---|
 | `next.config.ts` | Cấu hình `Permissions-Policy: camera=(self), geolocation=(self)` cho phép trình duyệt sử dụng Camera và GPS |
-| `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `checkOutSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()` |
-| `SalesVisitsClient.tsx` | Client component 5-tab: Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh, Tab 5 Giám Sát Thị Trường (CEO / Manager), tích hợp Offline Draft Queue và Modal hướng dẫn bật GPS |
+| `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()` |
+| `SalesVisitsClient.tsx` | Client component: 4 tab tác nghiệp Sales (Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh), Bảng Giám Sát Thị Trường Toàn Đội (Quản lý/CEO), tích hợp Offline Draft Queue và Modal hướng dẫn bật GPS |
 | `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, tạo micro-thumbnail song song, watermark chân thực, cảnh báo GPS trong kính ngắm, hỗ trợ native camera fallback |
-| `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ |
+| `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ khách hàng tối ưu (không query thừa) |
 
 ## Prisma Models
 
@@ -117,7 +117,6 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 - `VisitStatus` — IN_PROGRESS, COMPLETED, CANCELLED
 
 ## Ràng Buộc (Constraints)
-- ❌ Không thể check-in nếu đang có lượt viếng thăm `IN_PROGRESS` (bắt buộc check-out điểm trước).
-- ❌ Bắt buộc chụp ảnh camera khi check-in và check-out.
-- ❌ Bắt buộc nhập kết quả làm việc thực tế (tối thiểu 5 ký tự) khi check-out.
-- ❌ Phải lưu kế hoạch tuần trước khi chốt nộp báo cáo tuần.
+- 📸 Quy trình thực địa tinh gọn 1 lần: Check-in chụp ảnh thực tế tại điểm bán là hoàn tất ngay lượt viếng thăm (`COMPLETED`), không yêu cầu check-out.
+- 📍 Bắt buộc chụp ảnh camera thực tế và có toạ độ GPS hợp lệ (hoặc lưu tạm ngoại tuyến nếu mất sóng).
+- 📝 Phải lưu kế hoạch tuần trước khi chốt nộp báo cáo tuần.

@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
-    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
-    ExternalLink, Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
-    Check, Send, Award, TrendingUp, AlertTriangle, Sparkles, Phone, MessageSquare,
+    User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
+    Calendar, Plus, X, Download, ShieldCheck, ChevronLeft,
+    Check, Send, Award, TrendingUp, Sparkles, Phone,
     Wifi, WifiOff, UploadCloud, Target, Save, LayoutGrid, List
 } from 'lucide-react'
 import {
-    checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
+    checkInSalesVisit, getSalesVisits,
     reverseGeocodeAction, quickCreateProspectCustomer, getWeeklyPlanWithVisits,
     saveWeeklyPlanAction, submitWeeklyReportAction, saveManagerFeedbackAction,
     getTeamWeeklySalesOverview, getSalesVisitFullPhoto
@@ -20,7 +20,6 @@ import { toast } from 'sonner'
 interface Props {
     initialVisits: any[]
     customers: { id: string; code: string; name: string; channel: string | null; address?: string | null; phone?: string | null }[]
-    users?: { id: string; name: string; email: string }[]
     currentUserId: string
     currentUserName: string
     isManager: boolean
@@ -430,12 +429,10 @@ function PhotoViewerModal({
     )
 }
 
-export function SalesVisitsClient({ initialVisits, customers, users, currentUserId, currentUserName, isManager }: Props) {
+export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager }: Props) {
     const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
-    const [selectedSalespersonId, setSelectedSalespersonId] = useState(currentUserId)
-    const [activeVisit, setActiveVisit] = useState<any | null>(null)
-    const [loadingActive, setLoadingActive] = useState(true)
+    const selectedSalespersonId = currentUserId
 
     // Team Overview State (Exclusively for Manager / CEO)
     const [teamData, setTeamData] = useState<any | null>(null)
@@ -521,9 +518,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
     const [coords, setCoords] = useState<{ lat?: number; lng?: number; address?: string }>({})
     const [gettingLocation, setGettingLocation] = useState(false)
     const [gpsError, setGpsError] = useState<string | null>(null)
-
-    // Active Visit Timer
-    const [elapsedMinutes, setElapsedMinutes] = useState(0)
 
     // Camera Modal
     const [cameraTarget, setCameraTarget] = useState<{
@@ -669,33 +663,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
     useEffect(() => {
         requestGPS()
     }, [requestGPS])
-
-    // -----------------------------------------------------------------
-    // ACTIVE VISIT & POLLING TIMER
-    // -----------------------------------------------------------------
-    const fetchActive = useCallback(async () => {
-        setLoadingActive(true)
-        const active = await getActiveVisit(selectedSalespersonId)
-        setActiveVisit(active)
-        setLoadingActive(false)
-    }, [selectedSalespersonId])
-
-    useEffect(() => {
-        fetchActive()
-    }, [fetchActive])
-
-    useEffect(() => {
-        if (!activeVisit) return
-        const checkInDate = new Date(activeVisit.checkInTime).getTime()
-        const updateTimer = () => {
-            const now = Date.now()
-            const diff = Math.max(1, Math.round((now - checkInDate) / (1000 * 60)))
-            setElapsedMinutes(diff)
-        }
-        updateTimer()
-        const interval = setInterval(updateTimer, 30_000)
-        return () => clearInterval(interval)
-    }, [activeVisit])
 
     // -----------------------------------------------------------------
     // LOAD WEEKLY PLAN & REVIEWS
@@ -1052,11 +1019,10 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
         if (successCount > 0) {
             toast.success(`✓ Đã tự động đồng bộ thành công ${successCount} lượt check-in ngoại tuyến lên hệ thống!`)
-            await fetchActive()
             await loadWeeklyData()
             await fetchHistoryVisits()
         }
-    }, [selectedSalespersonId, fetchActive, loadWeeklyData, fetchHistoryVisits])
+    }, [selectedSalespersonId, loadWeeklyData, fetchHistoryVisits])
 
     // Auto-sync offline drafts when network recovers or when mounted online
     useEffect(() => {
@@ -1124,7 +1090,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             const res = await checkInSalesVisit(payload)
             if (res.success) {
                 toast.success(`Check-in thành công tại ${customerName}!`)
-                await fetchActive()
                 await loadWeeklyData()
                 await fetchHistoryVisits()
             } else {

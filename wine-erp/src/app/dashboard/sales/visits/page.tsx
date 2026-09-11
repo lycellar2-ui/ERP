@@ -31,7 +31,7 @@ export default async function SalesVisitsPage() {
 
     const todayStr = new Date().toISOString().slice(0, 10)
 
-    const [visits, rawCustomers, users] = await Promise.all([
+    const [visits, rawCustomers] = await Promise.all([
         getSalesVisits(), // Load recent visits so history and photos are immediately available
         prisma.customer.findMany({
             where: { deletedAt: null },
@@ -50,11 +50,6 @@ export default async function SalesVisitsPage() {
             orderBy: { name: 'asc' },
             take: 500,
         }),
-        prisma.user.findMany({
-            where: { status: 'ACTIVE' },
-            select: { id: true, name: true, email: true },
-            orderBy: { name: 'asc' },
-        })
     ])
 
     const customers = rawCustomers.map(c => ({
@@ -71,7 +66,6 @@ export default async function SalesVisitsPage() {
             <SalesVisitsClient
                 initialVisits={visits}
                 customers={customers}
-                users={users}
                 currentUserId={user?.id || 'sys-user'}
                 currentUserName={user?.name || 'Sales Rep'}
                 isManager={isManager}
