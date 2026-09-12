@@ -1404,33 +1404,65 @@ function SearchableProductCombobox({
     onSelect: (product: any) => void
 }) {
     const [open, setOpen] = useState(false)
+    const [dropUp, setDropUp] = useState(false)
     const containerRef = React.useRef<HTMLDivElement>(null)
 
     const selectedProd = React.useMemo(() => {
         return products.find(p => p.id === selectedProductId)
     }, [products, selectedProductId])
 
+    const selectedProdTitle = selectedProd ? `[${selectedProd.skuCode}] ${selectedProd.productName}` : ''
     const [inputValue, setInputValue] = useState('')
 
     useEffect(() => {
         if (selectedProd) {
-            setInputValue(`[${selectedProd.skuCode}] ${selectedProd.productName}`)
+            setInputValue(selectedProdTitle)
         } else if (!open) {
             setInputValue('')
         }
-    }, [selectedProd, open])
+    }, [selectedProd, selectedProdTitle, open])
+
+    // Close when clicking outside container
+    useEffect(() => {
+        if (!open) return
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false)
+                if (selectedProd) {
+                    setInputValue(selectedProdTitle)
+                }
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [open, selectedProd, selectedProdTitle])
+
+    // Check space above vs below for smart auto-flip
+    useEffect(() => {
+        if (open && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            if (spaceBelow < 280 && rect.top > spaceBelow) {
+                setDropUp(true)
+            } else {
+                setDropUp(false)
+            }
+        }
+    }, [open])
 
     const filtered = React.useMemo(() => {
         const q = inputValue.trim().toLowerCase()
-        if (!q) return products.slice(0, 30)
+        if (!q || (selectedProd && inputValue === selectedProdTitle)) {
+            return products.slice(0, 50)
+        }
         return products.filter(p => 
             (p.productName && p.productName.toLowerCase().includes(q)) || 
             (p.skuCode && p.skuCode.toLowerCase().includes(q))
-        ).slice(0, 30)
-    }, [products, inputValue])
+        ).slice(0, 50)
+    }, [products, inputValue, selectedProd, selectedProdTitle])
 
     return (
-        <div ref={containerRef} className="relative flex-1 min-w-0">
+        <div ref={containerRef} className={`relative flex-1 min-w-0 ${open ? 'z-50' : 'z-10'}`}>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#8AAEBB' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
             <div className="relative">
                 <input
@@ -1444,27 +1476,35 @@ function SearchableProductCombobox({
                         setInputValue(e.target.value)
                         setOpen(true)
                     }}
-                    onBlur={() => {
-                        setTimeout(() => {
-                            setOpen(false)
-                            if (selectedProd) {
-                                setInputValue(`[${selectedProd.skuCode}] ${selectedProd.productName}`)
-                            }
-                        }, 250)
-                    }}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
                     style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
                 />
-                <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                {selectedProd ? (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSelect({ id: '', skuCode: '', productName: '', wholesalePrice: 0 })
+                            setInputValue('')
+                            setOpen(true)
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 p-1 transition cursor-pointer"
+                        title="Bỏ chọn sản phẩm"
+                    >
+                        <X size={14} />
+                    </button>
+                ) : (
+                    <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                )}
             </div>
 
             {open && (
                 <div
-                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
-                    style={{ minWidth: '280px' }}
+                    className={`absolute left-0 right-0 ${dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-[#1A2C3D] border border-slate-200 dark:border-[#2A4355]`}
+                    style={{ minWidth: '320px' }}
                 >
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-xs text-center text-slate-400">Không tìm thấy sản phẩm khớp "{inputValue}"</div>
+                        <div className="p-3 text-xs text-center text-slate-400">Không tìm thấy sản phẩm khớp &quot;{inputValue}&quot;</div>
                     ) : (
                         filtered.map(p => (
                             <div
@@ -1475,13 +1515,13 @@ function SearchableProductCombobox({
                                     setInputValue(`[${p.skuCode}] ${p.productName}`)
                                     setOpen(false)
                                 }}
-                                className="w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer"
+                                className="w-full text-left p-2.5 hover:bg-slate-100 dark:hover:bg-[#22384D] transition flex items-center justify-between text-xs cursor-pointer group"
                             >
                                 <div className="min-w-0 flex-1 pr-3">
-                                    <span className="font-mono font-bold text-teal-700 mr-2 text-xs">[{p.skuCode}]</span>
-                                    <span className="text-slate-900 font-medium">{p.productName}</span>
+                                    <span className="font-mono font-bold text-teal-600 dark:text-teal-400 mr-2 text-xs">[{p.skuCode}]</span>
+                                    <span className="text-slate-900 dark:text-slate-100 font-medium group-hover:text-amber-500 transition-colors">{p.productName}</span>
                                 </div>
-                                <span className="font-mono text-xs text-slate-600 font-medium whitespace-nowrap bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#142433] px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
                                     {formatVND(p.wholesalePrice)}
                                 </span>
                             </div>
@@ -1842,13 +1882,17 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                                    <div className="space-y-2.5">
                                         {priceLines.map((line, idx) => {
                                             const selectedProd = products.find(p => p.id === line.productId)
                                             const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
                                             
                                             return (
-                                                <div key={idx} className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-[#2A4355] shadow-sm">
+                                                <div 
+                                                    key={idx} 
+                                                    className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-[#2A4355] shadow-sm relative"
+                                                    style={{ zIndex: priceLines.length - idx + 10 }}
+                                                >
                                                     <div className="flex-1 min-w-0">
                                                         <SearchableProductCombobox
                                                             products={products}
@@ -2054,14 +2098,22 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         </div>
                                     </div>
                                     
-                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                    <div className="space-y-2.5">
                                         {priceLines.map((line, idx) => {
                                             const selectedProd = products.find(p => p.id === line.productId)
                                             const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
                                             const diffPct = wholesale > 0 && line.proposedPrice > 0 ? ((line.proposedPrice - wholesale) / wholesale) * 100 : 0
                                             
                                             return (
-                                                <div key={idx} className="flex gap-2 items-end p-2.5 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                <div 
+                                                    key={idx} 
+                                                    className="flex gap-2 items-end p-2.5 rounded-md relative" 
+                                                    style={{ 
+                                                        background: '#142433', 
+                                                        border: '1px solid #2A4355',
+                                                        zIndex: priceLines.length - idx + 10
+                                                    }}
+                                                >
                                                     <SearchableProductCombobox
                                                         products={products}
                                                         selectedProductId={line.productId}
@@ -2661,7 +2713,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                                 <button onClick={async () => { await updateProposalStatus(detail.id, 'IN_PROGRESS', userId); onRefresh() }}
                                     className="flex-1 py-2.5 text-sm font-semibold rounded-md"
                                     style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
-                                    <ArrowRight size={14} className="inline mr-1" /> Chuyển "Đang thực hiện"
+                                    <ArrowRight size={14} className="inline mr-1" /> Chuyển &quot;Đang thực hiện&quot;
                                 </button>
                             </div>
                         )}

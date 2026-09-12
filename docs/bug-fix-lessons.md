@@ -54,6 +54,7 @@
 45. [BUG-098: Lệch Thứ Trong Tuần, Quy Trình Check-in 2 Bước Rườm Rà & Chữ Watermark GPS Bị Nhỏ](#bug-098-lệch-thứ-trong-tuần-thứ-6-hiển-thị-thứ-7-do-utc-shift-quy-trình-check-in-2-bước-rườm-rà--chữ-watermark-gps-thời-gian-bị-nhỏ)
 46. [BUG-099: Build Fail Trên Vercel — Exported Function Phải Là Async Trong File 'use server' (Turbopack Server Actions)](#bug-099-build-fail-trên-vercel--exported-function-phải-là-async-trong-file-use-server-turbopack-server-actions)
 47. [BUG-100: Ảnh Phóng To (Preview Modal) Ở Tab Check-in Hôm Nay Bị Mờ Do Thiếu visitId Để Lazy Load Ảnh Gốc HD](#bug-100-ảnh-phóng-to-preview-modal-ở-tab-check-in-hôm-nay-bị-mờ-do-thiếu-visitid-để-lazy-load-ảnh-gốc-hd)
+48. [BUG-101: Dropdown Chọn Sản Phẩm Trên Tờ Trình Cơ Chế Giá & Tasting Bị Che / Cắt Do Bị Giam Trong Container max-h-64 overflow-y-auto](#bug-101-dropdown-chọn-sản-phẩm-trên-tờ-trình-cơ-chế-giá--tasting-bị-che--cắt-do-bị-giam-trong-container-max-h-64-overflow-y-auto)
 
 ---
 
@@ -2660,6 +2661,32 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 100: Khi áp dụng kiến trúc Thumbnail + Lazy Full Resolution, MỌI điểm kích hoạt xem ảnh phóng to (preview modal) trên Client PHẢI truyền kèm định danh bản ghi (`visitId`/`recordId`). Không được để sót bất kỳ vị trí hiển thị nào chỉ truyền thumbnail URL mà thiếu ID nạp ảnh gốc.**
+
+---
+
+## BUG-101: Dropdown Chọn Sản Phẩm Trên Tờ Trình Cơ Chế Giá & Tasting Bị Che / Cắt Do Bị Giam Trong Container max-h-64 overflow-y-auto
+
+### Mô tả lỗi
+- **Triệu chứng:** Khi người dùng tạo hoặc chỉnh sửa tờ trình (Proposals) có chọn sản phẩm theo dòng (Đề xuất giá theo chai hoặc Tasting thử rượu), khi bấm vào ô chọn sản phẩm (SearchableProductCombobox) ở các dòng dưới, danh sách xổ xuống bị che khuất, cắt cụt chỉ thấy 1 mẩu hoặc biến mất hoàn toàn, rất khó bấm chọn.
+- **Nguyên nhân gốc rễ:**
+  1. Container danh sách các dòng sản phẩm (`priceLines`) được bọc bởi thẻ `<div className="space-y-2 max-h-64 overflow-y-auto pr-1">`. Thuộc tính `overflow-y-auto` kèm `max-h-64` (256px) tạo ra một stacking/clipping context giam giữ mọi phần tử con có `position: absolute`. Khi dropdown sản phẩm xổ xuống (`max-h-72`), nó bị cắt ngang bởi đáy của container thay vì tràn ra ngoài giao diện.
+  2. Các dòng sản phẩm không có thứ tự `z-index` phân cấp, khiến dòng phía dưới có thể che phủ popup của dòng phía trên nếu cả hai đều nằm trong DOM.
+  3. `SearchableProductCombobox` chỉ mở xuống dưới cố định (`top-full mt-1`), khi dòng nằm ở gần đáy màn hình sẽ bị tràn khỏi viewport.
+  4. Cơ chế đóng mở dựa vào `onBlur` có `setTimeout(..., 250)` khiến người dùng khi kéo thanh cuộn dropdown có thể vô tình làm đóng menu; khi click vào sản phẩm đã chọn thì ô input vẫn giữ nguyên chuỗi đầy đủ và lọc ra đúng 1 sản phẩm thay vì hiển thị danh sách để đổi sang sản phẩm khác.
+
+### Cách khắc phục
+1. **Xóa bỏ `max-h-64 overflow-y-auto`** ở cả 2 phân hệ (Tờ trình Giá Đặc Biệt & Tờ trình Tasting) trong [ProposalsClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/proposals/ProposalsClient.tsx). Drawer vốn đã có thanh cuộn chính toàn trang mượt mà, cho phép danh sách mở rộng tự nhiên mà không tạo nested scroll trap.
+2. **Bổ sung `z-index` phân cấp giảm dần** cho từng dòng: `style={{ zIndex: priceLines.length - idx + 10 }}` và `z-50` khi ô combobox đang mở.
+3. **Thêm Smart Auto-Flip Positioning:** Tự động đo khoảng cách còn lại tới đáy màn hình (`window.innerHeight - rect.bottom`), nếu dưới 280px và phía trên còn nhiều khoảng trống hơn thì tự động bật lên trên (`bottom-full mb-1.5`).
+4. **Cải tiến UX tìm kiếm & đóng mở:**
+   - Sử dụng `document.addEventListener('mousedown', handleClickOutside)` thay vì `onBlur` timeout, giúp việc click / kéo scrollbar trên dropdown không bị tự tắt.
+   - Khi focus vào sản phẩm đã có, danh sách hiển thị top 50 sản phẩm thay vì chỉ lọc ra đúng 1 sản phẩm trùng tên.
+   - Thêm nút xóa nhanh `X` để bỏ chọn sản phẩm ngay lập tức.
+   - Tối ưu giao diện dropdown tương thích cả chế độ sáng và tối (dark mode).
+
+### Bài học
+> ⚠️ **RULE 101: Tuyệt đối KHÔNG đặt các thành phần có Dropdown/Combobox (`position: absolute`) bên trong các container cha có `overflow: auto` hoặc `overflow: hidden` với chiều cao cố định (`max-h-*`) nếu modal/drawer đã có scrollbar riêng. Luôn dùng click-outside listener thay cho onBlur timeout và bổ sung smart flip (trên/dưới) theo viewport.**
+
 
 
 
