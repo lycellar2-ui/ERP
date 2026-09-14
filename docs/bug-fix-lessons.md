@@ -55,6 +55,7 @@
 46. [BUG-099: Build Fail Trên Vercel — Exported Function Phải Là Async Trong File 'use server' (Turbopack Server Actions)](#bug-099-build-fail-trên-vercel--exported-function-phải-là-async-trong-file-use-server-turbopack-server-actions)
 47. [BUG-100: Ảnh Phóng To (Preview Modal) Ở Tab Check-in Hôm Nay Bị Mờ Do Thiếu visitId Để Lazy Load Ảnh Gốc HD](#bug-100-ảnh-phóng-to-preview-modal-ở-tab-check-in-hôm-nay-bị-mờ-do-thiếu-visitid-để-lazy-load-ảnh-gốc-hd)
 48. [BUG-101: Dropdown Chọn Sản Phẩm Trên Tờ Trình Cơ Chế Giá & Tasting Bị Che / Cắt Do Bị Giam Trong Container max-h-64 overflow-y-auto](#bug-101-dropdown-chọn-sản-phẩm-trên-tờ-trình-cơ-chế-giá--tasting-bị-che--cắt-do-bị-giam-trong-container-max-h-64-overflow-y-auto)
+49. [BUG-102: Giới Hạn Trang Cố Định (Hardcoded .slice(0, 8)) & Thiếu Điều Hướng Phân Trang Đơn Bán Hàng](#bug-102-giới-hạn-trang-cố-định-hardcoded-slice0-8--thiếu-điều-hướng-phân-trang-đơn-bán-hàng)
 
 ---
 
@@ -2686,6 +2687,36 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 101: Tuyệt đối KHÔNG đặt các thành phần có Dropdown/Combobox (`position: absolute`) bên trong các container cha có `overflow: auto` hoặc `overflow: hidden` với chiều cao cố định (`max-h-*`) nếu modal/drawer đã có scrollbar riêng. Luôn dùng click-outside listener thay cho onBlur timeout và bổ sung smart flip (trên/dưới) theo viewport.**
+
+---
+
+## BUG-102: Giới Hạn Trang Cố Định (Hardcoded .slice(0, 8)) & Thiếu Điều Hướng Phân Trang Đơn Bán Hàng
+
+### Mô tả lỗi
+- **Triệu chứng:** Người dùng vào phân hệ Quản lý Đơn Bán Hàng (`/dashboard/sales`), thanh phân trang chỉ hiển thị các nút từ trang 1 đến trang 8. Không thể xem được các đơn hàng cũ hơn (từ trang 9 trở đi), dù tổng số đơn hàng trong cơ sở dữ liệu lớn hơn rất nhiều.
+- **Nguyên nhân gốc rễ:**
+  1. Trong `SalesClient.tsx`, thanh phân trang render danh sách số trang bằng đoạn code:
+     `Array.from({ length: Math.ceil(total / 20) }, (_, i) => i + 1).slice(0, 8).map(...)`
+     Hàm `.slice(0, 8)` đã cắt bỏ toàn bộ các trang từ 9 trở đi trên giao diện.
+  2. Giao diện hoàn toàn không có các nút điều hướng cơ bản: Trang đầu (`«`), Trang trước (`‹`), Trang sau (`›`), Trang cuối (`»`). Do đó khi bị cắt số trang, người dùng không có cách nào để chuyển tiếp trang.
+  3. Thiếu tùy chọn kích thước trang (`pageSize`), cố định 20 đơn/trang khiến việc tra cứu lịch sử đơn hàng kéo dài nhiều thao tác.
+
+### Cách khắc phục
+1. **Loại bỏ hardcode `.slice(0, 8)`** và thay bằng thuật toán Smart Pagination (tương tự chuẩn `ProductTable.tsx`):
+   - Tự động rút gọn bằng dấu ba chấm `...` khi tổng số trang lớn hơn 7 (ví dụ: `1 ... 7 8 9 ... 42` hoặc `1 2 3 4 5 ... 42`).
+   - Đảm bảo luôn hiển thị trang 1 và trang cuối cùng.
+2. **Bổ sung cụm nút điều hướng đầy đủ:**
+   - Trang đầu (`ChevronsLeft`), Trang trước (`ChevronLeft`), Trang sau (`ChevronRight`), Trang cuối (`ChevronsRight`) có trạng thái `disabled` và `opacity` chuẩn khi ở đầu/cuối danh sách.
+   - Tự động scroll mượt (`window.scrollTo`) lên đầu danh sách khi chuyển trang.
+3. **Thêm tùy chọn số đơn trên mỗi trang (`pageSize`):**
+   - Hỗ trợ xem linh hoạt `20`, `50`, hoặc `100` đơn/trang.
+   - Khi đổi `pageSize`, tự động reset về trang 1 và refetch query với kích thước mới.
+4. **Cập nhật đồng bộ State & Cache TanStack Query:**
+   - Đưa `pageSize` vào `queryKey` và `reload({ pageSize })` để cache không bị nhầm lẫn giữa các cấu hình hiển thị khác nhau.
+
+### Bài học
+> ⚠️ **RULE 102: Tuyệt đối KHÔNG dùng `.slice(0, N)` để giới hạn số trang trên UI nếu không có đầy đủ nút điều hướng (Prev/Next/First/Last) và thuật toán Smart Ellipsis Pagination (`1 ... N`). Mọi danh sách dữ liệu có phân trang đều phải cho phép người dùng điều hướng đến trang cuối cùng và nên hỗ trợ tùy chọn số lượng hiển thị trên mỗi trang (`pageSize`).**
+
 
 
 

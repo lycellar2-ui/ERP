@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
@@ -1516,6 +1516,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         }
     }, [])
     const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(20)
     const [sortBy, setSortBy] = useState<'createdAt' | 'totalAmount' | 'soNo'>('createdAt')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
     const [dateFrom, setDateFrom] = useState('')
@@ -1559,6 +1560,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             search: search || undefined, 
             status: statusFilter || undefined, 
             page, 
+            pageSize,
             sortBy, 
             sortDir, 
             dateFrom: dateFrom || undefined, 
@@ -1578,7 +1580,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             search: search || undefined,
             status: statusFilter as SOStatus || undefined,
             page,
-            pageSize: 20,
+            pageSize,
             sortBy: sortBy as any,
             sortDir: sortDir as any,
             dateFrom: dateFrom || undefined,
@@ -1591,7 +1593,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             pendingAction: pendingActionFilter || undefined,
             orderType: (orderTypeFilter as any) || 'ALL'
         }),
-        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL'
+        initialData: !search && !statusFilter && page === 1 && pageSize === 20 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL'
             ? initialData
             : undefined,
         staleTime: 0,
@@ -1601,6 +1603,43 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const total = queryData?.total ?? 0
     const stats = queryData?.stats ?? { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 }
     const counts = queryData?.statusCounts ?? {}
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+    const getPageNumbers = () => {
+        if (totalPages <= 7) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1)
+        }
+        const pages: (number | '...')[] = [1]
+        if (page <= 4) {
+            for (let i = 2; i <= 5; i++) {
+                pages.push(i)
+            }
+            pages.push('...')
+            pages.push(totalPages)
+        } else if (page >= totalPages - 3) {
+            pages.push('...')
+            for (let i = totalPages - 4; i <= totalPages - 1; i++) {
+                pages.push(i)
+            }
+            pages.push(totalPages)
+        } else {
+            pages.push('...')
+            for (let i = page - 1; i <= page + 1; i++) {
+                pages.push(i)
+            }
+            pages.push('...')
+            pages.push(totalPages)
+        }
+        return pages
+    }
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || newPage > totalPages || newPage === page) return
+        setPage(newPage)
+        reload({ page: newPage }, true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     const salesReps = (queryData as any)?.salesReps ?? (initialData as any)?.salesReps ?? []
     const pageLegalEntities = (queryData as any)?.legalEntities ?? (initialData as any)?.legalEntities ?? []
@@ -1661,7 +1700,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     // Legacy reload — now triggers query refetch
     const reload = useCallback(async (
         overrides?: Partial<{ 
-            search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string;
+            search: string; status: string; page: number; pageSize: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string;
             salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean; orderType: string
         }>,
         _onlyRows = false
@@ -1670,6 +1709,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         if (overrides?.search !== undefined) setSearch(overrides.search)
         if (overrides?.status !== undefined) setStatusFilter(overrides.status as SOStatus | '')
         if (overrides?.page !== undefined) setPage(overrides.page)
+        if (overrides?.pageSize !== undefined) setPageSize(overrides.pageSize)
         if (overrides?.sortBy !== undefined) setSortBy(overrides.sortBy as any)
         if (overrides?.sortDir !== undefined) setSortDir(overrides.sortDir as any)
         if (overrides?.dateFrom !== undefined) setDateFrom(overrides.dateFrom)
@@ -2500,24 +2540,89 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             </div>
 
             {/* Pagination */}
-            {total > 20 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-[#142433] border border-[#2A4355] rounded-md animate-none">
-                    <p className="text-xs text-center sm:text-left" style={{ color: '#4A6A7A' }}>
-                        Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * 20 + 1}–{Math.min(page * 20, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span> đơn hàng
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-1">
-                        {Array.from({ length: Math.ceil(total / 20) }, (_, i) => i + 1).slice(0, 8).map(p => (
-                            <button key={p} onClick={() => { setPage(p); reload({ page: p }, true) }}
-                                className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
-                                style={{
-                                    background: p === page ? 'rgba(135,203,185,0.15)' : 'transparent',
-                                    color: p === page ? '#87CBB9' : '#8AAEBB',
-                                    border: `1px solid ${p === page ? '#87CBB9' : '#2A4355'}`, borderRadius: '4px',
-                                }}>
-                                {p}
-                            </button>
-                        ))}
+            {total > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-4 py-3 bg-[#142433] border border-[#2A4355] rounded-md animate-none">
+                    <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: '#4A6A7A' }}>
+                        <span>
+                            Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span> đơn hàng
+                        </span>
+                        <div className="flex items-center gap-1.5 border-l border-[#2A4355] pl-3">
+                            <span>Hiển thị:</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => {
+                                    const newSize = Number(e.target.value)
+                                    setPageSize(newSize)
+                                    setPage(1)
+                                    reload({ pageSize: newSize, page: 1 }, true)
+                                }}
+                                className="bg-[#0D1E2B] border border-[#2A4355] rounded px-2 py-1 text-xs text-[#8AAEBB] focus:outline-none focus:border-[#87CBB9]"
+                            >
+                                <option value={20}>20 / trang</option>
+                                <option value={50}>50 / trang</option>
+                                <option value={100}>100 / trang</option>
+                            </select>
+                        </div>
                     </div>
+                    {totalPages > 1 && (
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            <button
+                                onClick={() => handlePageChange(1)}
+                                disabled={page <= 1}
+                                title="Trang đầu"
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
+                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                            >
+                                <ChevronsLeft size={15} />
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(page - 1)}
+                                disabled={page <= 1}
+                                title="Trang trước"
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
+                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                            >
+                                <ChevronLeft size={15} />
+                            </button>
+                            {getPageNumbers().map((p, i) =>
+                                p === '...' ? (
+                                    <span key={`dots-${i}`} className="px-1 text-xs select-none" style={{ color: '#4A6A7A' }}>…</span>
+                                ) : (
+                                    <button
+                                        key={p}
+                                        onClick={() => handlePageChange(p as number)}
+                                        className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
+                                        style={{
+                                            background: p === page ? 'rgba(135,203,185,0.15)' : 'transparent',
+                                            color: p === page ? '#87CBB9' : '#8AAEBB',
+                                            border: `1px solid ${p === page ? '#87CBB9' : '#2A4355'}`,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        {p}
+                                    </button>
+                                )
+                            )}
+                            <button
+                                onClick={() => handlePageChange(page + 1)}
+                                disabled={page >= totalPages}
+                                title="Trang sau"
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
+                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                            >
+                                <ChevronRight size={15} />
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(totalPages)}
+                                disabled={page >= totalPages}
+                                title="Trang cuối"
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
+                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                            >
+                                <ChevronsRight size={15} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
