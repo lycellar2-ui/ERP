@@ -36,7 +36,19 @@
 - **Bộ lọc mở rộng**: Lọc theo Pháp nhân nhập khẩu, Incoterms (*EXW, FOB, CIF, DDP*), Tiền tệ giao dịch.
 
 ### 3.3 Tạo & Chỉnh Sửa Đơn Mua Hàng (Create & Edit Draft PO)
-- **Chỉnh sửa đơn Nháp (EditPODrawer)**: Cho phép sửa toàn diện các đơn hàng ở trạng thái `DRAFT` (hoặc bị trả về khi Từ chối): thay đổi nhà cung cấp, pháp nhân, tiền tệ, tỷ giá, thêm/bớt sản phẩm, đổi quy cách thùng/chai và đơn giá.
+- **Tạo đơn 2 tùy chọn linh hoạt (`CreatePODrawer`)**:
+  - `[💾 Lưu Bản Nháp]`: Tạo và lưu đơn ở trạng thái `DRAFT` để người mua có thể xem lại, bổ sung dòng hàng, thương lượng thêm với Winery trước khi trình duyệt.
+  - `[🚀 Tạo & Gửi Trình Duyệt]`: Tạo đơn và tự động khởi tạo luồng phê duyệt đa cấp ngay lập tức.
+  - Badge trực quan `Bản Nháp (Draft)` trên tiêu đề drawer giúp người dùng nắm rõ trạng thái khởi tạo ban đầu.
+- **Chỉnh sửa đơn Nháp toàn diện (`EditPODrawer`)**:
+  - Cho phép sửa toàn bộ thông tin của đơn hàng ở trạng thái `DRAFT` (hoặc sau khi bị Từ chối / Thu hồi): thay đổi nhà cung cấp, pháp nhân, tiền tệ, tỷ giá, thêm/bớt sản phẩm, đổi quy cách thùng/chai, đơn giá thương mại, hàng FOC và chiết khấu.
+  - Cung cấp 2 lựa chọn lưu: `[💾 Lưu Bản Nháp]` (tiếp tục giữ ở trạng thái nháp) hoặc `[🚀 Lưu & Gửi Duyệt]` (lưu thay đổi và gửi trình duyệt ngay).
+- **Thu hồi về Nháp (`revertPOToDraft`)**:
+  - Khi đơn đang ở trạng thái `PENDING_APPROVAL` nhưng phát hiện cần điều chỉnh trước khi cấp trên duyệt, người tạo có thể bấm `[↩️ Thu Hồi Về Nháp]` trực tiếp từ bảng hoặc từ Slide-over Chi Tiết PO.
+- **Xoá đơn Nháp (`deletePurchaseOrder`)**:
+  - Hỗ trợ xoá vĩnh viễn đơn mua hàng nháp không còn nhu cầu sử dụng để làm sạch dữ liệu, không ảnh hưởng tới dữ liệu vận tải hay kế toán kho.
+- **Thanh tác vụ cố định (Sticky Action Footer)**:
+  - Khi mở Slide-over Chi Tiết PO ở trạng thái `DRAFT`, thanh chân trang luôn hiển thị trực tiếp các nút: `[🗑️ Xoá Đơn]`, `[✏️ Sửa Đơn Nháp]` và `[📤 Gửi Trình Duyệt]` ở bất kỳ tab nào (Sản phẩm, Lô vận tải, Chứng từ).
 - **Tìm kiếm SKU/Sản phẩm thông minh**: Tự động gợi ý theo mã SKU hoặc tên rượu vang có debounce và hiển thị cờ quốc gia.
 - **Quy cách đóng gói linh hoạt**:
   - Hỗ trợ Thùng 6 chai (`CASE_6`), Thùng 12 chai (`CASE_12`), Thùng 3 chai (`CASE_3`), Thùng 1 chai (`CASE_1`) và Chai lẻ (`BOTTLE`).

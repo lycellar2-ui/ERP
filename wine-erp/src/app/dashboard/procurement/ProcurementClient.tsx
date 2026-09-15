@@ -7,7 +7,7 @@ import {
     Package, Globe, ArrowRight, Eye, UploadCloud, Ship, Anchor,
     Filter, RefreshCw, Printer, Calendar, ArrowUpDown, ChevronRight,
     Building2, FileCheck, Layers, ExternalLink, Box, Send, CheckSquare, XCircle, ShieldCheck,
-    Download, ChevronUp, Copy, Pencil
+    Download, ChevronUp, Copy, Pencil, RotateCcw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
@@ -17,7 +17,8 @@ import {
     createPurchaseOrder, updatePurchaseOrder, updatePOStatus,
     getPurchaseOrders, getPODetail, uploadPODocument, convertPOToVND,
     getExchangeRateSummary, getLegalEntitiesForProcurement,
-    submitPOForApproval, approvePO, rejectPO, exportPurchaseOrdersExcel
+    submitPOForApproval, approvePO, rejectPO, exportPurchaseOrdersExcel,
+    deletePurchaseOrder, revertPOToDraft
 } from './actions'
 import { getShipments, type ShipmentRow } from './shipment-actions'
 import { ShipmentDetailDrawer } from './ShipmentDetailDrawer'
@@ -240,7 +241,7 @@ function POStatusBadge({ status }: { status: string }) {
 }
 
 // ── Status Stepper Action Component ────────────────
-function StatusStepper({ current, poId, onUpdate }: { current: string; poId: string; onUpdate: () => void }) {
+function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; poId: string; onUpdate: () => void; onEdit?: (poId: string) => void }) {
     const [updating, setUpdating] = useState(false)
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
     const [reason, setReason] = useState('')
@@ -301,18 +302,36 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
         )
     }
 
-    const handleCancel = async () => {
-        if (!confirm('Bạn có chắc chắn muốn huỷ PO này không?')) return
+    const handleRevert = async () => {
+        if (!confirm('Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?')) return
         setUpdating(true)
         toast.promise(
-            updatePOStatus(poId, 'CANCELLED').then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi huỷ PO')
+            revertPOToDraft(poId).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
                 onUpdate()
                 return res
             }),
             {
-                loading: 'Đang huỷ...',
-                success: 'Đã huỷ PO',
+                loading: 'Đang thu hồi về Nháp...',
+                success: 'Đã thu hồi đơn về trạng thái Nháp thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setUpdating(false)
+            }
+        )
+    }
+
+    const handleDeleteDraft = async () => {
+        if (!confirm('Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.')) return
+        setUpdating(true)
+        toast.promise(
+            deletePurchaseOrder(poId).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
+                onUpdate()
+                return res
+            }),
+            {
+                loading: 'Đang xoá đơn nháp...',
+                success: 'Đã xoá đơn mua hàng nháp thành công!',
                 error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setUpdating(false)
             }
@@ -322,17 +341,25 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
     if (current === 'DRAFT') {
         return (
             <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                {onEdit && (
+                    <button onClick={() => onEdit(poId)} disabled={updating}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-amber-500/20"
+                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                        title="Chỉnh sửa đơn mua hàng nháp">
+                        <Pencil size={11} /> Sửa
+                    </button>
+                )}
                 <button onClick={handleSubmit} disabled={updating}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all"
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/20"
                     style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
                     title="Gửi duyệt PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><Send size={11} /> Gửi Duyệt</>}
                 </button>
-                <button onClick={handleCancel} disabled={updating}
-                    className="px-1.5 py-1 rounded text-[11px] font-semibold transition-all"
+                <button onClick={handleDeleteDraft} disabled={updating}
+                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
                     style={{ background: 'rgba(139,26,46,0.1)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.25)' }}
-                    title="Huỷ PO">
-                    Huỷ
+                    title="Xoá đơn mua hàng nháp">
+                    <Trash2 size={11} />
                 </button>
             </div>
         )
@@ -342,16 +369,22 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
         return (
             <div className="flex items-center gap-1 relative" onClick={e => e.stopPropagation()}>
                 <button onClick={handleApprove} disabled={updating}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all"
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/25"
                     style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}
                     title="Duyệt PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
                 </button>
                 <button onClick={() => setRejectDialogOpen(true)} disabled={updating}
-                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all"
+                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
                     style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)' }}
                     title="Từ chối PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><X size={11} /> Từ Chối</>}
+                </button>
+                <button onClick={handleRevert} disabled={updating}
+                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-amber-500/20"
+                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                    title="Thu hồi về Nháp để chỉnh sửa">
+                    <RotateCcw size={10} /> Thu Hồi
                 </button>
 
                 {rejectDialogOpen && (
@@ -705,7 +738,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     const setLine = (i: number, key: keyof DraftPOLine, val: any) =>
         setLines(ls => ls.map((l, idx) => idx === i ? { ...l, [key]: val } : l))
 
-    const handleSave = async () => {
+    const handleSave = async (submitImmediately: boolean = false) => {
         if (!supplierId) return toast.error('Vui lòng chọn nhà cung cấp')
         if (lines.some(l => !l.productId || (!l.isFoc && l.priceInput <= 0))) {
             return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm (đơn giá > 0 cho hàng thương mại)')
@@ -726,23 +759,32 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         })
 
         toast.promise(
-            createPurchaseOrder({
-                supplierId,
-                currency,
-                exchangeRate,
-                lines: formattedLines,
-                legalEntityId: legalEntityId || undefined,
-                incoterms,
-                discountPct: discountType === 'PERCENT' ? discountPct : undefined,
-                discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
-            }).then(res => {
-                if (!res.success || !res.poNo) throw new Error(res.error || 'Lỗi không xác định')
+            (async () => {
+                const res = await createPurchaseOrder({
+                    supplierId,
+                    currency,
+                    exchangeRate,
+                    lines: formattedLines,
+                    legalEntityId: legalEntityId || undefined,
+                    incoterms,
+                    discountPct: discountType === 'PERCENT' ? discountPct : undefined,
+                    discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
+                })
+                if (!res.success || !res.poNo || !res.id) throw new Error(res.error || 'Lỗi không xác định khi tạo đơn')
+
+                if (submitImmediately) {
+                    const submitRes = await submitPOForApproval(res.id)
+                    if (!submitRes.success) throw new Error(submitRes.error || 'Lỗi gửi trình duyệt PO')
+                }
+
                 onCreated(res.poNo)
                 return res
-            }),
+            })(),
             {
-                loading: 'Đang tạo Purchase Order...',
-                success: 'Tạo PO thành công!',
+                loading: submitImmediately ? 'Đang tạo và gửi trình duyệt PO...' : 'Đang lưu bản nháp PO...',
+                success: (res) => submitImmediately
+                    ? `Đã tạo và gửi trình duyệt PO ${res.poNo} thành công!`
+                    : `Đã lưu bản nháp ${res.poNo} thành công! Bạn có thể chỉnh sửa bất kỳ lúc nào.`,
                 error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setSaving(false)
             }
@@ -767,7 +809,12 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             <ShoppingCart size={18} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>Tạo Đơn Mua Hàng (PO)</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>Tạo Đơn Mua Hàng (PO)</h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
+                                    Bản Nháp (Draft)
+                                </span>
+                            </div>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC</p>
                         </div>
                     </div>
@@ -1151,12 +1198,26 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             </p>
                         </div>
                     </div>
-                    <button onClick={handleSave} disabled={saving}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all shadow-sm"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
-                        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                        Tạo Đơn Mua Hàng
-                    </button>
+                    <div className="flex items-center gap-2.5">
+                        <button type="button" onClick={onClose}
+                            className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                            Huỷ
+                        </button>
+                        <button type="button" onClick={() => handleSave(false)} disabled={saving}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:bg-amber-500/25"
+                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                            title="Lưu bản nháp để có thể xem lại và chỉnh sửa tiếp">
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            Lưu Bản Nháp
+                        </button>
+                        <button type="button" onClick={() => handleSave(true)} disabled={saving}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
+                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                            title="Tạo đơn và gửi trình duyệt ngay">
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Tạo & Gửi Trình Duyệt
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1312,7 +1373,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
     const setLine = (i: number, key: keyof DraftPOLine, val: any) =>
         setLines(ls => ls.map((l, idx) => idx === i ? { ...l, [key]: val } : l))
 
-    const handleSave = async () => {
+    const handleSave = async (submitImmediately: boolean = false) => {
         if (!poId) return
         if (!supplierId) return toast.error('Vui lòng chọn nhà cung cấp')
         if (lines.some(l => !l.productId || (!l.isFoc && l.priceInput <= 0))) {
@@ -1334,23 +1395,32 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
         })
 
         toast.promise(
-            updatePurchaseOrder(poId, {
-                supplierId,
-                currency,
-                exchangeRate,
-                lines: formattedLines,
-                legalEntityId,
-                incoterms,
-                discountPct: discountType === 'PERCENT' ? discountPct : undefined,
-                discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
-            }).then(res => {
+            (async () => {
+                const res = await updatePurchaseOrder(poId, {
+                    supplierId,
+                    currency,
+                    exchangeRate,
+                    lines: formattedLines,
+                    legalEntityId,
+                    incoterms,
+                    discountPct: discountType === 'PERCENT' ? discountPct : undefined,
+                    discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
+                })
                 if (!res.success) throw new Error(res.error || 'Lỗi cập nhật PO')
+
+                if (submitImmediately) {
+                    const submitRes = await submitPOForApproval(poId)
+                    if (!submitRes.success) throw new Error(submitRes.error || 'Lỗi gửi trình duyệt PO')
+                }
+
                 onUpdated(res.poNo || poNo)
                 return res
-            }),
+            })(),
             {
-                loading: 'Đang lưu chỉnh sửa PO...',
-                success: 'Cập nhật PO thành công!',
+                loading: submitImmediately ? 'Đang cập nhật và gửi trình duyệt...' : 'Đang lưu bản nháp PO...',
+                success: (res) => submitImmediately
+                    ? `Đã cập nhật và gửi trình duyệt PO ${res.poNo || poNo} thành công!`
+                    : `Đã cập nhật bản nháp PO ${res.poNo || poNo} thành công!`,
                 error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setSaving(false)
             }
@@ -1375,9 +1445,14 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                             <Pencil size={18} style={{ color: '#D4A853' }} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>
-                                Chỉnh Sửa Đơn Mua Hàng: <span className="font-mono text-[#87CBB9]">{poNo}</span>
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>
+                                    Chỉnh Sửa Đơn Nháp: <span className="font-mono text-[#87CBB9]">{poNo}</span>
+                                </h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
+                                    Bản Nháp
+                                </span>
+                            </div>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu</p>
                         </div>
                     </div>
@@ -1790,16 +1865,24 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={onClose}
-                                    className="px-4 py-3 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
-                                    Huỷ
+                            <div className="flex gap-2.5">
+                                <button type="button" onClick={onClose}
+                                    className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                                    Đóng
                                 </button>
-                                <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all shadow-sm"
-                                    style={{ background: '#D4A853', color: '#0A1926' }}>
-                                    {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                                    Lưu Thay Đổi Đơn PO
+                                <button type="button" onClick={() => handleSave(false)} disabled={saving}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:bg-amber-500/25"
+                                    style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                    title="Lưu các thay đổi và tiếp tục giữ ở trạng thái Nháp">
+                                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                    Lưu Bản Nháp
+                                </button>
+                                <button type="button" onClick={() => handleSave(true)} disabled={saving}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
+                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                    title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
+                                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                    Lưu & Gửi Duyệt
                                 </button>
                             </div>
                         </div>
@@ -2077,6 +2160,45 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         )
     }
 
+    const handleDrawerRevertToDraft = async (poId: string) => {
+        if (!confirm('Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?')) return
+        setApproving(true)
+        toast.promise(
+            revertPOToDraft(poId).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
+                refresh()
+                if (selectedId === poId) showDetail(poId, true)
+                return res
+            }),
+            {
+                loading: 'Đang thu hồi đơn về trạng thái Nháp...',
+                success: 'Đã thu hồi đơn về trạng thái Nháp để chỉnh sửa!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setApproving(false)
+            }
+        )
+    }
+
+    const handleDrawerDelete = async (poId: string) => {
+        if (!confirm('Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.')) return
+        setApproving(true)
+        toast.promise(
+            deletePurchaseOrder(poId).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
+                setSelectedId(null)
+                setPoDetail(null)
+                refresh()
+                return res
+            }),
+            {
+                loading: 'Đang xoá đơn nháp...',
+                success: 'Đã xoá đơn mua hàng nháp thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setApproving(false)
+            }
+        )
+    }
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header with Inline Stats and Action Buttons */}
@@ -2088,7 +2210,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong>
                         </span>
                         <span style={{ color: '#8AAEBB' }}>
-                            Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.draft + (statusCounts.PENDING_APPROVAL || 0)}</strong>
+                            Bản nháp: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
+                        </span>
+                        <span style={{ color: '#8AAEBB' }}>
+                            Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
                         </span>
                         <span style={{ color: '#8AAEBB' }}>
                             Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.approved}</strong>
@@ -2507,14 +2632,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Edit Draft PO */}
                                                 {row.status === 'DRAFT' && (
                                                     <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
-                                                        className="p-1.5 rounded-lg text-[#D4A853] hover:bg-[#1B2E3D] border border-amber-500/20"
-                                                        title="Chỉnh sửa PO">
-                                                        <Pencil size={13} />
+                                                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-[#D4A853] hover:bg-amber-500/20 border border-amber-500/30 bg-amber-500/10 transition-all"
+                                                        title="Chỉnh sửa PO Nháp">
+                                                        <Pencil size={11} /> Sửa
                                                     </button>
                                                 )}
 
                                                 {/* Status Stepper */}
-                                                <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
+                                                <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
 
                                                 {/* Direct Warehouse Receipt shortcut */}
                                                 {isReadyForGR && (
@@ -2599,10 +2724,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                             <div className="flex items-center justify-between pt-2 border-t border-[#2A4355]/40 text-xs" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                    <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
+                                    <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
                                     {row.status === 'DRAFT' && (
                                         <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
-                                            className="px-2 py-1 text-xs font-bold rounded-lg text-[#D4A853] bg-[#1B2E3D] border border-amber-500/20 flex items-center gap-1">
+                                            className="px-2 py-1 text-xs font-bold rounded-lg text-[#D4A853] bg-amber-500/10 border border-amber-500/30 flex items-center gap-1 hover:bg-amber-500/20">
                                             <Pencil size={11} /> Sửa
                                         </button>
                                     )}
@@ -2642,10 +2767,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <div className="flex items-center gap-2">
                                 {poDetail && poDetail.status === 'DRAFT' && (
                                     <button onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true); }}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
                                         style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
-                                        title="Chỉnh sửa PO">
-                                        <Pencil size={13} /> Sửa Đơn
+                                        title="Chỉnh sửa PO Nháp">
+                                        <Pencil size={13} /> Sửa Đơn Nháp
+                                    </button>
+                                )}
+                                {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
+                                    <button onClick={() => handleDrawerRevertToDraft(selectedId!)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
+                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        title="Thu hồi về trạng thái Nháp để chỉnh sửa">
+                                        <RotateCcw size={12} /> Thu Hồi Về Nháp
                                     </button>
                                 )}
                                 <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]">
@@ -3053,6 +3186,65 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
                             </>
                         ) : null}
+
+                        {/* Sticky Action Footer for DRAFT PO in Detail Drawer */}
+                        {poDetail && poDetail.status === 'DRAFT' && (
+                            <div className="p-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-300">Đơn hàng ở trạng thái Bản Nháp</p>
+                                        <p className="text-[10px] text-[#8AAEBB]">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => handleDrawerDelete(poDetail.id)}
+                                        disabled={approving}
+                                        className="flex items-center gap-1 px-2.5 py-2 text-xs font-semibold rounded-xl text-rose-400 hover:bg-rose-900/30 border border-rose-500/20 transition-all"
+                                        title="Xoá đơn mua hàng nháp">
+                                        <Trash2 size={13} /> Xoá Đơn
+                                    </button>
+                                    <button 
+                                        onClick={() => { setEditPoId(poDetail.id); setEditDrawerOpen(true); }}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all hover:bg-amber-500/25"
+                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        <Pencil size={13} /> Sửa Đơn Nháp
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDrawerSubmit(poDetail.id)}
+                                        disabled={approving}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-[#0A1926] transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
+                                        style={{ background: '#87CBB9' }}>
+                                        {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                                        Gửi Trình Duyệt
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Sticky Action Footer for PENDING_APPROVAL PO in Detail Drawer */}
+                        {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
+                            <div className="p-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
+                                <div className="flex items-center gap-2">
+                                    <Clock size={16} className="text-[#D4A853]" />
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-300">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
+                                        <p className="text-[10px] text-[#8AAEBB]">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button 
+                                        onClick={() => handleDrawerRevertToDraft(poDetail.id)}
+                                        disabled={approving}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all hover:bg-amber-500/25"
+                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        title="Thu hồi về Nháp để chỉnh sửa">
+                                        <RotateCcw size={13} /> Thu Hồi Về Nháp
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

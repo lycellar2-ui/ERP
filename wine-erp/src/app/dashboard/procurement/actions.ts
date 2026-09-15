@@ -617,6 +617,35 @@ export async function updatePurchaseOrder(id: string, input: CreatePOInput) {
     return { success: true, id: po.id, poNo: po.poNo }
 }
 
+// ─── Delete PO (Draft only) ───────────────────────
+export async function deletePurchaseOrder(id: string) {
+    await requireAuth()
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        select: { id: true, poNo: true, status: true }
+    })
+    if (!po) return { success: false, error: 'Không tìm thấy đơn mua hàng' }
+    if (po.status !== 'DRAFT') {
+        return { success: false, error: 'Chỉ có thể xoá đơn mua hàng ở trạng thái Nháp (DRAFT)' }
+    }
+
+    await prisma.$transaction(async (tx) => {
+        await tx.purchaseOrderLine.deleteMany({ where: { poId: id } })
+        await tx.pODocument.deleteMany({ where: { poId: id } })
+        await tx.auditLog.deleteMany({ where: { entityType: 'PurchaseOrder', entityId: id } })
+        await tx.purchaseOrder.delete({ where: { id } })
+    })
+
+    revalidateCache('procurement')
+    revalidatePath('/dashboard/procurement')
+    return { success: true }
+}
+
+// ─── Revert PO to Draft (Recall from Pending) ─────
+export async function revertPOToDraft(id: string) {
+    return updatePOStatus(id, 'DRAFT')
+}
+
 // ─── PO Approval Workflow Actions ─────────────────
 
 // 1. Submit PO for Approval

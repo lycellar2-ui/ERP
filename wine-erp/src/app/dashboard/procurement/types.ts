@@ -92,7 +92,7 @@ export const poLineSchema = z.object({
     uom: z.string().default('BOTTLE'),
     packType: z.string().optional(),
     pricingMode: z.string().optional(),
-    isFoc: z.boolean().default(false),
+    isFoc: z.boolean().optional().default(false),
     focNote: z.string().optional(),
     declaredPrice: z.number().min(0).optional(),
 })
@@ -110,7 +110,7 @@ export const createPOSchema = z.object({
     lines: z.array(poLineSchema).min(1, 'Cần ít nhất 1 dòng sản phẩm'),
 })
 
-export type CreatePOInput = z.infer<typeof createPOSchema>
+export type CreatePOInput = z.input<typeof createPOSchema>
 
 export type POCurrencyBreakdown = {
     poId: string
