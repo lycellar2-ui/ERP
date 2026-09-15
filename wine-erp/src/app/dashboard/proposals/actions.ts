@@ -67,50 +67,47 @@ export async function getProposals(filters?: {
     priority?: string
     createdBy?: string
 }) {
-    const cacheKey = `proposals:list:${filters?.status ?? ''}:${filters?.category ?? ''}:${filters?.priority ?? ''}:${filters?.createdBy ?? ''}`
-    return cached(cacheKey, async () => {
-        const where: any = {}
-        if (filters?.status) where.status = filters.status
-        if (filters?.category) where.category = filters.category
-        if (filters?.priority) where.priority = filters.priority
-        if (filters?.createdBy) where.createdBy = filters.createdBy
+    const where: any = {}
+    if (filters?.status) where.status = filters.status
+    if (filters?.category) where.category = filters.category
+    if (filters?.priority) where.priority = filters.priority
+    if (filters?.createdBy) where.createdBy = filters.createdBy
 
-        const proposals = await prisma.proposal.findMany({
-            where,
-            include: {
-                creator: { select: { name: true, email: true } },
-                department: { select: { name: true } },
-                customer: { select: { name: true } },
-                _count: { select: { attachments: true, comments: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-        })
+    const proposals = await prisma.proposal.findMany({
+        where,
+        include: {
+            creator: { select: { name: true, email: true } },
+            department: { select: { name: true } },
+            customer: { select: { name: true } },
+            _count: { select: { attachments: true, comments: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+    })
 
-        return proposals.map(p => ({
-            id: p.id,
-            proposalNo: p.proposalNo,
-            category: p.category,
-            priority: p.priority,
-            title: p.title,
-            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-            currency: p.currency,
-            deadline: p.deadline,
-            startDate: p.startDate,
-            endDate: p.endDate,
-            status: p.status,
-            currentLevel: p.currentLevel,
-            creatorName: p.creator.name ?? p.creator.email,
-            departmentName: p.department?.name ?? null,
-            customerName: p.customer?.name ?? null,
-            scope: p.scope,
-            discountPct: p.discountPct ? Number(p.discountPct) : null,
-            attachmentCount: p._count.attachments,
-            commentCount: p._count.comments,
-            submittedAt: p.submittedAt,
-            resolvedAt: p.resolvedAt,
-            createdAt: p.createdAt,
-        }))
-    }, 30_000) // 30s cache
+    return proposals.map(p => ({
+        id: p.id,
+        proposalNo: p.proposalNo,
+        category: p.category,
+        priority: p.priority,
+        title: p.title,
+        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+        currency: p.currency,
+        deadline: p.deadline,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        status: p.status,
+        currentLevel: p.currentLevel,
+        creatorName: p.creator.name ?? p.creator.email,
+        departmentName: p.department?.name ?? null,
+        customerName: p.customer?.name ?? null,
+        scope: p.scope,
+        discountPct: p.discountPct ? Number(p.discountPct) : null,
+        attachmentCount: p._count.attachments,
+        commentCount: p._count.comments,
+        submittedAt: p.submittedAt,
+        resolvedAt: p.resolvedAt,
+        createdAt: p.createdAt,
+    }))
 }
 
 // ─── Get proposal detail ─────────────────────────
@@ -559,65 +556,61 @@ export async function addProposalComment(input: {
 
 // ─── Stats for proposals page ────────────────────
 export async function getProposalStats() {
-    return cached('proposals:stats', async () => {
-        const [total, pending, approved, rejected, draft] = await Promise.all([
-            prisma.proposal.count(),
-            prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
-            prisma.proposal.count({ where: { status: 'APPROVED' } }),
-            prisma.proposal.count({ where: { status: 'REJECTED' } }),
-            prisma.proposal.count({ where: { status: 'DRAFT' } }),
-        ])
-        return { total, pending, approved, rejected, draft }
-    }, 30_000) // 30s cache
+    const [total, pending, approved, rejected, draft] = await Promise.all([
+        prisma.proposal.count(),
+        prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
+        prisma.proposal.count({ where: { status: 'APPROVED' } }),
+        prisma.proposal.count({ where: { status: 'REJECTED' } }),
+        prisma.proposal.count({ where: { status: 'DRAFT' } }),
+    ])
+    return { total, pending, approved, rejected, draft }
 }
 
 // ─── Pending proposals for CEO dashboard ─────────
 export async function getPendingProposalsForCEO() {
-    return cached('proposals:pendingCEO', async () => {
-        const proposals = await prisma.proposal.findMany({
-            where: {
-                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+    const proposals = await prisma.proposal.findMany({
+        where: {
+            status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+        },
+        include: {
+            creator: { select: { name: true, email: true } },
+            department: { select: { name: true } },
+            _count: { select: { attachments: true, comments: true } },
+            approvalLogs: {
+                orderBy: { createdAt: 'desc' },
+                take: 3,
+                include: { approver: { select: { name: true } } },
             },
-            include: {
-                creator: { select: { name: true, email: true } },
-                department: { select: { name: true } },
-                _count: { select: { attachments: true, comments: true } },
-                approvalLogs: {
-                    orderBy: { createdAt: 'desc' },
-                    take: 3,
-                    include: { approver: { select: { name: true } } },
-                },
-            },
-            orderBy: [
-                { priority: 'desc' },
-                { submittedAt: 'asc' },
-            ],
-        })
+        },
+        orderBy: [
+            { priority: 'desc' },
+            { submittedAt: 'asc' },
+        ],
+    })
 
-        return proposals.map(p => ({
-            id: p.id,
-            proposalNo: p.proposalNo,
-            category: p.category,
-            priority: p.priority,
-            title: p.title,
-            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-            currency: p.currency,
-            deadline: p.deadline,
-            status: p.status,
-            currentLevel: p.currentLevel,
-            creatorName: p.creator.name ?? p.creator.email,
-            departmentName: p.department?.name ?? null,
-            attachmentCount: p._count.attachments,
-            commentCount: p._count.comments,
-            submittedAt: p.submittedAt,
-            previousApprovals: p.approvalLogs.map(l => ({
-                level: l.level,
-                action: l.action,
-                approverName: l.approver.name,
-                createdAt: l.createdAt,
-            })),
-        }))
-    }, 15_000) // 15s cache — realtime-ish
+    return proposals.map(p => ({
+        id: p.id,
+        proposalNo: p.proposalNo,
+        category: p.category,
+        priority: p.priority,
+        title: p.title,
+        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+        currency: p.currency,
+        deadline: p.deadline,
+        status: p.status,
+        currentLevel: p.currentLevel,
+        creatorName: p.creator.name ?? p.creator.email,
+        departmentName: p.department?.name ?? null,
+        attachmentCount: p._count.attachments,
+        commentCount: p._count.comments,
+        submittedAt: p.submittedAt,
+        previousApprovals: p.approvalLogs.map(l => ({
+            level: l.level,
+            action: l.action,
+            approverName: l.approver.name,
+            createdAt: l.createdAt,
+        })),
+    }))
 }
 
 // ─── Mark as in-progress / closed ────────────────

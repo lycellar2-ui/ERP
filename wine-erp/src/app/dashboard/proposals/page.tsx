@@ -3,6 +3,9 @@ import { getProposals, getProposalStats } from './actions'
 import { getCurrentUser } from '@/lib/session'
 import ProposalsClient from './ProposalsClient'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function ProposalsPage() {
     const [proposals, stats, user] = await Promise.all([
         getProposals(),

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
-    getProposalDetail, updateProposalStatus,
+    getProposalDetail, updateProposalStatus, getProposals,
 } from './actions'
 import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './constants'
 import { formatVND } from '@/lib/utils'
@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase'
 
 function formatCompactVND(amount: number): string {
     if (amount >= 1_000_000_000) {
@@ -73,6 +74,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const [detail, setDetail] = useState<ProposalDetail | null>(null)
     const [loading, setLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+    // Sync state if server initialProposals updates
+    useEffect(() => {
+        setProposals(initialProposals)
+    }, [initialProposals])
 
     const searchParams = useSearchParams()
     const isCEO = userRoles.includes('CEO')
@@ -148,10 +154,36 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     })
 
     const refreshList = useCallback(async () => {
-        const { getProposals } = await import('./actions')
-        const data = await getProposals()
-        setProposals(data)
+        try {
+            const data = await getProposals()
+            setProposals(data)
+        } catch (err) {
+            console.error('Failed to refresh proposals:', err)
+        }
     }, [])
+
+    // Realtime Supabase Database Listener for live proposals updates
+    useEffect(() => {
+        const supabase = createClient()
+        const channel = supabase
+            .channel('realtime_proposals_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'proposals',
+                },
+                () => {
+                    refreshList().catch(() => {})
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [refreshList])
 
     const openDetail = useCallback(async (id: string) => {
         setDetailId(id)
@@ -176,10 +208,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             const res = await submitProposal(proposalId, userId)
             if (res.success) {
                 toast.success('Đã trình tờ trình phê duyệt thành công!')
-                Promise.all([
-                    refreshList(),
-                    detailId === proposalId ? openDetail(proposalId) : Promise.resolve(),
-                ]).catch(() => {})
+                await refreshList()
+                if (detailId === proposalId) {
+                    await openDetail(proposalId)
+                }
             } else {
                 setProposals(prevProposals)
                 setDetail(prevDetail)
@@ -238,11 +270,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     }
                 }
 
-                // Sync data in background without blocking UI
-                Promise.all([
-                    refreshList(),
-                    detailId === proposalId ? openDetail(proposalId) : Promise.resolve(),
-                ]).catch(() => {})
+                await refreshList()
+                if (detailId === proposalId) {
+                    await openDetail(proposalId)
+                }
             } else {
                 // Rollback on error
                 setProposals(prevProposals)
@@ -1260,12 +1291,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <DetailDrawer
                     detail={detail}
                     loading={loading}
+                    actionLoading={actionLoading}
                     onClose={() => { setDetailId(null); setDetail(null) }}
                     userId={userId}
                     isCEO={isCEO}
                     userRoles={userRoles}
-                    onApproval={async (action, comment) => { await handleApproval(detailId, action, comment); }}
-                    onRefresh={async () => { await refreshList(); await openDetail(detailId) }}
+                    onApproval={async (action, comment) => { if (detailId) await handleApproval(detailId, action, comment); }}
+                    onRefresh={async () => { await refreshList(); if (detailId) await openDetail(detailId) }}
                     onPrint={handlePrint}
                 />
             )}
@@ -2299,9 +2331,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 }
 
 // ─── Detail Drawer ───────────────────────────────
-function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onApproval, onRefresh, onPrint }: {
+function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, userRoles, onApproval, onRefresh, onPrint }: {
     detail: ProposalDetail | null
     loading: boolean
+    actionLoading?: string | null
     onClose: () => void
     userId: string
     isCEO: boolean
@@ -2682,16 +2715,18 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                             <div className="flex gap-3 p-4 rounded-md" style={{ background: 'rgba(212,168,83,0.05)', border: '2px solid rgba(212,168,83,0.2)' }}>
                                 <button
                                     onClick={() => onApproval('APPROVE')}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all"
+                                    disabled={Boolean(actionLoading)}
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}>
-                                    <CheckCircle2 size={16} /> Duyệt Tờ Trình
+                                    {actionLoading === detail.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Duyệt Tờ Trình
                                 </button>
                                 <button
                                     onClick={() => {
                                         const reason = prompt('Ghi chú khi trả lại:')
                                         if (reason) onApproval('RETURN', reason)
                                     }}
-                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all"
+                                    disabled={Boolean(actionLoading)}
+                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{ background: 'rgba(196,90,42,0.1)', color: '#C45A2A', border: '1px solid rgba(196,90,42,0.2)' }}>
                                     <RotateCcw size={14} className="inline mr-1" /> Trả Lại
                                 </button>
@@ -2700,7 +2735,8 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                                         const reason = prompt('Lý do từ chối:')
                                         if (reason) onApproval('REJECT', reason)
                                     }}
-                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all"
+                                    disabled={Boolean(actionLoading)}
+                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
                                     <XCircle size={14} className="inline mr-1" /> Từ Chối
                                 </button>

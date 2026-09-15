@@ -58,6 +58,7 @@
 49. [BUG-102: Giới Hạn Trang Cố Định (Hardcoded .slice(0, 8)) & Thiếu Điều Hướng Phân Trang Đơn Bán Hàng](#bug-102-giới-hạn-trang-cố-định-hardcoded-slice0-8--thiếu-điều-hướng-phân-trang-đơn-bán-hàng)
 50. [BUG-103: Phiếu Xuất Bán Hàng (DO) Bị Kéo Nhầm Vào Báo Cáo Nhập Xuất Tồn Kho Thường Tín & Lệch Ảo Tồn Sổ Sách Do Bỏ Quên Điều Chuyển Kho](#bug-103-phiếu-xuất-bán-hàng-do-bị-kéo-nhầm-vào-báo-cáo-nhập-xuất-tồn-kho-thường-tín--lệch-ảo-tồn-sổ-sách-do-bỏ-quên-điều-chuyển-kho)
 51. [BUG-104: Phân Quyền Miễn Xuất Hóa Đơn VAT Cho Đơn Hàng (Chỉ Kế Toán/Admin), Tách Riêng Doanh Thu & Bảo Toàn Đủ 100% VAT](#bug-104-phân-quyền-miễn-xuất-hóa-đơn-vat-cho-đơn-hàng-chỉ-kế-toánadmin-tách-riêng-doanh-thu--bảo-toàn-đủ-100-vat)
+52. [BUG-105: Độ Trễ Trạng Thái Tờ Trình (Stale Cache Đa Container Vercel & Thiếu Realtime Khi Nhấn Trình/Duyệt)](#bug-105-độ-trễ-trạng-thái-tờ-trình-stale-cache-đa-container-vercel--thiếu-realtime-khi-nhấn-trìnhduyệt)
 
 ---
 
@@ -2784,4 +2785,32 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 104: Nghiệp vụ miễn hóa đơn VAT (`isInvoiceExempt`) phải được kiểm soát phân quyền chặt chẽ (RBAC) - CHỈ CHO PHÉP Kế toán và Admin thao tác; Tuyệt đối không được làm thay đổi hoặc giảm trừ tiền thuế VAT/giá trị đơn hàng (bảo toàn 100% VAT cho doanh thu thực tế); Mọi thẻ chỉ số tài chính phải tách bạch rõ doanh thu có hóa đơn vs không hóa đơn; Đơn hàng miễn HĐ sau khi giao phải cho phép hoàn tất thu tiền (`DELIVERED -> PAID`) trơn tru mà không bị chặn bởi bước xuất HĐ.**
+---
+
+## BUG-105: Độ Trễ Trạng Thái Tờ Trình (Stale Cache Đa Container Vercel & Thiếu Realtime Khi Nhấn Trình/Duyệt)
+
+**Severity:** 🔴 High / User Experience & Workflow State Integrity  
+**Date:** 2026-09-15  
+**Affected Modules:** `PRO` (Proposals & Submissions — `proposals/actions.ts`, `proposals/page.tsx`, `proposals/ProposalsClient.tsx`)
+
+### Mô tả vấn đề
+- **Triệu chứng:**
+  1. Người dùng khi tạo tờ trình và bấm "Trình", hoặc duyệt tờ trình (Cấp 1, Cấp 2, Cấp 3), trên bảng danh sách vẫn giữ nguyên trạng thái cũ là "Bản nháp" (DRAFT) cùng nút "Trình", các thẻ thống kê đếm "Bản nháp: 1, Chờ duyệt: 0", dù thực tế trong cơ sở dữ liệu PostgreSQL bản ghi đã được cập nhật thành công (ví dụ `TT-2026-043` đã duyệt đến `APPROVED`).
+  2. Nút "Duyệt Tờ Trình" trong Drawer chi tiết không có trạng thái loading spinner, người dùng không biết thao tác đã được gửi đi hay chưa, dễ nhấn nhiều lần hoặc tải lại trang gây khó hiểu.
+- **Nguyên nhân gốc rễ:**
+  1. **In-Memory SWR Cache giữa các Serverless Container trên Vercel:** `getProposals` và `getProposalStats` bị bọc trong hàm `cached()` lưu bộ nhớ RAM (TTL 30s-60s). Khi người dùng thực hiện thao tác duyệt, Server Action chạy ở Container A và gọi `revalidateCache('proposals')` (chỉ xóa cache RAM của Container A). Ngay sau đó, hàm `refreshList()` trên Client gọi `getProposals()`, request này được Vercel định tuyến sang Container B - nơi cache cũ (`DRAFT`) vẫn còn hiệu lực. Kết quả là `refreshList()` nhận về dữ liệu cũ, ghi đè và hủy bỏ Optimistic Update của Client!
+  2. **Next.js Route Caching:** Trang `/dashboard/proposals` chưa cấu hình `force-dynamic` và `revalidate = 0`, khiến router cache của Next.js có thể tái sử dụng HTML/RSC payload cũ khi chuyển trang.
+  3. **Thiếu Realtime Database Listener:** Khác với phân hệ `sales` có kênh Supabase Realtime, phân hệ `proposals` hoàn toàn phụ thuộc vào việc fetch thủ công trên từng client, khiến các tab hoặc người duyệt khác không nhìn thấy trạng thái thay đổi đồng thời.
+  4. **Thiếu phản hồi loading trên nút duyệt:** Nút "Duyệt Tờ Trình" chưa nhận prop `actionLoading` để hiển thị spinner `<Loader2 className="animate-spin" />` và disable các nút hành động khác để ngăn chặn double-click.
+
+### Cách khắc phục
+1. **Bỏ cache in-memory trên Server Action (`proposals/actions.ts`):** Gỡ bỏ hoàn toàn `cached()` ở các hàm `getProposals`, `getProposalStats`, `getPendingProposalsForCEO`. Truy vấn trực tiếp từ PostgreSQL thông qua Prisma (< 10ms do tập dữ liệu nhỏ gọn), triệt tiêu 100% rủi ro stale cache đa container trên Vercel Serverless.
+2. **Bổ sung `force-dynamic` cho Route (`proposals/page.tsx`):** Khai báo `export const dynamic = 'force-dynamic'` và `export const revalidate = 0`.
+3. **Tích hợp Supabase Realtime (`ProposalsClient.tsx`):** Thiết lập channel `realtime_proposals_changes` lắng nghe sự kiện `postgres_changes` trên bảng `proposals`. Khi có bất kỳ ai trình hoặc duyệt tờ trình, tất cả các máy client đang mở đều tự động gọi `refreshList()` và cập nhật giao diện trực tiếp theo thời gian thực (0s delay).
+4. **Đồng bộ prop `initialProposals`:** Thêm `useEffect` đồng bộ `initialProposals` vào state `proposals` khi SSR re-render.
+5. **Bổ sung Loading Spinner & Chặn Double-Click trên UI:** Truyền `actionLoading` vào `DetailDrawer`, hiển thị `<Loader2 size={16} className="animate-spin" />` trên nút "Duyệt Tờ Trình" và vô hiệu hóa (`disabled`) toàn bộ cụm nút hành động khi đang gửi yêu cầu.
+
+### Bài học
+> ⚠️ **RULE 105: Đối với các module có luồng phê duyệt trạng thái thời gian thực (như Tờ Trình, Phê duyệt Đơn Hàng, Chuyển Kho), TUYỆT ĐỐI KHÔNG sử dụng in-memory cache (`cached()`) trên Server Action khi chạy trên môi trường Serverless đa container (Vercel) nếu không có Distributed Cache (Redis); BẮT BUỘC cấu hình `force-dynamic` trên Server Component và thiết lập Supabase Realtime Listener trên Client; Mọi nút thao tác duyệt/trình BẮT BUỘC phải có trạng thái loading spinner và vô hiệu hóa nút (`disabled`) để đảm bảo trải nghiệm người dùng tức thì và chống double-click.**
+
 
