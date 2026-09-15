@@ -2,12 +2,22 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Ban, Zap } from 'lucide-react'
+import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Ban, Zap, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { type TransferOrderRow, getTransferOrders, cancelTransferOrder, accountingApproveTransfer } from './actions'
 import { CreateTransferDrawer } from './CreateTransferDrawer'
 import { TransferDetailDrawer } from './TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
+
+type SortField =
+    | 'transferNo'
+    | 'fromWarehouse'
+    | 'toWarehouse'
+    | 'requesterName'
+    | 'transferDate'
+    | 'lineCount'
+    | 'totalQty'
+    | 'status'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
     DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
@@ -29,6 +39,20 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [statusTab, setStatusTab] = useState<string>('ALL')
     const [search, setSearch] = useState('')
+
+    // Sắp xếp mặc định: ngày chuyển giảm dần (mới nhất lên đầu)
+    const [sortField, setSortField] = useState<SortField>('transferDate')
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+        } else {
+            setSortField(field)
+            const defaultDesc = field === 'transferDate' || field === 'totalQty' || field === 'lineCount'
+            setSortOrder(defaultDesc ? 'desc' : 'asc')
+        }
+    }
 
     const reload = async () => {
         setLoading(true)
@@ -77,6 +101,64 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
             r.requesterName.toLowerCase().includes(search.toLowerCase())
         return matchesStatus && matchesSearch
     })
+
+    const sortedRows = [...filteredRows].sort((a, b) => {
+        const dir = sortOrder === 'asc' ? 1 : -1
+
+        switch (sortField) {
+            case 'transferDate': {
+                const timeA = a.transferDate ? new Date(a.transferDate).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+                const timeB = b.transferDate ? new Date(b.transferDate).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0)
+                if (timeA !== timeB) return (timeA - timeB) * dir
+                return a.transferNo.localeCompare(b.transferNo, undefined, { numeric: true }) * dir
+            }
+            case 'transferNo':
+                return a.transferNo.localeCompare(b.transferNo, undefined, { numeric: true }) * dir
+            case 'fromWarehouse':
+                return a.fromWarehouse.localeCompare(b.fromWarehouse, 'vi') * dir
+            case 'toWarehouse':
+                return a.toWarehouse.localeCompare(b.toWarehouse, 'vi') * dir
+            case 'requesterName':
+                return (a.requesterName || '').localeCompare(b.requesterName || '', 'vi') * dir
+            case 'lineCount':
+                return (a.lineCount - b.lineCount) * dir
+            case 'totalQty':
+                return (a.totalQty - b.totalQty) * dir
+            case 'status': {
+                const labelA = STATUS_CFG[a.status]?.label || a.status
+                const labelB = STATUS_CFG[b.status]?.label || b.status
+                return labelA.localeCompare(labelB, 'vi') * dir
+            }
+            default:
+                return 0
+        }
+    })
+
+    const renderSortHeader = (field: SortField, label: React.ReactNode, align: 'left' | 'center' | 'right' = 'left') => {
+        const isActive = sortField === field
+        return (
+            <th
+                onClick={() => handleSort(field)}
+                className={`p-3 font-extrabold uppercase text-[11px] whitespace-nowrap cursor-pointer select-none transition-colors hover:bg-slate-200/80 group ${
+                    align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+                } ${isActive ? 'text-amber-800 bg-amber-100/50 font-black' : 'text-slate-700'}`}
+                title={`Sắp xếp theo ${typeof label === 'string' ? label : field}`}
+            >
+                <div className={`inline-flex items-center gap-1.5 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                    <span>{label}</span>
+                    {isActive ? (
+                        sortOrder === 'asc' ? (
+                            <ArrowUp size={13} className="text-amber-600 font-bold shrink-0" />
+                        ) : (
+                            <ArrowDown size={13} className="text-amber-600 font-bold shrink-0" />
+                        )
+                    ) : (
+                        <ArrowUpDown size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
+                    )}
+                </div>
+            </th>
+        )
+    }
 
     const statusCounts = {
         ALL: rows.length,
@@ -170,26 +252,26 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                     <table className="w-full text-left text-xs border-collapse">
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Mã Phiếu</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🔴 Kho Xuất (Đi)</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🟢 Kho Nhận (Đến)</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Người Lập</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Ngày Chuyển</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Số Mặt Hàng</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Tổng Chai</th>
-                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Trạng Thái</th>
+                                {renderSortHeader('transferNo', 'Mã Phiếu')}
+                                {renderSortHeader('fromWarehouse', '🔴 Kho Xuất (Đi)')}
+                                {renderSortHeader('toWarehouse', '🟢 Kho Nhận (Đến)')}
+                                {renderSortHeader('requesterName', 'Người Lập')}
+                                {renderSortHeader('transferDate', 'Ngày Chuyển')}
+                                {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
+                                {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
+                                {renderSortHeader('status', 'Trạng Thái', 'center')}
                                 <th className="p-3 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                            {filteredRows.length === 0 ? (
+                            {sortedRows.length === 0 ? (
                                 <tr>
                                     <td colSpan={9} className="p-12 text-center text-slate-400">
                                         Không tìm thấy phiếu chuyển kho nào
                                     </td>
                                 </tr>
                             ) : (
-                                filteredRows.map(r => {
+                                sortedRows.map(r => {
                                     const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
                                     return (
                                         <tr

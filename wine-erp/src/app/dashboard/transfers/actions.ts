@@ -76,7 +76,10 @@ export type TransferOrderDetail = {
 export async function getTransferOrders(): Promise<TransferOrderRow[]> {
     return cached('transfers:list', async () => {
         const orders = await prisma.transferOrder.findMany({
-            orderBy: { createdAt: 'desc' },
+            orderBy: [
+                { transferDate: 'desc' },
+                { createdAt: 'desc' },
+            ],
             include: {
                 fromWarehouse: { select: { name: true, code: true } },
                 toWarehouse: { select: { name: true, code: true } },
