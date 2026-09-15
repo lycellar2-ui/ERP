@@ -21,6 +21,10 @@ export interface SalesOrderRow {
     id: string
     soNo: string
     invoiceNo?: string | null
+    isInvoiceExempt?: boolean
+    invoiceExemptReason?: string | null
+    invoiceExemptBy?: string | null
+    invoiceExemptAt?: Date | string | null
     customerName: string
     customerCode: string
     channel: SalesChannel
@@ -86,15 +90,16 @@ export async function getSalesOrders(filters: {
     paymentTerm?: string
     pendingAction?: boolean
     orderType?: SOType | 'ALL'
+    invoiceFilter?: 'ALL' | 'INVOICED' | 'EXEMPT' | 'PENDING'
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
     const { 
         status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', 
-        dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType
+        dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType, invoiceFilter
     } = filters
 
     const user = await getCurrentUser()
     const userId = user?.id ?? 'anonymous'
-    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}:${orderType || 'all'}`
+    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}:${orderType || 'all'}:${invoiceFilter || 'all'}`
 
     const fetchData = async () => {
         const skip = (page - 1) * pageSize
@@ -145,6 +150,14 @@ export async function getSalesOrders(filters: {
             conditions.push(`so.status IN ('PENDING_APPROVAL', 'PENDING_ACCOUNTING')`)
         }
 
+        if (invoiceFilter === 'INVOICED') {
+            conditions.push(`EXISTS (SELECT 1 FROM ar_invoices inv WHERE inv."soId" = so.id)`)
+        } else if (invoiceFilter === 'EXEMPT') {
+            conditions.push(`so."isInvoiceExempt" = true`)
+        } else if (invoiceFilter === 'PENDING') {
+            conditions.push(`(so."isInvoiceExempt" = false OR so."isInvoiceExempt" IS NULL) AND NOT EXISTS (SELECT 1 FROM ar_invoices inv WHERE inv."soId" = so.id)`)
+        }
+
         if (search) {
             conditions.push(`(so."soNo" ILIKE $${paramIndex} OR c.name ILIKE $${paramIndex} OR c.code ILIKE $${paramIndex} OR EXISTS (SELECT 1 FROM ar_invoices inv WHERE inv."soId" = so.id AND inv."invoiceNo" ILIKE $${paramIndex}))`)
             params.push(`%${search}%`)
@@ -180,6 +193,7 @@ export async function getSalesOrders(filters: {
         const query = `
             SELECT so.id, so."soNo", so."totalAmount", so.channel, so.status, so."paymentTerm", so."orderDiscount", NULL as notes, so."createdAt", 
                    so."orderType", so."proposalId", p."proposalNo" as proposal_no, p.title as proposal_title,
+                   so."isInvoiceExempt", so."invoiceExemptReason", so."invoiceExemptBy", so."invoiceExemptAt",
                    c.name as customer_name, c.code as customer_code,
                    u.name as sales_rep_name,
                    le.name as legal_entity_name, le.code as legal_entity_code,
@@ -249,6 +263,10 @@ export async function getSalesOrders(filters: {
                     id: o.id,
                     soNo: o.soNo,
                     invoiceNo: o.invoice_no || null,
+                    isInvoiceExempt: Boolean(o.isInvoiceExempt),
+                    invoiceExemptReason: o.invoiceExemptReason || null,
+                    invoiceExemptBy: o.invoiceExemptBy || null,
+                    invoiceExemptAt: o.invoiceExemptAt ? new Date(o.invoiceExemptAt) : null,
                     customerName: o.customer_name,
                     customerCode: o.customer_code,
                     channel: o.channel as SalesChannel,
@@ -1635,9 +1653,13 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
         INVOICED: ['PAID'],
     }
     try {
-        const so = await prisma.salesOrder.findUnique({ where: { id }, select: { status: true, soNo: true } })
+        const so = await prisma.salesOrder.findUnique({ where: { id }, select: { status: true, soNo: true, isInvoiceExempt: true } })
         if (!so) return { success: false, error: 'Không tìm thấy SO' }
-        if (!allowed[so.status]?.includes(toStatus)) {
+        const allowedTransitions = [...(allowed[so.status] || [])]
+        if (so.isInvoiceExempt && so.status === 'DELIVERED') {
+            allowedTransitions.push('PAID')
+        }
+        if (!allowedTransitions.includes(toStatus)) {
             return { success: false, error: `Không thể chuyển từ ${so.status} → ${toStatus}` }
         }
         await prisma.salesOrder.update({ where: { id }, data: { status: toStatus } })
@@ -1658,6 +1680,124 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
+    }
+}
+
+// ── Đánh dấu / Hủy đánh dấu miễn xuất hóa đơn VAT (Chỉ Kế toán & Admin) ──
+export async function toggleInvoiceExempt(
+    soId: string, 
+    isExempt: boolean, 
+    reason?: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const isAccountant = hasRole(user, 'Kế Toán', 'KE_TOAN', 'ACCOUNTANT') ||
+                             user.permissions?.includes('TAX:WRITE') ||
+                             user.permissions?.includes('FIN:WRITE')
+        const isAdmin = hasRole(user, 'Admin', 'ADMIN', 'CEO', 'DIRECTOR') ||
+                        user.permissions?.includes('SYS:ADMIN')
+
+        if (!isAccountant && !isAdmin) {
+            return { success: false, error: 'Chỉ có Kế toán hoặc Quản trị viên/Ban giám đốc mới có quyền thay đổi trạng thái miễn hóa đơn VAT.' }
+        }
+
+        const so = await prisma.salesOrder.findUnique({
+            where: { id: soId },
+            include: { arInvoices: { select: { id: true, invoiceNo: true } } }
+        })
+        if (!so) return { success: false, error: 'Không tìm thấy đơn hàng.' }
+
+        if (isExempt && so.arInvoices.length > 0) {
+            return { 
+                success: false, 
+                error: `Đơn hàng này đã có hóa đơn VAT (${so.arInvoices.map(i => i.invoiceNo).join(', ')}). Vui lòng gỡ bỏ hóa đơn trước khi đánh dấu miễn hóa đơn.` 
+            }
+        }
+
+        const cleanReason = isExempt ? (reason?.trim() || 'Khách không lấy hóa đơn') : null
+
+        await prisma.salesOrder.update({
+            where: { id: soId },
+            data: {
+                isInvoiceExempt: isExempt,
+                invoiceExemptReason: cleanReason,
+                invoiceExemptBy: isExempt ? (user.name || user.email) : null,
+                invoiceExemptAt: isExempt ? new Date() : null,
+            }
+        })
+
+        try {
+            await logAudit({
+                userId: user.id,
+                userName: user.name,
+                action: 'UPDATE',
+                entityType: 'SalesOrder',
+                entityId: soId,
+                description: isExempt 
+                    ? `Đánh dấu không xuất hóa đơn VAT cho SO ${so.soNo} (Lý do: ${cleanReason}) bởi ${user.name}`
+                    : `Hủy đánh dấu không xuất hóa đơn VAT cho SO ${so.soNo} bởi ${user.name}`,
+                newValue: { isInvoiceExempt: isExempt, reason: cleanReason },
+            })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi hệ thống' }
+    }
+}
+
+// ── Xác nhận thu tiền cho đơn hàng (Dành cho đơn không xuất HĐ hoặc đã xuất HĐ) ──
+export async function markSalesOrderPaid(
+    soId: string,
+    paymentDetails?: { method?: string; notes?: string }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const isAccountant = hasRole(user, 'Kế Toán', 'KE_TOAN', 'ACCOUNTANT') ||
+                             user.permissions?.includes('FIN:WRITE')
+        const isAdmin = hasRole(user, 'Admin', 'ADMIN', 'CEO', 'DIRECTOR') ||
+                        user.permissions?.includes('SYS:ADMIN')
+
+        if (!isAccountant && !isAdmin) {
+            return { success: false, error: 'Chỉ có Kế toán hoặc Quản trị viên mới có quyền xác nhận thu tiền đơn hàng.' }
+        }
+
+        const so = await prisma.salesOrder.findUnique({
+            where: { id: soId },
+            select: { id: true, soNo: true, status: true, isInvoiceExempt: true, totalAmount: true, vatAmount: true }
+        })
+        if (!so) return { success: false, error: 'Không tìm thấy đơn hàng.' }
+
+        if (!['DELIVERED', 'INVOICED'].includes(so.status)) {
+            return { success: false, error: `Chỉ đơn hàng Đã Giao (DELIVERED) hoặc Đã Xuất HĐ (INVOICED) mới có thể chuyển sang Đã Thu Tiền (PAID). Trạng thái hiện tại: ${so.status}` }
+        }
+
+        await prisma.salesOrder.update({
+            where: { id: soId },
+            data: { status: 'PAID' }
+        })
+
+        try {
+            await logAudit({
+                userId: user.id,
+                userName: user.name,
+                action: 'STATUS_CHANGE',
+                entityType: 'SalesOrder',
+                entityId: soId,
+                description: `Xác nhận thu tiền (PAID) cho SO ${so.soNo}${so.isInvoiceExempt ? ' [Đơn không xuất HĐ VAT - Đầy đủ VAT]' : ''} bởi ${user.name}`,
+                newValue: { status: 'PAID', ...paymentDetails },
+            })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi xác nhận thu tiền' }
     }
 }
 
@@ -1764,16 +1904,17 @@ export async function getSalesStats(filters: {
     legalEntityId?: string
     warehouseId?: string
     paymentTerm?: string
+    invoiceFilter?: 'ALL' | 'INVOICED' | 'EXEMPT' | 'PENDING'
 } = {}) {
     const { 
-        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm 
+        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, invoiceFilter
     } = filters
 
     const user = await getCurrentUser()
     const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
 
     const userId = user?.id ?? 'anonymous'
-    const cacheKey = `sales:stats:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}`
+    const cacheKey = `sales:stats:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${invoiceFilter || 'all'}`
 
     return (async () => {
         const where: any = {}
@@ -1788,6 +1929,15 @@ export async function getSalesStats(filters: {
         if (legalEntityId) where.legalEntityId = legalEntityId
         if (warehouseId) where.warehouseId = warehouseId
         if (paymentTerm) where.paymentTerm = paymentTerm
+
+        if (invoiceFilter === 'INVOICED') {
+            where.arInvoices = { some: {} }
+        } else if (invoiceFilter === 'EXEMPT') {
+            where.isInvoiceExempt = true
+        } else if (invoiceFilter === 'PENDING') {
+            where.isInvoiceExempt = false
+            where.arInvoices = { none: {} }
+        }
 
         if (dateFrom || dateTo) {
             where.createdAt = {}
@@ -1810,7 +1960,7 @@ export async function getSalesStats(filters: {
             status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] }
         }
 
-        const [totals, byStatus] = await Promise.all([
+        const [totals, byStatus, exemptRev, invoicedRev] = await Promise.all([
             prisma.salesOrder.aggregate({
                 where: revWhere,
                 _sum: { totalAmount: true },
@@ -1821,12 +1971,38 @@ export async function getSalesStats(filters: {
                 where,
                 _count: true
             }),
+            prisma.salesOrder.aggregate({
+                where: {
+                    ...revWhere,
+                    isInvoiceExempt: true,
+                },
+                _sum: { totalAmount: true },
+                _count: true,
+            }),
+            prisma.salesOrder.aggregate({
+                where: {
+                    ...revWhere,
+                    arInvoices: { some: {} },
+                },
+                _sum: { totalAmount: true },
+                _count: true,
+            }),
         ])
 
         const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count]))
+        const totalAmount = Number(totals._sum.totalAmount ?? 0)
+        const revenueWithInvoice = Number(invoicedRev._sum.totalAmount ?? 0)
+        const revenueExemptInvoice = Number(exemptRev._sum.totalAmount ?? 0)
+        const revenuePendingInvoice = Math.max(0, totalAmount - revenueWithInvoice - revenueExemptInvoice)
+
         return {
-            monthRevenue: Number(totals._sum.totalAmount ?? 0),
+            monthRevenue: totalAmount,
             monthOrders: totals._count,
+            revenueWithInvoice,
+            ordersWithInvoice: invoicedRev._count,
+            revenueExemptInvoice,
+            ordersExemptInvoice: exemptRev._count,
+            revenuePendingInvoice,
             pendingApproval: (statusMap['PENDING_APPROVAL'] ?? 0) + (statusMap['PENDING_ACCOUNTING'] ?? 0),
             draft: statusMap['DRAFT'] ?? 0,
             confirmed: statusMap['CONFIRMED'] ?? 0,
@@ -3080,16 +3256,17 @@ export async function getSOStatusCounts(filters: {
     paymentTerm?: string
     pendingAction?: boolean
     orderType?: SOType | 'ALL'
+    invoiceFilter?: 'ALL' | 'INVOICED' | 'EXEMPT' | 'PENDING'
 } = {}): Promise<Record<string, number>> {
     const { 
-        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType
+        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType, invoiceFilter
     } = filters
 
     const user = await getCurrentUser()
     const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
 
     const userId = user?.id ?? 'anonymous'
-    const cacheKey = `sales:status-counts:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}`
+    const cacheKey = `sales:status-counts:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}:${invoiceFilter || 'all'}`
 
     return (async () => {
         const where: any = {}
@@ -3108,6 +3285,15 @@ export async function getSOStatusCounts(filters: {
 
         if (pendingAction) {
             where.status = { in: ['PENDING_APPROVAL', 'PENDING_ACCOUNTING'] }
+        }
+
+        if (invoiceFilter === 'INVOICED') {
+            where.arInvoices = { some: {} }
+        } else if (invoiceFilter === 'EXEMPT') {
+            where.isInvoiceExempt = true
+        } else if (invoiceFilter === 'PENDING') {
+            where.isInvoiceExempt = false
+            where.arInvoices = { none: {} }
         }
 
         if (dateFrom || dateTo) {
@@ -3156,6 +3342,7 @@ export async function getSalesPageData(filters: {
     paymentTerm?: string
     pendingAction?: boolean
     orderType?: SOType | 'ALL'
+    invoiceFilter?: 'ALL' | 'INVOICED' | 'EXEMPT' | 'PENDING'
 } = {}, onlyRows = false) {
     if (onlyRows) {
         const [ordersResult, statusCounts] = await Promise.all([
@@ -3165,7 +3352,18 @@ export async function getSalesPageData(filters: {
         return serialize({
             rows: ordersResult.rows,
             total: ordersResult.total,
-            stats: { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 },
+            stats: {
+                monthRevenue: 0,
+                monthOrders: 0,
+                revenueWithInvoice: 0,
+                ordersWithInvoice: 0,
+                revenueExemptInvoice: 0,
+                ordersExemptInvoice: 0,
+                revenuePendingInvoice: 0,
+                pendingApproval: 0,
+                draft: 0,
+                confirmed: 0,
+            },
             statusCounts,
         })
     }
@@ -3295,6 +3493,10 @@ export async function createARInvoiceForSO(
             }
         })
         if (!so) return { success: false, error: 'Đơn hàng không tồn tại' }
+
+        if (so.isInvoiceExempt) {
+            return { success: false, error: `Đơn hàng ${so.soNo} đã được đánh dấu miễn xuất hóa đơn VAT. Vui lòng hủy đánh dấu trước khi xuất hóa đơn.` }
+        }
 
         // Check if invoice already exists
         if (so.arInvoices.length > 0 && !customInvoiceNo) {

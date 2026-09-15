@@ -56,6 +56,8 @@
 47. [BUG-100: Ảnh Phóng To (Preview Modal) Ở Tab Check-in Hôm Nay Bị Mờ Do Thiếu visitId Để Lazy Load Ảnh Gốc HD](#bug-100-ảnh-phóng-to-preview-modal-ở-tab-check-in-hôm-nay-bị-mờ-do-thiếu-visitid-để-lazy-load-ảnh-gốc-hd)
 48. [BUG-101: Dropdown Chọn Sản Phẩm Trên Tờ Trình Cơ Chế Giá & Tasting Bị Che / Cắt Do Bị Giam Trong Container max-h-64 overflow-y-auto](#bug-101-dropdown-chọn-sản-phẩm-trên-tờ-trình-cơ-chế-giá--tasting-bị-che--cắt-do-bị-giam-trong-container-max-h-64-overflow-y-auto)
 49. [BUG-102: Giới Hạn Trang Cố Định (Hardcoded .slice(0, 8)) & Thiếu Điều Hướng Phân Trang Đơn Bán Hàng](#bug-102-giới-hạn-trang-cố-định-hardcoded-slice0-8--thiếu-điều-hướng-phân-trang-đơn-bán-hàng)
+50. [BUG-103: Phiếu Xuất Bán Hàng (DO) Bị Kéo Nhầm Vào Báo Cáo Nhập Xuất Tồn Kho Thường Tín & Lệch Ảo Tồn Sổ Sách Do Bỏ Quên Điều Chuyển Kho](#bug-103-phiếu-xuất-bán-hàng-do-bị-kéo-nhầm-vào-báo-cáo-nhập-xuất-tồn-kho-thường-tín--lệch-ảo-tồn-sổ-sách-do-bỏ-quên-điều-chuyển-kho)
+51. [BUG-104: Phân Quyền Miễn Xuất Hóa Đơn VAT Cho Đơn Hàng (Chỉ Kế Toán/Admin), Tách Riêng Doanh Thu & Bảo Toàn Đủ 100% VAT](#bug-104-phân-quyền-miễn-xuất-hóa-đơn-vat-cho-đơn-hàng-chỉ-kế-toánadmin-tách-riêng-doanh-thu--bảo-toàn-đủ-100-vat)
 
 ---
 
@@ -2748,3 +2750,38 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 103: Báo cáo Nhập Xuất Tồn và các truy vấn biến động kho BẮT BUỘC phải lọc theo kho của vị trí lưu trữ thực tế (`line.location.warehouseId`), TUYỆT ĐỐI KHÔNG được chỉ lọc theo tiêu đề phiếu (`do.warehouseId`). Tại các phân hệ tạo phiếu xuất hàng (DO), phải thiết lập ràng buộc cứng cấm chọn kho có `allowSales: false` trên cả UI và Server Action. Trên danh sách lô tồn kho, Tồn Sổ Sách phải phản ánh đúng số dư sau tất cả các nghiệp vụ (bao gồm điều chuyển kho TO), không được chỉ trừ mỗi xuất bán DO.**
+---
+
+## BUG-104: Phân Quyền Miễn Xuất Hóa Đơn VAT Cho Đơn Hàng (Chỉ Kế Toán/Admin), Tách Riêng Doanh Thu & Bảo Toàn Đủ 100% VAT
+
+**Severity:** 🟡 Feature / Business Logic & Financial Integrity  
+**Date:** 2026-09-15  
+**Affected Modules:** `SLS` (Sales Orders — `prisma/schema.prisma`, `sales/actions.ts`, `sales/SalesClient.tsx`, `sales-allocation.md`)
+
+### Mô tả yêu cầu & rủi ro nghiệp vụ
+1. **Nhu cầu thực tế:** Nhiều khách hàng cá nhân/khách lẻ mua rượu không có nhu cầu lấy hóa đơn điện tử VAT, hoặc các đơn hàng nội bộ không xuất hóa đơn.
+2. **Nguy cơ vi phạm kiểm soát nội bộ & toàn vẹn doanh thu:**
+   - Nếu để nhân viên kinh doanh (Sales Rep / Sales Admin) tự ý đánh dấu miễn hóa đơn sẽ dễ phát sinh gian lận hoặc xuất kho không hóa đơn trái phép.
+   - Nếu khi miễn hóa đơn mà hệ thống tự động trừ giảm tiền VAT (tính doanh thu trên giá Net chưa VAT) thì sẽ làm sai lệch tổng tiền thu thực tế từ khách hàng và làm méo mó doanh số kinh doanh. Khách không lấy hóa đơn nhưng tiền thanh toán vẫn phải bảo toàn đầy đủ 100% VAT.
+   - Nếu không phân tách doanh thu có HĐ và không có HĐ trên giao diện chỉ số tài chính, ban giám đốc và kế toán thuế sẽ không đối chiếu được doanh số kê khai thuế GTGT và doanh thu bán hàng thực tế.
+   - Đơn hàng nếu không được xuất hóa đơn sẽ bị kẹt ở trạng thái `DELIVERED`, không thể chuyển sang `PAID` do luồng chuẩn yêu cầu bước `INVOICED`.
+
+### Cách khắc phục & Kiến trúc triển khai
+1. **Phân quyền thao tác nghiêm ngặt (RBAC 2 lớp):**
+   - **Tầng Giao diện (UI):** Các nút "Không xuất HĐ" và "Hủy miễn HĐ" trong Drawer chi tiết đơn hàng chỉ hiển thị cho Kế toán (`KE_TOAN`, `ACCOUNTANT`, `TAX:WRITE`, `FIN:WRITE`) hoặc Quản trị cấp cao (`ADMIN`, `CEO`, `DIRECTOR`, `SYS:ADMIN`). Nhân viên Sales chỉ có thể xem trạng thái.
+   - **Tầng Server Action (`toggleInvoiceExempt`):** Kiểm tra phiên đăng nhập và xác thực vai trò/quyền hạn ngay tại backend. Nếu không đủ quyền sẽ lập tức từ chối `Chỉ Kế toán hoặc Admin mới có quyền thực hiện thao tác này`. Đồng thời ghi nhận đầy đủ Audit Log (`invoiceExemptBy`, `invoiceExemptAt`, `invoiceExemptReason`).
+   - Khóa chức năng xuất HĐ (`createARInvoiceForSO`): Nếu đơn đã được đánh dấu miễn HĐ thì không được phép tạo hóa đơn điện tử.
+2. **Bảo toàn 100% giá trị và thuế VAT:**
+   - Toàn bộ các trường `totalAmount`, `vatAmount`, `vatRate` và đơn giá từng dòng sản phẩm được giữ nguyên vẹn tuyệt đối.
+   - Bổ sung thông báo trực quan trên giao diện tóm tắt tài chính: *"Đơn hàng không xuất HĐ VAT - Giá bán và tổng thanh toán vẫn giữ nguyên và tính đủ 100% thuế VAT"*.
+3. **Phân tách doanh thu minh bạch (Financial Separation):**
+   - Cập nhật `getSalesStats` để bóc tách: `revenueWithInvoice` (Doanh thu đã có HĐ), `ordersWithInvoice`, `revenueExemptInvoice` (Doanh thu miễn HĐ), `ordersExemptInvoice`, `revenuePendingInvoice` (Doanh thu chưa xuất HĐ).
+   - Hiển thị trên thanh Quick Stats (Header) và Lưới thẻ chỉ số mở rộng (Collapsible Grid) với màu sắc nhận diện trực quan: Có HĐ (Xanh ngọc lục bảo), Không HĐ (Vàng hổ phách).
+   - Bổ sung bộ lọc trạng thái hóa đơn (`invoiceFilter`: Tất cả / Có HĐ / Miễn HĐ / Chưa xuất HĐ) và gắn badge `🚫 Không HĐ` trên cả bảng Desktop lẫn thẻ Mobile.
+4. **Luồng tiến trình thông suốt (Seamless Workflow):**
+   - Cập nhật Stepper: Khi `isInvoiceExempt = true`, mốc `INVOICED` được đổi tên thành `Miễn HĐ` và tự động đánh dấu hoàn thành khi đơn đã giao hàng.
+   - Cho phép Kế toán/Admin bấm nút **"Xác Nhận Thu Tiền (PAID)"** trực tiếp trên Drawer hoặc qua Server Action `markSalesOrderPaid` (`DELIVERED -> PAID`) mà không bắt buộc tạo `ARInvoice`.
+
+### Bài học
+> ⚠️ **RULE 104: Nghiệp vụ miễn hóa đơn VAT (`isInvoiceExempt`) phải được kiểm soát phân quyền chặt chẽ (RBAC) - CHỈ CHO PHÉP Kế toán và Admin thao tác; Tuyệt đối không được làm thay đổi hoặc giảm trừ tiền thuế VAT/giá trị đơn hàng (bảo toàn 100% VAT cho doanh thu thực tế); Mọi thẻ chỉ số tài chính phải tách bạch rõ doanh thu có hóa đơn vs không hóa đơn; Đơn hàng miễn HĐ sau khi giao phải cho phép hoàn tất thu tiền (`DELIVERED -> PAID`) trơn tru mà không bị chặn bởi bước xuất HĐ.**
+

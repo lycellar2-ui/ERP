@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 103 Rules rút ra từ 72 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 104 Rules rút ra từ 74 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-15 09:00 | Wine ERP v10.27 — Fix Báo Cáo Nhập Xuất Tồn Kho Thường Tín Lọc Theo Vị Trí Thực Xuất Thay Vì Header, Khóa Cứng Ràng Buộc allowSales Cấm Tạo DO Tại Kho Lưu Trữ/Điều Chuyển (BUG-103)*
+*Last updated: 2026-09-15 11:00 | Wine ERP v10.28 — Nghiệp vụ miễn xuất hóa đơn VAT (isInvoiceExempt) cho đơn hàng: Phân quyền RBAC Kế toán/Admin, Tách bạch doanh thu có HĐ vs không HĐ, Bảo toàn 100% VAT (BUG-104)*
 

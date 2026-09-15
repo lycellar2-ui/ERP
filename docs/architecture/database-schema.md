@@ -411,6 +411,10 @@ erDiagram
         payment_term        string
         status              enum
         total_amount        decimal
+        is_invoice_exempt   boolean
+        invoice_exempt_reason string
+        invoice_exempt_by   string
+        invoice_exempt_at   datetime
     }
     SalesOrderLine {
         id                      uuid PK
@@ -747,12 +751,16 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `sales_visits` | `visitNo`, `customerId`, `salespersonId`, `status`, `purpose`, `activityType`, `scheduleId`, `isUnplanned`, `checkInTime`/`checkOutTime`, `checkInPhoto`/`checkOutPhoto`, `durationMinutes`, `notes` |
 | `weekly_visit_plans` | `salesRepId`, `weekNumber`, `year`, `status`, `note`, `selfReview`, `managerFeedback`, `submittedAt`, `reviewedAt` |
 | `sales_visit_schedules` | `planId`, `customerId`, `visitDate`, `purpose`, `status`, `isUnplanned`, `salesVisitId`, `resultNotes` |
+| `sales_orders` | `isInvoiceExempt`, `invoiceExemptReason`, `invoiceExemptBy`, `invoiceExemptAt` (Nghiệp vụ miễn xuất HĐ VAT, bảo toàn đủ 100% VAT và doanh thu) |
 
 ### D. Indexes Quan Trọng
 ```sql
 -- Tìm tồn kho theo SKU nhanh
 CREATE INDEX idx_stocklot_product ON stock_lot(product_id, status);
 CREATE INDEX idx_stocklot_prod_qty ON stock_lots(productId, qtyAvailable);
+
+-- Lọc đơn hàng miễn hóa đơn VAT
+CREATE INDEX sales_orders_is_invoice_exempt_idx ON sales_orders(isInvoiceExempt);
 
 -- Tra cứu thuế
 CREATE INDEX idx_taxrate_lookup ON tax_rate(hs_code, country_of_origin, effective_date);

@@ -26,6 +26,12 @@ PAID / CLOSED
 
 > **Hóa Đơn Công Nợ (AR)**: Trên Drawer chi tiết đơn hàng (`SalesClient.tsx`), Kế toán/Admin có thể nhấp trực tiếp nút **`+ Xuất / Gắn Hóa Đơn VAT`** để tự động sinh mã hóa đơn hệ thống (`VAT-SO-xxxxxx`) hoặc điền mã Hóa đơn điện tử VAT (từ MISA/VNPT/Viettel). Đơn hàng sẽ tự động chuyển trạng thái sang **`INVOICED`** và ghi nhận vào sổ công nợ AR.
 > Ngoài ra, hệ thống hỗ trợ **✏️ Chỉnh sửa mã số hóa đơn** bất kỳ lúc nào nếu nhập sai/đổi số HĐ điện tử, và **❌ Gỡ bỏ/Hủy gán hóa đơn** (khi chưa phát sinh thanh toán) để tự động hoàn trả trạng thái đơn hàng (`CONFIRMED` hoặc `DELIVERED`).
+>
+> **Nghiệp Vụ Không Xuất Hóa Đơn VAT (`isInvoiceExempt`)**:
+> - **Phân quyền thao tác (RBAC)**: CHỈ CÓ **Kế toán** (`KE_TOAN`, `ACCOUNTANT`, `TAX:WRITE`, `FIN:WRITE`) và **Admin** (`ADMIN`, `CEO`, `DIRECTOR`, `SYS:ADMIN`) mới có quyền bấm nút đánh dấu hoặc hủy miễn hóa đơn. Sales Rep / Sales Admin không được phép tự ý thay đổi.
+> - **Bảo toàn 100% VAT & Doanh số**: Đơn hàng không xuất hóa đơn nhưng **giá bán và tổng thanh toán vẫn giữ nguyên và tính đủ 100% thuế VAT** (`totalAmount`, `vatAmount`), tuyệt đối không giảm trừ giá hay miễn trừ thuế làm sai lệch tổng doanh thu.
+> - **Phân tách doanh thu trên báo cáo**: Tách biệt rõ ràng trên Quick Stats & Collapsible Grid giữa **Tổng Doanh Thu** (đủ VAT), **Doanh Thu Có HĐ**, **Doanh Thu Không Xuất HĐ**, và bộ lọc trạng thái hóa đơn (`invoiceFilter`: Tất cả / Có HĐ / Không HĐ / Chưa xuất HĐ).
+> - **Tiến trình đơn hàng**: Khi đơn hàng miễn HĐ hoàn thành giao (`DELIVERED`), tiến trình Stepper tự động hiển thị mốc `Miễn HĐ` thay cho `INVOICED`. Kế toán/Admin có thể xác nhận thu tiền (`Xác Nhận Thu Tiền - PAID`) trực tiếp mà không bắt buộc phải tạo `ARInvoice`. Hệ thống đồng thời khóa chức năng xuất HĐ nếu đơn đang được đánh dấu miễn HĐ.
 
 ---
 

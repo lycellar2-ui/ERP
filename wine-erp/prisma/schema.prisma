@@ -1677,6 +1677,10 @@ model SalesOrder {
   orderType         SOType              @default(STANDARD)
   proposalId        String?
   proposal          Proposal?           @relation(fields: [proposalId], references: [id])
+  isInvoiceExempt     Boolean             @default(false)
+  invoiceExemptReason String?
+  invoiceExemptBy     String?
+  invoiceExemptAt     DateTime?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
@@ -1688,6 +1692,7 @@ model SalesOrder {
   @@index([proposalId])
   @@index([createdAt])
   @@index([status, createdAt])
+  @@index([isInvoiceExempt])
   @@map("sales_orders")
 }
 

@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel } from './actions'
+import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
@@ -397,10 +397,12 @@ function SODetailDrawer({
     canAcctApprove,
     canApprove,
     canCreateInvoice,
+    canToggleInvoiceExempt,
     onAcctApprove,
     onAcctReject,
     onApprove,
-    onReject
+    onReject,
+    onReloadList
 }: { 
     soId: string; 
     onClose: () => void; 
@@ -409,10 +411,12 @@ function SODetailDrawer({
     canAcctApprove?: boolean;
     canApprove?: boolean;
     canCreateInvoice?: boolean;
+    canToggleInvoiceExempt?: boolean;
     onAcctApprove?: (id: string, legalEntityId?: string) => void;
     onAcctReject?: (id: string) => void;
     onApprove?: (id: string) => void;
     onReject?: (id: string) => void;
+    onReloadList?: () => void;
 }) {
     const [detail, setDetail] = useState<DetailType>(null)
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
@@ -422,6 +426,78 @@ function SODetailDrawer({
     const [creatingInvoice, setCreatingInvoice] = useState(false)
     const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null)
     const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
+    const [togglingExempt, setTogglingExempt] = useState(false)
+    const [markingPaid, setMarkingPaid] = useState(false)
+
+    const handleToggleExempt = async () => {
+        if (!soId || !detail || togglingExempt) return
+        if (detail.isInvoiceExempt) {
+            if (!window.confirm('Bạn có chắc chắn muốn hủy đánh dấu miễn hóa đơn? Kế toán sẽ có thể xuất hóa đơn VAT sau khi hủy.')) return
+            setTogglingExempt(true)
+            try {
+                const res = await toggleInvoiceExempt(soId, false)
+                if (res.success) {
+                    toast.success('Đã hủy miễn hóa đơn VAT cho đơn hàng!')
+                    const updated = await getSalesOrderDetail(soId)
+                    setDetail(updated)
+                    getSOTimeline(soId).then(setTimeline).catch(() => {})
+                    onReloadList?.()
+                } else {
+                    toast.error(res.error || 'Lỗi thao tác')
+                }
+            } catch (err: any) {
+                toast.error(err.message || 'Lỗi hệ thống')
+            } finally {
+                setTogglingExempt(false)
+            }
+        } else {
+            const reason = window.prompt(
+                'Nhập lý do không xuất hóa đơn VAT (ví dụ: Khách lẻ không lấy HĐ, tiêu dùng nội bộ, quà biếu tặng...):',
+                'Khách lẻ không lấy hóa đơn'
+            )
+            if (reason === null) return
+            setTogglingExempt(true)
+            try {
+                const res = await toggleInvoiceExempt(soId, true, reason)
+                if (res.success) {
+                    toast.success('Đã đánh dấu không xuất hóa đơn VAT thành công!')
+                    const updated = await getSalesOrderDetail(soId)
+                    setDetail(updated)
+                    getSOTimeline(soId).then(setTimeline).catch(() => {})
+                    onReloadList?.()
+                } else {
+                    toast.error(res.error || 'Lỗi thao tác')
+                }
+            } catch (err: any) {
+                toast.error(err.message || 'Lỗi hệ thống')
+            } finally {
+                setTogglingExempt(false)
+            }
+        }
+    }
+
+    const handleMarkPaid = async () => {
+        if (!soId || !detail || markingPaid) return
+        const totalVatIncluded = Number(detail.totalAmount) + Number(detail.vatAmount ?? 0)
+        if (!window.confirm(`Xác nhận đã thu đủ tiền (${formatVND(totalVatIncluded)}) cho đơn hàng ${detail.soNo}? Đơn hàng sẽ chuyển sang trạng thái ĐÃ THU TIỀN (PAID).`)) return
+        setMarkingPaid(true)
+        try {
+            const res = await markSalesOrderPaid(soId)
+            if (res.success) {
+                toast.success('Đã xác nhận thu tiền cho đơn hàng!')
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+                onReloadList?.()
+            } else {
+                toast.error(res.error || 'Lỗi xác nhận thu tiền')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi hệ thống')
+        } finally {
+            setMarkingPaid(false)
+        }
+    }
 
     const handleCreateInvoice = async () => {
         if (!soId || creatingInvoice) return
@@ -727,7 +803,7 @@ function SODetailDrawer({
                                             { s: 'PENDING_ACCOUNTING', label: 'QL Duyệt' },
                                             { s: 'CONFIRMED', label: 'KT Duyệt' },
                                             { s: 'DELIVERED', label: 'Giao hàng' },
-                                            { s: 'INVOICED', label: 'Xuất HĐ' },
+                                            { s: 'INVOICED', label: detail.isInvoiceExempt ? 'Miễn HĐ' : 'Xuất HĐ' },
                                             { s: 'PAID', label: 'Thu tiền' }
                                         ]
                                         
@@ -756,8 +832,8 @@ function SODetailDrawer({
                                                 isDone = !!hasDelivery || detail.status === 'DELIVERED'
                                                 isCurrent = (detail.status === 'CONFIRMED' || detail.status === 'PARTIALLY_DELIVERED') && !hasDelivery
                                             } else if (s === 'INVOICED') {
-                                                isDone = hasInvoice || detail.status === 'INVOICED' || detail.status === 'PAID'
-                                                isCurrent = detail.status === 'INVOICED' || (detail.status === 'DELIVERED' && !hasInvoice)
+                                                isDone = detail.isInvoiceExempt || hasInvoice || detail.status === 'INVOICED' || detail.status === 'PAID'
+                                                isCurrent = detail.status === 'INVOICED' || (detail.status === 'DELIVERED' && !hasInvoice && !detail.isInvoiceExempt)
                                             }
 
                                             const ts = getStepTimestamp(s as SOStatus, detail.createdAt, detail.updatedAt, detail.status)
@@ -908,6 +984,15 @@ function SODetailDrawer({
                                             <span style={{ color: '#4A6A7A' }}>Tổng thanh toán (Có VAT):</span>
                                             <span className="font-bold font-mono text-sm text-[#87CBB9]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>
                                         </div>
+                                        {detail.isInvoiceExempt && (
+                                            <div className="p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 mt-2 flex items-start gap-2">
+                                                <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-400" />
+                                                <div className="leading-snug">
+                                                    <span className="font-bold block text-amber-400 mb-0.5">Đơn hàng không xuất HĐ VAT</span>
+                                                    Giá bán và tổng thanh toán vẫn giữ nguyên và tính đủ 100% thuế VAT theo đúng yêu cầu.
+                                                </div>
+                                            </div>
+                                        )}
                                         {marginData && canSeeMargin ? (
                                             <>
                                                 <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
@@ -1128,33 +1213,110 @@ function SODetailDrawer({
                             <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                 <div className="flex items-center justify-between mb-2.5">
                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
-                                    {canCreateInvoice && (
-                                        <button
-                                            onClick={handleCreateInvoice}
-                                            disabled={creatingInvoice}
-                                            className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
-                                            style={{ background: '#87CBB9', color: '#0A1926' }}
-                                            title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
-                                        >
-                                            {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
-                                            + Xuất Hóa Đơn
-                                        </button>
-                                    )}
-                                </div>
-                                {detail.arInvoices.length === 0 ? (
-                                    <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
-                                        <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
-                                        {canCreateInvoice && (
+                                    <div className="flex items-center gap-2">
+                                        {!detail.isInvoiceExempt && detail.arInvoices.length === 0 && canToggleInvoiceExempt && (
+                                            <button
+                                                onClick={handleToggleExempt}
+                                                disabled={togglingExempt}
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shadow-xs cursor-pointer"
+                                                title="Chỉ Kế toán & Admin: Đánh dấu đơn hàng này không cần xuất hóa đơn VAT"
+                                            >
+                                                {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <FileX2 size={12} />}
+                                                Không xuất HĐ
+                                            </button>
+                                        )}
+                                        {detail.isInvoiceExempt && canToggleInvoiceExempt && (
+                                            <button
+                                                onClick={handleToggleExempt}
+                                                disabled={togglingExempt}
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-sky-500/40 text-sky-400 hover:bg-sky-500/10 shadow-xs cursor-pointer"
+                                                title="Chỉ Kế toán & Admin: Hủy miễn HĐ để cho phép xuất hóa đơn VAT"
+                                            >
+                                                {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                                                Hủy miễn HĐ
+                                            </button>
+                                        )}
+                                        {!detail.isInvoiceExempt && canCreateInvoice && (
                                             <button
                                                 onClick={handleCreateInvoice}
                                                 disabled={creatingInvoice}
-                                                className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
                                                 style={{ background: '#87CBB9', color: '#0A1926' }}
+                                                title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
                                             >
-                                                {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-                                                Bấm vào đây để Xuất / Gắn Hóa Đơn VAT
+                                                {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                                                + Xuất Hóa Đơn
                                             </button>
                                         )}
+                                    </div>
+                                </div>
+                                {detail.isInvoiceExempt ? (
+                                    <div className="p-3.5 rounded-md bg-amber-500/10 border border-amber-500/30">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                <FileX2 size={18} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-amber-400">Đơn Hàng Không Xuất Hóa Đơn VAT</span>
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                        Đã duyệt miễn HĐ
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs mt-1 text-[#E8F1F2]">
+                                                    <span className="text-[#8AAEBB]">Lý do: </span>
+                                                    {detail.invoiceExemptReason || 'Khách không lấy hóa đơn VAT'}
+                                                </p>
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-[#4A6A7A]">
+                                                    {detail.invoiceExemptBy && (
+                                                        <span>Người duyệt: <strong className="text-[#8AAEBB]">{detail.invoiceExemptBy}</strong></span>
+                                                    )}
+                                                    {detail.invoiceExemptAt && (
+                                                        <span>Thời gian: <strong className="text-[#8AAEBB]">{formatDateTime(detail.invoiceExemptAt)}</strong></span>
+                                                    )}
+                                                </div>
+                                                {detail.status === 'DELIVERED' && canToggleInvoiceExempt && (
+                                                    <div className="mt-3 pt-3 border-t border-amber-500/20 flex items-center justify-between">
+                                                        <span className="text-[11px] text-amber-300/90">Đơn hàng đã giao thành công. Kế toán/Admin có thể xác nhận thu tiền.</span>
+                                                        <button
+                                                            onClick={handleMarkPaid}
+                                                            disabled={markingPaid}
+                                                            className="text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1.5 bg-[#5BA88A] hover:bg-[#4d9377] text-white shadow-sm transition-all cursor-pointer"
+                                                        >
+                                                            {markingPaid ? <Loader2 size={12} className="animate-spin" /> : <DollarSign size={12} />}
+                                                            Xác Nhận Thu Tiền (PAID)
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : detail.arInvoices.length === 0 ? (
+                                    <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
+                                        <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
+                                        <div className="flex items-center justify-center gap-2">
+                                            {canCreateInvoice && (
+                                                <button
+                                                    onClick={handleCreateInvoice}
+                                                    disabled={creatingInvoice}
+                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
+                                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                                >
+                                                    {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                                                    Xuất / Gắn Hóa Đơn VAT
+                                                </button>
+                                            )}
+                                            {canToggleInvoiceExempt && (
+                                                <button
+                                                    onClick={handleToggleExempt}
+                                                    disabled={togglingExempt}
+                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shadow-xs cursor-pointer"
+                                                >
+                                                    {togglingExempt ? <Loader2 size={13} className="animate-spin" /> : <FileX2 size={13} />}
+                                                    Đánh Dấu: Không Xuất HĐ
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-1.5">
@@ -1325,13 +1487,19 @@ function SalesOrderMobileCard({
                 )}
 
                 {/* Invoice Number Badge */}
-                {row.invoiceNo && (
+                {row.invoiceNo ? (
                     <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
                         style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
                         title={`Số hóa đơn: ${row.invoiceNo}`}>
                         HĐ: {row.invoiceNo}
                     </span>
-                )}
+                ) : row.isInvoiceExempt ? (
+                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1"
+                        style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}
+                        title={row.invoiceExemptReason || 'Đơn hàng không xuất HĐ VAT'}>
+                        🚫 Không HĐ
+                    </span>
+                ) : null}
 
                 {/* Sales Rep Name */}
                 <span className="text-[10px] ml-auto" style={{ color: '#8AAEBB' }}>
@@ -1452,7 +1620,23 @@ function SalesOrderMobileCard({
 // Roles allowed to see cost/margin data
 const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager']
 
-type SalesPageResult = { rows: SalesOrderRow[]; total: number; stats: { monthRevenue: number; monthOrders: number; pendingApproval: number; draft: number; confirmed: number }; statusCounts: Record<string, number> }
+type SalesPageResult = { 
+    rows: SalesOrderRow[]
+    total: number
+    stats: { 
+        monthRevenue: number
+        monthOrders: number
+        revenueWithInvoice?: number
+        ordersWithInvoice?: number
+        revenueExemptInvoice?: number
+        ordersExemptInvoice?: number
+        revenuePendingInvoice?: number
+        pendingApproval: number
+        draft: number
+        confirmed: number 
+    }
+    statusCounts: Record<string, number> 
+}
 
 type Props = {
     initialData?: SalesPageResult
@@ -1466,7 +1650,19 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
-    const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN')
+    const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN') || userRoles.includes('ACCOUNTANT')
+
+    const isAccountant = canAcctApprove || 
+                         userPermissions.includes('TAX:WRITE') || 
+                         userPermissions.includes('FIN:WRITE')
+
+    const isAdmin = isCEO || 
+                    userRoles.includes('Admin') || 
+                    userRoles.includes('ADMIN') || 
+                    userRoles.includes('DIRECTOR') || 
+                    userPermissions.includes('SYS:ADMIN')
+
+    const canToggleInvoiceExempt = isAccountant || isAdmin
 
     const canCreateInvoice = isCEO || 
                              canAcctApprove || 
@@ -1552,6 +1748,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const [paymentTermFilter, setPaymentTermFilter] = useState<string>('')
     const [pendingActionFilter, setPendingActionFilter] = useState<boolean>(false)
     const [orderTypeFilter, setOrderTypeFilter] = useState<string>('ALL')
+    const [invoiceFilter, setInvoiceFilter] = useState<'ALL' | 'INVOICED' | 'EXEMPT' | 'PENDING'>('ALL')
 
     // TanStack Query — cache sales data, survive tab switches
     const queryKey = [
@@ -1571,7 +1768,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             warehouseId: warehouseFilter || undefined,
             paymentTerm: paymentTermFilter || undefined,
             pendingAction: pendingActionFilter || undefined,
-            orderType: orderTypeFilter !== 'ALL' ? orderTypeFilter : undefined
+            orderType: orderTypeFilter !== 'ALL' ? orderTypeFilter : undefined,
+            invoiceFilter: invoiceFilter !== 'ALL' ? invoiceFilter : undefined
         }
     ]
     const { data: queryData, isLoading: loading, refetch } = useQuery({
@@ -1591,9 +1789,10 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             warehouseId: warehouseFilter || undefined,
             paymentTerm: paymentTermFilter || undefined,
             pendingAction: pendingActionFilter || undefined,
-            orderType: (orderTypeFilter as any) || 'ALL'
+            orderType: (orderTypeFilter as any) || 'ALL',
+            invoiceFilter: invoiceFilter !== 'ALL' ? invoiceFilter : undefined
         }),
-        initialData: !search && !statusFilter && page === 1 && pageSize === 20 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL'
+        initialData: !search && !statusFilter && page === 1 && pageSize === 20 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL' && invoiceFilter === 'ALL'
             ? initialData
             : undefined,
         staleTime: 0,
@@ -1601,7 +1800,18 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
     const rows = queryData?.rows ?? []
     const total = queryData?.total ?? 0
-    const stats = queryData?.stats ?? { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 }
+    const stats: NonNullable<SalesPageResult['stats']> = (queryData?.stats as any) ?? { 
+        monthRevenue: 0, 
+        monthOrders: 0, 
+        revenueWithInvoice: 0,
+        ordersWithInvoice: 0,
+        revenueExemptInvoice: 0,
+        ordersExemptInvoice: 0,
+        revenuePendingInvoice: 0,
+        pendingApproval: 0, 
+        draft: 0, 
+        confirmed: 0 
+    }
     const counts = queryData?.statusCounts ?? {}
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -1646,7 +1856,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const pageWarehouses = (queryData as any)?.warehouses ?? (initialData as any)?.warehouses ?? []
     const paymentTerms = (queryData as any)?.paymentTerms ?? (initialData as any)?.paymentTerms ?? []
 
-    const hasActiveFilters = !!(search || statusFilter || dateFrom || dateTo || salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'))
+    const hasActiveFilters = !!(search || statusFilter || (invoiceFilter && invoiceFilter !== 'ALL') || dateFrom || dateTo || salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'))
 
     const handleClearFilters = () => {
         setSearchInput('')
@@ -1661,10 +1871,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         setPaymentTermFilter('')
         setPendingActionFilter(false)
         setOrderTypeFilter('ALL')
+        setInvoiceFilter('ALL')
         setPage(1)
         reload({
             search: '', status: '', page: 1, dateFrom: '', dateTo: '',
-            salesRepId: '', channel: '', legalEntityId: '', warehouseId: '', paymentTerm: '', pendingAction: false, orderType: 'ALL'
+            salesRepId: '', channel: '', legalEntityId: '', warehouseId: '', paymentTerm: '', pendingAction: false, orderType: 'ALL', invoiceFilter: 'ALL'
         }, true)
     }
 
@@ -1701,7 +1912,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const reload = useCallback(async (
         overrides?: Partial<{ 
             search: string; status: string; page: number; pageSize: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string;
-            salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean; orderType: string
+            salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean; orderType: string; invoiceFilter: string
         }>,
         _onlyRows = false
     ) => {
@@ -1721,6 +1932,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         if (overrides?.paymentTerm !== undefined) setPaymentTermFilter(overrides.paymentTerm)
         if (overrides?.pendingAction !== undefined) setPendingActionFilter(overrides.pendingAction)
         if (overrides?.orderType !== undefined) setOrderTypeFilter(overrides.orderType)
+        if (overrides?.invoiceFilter !== undefined) setInvoiceFilter(overrides.invoiceFilter as any)
         // If no overrides, just refetch current query
         if (!overrides || Object.keys(overrides).length === 0) {
             refetch()
@@ -2039,11 +2251,15 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     {/* Inline Quick Stats */}
-                    <div className="hidden lg:flex items-center gap-x-4 text-xs">
-                        <span style={{ color: '#8AAEBB' }}>Doanh Thu: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(1)}T</strong></span>
+                    <div className="hidden xl:flex items-center gap-x-3 text-xs">
+                        <span style={{ color: '#8AAEBB' }}>Tổng DT: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#2A4355]">|</span>
+                        <span style={{ color: '#8AAEBB' }} title="Doanh thu đã xuất hóa đơn VAT">Có HĐ: <strong className="font-mono text-sm ml-1 text-emerald-400">₫{((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#2A4355]">|</span>
+                        <span style={{ color: '#8AAEBB' }} title="Doanh thu không xuất hóa đơn VAT (vẫn tính đủ 100% VAT)">Không HĐ: <strong className="font-mono text-sm ml-1 text-amber-400">₫{((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#2A4355]">|</span>
                         <span style={{ color: '#8AAEBB' }}>Đơn: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
                         <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Xác nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.confirmed}</strong></span>
                     </div>
                 </div>
                 
@@ -2103,17 +2319,18 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {showStats && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết</span>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết Doanh Thu & Đơn Hàng</span>
                         <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
                             Thu gọn chỉ số ✕
                         </button>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                        <SOStatCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(1)}T`} accent="#87CBB9" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <SOStatCard label="Tổng Doanh Thu" value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} sub="Bao gồm 100% VAT" accent="#87CBB9" />
+                        <SOStatCard label="Doanh Thu Có HĐ" value={`₫${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T`} sub={`${stats.ordersWithInvoice || 0} đơn có HĐ`} accent="#10B981" />
+                        <SOStatCard label="DT Không Xuất HĐ" value={`₫${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T`} sub={`${stats.ordersExemptInvoice || 0} đơn miễn HĐ`} accent="#F59E0B" />
                         <SOStatCard label="Đơn Tháng Này" value={stats.monthOrders} accent="#5BA88A" />
                         <SOStatCard label="Chờ Duyệt" value={stats.pendingApproval} accent="#D4A853" />
                         <SOStatCard label="Đã Xác Nhận" value={stats.confirmed} accent="#4A8FAB" />
-                        <SOStatCard label="Bản Nháp" value={stats.draft} accent="#8AAEBB" />
                     </div>
                 </div>
             )}
@@ -2187,7 +2404,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
                     {/* Filter Toggle Button */}
                     {(() => {
-                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'));
+                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL') || (invoiceFilter && invoiceFilter !== 'ALL'));
                         return (
                             <button onClick={() => setShowFilters(!showFilters)}
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all shadow-2xs"
@@ -2210,7 +2427,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150 bg-slate-50 border border-slate-200">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150 bg-slate-50 border border-slate-200">
                     <div>
                         <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Loại Đơn Hàng</label>
                         <select value={orderTypeFilter} 
@@ -2221,6 +2438,19 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             <option value="STANDARD">📦 Thương Mại</option>
                             <option value="TASTING">🍷 Tasting (Nếm thử)</option>
                             <option value="SAMPLE">🍾 Hàng Mẫu</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Trạng Thái HĐ</label>
+                        <select value={invoiceFilter} 
+                            onChange={e => { setInvoiceFilter(e.target.value as any); setPage(1); reload({ invoiceFilter: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: invoiceFilter === 'EXEMPT' ? '#D97706' : invoiceFilter === 'INVOICED' ? '#059669' : '#0F172A' }}>
+                            <option value="ALL">Tất cả hóa đơn</option>
+                            <option value="INVOICED">📜 Có hóa đơn VAT</option>
+                            <option value="EXEMPT">🚫 Không xuất HĐ VAT</option>
+                            <option value="PENDING">⏳ Chờ xuất HĐ</option>
                         </select>
                     </div>
 
@@ -2351,6 +2581,12 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                 style={{ background: 'rgba(135,203,185,0.08)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
                                                 title={row.invoiceNo}>
                                                 {row.invoiceNo}
+                                            </span>
+                                        ) : row.isInvoiceExempt ? (
+                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                                                style={{ background: 'rgba(239,68,68,0.12)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)' }}
+                                                title={`Miễn HĐ: ${row.invoiceExemptReason || 'Không có lý do'}${row.invoiceExemptBy ? ` (Duyệt bởi: ${row.invoiceExemptBy})` : ''}`}>
+                                                <FileX2 size={11} /> Không HĐ
                                             </span>
                                         ) : null}
                                     </td>
@@ -2635,6 +2871,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     canAcctApprove={canAcctApprove}
                     canApprove={isCEO || isSaleAdminOrMgr}
                     canCreateInvoice={canCreateInvoice}
+                    canToggleInvoiceExempt={canToggleInvoiceExempt}
+                    onReloadList={() => reload()}
                     onAcctApprove={(id, entityId) => {
                         setAcctModalId(id)
                         if (entityId) setAcctEntityId(entityId)
