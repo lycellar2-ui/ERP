@@ -44,6 +44,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
     const [showRejectInput, setShowRejectInput] = useState(false)
     const [printModalOpen, setPrintModalOpen] = useState(false)
     const [printDocType, setPrintDocType] = useState<'VOUCHER' | 'PICK_LIST'>('VOUCHER')
+    const [activeTab, setActiveTab] = useState<'ITEMS' | 'PICKING'>('ITEMS')
 
     // Actual receipt verification state
     const [showReceiveModal, setShowReceiveModal] = useState(false)
@@ -305,9 +306,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         <div className="flex items-center gap-2">
                             {detail && (
                                 <button
-                                    onClick={() => setPrintModalOpen(true)}
-                                    className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                    style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' }}
+                                    onClick={() => { setPrintDocType('VOUCHER'); setPrintModalOpen(true) }}
+                                    className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700"
                                     title="In phiếu chuyển kho ra giấy A4 để ký tên 4 bên"
                                 >
                                     <Printer size={15} /> In Phiếu (A4)
@@ -315,8 +315,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             )}
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                                style={{ color: '#64748B' }}
+                                className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
@@ -460,344 +459,426 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     </div>
                                 )}
 
-                                {/* Overview Metadata Table */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>🔴 Kho Xuất (Kho Đi)</p>
-                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detail.fromWarehouse}</p>
+                                {/* Overview Metadata Summary Card - Sleek & Compact */}
+                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
+                                        <div className="flex items-center gap-2 font-semibold">
+                                            <span className="text-rose-700 font-bold">🔴 {detail.fromWarehouse}</span>
+                                            <span className="text-slate-400 font-bold">➔</span>
+                                            <span className="text-emerald-700 font-bold">🟢 {detail.toWarehouse}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+                                            <span>{detail.lines.length} mặt hàng</span>
+                                            <span>•</span>
+                                            <span className="font-bold text-emerald-700">{detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai</span>
+                                        </div>
                                     </div>
-
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>🟢 Kho Nhận (Kho Đến)</p>
-                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detail.toWarehouse}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-slate-400">Người lập:</span>
+                                            <span className="font-bold text-slate-800">{detail.requesterName}</span>
+                                            <span className="text-slate-400 font-mono">({formatDate(detail.transferDate)})</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 sm:justify-end">
+                                            <span className="text-slate-400">Kế toán duyệt:</span>
+                                            {detail.accountingApprovedBy ? (
+                                                <span className="font-bold text-emerald-700">
+                                                    {detail.accountingApprovedBy} {detail.accountingApprovedAt && `(${formatDate(detail.accountingApprovedAt)})`}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 italic">Chưa phê duyệt</span>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>👤 Người Yêu Cầu / Chuyển Kho</p>
-                                        <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{detail.requesterName}</p>
-                                        <p className="text-[11px] font-mono" style={{ color: '#64748B' }}>{formatDate(detail.transferDate)}</p>
-                                    </div>
-
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>💼 Kế Toán Phê Duyệt</p>
-                                        <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{detail.accountingApprovedBy || 'Chưa duyệt'}</p>
-                                        {detail.accountingApprovedAt && (
-                                            <p className="text-[11px] font-mono" style={{ color: '#16A34A' }}>Duyệt lúc {formatDate(detail.accountingApprovedAt)}</p>
-                                        )}
-                                    </div>
+                                    {detail.notes && (
+                                        <div className="pt-1 text-[11px] text-slate-600 border-t border-slate-200/60">
+                                            <span className="font-bold text-slate-500 mr-1">Ghi chú:</span>
+                                            <span>{detail.notes}</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {detail.notes && (
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>📝 Ghi Chú</p>
-                                        <p className="text-xs font-medium" style={{ color: '#0F172A' }}>{detail.notes}</p>
-                                    </div>
-                                )}
+                                {/* Navigation Tabs */}
+                                <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('ITEMS')}
+                                        className={`px-4 py-2.5 text-xs font-extrabold border-b-2 flex items-center gap-2 transition cursor-pointer ${
+                                            activeTab === 'ITEMS'
+                                                ? 'border-amber-500 text-amber-900 bg-amber-50/50 rounded-t-lg'
+                                                : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        <Boxes size={15} className={activeTab === 'ITEMS' ? 'text-amber-600' : 'text-slate-400'} />
+                                        <span>Danh Sách Mặt Hàng</span>
+                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                                            activeTab === 'ITEMS' ? 'bg-amber-200/80 text-amber-950' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            {detail.lines.length}
+                                        </span>
+                                    </button>
 
-                                {/* 📍 FIFO PICKING LOCATION / DISPATCH FULFILLMENT STATUS */}
-                                {(() => {
-                                    const isReceived = detail.status === 'RECEIVED'
-                                    const isInTransit = detail.status === 'IN_TRANSIT'
-                                    const isCancelled = detail.status === 'CANCELLED'
-                                    const isDispatchedOrDone = isReceived || isInTransit
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('PICKING')}
+                                        className={`px-4 py-2.5 text-xs font-extrabold border-b-2 flex items-center gap-2 transition cursor-pointer ${
+                                            activeTab === 'PICKING'
+                                                ? 'border-sky-500 text-sky-900 bg-sky-50/50 rounded-t-lg'
+                                                : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        <MapPin size={15} className={activeTab === 'PICKING' ? 'text-sky-600' : 'text-slate-400'} />
+                                        <span>Vị Trí Nhặt Hàng (Pick List)</span>
+                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                                            activeTab === 'PICKING' ? 'bg-sky-200/80 text-sky-950' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            {pickingLocations.length}
+                                        </span>
+                                    </button>
+                                </div>
 
-                                    if (isCancelled) {
-                                        return (
-                                            <div className="p-4 rounded-xl space-y-2 bg-rose-50 border border-rose-200">
-                                                <div className="flex items-center gap-2 text-rose-800">
-                                                    <ShieldAlert size={16} className="text-rose-600" />
-                                                    <h4 className="text-xs font-extrabold uppercase tracking-wide">
-                                                        Phiếu Chuyển Kho Đã Hủy / Bị Từ Chối
-                                                    </h4>
-                                                </div>
-                                                <p className="text-xs text-rose-700">
-                                                    Phiếu chuyển kho này không còn hiệu lực. Hàng hóa chưa hoặc không được xuất kho.
-                                                </p>
-                                            </div>
-                                        )
-                                    }
-
-                                    return (
-                                        <div
-                                            className="p-4 rounded-xl space-y-3"
-                                            style={
-                                                isReceived
-                                                    ? { background: '#F0FDF4', border: '1px solid #BBF7D0' }
-                                                    : isInTransit
-                                                    ? { background: '#EFF6FF', border: '1px solid #BFDBFE' }
-                                                    : { background: '#F0F9FF', border: '1px solid #BAE6FD' }
-                                            }
-                                        >
-                                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    {isReceived ? (
-                                                        <PackageCheck size={18} className="text-emerald-600 shrink-0" />
-                                                    ) : isInTransit ? (
-                                                        <Truck size={18} className="text-blue-600 shrink-0" />
-                                                    ) : (
-                                                        <MapPin size={16} className="text-sky-600 shrink-0" />
-                                                    )}
+                                {/* TAB 1: DANH SÁCH MẶT HÀNG */}
+                                {activeTab === 'ITEMS' && (
+                                    <div className="space-y-4">
+                                        {/* Vintage Mismatch Warning Banner */}
+                                        {hasVintageMismatch && (
+                                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                                                <div className="flex items-start gap-2.5 text-amber-900">
+                                                    <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                                                     <div>
-                                                        <h4
-                                                            className={`text-xs font-extrabold uppercase tracking-wide ${
-                                                                isReceived ? 'text-emerald-950' : isInTransit ? 'text-blue-950' : 'text-sky-950'
-                                                            }`}
-                                                        >
-                                                            {isReceived
-                                                                ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất`
-                                                                : isInTransit
-                                                                ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho (${detail.fromWarehouse}) — Đang Vận Chuyển`
-                                                                : `Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại ${detail.fromWarehouse})`}
-                                                        </h4>
-                                                        <p className="text-[11px] text-slate-600 mt-0.5">
-                                                            {isReceived
-                                                                ? `Toàn bộ hàng đã được xuất thành công từ ${detail.fromWarehouse} và nhập đủ vào ${detail.toWarehouse}.`
-                                                                : isInTransit
-                                                                ? `Hàng đã được trừ tồn tại ${detail.fromWarehouse}, đang trên đường chuyển đến ${detail.toWarehouse}.`
-                                                                : `Vị trí các lô hàng khả dụng theo nguyên tắc FIFO tại kho xuất.`}
+                                                        <p className="text-xs font-bold text-amber-950">
+                                                            Phát hiện Niên Vụ (Vintage) không khớp với tồn kho thực tế tại kho xuất!
+                                                        </p>
+                                                        <p className="text-[11px] text-amber-800 mt-0.5">
+                                                            Có sản phẩm đang yêu cầu niên vụ mà kho xuất đã hết hàng. Bạn có thể bấm &quot;Tự Động Khớp&quot; để hệ thống tự chuyển sang niên vụ có sẵn hàng, hoặc đổi thủ công từng dòng ở bảng bên dưới.
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <button
-                                                    onClick={() => { setPrintDocType('PICK_LIST'); setPrintModalOpen(true) }}
-                                                    className={`px-2.5 py-1 text-[11px] font-bold rounded text-white flex items-center gap-1 shadow-2xs cursor-pointer ${
-                                                        isReceived ? 'bg-emerald-600 hover:bg-emerald-700' : isInTransit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-sky-600 hover:bg-sky-700'
-                                                    }`}
+                                                    type="button"
+                                                    disabled={autoFixing}
+                                                    onClick={handleAutoFixVintages}
+                                                    className="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
                                                 >
-                                                    <Printer size={12} /> In Phiếu Nhặt Hàng
+                                                    {autoFixing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                                                    ⚡ Tự Động Khớp Niên Vụ Còn Hàng
                                                 </button>
                                             </div>
+                                        )}
 
-                                            {pickingLocations.length === 0 ? (
-                                                <p className="text-xs text-slate-500 italic">Đang tải thông tin vị trí nhặt hàng...</p>
-                                            ) : (
-                                                <div className="space-y-2.5">
-                                                    {pickingLocations.map(p => (
-                                                        <div
-                                                            key={p.productId}
-                                                            className={`p-3 bg-white rounded-lg shadow-2xs space-y-2 border ${
-                                                                isReceived ? 'border-emerald-200' : isInTransit ? 'border-blue-200' : 'border-sky-200'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-center justify-between flex-wrap gap-1">
-                                                                <div>
-                                                                    <span className="font-mono font-bold text-amber-700 text-xs mr-1.5">[{p.skuCode}]</span>
-                                                                    <span className="font-bold text-slate-900 text-xs">{p.productName}</span>
-                                                                    {p.vintageRequested && (
-                                                                        <span className="ml-2 font-mono text-[10px] text-slate-500 font-semibold">
-                                                                            ({p.vintageRequested})
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[11px] font-mono font-bold text-slate-900">
-                                                                        Yêu cầu: {p.qtyRequested} chai
-                                                                    </span>
-                                                                    {isReceived ? (
-                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                                                                            <CheckCircle2 size={10} /> Đã Xuất & Nhận Đủ ({p.qtyRequested} chai)
-                                                                        </span>
-                                                                    ) : isInTransit ? (
-                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 flex items-center gap-1">
-                                                                            <Truck size={10} /> Đã Xuất Kho ({p.qtyRequested} chai)
-                                                                        </span>
-                                                                    ) : p.isSufficient ? (
-                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">
-                                                                            🟢 Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">
-                                                                            ⚠️ Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                        {/* Line Items Table */}
+                                        <div className="rounded-xl overflow-hidden shadow-2xs border border-slate-200 bg-white">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left text-xs border-collapse">
+                                                    <thead>
+                                                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] w-10 text-center">STT</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px]">Mã SKU</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px]">Sản Phẩm</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-center">VTG</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-center">Số Lượng</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">Đơn Giá Vốn</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">Thành Tiền</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y" style={{ borderColor: '#F1F5F9' }}>
+                                                        {detail.lines.map((l, idx) => {
+                                                            const isEditable = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(detail.status)
+                                                            const isLowOrZeroStock = (l.vintageAvailableStock ?? 0) < l.qtyTransferred
 
-                                                            {/* Locations list or Completed Status */}
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-                                                                {isDispatchedOrDone && p.pickingLocations.length === 0 ? (
-                                                                    <div
-                                                                        className={`p-2 rounded text-xs flex items-center gap-2 col-span-2 ${
-                                                                            isReceived
-                                                                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
-                                                                                : 'bg-blue-50 text-blue-800 border border-blue-100'
-                                                                        }`}
-                                                                    >
-                                                                        {isReceived ? (
-                                                                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                                            return (
+                                                                <tr key={l.id} className={`hover:bg-slate-50 ${isEditable && isLowOrZeroStock ? 'bg-amber-50/40' : ''}`}>
+                                                                    <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
+                                                                    <td className="p-3 font-mono font-bold" style={{ color: '#B47816' }}>{l.skuCode}</td>
+                                                                    <td className="p-3 font-bold" style={{ color: '#0F172A' }}>{l.productName}</td>
+                                                                    <td className="p-3 text-center font-mono">
+                                                                        {editingVintageLineId === l.id ? (
+                                                                            <div className="flex items-center gap-1 justify-center">
+                                                                                <select
+                                                                                    value={selectedNewVintage}
+                                                                                    onChange={e => setSelectedNewVintage(e.target.value)}
+                                                                                    className="px-1.5 py-1 text-xs rounded border border-slate-300 bg-white text-slate-900 font-mono shadow-2xs outline-none focus:border-amber-500"
+                                                                                >
+                                                                                    {l.availableVintages && l.availableVintages.length > 0 ? (
+                                                                                        l.availableVintages.map(v => (
+                                                                                            <option key={v.vintage ?? 'NV'} value={v.vintage !== null && v.vintage !== undefined ? String(v.vintage) : 'NV'}>
+                                                                                                {v.vintage ? `VTG ${v.vintage}` : 'NV'} (Tồn: {v.qtyAvailable}c)
+                                                                                            </option>
+                                                                                        ))
+                                                                                    ) : (
+                                                                                        <option value="NV">Kho hết hàng</option>
+                                                                                    )}
+                                                                                </select>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    disabled={vintageUpdating}
+                                                                                    onClick={() => handleUpdateVintage(l.id, selectedNewVintage)}
+                                                                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded cursor-pointer"
+                                                                                    title="Lưu thay đổi niên vụ"
+                                                                                >
+                                                                                    {vintageUpdating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setEditingVintageLineId(null)}
+                                                                                    className="p-1 text-slate-400 hover:bg-slate-100 rounded cursor-pointer"
+                                                                                    title="Hủy"
+                                                                                >
+                                                                                    <X size={13} />
+                                                                                </button>
+                                                                            </div>
                                                                         ) : (
-                                                                            <Truck size={14} className="text-blue-600 shrink-0" />
+                                                                            <div className="flex flex-col items-center gap-0.5">
+                                                                                <div className="flex items-center gap-1.5 font-bold">
+                                                                                    <span style={{ color: isEditable && isLowOrZeroStock ? '#DC2626' : '#475569' }}>
+                                                                                        {l.vintage || 'NV'}
+                                                                                    </span>
+                                                                                    {isEditable && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => {
+                                                                                                setEditingVintageLineId(l.id)
+                                                                                                const candidate = l.availableVintages?.find(v => v.qtyAvailable >= l.qtyTransferred)?.vintage
+                                                                                                setSelectedNewVintage(
+                                                                                                    candidate !== undefined
+                                                                                                        ? (candidate !== null ? String(candidate) : 'NV')
+                                                                                                        : (l.vintage !== null && l.vintage !== undefined ? String(l.vintage) : 'NV')
+                                                                                                )
+                                                                                            }}
+                                                                                            className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors flex items-center gap-1 cursor-pointer"
+                                                                                            title="Đổi niên vụ (Vintage) cho sản phẩm này"
+                                                                                        >
+                                                                                            <RotateCw size={10} /> Đổi
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                                {isEditable && isLowOrZeroStock && (
+                                                                                    <span className="text-[10px] text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-semibold whitespace-nowrap border border-rose-100">
+                                                                                        ⚠️ Tồn: {l.vintageAvailableStock ?? 0}c
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
                                                                         )}
-                                                                        <span>
-                                                                            Đã xuất kho đủ <strong>{p.qtyRequested} chai</strong> (Tồn kho tại <em>{detail.fromWarehouse}</em> đã được trừ hoàn tất khi xuất hàng).
-                                                                        </span>
-                                                                    </div>
-                                                                ) : p.pickingLocations.length === 0 ? (
-                                                                    <div className="text-[11px] text-rose-600 font-semibold col-span-2">
-                                                                        Không tìm thấy lô hàng khả dụng ở Kho Xuất
-                                                                    </div>
-                                                                ) : (
-                                                                    p.pickingLocations.map((loc, i) => (
-                                                                        <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200 text-xs">
-                                                                            <div className="space-y-0.5">
-                                                                                <div className="flex items-center gap-1 font-mono font-extrabold text-slate-900">
-                                                                                    <Layers size={12} className="text-sky-600" />
-                                                                                    <span>Kệ/Vị trí: <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
-                                                                                </div>
-                                                                                <div className="text-[10px] text-slate-500 font-mono">
-                                                                                    Lô: {loc.lotNo} {loc.vintage ? `· Vintage ${loc.vintage}` : ''}
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="text-right font-mono">
-                                                                                <span className="font-bold text-emerald-700 text-xs block">
-                                                                                    {isDispatchedOrDone ? 'Đã nhặt' : 'Nhặt'} {loc.qtyToPick} chai
-                                                                                </span>
-                                                                                <span className="text-[10px] text-slate-400">
-                                                                                    {isDispatchedOrDone ? `Tồn dư hiện tại: ${loc.qtyAvailable}` : `Tồn kệ: ${loc.qtyAvailable}`}
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })()}
-
-                                {/* Vintage Mismatch Warning Banner */}
-                                {hasVintageMismatch && (
-                                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-                                        <div className="flex items-start gap-2.5 text-amber-900">
-                                            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                                            <div>
-                                                <p className="text-xs font-bold text-amber-950">
-                                                    Phát hiện Niên Vụ (Vintage) không khớp với tồn kho thực tế tại kho xuất!
-                                                </p>
-                                                <p className="text-[11px] text-amber-800 mt-0.5">
-                                                    Có sản phẩm đang yêu cầu niên vụ mà kho xuất đã hết hàng. Bạn có thể bấm "Tự Động Khớp" để hệ thống tự chuyển sang niên vụ có sẵn hàng, hoặc đổi thủ công từng dòng ở bảng bên dưới.
-                                                </p>
+                                                                    </td>
+                                                                    <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
+                                                                    <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
+                                                                    <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
+                                                                </tr>
+                                                            )
+                                                        })}
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr className="bg-slate-50 border-t border-slate-200 font-bold text-slate-800">
+                                                            <td colSpan={4} className="p-3 text-right uppercase text-[10px] text-slate-500 font-bold">
+                                                                Tổng cộng ({detail.lines.length} mặt hàng):
+                                                            </td>
+                                                            <td className="p-3 text-center font-mono font-extrabold text-amber-700">
+                                                                {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai
+                                                            </td>
+                                                            <td></td>
+                                                            <td className="p-3 text-right font-mono font-extrabold text-slate-900">
+                                                                {formatVND(detail.lines.reduce((s, l) => s + Number(l.totalValue || 0), 0))}
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            disabled={autoFixing}
-                                            onClick={handleAutoFixVintages}
-                                            className="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
-                                        >
-                                            {autoFixing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                                            ⚡ Tự Động Khớp Niên Vụ Còn Hàng
-                                        </button>
+
+                                        {/* Quick link to Picking tab */}
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-sky-50/70 border border-sky-200 text-xs">
+                                            <div className="flex items-center gap-2 text-sky-900">
+                                                <MapPin size={15} className="text-sky-600 shrink-0" />
+                                                <span>Cần kiểm tra vị trí kệ/pallet nhặt hàng tại kho xuất?</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('PICKING')}
+                                                className="font-bold text-sky-700 hover:text-sky-900 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                                            >
+                                                Xem vị trí nhặt hàng ➔
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
-                                {/* Line Items Table */}
-                                <div className="rounded-xl overflow-hidden shadow-2xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-xs border-collapse">
-                                            <thead>
-                                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
-                                                    <th className="p-3 font-semibold uppercase text-[10px] w-10 text-center">STT</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px]">Mã SKU</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px]">Sản Phẩm</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px] text-center">VTG</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px] text-center">Số Lượng</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px] text-right">Đơn Giá Vốn</th>
-                                                    <th className="p-3 font-semibold uppercase text-[10px] text-right">Thành Tiền</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y" style={{ borderColor: '#F1F5F9' }}>
-                                                {detail.lines.map((l, idx) => {
-                                                    const isEditable = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(detail.status)
-                                                    const isLowOrZeroStock = (l.vintageAvailableStock ?? 0) < l.qtyTransferred
+                                {/* TAB 2: VỊ TRÍ NHẶT HÀNG (FIFO PICK LIST) */}
+                                {activeTab === 'PICKING' && (
+                                    <div className="space-y-4">
+                                        {(() => {
+                                            const isReceived = detail.status === 'RECEIVED'
+                                            const isInTransit = detail.status === 'IN_TRANSIT'
+                                            const isCancelled = detail.status === 'CANCELLED'
+                                            const isDispatchedOrDone = isReceived || isInTransit
 
-                                                    return (
-                                                        <tr key={l.id} className={`hover:bg-slate-50 ${isEditable && isLowOrZeroStock ? 'bg-amber-50/40' : ''}`}>
-                                                            <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
-                                                            <td className="p-3 font-mono font-bold" style={{ color: '#B47816' }}>{l.skuCode}</td>
-                                                            <td className="p-3 font-bold" style={{ color: '#0F172A' }}>{l.productName}</td>
-                                                            <td className="p-3 text-center font-mono">
-                                                                {editingVintageLineId === l.id ? (
-                                                                    <div className="flex items-center gap-1 justify-center">
-                                                                        <select
-                                                                            value={selectedNewVintage}
-                                                                            onChange={e => setSelectedNewVintage(e.target.value)}
-                                                                            className="px-1.5 py-1 text-xs rounded border border-slate-300 bg-white text-slate-900 font-mono shadow-2xs outline-none focus:border-amber-500"
-                                                                        >
-                                                                            {l.availableVintages && l.availableVintages.length > 0 ? (
-                                                                                l.availableVintages.map(v => (
-                                                                                    <option key={v.vintage ?? 'NV'} value={v.vintage !== null && v.vintage !== undefined ? String(v.vintage) : 'NV'}>
-                                                                                        {v.vintage ? `VTG ${v.vintage}` : 'NV'} (Tồn: {v.qtyAvailable}c)
-                                                                                    </option>
-                                                                                ))
-                                                                            ) : (
-                                                                                <option value="NV">Kho hết hàng</option>
-                                                                            )}
-                                                                        </select>
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={vintageUpdating}
-                                                                            onClick={() => handleUpdateVintage(l.id, selectedNewVintage)}
-                                                                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded cursor-pointer"
-                                                                            title="Lưu thay đổi niên vụ"
-                                                                        >
-                                                                            {vintageUpdating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setEditingVintageLineId(null)}
-                                                                            className="p-1 text-slate-400 hover:bg-slate-100 rounded cursor-pointer"
-                                                                            title="Hủy"
-                                                                        >
-                                                                            <X size={13} />
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="flex flex-col items-center gap-0.5">
-                                                                        <div className="flex items-center gap-1.5 font-bold">
-                                                                            <span style={{ color: isEditable && isLowOrZeroStock ? '#DC2626' : '#475569' }}>
-                                                                                {l.vintage || 'NV'}
-                                                                            </span>
-                                                                            {isEditable && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        setEditingVintageLineId(l.id)
-                                                                                        const candidate = l.availableVintages?.find(v => v.qtyAvailable >= l.qtyTransferred)?.vintage
-                                                                                        setSelectedNewVintage(
-                                                                                            candidate !== undefined
-                                                                                                ? (candidate !== null ? String(candidate) : 'NV')
-                                                                                                : (l.vintage !== null && l.vintage !== undefined ? String(l.vintage) : 'NV')
-                                                                                        )
-                                                                                    }}
-                                                                                    className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors flex items-center gap-1 cursor-pointer"
-                                                                                    title="Đổi niên vụ (Vintage) cho sản phẩm này"
-                                                                                >
-                                                                                    <RotateCw size={10} /> Đổi
-                                                                                </button>
+                                            if (isCancelled) {
+                                                return (
+                                                    <div className="p-4 rounded-xl space-y-2 bg-rose-50 border border-rose-200">
+                                                        <div className="flex items-center gap-2 text-rose-800">
+                                                            <ShieldAlert size={16} className="text-rose-600" />
+                                                            <h4 className="text-xs font-extrabold uppercase tracking-wide">
+                                                                Phiếu Chuyển Kho Đã Hủy / Bị Từ Chối
+                                                            </h4>
+                                                        </div>
+                                                        <p className="text-xs text-rose-700">
+                                                            Phiếu chuyển kho này không còn hiệu lực. Hàng hóa chưa hoặc không được xuất kho.
+                                                        </p>
+                                                    </div>
+                                                )
+                                            }
+
+                                            return (
+                                                <div
+                                                    className="p-4 rounded-xl space-y-3"
+                                                    style={
+                                                        isReceived
+                                                            ? { background: '#F0FDF4', border: '1px solid #BBF7D0' }
+                                                            : isInTransit
+                                                            ? { background: '#EFF6FF', border: '1px solid #BFDBFE' }
+                                                            : { background: '#F0F9FF', border: '1px solid #BAE6FD' }
+                                                    }
+                                                >
+                                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            {isReceived ? (
+                                                                <PackageCheck size={18} className="text-emerald-600 shrink-0" />
+                                                            ) : isInTransit ? (
+                                                                <Truck size={18} className="text-blue-600 shrink-0" />
+                                                            ) : (
+                                                                <MapPin size={16} className="text-sky-600 shrink-0" />
+                                                            )}
+                                                            <div>
+                                                                <h4
+                                                                    className={`text-xs font-extrabold uppercase tracking-wide ${
+                                                                        isReceived ? 'text-emerald-950' : isInTransit ? 'text-blue-950' : 'text-sky-950'
+                                                                    }`}
+                                                                >
+                                                                    {isReceived
+                                                                        ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất`
+                                                                        : isInTransit
+                                                                        ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho (${detail.fromWarehouse}) — Đang Vận Chuyển`
+                                                                        : `Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại ${detail.fromWarehouse})`}
+                                                                </h4>
+                                                                <p className="text-[11px] text-slate-600 mt-0.5">
+                                                                    {isReceived
+                                                                        ? `Toàn bộ hàng đã được xuất thành công từ ${detail.fromWarehouse} và nhập đủ vào ${detail.toWarehouse}.`
+                                                                        : isInTransit
+                                                                        ? `Hàng đã được trừ tồn tại ${detail.fromWarehouse}, đang trên đường chuyển đến ${detail.toWarehouse}.`
+                                                                        : `Vị trí các lô hàng khả dụng theo nguyên tắc FIFO tại kho xuất.`}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => { setPrintDocType('PICK_LIST'); setPrintModalOpen(true) }}
+                                                            className={`px-2.5 py-1 text-[11px] font-bold rounded text-white flex items-center gap-1 shadow-2xs cursor-pointer ${
+                                                                isReceived ? 'bg-emerald-600 hover:bg-emerald-700' : isInTransit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-sky-600 hover:bg-sky-700'
+                                                            }`}
+                                                        >
+                                                            <Printer size={12} /> In Phiếu Nhặt Hàng
+                                                        </button>
+                                                    </div>
+
+                                                    {pickingLocations.length === 0 ? (
+                                                        <p className="text-xs text-slate-500 italic">Đang tải thông tin vị trí nhặt hàng...</p>
+                                                    ) : (
+                                                        <div className="space-y-2.5">
+                                                            {pickingLocations.map(p => (
+                                                                <div
+                                                                    key={p.productId}
+                                                                    className={`p-3 bg-white rounded-lg shadow-2xs space-y-2 border ${
+                                                                        isReceived ? 'border-emerald-200' : isInTransit ? 'border-blue-200' : 'border-sky-200'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center justify-between flex-wrap gap-1">
+                                                                        <div>
+                                                                            <span className="font-mono font-bold text-amber-700 text-xs mr-1.5">[{p.skuCode}]</span>
+                                                                            <span className="font-bold text-slate-900 text-xs">{p.productName}</span>
+                                                                            {p.vintageRequested && (
+                                                                                <span className="ml-2 font-mono text-[10px] text-slate-500 font-semibold">
+                                                                                    ({p.vintageRequested})
+                                                                                </span>
                                                                             )}
                                                                         </div>
-                                                                        {isEditable && isLowOrZeroStock && (
-                                                                            <span className="text-[10px] text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-semibold whitespace-nowrap border border-rose-100">
-                                                                                ⚠️ Tồn: {l.vintageAvailableStock ?? 0}c
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[11px] font-mono font-bold text-slate-900">
+                                                                                Yêu cầu: {p.qtyRequested} chai
                                                                             </span>
+                                                                            {isReceived ? (
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                                                                    <CheckCircle2 size={10} /> Đã Xuất & Nhận Đủ ({p.qtyRequested} chai)
+                                                                                </span>
+                                                                            ) : isInTransit ? (
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 flex items-center gap-1">
+                                                                                    <Truck size={10} /> Đã Xuất Kho ({p.qtyRequested} chai)
+                                                                                </span>
+                                                                            ) : p.isSufficient ? (
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">
+                                                                                    🟢 Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">
+                                                                                    ⚠️ Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Locations list or Completed Status */}
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+                                                                        {isDispatchedOrDone && p.pickingLocations.length === 0 ? (
+                                                                            <div
+                                                                                className={`p-2 rounded text-xs flex items-center gap-2 col-span-2 ${
+                                                                                    isReceived
+                                                                                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                                                                                        : 'bg-blue-50 text-blue-800 border border-blue-100'
+                                                                                }`}
+                                                                            >
+                                                                                {isReceived ? (
+                                                                                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                                                                ) : (
+                                                                                    <Truck size={14} className="text-blue-600 shrink-0" />
+                                                                                )}
+                                                                                <span>
+                                                                                    Đã xuất kho đủ <strong>{p.qtyRequested} chai</strong> (Tồn kho tại <em>{detail.fromWarehouse}</em> đã được trừ hoàn tất khi xuất hàng).
+                                                                                </span>
+                                                                            </div>
+                                                                        ) : p.pickingLocations.length === 0 ? (
+                                                                            <div className="text-[11px] text-rose-600 font-semibold col-span-2">
+                                                                                Không tìm thấy lô hàng khả dụng ở Kho Xuất
+                                                                            </div>
+                                                                        ) : (
+                                                                            p.pickingLocations.map((loc, i) => (
+                                                                                <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200 text-xs">
+                                                                                    <div className="space-y-0.5">
+                                                                                        <div className="flex items-center gap-1 font-mono font-extrabold text-slate-900">
+                                                                                            <Layers size={12} className="text-sky-600" />
+                                                                                            <span>Kệ/Vị trí: <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
+                                                                                        </div>
+                                                                                        <div className="text-[10px] text-slate-500 font-mono">
+                                                                                            Lô: {loc.lotNo} {loc.vintage ? `· Vintage ${loc.vintage}` : ''}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right font-mono">
+                                                                                        <span className="font-bold text-emerald-700 text-xs block">
+                                                                                            {isDispatchedOrDone ? 'Đã nhặt' : 'Nhặt'} {loc.qtyToPick} chai
+                                                                                        </span>
+                                                                                        <span className="text-[10px] text-slate-400">
+                                                                                            {isDispatchedOrDone ? `Tồn dư hiện tại: ${loc.qtyAvailable}` : `Tồn kệ: ${loc.qtyAvailable}`}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))
                                                                         )}
                                                                     </div>
-                                                                )}
-                                                            </td>
-                                                            <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
-                                                            <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
-                                                            <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
-                                                        </tr>
-                                                    )
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
                                     </div>
-                                </div>
+                                )}
                             </>
                         ) : (
                             <div className="p-12 text-center text-slate-400">Không tìm thấy dữ liệu phiếu</div>
