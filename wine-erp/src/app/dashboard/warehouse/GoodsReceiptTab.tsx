@@ -24,6 +24,9 @@ type POLineOption = {
     unitsPerCase: number
     qtyOrdered: number
     casesOrdered: number
+    uom?: string
+    isFoc?: boolean
+    focNote?: string
 }
 
 type POOption = {
@@ -1116,7 +1119,9 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
     const [locations, setLocations] = useState<{ id: string; locationCode: string; zone: string; rack?: string | null; bin?: string | null }[]>([])
     const [loadingLocations, setLoadingLocations] = useState(false)
     const [lines, setLines] = useState<{
+        poLineId: string
         productId: string
+        unitsPerCase: number
         qtyReceived: number
         casesReceived: number
         locationId: string
@@ -1160,7 +1165,9 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
             setLines(po.lines.map(l => {
                 const u = l.unitsPerCase || 6
                 return {
+                    poLineId: l.id,
                     productId: l.productId,
+                    unitsPerCase: u,
                     qtyReceived: l.qtyOrdered,
                     casesReceived: l.casesOrdered ?? Math.round((l.qtyOrdered / u) * 10) / 10,
                     locationId: locations.length > 0 ? locations[0].id : '',
@@ -1189,6 +1196,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     warehouseId,
                     autoConfirm,
                     lines: validLines.map(l => ({
+                        poLineId: l.poLineId,
                         productId: l.productId,
                         qtyReceived: l.qtyReceived,
                         locationId: l.locationId,
@@ -1293,20 +1301,27 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
                             <div className="space-y-3.5">
                                 {selectedPO.lines.map((pol, i) => {
-                                    const u = pol.unitsPerCase || 6
+                                    const lineUpc = lines[i]?.unitsPerCase ?? pol.unitsPerCase ?? 6
                                     return (
                                         <div
-                                            key={pol.productId}
+                                            key={pol.id || `${pol.productId}-${i}`}
                                             className="p-4 rounded-xl border space-y-3 shadow-sm"
-                                            style={{ background: '#1B2E3D', borderColor: '#2A4355' }}
+                                            style={{ background: '#1B2E3D', borderColor: pol.isFoc ? 'rgba(212,168,83,0.35)' : '#2A4355' }}
                                         >
                                             {/* Product Title & Badges */}
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 <div>
-                                                    <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
-                                                        {pol.productName || 'Sản phẩm ' + pol.skuCode}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                                            {pol.productName || 'Sản phẩm ' + pol.skuCode}
+                                                        </p>
+                                                        {pol.isFoc && (
+                                                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                                🎁 FOC {pol.focNote ? `(${pol.focNote})` : ''}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                         <span
                                                             className="text-xs font-mono font-bold px-2 py-0.5 rounded"
                                                             style={{
@@ -1317,16 +1332,33 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                         >
                                                             SKU: {pol.skuCode}
                                                         </span>
-                                                        <span
-                                                            className="text-[11px] font-semibold px-2 py-0.5 rounded"
-                                                            style={{
-                                                                background: '#142433',
-                                                                color: '#8AAEBB',
-                                                                border: '1px solid #2A4355',
-                                                            }}
-                                                        >
-                                                            Quy cách: {u} chai/thùng
-                                                        </span>
+                                                        {/* Interactive Quy cách selector */}
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#142433] border border-[#2A4355]">
+                                                            <span className="text-[11px] font-semibold text-[#8AAEBB]">Quy cách:</span>
+                                                            <select
+                                                                value={lineUpc}
+                                                                onChange={e => {
+                                                                    const newUpc = Number(e.target.value)
+                                                                    const v = [...lines]
+                                                                    const curCases = v[i]?.casesReceived ?? 0
+                                                                    const curBottles = v[i]?.qtyReceived ?? 0
+                                                                    const newBottles = curCases > 0 ? Math.round(curCases * newUpc) : curBottles
+                                                                    v[i] = {
+                                                                        ...v[i],
+                                                                        unitsPerCase: newUpc,
+                                                                        qtyReceived: newBottles,
+                                                                        casesReceived: newUpc > 0 ? Math.round((newBottles / newUpc) * 10) / 10 : curCases
+                                                                    }
+                                                                    setLines(v)
+                                                                }}
+                                                                className="bg-transparent text-xs font-bold text-[#87CBB9] outline-none cursor-pointer"
+                                                            >
+                                                                <option value={12} className="bg-[#0D1E2B] text-[#E8F1F2]">12 chai/thùng</option>
+                                                                <option value={6} className="bg-[#0D1E2B] text-[#E8F1F2]">6 chai/thùng</option>
+                                                                <option value={3} className="bg-[#0D1E2B] text-[#E8F1F2]">3 chai/thùng</option>
+                                                                <option value={1} className="bg-[#0D1E2B] text-[#E8F1F2]">1 chai/hộp</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -1339,7 +1371,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                             border: '1px solid rgba(212,168,83,0.3)',
                                                         }}
                                                     >
-                                                        PO: {pol.casesOrdered ?? Math.round((pol.qtyOrdered / u) * 10) / 10} thùng ({pol.qtyOrdered} chai)
+                                                        PO: {pol.casesOrdered ?? Math.round((pol.qtyOrdered / lineUpc) * 10) / 10} thùng ({pol.qtyOrdered} chai)
                                                     </span>
                                                 </div>
                                             </div>
@@ -1358,7 +1390,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                         value={lines[i]?.casesReceived ?? 0}
                                                         onChange={e => {
                                                             const cases = Number(e.target.value)
-                                                            const bottles = Math.round(cases * u)
+                                                            const bottles = Math.round(cases * lineUpc)
                                                             const v = [...lines]
                                                             v[i] = { ...v[i], casesReceived: cases, qtyReceived: bottles }
                                                             setLines(v)
@@ -1379,7 +1411,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                         value={lines[i]?.qtyReceived ?? 0}
                                                         onChange={e => {
                                                             const bottles = Number(e.target.value)
-                                                            const cases = Math.round((bottles / u) * 10) / 10
+                                                            const cases = Math.round((bottles / lineUpc) * 10) / 10
                                                             const v = [...lines]
                                                             v[i] = { ...v[i], qtyReceived: bottles, casesReceived: cases }
                                                             setLines(v)

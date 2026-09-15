@@ -556,7 +556,12 @@ export async function getGoodsReceipts(filters: {
     const receipts = await prisma.goodsReceipt.findMany({
         where,
         include: {
-            po: { select: { poNo: true } },
+            po: {
+                select: {
+                    poNo: true,
+                    lines: { select: { productId: true, uom: true } }
+                }
+            },
             warehouse: { select: { name: true } },
             confirmer: { select: { name: true } },
             lines: {
@@ -572,7 +577,13 @@ export async function getGoodsReceipts(filters: {
     return receipts.map(gr => {
         const totalQtyReceived = gr.lines.reduce((s, l) => s + Number(l.qtyReceived), 0)
         const totalCases = gr.lines.reduce((s, l) => {
-            const u = l.product?.unitsPerCase || 6
+            const poLine = gr.po?.lines?.find(pol => pol.productId === l.productId)
+            let u = 6
+            if (poLine?.uom === 'CASE_12') u = 12
+            else if (poLine?.uom === 'CASE_6') u = 6
+            else if (poLine?.uom === 'CASE_3') u = 3
+            else if (poLine?.uom === 'CASE_1' || poLine?.uom === 'BOTTLE') u = 1
+            else if (l.product?.unitsPerCase) u = l.product.unitsPerCase
             return s + Number(l.qtyReceived) / u
         }, 0)
 
@@ -615,7 +626,13 @@ export async function getPOsForReceiving() {
         poNo: p.poNo,
         supplierName: p.supplier.name,
         lines: p.lines.map(l => {
-            const u = l.product.unitsPerCase || 6
+            let u = 6
+            if (l.uom === 'CASE_12') u = 12
+            else if (l.uom === 'CASE_6') u = 6
+            else if (l.uom === 'CASE_3') u = 3
+            else if (l.uom === 'CASE_1' || l.uom === 'BOTTLE') u = 1
+            else if (l.product.unitsPerCase) u = l.product.unitsPerCase
+
             const qty = Number(l.qtyOrdered)
             return {
                 id: l.id,
@@ -625,6 +642,9 @@ export async function getPOsForReceiving() {
                 unitsPerCase: u,
                 qtyOrdered: qty,
                 casesOrdered: Math.round((qty / u) * 10) / 10,
+                uom: l.uom,
+                isFoc: l.isFoc,
+                focNote: l.focNote,
             }
         })
     }))
@@ -688,7 +708,9 @@ export async function createGoodsReceipt(input: {
 
             // Create GR Lines + StockLots
             for (const line of lines) {
-                const poLine = po.lines.find(l => l.productId === line.productId)
+                const poLine = (line as any).poLineId
+                    ? po.lines.find(l => l.id === (line as any).poLineId)
+                    : po.lines.find(l => l.productId === line.productId)
                 const qtyExpected = poLine ? Number(poLine.qtyOrdered) : line.qtyReceived
 
                 // Generate unique lot number (atomic — collision-safe within month)
@@ -2302,7 +2324,13 @@ export async function getGRDetail(grId: string) {
     const gr = await prisma.goodsReceipt.findUnique({
         where: { id: grId },
         include: {
-            po: { select: { poNo: true, supplier: { select: { name: true } } } },
+            po: {
+                select: {
+                    poNo: true,
+                    supplier: { select: { name: true } },
+                    lines: { select: { productId: true, uom: true } }
+                }
+            },
             warehouse: { select: { name: true } },
             confirmer: { select: { name: true } },
             lines: {
@@ -2325,7 +2353,14 @@ export async function getGRDetail(grId: string) {
         confirmedAt: gr.confirmedAt,
         createdAt: gr.createdAt,
         lines: gr.lines.map(l => {
-            const u = l.product.unitsPerCase || 6
+            const poLine = gr.po?.lines?.find(pol => pol.productId === l.productId)
+            let u = 6
+            if (poLine?.uom === 'CASE_12') u = 12
+            else if (poLine?.uom === 'CASE_6') u = 6
+            else if (poLine?.uom === 'CASE_3') u = 3
+            else if (poLine?.uom === 'CASE_1' || poLine?.uom === 'BOTTLE') u = 1
+            else if (l.product.unitsPerCase) u = l.product.unitsPerCase
+
             const qtyExp = Number(l.qtyExpected)
             const qtyRec = Number(l.qtyReceived)
             const diff = Number(l.variance)

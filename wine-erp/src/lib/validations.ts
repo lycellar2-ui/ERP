@@ -427,6 +427,7 @@ export const LoyaltyRedeemSchema = z.object({
 // ═══════════════════════════════════════════════════
 
 export const GoodsReceiptLineSchema = z.object({
+    poLineId: z.string().optional(),
     productId: z.string().min(1),
     qtyReceived: z.number().int().positive('SL nhận phải > 0'),
     locationId: z.string().min(1),

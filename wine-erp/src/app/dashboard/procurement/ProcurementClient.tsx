@@ -188,14 +188,16 @@ const TAB_LABELS: Record<string, string> = {
 }
 
 function FilterTabs({ active, counts, onChange }: { active: string; counts: Record<string, number>; onChange: (s: string) => void }) {
+    const visibleTabs = TAB_ORDER.filter(tab => tab === 'ALL' || tab === active || (counts[tab] ?? 0) > 0)
+
     return (
-        <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {TAB_ORDER.map(tab => {
+        <div className="flex items-center gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {visibleTabs.map(tab => {
                 const isActive = (tab === 'ALL' && active === '') || tab === active
                 const count = tab === 'ALL' ? (counts.ALL ?? 0) : (counts[tab] ?? 0)
                 return (
                     <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab)}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0"
                         style={{
                             background: isActive ? 'rgba(135,203,185,0.15)' : 'transparent',
                             color: isActive ? '#87CBB9' : '#4A6A7A',
@@ -2293,14 +2295,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             )}
 
             {/* Toolbar: Tabs & Main Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
                 {/* Left side: Quick Filter Tabs */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                     <FilterTabs active={statusFilter} counts={statusCounts} onChange={handleStatusTab} />
                 </div>
 
                 {/* Right side: Search + Date inputs + Filter button */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                     {/* Search input */}
                     <div className="relative w-full sm:w-48 xl:w-64">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
@@ -2435,14 +2437,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '22%' }} />
-                                <SortHeader label="Nhà Cung Cấp & Pháp Nhân" field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '22%' }} />
-                                <SortHeader label="Quy Mô & Nhập Kho" field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '16%' }} />
-                                <SortHeader label="Giá Trị & Quy Đổi" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '16%' }} />
+                                <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
+                                <SortHeader label="Nhà Cung Cấp & Pháp Nhân" field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
+                                <SortHeader label="Quy Mô & Nhập Kho" field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
+                                <SortHeader label="Giá Trị & Quy Đổi" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
                                 <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB]" style={{ width: '14%' }}>
                                     Trạng Thái & Hồ Sơ
                                 </th>
-                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB] text-right" style={{ width: '10%' }}>
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB] text-right" style={{ width: '16%', minWidth: '175px' }}>
                                     Thao Tác
                                 </th>
                             </tr>
@@ -2621,30 +2623,21 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         </td>
 
                                         {/* Col 6: Actions */}
-                                        <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                        <td className="px-4 py-3 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                            <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                                                 <button onClick={() => showDetail(row.id)}
-                                                    className="p-1.5 rounded-lg text-[#87CBB9] hover:bg-[#1B2E3D] border border-emerald-500/20"
+                                                    className="p-1.5 rounded-lg text-[#87CBB9] hover:bg-[#1B2E3D] border border-emerald-500/20 flex-shrink-0"
                                                     title="Xem chi tiết PO">
                                                     <Eye size={13} />
                                                 </button>
 
-                                                {/* Edit Draft PO */}
-                                                {row.status === 'DRAFT' && (
-                                                    <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
-                                                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-[#D4A853] hover:bg-amber-500/20 border border-amber-500/30 bg-amber-500/10 transition-all"
-                                                        title="Chỉnh sửa PO Nháp">
-                                                        <Pencil size={11} /> Sửa
-                                                    </button>
-                                                )}
-
-                                                {/* Status Stepper */}
+                                                {/* Status Stepper handles Sửa, Gửi Duyệt, Xoá for DRAFT */}
                                                 <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
 
                                                 {/* Direct Warehouse Receipt shortcut */}
                                                 {isReadyForGR && (
                                                     <Link href="/dashboard/warehouse"
-                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#87CBB9] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20"
+                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#87CBB9] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
                                                         title="Nhập kho hàng cho PO này">
                                                         <Box size={11} /> Nhập Kho
                                                     </Link>
@@ -2725,12 +2718,6 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <div className="flex items-center justify-between pt-2 border-t border-[#2A4355]/40 text-xs" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
-                                    {row.status === 'DRAFT' && (
-                                        <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
-                                            className="px-2 py-1 text-xs font-bold rounded-lg text-[#D4A853] bg-amber-500/10 border border-amber-500/30 flex items-center gap-1 hover:bg-amber-500/20">
-                                            <Pencil size={11} /> Sửa
-                                        </button>
-                                    )}
                                 </div>
                                 <button onClick={() => showDetail(row.id)}
                                     className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#87CBB9] bg-[#1B2E3D] border border-emerald-500/20">

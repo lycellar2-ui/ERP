@@ -137,7 +137,9 @@ export async function createGoodsReceipt(input: {
             })
 
             for (const line of lines) {
-                const poLine = po.lines.find(l => l.productId === line.productId)
+                const poLine = (line as any).poLineId
+                    ? po.lines.find(l => l.id === (line as any).poLineId)
+                    : po.lines.find(l => l.productId === line.productId)
                 const qtyExpected = poLine ? Number(poLine.qtyOrdered) : line.qtyReceived
 
                 // Generate unique lot number (atomic — collision-safe within month)

@@ -59,6 +59,7 @@
 50. [BUG-103: Phiếu Xuất Bán Hàng (DO) Bị Kéo Nhầm Vào Báo Cáo Nhập Xuất Tồn Kho Thường Tín & Lệch Ảo Tồn Sổ Sách Do Bỏ Quên Điều Chuyển Kho](#bug-103-phiếu-xuất-bán-hàng-do-bị-kéo-nhầm-vào-báo-cáo-nhập-xuất-tồn-kho-thường-tín--lệch-ảo-tồn-sổ-sách-do-bỏ-quên-điều-chuyển-kho)
 51. [BUG-104: Phân Quyền Miễn Xuất Hóa Đơn VAT Cho Đơn Hàng (Chỉ Kế Toán/Admin), Tách Riêng Doanh Thu & Bảo Toàn Đủ 100% VAT](#bug-104-phân-quyền-miễn-xuất-hóa-đơn-vat-cho-đơn-hàng-chỉ-kế-toánadmin-tách-riêng-doanh-thu--bảo-toàn-đủ-100-vat)
 52. [BUG-105: Độ Trễ Trạng Thái Tờ Trình (Stale Cache Đa Container Vercel & Thiếu Realtime Khi Nhấn Trình/Duyệt)](#bug-105-độ-trễ-trạng-thái-tờ-trình-stale-cache-đa-container-vercel--thiếu-realtime-khi-nhấn-trìnhduyệt)
+53. [BUG-106: Nhận Sai Quy Cách Thùng Khi Nhập Kho PO & Lỗi Tràn Layout Giao Diện Đơn Mua Hàng](#bug-106-nhận-sai-quy-cách-thùng-khi-nhập-kho-po--lỗi-tràn-layout-giao-diện-đơn-mua-hàng)
 
 ---
 
@@ -2814,3 +2815,34 @@ Server Actions must be async functions.
 > ⚠️ **RULE 105: Đối với các module có luồng phê duyệt trạng thái thời gian thực (như Tờ Trình, Phê duyệt Đơn Hàng, Chuyển Kho), TUYỆT ĐỐI KHÔNG sử dụng in-memory cache (`cached()`) trên Server Action khi chạy trên môi trường Serverless đa container (Vercel) nếu không có Distributed Cache (Redis); BẮT BUỘC cấu hình `force-dynamic` trên Server Component và thiết lập Supabase Realtime Listener trên Client; Mọi nút thao tác duyệt/trình BẮT BUỘC phải có trạng thái loading spinner và vô hiệu hóa nút (`disabled`) để đảm bảo trải nghiệm người dùng tức thì và chống double-click.**
 
 
+
+
+## BUG-106: Nhận Sai Quy Cách Thùng Khi Nhập Kho PO & Lỗi Tràn Layout Giao Diện Đơn Mua Hàng
+
+**Severity:** 🔴 High / Inventory Accuracy & UI Usability  
+**Date:** 2026-09-15  
+**Affected Modules:** `WMS` (Warehouse Goods Receipt — `warehouse/actions.ts`, `warehouse/actions-gr.ts`, `warehouse/GoodsReceiptTab.tsx`, `lib/validations.ts`) & `PROC` (Procurement — `procurement/ProcurementClient.tsx`)
+
+### Mô tả vấn đề
+1. **Lỗi nhận sai quy cách thùng (Units Per Case) khi nhập kho từ PO:**
+   - Đơn mua hàng PO (ví dụ `PO-2609-0002`) đặt hàng theo quy cách thùng 12 chai (`uom: 'CASE_12'`), số lượng 168 chai (14 thùng), 180 chai (15 thùng), 240 chai (20 thùng), và các dòng hàng tặng FOC (12 chai = 1 thùng, 24 chai = 2 thùng).
+   - Tuy nhiên, khi mở màn hình "Tạo Phiếu Nhập Kho (Goods Receipt)", hàm `getPOsForReceiving()` tại backend chỉ đọc trường `product.unitsPerCase || 6` từ danh mục sản phẩm (mặc định là 6), hoàn toàn bỏ qua trường `line.uom` của dòng đơn mua hàng!
+   - Kết quả: Toàn bộ sản phẩm hiển thị cố định "Quy cách: 6 chai/thùng", số thùng bị tính sai gấp đôi (168 chai biến thành 28 thùng thay vì 14 thùng, 180 chai thành 30 thùng thay vì 15 thùng, 240 chai thành 40 thùng thay vì 20 thùng).
+   - Hơn nữa, trên giao diện nhập kho, quy cách thùng là text cứng không cho phép thủ kho điều chỉnh khi thực tế nhà cung cấp đóng gói khác, và các dòng trùng sản phẩm (ví dụ dòng mua chính và dòng hàng FOC cùng SKU) dùng chung key `pol.productId` gây cảnh báo React duplicate key.
+2. **Lỗi vỡ giao diện (UI) bảng danh sách đơn mua hàng:**
+   - Cột Thao tác hiển thị 2 nút "Sửa" trùng lặp cho PO ở trạng thái Nháp (DRAFT): một nút render ngoài bảng và một nút trong `StatusStepper`. Cùng với các nút Xem, Gửi Duyệt, Xóa, tất cả bị nhét trong cột hẹp `width: 10%`, dẫn đến việc các nút bị rớt dòng lộn xộn thành 2 hàng răng cưa.
+   - Thanh bộ lọc trạng thái hiển thị tất cả 8 tab kể cả khi số lượng bằng 0, ép chung dòng với ô Tìm kiếm, Lọc ngày và Nút bộ lọc ở màn hình laptop, khiến các tab bị đè vào ô tìm kiếm và tab cuối bị cắt chữ `Đã h...`.
+
+### Cách khắc phục
+1. **Đồng bộ chuẩn quy cách thùng từ PO vào Nhập Kho:**
+   - Trong `warehouse/actions.ts` (`getPOsForReceiving`, `getGoodsReceipts`, `getGRDetail`): Ưu tiên xác định `unitsPerCase` theo đơn vị đóng gói của dòng PO (`l.uom === 'CASE_12' ? 12 : l.uom === 'CASE_6' ? 6 : l.uom === 'CASE_3' ? 3 : l.uom === 'CASE_1' ? 1 : l.product.unitsPerCase || 6`).
+   - Bổ sung `poLineId` vào `GoodsReceiptLineSchema` và truyền từ client xuống server action để khớp chính xác dòng đơn hàng gốc (kể cả khi có nhiều dòng cùng 1 SKU như dòng hàng mua và dòng FOC).
+   - Bổ sung dropdown Quy cách trực tiếp trên từng dòng sản phẩm tại Drawer Tạo Phiếu Nhập Kho (`GoodsReceiptTab.tsx`), cho phép thủ kho linh hoạt chọn quy cách thực nhận (12, 6, 3, 1 chai/thùng) và tự động tính toán lại số thùng/chai tương ứng.
+   - Gắn badge `🎁 FOC` phân biệt rõ ràng dòng hàng tặng khuyến mại và sử dụng unique key `pol.id`.
+2. **Sửa triệt để layout bảng Đơn Mua Hàng:**
+   - Xóa nút "Sửa" thừa ngoài bảng và trên thẻ mobile, để `StatusStepper` đóng vai trò duy nhất quản lý các thao tác theo trạng thái.
+   - Mở rộng cột "Thao Tác" lên `16%` (`minWidth: 175px`) kết hợp `whitespace-nowrap flex-nowrap`, đảm bảo các nút luôn thẳng hàng trên 1 dòng duy nhất.
+   - Lọc bỏ các tab trạng thái có số lượng = 0 trong `FilterTabs` (giống chuẩn `SalesClient.tsx`), giảm bề rộng thanh tab từ ~800px xuống ~300px; điều chỉnh responsive container thành `flex-col xl:flex-row` chống tràn và đè lên ô tìm kiếm.
+
+### Bài học
+> ⚠️ **RULE 106: Khi kế thừa dữ liệu từ PO sang Phiếu Nhập Kho (Goods Receipt), BẮT BUỘC phải đọc quy cách đóng gói (`unitsPerCase`) từ trường đơn vị của dòng PO (`line.uom`) thay vì chỉ phụ thuộc vào danh mục gốc (`product.unitsPerCase`); Luôn hỗ trợ `poLineId` để phân biệt các dòng cùng SKU (hàng mua vs hàng tặng FOC); Trên giao diện bảng ERP, cột nút hành động (Actions) phải có `min-width` cố định và `whitespace-nowrap flex-nowrap` để tuyệt đối không bị rớt dòng răng cưa.**
