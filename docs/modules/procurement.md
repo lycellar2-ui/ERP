@@ -41,7 +41,14 @@
 - **Quy cách đóng gói linh hoạt**:
   - Hỗ trợ Thùng 6 chai (`CASE_6`), Thùng 12 chai (`CASE_12`), Thùng 3 chai (`CASE_3`), Thùng 1 chai (`CASE_1`) và Chai lẻ (`BOTTLE`).
   - Cho phép nhập giá theo Thùng hoặc theo Chai, tự động tính tổng số chai và đơn giá quy đổi.
-- **Quy đổi giá trị thời gian thực**: Tự động tính FOB Ngoại tệ và quy đổi sang VNĐ dựa trên tỷ giá cấu hình.
+- **Quản lý Giảm giá & Chiết khấu đơn hàng (Order Discounts)**:
+  - Hỗ trợ 2 hình thức: **% Chiết khấu trên tổng tiền hàng** (`discountPct`) hoặc **Số tiền giảm trực tiếp** (`discountAmount`).
+  - Tự động trừ tiền hàng trước giảm (`subtotal`) để tính ra tổng số tiền thực tế phải trả nhà cung cấp (`totalAmount`).
+- **Hàng Quà Tặng / Hàng Mẫu FOC (Free of Charge Goods)**:
+  - Checkbox `[x] Hàng FOC (Miễn phí)` trên từng dòng sản phẩm với trường ghi chú lý do (`focNote`: *Chai thử nếm tasting, Thưởng doanh số, Bù hao vỡ mẻ trước...*).
+  - Tiền phải trả nhà cung cấp tự động bằng `0.00`.
+  - Cho phép nhập **Đơn giá danh nghĩa hải quan** (`declaredPrice`): Tự động tính trị giá hải quan phục vụ khai báo tờ khai, áp thuế Nhập khẩu + Thuế TTĐB (35%-65%) và phân bổ chi phí Landed Cost khi hàng về cảng.
+- **Quy đổi giá trị thời gian thực**: Tự động tính FOB Ngoại tệ, chiết khấu và quy đổi sang VNĐ dựa trên tỷ giá cấu hình.
 
 ### 3.4 Quy Trình Phê Duyệt Đa Cấp (Approval Matrix)
 - Tích hợp theo cấu hình phân quyền trong `ApprovalConfig` (`procurement.purchase_order`).
@@ -58,6 +65,7 @@
 - Cột hiển thị đa thông tin:
   - **Mã PO & Vận tải**: Số PO, Incoterms, Vận đơn B/L, Tên tàu, Số container.
   - **Nhà cung cấp & Pháp nhân**: Quốc kỳ, Tên Winery/NCC, Pháp nhân nhập khẩu, Điều khoản thanh toán.
-  - **Quy mô & Nhập kho**: Số lượng SKU, Tổng số chai, Tiến độ nhập kho (%) với thanh tiến trình trực quan.
-  - **Giá trị**: Tổng tiền ngoại tệ, Giá trị quy đổi VNĐ, Tỷ giá.
+  - **Quy mô & Nhập kho**: Số lượng SKU, Tổng số chai (kèm badge `🎁 FOC: X chai` nếu có hàng tặng), Tiến độ nhập kho (%) với thanh tiến trình trực quan.
+  - **Giá trị**: Tổng tiền ngoại tệ, Badge chiết khấu (`🏷️ -X USD`), Giá trị quy đổi VNĐ, Tỷ giá.
   - **Trạng thái & Thao tác**: Badge trạng thái, Thao tác nhanh (*Gửi duyệt, Phê duyệt, Từ chối, Nhập kho, Xem chi tiết*).
+  - **Slide-over Chi Tiết PO**: Hiển thị bảng chi tiết các dòng sản phẩm, phân biệt rõ hàng thương mại và hàng FOC, giá hải quan, lý do FOC và thẻ tóm tắt tài chính (Subtotal, Discount, Total Payable, VNĐ).

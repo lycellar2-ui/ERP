@@ -100,7 +100,7 @@ export async function getPurchaseOrders(filters: {
                     supplier: { select: { id: true, name: true, code: true, country: true, paymentTerm: true, incoterms: true } },
                     creator: { select: { id: true, name: true } },
                     documents: { select: { id: true, name: true, fileUrl: true, uploadedAt: true } },
-                    lines: { select: { qtyOrdered: true, unitPrice: true } },
+                    lines: { select: { qtyOrdered: true, unitPrice: true, isFoc: true, focNote: true, declaredPrice: true } },
                     shipments: {
                         select: {
                             id: true,
@@ -143,8 +143,22 @@ export async function getPurchaseOrders(filters: {
         }
 
         const rows: PORow[] = items.map((po: any) => {
-            const totalAmount = po.lines.reduce((s: number, l: any) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+            const focLines = po.lines.filter((l: any) => l.isFoc)
+            const regularLines = po.lines.filter((l: any) => !l.isFoc)
+            const rawSubtotal = regularLines.reduce((s: number, l: any) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+            const subtotal = po.subtotal ? Number(po.subtotal) : rawSubtotal
+            const discountPct = po.discountPct ? Number(po.discountPct) : null
+            const discountAmount = po.discountAmount ? Number(po.discountAmount) : null
+            let computedDiscount = 0
+            if (discountAmount) {
+                computedDiscount = discountAmount
+            } else if (discountPct) {
+                computedDiscount = (subtotal * discountPct) / 100
+            }
+            const totalAmount = po.totalAmount ? Number(po.totalAmount) : Math.max(0, subtotal - computedDiscount)
             const totalQty = po.lines.reduce((s: number, l: any) => s + Number(l.qtyOrdered), 0)
+            const totalFocQty = focLines.reduce((s: number, l: any) => s + Number(l.qtyOrdered), 0)
+            const hasFoc = focLines.length > 0
             const totalQtyReceived = po.goodsReceipts.reduce(
                 (sum: number, gr: any) => sum + gr.lines.reduce((lsum: number, l: any) => lsum + Number(l.qtyReceived || 0), 0),
                 0
@@ -186,9 +200,14 @@ export async function getPurchaseOrders(filters: {
                 currency: po.currency,
                 exchangeRate: Number(po.exchangeRate),
                 status: po.status,
+                subtotal,
+                discountPct,
+                discountAmount,
                 totalAmount,
                 lineCount: po.lines.length,
                 totalQty,
+                totalFocQty,
+                hasFoc,
                 totalQtyReceived,
                 receivedPercentage,
                 estimatedDelivery: po.estimatedDelivery,
@@ -265,19 +284,40 @@ export async function getPODetail(id: string): Promise<PODetail | null> {
 
     if (!po) return null
 
-    const lines = po.lines.map((l: any) => ({
-        id: l.id,
-        productId: l.productId,
-        productName: l.product.productName,
-        skuCode: l.product.skuCode,
-        qtyOrdered: Number(l.qtyOrdered),
-        unitPrice: Number(l.unitPrice),
-        uom: l.uom,
-        lineTotal: Number(l.qtyOrdered) * Number(l.unitPrice),
-    }))
+    const lines = po.lines.map((l: any) => {
+        const isFoc = Boolean(l.isFoc)
+        const qtyOrdered = Number(l.qtyOrdered)
+        const unitPrice = Number(l.unitPrice)
+        const lineTotal = isFoc ? 0 : qtyOrdered * unitPrice
+        return {
+            id: l.id,
+            productId: l.productId,
+            productName: l.product.productName,
+            skuCode: l.product.skuCode,
+            qtyOrdered,
+            unitPrice,
+            uom: l.uom,
+            isFoc,
+            focNote: l.focNote || null,
+            declaredPrice: l.declaredPrice ? Number(l.declaredPrice) : (isFoc ? unitPrice : null),
+            lineTotal,
+        }
+    })
 
-    const totalAmount = lines.reduce((s: number, l: any) => s + l.lineTotal, 0)
+    const rawSubtotal = lines.reduce((s: number, l: any) => s + l.lineTotal, 0)
+    const subtotal = po.subtotal ? Number(po.subtotal) : rawSubtotal
+    const discountPct = po.discountPct ? Number(po.discountPct) : null
+    const discountAmount = po.discountAmount ? Number(po.discountAmount) : null
+    let computedDiscount = 0
+    if (discountAmount) {
+        computedDiscount = discountAmount
+    } else if (discountPct) {
+        computedDiscount = (subtotal * discountPct) / 100
+    }
+    const totalAmount = po.totalAmount ? Number(po.totalAmount) : Math.max(0, subtotal - computedDiscount)
     const totalQty = lines.reduce((s: number, l: any) => s + l.qtyOrdered, 0)
+    const totalFocQty = lines.filter((l: any) => l.isFoc).reduce((s: number, l: any) => s + l.qtyOrdered, 0)
+    const hasFoc = totalFocQty > 0
     const totalQtyReceived = po.goodsReceipts.reduce(
         (sum: number, gr: any) => sum + gr.lines.reduce((lsum: number, l: any) => lsum + Number(l.qtyReceived || 0), 0),
         0
@@ -351,9 +391,14 @@ export async function getPODetail(id: string): Promise<PODetail | null> {
         currentApprovalStep,
         totalApprovalSteps,
         approvalSteps: routeConfig.steps,
+        subtotal,
+        discountPct,
+        discountAmount,
         totalAmount,
         lineCount: lines.length,
         totalQty,
+        totalFocQty,
+        hasFoc,
         totalQtyReceived,
         receivedPercentage,
         estimatedDelivery: po.estimatedDelivery,
@@ -428,6 +473,20 @@ export async function createPurchaseOrder(input: CreatePOInput) {
         const nextSeq = lastPO ? parseInt(lastPO.poNo.slice(-4)) + 1 : 1
         const poNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
 
+        let subtotal = 0
+        for (const l of data.lines) {
+            if (!l.isFoc) {
+                subtotal += l.qtyOrdered * l.unitPrice
+            }
+        }
+        let computedDiscount = 0
+        if (data.discountAmount) {
+            computedDiscount = data.discountAmount
+        } else if (data.discountPct) {
+            computedDiscount = (subtotal * data.discountPct) / 100
+        }
+        const totalAmount = Math.max(0, subtotal - computedDiscount)
+
         return await tx.purchaseOrder.create({
             data: {
                 poNo,
@@ -437,12 +496,19 @@ export async function createPurchaseOrder(input: CreatePOInput) {
                 status: 'DRAFT',
                 createdBy: userId,
                 legalEntityId,
+                subtotal,
+                discountPct: data.discountPct ?? null,
+                discountAmount: data.discountAmount ?? null,
+                totalAmount,
                 lines: {
                     create: data.lines.map(l => ({
                         productId: l.productId,
                         qtyOrdered: l.qtyOrdered,
-                        unitPrice: l.unitPrice,
+                        unitPrice: l.isFoc ? 0 : l.unitPrice,
                         uom: l.uom,
+                        isFoc: l.isFoc ?? false,
+                        focNote: l.focNote ?? null,
+                        declaredPrice: l.declaredPrice ?? (l.isFoc ? l.unitPrice : null),
                     })),
                 },
             },
@@ -488,6 +554,20 @@ export async function updatePurchaseOrder(id: string, input: CreatePOInput) {
             where: { poId: id }
         })
 
+        let subtotal = 0
+        for (const l of data.lines) {
+            if (!l.isFoc) {
+                subtotal += l.qtyOrdered * l.unitPrice
+            }
+        }
+        let computedDiscount = 0
+        if (data.discountAmount) {
+            computedDiscount = data.discountAmount
+        } else if (data.discountPct) {
+            computedDiscount = (subtotal * data.discountPct) / 100
+        }
+        const totalAmount = Math.max(0, subtotal - computedDiscount)
+
         // Update PO and recreate lines
         await tx.purchaseOrder.update({
             where: { id },
@@ -499,12 +579,19 @@ export async function updatePurchaseOrder(id: string, input: CreatePOInput) {
                 incoterms: data.incoterms || undefined,
                 paymentTerm: data.paymentTerm || undefined,
                 notes: data.notes !== undefined ? data.notes : undefined,
+                subtotal,
+                discountPct: data.discountPct ?? null,
+                discountAmount: data.discountAmount ?? null,
+                totalAmount,
                 lines: {
                     create: data.lines.map(l => ({
                         productId: l.productId,
                         qtyOrdered: l.qtyOrdered,
-                        unitPrice: l.unitPrice,
+                        unitPrice: l.isFoc ? 0 : l.unitPrice,
                         uom: l.uom,
+                        isFoc: l.isFoc ?? false,
+                        focNote: l.focNote ?? null,
+                        declaredPrice: l.declaredPrice ?? (l.isFoc ? l.unitPrice : null),
                     })),
                 },
             }

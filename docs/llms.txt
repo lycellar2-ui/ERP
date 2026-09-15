@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-15 13:45
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, PRO v10.29 (Proposal Realtime Sync & Serverless Cache Fix, BUG-105 Fixed)
+> Last updated: 2026-09-15 14:40
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, PRC v10.30 (PO Order Discounts & FOC Goods with Customs Value Support)
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

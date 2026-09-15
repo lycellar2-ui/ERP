@@ -392,6 +392,9 @@ interface DraftPOLine {
     pricingMode: 'PER_CASE' | 'PER_BOTTLE'
     qtyInput: number
     priceInput: number
+    isFoc?: boolean
+    focNote?: string
+    declaredPrice?: number
 }
 
 const getPackMultiplier = (packType: string) => {
@@ -408,6 +411,7 @@ const getLineCalculations = (line: DraftPOLine) => {
     const multiplier = getPackMultiplier(line.packType)
     const isCase = line.packType !== 'BOTTLE'
     const totalBottles = line.qtyInput * multiplier
+    const isFoc = Boolean(line.isFoc)
     
     // Đơn giá tính theo 1 chai
     const unitPricePerBottle = isCase && line.pricingMode === 'PER_CASE'
@@ -419,7 +423,8 @@ const getLineCalculations = (line: DraftPOLine) => {
         ? line.priceInput * multiplier
         : line.priceInput
 
-    const lineTotal = totalBottles * unitPricePerBottle
+    const customsValue = totalBottles * unitPricePerBottle
+    const lineTotal = isFoc ? 0 : customsValue
 
     return {
         multiplier,
@@ -428,7 +433,154 @@ const getLineCalculations = (line: DraftPOLine) => {
         unitPricePerBottle,
         unitPricePerCase,
         lineTotal,
+        customsValue,
+        isFoc,
     }
+}
+
+// ── PO Discount Section Component ──────────────────
+function PODiscountSection({
+    discountType,
+    discountPct,
+    discountAmount,
+    subtotal,
+    currency,
+    exchangeRate,
+    onChangeType,
+    onChangePct,
+    onChangeAmount,
+}: {
+    discountType: 'NONE' | 'PERCENT' | 'AMOUNT'
+    discountPct: number
+    discountAmount: number
+    subtotal: number
+    currency: string
+    exchangeRate: number
+    onChangeType: (t: 'NONE' | 'PERCENT' | 'AMOUNT') => void
+    onChangePct: (v: number) => void
+    onChangeAmount: (v: number) => void
+}) {
+    const computedDiscount = discountType === 'PERCENT'
+        ? (subtotal * discountPct) / 100
+        : discountType === 'AMOUNT'
+        ? discountAmount
+        : 0
+
+    return (
+        <div className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#E8F1F2]">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
+                    {computedDiscount > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
+                            -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                        </span>
+                    )}
+                </div>
+
+                {/* 3-way toggle button group */}
+                <div className="flex items-center rounded-lg p-0.5 bg-[#0D1E2B] border border-[#2A4355] self-start sm:self-auto">
+                    <button
+                        type="button"
+                        onClick={() => onChangeType('NONE')}
+                        className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
+                        style={{
+                            background: discountType === 'NONE' ? '#2A4355' : 'transparent',
+                            color: discountType === 'NONE' ? '#E8F1F2' : '#8AAEBB',
+                        }}
+                    >
+                        Không giảm
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onChangeType('PERCENT')}
+                        className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
+                        style={{
+                            background: discountType === 'PERCENT' ? 'rgba(212,168,83,0.25)' : 'transparent',
+                            color: discountType === 'PERCENT' ? '#D4A853' : '#8AAEBB',
+                        }}
+                    >
+                        % Chiết khấu
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onChangeType('AMOUNT')}
+                        className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
+                        style={{
+                            background: discountType === 'AMOUNT' ? 'rgba(212,168,83,0.25)' : 'transparent',
+                            color: discountType === 'AMOUNT' ? '#D4A853' : '#8AAEBB',
+                        }}
+                    >
+                        Số tiền cố định
+                    </button>
+                </div>
+            </div>
+
+            {discountType === 'PERCENT' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A4355]/40">
+                    <div>
+                        <label className="text-[10px] font-semibold text-[#8AAEBB] block mb-1">
+                            Tỷ lệ chiết khấu (%) trên tổng tiền hàng
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                step={0.5}
+                                value={discountPct}
+                                onChange={e => onChangePct(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                placeholder="Vd: 5.5"
+                                className="w-full px-3 py-2 rounded-lg text-xs outline-none font-mono"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            />
+                            <span className="absolute right-3 top-2 text-xs font-bold text-[#8AAEBB]">%</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col justify-end text-xs">
+                        <span className="text-[#4A6A7A] text-[11px]">Trị giá chiết khấu được trừ:</span>
+                        <p className="font-mono font-bold text-amber-300 text-sm">
+                            -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                            <span className="text-[11px] text-[#87CBB9] ml-1 font-normal">
+                                (≈ {formatVND(computedDiscount * exchangeRate)})
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {discountType === 'AMOUNT' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A4355]/40">
+                    <div>
+                        <label className="text-[10px] font-semibold text-[#8AAEBB] block mb-1">
+                            Số tiền giảm trực tiếp ({currency})
+                        </label>
+                        <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={discountAmount}
+                            onChange={e => onChangeAmount(Math.max(0, Number(e.target.value)))}
+                            placeholder="Vd: 500"
+                            className="w-full px-3 py-2 rounded-lg text-xs outline-none font-mono"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        />
+                    </div>
+                    <div className="flex flex-col justify-end text-xs">
+                        <span className="text-[#4A6A7A] text-[11px]">Quy đổi & Tỷ lệ giảm:</span>
+                        <p className="font-mono font-bold text-amber-300 text-sm">
+                            ≈ {formatVND(discountAmount * exchangeRate)}
+                            {subtotal > 0 && (
+                                <span className="text-[11px] text-[#8AAEBB] ml-1 font-normal">
+                                    ({((discountAmount / subtotal) * 100).toFixed(1)}% đơn hàng)
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }
 
 // ── Create PO Drawer ───────────────────────────────
@@ -444,11 +596,16 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'NZD' | 'AUD'>('USD')
     const [exchangeRate, setExchangeRate] = useState(25500)
     const [lines, setLines] = useState<DraftPOLine[]>([
-        { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }
+        { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0, isFoc: false }
     ])
     const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
     const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
     const [saving, setSaving] = useState(false)
+
+    // Discount state
+    const [discountType, setDiscountType] = useState<'NONE' | 'PERCENT' | 'AMOUNT'>('NONE')
+    const [discountPct, setDiscountPct] = useState(0)
+    const [discountAmount, setDiscountAmount] = useState(0)
 
     useEffect(() => {
         if (currency === 'EUR') setExchangeRate(27500)
@@ -490,7 +647,6 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         let q = query.trim().toLowerCase()
         if (!q) return products.slice(0, 20)
         
-        // If query starts with [SKU], handle search appropriately
         if (q.startsWith('[')) {
             const closeIdx = q.indexOf(']')
             if (closeIdx !== -1) {
@@ -513,13 +669,25 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         return results
     }
 
-    const totalFOB = lines.reduce((s, l) => {
+    const subtotalFOB = lines.reduce((s, l) => {
         const calc = getLineCalculations(l)
         return s + calc.lineTotal
     }, 0)
-    const totalVND = totalFOB * exchangeRate
 
-    const addLine = () => setLines(ls => [...ls, { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }])
+    const computedDiscount = discountType === 'PERCENT'
+        ? (subtotalFOB * discountPct) / 100
+        : discountType === 'AMOUNT'
+        ? discountAmount
+        : 0
+
+    const finalPayableFOB = Math.max(0, subtotalFOB - computedDiscount)
+    const totalVND = finalPayableFOB * exchangeRate
+
+    const totalPurchasedBottles = lines.filter(l => !l.isFoc).reduce((s, l) => s + getLineCalculations(l).totalBottles, 0)
+    const totalFocBottles = lines.filter(l => l.isFoc).reduce((s, l) => s + getLineCalculations(l).totalBottles, 0)
+    const totalAllBottles = totalPurchasedBottles + totalFocBottles
+
+    const addLine = () => setLines(ls => [...ls, { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0, isFoc: false }])
     const removeLine = (i: number) => {
         setLines(ls => ls.filter((_, idx) => idx !== i))
         setSearchQueries(prev => {
@@ -539,7 +707,9 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
     const handleSave = async () => {
         if (!supplierId) return toast.error('Vui lòng chọn nhà cung cấp')
-        if (lines.some(l => !l.productId || l.priceInput <= 0)) return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm')
+        if (lines.some(l => !l.productId || (!l.isFoc && l.priceInput <= 0))) {
+            return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm (đơn giá > 0 cho hàng thương mại)')
+        }
         setSaving(true)
 
         const formattedLines = lines.map(l => {
@@ -547,13 +717,25 @@ function CreatePODrawer({ open, onClose, onCreated }: {
             return {
                 productId: l.productId,
                 qtyOrdered: calc.totalBottles,
-                unitPrice: Number(calc.unitPricePerBottle.toFixed(4)),
+                unitPrice: l.isFoc ? 0 : Number(calc.unitPricePerBottle.toFixed(4)),
                 uom: l.packType,
+                isFoc: Boolean(l.isFoc),
+                focNote: l.focNote || undefined,
+                declaredPrice: l.isFoc ? Number(calc.unitPricePerBottle.toFixed(4)) : undefined,
             }
         })
 
         toast.promise(
-            createPurchaseOrder({ supplierId, currency, exchangeRate, lines: formattedLines }).then(res => {
+            createPurchaseOrder({
+                supplierId,
+                currency,
+                exchangeRate,
+                lines: formattedLines,
+                legalEntityId: legalEntityId || undefined,
+                incoterms,
+                discountPct: discountType === 'PERCENT' ? discountPct : undefined,
+                discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
+            }).then(res => {
                 if (!res.success || !res.poNo) throw new Error(res.error || 'Lỗi không xác định')
                 onCreated(res.poNo)
                 return res
@@ -574,7 +756,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
-            <div className="w-full sm:w-[720px] max-w-full h-full overflow-y-auto flex flex-col"
+            <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
                 style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
                 onClick={e => e.stopPropagation()}>
 
@@ -586,7 +768,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </div>
                         <div>
                             <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>Tạo Đơn Mua Hàng (PO)</h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Đặt hàng từ Winery / Négociant / Nhà cung cấp (Hỗ trợ giá theo Thùng / Chai)</p>
+                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]"><X size={18} /></button>
@@ -665,7 +847,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             const calc = getLineCalculations(line)
 
                             return (
-                                <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #2A4355' }}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-bold text-[#8AAEBB]">Dòng #{i + 1}</span>
@@ -674,6 +856,27 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                     {calc.totalBottles} chai
                                                 </span>
                                             )}
+                                            {/* FOC Checkbox */}
+                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
+                                                style={{
+                                                    background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
+                                                    borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355',
+                                                    color: line.isFoc ? '#D4A853' : '#8AAEBB'
+                                                }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!line.isFoc}
+                                                    onChange={e => {
+                                                        const checked = e.target.checked
+                                                        setLine(i, 'isFoc', checked)
+                                                        if (checked && !line.focNote) {
+                                                            setLine(i, 'focNote', 'Hàng tặng kèm / Thử nếm')
+                                                        }
+                                                    }}
+                                                    className="rounded border-[#2A4355] text-amber-500 focus:ring-0 cursor-pointer"
+                                                />
+                                                <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
+                                            </label>
                                         </div>
                                         {lines.length > 1 && (
                                             <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-[#1B2E3D]">
@@ -681,6 +884,20 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             </button>
                                         )}
                                     </div>
+
+                                    {/* FOC Note Input (If line is FOC) */}
+                                    {line.isFoc && (
+                                        <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+                                            <span className="text-amber-400 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
+                                            <input
+                                                type="text"
+                                                placeholder="Vd: Chai thử nếm (Tasting samples), Khuyến mãi Winery, Bù hao vỡ mẻ trước..."
+                                                value={line.focNote || ''}
+                                                onChange={e => setLine(i, 'focNote', e.target.value)}
+                                                className="flex-1 bg-transparent border-none text-xs text-amber-200 outline-none placeholder-amber-400/40 font-medium"
+                                            />
+                                        </div>
+                                    )}
 
                                     {/* Searchable Product Autocomplete Input */}
                                     <div className="relative">
@@ -812,20 +1029,28 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         {/* Unit Price */}
                                         <div>
                                             <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
-                                                {line.pricingMode === 'PER_CASE' && calc.isCase
-                                                    ? `Đơn giá thùng (${currency})`
-                                                    : `Đơn giá chai (${currency})`}
+                                                {line.isFoc
+                                                    ? (line.pricingMode === 'PER_CASE' && calc.isCase
+                                                        ? `Giá danh nghĩa HQ/thùng (${currency})`
+                                                        : `Giá danh nghĩa HQ/chai (${currency})`)
+                                                    : (line.pricingMode === 'PER_CASE' && calc.isCase
+                                                        ? `Đơn giá thùng (${currency})`
+                                                        : `Đơn giá chai (${currency})`)}
                                             </label>
                                             <input
                                                 type="number"
                                                 min={0}
                                                 step={0.01}
                                                 className={inputCls}
-                                                style={inputStyle}
+                                                style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355' }}
                                                 value={line.priceInput}
                                                 onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                             />
-                                            {calc.isCase && (
+                                            {line.isFoc ? (
+                                                <span className="text-[10px] font-mono text-amber-400/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                    (HQ: {calc.customsValue.toFixed(2)} {currency})
+                                                </span>
+                                            ) : calc.isCase && (
                                                 <span className="text-[10px] font-mono text-[#8AAEBB] block mt-0.5">
                                                     {line.pricingMode === 'PER_CASE'
                                                         ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
@@ -838,37 +1063,91 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     {/* Line Total preview */}
                                     <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A4355]/40">
                                         <span className="text-[#4A6A7A]">
-                                            Thành tiền dòng:
-                                            <span className="ml-1 text-[11px] text-[#8AAEBB]">
-                                                ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
-                                            </span>
+                                            {line.isFoc ? (
+                                                <span className="text-amber-300 font-bold">
+                                                    🎁 Hàng FOC (Miễn phí thanh toán NCC):
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    Thành tiền dòng:
+                                                    <span className="ml-1 text-[11px] text-[#8AAEBB]">
+                                                        ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
+                                                    </span>
+                                                </>
+                                            )}
                                         </span>
                                         <span className="font-mono font-bold text-[#E8F1F2]">
-                                            {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                            <span className="text-[10px] ml-1.5 text-[#87CBB9]">
-                                                (≈ {formatVND(calc.lineTotal * exchangeRate)})
-                                            </span>
+                                            {line.isFoc ? (
+                                                <>
+                                                    <span className="text-amber-400 mr-2">0.00 {currency}</span>
+                                                    <span className="text-[10px] text-[#8AAEBB] font-normal">
+                                                        (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                                                    <span className="text-[10px] ml-1.5 text-[#87CBB9]">
+                                                        (≈ {formatVND(calc.lineTotal * exchangeRate)})
+                                                    </span>
+                                                </>
+                                            )}
                                         </span>
                                     </div>
                                 </div>
                             )
                         })}
                     </div>
+
+                    {/* Order Level Discount Section */}
+                    <div className="pt-2">
+                        <PODiscountSection
+                            discountType={discountType}
+                            discountPct={discountPct}
+                            discountAmount={discountAmount}
+                            subtotal={subtotalFOB}
+                            currency={currency}
+                            exchangeRate={exchangeRate}
+                            onChangeType={setDiscountType}
+                            onChangePct={setDiscountPct}
+                            onChangeAmount={setDiscountAmount}
+                        />
+                    </div>
                 </div>
 
                 {/* Footer */}
                 <div className="p-4 border-t border-[#2A4355] flex-shrink-0 space-y-3" style={{ background: '#142433' }}>
-                    <div className="flex items-center justify-between">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-[#2A4355]/40 pb-2.5">
                         <div>
-                            <p className="text-xs text-[#8AAEBB]">Tổng giá trị đơn hàng ({currency}):</p>
-                            <p className="text-lg font-bold font-mono text-[#E8F1F2]">
-                                {totalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tổng SL Chai</p>
+                            <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                {totalAllBottles.toLocaleString()} chai
+                            </p>
+                            {totalFocBottles > 0 && (
+                                <p className="text-[10px] text-amber-300">
+                                    ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
+                                </p>
+                            )}
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tiền Hàng (Subtotal)</p>
+                            <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Giảm Giá / CK</p>
+                            <p className="font-mono font-bold text-amber-400 text-sm">
+                                {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-[#8AAEBB]">Quy đổi VNĐ:</p>
-                            <p className="text-lg font-bold font-mono text-[#87CBB9]">
+                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Phải Thanh Toán</p>
+                            <p className="font-mono font-bold text-[#87CBB9] text-base">
                                 {formatVND(totalVND)}
+                            </p>
+                            <p className="text-[10px] font-mono text-[#8AAEBB]">
+                                {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                             </p>
                         </div>
                     </div>
@@ -906,6 +1185,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
     const [loadingDetail, setLoadingDetail] = useState(false)
     const [saving, setSaving] = useState(false)
 
+    // Discount state
+    const [discountType, setDiscountType] = useState<'NONE' | 'PERCENT' | 'AMOUNT'>('NONE')
+    const [discountPct, setDiscountPct] = useState(0)
+    const [discountAmount, setDiscountAmount] = useState(0)
+
     useEffect(() => {
         if (!open || !poId) return
         setLoadingDetail(true)
@@ -923,6 +1207,21 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                 setCurrency(detail.currency as any)
                 setExchangeRate(detail.exchangeRate || 25500)
 
+                // Populate discount
+                if (detail.discountPct && detail.discountPct > 0) {
+                    setDiscountType('PERCENT')
+                    setDiscountPct(detail.discountPct)
+                    setDiscountAmount(detail.discountAmount || 0)
+                } else if (detail.discountAmount && detail.discountAmount > 0) {
+                    setDiscountType('AMOUNT')
+                    setDiscountAmount(detail.discountAmount)
+                    setDiscountPct(0)
+                } else {
+                    setDiscountType('NONE')
+                    setDiscountPct(0)
+                    setDiscountAmount(0)
+                }
+
                 const queries: Record<number, string> = {}
                 const draftLines: DraftPOLine[] = detail.lines.map((l, i) => {
                     queries[i] = `[${l.skuCode}] ${l.productName}`
@@ -933,16 +1232,20 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                     const packType = isCase12 ? 'CASE_12' : isCase6 ? 'CASE_6' : isCase3 ? 'CASE_3' : isCase1 ? 'CASE_1' : 'BOTTLE'
                     const multiplier = getPackMultiplier(packType)
                     const qtyInput = multiplier > 1 ? l.qtyOrdered / multiplier : l.qtyOrdered
-                    const priceInput = multiplier > 1 ? l.unitPrice * multiplier : l.unitPrice
+                    const basePrice = (l.isFoc && l.declaredPrice && l.declaredPrice > 0) ? l.declaredPrice : l.unitPrice
+                    const priceInput = multiplier > 1 ? basePrice * multiplier : basePrice
                     return {
                         productId: l.productId,
                         packType: packType as any,
                         pricingMode: multiplier > 1 ? 'PER_CASE' : 'PER_BOTTLE',
                         qtyInput: Math.max(1, Math.round(qtyInput)),
                         priceInput: Number(priceInput.toFixed(2)),
+                        isFoc: Boolean(l.isFoc),
+                        focNote: l.focNote || '',
+                        declaredPrice: l.declaredPrice || 0,
                     }
                 })
-                setLines(draftLines.length > 0 ? draftLines : [{ productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }])
+                setLines(draftLines.length > 0 ? draftLines : [{ productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0, isFoc: false }])
                 setSearchQueries(queries)
             }
         }).catch(err => {
@@ -973,13 +1276,25 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
         return results
     }
 
-    const totalFOB = lines.reduce((s, l) => {
+    const subtotalFOB = lines.reduce((s, l) => {
         const calc = getLineCalculations(l)
         return s + calc.lineTotal
     }, 0)
-    const totalVND = totalFOB * exchangeRate
 
-    const addLine = () => setLines(ls => [...ls, { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }])
+    const computedDiscount = discountType === 'PERCENT'
+        ? (subtotalFOB * discountPct) / 100
+        : discountType === 'AMOUNT'
+        ? discountAmount
+        : 0
+
+    const finalPayableFOB = Math.max(0, subtotalFOB - computedDiscount)
+    const totalVND = finalPayableFOB * exchangeRate
+
+    const totalPurchasedBottles = lines.filter(l => !l.isFoc).reduce((s, l) => s + getLineCalculations(l).totalBottles, 0)
+    const totalFocBottles = lines.filter(l => l.isFoc).reduce((s, l) => s + getLineCalculations(l).totalBottles, 0)
+    const totalAllBottles = totalPurchasedBottles + totalFocBottles
+
+    const addLine = () => setLines(ls => [...ls, { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0, isFoc: false }])
     const removeLine = (i: number) => {
         setLines(ls => ls.filter((_, idx) => idx !== i))
         setSearchQueries(prev => {
@@ -1000,7 +1315,9 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
     const handleSave = async () => {
         if (!poId) return
         if (!supplierId) return toast.error('Vui lòng chọn nhà cung cấp')
-        if (lines.some(l => !l.productId || l.priceInput <= 0)) return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm')
+        if (lines.some(l => !l.productId || (!l.isFoc && l.priceInput <= 0))) {
+            return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm (đơn giá > 0 cho hàng thương mại)')
+        }
         setSaving(true)
 
         const formattedLines = lines.map(l => {
@@ -1008,13 +1325,25 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
             return {
                 productId: l.productId,
                 qtyOrdered: calc.totalBottles,
-                unitPrice: Number(calc.unitPricePerBottle.toFixed(4)),
+                unitPrice: l.isFoc ? 0 : Number(calc.unitPricePerBottle.toFixed(4)),
                 uom: l.packType,
+                isFoc: Boolean(l.isFoc),
+                focNote: l.focNote || undefined,
+                declaredPrice: l.isFoc ? Number(calc.unitPricePerBottle.toFixed(4)) : undefined,
             }
         })
 
         toast.promise(
-            updatePurchaseOrder(poId, { supplierId, currency, exchangeRate, lines: formattedLines, legalEntityId, incoterms }).then(res => {
+            updatePurchaseOrder(poId, {
+                supplierId,
+                currency,
+                exchangeRate,
+                lines: formattedLines,
+                legalEntityId,
+                incoterms,
+                discountPct: discountType === 'PERCENT' ? discountPct : undefined,
+                discountAmount: discountType === 'AMOUNT' ? discountAmount : (discountType === 'PERCENT' ? Number(computedDiscount.toFixed(2)) : 0),
+            }).then(res => {
                 if (!res.success) throw new Error(res.error || 'Lỗi cập nhật PO')
                 onUpdated(res.poNo || poNo)
                 return res
@@ -1035,7 +1364,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
-            <div className="w-full sm:w-[720px] max-w-full h-full overflow-y-auto flex flex-col"
+            <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
                 style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
                 onClick={e => e.stopPropagation()}>
 
@@ -1049,7 +1378,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                             <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>
                                 Chỉnh Sửa Đơn Mua Hàng: <span className="font-mono text-[#87CBB9]">{poNo}</span>
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉnh sửa thông tin đơn hàng, số lượng, quy cách đóng gói và đơn giá</p>
+                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]"><X size={18} /></button>
@@ -1161,7 +1490,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     const calc = getLineCalculations(line)
 
                                     return (
-                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #2A4355' }}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-bold text-[#8AAEBB]">Dòng #{i + 1}</span>
@@ -1170,6 +1499,27 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                             {calc.totalBottles} chai
                                                         </span>
                                                     )}
+                                                    {/* FOC Checkbox */}
+                                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
+                                                        style={{
+                                                            background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
+                                                            borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355',
+                                                            color: line.isFoc ? '#D4A853' : '#8AAEBB'
+                                                        }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!line.isFoc}
+                                                            onChange={e => {
+                                                                const checked = e.target.checked
+                                                                setLine(i, 'isFoc', checked)
+                                                                if (checked && !line.focNote) {
+                                                                    setLine(i, 'focNote', 'Hàng tặng kèm / Thử nếm')
+                                                                }
+                                                            }}
+                                                            className="rounded border-[#2A4355] text-amber-500 focus:ring-0 cursor-pointer"
+                                                        />
+                                                        <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
+                                                    </label>
                                                 </div>
                                                 {lines.length > 1 && (
                                                     <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-[#1B2E3D]">
@@ -1177,6 +1527,20 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     </button>
                                                 )}
                                             </div>
+
+                                            {/* FOC Note Input (If line is FOC) */}
+                                            {line.isFoc && (
+                                                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+                                                    <span className="text-amber-400 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Vd: Chai thử nếm (Tasting samples), Khuyến mãi Winery, Bù hao vỡ mẻ trước..."
+                                                        value={line.focNote || ''}
+                                                        onChange={e => setLine(i, 'focNote', e.target.value)}
+                                                        className="flex-1 bg-transparent border-none text-xs text-amber-200 outline-none placeholder-amber-400/40 font-medium"
+                                                    />
+                                                </div>
+                                            )}
 
                                             {/* Searchable Product Autocomplete Input */}
                                             <div className="relative">
@@ -1304,20 +1668,28 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
 
                                                 <div>
                                                     <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
-                                                        {line.pricingMode === 'PER_CASE' && calc.isCase
-                                                            ? `Đơn giá thùng (${currency})`
-                                                            : `Đơn giá chai (${currency})`}
+                                                        {line.isFoc
+                                                            ? (line.pricingMode === 'PER_CASE' && calc.isCase
+                                                                ? `Giá danh nghĩa HQ/thùng (${currency})`
+                                                                : `Giá danh nghĩa HQ/chai (${currency})`)
+                                                            : (line.pricingMode === 'PER_CASE' && calc.isCase
+                                                                ? `Đơn giá thùng (${currency})`
+                                                                : `Đơn giá chai (${currency})`)}
                                                     </label>
                                                     <input
                                                         type="number"
                                                         min={0}
                                                         step={0.01}
                                                         className={inputCls}
-                                                        style={inputStyle}
+                                                        style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355' }}
                                                         value={line.priceInput}
                                                         onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                                     />
-                                                    {calc.isCase && (
+                                                    {line.isFoc ? (
+                                                        <span className="text-[10px] font-mono text-amber-400/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                            (HQ: {calc.customsValue.toFixed(2)} {currency})
+                                                        </span>
+                                                    ) : calc.isCase && (
                                                         <span className="text-[10px] font-mono text-[#8AAEBB] block mt-0.5">
                                                             {line.pricingMode === 'PER_CASE'
                                                                 ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
@@ -1330,37 +1702,91 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             {/* Line Total preview */}
                                             <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A4355]/40">
                                                 <span className="text-[#4A6A7A]">
-                                                    Thành tiền dòng:
-                                                    <span className="ml-1 text-[11px] text-[#8AAEBB]">
-                                                        ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
-                                                    </span>
+                                                    {line.isFoc ? (
+                                                        <span className="text-amber-300 font-bold">
+                                                            🎁 Hàng FOC (Miễn phí thanh toán NCC):
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            Thành tiền dòng:
+                                                            <span className="ml-1 text-[11px] text-[#8AAEBB]">
+                                                                ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </span>
                                                 <span className="font-mono font-bold text-[#E8F1F2]">
-                                                    {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                                    <span className="text-[10px] ml-1.5 text-[#87CBB9]">
-                                                        (≈ {formatVND(calc.lineTotal * exchangeRate)})
-                                                    </span>
+                                                    {line.isFoc ? (
+                                                        <>
+                                                            <span className="text-amber-400 mr-2">0.00 {currency}</span>
+                                                            <span className="text-[10px] text-[#8AAEBB] font-normal">
+                                                                (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                                                            <span className="text-[10px] ml-1.5 text-[#87CBB9]">
+                                                                (≈ {formatVND(calc.lineTotal * exchangeRate)})
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
                                     )
                                 })}
                             </div>
+
+                            {/* Order Level Discount Section */}
+                            <div className="pt-2">
+                                <PODiscountSection
+                                    discountType={discountType}
+                                    discountPct={discountPct}
+                                    discountAmount={discountAmount}
+                                    subtotal={subtotalFOB}
+                                    currency={currency}
+                                    exchangeRate={exchangeRate}
+                                    onChangeType={setDiscountType}
+                                    onChangePct={setDiscountPct}
+                                    onChangeAmount={setDiscountAmount}
+                                />
+                            </div>
                         </div>
 
                         {/* Footer */}
                         <div className="p-4 border-t border-[#2A4355] flex-shrink-0 space-y-3" style={{ background: '#142433' }}>
-                            <div className="flex items-center justify-between">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-[#2A4355]/40 pb-2.5">
                                 <div>
-                                    <p className="text-xs text-[#8AAEBB]">Tổng giá trị đơn hàng ({currency}):</p>
-                                    <p className="text-lg font-bold font-mono text-[#E8F1F2]">
-                                        {totalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tổng SL Chai</p>
+                                    <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                        {totalAllBottles.toLocaleString()} chai
+                                    </p>
+                                    {totalFocBottles > 0 && (
+                                        <p className="text-[10px] text-amber-300">
+                                            ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tiền Hàng (Subtotal)</p>
+                                    <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                        {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Giảm Giá / CK</p>
+                                    <p className="font-mono font-bold text-amber-400 text-sm">
+                                        {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-[#8AAEBB]">Quy đổi VNĐ:</p>
-                                    <p className="text-lg font-bold font-mono text-[#87CBB9]">
+                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Phải Thanh Toán</p>
+                                    <p className="font-mono font-bold text-[#87CBB9] text-base">
                                         {formatVND(totalVND)}
+                                    </p>
+                                    <p className="text-[10px] font-mono text-[#8AAEBB]">
+                                        {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                                     </p>
                                 </div>
                             </div>
@@ -2004,6 +2430,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <div className="text-xs font-bold text-[#E8F1F2]">
                                                 <span className="text-[#8AAEBB] font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-[#E8F1F2]">{row.totalQty.toLocaleString()}</span> chai
                                             </div>
+                                            {row.hasFoc && (
+                                                <div className="mt-0.5">
+                                                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                                        🎁 FOC: {(row.totalFocQty ?? 0).toLocaleString()} chai
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="mt-1 space-y-0.5">
                                                 <div className="flex justify-between items-center text-[10px]">
                                                     <span className="text-[#4A6A7A]">Đã nhập kho:</span>
@@ -2026,6 +2459,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <p className="text-xs font-bold font-mono text-[#E8F1F2]">
                                                 {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
                                             </p>
+                                            {row.discountAmount && row.discountAmount > 0 ? (
+                                                <p className="text-[10px] text-amber-400 font-mono">
+                                                    🏷️ -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
+                                                </p>
+                                            ) : null}
                                             <p className="text-[11px] font-bold font-mono text-[#87CBB9] mt-0.5">
                                                 ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                             </p>
@@ -2143,11 +2581,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div>
                                     <span className="text-[10px] text-[#4A6A7A] block">Số lượng & Tiến độ:</span>
                                     <span className="font-mono text-[#E8F1F2] font-bold">{row.totalQty.toLocaleString()} chai</span>
+                                    {row.hasFoc && (
+                                        <span className="text-[10px] text-amber-300 ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
+                                    )}
                                     <span className="text-[10px] text-[#87CBB9] ml-1">({row.receivedPercentage}% kho)</span>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-[10px] text-[#4A6A7A] block">Giá trị:</span>
                                     <span className="font-mono text-[#87CBB9] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
+                                    {row.discountAmount && row.discountAmount > 0 && (
+                                        <span className="text-[10px] text-amber-400 block font-mono">
+                                            🏷️ Giảm {row.discountAmount.toLocaleString()} {row.currency}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -2219,11 +2665,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <div>
                                         <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Tổng Số Lượng</span>
                                         <span className="font-mono font-bold text-[#E8F1F2]">{poDetail.totalQty.toLocaleString()} chai</span>
+                                        {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
+                                            <span className="text-[10px] text-amber-300 ml-1">({poDetail.totalFocQty} FOC)</span>
+                                        )}
                                         <span className="text-[10px] text-[#87CBB9] ml-1">({poDetail.totalQtyReceived} đã nhận)</span>
                                     </div>
                                     <div>
                                         <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Giá Ngoại Tệ</span>
                                         <span className="font-mono font-bold text-[#E8F1F2]">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
+                                        {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
+                                            <span className="text-[10px] text-amber-400 block font-mono">
+                                                (Đã giảm {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="text-right">
                                         <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Quy Đổi VNĐ</span>
@@ -2253,36 +2707,102 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 {/* Tab Content */}
                                 <div className="flex-1 p-5 space-y-4 overflow-y-auto">
                                     {detailTab === 'LINES' && (
-                                        <div className="space-y-2">
-                                            {poDetail.lines.map(line => {
-                                                const isCase6 = line.uom === 'CASE_6'
-                                                const isCase12 = line.uom === 'CASE_12'
-                                                const isCase3 = line.uom === 'CASE_3'
-                                                const isCase1 = line.uom === 'CASE_1'
-                                                const uomLabel = isCase6 ? `${line.qtyOrdered / 6} Thùng 6 (${line.qtyOrdered} chai)`
-                                                    : isCase12 ? `${line.qtyOrdered / 12} Thùng 12 (${line.qtyOrdered} chai)`
-                                                    : isCase3 ? `${line.qtyOrdered / 3} Thùng 3 (${line.qtyOrdered} chai)`
-                                                    : isCase1 ? `${line.qtyOrdered} Hộp 1 chai`
-                                                    : `${line.qtyOrdered} chai`
+                                        <div className="space-y-3">
+                                            <div className="space-y-2">
+                                                {poDetail.lines.map(line => {
+                                                    const isCase6 = line.uom === 'CASE_6'
+                                                    const isCase12 = line.uom === 'CASE_12'
+                                                    const isCase3 = line.uom === 'CASE_3'
+                                                    const isCase1 = line.uom === 'CASE_1'
+                                                    const uomLabel = isCase6 ? `${line.qtyOrdered / 6} Thùng 6 (${line.qtyOrdered} chai)`
+                                                        : isCase12 ? `${line.qtyOrdered / 12} Thùng 12 (${line.qtyOrdered} chai)`
+                                                        : isCase3 ? `${line.qtyOrdered / 3} Thùng 3 (${line.qtyOrdered} chai)`
+                                                        : isCase1 ? `${line.qtyOrdered} Hộp 1 chai`
+                                                        : `${line.qtyOrdered} chai`
 
-                                                return (
-                                                    <div key={line.id} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] flex justify-between items-center text-xs">
-                                                        <div>
-                                                            <p className="font-extrabold text-[#E8F1F2]">{line.productName}</p>
-                                                            <p className="text-[10px] text-[#4A6A7A] font-mono">{line.skuCode}</p>
+                                                    return (
+                                                        <div key={line.id} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] flex justify-between items-start text-xs gap-3"
+                                                            style={{ borderColor: line.isFoc ? 'rgba(212,168,83,0.35)' : '#2A4355' }}>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                    <p className="font-extrabold text-[#E8F1F2]">{line.productName}</p>
+                                                                    {line.isFoc && (
+                                                                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                                            🎁 FOC
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-[10px] text-[#4A6A7A] font-mono mt-0.5">{line.skuCode}</p>
+                                                                {line.isFoc && line.focNote && (
+                                                                    <p className="text-[10px] text-amber-400/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block">
+                                                                        Lý do FOC: {line.focNote}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <p className="font-mono font-bold text-[#87CBB9]">{uomLabel}</p>
+                                                                {line.isFoc ? (
+                                                                    <>
+                                                                        <p className="text-[11px] font-bold text-amber-400 font-mono">
+                                                                            0.00 {poDetail.currency} (Miễn phí)
+                                                                        </p>
+                                                                        {line.declaredPrice ? (
+                                                                            <p className="text-[10px] text-[#8AAEBB] font-mono" title="Đơn giá khai báo hải quan">
+                                                                                Giá HQ: {line.declaredPrice.toFixed(2)} {poDetail.currency}/chai
+                                                                            </p>
+                                                                        ) : null}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <p className="text-[10px] text-[#8AAEBB] font-mono">
+                                                                            {line.unitPrice.toFixed(2)} {poDetail.currency} / chai
+                                                                        </p>
+                                                                        <p className="text-[10px] text-[#4A6A7A] font-mono">
+                                                                            ≈ {formatVND(line.lineTotal * poDetail.exchangeRate)}
+                                                                        </p>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="font-mono font-bold text-[#87CBB9]">{uomLabel}</p>
-                                                            <p className="text-[10px] text-[#8AAEBB] font-mono">
-                                                                {line.unitPrice.toFixed(2)} {poDetail.currency} / chai
-                                                            </p>
-                                                            <p className="text-[10px] text-[#4A6A7A] font-mono">
-                                                                ≈ {formatVND(line.lineTotal * poDetail.exchangeRate)}
-                                                            </p>
-                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+
+                                            {/* Financial Summary Card */}
+                                            <div className="p-3.5 rounded-xl bg-[#0D1E2B] border border-[#2A4355] space-y-2 text-xs">
+                                                <div className="flex justify-between items-center text-[#8AAEBB]">
+                                                    <span>Tổng tiền hàng (Subtotal):</span>
+                                                    <span className="font-mono font-bold text-[#E8F1F2]">
+                                                        {(poDetail.subtotal ?? poDetail.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
+                                                    </span>
+                                                </div>
+                                                {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
+                                                    <div className="flex justify-between items-center text-amber-400">
+                                                        <span>
+                                                            Chiết khấu / Giảm giá {poDetail.discountPct ? `(${poDetail.discountPct}%)` : ''}:
+                                                        </span>
+                                                        <span className="font-mono font-bold">
+                                                            -{poDetail.discountAmount?.toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
+                                                        </span>
                                                     </div>
-                                                )
-                                            })}
+                                                )}
+                                                <div className="flex justify-between items-center pt-2 border-t border-[#2A4355] font-bold">
+                                                    <span className="text-[#E8F1F2]">Tổng phải thanh toán:</span>
+                                                    <div className="text-right">
+                                                        <span className="font-mono text-[#87CBB9] text-sm">
+                                                            {poDetail.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
+                                                        </span>
+                                                        <span className="text-[10px] text-[#8AAEBB] block font-mono">
+                                                            ≈ {formatVND(poDetail.totalAmount * poDetail.exchangeRate)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
+                                                    <p className="text-[11px] text-amber-300 pt-1 border-t border-[#2A4355]/40 italic">
+                                                        🎁 Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
 

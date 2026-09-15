@@ -45,9 +45,14 @@ export type PORow = {
     status: string
     currentApprovalStep?: number
     totalApprovalSteps?: number
+    subtotal?: number
+    discountPct?: number | null
+    discountAmount?: number | null
     totalAmount: number
     lineCount: number
     totalQty: number
+    totalFocQty?: number
+    hasFoc?: boolean
     totalQtyReceived: number
     receivedPercentage: number
     estimatedDelivery?: Date | null
@@ -72,6 +77,9 @@ export type PODetail = PORow & {
         qtyOrdered: number
         unitPrice: number
         uom: string
+        isFoc?: boolean
+        focNote?: string | null
+        declaredPrice?: number | null
         lineTotal: number
     }[]
 }
@@ -80,10 +88,13 @@ export type PODetail = PORow & {
 export const poLineSchema = z.object({
     productId: z.string().min(1),
     qtyOrdered: z.number().positive(),
-    unitPrice: z.number().positive(),
+    unitPrice: z.number().min(0),
     uom: z.string().default('BOTTLE'),
     packType: z.string().optional(),
     pricingMode: z.string().optional(),
+    isFoc: z.boolean().default(false),
+    focNote: z.string().optional(),
+    declaredPrice: z.number().min(0).optional(),
 })
 
 export const createPOSchema = z.object({
@@ -94,6 +105,8 @@ export const createPOSchema = z.object({
     notes: z.string().optional(),
     currency: z.enum(['USD', 'EUR', 'GBP', 'NZD', 'AUD']).default('USD'),
     exchangeRate: z.number().positive().default(25000),
+    discountPct: z.number().min(0).max(100).optional(),
+    discountAmount: z.number().min(0).optional(),
     lines: z.array(poLineSchema).min(1, 'Cần ít nhất 1 dòng sản phẩm'),
 })
 

@@ -291,15 +291,22 @@ erDiagram
         currency        string
         exchange_rate   decimal
         status          enum
+        subtotal        decimal "Tiền hàng trước giảm"
+        discount_pct    decimal "% Giảm giá trên đơn hàng"
+        discount_amount decimal "Số tiền giảm cụ thể"
+        total_amount    decimal "Tổng phải thanh toán sau giảm"
         created_by      uuid FK
     }
     PurchaseOrderLine {
-        id          uuid PK
-        po_id       uuid FK
-        product_id  uuid FK
-        qty_ordered decimal
-        unit_price  decimal
-        uom         string
+        id              uuid PK
+        po_id           uuid FK
+        product_id      uuid FK
+        qty_ordered     decimal
+        unit_price      decimal "Đơn giá (0.00 đối với hàng FOC)"
+        uom             string
+        is_foc          boolean "Cờ hàng tặng FOC (Free of Charge)"
+        foc_note        string "Lý do / mục đích FOC (nếm thử, thưởng...)"
+        declared_price  decimal "Giá danh nghĩa khai báo HQ & tính thuế NK/TTĐB"
     }
     Shipment {
         id                  uuid PK

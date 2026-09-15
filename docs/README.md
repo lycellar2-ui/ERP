@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-15 13:45 | Wine ERP v10.29 — Khắc phục độ trễ trạng thái tờ trình: Gỡ in-memory cache serverless, Bổ sung Supabase Realtime, Đồng bộ state tức thì & Loading spinner nút duyệt (BUG-105)*
+*Last updated: 2026-09-15 14:40 | Wine ERP v10.30 — Mua Hàng (PRC): Bổ sung Quản lý Giảm giá/Chiết khấu đơn hàng (% & Tiền cố định), Quản lý hàng quà tặng FOC kèm Đơn giá danh nghĩa Hải quan & Landed Cost*
 

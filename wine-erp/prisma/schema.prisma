@@ -1046,6 +1046,11 @@ model PurchaseOrder {
   creator           User                @relation(fields: [createdBy], references: [id])
   signatureUrl      String?
 
+  subtotal          Decimal?            @db.Decimal(15, 2)
+  discountPct       Decimal?            @db.Decimal(5, 2)
+  discountAmount    Decimal?            @db.Decimal(15, 2)
+  totalAmount       Decimal?            @db.Decimal(15, 2)
+
   lines             PurchaseOrderLine[]
   shipments         Shipment[]
   apInvoices        APInvoice[]
@@ -1071,14 +1076,17 @@ model PODocument {
 }
 
 model PurchaseOrderLine {
-  id         String        @id @default(cuid())
-  poId       String
-  po         PurchaseOrder @relation(fields: [poId], references: [id])
-  productId  String
-  product    Product       @relation(fields: [productId], references: [id])
-  qtyOrdered Decimal
-  unitPrice  Decimal
-  uom        String        @default("BOTTLE")
+  id            String        @id @default(cuid())
+  poId          String
+  po            PurchaseOrder @relation(fields: [poId], references: [id])
+  productId     String
+  product       Product       @relation(fields: [productId], references: [id])
+  qtyOrdered    Decimal
+  unitPrice     Decimal
+  uom           String        @default("BOTTLE")
+  isFoc         Boolean       @default(false)
+  focNote       String?
+  declaredPrice Decimal?      @db.Decimal(15, 2)
 
   @@map("purchase_order_lines")
 }
