@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 99 Rules rút ra từ 68 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 103 Rules rút ra từ 72 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 16:42 | Wine ERP v10.26 — Phân Tách Tuyệt Đối Vai Trò Quản Lý (Báo Cáo Chung, Ẩn Tab Check-in) vs Sales Thực Địa ("Tài Khoản Nào Biết Tài Khoản Đó"), Chuẩn Hoá Tiêu Đề Header "Quản Lý Check-in Thị Trường", Fix Vercel Server Action Export (BUG-099)*
+*Last updated: 2026-09-15 09:00 | Wine ERP v10.27 — Fix Báo Cáo Nhập Xuất Tồn Kho Thường Tín Lọc Theo Vị Trí Thực Xuất Thay Vì Header, Khóa Cứng Ràng Buộc allowSales Cấm Tạo DO Tại Kho Lưu Trữ/Điều Chuyển (BUG-103)*
 

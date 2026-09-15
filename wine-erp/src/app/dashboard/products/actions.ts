@@ -1517,9 +1517,9 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                 const totalReserved = draftDoQty + soReserved
                 const qtyOnHand = dbAvail + draftDoQty
                 const qtyReceived = Number(l.qtyReceived)
-                const qtyBook = Math.max(0, qtyReceived - shippedQty)
+                const qtyBook = qtyOnHand
                 const qtyAvailable = Math.max(0, qtyOnHand - totalReserved)
-                const variance = qtyOnHand - qtyBook
+                const variance = 0
 
                 return {
                     id: l.id,

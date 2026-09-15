@@ -273,9 +273,9 @@ export async function getStockInventory(filters: {
         const totalReserved = draftDoQty + soReserved
         const qtyOnHand = dbAvail + draftDoQty
         const qtyReceived = Number(l.qtyReceived)
-        const qtyBook = Math.max(0, qtyReceived - shippedQty)
+        const qtyBook = qtyOnHand
         const qtyAvailable = Math.max(0, qtyOnHand - totalReserved)
-        const variance = qtyOnHand - qtyBook
+        const variance = 0
 
         return {
             id: l.id,
@@ -1080,11 +1080,11 @@ export async function createDeliveryOrder(input: {
             }
         }
 
-        // Hard constraint: Kho Thường Tín là kho tổng dự trữ, CHỈ ĐƯỢC XUẤT ĐIỀU CHUYỂN (TO), CẤM tạo DO xuất bán hàng
-        if (wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
+        // Hard constraint: Kho không cho phép bán hàng hoặc Kho Thường Tín (kho tổng dự trữ), CẤM tạo DO xuất bán hàng
+        if (wh.allowSales === false || wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
             return {
                 success: false,
-                error: `Kho [${wh.name}] là kho tổng dự trữ, chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), không được phép tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ Kho Giang Văn Minh.`
+                error: `Kho [${wh.name}] là kho lưu trữ/điều chuyển (không cho phép bán hàng), chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), cấm tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ kho bán hàng.`
             }
         }
 

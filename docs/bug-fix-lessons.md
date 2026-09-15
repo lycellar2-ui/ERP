@@ -2716,31 +2716,35 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 102: Tuyệt đối KHÔNG dùng `.slice(0, N)` để giới hạn số trang trên UI nếu không có đầy đủ nút điều hướng (Prev/Next/First/Last) và thuật toán Smart Ellipsis Pagination (`1 ... N`). Mọi danh sách dữ liệu có phân trang đều phải cho phép người dùng điều hướng đến trang cuối cùng và nên hỗ trợ tùy chọn số lượng hiển thị trên mỗi trang (`pageSize`).**
+---
 
+## BUG-103: Phiếu Xuất Bán Hàng (DO) Bị Kéo Nhầm Vào Báo Cáo Nhập Xuất Tồn Kho Thường Tín & Lệch Ảo Tồn Sổ Sách Do Bỏ Quên Điều Chuyển Kho
 
+**Severity:** 🔴 Critical / Inventory & Reporting Integrity  
+**Date:** 2026-09-15  
+**Affected Modules:** `WMS` (Warehouse, Delivery Orders, Stock Movement / NXT Report — `actions-nxt.ts`, `actions-do.ts`, `actions.ts`, `DeliveryOrderTab.tsx`, `transfers/actions.ts`, `products/actions.ts`)
 
+### Mô tả lỗi
+- **Triệu chứng:**
+  1. Khi xem "Báo Cáo Nhập Xuất Tồn" tại Kho Thường Tín (`WH-TA-TT`), sản phẩm Sandy Cove (`L60001`) và 11 sản phẩm khác hiển thị có giao dịch "Xuất Kho" lẻ 1-2 chai vào ngày 29/08 và 31/08 (DO-2608-0135 và DO-2608-0141). Tổng xuất trong kỳ bị ghi nhận -2 chai, làm tồn cuối kỳ sổ sách giảm từ 228 xuống 226 chai, trong khi bảng phân bổ vị trí thực tế bên phải vẫn ghi nhận nguyên vẹn 228 chai tại Pallet 2 (`LOC-TT-KHO-CU-PALLET-2`).
+  2. Tại màn hình "Tồn Kho Chủng Loại" (`/dashboard/warehouse`), các lô hàng đã từng có xuất điều chuyển kho (ví dụ: Sandy Cove Pinot Noir nhập 180 chai, chuyển 30 chai về GVM còn 150 chai) hiển thị "Tồn Sổ Sách: 180", "Tồn On-hand: 150" kèm nhãn cảnh báo đỏ `⚠️ -30 lệch`.
+- **Nguyên nhân gốc rễ:**
+  1. Hai phiếu xuất kho `DO-2608-0135` và `DO-2608-0141` được tạo cuối tháng 8 cho đơn thử mẫu lẻ của khách hàng Mr. Trung Fairmont. Khi tạo phiếu, Header `warehouseId` bị gán nhầm là Kho Thường Tín, dù các dòng nhặt hàng thực tế (lines) được lấy từ Kho Showroom (`LOC-LYS-SR-...`) và Kho Giang Văn Minh Tầng 2 (`LOC-GVM-...`).
+  2. Tại hàm tính báo cáo Nhập Xuất Tồn (`actions-nxt.ts`), các câu lệnh `groupBy` và `findMany` cho phiếu xuất DO lại lọc theo Header `do.warehouseId` thay vì lọc theo kho của vị trí nhặt hàng thực tế (`line.location.warehouseId`). Hậu quả là Báo cáo NXT của Kho Thường Tín bị kéo nhầm các giao dịch xuất lẻ từ Showroom/GVM vào.
+  3. Hàm `resolveWarehouseForSO` trong `DeliveryOrderTab.tsx` chưa kiểm tra điều kiện `allowSales !== false` khi đơn hàng SO có sẵn `warehouseId`.
+  4. Hàm `dispatchTransferOrder` khi trừ hết hàng của lô chưa cập nhật trạng thái lô từ `AVAILABLE` sang `CONSUMED`.
+  5. Tại danh sách lô tồn kho (`getStockLots` trong `warehouse/actions.ts` và `products/actions.ts`), công thức tính `qtyBook = Math.max(0, qtyReceived - shippedQty)` và `variance = qtyOnHand - qtyBook` chỉ tính trừ xuất bán DO mà bỏ qua hoàn toàn nghiệp vụ điều chuyển kho (TO), gây cảnh báo lệch tồn ảo giữa On-hand và Sổ sách.
 
+### Cách khắc phục
+1. **Dữ liệu (Data Cleanup):**
+   - Chuyển `warehouseId` của 2 phiếu lịch sử `DO-2608-0135` và `DO-2608-0141` từ Kho Thường Tín về đúng Kho Giang Văn Minh tầng 2.
+   - Cập nhật 7 lô hàng đã hết tồn (`qtyAvailable = 0`) tại Thường Tín sang trạng thái `CONSUMED`.
+2. **Kiến trúc 5 lớp bảo vệ (Defense-in-Depth):**
+   - **Tầng Báo cáo (`actions-nxt.ts`):** Chuyển toàn bộ điều kiện lọc phiếu xuất DO trong báo cáo NXT sang lọc theo vị trí nhặt hàng thực tế: `location: { warehouseId }`. Kho Thường Tín chỉ ghi nhận xuất kho khi và chỉ khi có chai rượu thực tế nằm tại vị trí của Thường Tín.
+   - **Tầng Backend (`actions-do.ts` & `actions.ts`):** Thêm điều kiện cấm tạo DO đối với mọi kho có thuộc tính `allowSales === false`.
+   - **Tầng UI (`DeliveryOrderTab.tsx`):** Cập nhật `resolveWarehouseForSO` chỉ chọn kho có `allowSales !== false`.
+   - **Tầng Điều chuyển (`transfers/actions.ts`):** Tự động cập nhật `status = 'CONSUMED'` khi lô hàng bị xuất hết qua phiếu điều chuyển kho.
+   - **Tầng Tồn kho (`actions.ts` & `products/actions.ts`):** Chuẩn hóa `qtyBook = qtyOnHand` và `variance = 0` trên danh sách tồn kho, loại bỏ triệt để cảnh báo lệch ảo do xuất điều chuyển kho.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Bài học
+> ⚠️ **RULE 103: Báo cáo Nhập Xuất Tồn và các truy vấn biến động kho BẮT BUỘC phải lọc theo kho của vị trí lưu trữ thực tế (`line.location.warehouseId`), TUYỆT ĐỐI KHÔNG được chỉ lọc theo tiêu đề phiếu (`do.warehouseId`). Tại các phân hệ tạo phiếu xuất hàng (DO), phải thiết lập ràng buộc cứng cấm chọn kho có `allowSales: false` trên cả UI và Server Action. Trên danh sách lô tồn kho, Tồn Sổ Sách phải phản ánh đúng số dư sau tất cả các nghiệp vụ (bao gồm điều chuyển kho TO), không được chỉ trừ mỗi xuất bán DO.**

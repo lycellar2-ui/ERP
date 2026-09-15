@@ -57,22 +57,22 @@ export function resolveWarehouseForSO(targetSO: SOOption, warehouses: WarehouseO
         return false
     })
 
-    // If SO already had a warehouseId specified, check if that warehouse matches the SO's legal entity
+    // If SO already had a warehouseId specified, check if that warehouse matches the SO's legal entity and allows sales
     if (targetSO.warehouseId) {
         const preSelectedWh = warehouses.find(w => w.id === targetSO.warehouseId)
-        if (preSelectedWh) {
+        if (preSelectedWh && preSelectedWh.allowSales !== false) {
             const matchesEntity = entityWhs.length === 0 || entityWhs.some(w => w.id === preSelectedWh.id)
             if (matchesEntity) return preSelectedWh.id
         }
     }
 
-    // Pick the default warehouse belonging to THIS specific Legal Entity
+    // Pick the default warehouse belonging to THIS specific Legal Entity that allows sales
     const pool = entityWhs.length > 0 ? entityWhs : warehouses
-    const defaultWh = pool.find((w: any) => w.isDefault && w.allowSales !== false)
-        ?? pool.find((w: any) => w.allowSales !== false)
-        ?? pool[0]
+    const salesPool = pool.filter((w: any) => w.allowSales !== false)
+    const defaultWh = salesPool.find((w: any) => w.isDefault)
+        ?? salesPool[0]
 
-    return defaultWh ? defaultWh.id : (warehouses[0]?.id ?? '')
+    return defaultWh ? defaultWh.id : (warehouses.find(w => w.allowSales !== false)?.id ?? '')
 }
 
 export function DeliveryOrderTab({ warehouses }: {

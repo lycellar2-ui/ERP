@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-11 16:42
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, SFV v10.26 (Role-Scoping, Manager Executive Board Only, Sales Personal Field Shell, Header "Quản Lý Check-in Thị Trường", BUG-099 Fixed)
+> Last updated: 2026-09-15 09:00
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, WMS v10.27 (NXT Location-based Filtering, allowSales Hard Constraint, BUG-103 Fixed)
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 99 rules from 68 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 103 rules from 72 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)

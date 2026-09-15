@@ -331,9 +331,13 @@ export async function dispatchTransferOrder(id: string): Promise<{ success: bool
                 for (const lot of lots) {
                     if (remaining <= 0) break
                     const take = Math.min(Number(lot.qtyAvailable), remaining)
+                    const isFullyConsumed = Number(lot.qtyAvailable) === take
                     const updated = await tx.stockLot.updateMany({
                         where: { id: lot.id, qtyAvailable: { gte: take } },
-                        data: { qtyAvailable: { decrement: take } },
+                        data: {
+                            qtyAvailable: { decrement: take },
+                            ...(isFullyConsumed ? { status: 'CONSUMED' } : {}),
+                        },
                     })
                     if (updated.count === 0) {
                         throw new Error(`Lô ${lot.lotNo} đã bị thay đổi do có giao dịch đồng thời. Vui lòng thử lại.`)

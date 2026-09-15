@@ -152,7 +152,7 @@ export async function getWarehouseNXTReport(filters: {
 
     // 2. Fetch Aggregates using groupBy for performance
     const lotWarehouseFilter = warehouseId ? { location: { warehouseId } } : {}
-    const doWarehouseFilter = warehouseId ? { warehouseId } : {}
+    const doLocationWarehouseFilter = warehouseId ? { location: { warehouseId } } : {}
 
     // A1. Opening Stock Lots received before fromDate (exclude transfer lots TRF-)
     const openingStockLots = await prisma.stockLot.groupBy({
@@ -184,7 +184,7 @@ export async function getWarehouseNXTReport(filters: {
         openingTrfIn.forEach(item => openingTrfInMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
     }
 
-    // B1. Opening DO (SHIPPED/DELIVERED before fromDate)
+    // B1. Opening DO (SHIPPED/DELIVERED before fromDate) — Filter by physical location warehouse
     const openingDo = await prisma.deliveryOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyShipped: true },
@@ -192,8 +192,8 @@ export async function getWarehouseNXTReport(filters: {
             do: {
                 status: { in: ['SHIPPED', 'DELIVERED'] },
                 createdAt: { lt: fromDate },
-                ...doWarehouseFilter,
             },
+            ...doLocationWarehouseFilter,
         },
     })
     const openingDoMap = new Map<string, number>()
@@ -261,7 +261,7 @@ export async function getWarehouseNXTReport(filters: {
         periodTrfIn.forEach(item => periodTrfInMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
     }
 
-    // D1. Period DO (SHIPPED/DELIVERED between fromDate and toDate)
+    // D1. Period DO (SHIPPED/DELIVERED between fromDate and toDate) — Filter by physical location warehouse
     const periodDo = await prisma.deliveryOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyShipped: true },
@@ -269,8 +269,8 @@ export async function getWarehouseNXTReport(filters: {
             do: {
                 status: { in: ['SHIPPED', 'DELIVERED'] },
                 createdAt: { gte: fromDate, lte: toDate },
-                ...doWarehouseFilter,
             },
+            ...doLocationWarehouseFilter,
         },
     })
     const periodDoMap = new Map<string, number>()
@@ -607,10 +607,12 @@ export async function getStockMovements(filters: {
     if (movementType === 'ALL' || movementType === 'OUT') {
         const doWhere: any = {
             productId,
-            do: { status: { in: ['SHIPPED', 'DELIVERED'] } },
+            do: {
+                status: { in: ['SHIPPED', 'DELIVERED'] },
+                createdAt: { gte: fromDate, lte: toDate },
+            },
         }
-        if (warehouseId) doWhere.do = { ...doWhere.do, warehouseId }
-        doWhere.do.createdAt = { gte: fromDate, lte: toDate }
+        if (warehouseId) doWhere.location = { warehouseId }
 
         const doLines = await prisma.deliveryOrderLine.findMany({
             where: doWhere,
@@ -622,7 +624,12 @@ export async function getStockMovements(filters: {
                     },
                 },
                 lot: { select: { lotNo: true, unitLandedCost: true } },
-                location: { select: { locationCode: true } },
+                location: {
+                    select: {
+                        locationCode: true,
+                        warehouse: { select: { id: true, name: true } },
+                    },
+                },
             },
             orderBy: { do: { createdAt: 'asc' } },
         })
@@ -634,8 +641,8 @@ export async function getStockMovements(filters: {
                 docType: 'DO',
                 docNo: line.do.doNo,
                 docId: line.do.id,
-                warehouseId: line.do.warehouse.id,
-                warehouseName: line.do.warehouse.name,
+                warehouseId: line.location?.warehouse?.id ?? line.do.warehouse.id,
+                warehouseName: line.location?.warehouse?.name ?? line.do.warehouse.name,
                 locationCode: line.location?.locationCode ?? '—',
                 lotNo: line.lot?.lotNo ?? '—',
                 qtyIn: 0,

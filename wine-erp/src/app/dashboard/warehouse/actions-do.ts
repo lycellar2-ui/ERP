@@ -141,11 +141,11 @@ export async function createDeliveryOrder(input: {
             }
         }
 
-        // Hard constraint: Kho Thường Tín là kho tổng dự trữ, CHỈ ĐƯỢC XUẤT ĐIỀU CHUYỂN (Transfer Order), CẤM xuất bán hàng trực tiếp (DO)
-        if (wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
+        // Hard constraint: Kho không cho phép bán hàng hoặc Kho Thường Tín (kho tổng dự trữ), CẤM xuất bán hàng trực tiếp (DO)
+        if (wh.allowSales === false || wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
             return {
                 success: false,
-                error: `Kho [${wh.name}] là kho tổng dự trữ, chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), không được phép tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ Kho Giang Văn Minh.`
+                error: `Kho [${wh.name}] là kho lưu trữ/điều chuyển (không cho phép bán hàng), chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), cấm tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ kho bán hàng.`
             }
         }
 
