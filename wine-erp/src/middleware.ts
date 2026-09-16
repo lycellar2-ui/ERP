@@ -11,6 +11,7 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/sales': 'SLS:READ',
     '/dashboard/delivery': 'TRS:READ',
     '/dashboard/finance': 'FIN:READ',
+    '/dashboard/reconciliation': 'FIN:READ',
     '/dashboard/declarations': 'FIN:READ',
     '/dashboard/costing': 'FIN:READ',
     '/dashboard/reports': 'RPT:READ',

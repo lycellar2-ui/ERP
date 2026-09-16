@@ -79,7 +79,7 @@
 | 13 | `POS` | POS Bán Lẻ Showroom | [pos-retail.md](./modules/pos-retail.md) | `/pos` |
 | 14 | `CSG` | Consignment (Hàng ký gửi HORECA) | [consignment.md](./modules/consignment.md) | `/consignment` |
 | 15 | `TRS` | Transportation & Delivery (E-POD) | [transport-delivery.md](./modules/transport-delivery.md) | `/delivery` |
-| 16 | `FIN` | Finance & Accounting | [finance-accounting.md](./modules/finance-accounting.md) | `/finance`, `/declarations` |
+| 16 | `FIN` | Finance & Accounting | [finance-accounting.md](./modules/finance-accounting.md) | `/finance`, `/reconciliation`, `/declarations` |
 | 17 | `STP` | Quản Lý Tem Rượu | [finance-accounting.md#6](./modules/finance-accounting.md) | `/stamps` |
 | 18 | `RPT` | Reporting & Business Intelligence | [reporting-bi.md](./modules/reporting-bi.md) | `/reports` |
 | 19 | `DSH` | CEO Executive Dashboard | [ceo-dashboard.md](./modules/ceo-dashboard.md) | `/dashboard` (root) |

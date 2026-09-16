@@ -338,7 +338,7 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 |---|---|---|
 | **VNPT SOAP Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX `PublishService`, `PortalService`, `BusinessService`. Hỗ trợ đẩy nháp (`ImportInvByPattern`), xóa nháp (`deleteInvoiceByFkey`), lấy số HĐ & mã CQT (`GetMCCQThueByFkeysNoXMLSign`), lấy dải hóa đơn (`GetMCCQThueFromNoToNo`), link PDF/Portal (`GetLinkInvViewFkey`). Đa pháp nhân Thắng Ân (`TA`: C26THP) vs Ly's Cellar (`LC`: C26TAB). |
 | **Server Actions Đối Chiếu** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (phân loại ma trận, KPI độ phủ %, phát hiện lệch thuế & tổng tiền), `batchSyncPendingInvoices` (đồng bộ hàng loạt song song 5 luồng), `manualLinkInvoiceToOrder` (gán thủ công chuẩn Net + VAT), `exportInvoiceReconciliationExcel` (xuất file Excel 2 sheet). |
-| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` | 5 thẻ KPI trực quan, bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, badge cảnh báo lệch kỳ thuế NĐ 123, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
+| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` & `src/app/dashboard/reconciliation/page.tsx` | Menu riêng trên Sidebar **"Đối Chiếu Hóa Đơn"** (`/dashboard/reconciliation`) & Tab trong `/dashboard/finance`. Gồm 5 thẻ KPI trực quan, bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, badge cảnh báo lệch kỳ thuế NĐ 123, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
 
 ### 🐛 Bugs Fixed & Audit Results (16/09/2026)
 

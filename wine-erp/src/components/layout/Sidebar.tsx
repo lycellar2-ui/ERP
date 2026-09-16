@@ -13,7 +13,8 @@ import {
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin
+    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
+    FileCheck2
 } from 'lucide-react'
 
 interface NavItem {
@@ -76,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Tài Chính',
         items: [
             { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', permission: 'FIN:READ' },
+            { href: '/dashboard/reconciliation', icon: FileCheck2, label: 'Đối Chiếu Hóa Đơn', permission: 'FIN:READ' },
             // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
             // { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
             { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', permission: 'RPT:READ' },
@@ -233,6 +235,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                         '/dashboard/consignment',
                         '/dashboard/returns',
                         '/dashboard/finance',
+                        '/dashboard/reconciliation',
                         '/dashboard/reports',
                         '/dashboard/kpi',
                     ]
