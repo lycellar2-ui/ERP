@@ -6,6 +6,7 @@ import { logAudit } from '@/lib/audit'
 import { revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
 import { syncVnptInvoiceForOrder } from '../sales/actions-vnpt'
+import { checkInvoiceDateDiscrepancy } from '@/lib/vnpt/date-utils'
 import ExcelJS from 'exceljs'
 
 export type ReconciliationStatus = 'MATCHED' | 'MISSING_INVOICE' | 'PENDING_SIGN' | 'DISCREPANCY' | 'EXEMPT'
@@ -21,10 +22,13 @@ export interface ReconciliationRow {
     legalEntityCode: string
     soStatus: string
     orderTotal: number
+    orderNet?: number
     orderVat: number
     invoiceTotal: number | null
+    invoiceNet?: number | null
     invoiceVat: number | null
     variance: number
+    vatVariance?: number
     reconciliationStatus: ReconciliationStatus
     isInvoiceExempt: boolean
     invoiceId?: string
@@ -37,6 +41,15 @@ export interface ReconciliationRow {
     pdfUrl?: string
     viewUrl?: string
     discrepancyReason?: string
+    dateWarning?: {
+        hasWarning: boolean
+        isDifferentMonth: boolean
+        diffDays: number
+        orderDateFormatted: string
+        invoiceDateFormatted: string
+        level: 'INFO' | 'WARNING' | 'DANGER'
+        message: string
+    }
 }
 
 export interface ReconciliationKpis {
@@ -197,65 +210,87 @@ export async function getInvoiceReconciliationData(filters: ReconciliationFilter
         const allRows: ReconciliationRow[] = []
 
         for (const so of orders) {
-            const orderTotal = Number(so.totalAmount)
+            const orderNet = Number(so.totalAmount || 0)
             const orderVat = Number(so.vatAmount || 0)
-            totalOrderAmount += orderTotal
+            const orderGross = Math.round(orderNet + orderVat)
+            totalOrderAmount += orderGross
 
-            const inv = so.arInvoices[0]
+            // Prioritize published official invoices over draft invoices
+            const publishedInvs = so.arInvoices.filter(i => !i.invoiceNo.startsWith('NHAP-') && i.status !== 'CANCELLED')
+            const draftInvs = so.arInvoices.filter(i => i.invoiceNo.startsWith('NHAP-'))
+            const targetInvs = publishedInvs.length > 0 ? publishedInvs : draftInvs
+
+            const primaryInv = targetInvs[0] || so.arInvoices[0]
+
             let vnptMeta: any = null
-            if (inv?.notes) {
+            if (primaryInv?.notes) {
                 try {
-                    const parsed = JSON.parse(inv.notes)
+                    const parsed = JSON.parse(primaryInv.notes)
                     vnptMeta = parsed.vnpt || null
                 } catch { }
             }
 
             const isExempt = Boolean(so.isInvoiceExempt)
-            const hasInv = Boolean(inv && inv.invoiceNo)
-            const isDraftInv = Boolean(inv && inv.invoiceNo.startsWith('NHAP-'))
+            const hasInv = Boolean(primaryInv && primaryInv.invoiceNo)
+            const isDraftInv = Boolean(primaryInv && (primaryInv.invoiceNo.startsWith('NHAP-') || vnptMeta?.status === 'DRAFT'))
 
-            let invoiceTotal: number | null = null
+            let invoiceNet: number | null = null
             let invoiceVat: number | null = null
+            let invoiceTotal: number | null = null
             let variance = 0
+            let vatVariance = 0
             let reconciliationStatus: ReconciliationStatus = 'MISSING_INVOICE'
             let discrepancyReason = ''
 
-            if (inv) {
-                invoiceTotal = Number(inv.totalAmount || inv.amount || 0)
-                invoiceVat = Number(inv.vatAmount || 0)
-                variance = orderTotal - invoiceTotal
+            if (targetInvs.length > 0) {
+                invoiceNet = targetInvs.reduce((acc, i) => acc + Number(i.amount || 0), 0)
+                invoiceVat = targetInvs.reduce((acc, i) => acc + Number(i.vatAmount || 0), 0)
+                invoiceTotal = targetInvs.reduce((acc, i) => acc + Number(i.totalAmount || (Number(i.amount || 0) + Number(i.vatAmount || 0))), 0)
+                variance = orderGross - invoiceTotal
+                vatVariance = orderVat - invoiceVat
             }
 
             if (isExempt) {
                 reconciliationStatus = 'EXEMPT'
                 exemptOrders++
-                exemptAmount += orderTotal
+                exemptAmount += orderGross
             } else if (!hasInv) {
                 reconciliationStatus = 'MISSING_INVOICE'
                 missingOrders++
-                missingAmount += orderTotal
-            } else if (isDraftInv || vnptMeta?.status === 'DRAFT') {
+                missingAmount += orderGross
+            } else if (isDraftInv) {
                 reconciliationStatus = 'PENDING_SIGN'
                 pendingSignOrders++
-                pendingSignAmount += orderTotal
+                pendingSignAmount += orderGross
             } else {
-                // Check discrepancy: variance > 1000 VND
+                // Check discrepancy: variance > 1000 VND OR vatVariance > 1000 VND
                 const absDiff = Math.abs(variance)
-                if (absDiff > 1000) {
+                const absVatDiff = Math.abs(vatVariance)
+                if (absDiff > 1000 || absVatDiff > 1000) {
                     reconciliationStatus = 'DISCREPANCY'
                     discrepancyOrders++
-                    discrepancyAmount += orderTotal
-                    discrepancyReason = `Lệch tổng tiền: Đơn hàng (${orderTotal.toLocaleString('vi-VN')} đ) vs HĐ (${(invoiceTotal || 0).toLocaleString('vi-VN')} đ) lệch ${absDiff.toLocaleString('vi-VN')} đ`
+                    discrepancyAmount += orderGross
+                    const reasons: string[] = []
+                    if (absDiff > 1000) {
+                        reasons.push(`Lệch tổng thanh toán: Đơn hàng (${orderGross.toLocaleString('vi-VN')} đ) vs HĐ (${(invoiceTotal || 0).toLocaleString('vi-VN')} đ) lệch ${absDiff.toLocaleString('vi-VN')} đ`)
+                    }
+                    if (absVatDiff > 1000) {
+                        reasons.push(`Lệch thuế VAT: Thuế SO (${orderVat.toLocaleString('vi-VN')} đ) vs Thuế HĐ (${(invoiceVat || 0).toLocaleString('vi-VN')} đ) lệch ${absVatDiff.toLocaleString('vi-VN')} đ`)
+                    }
+                    discrepancyReason = reasons.join('; ')
                 } else {
                     reconciliationStatus = 'MATCHED'
                     matchedOrders++
-                    matchedAmount += orderTotal
+                    matchedAmount += orderGross
                 }
             }
 
             // Customer taxId prioritized by parent
             const effectiveTaxId = so.customer.parent?.taxId || so.customer.taxId || 'Chưa cập nhật'
             const effectiveCustomerName = so.customer.parent?.vatCompanyName || so.customer.vatCompanyName || so.customer.name
+
+            // Check date discrepancy under ND 123
+            const dateWarning = checkInvoiceDateDiscrepancy(so.createdAt)
 
             allRows.push({
                 soId: so.id,
@@ -267,15 +302,18 @@ export async function getInvoiceReconciliationData(filters: ReconciliationFilter
                 legalEntityName: so.legalEntity?.name || 'Chưa gán',
                 legalEntityCode: so.legalEntity?.code || '',
                 soStatus: so.status,
-                orderTotal,
+                orderTotal: orderGross,
+                orderNet,
                 orderVat,
                 invoiceTotal,
+                invoiceNet,
                 invoiceVat,
                 variance,
+                vatVariance,
                 reconciliationStatus,
                 isInvoiceExempt: isExempt,
-                invoiceId: inv?.id,
-                invoiceNo: inv?.invoiceNo,
+                invoiceId: primaryInv?.id,
+                invoiceNo: targetInvs.map(i => i.invoiceNo).join(', ') || primaryInv?.invoiceNo,
                 pattern: vnptMeta?.pattern,
                 serial: vnptMeta?.serial,
                 taxAuthorityCode: vnptMeta?.taxAuthorityCode,
@@ -284,6 +322,15 @@ export async function getInvoiceReconciliationData(filters: ReconciliationFilter
                 pdfUrl: vnptMeta?.pdfUrl,
                 viewUrl: vnptMeta?.viewUrl,
                 discrepancyReason,
+                dateWarning: dateWarning.hasWarning ? {
+                    hasWarning: true,
+                    isDifferentMonth: dateWarning.isDifferentMonth,
+                    diffDays: dateWarning.diffDays,
+                    orderDateFormatted: dateWarning.orderDateFormatted,
+                    invoiceDateFormatted: dateWarning.invoiceDateFormatted,
+                    level: dateWarning.level,
+                    message: dateWarning.message,
+                } : undefined,
             })
         }
 
@@ -413,19 +460,26 @@ export async function batchSyncPendingInvoices(soIds?: string[]): Promise<{
     let stillDraftCount = 0
     let failedCount = 0
 
-    for (const soId of targetSoIds) {
-        try {
-            const res = await syncVnptInvoiceForOrder(soId)
-            if (res.success) {
-                syncedCount++
-            } else if (res.isDraft) {
-                stillDraftCount++
-            } else {
-                failedCount++
-            }
-        } catch {
-            failedCount++
-        }
+    // Concurrently process in chunks of 5
+    const CHUNK_SIZE = 5
+    for (let i = 0; i < targetSoIds.length; i += CHUNK_SIZE) {
+        const chunk = targetSoIds.slice(i, i + CHUNK_SIZE)
+        await Promise.all(
+            chunk.map(async (soId) => {
+                try {
+                    const res = await syncVnptInvoiceForOrder(soId)
+                    if (res.success) {
+                        syncedCount++
+                    } else if (res.isDraft) {
+                        stillDraftCount++
+                    } else {
+                        failedCount++
+                    }
+                } catch {
+                    failedCount++
+                }
+            })
+        )
     }
 
     await logAudit({
@@ -478,12 +532,18 @@ export async function manualLinkInvoiceToOrder(params: {
         }
 
         const existingInv = so.arInvoices[0]
+        const netAmount = Number(so.totalAmount || 0)
+        const vatAmount = Number(so.vatAmount || 0)
+        const totalAmount = Math.round(netAmount + vatAmount)
 
         if (existingInv) {
             await prisma.aRInvoice.update({
                 where: { id: existingInv.id },
                 data: {
                     invoiceNo: trimmedInvNo,
+                    amount: Number(existingInv.amount || 0) > 0 ? existingInv.amount : netAmount,
+                    vatAmount: Number(existingInv.vatAmount || 0) > 0 ? existingInv.vatAmount : vatAmount,
+                    totalAmount: Number(existingInv.totalAmount || 0) > 0 ? existingInv.totalAmount : totalAmount,
                     notes: notes || existingInv.notes,
                 },
             })
@@ -497,9 +557,9 @@ export async function manualLinkInvoiceToOrder(params: {
                     legalEntityId: so.legalEntityId || (await prisma.legalEntity.findFirst())!.id,
                     soId: so.id,
                     customerId: so.customerId,
-                    amount: so.totalAmount,
-                    vatAmount: so.vatAmount || 0,
-                    totalAmount: so.totalAmount,
+                    amount: netAmount,
+                    vatAmount: vatAmount,
+                    totalAmount: totalAmount,
                     paidAmount: 0,
                     dueDate,
                     status: 'UNPAID',

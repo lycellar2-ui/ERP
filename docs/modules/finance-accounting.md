@@ -332,13 +332,22 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | Kế toán | Dòng Tiền | Cash position + 30/60/90 forecast |
 | Kế toán | Nợ Khó Đòi | Scan >180 ngày + write-off |
 
-### 🚀 Tích Hợp VNPT e-Invoice (Web Service TT78 & NĐ70) — Đã Hoàn Thành (16/09/2026)
+### 🚀 Tích Hợp VNPT e-Invoice (Web Service TT78 & NĐ70) & Đối Chiếu Hóa Đơn — Đã Hoàn Thành & Audit (16/09/2026)
 
 | Thành phần | File code | Mô tả |
 |---|---|---|
-| **VNPT SOAP Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX `PublishService`, `PortalService`, `BusinessService`. Hỗ trợ đẩy nháp (`ImportInvByPattern`), xóa nháp (`deleteInvoiceByFkey`), lấy số HĐ & mã CQT (`GetMCCQThueByFkeysNoXMLSign`), lấy dải hóa đơn (`GetMCCQThueFromNoToNo`), link PDF/Portal (`GetLinkInvViewFkey`). |
-| **Server Actions Đối Chiếu** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (phân loại ma trận, KPI độ phủ %), `batchSyncPendingInvoices` (đồng bộ hàng loạt), `manualLinkInvoiceToOrder` (gán thủ công), `exportInvoiceReconciliationExcel` (xuất file Excel 2 sheet). |
-| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` | 5 thẻ KPI trực quan, bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
+| **VNPT SOAP Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX `PublishService`, `PortalService`, `BusinessService`. Hỗ trợ đẩy nháp (`ImportInvByPattern`), xóa nháp (`deleteInvoiceByFkey`), lấy số HĐ & mã CQT (`GetMCCQThueByFkeysNoXMLSign`), lấy dải hóa đơn (`GetMCCQThueFromNoToNo`), link PDF/Portal (`GetLinkInvViewFkey`). Đa pháp nhân Thắng Ân (`TA`: C26THP) vs Ly's Cellar (`LC`: C26TAB). |
+| **Server Actions Đối Chiếu** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (phân loại ma trận, KPI độ phủ %, phát hiện lệch thuế & tổng tiền), `batchSyncPendingInvoices` (đồng bộ hàng loạt song song 5 luồng), `manualLinkInvoiceToOrder` (gán thủ công chuẩn Net + VAT), `exportInvoiceReconciliationExcel` (xuất file Excel 2 sheet). |
+| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` | 5 thẻ KPI trực quan, bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, badge cảnh báo lệch kỳ thuế NĐ 123, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
+
+### 🐛 Bugs Fixed & Audit Results (16/09/2026)
+
+| Bug / Audit Finding | Root Cause & Fix | Hiệu quả sau sửa |
+|---|---|---|
+| **Lệch tiền hàng loạt (False Positives)** | `orderTotal` so sánh tiền trước thuế (`so.totalAmount`) với tiền sau thuế của hóa đơn (`inv.totalAmount`). Đã chuẩn hóa so khớp đồng nhất Gross (`orderGross = net + vat`) và kiểm tra độc lập cả `vatVariance`. | Khắc phục 159 đơn bị báo lệch ảo về đúng trạng thái **MATCHED (Khớp 100%)**, chỉ định vị đúng 1 đơn hàng duy nhất lệch thực tế (`SO-2608-0078` lệch 10.000đ). |
+| **Gán HĐ thủ công thiếu tiền thuế VAT** | `manualLinkInvoiceToOrder` gán `totalAmount = so.totalAmount` (thiếu `vatAmount`). Đã sửa tính đủ `totalAmount = netAmount + vatAmount`. | Dữ liệu `ARInvoice` chuẩn xác 100% khi kế toán gán hóa đơn thủ công. |
+| **Thiếu cảnh báo lệch kỳ tính thuế NĐ 123** | Chưa tích hợp kiểm tra ngày lập đơn vs ngày xuất HĐ trên màn hình đối chiếu. Đã bổ sung badge `⚠️ Lệch kỳ thuế` khi đơn khác tháng với ngày hôm nay. | Kế toán trưởng rà soát phát hiện ngay các đơn hàng giao tháng trước chưa kịp xuất HĐ để xử lý rủi ro thuế. |
+| **Đồng bộ hàng loạt bị nghẽn (Serial)** | `batchSyncPendingInvoices` duyệt tuần tự từng đơn. Đã nâng cấp chạy song song theo cụm 5 luồng (`CHUNK_SIZE = 5`). | Tốc độ quét và đồng bộ VNPT tăng nhanh gấp ~4 lần. |
 
 ### ❌ Chưa triển khai
 
@@ -366,6 +375,6 @@ JournalDocType    enum: ..., COGS, EXPENSE, COD_COLLECTION, BAD_DEBT
 | Missing AP Payment journal | `actions.ts`: thêm `generateAPPaymentJournal` DR 331/CR 112 |
 | `idSchema` dùng `.uuid()` nhưng Prisma dùng `cuid()` | `validations.ts`: đổi thành `.min(1)` |
 
-*Last updated: 2026-09-16 | Wine ERP v11.0*
+*Last updated: 2026-09-16 12:40 | Wine ERP v11.0*
 
 

@@ -515,7 +515,17 @@ export function InvoiceReconciliationTab() {
                                         >
                                             {/* 1. SO No & Date */}
                                             <td className="py-3 px-3.5">
-                                                <div className="font-bold font-mono text-[#87CBB9]">{r.soNo}</div>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-bold font-mono text-[#87CBB9]">{r.soNo}</span>
+                                                    {r.dateWarning?.isDifferentMonth && (
+                                                        <span 
+                                                            className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 cursor-help" 
+                                                            title={r.dateWarning.message}
+                                                        >
+                                                            ⚠️ Lệch kỳ thuế
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="text-[10px]" style={{ color: '#4A6A7A' }}>
                                                     {new Date(r.orderDate).toLocaleDateString('vi-VN')}
                                                 </div>
@@ -556,8 +566,18 @@ export function InvoiceReconciliationTab() {
                                                             {formatVND(r.invoiceTotal)}
                                                         </div>
                                                         {Math.abs(r.variance) > 1000 ? (
-                                                            <div className="text-[10px] font-bold text-orange-400">
+                                                            <div 
+                                                                className="text-[10px] font-bold text-orange-400 cursor-help"
+                                                                title={r.discrepancyReason || `Lệch tổng tiền ${formatVND(r.variance)}`}
+                                                            >
                                                                 Lệch: {formatVND(r.variance)}
+                                                            </div>
+                                                        ) : r.vatVariance && Math.abs(r.vatVariance) > 1000 ? (
+                                                            <div 
+                                                                className="text-[10px] font-bold text-orange-400 cursor-help"
+                                                                title={r.discrepancyReason || `Lệch thuế VAT ${formatVND(r.vatVariance)}`}
+                                                            >
+                                                                Lệch VAT: {formatVND(r.vatVariance)}
                                                             </div>
                                                         ) : (
                                                             <div className="text-[10px] text-emerald-400">Khớp 100%</div>
