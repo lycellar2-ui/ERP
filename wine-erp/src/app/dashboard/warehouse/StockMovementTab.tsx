@@ -27,6 +27,7 @@ const DOC_TYPE_CFG: Record<string, { label: string; color: string; bg: string; i
     TRANSFER_IN: { label: 'Chuyển Vào', color: '#0284C7', bg: '#F0F9FF', icon: ArrowDownCircle },
     TRANSFER_OUT: { label: 'Chuyển Ra', color: '#C05621', bg: '#FFFAF0', icon: ArrowUpCircle },
     WRITE_OFF: { label: 'Hủy', color: '#991B1B', bg: '#FEF2F2', icon: TrendingDown },
+    POS_SALE: { label: 'Bán POS', color: '#0F766E', bg: '#F0FDFA', icon: ArrowUpCircle },
 }
 
 type ViewMode = 'SUMMARY' | 'DETAIL'

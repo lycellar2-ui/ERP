@@ -60,6 +60,7 @@
 51. [BUG-104: Phân Quyền Miễn Xuất Hóa Đơn VAT Cho Đơn Hàng (Chỉ Kế Toán/Admin), Tách Riêng Doanh Thu & Bảo Toàn Đủ 100% VAT](#bug-104-phân-quyền-miễn-xuất-hóa-đơn-vat-cho-đơn-hàng-chỉ-kế-toánadmin-tách-riêng-doanh-thu--bảo-toàn-đủ-100-vat)
 52. [BUG-105: Độ Trễ Trạng Thái Tờ Trình (Stale Cache Đa Container Vercel & Thiếu Realtime Khi Nhấn Trình/Duyệt)](#bug-105-độ-trễ-trạng-thái-tờ-trình-stale-cache-đa-container-vercel--thiếu-realtime-khi-nhấn-trìnhduyệt)
 53. [BUG-106: Nhận Sai Quy Cách Thùng Khi Nhập Kho PO & Lỗi Tràn Layout Giao Diện Đơn Mua Hàng](#bug-106-nhận-sai-quy-cách-thùng-khi-nhập-kho-po--lỗi-tràn-layout-giao-diện-đơn-mua-hàng)
+54. [BUG-107: Lỗi Tính Toán Báo Cáo Nhập Xuất Tồn (NXT), Lệch Sổ Kho & Tính Ảo Phiếu Nhập DRAFT](#bug-107-lỗi-tính-toán-báo-cáo-nhập-xuất-tồn-nxt-lệch-sổ-kho--tính-ảo-phiếu-nhập-draft)
 
 ---
 
@@ -2846,3 +2847,51 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 106: Khi kế thừa dữ liệu từ PO sang Phiếu Nhập Kho (Goods Receipt), BẮT BUỘC phải đọc quy cách đóng gói (`unitsPerCase`) từ trường đơn vị của dòng PO (`line.uom`) thay vì chỉ phụ thuộc vào danh mục gốc (`product.unitsPerCase`); Luôn hỗ trợ `poLineId` để phân biệt các dòng cùng SKU (hàng mua vs hàng tặng FOC); Trên giao diện bảng ERP, cột nút hành động (Actions) phải có `min-width` cố định và `whitespace-nowrap flex-nowrap` để tuyệt đối không bị rớt dòng răng cưa.**
+
+
+## BUG-107: Lỗi Tính Toán Báo Cáo Nhập Xuất Tồn (NXT), Lệch Sổ Kho & Tính Ảo Phiếu Nhập DRAFT
+
+**Severity:** 🔴 Critical / Inventory & Financial Integrity  
+**Date:** 2026-09-15  
+**Affected Modules:** `WMS` (Warehouse Goods Receipt & NXT — `warehouse/actions.ts`, `warehouse/actions-nxt.ts`, `warehouse/GoodsReceiptTab.tsx`, `warehouse/StockMovementTab.tsx`)
+
+### Mô tả vấn đề
+1. **Phiếu Nhập kho DRAFT bị tính ngay vào tồn kho và Báo cáo NXT:**
+   - Khi tạo phiếu nhập kho tạm `createGoodsReceipt`, hệ thống sinh bản ghi `StockLot` với `status: 'PENDING'`. Tuy nhiên, trong `actions-nxt.ts`, các hàm gom nhóm `openingStockLots` và `periodStockLots` chỉ kiểm tra ngày `receivedDate` và `NOT: { lotNo: { startsWith: 'TRF-' } }`, hoàn toàn không kiểm tra trạng thái của lô hàng hay phiếu nhập.
+   - Kết quả: Phiếu tạm (hàng chưa về, chưa kiểm nghiệm, chưa bấm xác nhận) đã lập tức bị cộng vào 'Nhập trong kỳ' và 'Tồn cuối kỳ' của Báo cáo NXT.
+   - Khi xác nhận phiếu (`confirmGoodsReceipt`), ngày tiếp nhận `receivedDate` của lô hàng không được cập nhật sang thời điểm xác nhận thực tế (`confirmedAt`), khiến hàng nhập tháng sau nhưng bị tính vào tháng trước nếu tạo nháp trước đó.
+2. **Điều chuyển kho nội bộ (`transferStock`) làm tăng khống hàng nhập toàn công ty:**
+   - Trong `actions.ts` (`transferStock`), khi chuyển hàng vào một lô có sẵn tại vị trí đích, hệ thống tăng cả `qtyAvailable` và `qtyReceived` trên lô đích. Nhưng ở lô xuất gốc, chỉ trừ `qtyAvailable` mà không trừ `qtyReceived`.
+   - Kết quả: Khi tổng hợp Báo cáo NXT toàn công ty, tổng số chai nhập khẩu/mua mới bị đội lên thêm đúng bằng số lượng hàng luân chuyển qua lại giữa các vị trí.
+3. **Bán lẻ POS không lọc theo Kho trong Báo cáo NXT:**
+   - Truy vấn `openingPos` và `periodPos` trong `actions-nxt.ts` không lọc theo `so.warehouseId`. Khi người dùng xem Báo cáo NXT cho một kho cụ thể (ví dụ Kho TP.HCM), toàn bộ đơn hàng POS bán ở các kho khác (như Hà Nội) vẫn bị trừ vào tồn kho của kho đang xem.
+4. **Bất nhất giữa Bảng Tổng Hợp và Sổ Chi Tiết Thẻ Kho:**
+   - Bảng tổng hợp gom số xuất bán lẻ POS vào `outQty`, nhưng trong hàm `getStockMovements` (Sổ chi tiết Thẻ kho khi bấm vào sản phẩm) lại hoàn toàn không truy vấn đơn POS. Dẫn đến số liệu xuất và số dư chạy (running balance) trong sổ chi tiết bị vênh với bảng tổng hợp.
+5. **Bỏ sót Kiểm kê kho (Stock Count) và Xuất hủy (Write-off):**
+   - Nghiệp vụ điều chỉnh kiểm kê thừa/thiếu (`adjustStockFromCount`) và xuất hủy hàng hỏng/vỡ (`writeOffStock`) chỉ tăng/giảm trực tiếp `qtyAvailable` trên `StockLot`. Báo cáo NXT không ghi nhận các biến động này, làm con số 'Tồn cuối kỳ' trên Báo cáo NXT lệch hoàn toàn với 'Tồn kho thực tế' trên Tab Tồn Kho.
+6. **Định giá Giá trị Tồn kho sai kế toán khi hết hàng:**
+   - `actions-nxt.ts` tính đơn giá vốn bình quân chỉ trên các lô còn hàng (`status in ['AVAILABLE', 'RESERVED', 'QUARANTINE']`). Khi một sản phẩm đã bán sạch tồn (`qtyAvailable = 0`), giá vốn bị tính bằng 0đ, kéo theo toàn bộ Giá trị tồn đầu, nhập, xuất trong kỳ đều bị hiển thị là 0đ dù có giao dịch phát sinh.
+7. **Thiếu nút Hủy phiếu Nhập kho DRAFT:**
+   - Thủ kho không thể hủy các phiếu nhập nháp tạo sai, khiến các lô `PENDING` rác tồn tại vĩnh viễn trong cơ sở dữ liệu.
+
+### Cách khắc phục
+1. **Lọc triệt để trạng thái hợp lệ trên Báo cáo NXT (`actions-nxt.ts`):**
+   - Bổ sung điều kiện `status: { in: ['AVAILABLE', 'RESERVED', 'CONSUMED', 'QUARANTINE'] }` vào toàn bộ truy vấn `openingStockLots` và `periodStockLots`, loại bỏ 100% các lô `PENDING` của phiếu DRAFT khỏi báo cáo.
+   - Cập nhật `receivedDate = new Date()` khi xác nhận phiếu nhập `confirmGoodsReceipt` để phản ánh chính xác ngày thực nhập.
+2. **Khắc phục lỗi điều chuyển kho:**
+   - Trong `transferStock` (`actions.ts`), bỏ lệnh tăng `qtyReceived` khi chuyển vào lô sẵn có, bảo toàn đúng tổng số lượng hàng nhập gốc của công ty.
+3. **Đồng bộ hóa POS Sales:**
+   - Bổ sung điều kiện `so.warehouseId = warehouseId` vào cả `openingPos` và `periodPos`.
+   - Bổ sung truy vấn đơn POS vào `getStockMovements` với `docType: 'POS_SALE'`, hiển thị rõ ràng trên thẻ kho và khớp số dư 100% với Bảng tổng hợp.
+4. **Tích hợp Kiểm kê kho (`ADJ`) và Xuất hủy (`WRITE_OFF`):**
+   - Truy vấn chênh lệch kiểm kê từ `stockCountLine` (của các phiên kiểm kê `COMPLETED`): chênh lệch dương cộng vào nhập, chênh lệch âm cộng vào xuất.
+   - Bổ sung dòng biến động `docType: 'ADJ'` trong sổ chi tiết thẻ kho.
+5. **Chuẩn hóa Định giá tồn kho:**
+   - Tính `inValue` theo giá trị thực tế của các lô nhập trong kỳ: tổng `(qtyReceived * unitLandedCost)`.
+   - Mở rộng phạm vi tính giá vốn bình quân cho tất cả các lô có `unitLandedCost > 0` trong lịch sử để sản phẩm hết tồn vẫn giữ nguyên giá vốn chính xác, không bị 0đ.
+6. **Bổ sung tính năng Hủy phiếu Nhập kho DRAFT (`cancelGoodsReceipt`):**
+   - Cho phép xóa phiếu DRAFT và tự động dọn dẹp các lô `PENDING` liên kết, đồng thời ghi nhận audit trail `DELETE`.
+   - Thêm nút 'Hủy' trên cả bảng danh sách và Drawer chi tiết (`GoodsReceiptTab.tsx`).
+
+### Bài học
+> ⚠️ **RULE 107: Mọi biến động kho trên Báo cáo Nhập Xuất Tồn (NXT) CHỈ ĐƯỢC PHÉP ghi nhận khi chứng từ đã ở trạng thái HOÀN THÀNH/XÁC NHẬN (CONFIRMED/SHIPPED/COMPLETED); TUYỆT ĐỐI KHÔNG tính các bản ghi DRAFT/PENDING vào tồn kho; Khi luân chuyển kho nội bộ, KHÔNG ĐƯỢC phép tăng `qtyReceived` trên lô nhận vì sẽ làm khống tổng nhập kho toàn công ty; Mọi kênh xuất hàng (kể cả bán lẻ POS, kiểm kê điều chỉnh hay xuất hủy) BẮT BUỘC phải được đưa vào cả Bảng tổng hợp và Thẻ kho chi tiết với đầy đủ bộ lọc kho (`warehouseId`).**

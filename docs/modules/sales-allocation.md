@@ -618,4 +618,16 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Sao Chép / Áp Dụng Giá Cho Các Cơ Sở Khác** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:cloneCustomerPriceRules`, `customer-rules-actions.ts:getCustomerRelatedBranches` | Hỗ trợ nhân bản / sao chép chính sách giá đặc biệt từ một khách hàng nguồn sang nhiều chi nhánh / cơ sở khác cùng chuỗi thương hiệu hoặc công ty mẹ với 1 cú click |
 | **Áp Dụng Cơ Chế Giá Đa Chi Nhánh Trong Tờ Trình** | `ProposalsClient.tsx`, `proposals/actions.ts:syncProposalToCustomerPriceRules` | Cho phép tích chọn áp dụng đồng thời cơ chế giá đề xuất cho các cơ sở con / cơ sở liên kết, tự động đồng bộ giá sang toàn bộ các cơ sở khi tờ trình được duyệt |
 
-*Last updated: 2026-08-20 17:05 | Wine ERP v10.9*
+#### 🚀 Session 15 - Tích hợp Đẩy Hóa Đơn Nháp lên VNPT e-Invoice (16/09/2026)
+
+Tích hợp trực tiếp Web Service VNPT e-Invoice (Chuẩn tài liệu V5 Webservice theo Thông tư 78/2021/TT-BTC & Nghị định 70/2025/NĐ-CP):
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **VNPT Types & Models** | `src/lib/vnpt/types.ts` | Khai báo các interface `VnptConfig`, `InvoicePayload`, `InvoiceItem`, `VnptCallResult`, `VnptDraftMetadata`. |
+| **XML Builder TT78 / NĐ70** | `src/lib/vnpt/xml-builder.ts` | Tự động sinh chuỗi XML `<DSHDon>` chuẩn Thuế, hỗ trợ đa thuế suất (10%, 8%), chuyển đổi số tiền sang chữ tiếng Việt (`readVndMoneyToWords`), escape ký tự XML an toàn. |
+| **VNPT SOAP Web Service Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX SOAP 1.1 / 1.2: `ImportInvByPattern` (đẩy hóa đơn nháp) và `deleteInvoiceByFkey` (xóa bản nháp). Hỗ trợ từ điển mã lỗi chi tiết tiếng Việt và chế độ Mock/Sandbox an toàn. |
+| **Server Actions VNPT** | `src/app/dashboard/sales/actions-vnpt.ts` | `uploadDraftInvoiceToVnpt(soId)` (đẩy nháp, tạo ARInvoice `NHAP-...`, lưu FKey), `deleteDraftInvoiceFromVnpt(soId)` (hủy nháp VNPT), `getVnptDraftInfo(soId)`. |
+| **UI Drawer Hóa Đơn** | `src/app/dashboard/sales/SalesClient.tsx` | Bổ sung nút **"Đẩy Nháp Lên VNPT"**, hiển thị badge trạng thái nháp VNPT (kèm FKey, Mẫu số, Ký hiệu), nút xóa bản nháp và đồng bộ lại. |
+
+*Last updated: 2026-09-16 11:22 | Wine ERP v11.0*

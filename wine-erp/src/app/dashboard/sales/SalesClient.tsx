@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle, CloudUpload } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
+import { uploadDraftInvoiceToVnpt, deleteDraftInvoiceFromVnpt } from './actions-vnpt'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
@@ -428,6 +429,8 @@ function SODetailDrawer({
     const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
     const [togglingExempt, setTogglingExempt] = useState(false)
     const [markingPaid, setMarkingPaid] = useState(false)
+    const [uploadingVnpt, setUploadingVnpt] = useState(false)
+    const [deletingVnpt, setDeletingVnpt] = useState(false)
 
     const handleToggleExempt = async () => {
         if (!soId || !detail || togglingExempt) return
@@ -573,6 +576,51 @@ function SODetailDrawer({
             toast.error(err.message || 'Lỗi kết nối hệ thống')
         } finally {
             setDeletingInvoiceId(null)
+        }
+    }
+
+    const handleUploadVnptDraft = async () => {
+        if (!soId || !detail || uploadingVnpt) return
+        setUploadingVnpt(true)
+        try {
+            const res = await uploadDraftInvoiceToVnpt(soId)
+            if (res.success) {
+                toast.success(res.message || 'Đã đẩy hóa đơn nháp lên VNPT thành công!')
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+                onReloadList?.()
+            } else {
+                toast.error(res.error || 'Lỗi khi đẩy hóa đơn nháp lên VNPT')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối máy chủ VNPT')
+        } finally {
+            setUploadingVnpt(false)
+        }
+    }
+
+    const handleDeleteVnptDraft = async () => {
+        if (!soId || !detail || deletingVnpt) return
+        if (!window.confirm('Bạn có chắc chắn muốn xóa bản nháp hóa đơn này trên hệ thống VNPT không?')) {
+            return
+        }
+        setDeletingVnpt(true)
+        try {
+            const res = await deleteDraftInvoiceFromVnpt(soId)
+            if (res.success) {
+                toast.success(res.message || 'Đã xóa bản nháp VNPT thành công!')
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+                onReloadList?.()
+            } else {
+                toast.error(res.error || 'Lỗi xóa bản nháp VNPT')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối')
+        } finally {
+            setDeletingVnpt(false)
         }
     }
 
@@ -1294,16 +1342,28 @@ function SODetailDrawer({
                                 ) : detail.arInvoices.length === 0 ? (
                                     <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
                                         <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
-                                        <div className="flex items-center justify-center gap-2">
+                                        <div className="flex flex-wrap items-center justify-center gap-2">
+                                            {canCreateInvoice && (
+                                                <button
+                                                    onClick={handleUploadVnptDraft}
+                                                    disabled={uploadingVnpt}
+                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50 cursor-pointer text-white"
+                                                    style={{ background: '#2563EB' }}
+                                                    title="Đẩy dữ liệu hóa đơn nháp lên cổng VNPT e-Invoice (TT78/NĐ70)"
+                                                >
+                                                    {uploadingVnpt ? <Loader2 size={13} className="animate-spin" /> : <CloudUpload size={13} />}
+                                                    Đẩy Nháp Lên VNPT
+                                                </button>
+                                            )}
                                             {canCreateInvoice && (
                                                 <button
                                                     onClick={handleCreateInvoice}
                                                     disabled={creatingInvoice}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
+                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50 cursor-pointer"
                                                     style={{ background: '#87CBB9', color: '#0A1926' }}
                                                 >
                                                     {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-                                                    Xuất / Gắn Hóa Đơn VAT
+                                                    Gắn HĐ VAT Thủ Công
                                                 </button>
                                             )}
                                             {canToggleInvoiceExempt && (
@@ -1319,43 +1379,98 @@ function SODetailDrawer({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-1.5">
-                                        {detail.arInvoices.map(inv => (
-                                            <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded gap-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-xs font-bold font-mono text-[#87CBB9] truncate">{inv.invoiceNo}</span>
-                                                        {canCreateInvoice && (
-                                                            <button
-                                                                onClick={() => handleEditInvoice(inv.id, inv.invoiceNo)}
-                                                                disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
-                                                                className="p-1 rounded text-[#8AAEBB] hover:text-[#87CBB9] hover:bg-[#2A4355]/40 transition-colors"
-                                                                title="Chỉnh sửa mã số hóa đơn"
+                                    <div className="space-y-2">
+                                        {detail.arInvoices.map(inv => {
+                                            const isDraftVnpt = inv.invoiceNo.startsWith('NHAP-')
+                                            return (
+                                                <div
+                                                    key={inv.id}
+                                                    className="p-3 rounded-md transition-all"
+                                                    style={{
+                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : '#1B2E3D',
+                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : '1px solid #2A4355',
+                                                    }}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : 'text-[#87CBB9]'}`}>
+                                                                    {inv.invoiceNo}
+                                                                </span>
+                                                                {isDraftVnpt ? (
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+                                                                        <CloudUpload size={10} />
+                                                                        Nháp VNPT
+                                                                    </span>
+                                                                ) : (
+                                                                    canCreateInvoice && (
+                                                                        <button
+                                                                            onClick={() => handleEditInvoice(inv.id, inv.invoiceNo)}
+                                                                            disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
+                                                                            className="p-1 rounded text-[#8AAEBB] hover:text-[#87CBB9] hover:bg-[#2A4355]/40 transition-colors"
+                                                                            title="Chỉnh sửa mã số hóa đơn"
+                                                                        >
+                                                                            {editingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
+                                                                        </button>
+                                                                    )
+                                                                )}
+                                                                {canCreateInvoice && inv.status !== 'PAID' && (
+                                                                    <button
+                                                                        onClick={() => isDraftVnpt ? handleDeleteVnptDraft() : handleDeleteInvoice(inv.id, inv.invoiceNo)}
+                                                                        disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id || deletingVnpt}
+                                                                        className="p-1 rounded text-[#8AAEBB] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                                                        title={isDraftVnpt ? "Xóa bản nháp trên cổng VNPT" : "Gỡ bỏ hóa đơn"}
+                                                                    >
+                                                                        {(deletingInvoiceId === inv.id || (isDraftVnpt && deletingVnpt)) ? (
+                                                                            <Loader2 size={11} className="animate-spin text-red-400" />
+                                                                        ) : (
+                                                                            <X size={11} />
+                                                                        )}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[11px] mt-1 text-[#8AAEBB]">
+                                                                {isDraftVnpt
+                                                                    ? 'Đã tải lên mục "Hóa đơn chờ phát hành" trên VNPT e-Invoice. Kế toán kiểm tra và ký số trên Web Portal VNPT.'
+                                                                    : `Hạn thanh toán: ${formatDate(inv.dueDate)}`}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right shrink-0">
+                                                            <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>
+                                                                {formatVND(Number(inv.amount))}
+                                                            </span>
+                                                            <span
+                                                                className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5"
+                                                                style={isDraftVnpt ? { background: 'rgba(59,130,246,0.15)', color: '#60A5FA' } : getInvoiceStatusStyle(inv.status)}
                                                             >
-                                                                {editingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
-                                                            </button>
-                                                        )}
-                                                        {canCreateInvoice && inv.status !== 'PAID' && (
-                                                            <button
-                                                                onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNo)}
-                                                                disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
-                                                                className="p-1 rounded text-[#8AAEBB] hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                                                title="Gỡ bỏ hóa đơn"
-                                                            >
-                                                                {deletingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin text-red-400" /> : <X size={11} />}
-                                                            </button>
-                                                        )}
+                                                                {isDraftVnpt ? 'CHỜ PHÁT HÀNH' : (INVOICE_STATUS_LABELS[inv.status] ?? inv.status)}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <span className="text-[10px] block mt-0.5" style={{ color: '#4A6A7A' }}>Hạn: {formatDate(inv.dueDate)}</span>
+
+                                                    {isDraftVnpt && (
+                                                        <div className="mt-2.5 pt-2 border-t border-blue-500/20 flex items-center justify-between gap-2">
+                                                            <span className="text-[10px] text-blue-300/80">
+                                                                FKey: <code className="font-mono text-blue-200">SO_{detail.soNo.replace(/[^A-Za-z0-9_-]/g, '_')}</code>
+                                                            </span>
+                                                            <div className="flex items-center gap-1.5">
+                                                                {canCreateInvoice && (
+                                                                    <button
+                                                                        onClick={handleUploadVnptDraft}
+                                                                        disabled={uploadingVnpt}
+                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-300 hover:bg-blue-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="Cập nhật lại thông tin mới nhất lên bản nháp VNPT"
+                                                                    >
+                                                                        {uploadingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
+                                                                        Đồng Bộ Lại
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="text-right shrink-0">
-                                                    <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.amount))}</span>
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5" style={getInvoiceStatusStyle(inv.status)}>
-                                                        {INVOICE_STATUS_LABELS[inv.status] ?? inv.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 )}
                             </div>

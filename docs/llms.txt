@@ -1,5 +1,5 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-15 14:40
+> Last updated: 2026-09-15 23:35
 > Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, PRC v10.30 (PO Order Discounts & FOC Goods with Customs Value Support)
  
 ## Core Files (MUST READ IN ORDER)

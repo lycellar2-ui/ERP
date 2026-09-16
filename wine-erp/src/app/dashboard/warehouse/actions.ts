@@ -845,6 +845,7 @@ export async function confirmGoodsReceipt(
                         data: {
                             status: 'AVAILABLE',
                             qtyAvailable: line.qtyReceived,
+                            receivedDate: new Date(),
                         },
                     })
                 }
@@ -894,6 +895,67 @@ export async function confirmGoodsReceipt(
         revalidatePath('/dashboard/procurement')
         revalidatePath('/dashboard/finance')
         revalidatePath('/dashboard/qr-codes')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Cancel / Delete DRAFT Goods Receipt ───────────
+export async function cancelGoodsReceipt(
+    grId: string
+): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser()
+    try {
+        let grNo = ''
+        await prisma.$transaction(async (tx) => {
+            const gr = await tx.goodsReceipt.findUnique({
+                where: { id: grId },
+                include: { lines: true },
+            })
+            if (!gr) throw new Error('Phiếu nhập kho không tồn tại')
+            if (gr.status !== 'DRAFT') {
+                throw new Error('Chỉ được phép hủy phiếu nhập kho ở trạng thái DRAFT (Nháp)')
+            }
+            grNo = gr.grNo
+
+            // Collect all pending lot IDs from lines
+            const lotIds = gr.lines.map(l => l.lotId).filter(Boolean) as string[]
+
+            // Delete lines first
+            await tx.goodsReceiptLine.deleteMany({
+                where: { grId },
+            })
+
+            // Delete pending lots created for this draft
+            if (lotIds.length > 0) {
+                await tx.stockLot.deleteMany({
+                    where: {
+                        id: { in: lotIds },
+                        status: 'PENDING',
+                    },
+                })
+            }
+
+            // Delete the GR
+            await tx.goodsReceipt.delete({
+                where: { id: grId },
+            })
+        })
+
+        if (user?.id) {
+            logAudit({
+                userId: user.id,
+                action: 'DELETE',
+                entityType: 'GoodsReceipt',
+                entityId: grId,
+                description: `Hủy phiếu nhập kho nháp ${grNo}`,
+            })
+        }
+
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
+        revalidatePath('/dashboard/procurement')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -1493,7 +1555,6 @@ export async function transferStock(input: {
                     where: { id: existingLot.id },
                     data: {
                         qtyAvailable: { increment: input.qty },
-                        qtyReceived: { increment: input.qty },
                     },
                 })
             } else {
@@ -1905,7 +1966,19 @@ export async function writeOffStock(input: {
         const { generateWriteOffJournal } = await import('../finance/actions')
         generateWriteOffJournal(input.lotId, input.qty, input.reason, 'system').catch(() => { })
 
+        const user = await getCurrentUser()
+        if (user?.id) {
+            logAudit({
+                userId: user.id,
+                action: 'UPDATE',
+                entityType: 'StockLot',
+                entityId: input.lotId,
+                description: `Xuất hủy ${input.qty} chai (Lô: ${lot.lotNo}). Lý do: ${input.reason}`,
+            })
+        }
+
         revalidateCache('wms')
+        revalidateCache('nxt')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/finance')
         return { success: true }
@@ -1987,6 +2060,7 @@ export async function adjustStockFromCount(
         })
 
         revalidateCache('wms')
+        revalidateCache('nxt')
         revalidatePath('/dashboard/warehouse')
         return { success: true, adjustedLines: result }
     } catch (err: any) {

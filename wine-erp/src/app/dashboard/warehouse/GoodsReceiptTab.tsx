@@ -10,7 +10,7 @@ import {
 import { toast } from 'sonner'
 import {
     type GoodsReceiptRow,
-    getGoodsReceipts, getPOsForReceiving, createGoodsReceipt, confirmGoodsReceipt,
+    getGoodsReceipts, getPOsForReceiving, createGoodsReceipt, confirmGoodsReceipt, cancelGoodsReceipt,
     getGRDetail, getLocations, exportGoodsReceiptsExcel,
 } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
@@ -283,6 +283,25 @@ export function GoodsReceiptTab({ warehouses }: {
             {
                 loading: 'Đang xác nhận nhập kho...',
                 success: `Phiếu ${grNo} đã xác nhận — Tồn kho đã cập nhật!`,
+                error: (err: Error) => `Lỗi: ${err.message}`
+            }
+        )
+    }
+
+    const handleCancel = async (id: string, grNo: string) => {
+        if (!confirm(`Hủy và xóa phiếu nhập kho tạm ${grNo}? Toàn bộ số lượng nháp sẽ bị xóa bỏ.`)) return
+        toast.promise(
+            cancelGoodsReceipt(id).then(async (res) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi hủy phiếu GR')
+                await reload()
+                if (detailData && detailData.id === id) {
+                    setDetailData(null)
+                }
+                return res
+            }),
+            {
+                loading: 'Đang hủy phiếu tạm...',
+                success: `Phiếu ${grNo} đã được hủy bỏ thành công!`,
                 error: (err: Error) => `Lỗi: ${err.message}`
             }
         )
@@ -776,14 +795,23 @@ export function GoodsReceiptTab({ warehouses }: {
                                                 </button>
 
                                                 {gr.status === 'DRAFT' && (
-                                                    <button
-                                                        onClick={() => handleConfirm(gr.id, gr.grNo)}
-                                                        className="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
-                                                        style={{ background: '#5BA88A', color: '#0F1E2E' }}
-                                                        title="Xác nhận nhập kho ngay"
-                                                    >
-                                                        Xác Nhận
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleConfirm(gr.id, gr.grNo)}
+                                                            className="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
+                                                            style={{ background: '#5BA88A', color: '#0F1E2E' }}
+                                                            title="Xác nhận nhập kho ngay"
+                                                        >
+                                                            Xác Nhận
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleCancel(gr.id, gr.grNo)}
+                                                            className="px-2 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-400 border border-rose-800/40"
+                                                            title="Hủy phiếu tạm và xóa lô nháp"
+                                                        >
+                                                            Hủy
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </td>
@@ -921,13 +949,21 @@ export function GoodsReceiptTab({ warehouses }: {
 
                             <div className="flex items-center gap-2">
                                 {detailData && detailData.status === 'DRAFT' && (
-                                    <button
-                                        onClick={() => handleConfirm(detailData.id, detailData.grNo)}
-                                        className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
-                                        style={{ background: '#5BA88A', color: '#0F1E2E' }}
-                                    >
-                                        Xác Nhận GR
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => handleConfirm(detailData.id, detailData.grNo)}
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
+                                            style={{ background: '#5BA88A', color: '#0F1E2E' }}
+                                        >
+                                            Xác Nhận GR
+                                        </button>
+                                        <button
+                                            onClick={() => handleCancel(detailData.id, detailData.grNo)}
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-400 border border-rose-800/40"
+                                        >
+                                            Hủy Phiếu
+                                        </button>
+                                    </>
                                 )}
                                 <button
                                     onClick={() => setDetailData(null)}

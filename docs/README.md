@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 105 Rules rút ra từ 75 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 107 Rules rút ra từ 76 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-15 14:40 | Wine ERP v10.30 — Mua Hàng (PRC): Bổ sung Quản lý Giảm giá/Chiết khấu đơn hàng (% & Tiền cố định), Quản lý hàng quà tặng FOC kèm Đơn giá danh nghĩa Hải quan & Landed Cost*
+*Last updated: 2026-09-15 23:35 | Wine ERP v10.31 - Kho Hàng (WMS): Sửa toàn bộ 10 lỗi Nhập Kho, Điều Chuyển, Bán POS và Báo Cáo Nhập Xuất Tồn (NXT)*
 
