@@ -71,3 +71,11 @@ TaxRate {
 
 ### D. Xuất Báo Cáo
 - Báo cáo "Chi phí Thuế theo Quốc gia" — Giúp CEO so sánh tổng chi phí nhập khẩu Wine từ Pháp (EVFTA) vs Mỹ (MFN) để ra quyết định chiến lược nguồn hàng
+
+---
+
+## 3. Trạng Thái Cập Nhật (16/09/2026)
+
+- **Gỡ bỏ Route `/dashboard/tax`:** Màn hình `/dashboard/tax` (trước đây đặt tên là "Quản Lý & Hóa Đơn Thuế") và tính năng cào hóa đơn GDT Captcha đã được gỡ bỏ hoàn toàn khỏi thanh Sidebar và hệ thống theo yêu cầu quản trị.
+- **Lý do:** Quy trình hóa đơn điện tử và kiểm soát đối chiếu đã được tích hợp tập trung, chính thức và tự động qua **VNPT e-Invoice** trực tiếp trên Đơn Bán Hàng (`/dashboard/sales`) và tab **Đối Chiếu HĐ VNPT** trong phân hệ Kế toán (`/dashboard/finance`).
+

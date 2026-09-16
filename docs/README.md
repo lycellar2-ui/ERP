@@ -68,7 +68,7 @@
 | 2 | `MDM` | Master Data (Product, Supplier, Customer) | [master-data.md](./modules/master-data.md) | `/products`, `/suppliers`, `/customers` |
 | 3 | `CRM` | Customer Relationship Management | [crm.md](./modules/crm.md) | `/crm`, `/pipeline` |
 | 4 | `CNT` | Contract Management & Regulated Documents | [contract-management.md](./modules/contract-management.md) | `/contracts` |
-| 5 | `TAX` | Tax Reference & Market Price Lookup | [market-price-tax-lookup.md](./modules/market-price-tax-lookup.md) | `/tax`, `/market-price` |
+| 5 | `TAX` | Tax Reference & Market Price Lookup | [market-price-tax-lookup.md](./modules/market-price-tax-lookup.md) | `/market-price` |
 | 6 | `PRC` | Procurement & Purchase Order | [procurement.md](./modules/procurement.md) | `/procurement` |
 | 7 | `SHP` | Shipment Tracking (Milestones, Costs) | [shipment-tracking.md](./modules/shipment-tracking.md) | `/shipments` |
 | 8 | `CST` | Product Costing (Giá vốn/chai) | [product-costing.md](./modules/product-costing.md) | `/costing` |

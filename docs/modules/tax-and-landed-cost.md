@@ -63,7 +63,7 @@ Hệ thống cần các bảng:
 | **Landed Cost Breakdown** | ✅ | `getLandedCostBreakdown()`: CIF + costs + tax → per SKU |
 | **UI Phân Tích Giá Vốn** | ✅ | Modal hiển thị: CIF VND, chi phí theo loại, thuế 3 tầng, giá/chai |
 | **Thuế engine** | ✅ | CIF → NK → TTĐB → VAT cascade, tự tra ABV cho 35%/65% TTĐB |
-| **Tax Lookup Module** | ✅ | `/dashboard/tax` — Tra cứu thuế suất theo HS, FTA |
+| **Tax Lookup Module** | Gỡ bỏ | Đã chuyển sang tích hợp trực tiếp biểu thuế trong Product Costing & Tờ khai HQ |
 | **Product Costing** | ✅ | `/dashboard/costing` — Tính giá vốn/chai 3 lớp thuế + đề xuất giá bán |
 
 ### Chi phí 15 loại đã cấu hình:
