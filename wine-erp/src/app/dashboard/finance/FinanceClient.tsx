@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab, TrialBalanceTab, AccountLedgerTab } from './FinanceTabs'
+import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
 
-type Tab = 'ar' | 'ap' | 'aging' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
+type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
 const AR_STATUS: Record<string, { label: string; color: string }> = {
     UNPAID: { label: 'Chưa Thu', color: '#D4A853' },
@@ -170,6 +171,16 @@ interface Props {
 
 export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPTotal, stats, agingBuckets, userId }: Props) {
     const [tab, setTab] = useState<Tab>('ar')
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search)
+            const urlTab = params.get('tab') as Tab
+            if (urlTab && ['ar', 'ap', 'aging', 'invoice-reconcile', 'journal', 'pnl', 'bs', 'trialbalance', 'ledger', 'expense', 'period', 'baddebt', 'cashflow'].includes(urlTab)) {
+                setTab(urlTab)
+            }
+        }
+    }, [])
     const [arRows, setArRows] = useState(initialAR)
     const [arTotal, setArTotal] = useState(initialARTotal)
     const [apRows, setApRows] = useState(initialAP)
@@ -259,6 +270,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         { key: 'ar', label: 'Phải Thu (AR)', icon: ArrowUpRight, group: 'ops' },
         { key: 'ap', label: 'Phải Trả (AP)', icon: ArrowDownRight, group: 'ops' },
         { key: 'aging', label: 'AR Aging', icon: Clock, group: 'ops' },
+        { key: 'invoice-reconcile', label: 'Đối Chiếu HĐ VNPT', icon: FileCheck2, group: 'ops' },
         // Accounting — Kế toán (export to external SW)
         { key: 'journal', label: 'Sổ Cái', icon: BookOpen, group: 'acct' },
         { key: 'pnl', label: 'P&L', icon: BarChart3, group: 'acct' },
@@ -493,6 +505,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     <AgingBars buckets={agingBuckets} />
                 </div>
             )}
+
+            {tab === 'invoice-reconcile' && <InvoiceReconciliationTab />}
 
             {tab === 'journal' && <JournalEntryTab />}
 

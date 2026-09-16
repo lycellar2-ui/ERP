@@ -102,3 +102,16 @@ export interface VnptSyncResult {
     errorMessage?: string
     rawXml?: string
 }
+
+export interface VnptRangeInvoice {
+    fkey: string
+    invoiceNo: string
+    fullInvoiceNo: string
+    pattern: string
+    serial: string
+    taxAuthorityCode: string
+    taxStatus: string
+    taxStatusText: string
+    taxError?: string
+}
+

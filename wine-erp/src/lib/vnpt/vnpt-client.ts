@@ -1,4 +1,4 @@
-import { VnptConfig, VnptCallResult, VnptSyncResult } from './types'
+import { VnptConfig, VnptCallResult, VnptSyncResult, VnptRangeInvoice } from './types'
 
 export const VNPT_ERROR_CODES: Record<string, string> = {
     'ERR:1': 'Tài khoản Web Service hoặc tài khoản phát hành không đúng, hoặc không có quyền thao tác.',
@@ -456,6 +456,145 @@ export async function syncInvoiceStatusFromVnpt(
         return {
             success: false,
             errorMessage: `Không thể kết nối Web Service VNPT khi kiểm tra trạng thái: ${err.message}`,
+        }
+    }
+}
+
+/**
+ * Lấy danh sách hóa đơn theo dải số từ VNPT qua hàm GetMCCQThueFromNoToNo
+ */
+export async function fetchVnptInvoicesByRange(
+    config: VnptConfig,
+    fromNo: number,
+    toNo: number
+): Promise<{
+    success: boolean
+    invoices: VnptRangeInvoice[]
+    errorMessage?: string
+}> {
+    if (config.isMock) {
+        return {
+            success: true,
+            invoices: [
+                {
+                    fkey: 'SO_DEMO_01',
+                    invoiceNo: '00000001',
+                    fullInvoiceNo: `${config.serial}-00000001`,
+                    pattern: config.pattern,
+                    serial: config.serial,
+                    taxAuthorityCode: 'MOCK-CQT-00001',
+                    taxStatus: '2',
+                    taxStatusText: 'Đã được Cơ quan thuế chấp nhận',
+                },
+            ],
+        }
+    }
+
+    const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetMCCQThueFromNoToNo xmlns="http://tempuri.org/">
+      <invFromNo>${fromNo}</invFromNo>
+      <invToNo>${toNo}</invToNo>
+      <invPattern>${escapeSoap(config.pattern)}</invPattern>
+      <invSerial>${escapeSoap(config.serial)}</invSerial>
+      <isXMLData>0</isXMLData>
+      <Account>${escapeSoap(config.account)}</Account>
+      <ACpass>${escapeSoap(config.acpass)}</ACpass>
+      <userName>${escapeSoap(config.username)}</userName>
+      <userPass>${escapeSoap(config.password)}</userPass>
+    </GetMCCQThueFromNoToNo>
+  </soap:Body>
+</soap:Envelope>`.trim()
+
+    try {
+        const res = await fetch(config.serviceUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml; charset=utf-8',
+                'SOAPAction': 'http://tempuri.org/GetMCCQThueFromNoToNo',
+            },
+            body: soapEnvelope,
+            signal: AbortSignal.timeout(30000),
+        })
+
+        if (!res.ok) {
+            return {
+                success: false,
+                invoices: [],
+                errorMessage: `Lỗi kết nối Web Service VNPT (HTTP ${res.status})`,
+            }
+        }
+
+        const textResponse = await res.text()
+        const match = textResponse.match(/<GetMCCQThueFromNoToNoResult>(.*?)<\/GetMCCQThueFromNoToNoResult>/)
+        const resultRaw = match ? match[1].trim() : textResponse.trim()
+
+        if (resultRaw.startsWith('ERR:')) {
+            const msg = VNPT_ERROR_CODES[resultRaw] || `Lỗi từ VNPT: ${resultRaw}`
+            return {
+                success: false,
+                invoices: [],
+                errorMessage: msg,
+            }
+        }
+
+        let xmlDecoded = ''
+        try {
+            xmlDecoded = Buffer.from(resultRaw, 'base64').toString('utf-8')
+        } catch {
+            xmlDecoded = resultRaw
+        }
+
+        const invoices: VnptRangeInvoice[] = []
+        const hdonMatches = [...xmlDecoded.matchAll(/<HDon>([\s\S]*?)<\/HDon>/g)]
+
+        for (const m of hdonMatches) {
+            const itemXml = m[1]
+            const patM = itemXml.match(/<KHMSHDon>(.*?)<\/KHMSHDon>/)
+            const serM = itemXml.match(/<KHHDon>(.*?)<\/KHHDon>/)
+            const shdonM = itemXml.match(/<SHDon>(.*?)<\/SHDon>/)
+            const mccqtM = itemXml.match(/<MCCQThue>(.*?)<\/MCCQThue>/)
+            const tthaiM = itemXml.match(/<TThai>(.*?)<\/TThai>/)
+            const mtloiM = itemXml.match(/<MTLoi>(.*?)<\/MTLoi>/)
+            const fkeyM = itemXml.match(/<Fkey>(.*?)<\/Fkey>/)
+
+            const rawInvNo = shdonM ? shdonM[1].trim() : ''
+            const formattedInvNo = !isNaN(Number(rawInvNo)) ? String(rawInvNo).padStart(8, '0') : rawInvNo
+            const serial = serM ? serM[1].trim() : config.serial
+            const pattern = patM ? patM[1].trim() : config.pattern
+            const fullInvoiceNo = `${serial}-${formattedInvNo}`
+            const taxStatus = tthaiM ? tthaiM[1].trim() : ''
+            const taxError = mtloiM ? mtloiM[1].trim() : ''
+
+            let taxStatusText = 'Chưa xác định'
+            if (taxStatus === '0') taxStatusText = 'Chưa gửi CQT'
+            else if (taxStatus === '1') taxStatusText = 'Đang chờ CQT duyệt'
+            else if (taxStatus === '2') taxStatusText = 'Đã được CQT chấp nhận'
+            else if (taxStatus === '3') taxStatusText = `CQT từ chối${taxError ? ': ' + taxError : ''}`
+
+            invoices.push({
+                fkey: fkeyM ? fkeyM[1].trim() : '',
+                invoiceNo: formattedInvNo,
+                fullInvoiceNo,
+                pattern,
+                serial,
+                taxAuthorityCode: mccqtM ? mccqtM[1].trim() : '',
+                taxStatus,
+                taxStatusText,
+                taxError: taxError || undefined,
+            })
+        }
+
+        return {
+            success: true,
+            invoices,
+        }
+    } catch (err: any) {
+        return {
+            success: false,
+            invoices: [],
+            errorMessage: `Lỗi kết nối VNPT: ${err.message}`,
         }
     }
 }

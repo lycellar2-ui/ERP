@@ -321,6 +321,7 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | Vận hành | Phải Thu (AR) | Công nợ khách hàng, thu tiền, auto journal |
 | Vận hành | Phải Trả (AP) | Công nợ NCC, multi-currency, trả tiền |
 | Vận hành | AR Aging | Phân tầng tuổi nợ 30/60/90/120/180+ |
+| Vận hành | **Đối Chiếu HĐ VNPT** | **Kiểm soát & đối chiếu hóa đơn điện tử VNPT vs Đơn hàng ERP (Ma trận 6 trạng thái: Đã khớp, Thiếu HĐ, Chờ ký số, Lệch tiền/thuế, Miễn HĐ, HĐ chưa gán); Đồng bộ hàng loạt từ VNPT; Gán HĐ thủ công; Xuất báo cáo Excel 2 sheet** |
 | Kế toán | Sổ Cái | Journal entries + **Xuất Kế Toán** (Excel/JSON) |
 | Kế toán | P&L | Lãi/Lỗ VAS 8-section + thuế TNDN |
 | Kế toán | CĐKT | Bảng cân đối kế toán (Trial Balance) |
@@ -331,12 +332,19 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | Kế toán | Dòng Tiền | Cash position + 30/60/90 forecast |
 | Kế toán | Nợ Khó Đòi | Scan >180 ngày + write-off |
 
+### 🚀 Tích Hợp VNPT e-Invoice (Web Service TT78 & NĐ70) — Đã Hoàn Thành (16/09/2026)
+
+| Thành phần | File code | Mô tả |
+|---|---|---|
+| **VNPT SOAP Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX `PublishService`, `PortalService`, `BusinessService`. Hỗ trợ đẩy nháp (`ImportInvByPattern`), xóa nháp (`deleteInvoiceByFkey`), lấy số HĐ & mã CQT (`GetMCCQThueByFkeysNoXMLSign`), lấy dải hóa đơn (`GetMCCQThueFromNoToNo`), link PDF/Portal (`GetLinkInvViewFkey`). |
+| **Server Actions Đối Chiếu** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (phân loại ma trận, KPI độ phủ %), `batchSyncPendingInvoices` (đồng bộ hàng loạt), `manualLinkInvoiceToOrder` (gán thủ công), `exportInvoiceReconciliationExcel` (xuất file Excel 2 sheet). |
+| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` | 5 thẻ KPI trực quan, bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
+
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
 |---|---|
 | API Sync adapter (MISA/Fast) | 🟢 P3 — khi chọn PM kế toán |
-| E-Invoice integration (Hóa đơn điện tử) | 🟢 P3 |
 
 ### Database Models (Prisma)
 
@@ -358,5 +366,6 @@ JournalDocType    enum: ..., COGS, EXPENSE, COD_COLLECTION, BAD_DEBT
 | Missing AP Payment journal | `actions.ts`: thêm `generateAPPaymentJournal` DR 331/CR 112 |
 | `idSchema` dùng `.uuid()` nhưng Prisma dùng `cuid()` | `validations.ts`: đổi thành `.min(1)` |
 
-*Last updated: 2026-03-09 | Wine ERP v5.2*
+*Last updated: 2026-09-16 | Wine ERP v11.0*
+
 
