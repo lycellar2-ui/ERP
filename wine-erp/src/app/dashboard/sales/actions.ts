@@ -325,7 +325,7 @@ export async function getSalesOrderDetail(id: string) {
                 },
             },
             deliveryOrders: { select: { id: true, doNo: true, status: true } },
-            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true, notes: true } },
         },
     })
     if (!raw) return null
@@ -391,7 +391,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
                 },
             },
             deliveryOrders: { select: { id: true, doNo: true, status: true } },
-            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true, notes: true } },
         },
     })
     if (!detail) return { detail: null, margin: null }

@@ -72,6 +72,33 @@ export interface VnptDraftMetadata {
     serial: string
     status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED'
     uploadedAt: string
+    invoiceNo?: string
+    fullInvoiceNo?: string
+    taxAuthorityCode?: string
+    taxStatus?: string
+    viewUrl?: string
+    pdfUrl?: string
+    xmlUrl?: string
+    publishedAt?: string
+    syncedAt?: string
     xmlSnapshot?: string
     lastError?: string
+}
+
+export interface VnptSyncResult {
+    success: boolean
+    isDraft?: boolean
+    invoiceNo?: string
+    fullInvoiceNo?: string
+    pattern?: string
+    serial?: string
+    taxAuthorityCode?: string
+    taxStatus?: string
+    taxStatusText?: string
+    viewUrl?: string
+    pdfUrl?: string
+    xmlUrl?: string
+    errorCode?: string
+    errorMessage?: string
+    rawXml?: string
 }

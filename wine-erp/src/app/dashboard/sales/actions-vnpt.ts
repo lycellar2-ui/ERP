@@ -5,7 +5,7 @@ import { revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { requireAuth } from '@/lib/session'
-import { getVnptConfigForEntity, uploadDraftToVnpt, deleteDraftFromVnpt } from '@/lib/vnpt/vnpt-client'
+import { getVnptConfigForEntity, uploadDraftToVnpt, deleteDraftFromVnpt, syncInvoiceStatusFromVnpt } from '@/lib/vnpt/vnpt-client'
 import { buildVnptDraftInvoiceXml } from '@/lib/vnpt/xml-builder'
 import { InvoiceBuyer, InvoiceItem, InvoicePayload, VnptDraftMetadata } from '@/lib/vnpt/types'
 
@@ -351,21 +351,151 @@ export async function getVnptDraftInfo(soId: string) {
     for (const inv of so.arInvoices) {
         try {
             const parsed = JSON.parse(inv.notes || '{}')
-            if (parsed.vnpt && parsed.vnpt.status === 'DRAFT') {
+            if (parsed.vnpt) {
                 const config = getVnptConfigForEntity(so.legalEntity?.code)
+                const isDraft = parsed.vnpt.status === 'DRAFT'
+                const isPublished = parsed.vnpt.status === 'PUBLISHED'
                 return {
-                    hasDraft: true,
+                    hasDraft: isDraft,
+                    isPublished,
+                    status: parsed.vnpt.status as 'DRAFT' | 'PUBLISHED' | 'CANCELLED',
                     invoiceId: inv.id,
-                    invoiceNo: inv.invoiceNo,
+                    invoiceNo: parsed.vnpt.invoiceNo || inv.invoiceNo,
+                    fullInvoiceNo: parsed.vnpt.fullInvoiceNo || inv.invoiceNo,
                     fkey: parsed.vnpt.fkey,
                     pattern: parsed.vnpt.pattern,
                     serial: parsed.vnpt.serial,
+                    taxAuthorityCode: parsed.vnpt.taxAuthorityCode,
+                    taxStatus: parsed.vnpt.taxStatus,
+                    taxStatusText: parsed.vnpt.taxStatusText,
+                    viewUrl: parsed.vnpt.viewUrl,
+                    pdfUrl: parsed.vnpt.pdfUrl,
+                    xmlUrl: parsed.vnpt.xmlUrl,
                     uploadedAt: parsed.vnpt.uploadedAt,
+                    syncedAt: parsed.vnpt.syncedAt,
                     isMock: config.isMock,
                 }
             }
         } catch { }
     }
 
-    return { hasDraft: false }
+    return { hasDraft: false, isPublished: false }
 }
+
+/**
+ * Đồng bộ số hóa đơn chính thức, mã CQT và link PDF từ VNPT sau khi kế toán đã ký số trên portal
+ */
+export async function syncVnptInvoiceForOrder(soId: string) {
+    const user = await requireAuth()
+
+    const so = await prisma.salesOrder.findUnique({
+        where: { id: soId },
+        include: {
+            customer: { select: { name: true, code: true } },
+            legalEntity: { select: { code: true, name: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, notes: true } },
+        },
+    })
+
+    if (!so) {
+        return { success: false, error: 'Không tìm thấy đơn hàng trong hệ thống.' }
+    }
+
+    // Tìm FKey và Pattern từ bản nháp ARInvoice hiện tại
+    let targetInv = so.arInvoices[0]
+    let fkey = ''
+    let pattern = ''
+    let existingVnpt: any = null
+
+    for (const inv of so.arInvoices) {
+        try {
+            const parsed = JSON.parse(inv.notes || '{}')
+            if (parsed.vnpt && parsed.vnpt.fkey) {
+                targetInv = inv
+                fkey = parsed.vnpt.fkey
+                pattern = parsed.vnpt.pattern
+                existingVnpt = parsed.vnpt
+                break
+            }
+        } catch { }
+    }
+
+    if (!fkey) {
+        const sanitizedSoNo = so.soNo.replace(/[^A-Za-z0-9_-]/g, '_')
+        fkey = `SO_${sanitizedSoNo}`
+    }
+
+    const config = getVnptConfigForEntity(so.legalEntity?.code)
+
+    // Gọi VNPT để kiểm tra trạng thái ký số và lấy thông tin hóa đơn chính thức
+    const syncRes = await syncInvoiceStatusFromVnpt(config, fkey, pattern)
+
+    if (!syncRes.success) {
+        return {
+            success: false,
+            isDraft: syncRes.isDraft,
+            error: syncRes.errorMessage || 'Chưa thể đồng bộ số hóa đơn từ VNPT.',
+        }
+    }
+
+    const finalInvoiceNo = syncRes.fullInvoiceNo || `${syncRes.serial}-${syncRes.invoiceNo}`
+
+    // Cập nhật metadata VNPT vào ARInvoice
+    const updatedVnptMeta: VnptDraftMetadata = {
+        ...(existingVnpt || {}),
+        fkey,
+        pattern: syncRes.pattern || pattern || config.pattern,
+        serial: syncRes.serial || config.serial,
+        invoiceNo: syncRes.invoiceNo,
+        fullInvoiceNo: finalInvoiceNo,
+        taxAuthorityCode: syncRes.taxAuthorityCode,
+        taxStatus: syncRes.taxStatus,
+        viewUrl: syncRes.viewUrl,
+        pdfUrl: syncRes.pdfUrl,
+        xmlUrl: syncRes.xmlUrl,
+        status: 'PUBLISHED',
+        syncedAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+        uploadedAt: existingVnpt?.uploadedAt || new Date().toISOString(),
+    }
+
+    if (targetInv) {
+        let existingNotes: any = {}
+        try {
+            existingNotes = JSON.parse(targetInv.notes || '{}')
+        } catch {
+            existingNotes = { rawNotes: targetInv.notes }
+        }
+        existingNotes.vnpt = updatedVnptMeta
+
+        await prisma.aRInvoice.update({
+            where: { id: targetInv.id },
+            data: {
+                invoiceNo: finalInvoiceNo,
+                notes: JSON.stringify(existingNotes),
+            },
+        })
+    }
+
+    await logAudit({
+        userId: user.id,
+        action: 'UPDATE',
+        entityType: 'ARInvoice',
+        entityId: targetInv?.id || so.id,
+        description: `Đồng bộ thành công số HĐ VNPT cho đơn ${so.soNo}: ${finalInvoiceNo} (Mã CQT: ${syncRes.taxAuthorityCode || 'Chưa cấp'})`,
+    })
+
+    revalidateCache('sales')
+    revalidatePath('/dashboard/sales')
+
+    return {
+        success: true,
+        invoiceNo: syncRes.invoiceNo,
+        fullInvoiceNo: finalInvoiceNo,
+        taxAuthorityCode: syncRes.taxAuthorityCode,
+        viewUrl: syncRes.viewUrl,
+        pdfUrl: syncRes.pdfUrl,
+        message: `Đồng bộ thành công! Số hóa đơn chính thức: ${finalInvoiceNo}`,
+    }
+}
+

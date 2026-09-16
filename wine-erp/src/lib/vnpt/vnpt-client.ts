@@ -1,4 +1,4 @@
-import { VnptConfig, VnptCallResult } from './types'
+import { VnptConfig, VnptCallResult, VnptSyncResult } from './types'
 
 export const VNPT_ERROR_CODES: Record<string, string> = {
     'ERR:1': 'Tài khoản Web Service hoặc tài khoản phát hành không đúng, hoặc không có quyền thao tác.',
@@ -257,6 +257,205 @@ export async function deleteDraftFromVnpt(
         return {
             success: false,
             errorMessage: `Lỗi khi gọi hủy bản nháp VNPT: ${err.message}`,
+        }
+    }
+}
+
+/**
+ * Query signed invoice status, official invoice number, tax authority code (MCCQT),
+ * and view/PDF links from VNPT by FKey.
+ */
+export async function syncInvoiceStatusFromVnpt(
+    config: VnptConfig,
+    fkey: string,
+    patternOverride?: string
+): Promise<VnptSyncResult> {
+    const pattern = patternOverride || config.pattern
+
+    if (config.isMock) {
+        return {
+            success: true,
+            isDraft: false,
+            invoiceNo: '00000001',
+            fullInvoiceNo: `${config.serial}-00000001`,
+            pattern,
+            serial: config.serial,
+            taxAuthorityCode: 'MOCK-CQT-12345678',
+            taxStatus: '2',
+            taxStatusText: 'Đã được Cơ quan thuế chấp nhận',
+            viewUrl: '#mock-view',
+            pdfUrl: '#mock-pdf',
+        }
+    }
+
+    // Step 1: Call GetMCCQThueByFkeysNoXMLSign on PublishService
+    const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetMCCQThueByFkeysNoXMLSign xmlns="http://tempuri.org/">
+      <Account>${escapeSoap(config.account)}</Account>
+      <ACpass>${escapeSoap(config.acpass)}</ACpass>
+      <username>${escapeSoap(config.username)}</username>
+      <password>${escapeSoap(config.password)}</password>
+      <pattern>${escapeSoap(pattern)}</pattern>
+      <fkeys>${escapeSoap(fkey)}</fkeys>
+    </GetMCCQThueByFkeysNoXMLSign>
+  </soap:Body>
+</soap:Envelope>`.trim()
+
+    try {
+        const res = await fetch(config.serviceUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml; charset=utf-8',
+                'SOAPAction': 'http://tempuri.org/GetMCCQThueByFkeysNoXMLSign',
+            },
+            body: soapEnvelope,
+            signal: AbortSignal.timeout(25000),
+        })
+
+        if (!res.ok) {
+            return {
+                success: false,
+                errorMessage: `Lỗi kết nối Web Service VNPT (HTTP ${res.status})`,
+            }
+        }
+
+        const textResponse = await res.text()
+        const match = textResponse.match(/<GetMCCQThueByFkeysNoXMLSignResult>(.*?)<\/GetMCCQThueByFkeysNoXMLSignResult>/)
+        const resultRaw = match ? match[1].trim() : textResponse.trim()
+
+        // If VNPT returns ERR:2 (Không tìm thấy hóa đơn tương ứng - do còn ở trạng thái nháp chưa ký)
+        if (resultRaw === 'ERR:2') {
+            return {
+                success: false,
+                isDraft: true,
+                errorMessage: 'Hóa đơn trên VNPT vẫn ở trạng thái nháp (chưa được ký số). Vui lòng ký số trên portal VNPT trước khi đồng bộ.',
+            }
+        }
+
+        if (resultRaw.startsWith('ERR:')) {
+            const msg = VNPT_ERROR_CODES[resultRaw] || `Lỗi từ VNPT: ${resultRaw}`
+            return {
+                success: false,
+                errorCode: resultRaw,
+                errorMessage: msg,
+            }
+        }
+
+        // Decode Base64 string to XML
+        let xmlDecoded = ''
+        try {
+            xmlDecoded = Buffer.from(resultRaw, 'base64').toString('utf-8')
+        } catch {
+            xmlDecoded = resultRaw
+        }
+
+        // Parse fields from XML: <KHMSHDon>, <KHHDon>, <SHDon>, <MCCQThue>, <TThai>, <MTLoi>
+        const patMatch = xmlDecoded.match(/<KHMSHDon>(.*?)<\/KHMSHDon>/)
+        const serMatch = xmlDecoded.match(/<KHHDon>(.*?)<\/KHHDon>/)
+        const shdonMatch = xmlDecoded.match(/<SHDon>(.*?)<\/SHDon>/)
+        const mccqtMatch = xmlDecoded.match(/<MCCQThue>(.*?)<\/MCCQThue>/)
+        const tthaiMatch = xmlDecoded.match(/<TThai>(.*?)<\/TThai>/)
+        const mtloiMatch = xmlDecoded.match(/<MTLoi>(.*?)<\/MTLoi>/)
+
+        const rawInvNo = shdonMatch ? shdonMatch[1].trim() : ''
+        const serial = serMatch ? serMatch[1].trim() : config.serial
+        const resolvedPattern = patMatch ? patMatch[1].trim() : pattern
+        const taxAuthorityCode = mccqtMatch ? mccqtMatch[1].trim() : ''
+        const taxStatus = tthaiMatch ? tthaiMatch[1].trim() : ''
+        const taxError = mtloiMatch ? mtloiMatch[1].trim() : ''
+
+        if (!rawInvNo) {
+            return {
+                success: false,
+                isDraft: true,
+                errorMessage: 'Chưa tìm thấy số hóa đơn chính thức trên VNPT (hóa đơn có thể chưa được ký số).',
+            }
+        }
+
+        // Format invoice number to standard 8 digits (e.g. 190 -> 00000190)
+        const formattedInvNo = !isNaN(Number(rawInvNo)) ? String(rawInvNo).padStart(8, '0') : rawInvNo
+        const fullInvoiceNo = `${serial}-${formattedInvNo}`
+
+        let taxStatusText = 'Chưa xác định'
+        if (taxStatus === '0') taxStatusText = 'Chưa gửi CQT'
+        else if (taxStatus === '1') taxStatusText = 'Đã gửi CQT, đang chờ cấp mã'
+        else if (taxStatus === '2') taxStatusText = 'Đã được CQT chấp nhận'
+        else if (taxStatus === '3') taxStatusText = `Bị CQT từ chối${taxError ? ': ' + taxError : ''}`
+
+        // Step 2: Fetch view and download links from PortalService
+        let viewUrl = ''
+        let pdfUrl = ''
+        let xmlUrl = ''
+
+        try {
+            const linkSoap = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetLinkInvViewFkey xmlns="http://tempuri.org/">
+      <fkey>${escapeSoap(fkey)}</fkey>
+      <userName>${escapeSoap(config.username)}</userName>
+      <userPass>${escapeSoap(config.password)}</userPass>
+    </GetLinkInvViewFkey>
+  </soap:Body>
+</soap:Envelope>`.trim()
+
+            const linkRes = await fetch(config.portalUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/xml; charset=utf-8',
+                    'SOAPAction': 'http://tempuri.org/GetLinkInvViewFkey',
+                },
+                body: linkSoap,
+                signal: AbortSignal.timeout(15000),
+            })
+
+            if (linkRes.ok) {
+                const linkText = await linkRes.text()
+                const linkMatch = linkText.match(/<GetLinkInvViewFkeyResult>(.*?)<\/GetLinkInvViewFkeyResult>/)
+                const linkRaw = linkMatch ? linkMatch[1].trim() : ''
+
+                if (linkRaw && !linkRaw.startsWith('ERR:')) {
+                    let decodedLinks = ''
+                    try {
+                        decodedLinks = Buffer.from(linkRaw, 'base64').toString('utf-8')
+                    } catch {
+                        decodedLinks = linkRaw
+                    }
+
+                    const vMatch = decodedLinks.match(/<LinkView>(.*?)<\/LinkView>/)
+                    const pMatch = decodedLinks.match(/<LinkPDF>(.*?)<\/LinkPDF>/)
+                    const xMatch = decodedLinks.match(/<LinkXML>(.*?)<\/LinkXML>/)
+
+                    if (vMatch) viewUrl = vMatch[1]
+                    if (pMatch) pdfUrl = pMatch[1]
+                    if (xMatch) xmlUrl = xMatch[1]
+                }
+            }
+        } catch {
+            // Ignore link fetch error, main sync succeeded
+        }
+
+        return {
+            success: true,
+            isDraft: false,
+            invoiceNo: formattedInvNo,
+            fullInvoiceNo,
+            pattern: resolvedPattern,
+            serial,
+            taxAuthorityCode,
+            taxStatus,
+            taxStatusText,
+            viewUrl,
+            pdfUrl,
+            xmlUrl,
+            rawXml: xmlDecoded,
+        }
+    } catch (err: any) {
+        return {
+            success: false,
+            errorMessage: `Không thể kết nối Web Service VNPT khi kiểm tra trạng thái: ${err.message}`,
         }
     }
 }

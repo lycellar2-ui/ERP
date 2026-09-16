@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle, CloudUpload } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
-import { uploadDraftInvoiceToVnpt, deleteDraftInvoiceFromVnpt } from './actions-vnpt'
+import { uploadDraftInvoiceToVnpt, deleteDraftInvoiceFromVnpt, syncVnptInvoiceForOrder } from './actions-vnpt'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
@@ -431,6 +431,7 @@ function SODetailDrawer({
     const [markingPaid, setMarkingPaid] = useState(false)
     const [uploadingVnpt, setUploadingVnpt] = useState(false)
     const [deletingVnpt, setDeletingVnpt] = useState(false)
+    const [syncingVnpt, setSyncingVnpt] = useState(false)
 
     const handleToggleExempt = async () => {
         if (!soId || !detail || togglingExempt) return
@@ -621,6 +622,27 @@ function SODetailDrawer({
             toast.error(err.message || 'Lỗi kết nối')
         } finally {
             setDeletingVnpt(false)
+        }
+    }
+
+    const handleSyncVnptInvoice = async () => {
+        if (!soId || !detail || syncingVnpt) return
+        setSyncingVnpt(true)
+        try {
+            const res = await syncVnptInvoiceForOrder(soId)
+            if (res.success) {
+                toast.success(res.message || 'Đã đồng bộ số hóa đơn từ VNPT thành công!')
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+                onReloadList?.()
+            } else {
+                toast.error(res.error || 'Chưa thể đồng bộ số hóa đơn VNPT')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối kiểm tra VNPT')
+        } finally {
+            setSyncingVnpt(false)
         }
     }
 
@@ -1382,25 +1404,37 @@ function SODetailDrawer({
                                     <div className="space-y-2">
                                         {detail.arInvoices.map(inv => {
                                             const isDraftVnpt = inv.invoiceNo.startsWith('NHAP-')
+                                            let vnptMeta: any = null
+                                            try {
+                                                const parsed = JSON.parse((inv as any).notes || '{}')
+                                                vnptMeta = parsed.vnpt || null
+                                            } catch {}
+                                            const isVnptPublished = Boolean(vnptMeta && (vnptMeta.status === 'PUBLISHED' || vnptMeta.pdfUrl || vnptMeta.taxAuthorityCode))
+
                                             return (
                                                 <div
                                                     key={inv.id}
                                                     className="p-3 rounded-md transition-all"
                                                     style={{
-                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : '#1B2E3D',
-                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : '1px solid #2A4355',
+                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : isVnptPublished ? 'rgba(16,185,129,0.06)' : '#1B2E3D',
+                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : isVnptPublished ? '1px solid rgba(16,185,129,0.35)' : '1px solid #2A4355',
                                                     }}
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : 'text-[#87CBB9]'}`}>
+                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : isVnptPublished ? 'text-emerald-300' : 'text-[#87CBB9]'}`}>
                                                                     {inv.invoiceNo}
                                                                 </span>
                                                                 {isDraftVnpt ? (
                                                                     <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
                                                                         <CloudUpload size={10} />
                                                                         Nháp VNPT
+                                                                    </span>
+                                                                ) : isVnptPublished ? (
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                                                        <ShieldCheck size={10} />
+                                                                        VNPT Đã Ký Số
                                                                     </span>
                                                                 ) : (
                                                                     canCreateInvoice && (
@@ -1431,7 +1465,9 @@ function SODetailDrawer({
                                                             </div>
                                                             <p className="text-[11px] mt-1 text-[#8AAEBB]">
                                                                 {isDraftVnpt
-                                                                    ? 'Đã tải lên mục "Hóa đơn chờ phát hành" trên VNPT e-Invoice. Kế toán kiểm tra và ký số trên Web Portal VNPT.'
+                                                                    ? 'Đã tải lên VNPT e-Invoice. Sau khi ký số trên Portal VNPT, bấm "Kéo Số HĐ" bên dưới.'
+                                                                    : isVnptPublished && vnptMeta?.taxAuthorityCode
+                                                                    ? `Mã CQT: ${vnptMeta.taxAuthorityCode}`
                                                                     : `Hạn thanh toán: ${formatDate(inv.dueDate)}`}
                                                             </p>
                                                         </div>
@@ -1441,19 +1477,30 @@ function SODetailDrawer({
                                                             </span>
                                                             <span
                                                                 className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5"
-                                                                style={isDraftVnpt ? { background: 'rgba(59,130,246,0.15)', color: '#60A5FA' } : getInvoiceStatusStyle(inv.status)}
+                                                                style={isDraftVnpt ? { background: 'rgba(59,130,246,0.15)', color: '#60A5FA' } : isVnptPublished ? { background: 'rgba(16,185,129,0.2)', color: '#34D399' } : getInvoiceStatusStyle(inv.status)}
                                                             >
-                                                                {isDraftVnpt ? 'CHỜ PHÁT HÀNH' : (INVOICE_STATUS_LABELS[inv.status] ?? inv.status)}
+                                                                {isDraftVnpt ? 'CHỜ KÝ SỐ' : isVnptPublished ? 'ĐÃ PHÁT HÀNH' : (INVOICE_STATUS_LABELS[inv.status] ?? inv.status)}
                                                             </span>
                                                         </div>
                                                     </div>
 
                                                     {isDraftVnpt && (
-                                                        <div className="mt-2.5 pt-2 border-t border-blue-500/20 flex items-center justify-between gap-2">
+                                                        <div className="mt-2.5 pt-2 border-t border-blue-500/20 flex flex-wrap items-center justify-between gap-2">
                                                             <span className="text-[10px] text-blue-300/80">
                                                                 FKey: <code className="font-mono text-blue-200">SO_{detail.soNo.replace(/[^A-Za-z0-9_-]/g, '_')}</code>
                                                             </span>
-                                                            <div className="flex items-center gap-1.5">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                {canCreateInvoice && (
+                                                                    <button
+                                                                        onClick={handleSyncVnptInvoice}
+                                                                        disabled={syncingVnpt}
+                                                                        className="text-[11px] px-2.5 py-1 rounded font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                                        title="Kiểm tra trạng thái ký số trên VNPT và kéo số hóa đơn chính thức về ERP"
+                                                                    >
+                                                                        {syncingVnpt ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                                                                        Kéo Số HĐ Từ VNPT
+                                                                    </button>
+                                                                )}
                                                                 {canCreateInvoice && (
                                                                     <button
                                                                         onClick={handleUploadVnptDraft}
@@ -1463,6 +1510,51 @@ function SODetailDrawer({
                                                                     >
                                                                         {uploadingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
                                                                         Đồng Bộ Lại
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {isVnptPublished && vnptMeta && (
+                                                        <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-2 text-[10px] text-[#8AAEBB]">
+                                                                <span>Ký hiệu: <code className="font-mono text-emerald-200">{vnptMeta.pattern} / {vnptMeta.serial}</code></span>
+                                                                {vnptMeta.syncedAt && <span>• {formatDateTime(vnptMeta.syncedAt)}</span>}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                {vnptMeta.pdfUrl && (
+                                                                    <a
+                                                                        href={vnptMeta.pdfUrl}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="text-[10px] px-2 py-1 rounded font-bold bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="Tải / Xem file PDF hóa đơn điện tử có chữ ký số từ VNPT"
+                                                                    >
+                                                                        <Download size={10} />
+                                                                        Tải PDF
+                                                                    </a>
+                                                                )}
+                                                                {vnptMeta.viewUrl && (
+                                                                    <a
+                                                                        href={vnptMeta.viewUrl}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="Xem hóa đơn trực tuyến trên portal VNPT"
+                                                                    >
+                                                                        <ExternalLink size={10} />
+                                                                        Portal
+                                                                    </a>
+                                                                )}
+                                                                {canCreateInvoice && (
+                                                                    <button
+                                                                        onClick={handleSyncVnptInvoice}
+                                                                        disabled={syncingVnpt}
+                                                                        className="text-[10px] px-1.5 py-1 rounded text-[#8AAEBB] hover:text-white hover:bg-[#2A4355]/40 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="Kiểm tra lại trạng thái CQT từ VNPT"
+                                                                    >
+                                                                        {syncingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
                                                                     </button>
                                                                 )}
                                                             </div>

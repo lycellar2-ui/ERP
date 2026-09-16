@@ -618,16 +618,17 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Sao Chép / Áp Dụng Giá Cho Các Cơ Sở Khác** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:cloneCustomerPriceRules`, `customer-rules-actions.ts:getCustomerRelatedBranches` | Hỗ trợ nhân bản / sao chép chính sách giá đặc biệt từ một khách hàng nguồn sang nhiều chi nhánh / cơ sở khác cùng chuỗi thương hiệu hoặc công ty mẹ với 1 cú click |
 | **Áp Dụng Cơ Chế Giá Đa Chi Nhánh Trong Tờ Trình** | `ProposalsClient.tsx`, `proposals/actions.ts:syncProposalToCustomerPriceRules` | Cho phép tích chọn áp dụng đồng thời cơ chế giá đề xuất cho các cơ sở con / cơ sở liên kết, tự động đồng bộ giá sang toàn bộ các cơ sở khi tờ trình được duyệt |
 
-#### 🚀 Session 15 - Tích hợp Đẩy Hóa Đơn Nháp lên VNPT e-Invoice (16/09/2026)
+#### 🚀 Session 15 - Tích hợp Đẩy Hóa Đơn Nháp & Đồng Bộ Số HĐ, Mã CQT, Link PDF Từ VNPT e-Invoice (16/09/2026)
 
-Tích hợp trực tiếp Web Service VNPT e-Invoice (Chuẩn tài liệu V5 Webservice theo Thông tư 78/2021/TT-BTC & Nghị định 70/2025/NĐ-CP):
+Tích hợp trực tiếp Web Service VNPT e-Invoice 2 chiều (Chuẩn tài liệu V5 Webservice theo Thông tư 78/2021/TT-BTC & Nghị định 70/2025/NĐ-CP):
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
-| **VNPT Types & Models** | `src/lib/vnpt/types.ts` | Khai báo các interface `VnptConfig`, `InvoicePayload`, `InvoiceItem`, `VnptCallResult`, `VnptDraftMetadata`. |
+| **VNPT Types & Models** | `src/lib/vnpt/types.ts` | Khai báo các interface `VnptConfig`, `InvoicePayload`, `InvoiceItem`, `VnptCallResult`, `VnptDraftMetadata`, `VnptSyncResult`. |
 | **XML Builder TT78 / NĐ70** | `src/lib/vnpt/xml-builder.ts` | Tự động sinh chuỗi XML `<DSHDon>` chuẩn Thuế, hỗ trợ đa thuế suất (10%, 8%), chuyển đổi số tiền sang chữ tiếng Việt (`readVndMoneyToWords`), escape ký tự XML an toàn. |
-| **VNPT SOAP Web Service Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX SOAP 1.1 / 1.2: `ImportInvByPattern` (đẩy hóa đơn nháp) và `deleteInvoiceByFkey` (xóa bản nháp). Hỗ trợ từ điển mã lỗi chi tiết tiếng Việt và chế độ Mock/Sandbox an toàn. |
-| **Server Actions VNPT** | `src/app/dashboard/sales/actions-vnpt.ts` | `uploadDraftInvoiceToVnpt(soId)` (đẩy nháp, tạo ARInvoice `NHAP-...`, lưu FKey), `deleteDraftInvoiceFromVnpt(soId)` (hủy nháp VNPT), `getVnptDraftInfo(soId)`. Ưu tiên tuyệt đối thông tin pháp nhân của Công ty mẹ (`parent.taxId`, `parent.vatCompanyName`, `parent.vatAddress`) khi xuất hóa đơn cho các chi nhánh/khách hàng con. |
-| **UI Drawer Hóa Đơn** | `src/app/dashboard/sales/SalesClient.tsx` | Bổ sung nút **"Đẩy Nháp Lên VNPT"**, hiển thị badge trạng thái nháp VNPT (kèm FKey, Mẫu số, Ký hiệu), nút xóa bản nháp và đồng bộ lại. |
+| **VNPT SOAP Web Service Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX SOAP 1.1 / 1.2 đa cổng:<br>• `PublishService.asmx` -> `ImportInvByPattern` (đẩy nháp)<br>• `BusinessService.asmx` -> `deleteInvoiceByFkey` (xóa nháp)<br>• `PublishService.asmx` -> `GetMCCQThueByFkeysNoXMLSign` (lấy số hóa đơn chính thức `SHDon`, mẫu số `KHMSHDon`, ký hiệu `KHHDon`, mã cơ quan thuế `MCCQThue`, trạng thái thuế `TThai`)<br>• `PortalService.asmx` -> `GetLinkInvViewFkey` (lấy link PDF gốc `LinkPDF`, link tra cứu `LinkView`, file `LinkXML`). |
+| **Server Actions VNPT** | `src/app/dashboard/sales/actions-vnpt.ts` | • `uploadDraftInvoiceToVnpt(soId)`: Đẩy nháp, tạo ARInvoice `NHAP-...`, lưu FKey. Ưu tiên tuyệt đối thông tin pháp nhân của Công ty mẹ (`parent.taxId`, `parent.vatCompanyName`, `parent.vatAddress`) khi xuất hóa đơn cho các chi nhánh/khách hàng con.<br>• `deleteDraftInvoiceFromVnpt(soId)`: Hủy nháp trên portal VNPT và hoàn trả trạng thái AR.<br>• `syncVnptInvoiceForOrder(soId)`: Kéo số HĐ chính thức, mã CQT và link PDF từ VNPT về gán lại vào `ARInvoice` (`C26THP-00000190`), ghi nhận metadata VNPT đầy đủ.<br>• `getVnptDraftInfo(soId)`: Truy vấn trạng thái nháp vs phát hành. |
+| **UI Drawer Hóa Đơn (SODetailDrawer)** | `src/app/dashboard/sales/SalesClient.tsx` | • Khi ở trạng thái nháp: Hiển thị nút **"Kéo Số HĐ Từ VNPT"** (kèm loader), nút **"Đồng Bộ Lại"**, nút **"Xóa Bản Nháp"**.<br>• Khi đã ký số thành công: Tự động đổi sang badge xanh lá **"VNPT Đã Ký Số"**, hiển thị số HĐ chính thức, hiển thị **Mã CQT** (`MCCQThue`), nút **"📄 Tải PDF"** và nút **"🌐 Portal"** mở trực tiếp hóa đơn gốc từ VNPT. |
 
-*Last updated: 2026-09-16 11:50 | Wine ERP v11.0*
+*Last updated: 2026-09-16 12:00 | Wine ERP v11.0*
+
