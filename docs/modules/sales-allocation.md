@@ -627,7 +627,7 @@ Tích hợp trực tiếp Web Service VNPT e-Invoice (Chuẩn tài liệu V5 Web
 | **VNPT Types & Models** | `src/lib/vnpt/types.ts` | Khai báo các interface `VnptConfig`, `InvoicePayload`, `InvoiceItem`, `VnptCallResult`, `VnptDraftMetadata`. |
 | **XML Builder TT78 / NĐ70** | `src/lib/vnpt/xml-builder.ts` | Tự động sinh chuỗi XML `<DSHDon>` chuẩn Thuế, hỗ trợ đa thuế suất (10%, 8%), chuyển đổi số tiền sang chữ tiếng Việt (`readVndMoneyToWords`), escape ký tự XML an toàn. |
 | **VNPT SOAP Web Service Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX SOAP 1.1 / 1.2: `ImportInvByPattern` (đẩy hóa đơn nháp) và `deleteInvoiceByFkey` (xóa bản nháp). Hỗ trợ từ điển mã lỗi chi tiết tiếng Việt và chế độ Mock/Sandbox an toàn. |
-| **Server Actions VNPT** | `src/app/dashboard/sales/actions-vnpt.ts` | `uploadDraftInvoiceToVnpt(soId)` (đẩy nháp, tạo ARInvoice `NHAP-...`, lưu FKey), `deleteDraftInvoiceFromVnpt(soId)` (hủy nháp VNPT), `getVnptDraftInfo(soId)`. |
+| **Server Actions VNPT** | `src/app/dashboard/sales/actions-vnpt.ts` | `uploadDraftInvoiceToVnpt(soId)` (đẩy nháp, tạo ARInvoice `NHAP-...`, lưu FKey), `deleteDraftInvoiceFromVnpt(soId)` (hủy nháp VNPT), `getVnptDraftInfo(soId)`. Ưu tiên tuyệt đối thông tin pháp nhân của Công ty mẹ (`parent.taxId`, `parent.vatCompanyName`, `parent.vatAddress`) khi xuất hóa đơn cho các chi nhánh/khách hàng con. |
 | **UI Drawer Hóa Đơn** | `src/app/dashboard/sales/SalesClient.tsx` | Bổ sung nút **"Đẩy Nháp Lên VNPT"**, hiển thị badge trạng thái nháp VNPT (kèm FKey, Mẫu số, Ký hiệu), nút xóa bản nháp và đồng bộ lại. |
 
-*Last updated: 2026-09-16 11:22 | Wine ERP v11.0*
+*Last updated: 2026-09-16 11:50 | Wine ERP v11.0*

@@ -2690,6 +2690,7 @@ export async function exportSalesOrdersExcel(filters: {
                     vatEmail: true,
                     parent: {
                         select: {
+                            name: true,
                             taxId: true,
                             vatCompanyName: true,
                             vatAddress: true,
@@ -2715,10 +2716,11 @@ export async function exportSalesOrdersExcel(filters: {
     const lineItemExportData: any[] = []
     for (const o of orders) {
         const orderVatRate = Number(o.vatRate ?? 10)
-        const vatCompanyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
-        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
-        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
-        const vatEmail = o.customer.vatEmail || o.customer.parent?.vatEmail || ''
+        const parent = o.customer.parent
+        const vatCompanyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
+        const taxId = parent?.taxId || o.customer.taxId || ''
+        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
+        const vatEmail = parent?.vatEmail || o.customer.vatEmail || ''
 
         if (o.lines.length === 0) {
             lineItemExportData.push({
@@ -2895,6 +2897,7 @@ export async function exportMisaSmeExcel(filters: {
                     vatEmail: true,
                     parent: {
                         select: {
+                            name: true,
                             taxId: true,
                             vatCompanyName: true,
                             vatAddress: true,
@@ -2920,9 +2923,10 @@ export async function exportMisaSmeExcel(filters: {
         const orderVatRate = Number(o.vatRate ?? 10)
         const dateObj = new Date(o.createdAt)
         const dateStr = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`
-        const vatCompanyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
-        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
-        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
+        const parent = o.customer.parent
+        const vatCompanyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
+        const taxId = parent?.taxId || o.customer.taxId || ''
+        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
 
         if (o.lines.length === 0) {
@@ -3071,6 +3075,7 @@ export async function exportVnptInvoiceExcel(filters: {
                     vatEmail: true,
                     parent: {
                         select: {
+                            name: true,
                             taxId: true,
                             vatCompanyName: true,
                             vatAddress: true,
@@ -3096,14 +3101,15 @@ export async function exportVnptInvoiceExcel(filters: {
 
     for (const o of orders) {
         const orderVatRate = Number(o.vatRate ?? 10)
-        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
-        const isCorporate = Boolean(taxId)
+        const parent = o.customer.parent
+        const taxId = parent?.taxId || o.customer.taxId || ''
+        const isCorporate = Boolean(taxId || parent?.vatCompanyName || o.customer.vatCompanyName)
         
-        // For corporate customers, buyerName (Tên người mua hàng) is optional per Tax Law
-        const buyerName = isCorporate ? '' : o.customer.name
-        const companyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
-        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
-        const vatEmail = o.customer.vatEmail || o.customer.parent?.vatEmail || ''
+        // Tên người mua: nếu có công ty mẹ thì ghi tên chi nhánh con; nếu không thì chỉ để tên khi là cá nhân
+        const buyerName = parent ? o.customer.name : (isCorporate ? '' : o.customer.name)
+        const companyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
+        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
+        const vatEmail = parent?.vatEmail || o.customer.vatEmail || ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
         const payMethod = o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK'
 

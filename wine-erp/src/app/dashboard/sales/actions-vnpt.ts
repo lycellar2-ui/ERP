@@ -31,10 +31,14 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                     vatEmail: true,
                     parent: {
                         select: {
+                            id: true,
+                            name: true,
                             taxId: true,
                             vatCompanyName: true,
                             vatAddress: true,
                             vatEmail: true,
+                            purchasingPhone: true,
+                            receiverPhone: true,
                         },
                     },
                 },
@@ -76,14 +80,26 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     const sanitizedSoNo = so.soNo.replace(/[^A-Za-z0-9_-]/g, '_')
     const fkey = `SO_${sanitizedSoNo}`
 
-    // Thông tin người mua
-    const taxId = so.customer.taxId || so.customer.parent?.taxId || ''
-    const isCorporate = Boolean(taxId)
-    const buyerName = isCorporate ? '' : so.customer.name
-    const companyName = so.customer.vatCompanyName || so.customer.parent?.vatCompanyName || so.customer.name
-    const vatAddress = so.customer.vatAddress || so.customer.parent?.vatAddress || so.shippingAddress?.address || 'Việt Nam'
-    const vatEmail = so.customer.vatEmail || so.customer.parent?.vatEmail || ''
-    const phone = so.customer.purchasingPhone || so.customer.receiverPhone || ''
+    // Thông tin người mua: ƯU TIÊN TUYỆT ĐỐI thông tin pháp nhân của Công ty mẹ (Tên, MST, Địa chỉ VAT)
+    const parent = so.customer.parent
+    const taxId = parent?.taxId || so.customer.taxId || ''
+    const isCorporate = Boolean(taxId || parent?.vatCompanyName || so.customer.vatCompanyName)
+
+    // Tên đơn vị mua hàng xuất HĐ: ưu tiên Tên VAT công ty mẹ -> Tên công ty mẹ -> Tên VAT con -> Tên con
+    const companyName = parent?.vatCompanyName || parent?.name || so.customer.vatCompanyName || so.customer.name
+
+    // Tên người mua hàng / Chi nhánh giao nhận:
+    // Nếu có công ty mẹ, buyerName ghi tên chi nhánh con (vd: Theodore Hotel) để thể hiện nơi nhận hàng
+    const buyerName = parent ? so.customer.name : (isCorporate ? '' : so.customer.name)
+
+    // Địa chỉ đăng ký thuế VAT: ưu tiên địa chỉ thuế của công ty mẹ
+    const vatAddress = parent?.vatAddress || so.customer.vatAddress || so.shippingAddress?.address || 'Việt Nam'
+
+    // Email nhận hóa đơn VAT: ưu tiên email của công ty mẹ
+    const vatEmail = parent?.vatEmail || so.customer.vatEmail || ''
+
+    // Số điện thoại liên hệ
+    const phone = so.customer.purchasingPhone || so.customer.receiverPhone || parent?.purchasingPhone || parent?.receiverPhone || ''
 
     const buyer: InvoiceBuyer = {
         buyerName,
