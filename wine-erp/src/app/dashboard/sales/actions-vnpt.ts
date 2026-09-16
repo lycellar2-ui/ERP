@@ -39,6 +39,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                     },
                 },
             },
+            shippingAddress: { select: { address: true } },
             legalEntity: { select: { id: true, name: true, code: true, taxId: true } },
             warehouse: { select: { id: true, name: true, code: true } },
             arInvoices: { select: { id: true, invoiceNo: true, status: true, notes: true } },
@@ -80,7 +81,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     const isCorporate = Boolean(taxId)
     const buyerName = isCorporate ? '' : so.customer.name
     const companyName = so.customer.vatCompanyName || so.customer.parent?.vatCompanyName || so.customer.name
-    const vatAddress = so.customer.vatAddress || so.customer.parent?.vatAddress || 'Việt Nam'
+    const vatAddress = so.customer.vatAddress || so.customer.parent?.vatAddress || so.shippingAddress?.address || 'Việt Nam'
     const vatEmail = so.customer.vatEmail || so.customer.parent?.vatEmail || ''
     const phone = so.customer.purchasingPhone || so.customer.receiverPhone || ''
 

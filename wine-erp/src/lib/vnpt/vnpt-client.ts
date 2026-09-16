@@ -30,22 +30,34 @@ export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
     const isLC = code === 'LC' || code.includes('LY')
     const prefix = isLC ? 'VNPT_LC_' : 'VNPT_TA_'
 
-    const serviceUrl = process.env[`${prefix}SERVICE_URL`] || process.env.VNPT_SERVICE_URL || 'https://vinvoice.vnpt-invoice.com.vn/PublishService.asmx'
-    const portalUrl = process.env[`${prefix}PORTAL_URL`] || process.env.VNPT_PORTAL_URL || 'https://vinvoice.vnpt-invoice.com.vn/PortalService.asmx'
-    const username = process.env[`${prefix}USERNAME`] || process.env.VNPT_USERNAME || (isLC ? 'lyscellar_ws' : 'thangan_ws')
-    const password = process.env[`${prefix}PASSWORD`] || process.env.VNPT_PASSWORD || 'Secret123@'
-    const account = process.env[`${prefix}ACCOUNT`] || process.env.VNPT_ACCOUNT || (isLC ? 'lyscellar_srv' : 'thangan_srv')
-    const acpass = process.env[`${prefix}ACPASS`] || process.env.VNPT_ACPASS || 'Secret123@'
-    const pattern = process.env[`${prefix}PATTERN`] || process.env.VNPT_PATTERN || '1/001'
-    const serial = process.env[`${prefix}SERIAL`] || process.env.VNPT_SERIAL || (isLC ? 'C26TLY' : 'C26TTA')
+    // Default fallback to VNPT Demo system if environment variables are not set in Vercel/production
+    const DEFAULT_SERVICE_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/publishservice.asmx'
+    const DEFAULT_PORTAL_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/portalservice.asmx'
+    const DEFAULT_BUSINESS_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/businessservice.asmx'
+    const DEFAULT_USERNAME = 'aiswebserviceadmin'
+    const DEFAULT_PASSWORD = 'Einv@oi@vn#pt26'
+    const DEFAULT_ACCOUNT = '2222222222-008_admin_demo'
+    const DEFAULT_ACPASS = 'test123aA@'
+    const DEFAULT_PATTERN = '1/011'
+    const DEFAULT_SERIAL = 'C26THP'
 
-    // If explicit mock flag is set or credentials are placeholder defaults, run in mock mode
-    const isMock = process.env.VNPT_MOCK === 'true' ||
-        process.env.NODE_ENV !== 'production' && (!process.env[`${prefix}SERVICE_URL`] && !process.env.VNPT_SERVICE_URL)
+    const serviceUrl = process.env[`${prefix}SERVICE_URL`] || process.env.VNPT_SERVICE_URL || DEFAULT_SERVICE_URL
+    const portalUrl = process.env[`${prefix}PORTAL_URL`] || process.env.VNPT_PORTAL_URL || DEFAULT_PORTAL_URL
+    const businessUrl = process.env[`${prefix}BUSINESS_URL`] || process.env.VNPT_BUSINESS_URL || DEFAULT_BUSINESS_URL
+    const username = process.env[`${prefix}USERNAME`] || process.env.VNPT_USERNAME || DEFAULT_USERNAME
+    const password = process.env[`${prefix}PASSWORD`] || process.env.VNPT_PASSWORD || DEFAULT_PASSWORD
+    const account = process.env[`${prefix}ACCOUNT`] || process.env.VNPT_ACCOUNT || DEFAULT_ACCOUNT
+    const acpass = process.env[`${prefix}ACPASS`] || process.env.VNPT_ACPASS || DEFAULT_ACPASS
+    const pattern = process.env[`${prefix}PATTERN`] || process.env.VNPT_PATTERN || DEFAULT_PATTERN
+    const serial = process.env[`${prefix}SERIAL`] || process.env.VNPT_SERIAL || DEFAULT_SERIAL
+
+    // If explicit mock flag is set
+    const isMock = process.env.VNPT_MOCK === 'true'
 
     return {
         serviceUrl,
         portalUrl,
+        businessUrl,
         username,
         password,
         account,

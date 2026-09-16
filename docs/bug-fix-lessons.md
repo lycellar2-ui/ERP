@@ -61,6 +61,7 @@
 52. [BUG-105: Độ Trễ Trạng Thái Tờ Trình (Stale Cache Đa Container Vercel & Thiếu Realtime Khi Nhấn Trình/Duyệt)](#bug-105-độ-trễ-trạng-thái-tờ-trình-stale-cache-đa-container-vercel--thiếu-realtime-khi-nhấn-trìnhduyệt)
 53. [BUG-106: Nhận Sai Quy Cách Thùng Khi Nhập Kho PO & Lỗi Tràn Layout Giao Diện Đơn Mua Hàng](#bug-106-nhận-sai-quy-cách-thùng-khi-nhập-kho-po--lỗi-tràn-layout-giao-diện-đơn-mua-hàng)
 54. [BUG-107: Lỗi Tính Toán Báo Cáo Nhập Xuất Tồn (NXT), Lệch Sổ Kho & Tính Ảo Phiếu Nhập DRAFT](#bug-107-lỗi-tính-toán-báo-cáo-nhập-xuất-tồn-nxt-lệch-sổ-kho--tính-ảo-phiếu-nhập-draft)
+55. [BUG-108: Lỗi Fetch Failed Khi Đẩy Hóa Đơn Nháp VNPT Trên Production Vercel](#bug-108-lỗi-fetch-failed-khi-đẩy-hóa-đơn-nháp-vnpt-trên-production-vercel)
 
 ---
 
@@ -2895,3 +2896,29 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 107: Mọi biến động kho trên Báo cáo Nhập Xuất Tồn (NXT) CHỈ ĐƯỢC PHÉP ghi nhận khi chứng từ đã ở trạng thái HOÀN THÀNH/XÁC NHẬN (CONFIRMED/SHIPPED/COMPLETED); TUYỆT ĐỐI KHÔNG tính các bản ghi DRAFT/PENDING vào tồn kho; Khi luân chuyển kho nội bộ, KHÔNG ĐƯỢC phép tăng `qtyReceived` trên lô nhận vì sẽ làm khống tổng nhập kho toàn công ty; Mọi kênh xuất hàng (kể cả bán lẻ POS, kiểm kê điều chỉnh hay xuất hủy) BẮT BUỘC phải được đưa vào cả Bảng tổng hợp và Thẻ kho chi tiết với đầy đủ bộ lọc kho (`warehouseId`).**
+
+
+## BUG-108: Lỗi Fetch Failed Khi Đẩy Hóa Đơn Nháp VNPT Trên Production Vercel
+
+**Severity:** 🔴 High / External Integration  
+**Date:** 2026-09-16  
+**Affected Modules:** `Sales & Billing` (VNPT e-Invoice Integration — `src/lib/vnpt/vnpt-client.ts`, `src/app/dashboard/sales/actions-vnpt.ts`)
+
+### Mô tả vấn đề
+1. **Lỗi `fetch failed` khi bấm nút "Đẩy Nháp Lên VNPT" trên production (`lyscellars.io.vn`):**
+   - Khi chạy ở môi trường production trên Vercel, các biến môi trường cấu hình VNPT (`VNPT_SERVICE_URL`, `VNPT_USERNAME`, `VNPT_PASSWORD`, v.v.) chưa được cài đặt trong Vercel Environment Variables.
+   - Hàm `getVnptConfigForEntity()` fallback về URL mặc định `https://vinvoice.vnpt-invoice.com.vn/PublishService.asmx`.
+   - Tên miền này không có server phản hồi cổng 443, dẫn đến Node.js fetch ném ngoại lệ `ConnectTimeoutError: Connect Timeout Error (attempted address: vinvoice.vnpt-invoice.com.vn:443, timeout: 10000ms)` với mã lỗi `UND_ERR_CONNECT_TIMEOUT`, chuyển thành lỗi `Không thể kết nối tới Web Service VNPT: fetch failed` trên UI.
+2. **Khách hàng thiếu địa chỉ VAT (`vatAddress` null):**
+   - Một số khách hàng không có trường `vatAddress` trong hồ sơ công ty nhưng có địa chỉ giao hàng (`so.shippingAddress?.address`).
+
+### Cách khắc phục
+1. **Cập nhật fallback sang hệ thống VNPT test đang hoạt động:**
+   - Đổi fallback URL mặc định trong `getVnptConfigForEntity` sang Web Service demo được cấp: `https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/publishservice.asmx`, tài khoản `aiswebserviceadmin`, dải ký hiệu `C26THP`, mẫu số `1/011`.
+   - Giúp hệ thống hoạt động ngay lập tức kể cả khi Vercel chưa cấu hình env var, đồng thời vẫn tôn trọng biến môi trường khi người dùng khai báo.
+2. **Bổ sung địa chỉ giao hàng làm fallback:**
+   - Trong `actions-vnpt.ts`, bổ sung quan hệ `shippingAddress: { select: { address: true } }` và fallback `vatAddress = so.customer.vatAddress || so.customer.parent?.vatAddress || so.shippingAddress?.address || 'Việt Nam'`.
+
+### Bài học
+> ⚠️ **RULE 108: Khi tích hợp Web Service bên thứ 3 (như VNPT e-Invoice), fallback mặc định của URL và tài khoản kết nối nếu không tìm thấy biến môi trường (.env) PHẢI trỏ về endpoint test/sandbox hợp lệ đang hoạt động hoặc báo lỗi thiếu cấu hình rõ ràng, TUYỆT ĐỐI KHÔNG dùng domain giữ chỗ không tồn tại gây treo kết nối và lỗi fetch failed; Luôn chuẩn bị fallback dữ liệu địa chỉ khách hàng (từ địa chỉ giao hàng/chi nhánh) để đảm bảo XML hợp lệ theo quy định thuế.**
+
