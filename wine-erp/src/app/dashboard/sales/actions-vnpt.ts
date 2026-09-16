@@ -7,7 +7,10 @@ import { logAudit } from '@/lib/audit'
 import { requireAuth } from '@/lib/session'
 import { getVnptConfigForEntity, uploadDraftToVnpt, deleteDraftFromVnpt, syncInvoiceStatusFromVnpt } from '@/lib/vnpt/vnpt-client'
 import { buildVnptDraftInvoiceXml } from '@/lib/vnpt/xml-builder'
-import { InvoiceBuyer, InvoiceItem, InvoicePayload, VnptDraftMetadata } from '@/lib/vnpt/types'
+import { InvoiceBuyer, InvoiceItem, InvoicePayload, VnptDraftMetadata, InvoiceDateWarning } from '@/lib/vnpt/types'
+
+import { checkInvoiceDateDiscrepancy } from '@/lib/vnpt/date-utils'
+export { checkInvoiceDateDiscrepancy }
 
 /**
  * Đẩy hóa đơn nháp của đơn hàng lên hệ thống VNPT e-Invoice (V5 Webservice - TT78/NĐ70)
@@ -237,13 +240,18 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         })
     }
 
-    // Ghi Audit Log
+    // Ghi Audit Log kèm cảnh báo ngày nếu có
+    const dateWarning = checkInvoiceDateDiscrepancy(so.createdAt)
+    const warningDesc = dateWarning.hasWarning
+        ? ` [LƯU Ý NGÀY: Lập đơn ${dateWarning.orderDateFormatted}, HĐ ngày ${dateWarning.invoiceDateFormatted}, lệch ${dateWarning.diffDays} ngày]`
+        : ''
+
     await logAudit({
         userId: user.id,
         action: 'CREATE',
         entityType: 'ARInvoice',
         entityId: targetInv.id,
-        description: `Đẩy hóa đơn nháp lên VNPT e-Invoice cho đơn hàng ${so.soNo} (FKey: ${fkey}, Ký hiệu: ${draftMeta.serial})`,
+        description: `Đẩy hóa đơn nháp lên VNPT e-Invoice cho đơn hàng ${so.soNo} (Pháp nhân: ${config.entityName || so.legalEntity?.name || 'TA'}, FKey: ${fkey}, Ký hiệu: ${draftMeta.serial})${warningDesc}`,
     })
 
     revalidateCache('sales')
@@ -257,6 +265,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         fkey,
         pattern: draftMeta.pattern,
         serial: draftMeta.serial,
+        dateWarning,
         isMock: config.isMock,
         invoiceId: targetInv.id,
     }

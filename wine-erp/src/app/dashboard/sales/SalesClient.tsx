@@ -6,6 +6,8 @@ import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptTex
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
 import { uploadDraftInvoiceToVnpt, deleteDraftInvoiceFromVnpt, syncVnptInvoiceForOrder } from './actions-vnpt'
+import { checkInvoiceDateDiscrepancy } from '@/lib/vnpt/date-utils'
+import type { InvoiceDateWarning } from '@/lib/vnpt/types'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
@@ -432,6 +434,7 @@ function SODetailDrawer({
     const [uploadingVnpt, setUploadingVnpt] = useState(false)
     const [deletingVnpt, setDeletingVnpt] = useState(false)
     const [syncingVnpt, setSyncingVnpt] = useState(false)
+    const [dateWarningModal, setDateWarningModal] = useState<InvoiceDateWarning | null>(null)
 
     const handleToggleExempt = async () => {
         if (!soId || !detail || togglingExempt) return
@@ -580,8 +583,19 @@ function SODetailDrawer({
         }
     }
 
-    const handleUploadVnptDraft = async () => {
+    const triggerUploadVnptDraft = () => {
+        if (!detail) return
+        const warn = checkInvoiceDateDiscrepancy(detail.createdAt)
+        if (warn.hasWarning) {
+            setDateWarningModal(warn)
+        } else {
+            executeUploadVnptDraft()
+        }
+    }
+
+    const executeUploadVnptDraft = async () => {
         if (!soId || !detail || uploadingVnpt) return
+        setDateWarningModal(null)
         setUploadingVnpt(true)
         try {
             const res = await uploadDraftInvoiceToVnpt(soId)
@@ -1367,7 +1381,7 @@ function SODetailDrawer({
                                         <div className="flex flex-wrap items-center justify-center gap-2">
                                             {canCreateInvoice && (
                                                 <button
-                                                    onClick={handleUploadVnptDraft}
+                                                    onClick={triggerUploadVnptDraft}
                                                     disabled={uploadingVnpt}
                                                     className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50 cursor-pointer text-white"
                                                     style={{ background: '#2563EB' }}
@@ -1503,7 +1517,7 @@ function SODetailDrawer({
                                                                 )}
                                                                 {canCreateInvoice && (
                                                                     <button
-                                                                        onClick={handleUploadVnptDraft}
+                                                                        onClick={triggerUploadVnptDraft}
                                                                         disabled={uploadingVnpt}
                                                                         className="text-[10px] px-2 py-1 rounded font-semibold text-blue-300 hover:bg-blue-500/20 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Cập nhật lại thông tin mới nhất lên bản nháp VNPT"
@@ -1604,6 +1618,125 @@ function SODetailDrawer({
                     </div>
                 )}
             </div>
+
+            {/* Modal Cảnh Báo Lệch Ngày Xuất Hóa Đơn (Nghị định 123 / Nghị định 70) */}
+            {dateWarningModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+                    <div 
+                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border"
+                        style={{ 
+                            background: '#0D1E2B', 
+                            borderColor: dateWarningModal.level === 'DANGER' ? '#EF4444' : '#F59E0B' 
+                        }}
+                    >
+                        {/* Header */}
+                        <div 
+                            className="px-5 py-4 border-b flex items-start justify-between gap-3"
+                            style={{ 
+                                background: dateWarningModal.level === 'DANGER' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
+                                borderColor: dateWarningModal.level === 'DANGER' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'
+                            }}
+                        >
+                            <div className="flex items-center gap-2.5">
+                                {dateWarningModal.level === 'DANGER' ? (
+                                    <div className="w-9 h-9 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/40">
+                                        <AlertTriangle size={20} />
+                                    </div>
+                                ) : (
+                                    <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/40">
+                                        <AlertCircle size={20} />
+                                    </div>
+                                )}
+                                <div>
+                                    <h3 className={`text-sm font-bold ${dateWarningModal.level === 'DANGER' ? 'text-red-400' : 'text-amber-400'}`}>
+                                        {dateWarningModal.level === 'DANGER' 
+                                            ? 'CẢNH BÁO LỆCH KỲ THUẾ (KHÁC THÁNG)' 
+                                            : 'LƯU Ý THỜI ĐIỂM LẬP HÓA ĐƠN'}
+                                    </h3>
+                                    <p className="text-[11px] text-[#8AAEBB] mt-0.5">
+                                        Đơn hàng: <span className="font-mono font-semibold text-white">{detail?.soNo}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setDateWarningModal(null)}
+                                className="text-[#8AAEBB] hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-5 space-y-4 text-xs text-[#E8F1F2]">
+                            {/* Legal Entity & Date Comparison */}
+                            <div className="p-3.5 rounded-lg bg-[#142433] border border-[#2A4355]/60 space-y-2.5">
+                                <div className="flex justify-between items-center pb-2 border-b border-[#2A4355]/30">
+                                    <span className="text-[#8AAEBB]">Pháp nhân phát hành:</span>
+                                    <span className="font-semibold text-amber-300">
+                                        {detail?.legalEntity?.name || (detail?.legalEntity?.code === 'TA' ? 'Công ty Cổ phần Thắng Ân (TA)' : detail?.legalEntity?.code === 'LC' ? "Công ty TNHH Phân phối Ly's Cellar (LC)" : 'Thắng Ân (TA)')}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div className="p-2 rounded bg-[#0D1E2B] border border-[#2A4355]/40 text-center">
+                                        <span className="text-[10px] text-[#8AAEBB] block uppercase tracking-wider mb-1">Ngày lập đơn ERP</span>
+                                        <span className="font-mono font-bold text-sm text-[#87CBB9]">{dateWarningModal.orderDateFormatted}</span>
+                                    </div>
+                                    <div className="p-2 rounded bg-[#0D1E2B] border border-[#2A4355]/40 text-center">
+                                        <span className="text-[10px] text-[#8AAEBB] block uppercase tracking-wider mb-1">Ngày xuất HĐ VNPT</span>
+                                        <span className="font-mono font-bold text-sm text-amber-300">{dateWarningModal.invoiceDateFormatted} (Hôm nay)</span>
+                                    </div>
+                                </div>
+                                <div className="text-center pt-1 text-[11px] text-[#8AAEBB]">
+                                    Khoảng cách thời gian: <strong className={dateWarningModal.diffDays > 0 ? 'text-amber-400' : 'text-white'}>{dateWarningModal.diffDays} ngày</strong>
+                                </div>
+                            </div>
+
+                            {/* Message / Policy explanation */}
+                            <div className={`p-3 rounded-lg border text-[11px] leading-relaxed ${
+                                dateWarningModal.level === 'DANGER' 
+                                    ? 'bg-red-500/10 border-red-500/30 text-red-300' 
+                                    : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                            }`}>
+                                <p className="font-semibold mb-1">
+                                    {dateWarningModal.level === 'DANGER' ? '⚠️ Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:' : 'ℹ️ Quy định pháp luật:'}
+                                </p>
+                                <p className="text-xs leading-normal">
+                                    {dateWarningModal.message}
+                                </p>
+                                {dateWarningModal.level === 'DANGER' && (
+                                    <p className="mt-2 text-[10px] opacity-90 italic">
+                                        * Lưu ý: Việc xuất hóa đơn khác kỳ kê khai thuế GTGT so với thời điểm phát sinh có thể dẫn đến rủi ro bị cơ quan thuế xử phạt về hóa đơn theo Điều 24 Nghị định 125/2020/NĐ-CP. Kế toán cần đối chiếu kỹ trước khi bấm xác nhận.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="px-5 py-3.5 bg-[#142433] border-t border-[#2A4355] flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setDateWarningModal(null)}
+                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#8AAEBB] hover:text-white hover:bg-white/5 border border-[#2A4355] transition-all cursor-pointer"
+                            >
+                                Hủy Bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={executeUploadVnptDraft}
+                                disabled={uploadingVnpt}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                                    dateWarningModal.level === 'DANGER'
+                                        ? 'bg-red-600 hover:bg-red-500'
+                                        : 'bg-amber-600 hover:bg-amber-500'
+                                }`}
+                            >
+                                {uploadingVnpt ? <Loader2 size={13} className="animate-spin" /> : <CloudUpload size={13} />}
+                                Tôi Đã Rà Soát & Tiếp Tục Đẩy Nháp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

@@ -24,13 +24,17 @@ export const VNPT_ERROR_CODES: Record<string, string> = {
  * Get VNPT configuration for a specific Legal Entity (Thăng An TA / Ly's Cellar LC)
  */
 export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
-    const code = (legalEntityCode || 'TA').toUpperCase()
+    const rawCode = (legalEntityCode || 'TA').trim().toUpperCase()
 
-    // Default configuration for Thăng An (MST 0109579480) & Ly's Cellar (MST 0109902863)
-    const isLC = code === 'LC' || code.includes('LY')
+    // Explicit detection for both legal entities:
+    // 1. Ly's Cellar (MST 0109902863): codes 'LC', 'LYS_CELLAR', 'LYSCELLAR', 'LY', 'CELLAR'
+    // 2. Thắng Ân / Thăng An (MST 0109579480): codes 'TA', 'THANG_AN', 'THANGAN', 'THANG AN', 'THẮNG ÂN'
+    const isLC = rawCode === 'LC' || rawCode.includes('LY') || rawCode.includes('CELLAR')
     const prefix = isLC ? 'VNPT_LC_' : 'VNPT_TA_'
+    const entityCode: 'TA' | 'LC' = isLC ? 'LC' : 'TA'
+    const entityName = isLC ? "Công ty TNHH Ly's Cellar" : "Công ty Cổ phần Thắng Ân"
 
-    // Default fallback to VNPT Demo system if environment variables are not set in Vercel/production
+    // Default configuration for demo/fallback if env vars are not set
     const DEFAULT_SERVICE_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/publishservice.asmx'
     const DEFAULT_PORTAL_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/portalservice.asmx'
     const DEFAULT_BUSINESS_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/businessservice.asmx'
@@ -38,8 +42,8 @@ export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
     const DEFAULT_PASSWORD = 'Einv@oi@vn#pt26'
     const DEFAULT_ACCOUNT = '2222222222-008_admin_demo'
     const DEFAULT_ACPASS = 'test123aA@'
-    const DEFAULT_PATTERN = '1/011'
-    const DEFAULT_SERIAL = 'C26THP'
+    const DEFAULT_PATTERN = isLC ? '1/001' : '1/011'
+    const DEFAULT_SERIAL = isLC ? 'C26TAB' : 'C26THP'
 
     const serviceUrl = process.env[`${prefix}SERVICE_URL`] || process.env.VNPT_SERVICE_URL || DEFAULT_SERVICE_URL
     const portalUrl = process.env[`${prefix}PORTAL_URL`] || process.env.VNPT_PORTAL_URL || DEFAULT_PORTAL_URL
@@ -64,6 +68,8 @@ export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
         acpass,
         pattern,
         serial,
+        entityCode,
+        entityName,
         isMock,
     }
 }

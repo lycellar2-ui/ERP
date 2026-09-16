@@ -12,6 +12,8 @@ export interface VnptConfig {
     acpass: string         // Mật khẩu tài khoản phát hành
     pattern: string        // Mẫu số hóa đơn, vd: '1/001'
     serial: string         // Ký hiệu hóa đơn, vd: 'C26TTA' hoặc 'C26TLY'
+    entityCode?: 'TA' | 'LC' // Mã pháp nhân
+    entityName?: string    // Tên pháp nhân
     isMock?: boolean       // Chế độ giả lập khi chưa kết nối máy chủ thật
 }
 
@@ -114,4 +116,15 @@ export interface VnptRangeInvoice {
     taxStatusText: string
     taxError?: string
 }
+
+export interface InvoiceDateWarning {
+    hasWarning: boolean
+    isDifferentMonth: boolean
+    diffDays: number
+    orderDateFormatted: string
+    invoiceDateFormatted: string
+    message: string
+    level: 'INFO' | 'WARNING' | 'DANGER'
+}
+
 
