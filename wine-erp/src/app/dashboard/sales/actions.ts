@@ -11,6 +11,7 @@ import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 import * as XLSX from 'xlsx'
+import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
@@ -3177,9 +3178,10 @@ export async function exportVnptInvoiceExcel(filters: {
                 const vatAmount = netBeforeVat * (vatRate / 100)
                 const grandTotal = netBeforeVat + vatAmount
 
+                const officialInvoiceName = getVnptInvoiceProductName(line.product.skuCode, line.product.productName)
                 const productNameWithVintage = line.vintage 
-                    ? `${line.product.productName} (Vintage ${line.vintage})` 
-                    : line.product.productName
+                    ? `${officialInvoiceName} (Vintage ${line.vintage})` 
+                    : officialInvoiceName
 
                 vnptRows.push({
                     'STT_HD': orderIndex,

@@ -34,16 +34,20 @@ export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
     const entityCode: 'TA' | 'LC' = isLC ? 'LC' : 'TA'
     const entityName = isLC ? "Công ty TNHH Ly's Cellar" : "Công ty Cổ phần Thắng Ân"
 
-    // Default configuration for demo/fallback if env vars are not set
-    const DEFAULT_SERVICE_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/publishservice.asmx'
-    const DEFAULT_PORTAL_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/portalservice.asmx'
-    const DEFAULT_BUSINESS_URL = 'https://2222222222-008-tt78democadmin.vnpt-invoice.com.vn/businessservice.asmx'
-    const DEFAULT_USERNAME = 'aiswebserviceadmin'
-    const DEFAULT_PASSWORD = 'Einv@oi@vn#pt26'
-    const DEFAULT_ACCOUNT = '2222222222-008_admin_demo'
-    const DEFAULT_ACPASS = 'test123aA@'
-    const DEFAULT_PATTERN = isLC ? '1/001' : '1/011'
-    const DEFAULT_SERIAL = isLC ? 'C26TAB' : 'C26THP'
+    // Default configuration for production entities (Ly's Cellar & Thắng Ân)
+    const defaultBaseUrl = isLC
+        ? 'https://0109902863-tt78cadmin.vnpt-invoice.com.vn'
+        : 'https://0109579480-tt78cadmin.vnpt-invoice.com.vn'
+
+    const DEFAULT_SERVICE_URL = `${defaultBaseUrl}/publishservice.asmx`
+    const DEFAULT_PORTAL_URL = `${defaultBaseUrl}/portalservice.asmx`
+    const DEFAULT_BUSINESS_URL = `${defaultBaseUrl}/businessservice.asmx`
+    const DEFAULT_USERNAME = isLC ? 'roleservicely' : 'roleservice'
+    const DEFAULT_PASSWORD = ''
+    const DEFAULT_ACCOUNT = isLC ? '0109902863_admin' : '0109579480_admin'
+    const DEFAULT_ACPASS = ''
+    const DEFAULT_PATTERN = '1/001'
+    const DEFAULT_SERIAL = isLC ? 'C26TLY' : 'C26TTA'
 
     const serviceUrl = process.env[`${prefix}SERVICE_URL`] || process.env.VNPT_SERVICE_URL || DEFAULT_SERVICE_URL
     const portalUrl = process.env[`${prefix}PORTAL_URL`] || process.env.VNPT_PORTAL_URL || DEFAULT_PORTAL_URL

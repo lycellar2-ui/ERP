@@ -10,6 +10,7 @@ import { buildVnptDraftInvoiceXml } from '@/lib/vnpt/xml-builder'
 import { InvoiceBuyer, InvoiceItem, InvoicePayload, VnptDraftMetadata, InvoiceDateWarning } from '@/lib/vnpt/types'
 
 import { checkInvoiceDateDiscrepancy } from '@/lib/vnpt/date-utils'
+import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
 export { checkInvoiceDateDiscrepancy }
 
 /**
@@ -139,7 +140,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         return {
             lineNo: idx + 1,
             productCode: line.product.skuCode,
-            productName: line.product.productName,
+            productName: getVnptInvoiceProductName(line.product.skuCode, line.product.productName),
             unit: (line.product as any).unit || 'Chai',
             quantity: qty,
             unitPrice,
