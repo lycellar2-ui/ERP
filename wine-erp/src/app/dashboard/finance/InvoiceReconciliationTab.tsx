@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback, useTransition } from 'react'
 import {
     CheckCircle2, AlertCircle, Clock, AlertTriangle, FileX2,
     RefreshCw, Download, Search, Link2, ExternalLink,
-    Building2, Calendar, FileText, Loader2, ArrowUpDown
+    Building2, Calendar, FileText, Loader2, ArrowUpDown, Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     ReconciliationRow, ReconciliationKpis, ReconciliationFilters, ReconciliationStatus,
     getInvoiceReconciliationData, batchSyncPendingInvoices, manualLinkInvoiceToOrder, exportInvoiceReconciliationExcel
 } from './actions-reconciliation'
-import { syncVnptInvoiceForOrder } from '../sales/actions-vnpt'
+import { syncVnptInvoiceForOrder, deleteDraftInvoiceFromVnpt } from '../sales/actions-vnpt'
 import { DataPagination } from '@/components/DataPagination'
 import { formatVND } from '@/lib/utils'
 
@@ -162,6 +162,26 @@ export function InvoiceReconciliationTab() {
             toast.error(`Lỗi: ${err.message}`)
         } finally {
             setSyncingSoId(null)
+        }
+    }
+
+    // Delete Draft Invoice
+    const [deletingSoId, setDeletingSoId] = useState<string | null>(null)
+    const handleDeleteDraft = async (soId: string, soNo: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn hủy bản nháp hóa đơn cho đơn hàng ${soNo}?`)) return
+        setDeletingSoId(soId)
+        try {
+            const res = await deleteDraftInvoiceFromVnpt(soId)
+            if (res.success) {
+                toast.success(res.message || 'Đã hủy bản nháp hóa đơn thành công.')
+                loadData()
+            } else {
+                toast.error(res.error || 'Lỗi khi hủy bản nháp.')
+            }
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally {
+            setDeletingSoId(null)
         }
     }
 
@@ -633,6 +653,19 @@ export function InvoiceReconciliationTab() {
                                                         >
                                                             {isSyncingThis ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
                                                             Kéo Số
+                                                        </button>
+                                                    )}
+
+                                                    {/* If Pending Sign: Hủy nháp button */}
+                                                    {r.reconciliationStatus === 'PENDING_SIGN' && (
+                                                        <button
+                                                            onClick={() => handleDeleteDraft(r.soId, r.soNo)}
+                                                            disabled={deletingSoId === r.soId}
+                                                            className="text-[10px] px-2 py-1 rounded font-bold border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                            title="Hủy bản nháp hóa đơn này để đưa đơn hàng về trạng thái chưa xuất HĐ"
+                                                        >
+                                                            {deletingSoId === r.soId ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                                                            Hủy Nháp
                                                         </button>
                                                     )}
 

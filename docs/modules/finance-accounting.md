@@ -348,6 +348,7 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | **Gán HĐ thủ công thiếu tiền thuế VAT** | `manualLinkInvoiceToOrder` gán `totalAmount = so.totalAmount` (thiếu `vatAmount`). Đã sửa tính đủ `totalAmount = netAmount + vatAmount`. | Dữ liệu `ARInvoice` chuẩn xác 100% khi kế toán gán hóa đơn thủ công. |
 | **Thiếu cảnh báo lệch kỳ tính thuế NĐ 123** | Chưa tích hợp kiểm tra ngày lập đơn vs ngày xuất HĐ trên màn hình đối chiếu. Đã bổ sung badge `⚠️ Lệch kỳ thuế` khi đơn khác tháng với ngày hôm nay. | Kế toán trưởng rà soát phát hiện ngay các đơn hàng giao tháng trước chưa kịp xuất HĐ để xử lý rủi ro thuế. |
 | **Đồng bộ hàng loạt bị nghẽn (Serial)** | `batchSyncPendingInvoices` duyệt tuần tự từng đơn. Đã nâng cấp chạy song song theo cụm 5 luồng (`CHUNK_SIZE = 5`). | Tốc độ quét và đồng bộ VNPT tăng nhanh gấp ~4 lần. |
+| **Kẹt hóa đơn nháp (Chờ ký số ảo)** | Bản nháp cũ (`NHAP-`) khi không tồn tại trên VNPT bị chặn không xóa được do VNPT trả về lỗi `ERR:5`/`ERR:1`. Bổ sung nút **"Hủy Nháp"** trực tiếp trên màn hình Đối Chiếu và cho phép xóa bản ghi nháp cục bộ trong ERP. | Kế toán dễ dàng dọn dẹp các bản nháp thử nghiệm hoặc bản nháp đẩy lỗi, không bị treo trạng thái `Chờ Ký Số`. |
 
 ### ❌ Chưa triển khai
 

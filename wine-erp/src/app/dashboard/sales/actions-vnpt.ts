@@ -304,7 +304,9 @@ export async function deleteDraftInvoiceFromVnpt(soId: string) {
     const config = getVnptConfigForEntity(so.legalEntity?.code)
     const result = await deleteDraftFromVnpt(config, fkey)
 
-    if (!result.success) {
+    // Nếu VNPT báo lỗi nhưng hóa đơn trong ERP là bản nháp (NHAP-), vẫn cho phép xóa bản ghi trong ERP
+    // để tránh tình trạng kẹt trạng thái Chờ Ký Số khi bản nháp không tồn tại trên VNPT
+    if (!result.success && !inv.invoiceNo.startsWith('NHAP-')) {
         return { success: false, error: result.errorMessage || 'Không thể xóa bản nháp trên VNPT.' }
     }
 
