@@ -332,13 +332,13 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | Kế toán | Dòng Tiền | Cash position + 30/60/90 forecast |
 | Kế toán | Nợ Khó Đòi | Scan >180 ngày + write-off |
 
-### 🚀 Tích Hợp VNPT e-Invoice (Web Service TT78 & NĐ70) & Đối Chiếu Hóa Đơn — Đã Hoàn Thành & Audit (16/09/2026)
+### 🚀 Tích Hợp VNPT e-Invoice (Web Service TT78 & NĐ70) & Đối Chiếu Hóa Đơn Hai Chiều — Đã Hoàn Thành & Audit (17/09/2026)
 
 | Thành phần | File code | Mô tả |
 |---|---|---|
 | **VNPT SOAP Client** | `src/lib/vnpt/vnpt-client.ts` | Giao tiếp ASMX `PublishService`, `PortalService`, `BusinessService`. Hỗ trợ đẩy nháp (`ImportInvByPattern`), xóa nháp (`deleteInvoiceByFkey`), lấy số HĐ & mã CQT (`GetMCCQThueByFkeysNoXMLSign`), lấy dải hóa đơn (`GetMCCQThueFromNoToNo`), link PDF/Portal (`GetLinkInvViewFkey`). Đa pháp nhân Thắng Ân (`TA`: C26TTA / 1/001) vs Ly's Cellar (`LC`: C26TLY / 1/001). |
-| **Server Actions Đối Chiếu** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (phân loại ma trận, KPI độ phủ %, phát hiện lệch thuế & tổng tiền), `batchSyncPendingInvoices` (đồng bộ hàng loạt song song 5 luồng), `manualLinkInvoiceToOrder` (gán thủ công chuẩn Net + VAT), `exportInvoiceReconciliationExcel` (xuất file Excel 2 sheet). |
-| **UI Đối Chiếu Hóa Đơn** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` & `src/app/dashboard/reconciliation/page.tsx` | Menu riêng trên Sidebar **"Đối Chiếu Hóa Đơn"** (`/dashboard/reconciliation`) & Tab trong `/dashboard/finance`. Gồm 5 thẻ KPI trực quan, thanh bộ lọc trạng thái hóa đơn theo tabs/pills kèm badge số lượng (`Tất Cả`, `Thiếu HĐ`, `Lệch Tiền`, `Chờ Ký Số`, `Đã Khớp`, `Miễn HĐ`), bộ lọc kỳ báo cáo & pháp nhân, bảng ma trận tương tác phân loại theo màu, badge cảnh báo lệch kỳ thuế NĐ 123, nút đồng bộ hàng loạt, nút tải PDF và tra cứu Portal VNPT. |
+| **Server Actions Đối Chiếu Hai Chiều** | `src/app/dashboard/finance/actions-reconciliation.ts` | `getInvoiceReconciliationData` (đối chiếu SO → HĐ, phát hiện thiếu HĐ/lệch thuế), `getVnptInvoicesRegistry` (đối chiếu ngược HĐ VNPT → SO, phát hiện HĐ mồ côi chưa gán, HĐ điều chỉnh giảm, HĐ nội bộ), `uploadVnptMonthlyExcel` (tải lên file bảng kê xuất từ portal VNPT), `searchSalesOrdersForLinking` (tìm kiếm nhanh đơn SO), `unlinkVnptInvoiceFromOrder` (hủy gán), `exportVnptRegistryExcel` (xuất bảng kê Excel VNPT). |
+| **UI Đối Chiếu Hóa Đơn Hai Chiều** | `src/app/dashboard/finance/InvoiceReconciliationTab.tsx` & `src/app/dashboard/reconciliation/page.tsx` | Menu riêng trên Sidebar **"Đối Chiếu Hóa Đơn"** (`/dashboard/reconciliation`) & Tab trong `/dashboard/finance`. Gồm Sub-nav chuyển đổi 2 góc nhìn: **"Đối Chiếu Theo Đơn Hàng"** (5 thẻ KPI, ma trận 6 trạng thái) và **"Danh Sách Hóa Đơn VNPT"** (4 thẻ KPI, bảng kê toàn bộ HĐ VNPT, lọc theo HĐ chưa gán/đã gán/điều chỉnh, nút tải lên file Excel VNPT, modal gán đơn trực tiếp). |
 
 ### 🐛 Bugs Fixed & Audit Results (16/09/2026)
 
