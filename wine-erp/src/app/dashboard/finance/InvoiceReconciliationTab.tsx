@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useTransition } from 'react'
 import {
     CheckCircle2, AlertCircle, Clock, AlertTriangle, FileX2,
     RefreshCw, Download, Search, Link2, ExternalLink,
-    Building2, Calendar, FileText, Loader2, ArrowUpDown, Trash2
+    Building2, Calendar, FileText, Loader2, ArrowUpDown, Trash2, Filter
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -487,6 +487,57 @@ export function InvoiceReconciliationTab() {
                         />
                     </div>
                 )}
+
+                {/* Status Filter Tabs / Pills */}
+                <div className="flex items-center gap-1.5 pt-2.5 border-t border-[#2A4355] flex-wrap">
+                    <span className="text-[11px] font-bold mr-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: '#8AAEBB' }}>
+                        <Filter size={11} /> Lọc Trạng Thái:
+                    </span>
+
+                    {[
+                        { key: 'ALL' as const, label: 'Tất Cả', count: kpis.totalOrders, color: '#8AAEBB', activeColor: '#87CBB9', activeBg: '#1B2E3D' },
+                        { key: 'MISSING_INVOICE' as const, label: 'Thiếu HĐ', count: kpis.missingOrders, color: '#EF4444', activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.15)' },
+                        { key: 'DISCREPANCY' as const, label: 'Lệch Tiền', count: kpis.discrepancyOrders, color: '#F97316', activeColor: '#F97316', activeBg: 'rgba(249,115,22,0.15)' },
+                        { key: 'PENDING_SIGN' as const, label: 'Chờ Ký Số', count: kpis.pendingSignOrders, color: '#D4A853', activeColor: '#D4A853', activeBg: 'rgba(212,168,83,0.15)' },
+                        { key: 'MATCHED' as const, label: 'Đã Khớp', count: kpis.matchedOrders, color: '#5BA88A', activeColor: '#5BA88A', activeBg: 'rgba(91,168,138,0.15)' },
+                        { key: 'EXEMPT' as const, label: 'Miễn HĐ', count: kpis.exemptOrders, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
+                    ].map(tab => {
+                        const active = statusFilter === tab.key
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => { setStatusFilter(tab.key); setPage(1) }}
+                                className="px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer flex items-center gap-1.5 hover:opacity-90"
+                                style={{
+                                    background: active ? tab.activeBg : '#111F2D',
+                                    color: active ? tab.activeColor : '#8AAEBB',
+                                    border: active ? `1.5px solid ${tab.activeColor}` : '1px solid #2A4355',
+                                    fontWeight: active ? 700 : 500,
+                                }}
+                            >
+                                <span>{tab.label}</span>
+                                <span
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none"
+                                    style={{
+                                        background: active ? tab.activeColor : '#1E3547',
+                                        color: active ? '#0A1926' : tab.color,
+                                    }}
+                                >
+                                    {tab.count}
+                                </span>
+                            </button>
+                        )
+                    })}
+
+                    {statusFilter !== 'ALL' && (
+                        <button
+                            onClick={() => { setStatusFilter('ALL'); setPage(1) }}
+                            className="text-[11px] ml-auto px-2 py-0.5 rounded text-slate-400 hover:text-white underline cursor-pointer"
+                        >
+                            Xóa bộ lọc
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Reconciliation Data Table */}
