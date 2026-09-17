@@ -1295,20 +1295,16 @@ function SODetailDrawer({
                             </div>
 
                             <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between mb-2.5">
-                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
+                                <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        {!detail.isInvoiceExempt && detail.arInvoices.length === 0 && canToggleInvoiceExempt && (
-                                            <button
-                                                onClick={handleToggleExempt}
-                                                disabled={togglingExempt}
-                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shadow-xs cursor-pointer"
-                                                title="Chỉ Kế toán & Admin: Đánh dấu đơn hàng này không cần xuất hóa đơn VAT"
-                                            >
-                                                {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <FileX2 size={12} />}
-                                                Không xuất HĐ
-                                            </button>
+                                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Hóa Đơn Công Nợ (AR)</p>
+                                        {detail.arInvoices.length > 0 && (
+                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#2A4355]/60 text-[#87CBB9]">
+                                                {detail.arInvoices.length}
+                                            </span>
                                         )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         {detail.isInvoiceExempt && canToggleInvoiceExempt && (
                                             <button
                                                 onClick={handleToggleExempt}
@@ -1320,16 +1316,15 @@ function SODetailDrawer({
                                                 Hủy miễn HĐ
                                             </button>
                                         )}
-                                        {!detail.isInvoiceExempt && canCreateInvoice && (
+                                        {!detail.isInvoiceExempt && detail.arInvoices.length > 0 && canCreateInvoice && (
                                             <button
                                                 onClick={handleCreateInvoice}
                                                 disabled={creatingInvoice}
-                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
-                                                style={{ background: '#87CBB9', color: '#0A1926' }}
-                                                title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-[#87CBB9]/40 text-[#87CBB9] hover:bg-[#87CBB9]/10 shadow-xs cursor-pointer disabled:opacity-50"
+                                                title="Gắn thêm mã hóa đơn VAT cho đơn hàng này"
                                             >
                                                 {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
-                                                + Xuất Hóa Đơn
+                                                + Thêm HĐ
                                             </button>
                                         )}
                                     </div>
@@ -1376,15 +1371,20 @@ function SODetailDrawer({
                                         </div>
                                     </div>
                                 ) : detail.arInvoices.length === 0 ? (
-                                    <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
-                                        <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
+                                    <div className="py-5 px-4 rounded-lg text-center" style={{ background: 'rgba(27,46,61,0.4)', border: '1px dashed #2A4355' }}>
+                                        <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-2">
+                                            <ReceiptText size={18} />
+                                        </div>
+                                        <h5 className="text-xs font-bold text-[#E8F1F2] mb-0.5">Chưa xuất hóa đơn cho đơn hàng này</h5>
+                                        <p className="text-[11px] text-[#8AAEBB] max-w-sm mx-auto mb-3.5">
+                                            Bạn có thể phát hành hóa đơn điện tử tự động qua VNPT hoặc gắn số hóa đơn thủ công.
+                                        </p>
                                         <div className="flex flex-wrap items-center justify-center gap-2">
                                             {canCreateInvoice && (
                                                 <button
                                                     onClick={triggerUploadVnptDraft}
                                                     disabled={uploadingVnpt}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50 cursor-pointer text-white"
-                                                    style={{ background: '#2563EB' }}
+                                                    className="text-xs px-3.5 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all shadow-md disabled:opacity-50 cursor-pointer text-white bg-[#2563EB] hover:bg-[#1D4ED8]"
                                                     title="Đẩy dữ liệu hóa đơn nháp lên cổng VNPT e-Invoice (TT78/NĐ70)"
                                                 >
                                                     {uploadingVnpt ? <Loader2 size={13} className="animate-spin" /> : <CloudUpload size={13} />}
@@ -1395,21 +1395,22 @@ function SODetailDrawer({
                                                 <button
                                                     onClick={handleCreateInvoice}
                                                     disabled={creatingInvoice}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50 cursor-pointer"
-                                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                                    className="text-xs px-3 py-1.5 rounded-md font-semibold inline-flex items-center gap-1.5 transition-all border border-[#87CBB9]/40 text-[#87CBB9] bg-[#87CBB9]/10 hover:bg-[#87CBB9]/20 shadow-xs cursor-pointer disabled:opacity-50"
+                                                    title="Gắn số hóa đơn VAT xuất từ hệ thống khác (MISA, Viettel, v.v.)"
                                                 >
                                                     {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-                                                    Gắn HĐ VAT Thủ Công
+                                                    Gắn HĐ Thủ Công
                                                 </button>
                                             )}
                                             {canToggleInvoiceExempt && (
                                                 <button
                                                     onClick={handleToggleExempt}
                                                     disabled={togglingExempt}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 shadow-xs cursor-pointer"
+                                                    className="text-xs px-2.5 py-1.5 rounded-md font-medium inline-flex items-center gap-1 transition-all text-amber-400/90 hover:text-amber-300 hover:bg-amber-500/10 cursor-pointer disabled:opacity-50"
+                                                    title="Chỉ Kế toán & Admin: Đánh dấu đơn hàng này không cần xuất hóa đơn VAT"
                                                 >
-                                                    {togglingExempt ? <Loader2 size={13} className="animate-spin" /> : <FileX2 size={13} />}
-                                                    Đánh Dấu: Không Xuất HĐ
+                                                    {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <FileX2 size={12} />}
+                                                    Không xuất HĐ
                                                 </button>
                                             )}
                                         </div>
