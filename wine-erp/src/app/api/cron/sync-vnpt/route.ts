@@ -29,6 +29,32 @@ async function handleCronSync(req: NextRequest) {
         }
     }
 
+    const isDiag = req.nextUrl.searchParams.get('diag') === 'true'
+    if (isDiag) {
+        const results: any = {}
+        try {
+            const start = Date.now()
+            const res = await fetch('https://0109902863-tt78cadmin.vnpt-invoice.com.vn/publishservice.asmx', {
+                method: 'GET',
+                signal: AbortSignal.timeout(8000),
+            })
+            results.lc = { ok: true, status: res.status, timeMs: Date.now() - start }
+        } catch (err: any) {
+            results.lc = { ok: false, error: err.message, cause: err.cause?.message || err.cause?.code || String(err.cause) }
+        }
+        try {
+            const start = Date.now()
+            const res = await fetch('https://0109579480-tt78cadmin.vnpt-invoice.com.vn/publishservice.asmx', {
+                method: 'GET',
+                signal: AbortSignal.timeout(8000),
+            })
+            results.ta = { ok: true, status: res.status, timeMs: Date.now() - start }
+        } catch (err: any) {
+            results.ta = { ok: false, error: err.message, cause: err.cause?.message || err.cause?.code || String(err.cause) }
+        }
+        return NextResponse.json(results)
+    }
+
     try {
         // Query draft invoices needing VNPT check
         const draftInvoices = await prisma.aRInvoice.findMany({

@@ -43,9 +43,9 @@ export function getVnptConfigForEntity(legalEntityCode?: string): VnptConfig {
     const DEFAULT_PORTAL_URL = `${defaultBaseUrl}/portalservice.asmx`
     const DEFAULT_BUSINESS_URL = `${defaultBaseUrl}/businessservice.asmx`
     const DEFAULT_USERNAME = isLC ? 'roleservicely' : 'roleservice'
-    const DEFAULT_PASSWORD = ''
+    const DEFAULT_PASSWORD = 'Abc12345='
     const DEFAULT_ACCOUNT = isLC ? '0109902863_admin' : '0109579480_admin'
-    const DEFAULT_ACPASS = ''
+    const DEFAULT_ACPASS = 'Abc12345='
     const DEFAULT_PATTERN = '1/001'
     const DEFAULT_SERIAL = isLC ? 'C26TLY' : 'C26TTA'
 
@@ -207,7 +207,7 @@ export async function uploadDraftToVnpt(
     } catch (err: any) {
         return {
             success: false,
-            errorMessage: `Không thể kết nối tới Web Service VNPT: ${err.message}`,
+            errorMessage: `Không thể kết nối tới Web Service VNPT: ${formatFetchError(err)}`,
         }
     }
 }
@@ -266,7 +266,7 @@ export async function deleteDraftFromVnpt(
     } catch (err: any) {
         return {
             success: false,
-            errorMessage: `Lỗi khi gọi hủy bản nháp VNPT: ${err.message}`,
+            errorMessage: `Lỗi khi gọi hủy bản nháp VNPT: ${formatFetchError(err)}`,
         }
     }
 }
@@ -465,7 +465,7 @@ export async function syncInvoiceStatusFromVnpt(
     } catch (err: any) {
         return {
             success: false,
-            errorMessage: `Không thể kết nối Web Service VNPT khi kiểm tra trạng thái: ${err.message}`,
+            errorMessage: `Không thể kết nối Web Service VNPT khi kiểm tra trạng thái: ${formatFetchError(err)}`,
         }
     }
 }
@@ -604,9 +604,18 @@ export async function fetchVnptInvoicesByRange(
         return {
             success: false,
             invoices: [],
-            errorMessage: `Lỗi kết nối VNPT: ${err.message}`,
+            errorMessage: `Lỗi kết nối VNPT: ${formatFetchError(err)}`,
         }
     }
+}
+
+function formatFetchError(err: any): string {
+    const cause = err?.cause
+    if (cause) {
+        const detail = cause.code || cause.message || (typeof cause === 'object' ? JSON.stringify(cause) : String(cause))
+        return `${err.message} [${detail}]`
+    }
+    return err?.message || String(err)
 }
 
 function escapeSoap(str?: string): string {
@@ -616,3 +625,4 @@ function escapeSoap(str?: string): string {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
 }
+
