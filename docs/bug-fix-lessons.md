@@ -62,6 +62,7 @@
 53. [BUG-106: Nhận Sai Quy Cách Thùng Khi Nhập Kho PO & Lỗi Tràn Layout Giao Diện Đơn Mua Hàng](#bug-106-nhận-sai-quy-cách-thùng-khi-nhập-kho-po--lỗi-tràn-layout-giao-diện-đơn-mua-hàng)
 54. [BUG-107: Lỗi Tính Toán Báo Cáo Nhập Xuất Tồn (NXT), Lệch Sổ Kho & Tính Ảo Phiếu Nhập DRAFT](#bug-107-lỗi-tính-toán-báo-cáo-nhập-xuất-tồn-nxt-lệch-sổ-kho--tính-ảo-phiếu-nhập-draft)
 55. [BUG-108: Lỗi Fetch Failed Khi Đẩy Hóa Đơn Nháp VNPT Trên Production Vercel](#bug-108-lỗi-fetch-failed-khi-đẩy-hóa-đơn-nháp-vnpt-trên-production-vercel)
+56. [BUG-109: Trùng Lặp Nút Thao Tác Xuất Hóa Đơn & Xung Đột Phân Cấp Giao Diện Trong Drawer Đơn Hàng](#bug-109-trùng-lặp-nút-thao-tác-xuất-hóa-đơn--xung-đột-phân-cấp-giao-diện-trong-drawer-đơn-hàng)
 
 ---
 
@@ -2921,4 +2922,35 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 108: Khi tích hợp Web Service bên thứ 3 (như VNPT e-Invoice), fallback mặc định của URL và tài khoản kết nối nếu không tìm thấy biến môi trường (.env) PHẢI trỏ về endpoint test/sandbox hợp lệ đang hoạt động hoặc báo lỗi thiếu cấu hình rõ ràng, TUYỆT ĐỐI KHÔNG dùng domain giữ chỗ không tồn tại gây treo kết nối và lỗi fetch failed; Luôn chuẩn bị fallback dữ liệu địa chỉ khách hàng (từ địa chỉ giao hàng/chi nhánh) để đảm bảo XML hợp lệ theo quy định thuế.**
+
+---
+
+## BUG-109: Trùng Lặp Nút Thao Tác Xuất Hóa Đơn & Xung Đột Phân Cấp Giao Diện Trong Drawer Đơn Hàng
+
+**Ngày:** 2026-09-17  
+**Người sửa:** AI Assistant  
+**Module:** Sales & Invoicing (`src/app/dashboard/sales/SalesClient.tsx`)  
+**Mức độ:** 🟡 Medium (Trải nghiệm người dùng & tính chuyên nghiệp của UI)
+
+### Mô tả lỗi
+- Trong Drawer chi tiết đơn bán hàng (`SODetailDrawer`), thẻ **Hóa Đơn Công Nợ (AR)** khi đơn hàng chưa có hóa đơn xuất hiện đồng thời:
+  1. Header thẻ: Nút `Không xuất HĐ` và nút `+ Xuất Hóa Đơn`.
+  2. Khung thân thẻ (Empty State): Nút `Đẩy Nháp Lên VNPT`, nút `Gắn HĐ VAT Thủ Công`, và nút `Đánh Dấu: Không Xuất HĐ`.
+- Dẫn đến việc 1 chức năng có 2 nút bấm khác nhau ở 2 vị trí liền kề, ngôn từ không đồng nhất ("Xuất Hóa Đơn" vs "Gắn HĐ VAT Thủ Công", "Không xuất HĐ" vs "Đánh Dấu: Không Xuất HĐ"), các nút bấm có kích thước và màu sắc xung đột, tạo cảm giác lộn xộn và thiếu chuyên nghiệp.
+
+### Cách khắc phục
+1. **Loại bỏ trùng lặp trên Header:**
+   - Khi đơn chưa có hóa đơn (`arInvoices.length === 0`), Header giữ sự tối giản chỉ hiển thị tiêu đề thẻ.
+   - Khi đã có hóa đơn, Header hiển thị badge số lượng và nút `+ Thêm HĐ` (nếu cần gán thêm).
+   - Khi đơn được duyệt miễn hóa đơn, Header hiển thị nút `Hủy miễn HĐ`.
+2. **Tái cấu trúc Empty State Card:**
+   - Bổ sung icon nhận diện `ReceiptText` trong vòng tròn nền xanh dịu.
+   - Hiển thị thông điệp hướng dẫn rõ ràng.
+   - Phân cấp rõ 3 hành động:
+     - **Chính (Primary):** `Đẩy Nháp Lên VNPT` (Nút xanh đậm, nổi bật).
+     - **Phụ (Secondary):** `Gắn HĐ Thủ Công` (Nút viền mảnh teal thanh lịch).
+     - **Tiện ích (Utility):** `Không xuất HĐ` (Nút text amber nhẹ nhàng).
+
+### Bài học
+> ⚠️ **RULE 109: Không bao giờ đặt các nút hành động trùng lặp ở cả Header thẻ và Thân thẻ (Empty state container); Mỗi hành động chỉ xuất hiện tại đúng một vị trí với phân cấp thị giác rõ ràng (Primary / Secondary / Utility) và ngôn từ nhất quán, tránh gây nhiễu và hoang mang cho người dùng.**
 
