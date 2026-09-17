@@ -1406,7 +1406,7 @@ function SODetailDrawer({
                                                 <button
                                                     onClick={handleToggleExempt}
                                                     disabled={togglingExempt}
-                                                    className="text-xs px-2.5 py-1.5 rounded-md font-medium inline-flex items-center gap-1 transition-all text-amber-400/90 hover:text-amber-300 hover:bg-amber-500/10 cursor-pointer disabled:opacity-50"
+                                                    className="text-xs px-2.5 py-1.5 rounded-md font-medium inline-flex items-center gap-1 transition-all text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-500/10 cursor-pointer disabled:opacity-50"
                                                     title="Chỉ Kế toán & Admin: Đánh dấu đơn hàng này không cần xuất hóa đơn VAT"
                                                 >
                                                     {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <FileX2 size={12} />}
@@ -1622,90 +1622,101 @@ function SODetailDrawer({
 
             {/* Modal Cảnh Báo Lệch Ngày Xuất Hóa Đơn (Nghị định 123 / Nghị định 70) */}
             {dateWarningModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div 
-                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border"
-                        style={{ 
-                            background: '#0D1E2B', 
-                            borderColor: dateWarningModal.level === 'DANGER' ? '#EF4444' : '#F59E0B' 
-                        }}
+                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white dark:bg-[#0D1E2B] border-slate-200 dark:border-[#2A4355]"
                     >
                         {/* Header */}
                         <div 
-                            className="px-5 py-4 border-b flex items-start justify-between gap-3"
-                            style={{ 
-                                background: dateWarningModal.level === 'DANGER' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
-                                borderColor: dateWarningModal.level === 'DANGER' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'
-                            }}
+                            className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
+                                dateWarningModal.level === 'DANGER'
+                                    ? 'bg-rose-50/80 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900/40'
+                                    : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900/40'
+                            }`}
                         >
-                            <div className="flex items-center gap-2.5">
+                            <div className="flex items-center gap-3">
                                 {dateWarningModal.level === 'DANGER' ? (
-                                    <div className="w-9 h-9 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/40">
+                                    <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-300 dark:border-rose-500/40 shadow-2xs">
                                         <AlertTriangle size={20} />
                                     </div>
                                 ) : (
-                                    <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/40">
+                                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-500/40 shadow-2xs">
                                         <AlertCircle size={20} />
                                     </div>
                                 )}
                                 <div>
-                                    <h3 className={`text-sm font-bold ${dateWarningModal.level === 'DANGER' ? 'text-red-400' : 'text-amber-400'}`}>
+                                    <h3 className={`text-sm font-bold tracking-tight ${
+                                        dateWarningModal.level === 'DANGER'
+                                            ? 'text-rose-900 dark:text-rose-400'
+                                            : 'text-amber-900 dark:text-amber-300'
+                                    }`}>
                                         {dateWarningModal.level === 'DANGER' 
                                             ? 'CẢNH BÁO LỆCH KỲ THUẾ (KHÁC THÁNG)' 
                                             : 'LƯU Ý THỜI ĐIỂM LẬP HÓA ĐƠN'}
                                     </h3>
-                                    <p className="text-[11px] text-[#8AAEBB] mt-0.5">
-                                        Đơn hàng: <span className="font-mono font-semibold text-white">{detail?.soNo}</span>
+                                    <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB] mt-0.5">
+                                        Đơn hàng: <span className="font-mono font-bold text-slate-800 dark:text-white">{detail?.soNo}</span>
                                     </p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setDateWarningModal(null)}
-                                className="text-[#8AAEBB] hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+                                className="text-slate-400 hover:text-slate-700 dark:text-[#8AAEBB] dark:hover:text-white p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
                         {/* Body */}
-                        <div className="p-5 space-y-4 text-xs text-[#E8F1F2]">
+                        <div className="p-5 space-y-4 text-xs text-slate-700 dark:text-[#E8F1F2]">
                             {/* Legal Entity & Date Comparison */}
-                            <div className="p-3.5 rounded-lg bg-[#142433] border border-[#2A4355]/60 space-y-2.5">
-                                <div className="flex justify-between items-center pb-2 border-b border-[#2A4355]/30">
-                                    <span className="text-[#8AAEBB]">Pháp nhân phát hành:</span>
-                                    <span className="font-semibold text-amber-300">
+                            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355]/60 space-y-3">
+                                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-[#2A4355]/30">
+                                    <span className="text-slate-500 dark:text-[#8AAEBB] font-medium">Pháp nhân phát hành:</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">
                                         {detail?.legalEntity?.name || (detail?.legalEntity?.code === 'TA' ? 'Công ty Cổ phần Thắng Ân (TA)' : detail?.legalEntity?.code === 'LC' ? "Công ty TNHH Phân phối Ly's Cellar (LC)" : 'Thắng Ân (TA)')}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 pt-1">
-                                    <div className="p-2 rounded bg-[#0D1E2B] border border-[#2A4355]/40 text-center">
-                                        <span className="text-[10px] text-[#8AAEBB] block uppercase tracking-wider mb-1">Ngày lập đơn ERP</span>
-                                        <span className="font-mono font-bold text-sm text-[#87CBB9]">{dateWarningModal.orderDateFormatted}</span>
+                                <div className="grid grid-cols-2 gap-3 pt-0.5">
+                                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#0D1E2B] border border-slate-200 dark:border-[#2A4355]/40 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 dark:text-[#8AAEBB] block uppercase tracking-wider font-semibold mb-1">Ngày lập đơn ERP</span>
+                                        <span className="font-mono font-bold text-sm text-teal-700 dark:text-[#87CBB9]">{dateWarningModal.orderDateFormatted}</span>
                                     </div>
-                                    <div className="p-2 rounded bg-[#0D1E2B] border border-[#2A4355]/40 text-center">
-                                        <span className="text-[10px] text-[#8AAEBB] block uppercase tracking-wider mb-1">Ngày xuất HĐ VNPT</span>
-                                        <span className="font-mono font-bold text-sm text-amber-300">{dateWarningModal.invoiceDateFormatted} (Hôm nay)</span>
+                                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#0D1E2B] border border-slate-200 dark:border-[#2A4355]/40 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 dark:text-[#8AAEBB] block uppercase tracking-wider font-semibold mb-1">Ngày xuất HĐ VNPT</span>
+                                        <span className="font-mono font-bold text-sm text-amber-700 dark:text-amber-400">
+                                            {dateWarningModal.invoiceDateFormatted} <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">(Hôm nay)</span>
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="text-center pt-1 text-[11px] text-[#8AAEBB]">
-                                    Khoảng cách thời gian: <strong className={dateWarningModal.diffDays > 0 ? 'text-amber-400' : 'text-white'}>{dateWarningModal.diffDays} ngày</strong>
+                                <div className="text-center pt-1 text-[11px] text-slate-500 dark:text-[#8AAEBB] flex items-center justify-center gap-1.5">
+                                    <span>Khoảng cách thời gian:</span>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                                        dateWarningModal.level === 'DANGER'
+                                            ? 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40'
+                                            : 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40'
+                                    }`}>
+                                        {dateWarningModal.diffDays} ngày
+                                    </span>
                                 </div>
                             </div>
 
                             {/* Message / Policy explanation */}
-                            <div className={`p-3 rounded-lg border text-[11px] leading-relaxed ${
+                            <div className={`p-3.5 rounded-lg border text-xs leading-relaxed ${
                                 dateWarningModal.level === 'DANGER' 
-                                    ? 'bg-red-500/10 border-red-500/30 text-red-300' 
-                                    : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                    ? 'bg-rose-50 border-rose-200 text-rose-950 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200' 
+                                    : 'bg-amber-50 border-amber-200 text-amber-950 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'
                             }`}>
-                                <p className="font-semibold mb-1">
-                                    {dateWarningModal.level === 'DANGER' ? '⚠️ Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:' : 'ℹ️ Quy định pháp luật:'}
+                                <p className={`font-bold mb-1.5 text-xs flex items-center gap-1.5 ${
+                                    dateWarningModal.level === 'DANGER' ? 'text-rose-900 dark:text-rose-300' : 'text-amber-900 dark:text-amber-300'
+                                }`}>
+                                    {dateWarningModal.level === 'DANGER' ? '⚠️ Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:' : 'ℹ️ Quy định pháp luật về thời điểm xuất hóa đơn:'}
                                 </p>
                                 <p className="text-xs leading-normal">
                                     {dateWarningModal.message}
                                 </p>
                                 {dateWarningModal.level === 'DANGER' && (
-                                    <p className="mt-2 text-[10px] opacity-90 italic">
+                                    <p className="mt-2.5 pt-2 border-t border-rose-200 dark:border-rose-800/40 text-[11px] text-rose-800 dark:text-rose-300/90 italic leading-normal">
                                         * Lưu ý: Việc xuất hóa đơn khác kỳ kê khai thuế GTGT so với thời điểm phát sinh có thể dẫn đến rủi ro bị cơ quan thuế xử phạt về hóa đơn theo Điều 24 Nghị định 125/2020/NĐ-CP. Kế toán cần đối chiếu kỹ trước khi bấm xác nhận.
                                     </p>
                                 )}
@@ -1713,11 +1724,11 @@ function SODetailDrawer({
                         </div>
 
                         {/* Footer Buttons */}
-                        <div className="px-5 py-3.5 bg-[#142433] border-t border-[#2A4355] flex items-center justify-end gap-2.5">
+                        <div className="px-5 py-3.5 bg-slate-50 dark:bg-[#142433] border-t border-slate-200 dark:border-[#2A4355] flex items-center justify-end gap-2.5">
                             <button
                                 type="button"
                                 onClick={() => setDateWarningModal(null)}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#8AAEBB] hover:text-white hover:bg-white/5 border border-[#2A4355] transition-all cursor-pointer"
+                                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 dark:text-[#8AAEBB] dark:hover:text-white dark:bg-transparent dark:border-[#2A4355] dark:hover:bg-white/5 transition-all cursor-pointer"
                             >
                                 Hủy Bỏ
                             </button>
@@ -1725,9 +1736,9 @@ function SODetailDrawer({
                                 type="button"
                                 onClick={executeUploadVnptDraft}
                                 disabled={uploadingVnpt}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                                className={`px-4 py-2 rounded-lg text-xs font-bold text-white shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-[0.98] ${
                                     dateWarningModal.level === 'DANGER'
-                                        ? 'bg-red-600 hover:bg-red-500'
+                                        ? 'bg-rose-600 hover:bg-rose-500'
                                         : 'bg-amber-600 hover:bg-amber-500'
                                 }`}
                             >
