@@ -128,7 +128,7 @@ export function buildVnptDraftInvoiceXml(payload: InvoicePayload): string {
             <TTChung>
                 <DVTTe>VND</DVTTe>
                 <TGia>1</TGia>
-                <HTTToan>${escapeXml(paymentMethod || 'TM/CK')}</HTTToan>
+                <HTTToan>${escapeXml(paymentMethod || 'Chuyển khoản/Tiền mặt')}</HTTToan>
             </TTChung>
             <NDHDon>
                 <NMua>

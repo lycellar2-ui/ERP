@@ -46,7 +46,7 @@ export interface InvoicePayload {
     fkey: string            // Khóa duy nhất từ Wine ERP (idempotency key)
     pattern: string         // Mẫu số
     serial: string          // Ký hiệu
-    paymentMethod: string   // Hình thức thanh toán: 'TM/CK', 'CK', 'TM'
+    paymentMethod: string   // Hình thức thanh toán: 'Chuyển khoản/Tiền mặt', 'TM/CK', 'CK', 'TM'
     buyer: InvoiceBuyer
     items: InvoiceItem[]
     totalNet: number        // Tổng tiền chưa thuế

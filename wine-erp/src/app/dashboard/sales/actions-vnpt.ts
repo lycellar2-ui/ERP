@@ -154,7 +154,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     })
 
     const totalAmount = Math.round(totalNet + totalVat)
-    const payMethod = so.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK'
+    const payMethod = 'Chuyển khoản/Tiền mặt'
 
     const payload: InvoicePayload = {
         fkey,

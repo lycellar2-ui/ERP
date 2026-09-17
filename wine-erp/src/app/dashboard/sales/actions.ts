@@ -3112,7 +3112,7 @@ export async function exportVnptInvoiceExcel(filters: {
         const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
         const vatEmail = parent?.vatEmail || o.customer.vatEmail || ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
-        const payMethod = o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK'
+        const payMethod = 'Chuyển khoản/Tiền mặt'
 
         const fallbackNet = Number(o.totalAmount) - Number(o.vatAmount || 0)
         let lineSeq = 1
