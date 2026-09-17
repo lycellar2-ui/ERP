@@ -8,10 +8,6 @@
         {
             "path": "/api/cron/reports",
             "schedule": "0 0 * * *"
-        },
-        {
-            "path": "/api/cron/sync-vnpt",
-            "schedule": "*/30 1-12 * * *"
         }
     ]
 }

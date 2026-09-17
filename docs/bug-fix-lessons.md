@@ -63,6 +63,7 @@
 54. [BUG-107: Lỗi Tính Toán Báo Cáo Nhập Xuất Tồn (NXT), Lệch Sổ Kho & Tính Ảo Phiếu Nhập DRAFT](#bug-107-lỗi-tính-toán-báo-cáo-nhập-xuất-tồn-nxt-lệch-sổ-kho--tính-ảo-phiếu-nhập-draft)
 55. [BUG-108: Lỗi Fetch Failed Khi Đẩy Hóa Đơn Nháp VNPT Trên Production Vercel](#bug-108-lỗi-fetch-failed-khi-đẩy-hóa-đơn-nháp-vnpt-trên-production-vercel)
 56. [BUG-109: Trùng Lặp Nút Thao Tác Xuất Hóa Đơn & Xung Đột Phân Cấp Giao Diện Trong Drawer Đơn Hàng](#bug-109-trùng-lặp-nút-thao-tác-xuất-hóa-đơn--xung-đột-phân-cấp-giao-diện-trong-drawer-đơn-hàng)
+57. [BUG-110: Vercel Deployment Bị Chặn Do Vượt Quá Giới Hạn Cron Jobs Gói Hobby](#bug-110-vercel-deployment-bị-chặn-do-vượt-quá-giới-hạn-cron-jobs-gói-hobby)
 
 ---
 
@@ -2953,4 +2954,43 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 109: Không bao giờ đặt các nút hành động trùng lặp ở cả Header thẻ và Thân thẻ (Empty state container); Mỗi hành động chỉ xuất hiện tại đúng một vị trí với phân cấp thị giác rõ ràng (Primary / Secondary / Utility) và ngôn từ nhất quán, tránh gây nhiễu và hoang mang cho người dùng.**
+
+---
+
+## BUG-110: Vercel Deployment Bị Chặn/Không Trigger Do Vượt Quá Giới Hạn Cron Jobs Gói Hobby
+
+**Ngày:** 2026-09-17  
+**Người sửa:** AI Assistant  
+**Module:** DevOps & Deployment (`wine-erp/vercel.json`, `docs/modules/sales-allocation.md`)  
+**Mức độ:** 🔴 Critical (Block toàn bộ luồng CI/CD & Deploy production)
+
+### Mô tả lỗi
+- Sau commit `2d29803` (22 giờ trước), các commit mới (`d6dbbe6`, `a3c8602`, `f2d9e10`, `050c034`...) được push lên GitHub `main` nhưng Vercel không hề tạo deployment mới, bảng điều khiển Deployments trên Vercel dừng lại ở 22h trước.
+- Kiểm tra chi tiết lỗi từ GitHub commit deployment status của Vercel trả về:
+  `A cron job can only be triggered at most once a day on the Hobby plan... vercel.link/3Fpeeb1`
+- **Nguyên nhân gốc rễ:**
+  - Trong commit `d6dbbe6`, cron job thứ 3 được bổ sung vào `wine-erp/vercel.json`:
+    ```json
+    {
+      "path": "/api/cron/sync-vnpt",
+      "schedule": "*/30 1-12 * * *"
+    }
+    ```
+  - Vercel tài khoản Hobby (miễn phí) có ràng buộc nghiêm ngặt:
+    1. Tối đa chỉ 2 cron jobs trên mỗi project.
+    2. Mỗi cron job chỉ được chạy tối đa 1 lần/ngày (tần suất daily, ví dụ `0 0 * * *` hoặc `0 21 * * *`). Lịch `*/30 ...` (mỗi 30 phút) vi phạm chính sách của gói Hobby.
+  - Khi cấu hình `vercel.json` vi phạm, Vercel Config Validator chặn ngay lập tức từ bước webhook/API trước cả khi tạo build runner.
+
+### Cách khắc phục
+1. **Xóa cron job thứ 3 khỏi `vercel.json`:**
+   - Giữ lại 2 cron daily hợp lệ của gói Hobby (`/api/cron/compliance` và `/api/cron/reports`).
+   - Gỡ bỏ `/api/cron/sync-vnpt` khỏi `wine-erp/vercel.json`.
+2. **Giải pháp đồng bộ định kỳ cho `/api/cron/sync-vnpt`:**
+   - API route `/api/cron/sync-vnpt/route.ts` vẫn được giữ nguyên và bảo vệ bằng `CRON_SECRET`.
+   - Sử dụng các dịch vụ webhook/cron miễn phí bên ngoài (như cron-job.org, Upstash QStash, hoặc GitHub Actions scheduled workflow) để gọi GET kèm header `Authorization: Bearer <CRON_SECRET>` mỗi 15-30 phút mà không tốn quota của Vercel.
+   - Bổ sung nút bấm "Đồng bộ trạng thái hóa đơn" trực tiếp trên giao diện Kế toán/Thuế khi cần lấy số tức thì.
+
+### Bài học
+> ⚠️ **RULE 110: Tuyệt đối không khai báo quá 2 cron jobs hoặc lịch chạy dày hơn 1 lần/ngày (ví dụ `*/30`, `*/5`) trong `vercel.json` nếu project đang sử dụng gói Vercel Hobby; Luôn kiểm tra GitHub deployment status/webhook error khi Vercel không tự động kích hoạt build sau git push; Đối với các tác vụ định kỳ dưới 1 ngày trên gói Hobby, sử dụng External Cron Service hoặc GitHub Actions.**
+
 
