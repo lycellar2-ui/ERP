@@ -745,9 +745,20 @@ export async function getTeamWeeklySalesOverview(weekNumber: number, year: numbe
         end.setDate(start.getDate() + 6)
         end.setHours(23, 59, 59, 999)
 
-        // 1. Get all active users
+        // 1. Get all active users with Sales Rep role
         const users = await prisma.user.findMany({
-            where: { status: 'ACTIVE' },
+            where: {
+                status: 'ACTIVE',
+                roles: {
+                    some: {
+                        role: {
+                            name: {
+                                in: ['Sales Rep', 'SALES_REP']
+                            }
+                        }
+                    }
+                }
+            },
             select: { id: true, name: true, email: true },
             orderBy: { name: 'asc' }
         })

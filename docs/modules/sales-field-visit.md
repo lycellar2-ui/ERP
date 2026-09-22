@@ -18,9 +18,9 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 2. **Dành cho Quản lý / CEO / Ban Giám Đốc (Không phải check-in, xem Báo Cáo Chung):**
    - Quản lý không đi thị trường nên không có các tab check-in thực địa.
    - Giao diện mở trực tiếp **Bảng Giám Sát & Báo Cáo Chung (Executive Board)**:
-     - 5 Thẻ KPI đo lường toàn đội ngũ: Số nhân sự, Tổng kế hoạch, Đã check-in thực tế, Tỷ lệ hoàn thành %, Số báo cáo chờ duyệt.
+     - 5 Thẻ KPI đo lường toàn đội ngũ: Số nhân sự (chỉ tính nhân sự có vai trò Sales Rep), Tổng kế hoạch, Đã check-in thực tế, Tỷ lệ hoàn thành %, Số báo cáo chờ duyệt.
      - Bộ điều hướng chọn tuần và nút làm mới tức thời.
-     - Bảng ma trận đối soát Kế hoạch vs Thực tế từng nhân viên.
+     - Bảng ma trận đối soát Kế hoạch vs Thực tế từng nhân viên: Chỉ lọc và hiển thị các tài khoản Sale thực địa (Sales Rep), loại trừ các bộ phận văn phòng khác (Kế toán, Thủ kho, Admin...).
      - Modal thẩm định chuyên sâu: Soi ảnh check-in thực tế kèm GPS/watermark to rõ, kiểm tra kế hoạch tuần và phê duyệt đánh giá KPI.
 
 ## Tính Năng Chính

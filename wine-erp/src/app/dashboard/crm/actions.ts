@@ -1053,7 +1053,7 @@ export async function getSalesRepsList() {
                     some: {
                         role: {
                             name: {
-                                in: ['Sales Rep', 'Sales Manager', 'SALES_REP', 'SALES_MGR']
+                                in: ['Sales Rep', 'SALES_REP']
                             }
                         }
                     }

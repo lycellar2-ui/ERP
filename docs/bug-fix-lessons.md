@@ -64,6 +64,7 @@
 55. [BUG-108: Lỗi Fetch Failed Khi Đẩy Hóa Đơn Nháp VNPT Trên Production Vercel](#bug-108-lỗi-fetch-failed-khi-đẩy-hóa-đơn-nháp-vnpt-trên-production-vercel)
 56. [BUG-109: Trùng Lặp Nút Thao Tác Xuất Hóa Đơn & Xung Đột Phân Cấp Giao Diện Trong Drawer Đơn Hàng](#bug-109-trùng-lặp-nút-thao-tác-xuất-hóa-đơn--xung-đột-phân-cấp-giao-diện-trong-drawer-đơn-hàng)
 57. [BUG-110: Vercel Deployment Bị Chặn Do Vượt Quá Giới Hạn Cron Jobs Gói Hobby](#bug-110-vercel-deployment-bị-chặn-do-vượt-quá-giới-hạn-cron-jobs-gói-hobby)
+58. [BUG-111: Bảng Ma Trận & Giám Sát Check-in Thị Trường Hiển Thị Toàn Bộ Tài Khoản Thay Vì Chỉ Tài Khoản Sale](#bug-111-bảng-ma-trận--giám-sát-check-in-thị-trường-hiển-thị-toàn-bộ-tài-khoản-thay-vì-chỉ-tài-khoản-sale)
 
 ---
 
@@ -2992,5 +2993,32 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 110: Tuyệt đối không khai báo quá 2 cron jobs hoặc lịch chạy dày hơn 1 lần/ngày (ví dụ `*/30`, `*/5`) trong `vercel.json` nếu project đang sử dụng gói Vercel Hobby; Luôn kiểm tra GitHub deployment status/webhook error khi Vercel không tự động kích hoạt build sau git push; Đối với các tác vụ định kỳ dưới 1 ngày trên gói Hobby, sử dụng External Cron Service hoặc GitHub Actions.**
+
+---
+
+## BUG-111: Bảng Ma Trận & Giám Sát Check-in Thị Trường Hiển Thị Toàn Bộ Tài Khoản Thay Vì Chỉ Tài Khoản Sale
+
+**Ngày:** 2026-09-22  
+**Người sửa:** AI Assistant  
+**Module:** SLS — Sales Field Operations (`wine-erp/src/app/dashboard/sales/visits/actions.ts`, `wine-erp/src/app/dashboard/crm/actions.ts`)  
+**Mức độ:** 🟡 Medium (Sai lệch đối tượng giám sát trên bảng điều hành Check-in thị trường & Kế hoạch tuần)
+
+### Mô tả lỗi
+- Trên giao diện **Quản Lý Check-in Thị Trường** (`/dashboard/sales/visits`), bảng ma trận kế hoạch vs thực tế (`Bảng Ma Trận Kế Hoạch vs Thực Tế Từng Nhân Viên`) và thẻ tổng số (`Đội ngũ Sales: X Nhân sự hoạt động`) hiển thị tất cả các tài khoản active trong toàn công ty bao gồm: Kế Toán, Thủ Kho, CEO, Operation Manager, Admin...
+- Tương tự tại mục **Kế hoạch viếng thăm tuần ở CRM** (`/dashboard/crm`), danh sách chọn nhân viên hiển thị cả các cấp quản lý không trực tiếp đi tuyến.
+- **Nguyên nhân gốc rễ:**
+  - Trong hàm `getTeamWeeklySalesOverview` tại `wine-erp/src/app/dashboard/sales/visits/actions.ts`, truy vấn Prisma lấy danh sách người dùng chỉ lọc theo `{ status: 'ACTIVE' }` mà không lọc theo vai trò (roles).
+  - Tương tự trong hàm `getSalesRepsList` tại `wine-erp/src/app/dashboard/crm/actions.ts`, danh mục vai trò gộp cả `Sales Manager` / `SALES_MGR`.
+
+### Cách khắc phục
+1. **Lọc chuẩn theo vai trò `Sales Rep`:**
+   - Trong `getTeamWeeklySalesOverview` (`src/app/dashboard/sales/visits/actions.ts`):
+     Thêm điều kiện lọc `roles: { some: { role: { name: { in: ['Sales Rep', 'SALES_REP'] } } } }` để chỉ lấy đúng các nhân viên kinh doanh đi thị trường thực địa.
+   - Trong `getSalesRepsList` (`src/app/dashboard/crm/actions.ts`):
+     Rút gọn danh sách vai trò về `['Sales Rep', 'SALES_REP']`.
+
+### Bài học
+> ⚠️ **RULE 111: Khi truy vấn danh sách nhân sự cho các bảng báo cáo/điều hành đặc thù (như Check-in thị trường, Chỉ tiêu KPI bán hàng, Phân bổ khách hàng), LUÔN LUÔN lọc theo đúng Role/Phòng ban thay vì chỉ lấy tất cả user `status: ACTIVE`, tránh kéo nhầm các bộ phận khác (Kế toán, Thủ kho, Ban giám đốc) vào danh sách thực thi.**
+
 
 
