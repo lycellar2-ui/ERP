@@ -65,6 +65,7 @@
 56. [BUG-109: Trùng Lặp Nút Thao Tác Xuất Hóa Đơn & Xung Đột Phân Cấp Giao Diện Trong Drawer Đơn Hàng](#bug-109-trùng-lặp-nút-thao-tác-xuất-hóa-đơn--xung-đột-phân-cấp-giao-diện-trong-drawer-đơn-hàng)
 57. [BUG-110: Vercel Deployment Bị Chặn Do Vượt Quá Giới Hạn Cron Jobs Gói Hobby](#bug-110-vercel-deployment-bị-chặn-do-vượt-quá-giới-hạn-cron-jobs-gói-hobby)
 58. [BUG-111: Bảng Ma Trận & Giám Sát Check-in Thị Trường Hiển Thị Toàn Bộ Tài Khoản Thay Vì Chỉ Tài Khoản Sale](#bug-111-bảng-ma-trận--giám-sát-check-in-thị-trường-hiển-thị-toàn-bộ-tài-khoản-thay-vì-chỉ-tài-khoản-sale)
+59. [BUG-112: Tải Màn Hình Check-in Thị Trường Chậm (5-8s) — SSR Over-fetching, Duplicate Client Waterfall & GPS Blocking](#bug-112-tải-màn-hình-check-in-thị-trường-chậm-5-8s--ssr-over-fetching-duplicate-client-waterfall--gps-blocking)
 
 ---
 
@@ -3019,6 +3020,37 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 111: Khi truy vấn danh sách nhân sự cho các bảng báo cáo/điều hành đặc thù (như Check-in thị trường, Chỉ tiêu KPI bán hàng, Phân bổ khách hàng), LUÔN LUÔN lọc theo đúng Role/Phòng ban thay vì chỉ lấy tất cả user `status: ACTIVE`, tránh kéo nhầm các bộ phận khác (Kế toán, Thủ kho, Ban giám đốc) vào danh sách thực thi.**
+
+---
+
+## BUG-112: Tải Màn Hình Check-in Thị Trường Chậm (5-8s) — SSR Over-fetching, Duplicate Client Waterfall & GPS Blocking
+
+**Ngày:** 2026-09-23  
+**Người sửa:** AI Assistant  
+**Module:** SFV — Sales Field Operations (`wine-erp/src/app/dashboard/sales/visits/page.tsx`, `SalesVisitsClient.tsx`, `actions.ts`)  
+**Mức độ:** 🟡 Medium (Ảnh hưởng trải nghiệm người dùng, tải trang trễ 5-8 giây)
+
+### Mô tả lỗi
+- Màn hình Check-in thị trường (`/dashboard/sales/visits`) mất từ 5-8 giây để tải xong. Quản lý vào trang bị xoay spinner "Đang tải dữ liệu...", nhân viên sales bị đơ do đợi dò toạ độ GPS vệ tinh.
+- **Nguyên nhân gốc rễ:**
+  1. **SSR Over-fetching:** `page.tsx` query 500 khách hàng kèm `LEFT JOIN addresses` trên 426 dòng trong khi combobox chỉ cần `id, code, name, channel`. `page.tsx` gọi `getSalesVisits()` với limit 200 dòng, trong đó có ảnh Base64 cũ nặng tới 1.51MB làm phình to dữ liệu SSR.
+  2. **Duplicate Waterfalls trên mount:** Component `SalesVisitsClient` khi mount trên trình duyệt lại gọi lại `getSalesVisits()` lần thứ 2 dù server đã fetch xong, đồng thời gọi thêm `getTeamWeeklySalesOverview()` và `getWeeklyPlanWithVisits()`.
+  3. **GPS Blocking & OpenStreetMap delay:** `requestGPS` chạy ngay khi mở trang với `enableHighAccuracy: true` (chờ vệ tinh tới 10s) và gửi request reverse geocode sang OpenStreetMap Nominatim châu Âu (trễ thêm 1-3s).
+
+### Cách khắc phục
+1. **SSR Pre-fetching theo Role (`page.tsx`):**
+   - Với Quản lý: Pre-fetch trực tiếp dữ liệu tổng quan đội ngũ (`getTeamWeeklySalesOverview`) song song cùng lịch sử gần nhất, truyền vào `initialTeamData`. Quản lý mở trang là số liệu KPI hiển thị tức thì.
+   - Với Sales Rep: Pre-fetch lịch tuần (`getWeeklyPlanWithVisits`), 20 lượt check-in gần nhất, và danh mục khách hàng rút gọn (chỉ 4 trường cần thiết, bỏ join address).
+2. **Chặn Duplicate Requests (`SalesVisitsClient.tsx`):**
+   - Dùng `useRef` chặn refetch trùng lặp khi component mount; chỉ fetch lại khi đổi bộ lọc hoặc bấm Làm mới.
+3. **Tối ưu GPS & Geocoding:**
+   - Quản lý không đi tuyến: Tắt hoàn toàn GPS trên mount.
+   - Sales Rep: Lấy nhanh toạ độ từ cache mạng (`enableHighAccuracy: false, timeout: 3s`). Chỉ kích hoạt GPS độ chính xác cao khi bấm chụp ảnh check-in thật. Thêm cache và abort timeout 2.5s cho Nominatim.
+4. **Giảm kích thước Payload (`actions.ts`):**
+   - Mặc định giới hạn 30 bản ghi (thay vì 200). Đóng gói thumbnail micro (~25KB) cho ảnh cũ.
+
+### Bài học
+> ⚠️ **RULE 112: Trong Next.js App Router, tuyệt đối không gọi lại cùng một Server Action trong `useEffect` trên mount nếu dữ liệu đã được fetch ở Server Component `page.tsx`; Phải pre-fetch đúng dữ liệu theo Role người dùng để loại bỏ client waterfall; Không kích hoạt phần cứng GPS độ chính xác cao hoặc gọi API Geocoding bên thứ ba chặn giao diện khi vừa mở trang.**
 
 
 

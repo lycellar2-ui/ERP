@@ -3,7 +3,7 @@
 > **Route:** `/dashboard/sales/visits`
 > **Tiêu đề trang & Menu:** Quản Lý Check-in Thị Trường
 > **Mã module:** SFV
-> **Cập nhật ngày:** 2026-09-11 (Tách biệt hoàn toàn giao diện Quản Lý xem Báo Cáo Chung vs Sales Thực Địa, đổi tên tiêu đề chuẩn)
+> **Cập nhật ngày:** 2026-09-23 (Chuẩn hóa copy doanh nghiệp, loại bỏ AI slop, tối ưu SSR pre-fetching và tốc độ tải trang tức thì <1s)
 
 ---
 
@@ -15,13 +15,15 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
    - Không có dropdown chọn nhân viên khác, bảo mật và cô lập dữ liệu tuyệt đối.
    - Quy trình khép kín 4 tab: Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh.
    - Giao diện di động tối ưu hoá 1 chạm với thanh điều hướng cố định đáy 4 nút, nút gọi điện, nút mở Google Maps chỉ đường.
+   - Tối ưu GPS: Mở trang chỉ đọc toạ độ nhẹ từ cache mạng di động không gây nghẽn giao diện; chỉ kích hoạt GPS chính xác cao khi bấm chụp ảnh check-in thực tế.
 2. **Dành cho Quản lý / CEO / Ban Giám Đốc (Không phải check-in, xem Báo Cáo Chung):**
-   - Quản lý không đi thị trường nên không có các tab check-in thực địa.
+   - Quản lý không đi thị trường nên không có các tab check-in thực địa, không kích hoạt phần cứng GPS.
    - Giao diện mở trực tiếp **Bảng Giám Sát & Báo Cáo Chung (Executive Board)**:
      - 5 Thẻ KPI đo lường toàn đội ngũ: Số nhân sự (chỉ tính nhân sự có vai trò Sales Rep), Tổng kế hoạch, Đã check-in thực tế, Tỷ lệ hoàn thành %, Số báo cáo chờ duyệt.
      - Bộ điều hướng chọn tuần và nút làm mới tức thời.
      - Bảng ma trận đối soát Kế hoạch vs Thực tế từng nhân viên: Chỉ lọc và hiển thị các tài khoản Sale thực địa (Sales Rep), loại trừ các bộ phận văn phòng khác (Kế toán, Thủ kho, Admin...).
-     - Modal thẩm định chuyên sâu: Soi ảnh check-in thực tế kèm GPS/watermark to rõ, kiểm tra kế hoạch tuần và phê duyệt đánh giá KPI.
+     - Modal thẩm định chuyên sâu: Xem ảnh check-in thực tế kèm GPS/watermark to rõ, kiểm tra kế hoạch tuần và phê duyệt đánh giá KPI.
+     - Tối ưu tải trang: Pre-fetch dữ liệu tổng quan đội ngũ ngay từ server SSR, loại bỏ spinner và duplicate request trên client.
 
 ## Tính Năng Chính
 

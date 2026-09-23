@@ -76,20 +76,34 @@ export async function getSalesVisitFullPhoto(visitId: string): Promise<{ success
 }
 
 // Reverse Geocoding via Server Action to bypass browser CORS & User-Agent restrictions
+const geocodeCache = new Map<string, string>()
+
 export async function reverseGeocodeAction(lat: number, lng: number): Promise<{ address?: string }> {
     try {
         if (!lat || !lng) return {}
+        const key = `${lat.toFixed(4)},${lng.toFixed(4)}`
+        if (geocodeCache.has(key)) {
+            return { address: geocodeCache.get(key) }
+        }
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2500)
+
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi&zoom=18`
         const res = await fetch(url, {
             headers: {
                 'User-Agent': 'WineERP-FieldOperations/1.0 (info@lyscellars.com)',
                 'Accept': 'application/json'
             },
-            next: { revalidate: 3600 } // Cache results for 1 hour
+            signal: controller.signal,
+            next: { revalidate: 86400 } // Cache results for 24 hours
         })
+        clearTimeout(timeoutId)
+
         if (res.ok) {
             const data = await res.json()
             if (data && data.display_name) {
+                geocodeCache.set(key, data.display_name)
                 return { address: data.display_name }
             }
         }
@@ -349,6 +363,7 @@ export async function getSalesVisits(filters?: {
     customerId?: string
     status?: string
     date?: string
+    limit?: number
 }) {
     try {
         const user = await requireAuth()
@@ -382,7 +397,7 @@ export async function getSalesVisits(filters?: {
                 salesperson: { select: { id: true, name: true, email: true } },
             },
             orderBy: { checkInTime: 'desc' },
-            take: 200,
+            take: filters?.limit ?? 30,
         })
 
         return visits.map((v: any) => ({

@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-22 22:30 | Wine ERP v10.32 - Check-in Thị Trường & CRM: Lọc chuẩn xác danh sách nhân sự chỉ hiển thị tài khoản Sales Rep*
+*Last updated: 2026-09-23 08:30 | Wine ERP v10.33 - Tối ưu tốc độ tải trang Check-in thị trường (<1s) & Chuẩn hóa copy ERP*
 

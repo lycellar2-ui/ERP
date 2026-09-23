@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
     User, ChevronRight, Eye, RefreshCw, FileText, Navigation,
@@ -23,6 +23,8 @@ interface Props {
     currentUserId: string
     currentUserName: string
     isManager: boolean
+    initialTeamData?: any
+    initialPlan?: any
 }
 
 // Activity Presets for Wine ERP
@@ -344,17 +346,17 @@ function GpsPermissionGuideModal({
                             onClick={async () => {
                                 const loc = await onRetryGps()
                                 if (loc?.lat) {
-                                    toast.success('Đã lấy được toạ độ GPS chính xác!')
+                                    toast.success('Đã nhận toạ độ GPS')
                                     onClose()
                                 } else {
-                                    toast.warning('Vẫn chưa nhận được toạ độ GPS. Hãy chắc chắn bạn đã bật định vị trên máy!')
+                                    toast.warning('Chưa nhận được toạ độ GPS. Vui lòng kiểm tra định vị trên thiết bị.')
                                 }
                             }}
                             disabled={gettingLocation}
                             className="w-full py-3 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
                         >
                             <RefreshCw size={15} className={gettingLocation ? 'animate-spin' : ''} />
-                            {gettingLocation ? 'Đang dò tìm toạ độ vệ tinh...' : '🔄 Thử lại định vị GPS ngay'}
+                            {gettingLocation ? 'Đang xác định vị trí...' : 'Thử lại định vị GPS'}
                         </button>
                     </div>
                 </div>
@@ -387,11 +389,11 @@ function PhotoViewerModal({
                         <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                             {loadingFullPhoto ? (
                                 <span className="text-amber-500 font-medium flex items-center gap-1">
-                                    <RefreshCw size={11} className="animate-spin" /> Đang tải ảnh gốc phân giải cao HD...
+                                    <RefreshCw size={11} className="animate-spin" /> Đang tải ảnh gốc...
                                 </span>
                             ) : (
-                                <span className="text-emerald-500 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                    ✓ Ảnh chụp camera thực tế tại điểm bán (Độ nét cao HD)
+                                <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                                    Ảnh check-in tại điểm bán
                                 </span>
                             )}
                         </p>
@@ -420,7 +422,7 @@ function PhotoViewerModal({
                     {loadingFullPhoto && (
                         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-amber-500/40 shadow-xl animate-pulse">
                             <RefreshCw size={13} className="animate-spin text-amber-400" />
-                            <span>Đang nạp ảnh nét HD...</span>
+                            <span>Đang tải ảnh gốc...</span>
                         </div>
                     )}
                 </div>
@@ -429,13 +431,13 @@ function PhotoViewerModal({
     )
 }
 
-export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager }: Props) {
+export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager, initialTeamData, initialPlan }: Props) {
     const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
     const selectedSalespersonId = currentUserId
 
     // Team Overview State (Exclusively for Manager / CEO)
-    const [teamData, setTeamData] = useState<any | null>(null)
+    const [teamData, setTeamData] = useState<any | null>(initialTeamData || null)
     const [loadingTeam, setLoadingTeam] = useState(false)
     const [inspectingSale, setInspectingSale] = useState<any | null>(null)
     const [teamFilterSearch, setTeamFilterSearch] = useState('')
@@ -457,15 +459,15 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     const [mobileSelectedDate, setMobileSelectedDate] = useState<string>('')
 
     // Weekly Plan state
-    const [weeklyPlan, setWeeklyPlan] = useState<any | null>(null)
-    const [planVisits, setPlanVisits] = useState<any[]>([])
-    const [weekActualVisits, setWeekActualVisits] = useState<any[]>([])
+    const [weeklyPlan, setWeeklyPlan] = useState<any | null>(initialPlan?.plan || null)
+    const [planVisits, setPlanVisits] = useState<any[]>(initialPlan?.plan?.visits || [])
+    const [weekActualVisits, setWeekActualVisits] = useState<any[]>(initialPlan?.actualVisits || [])
     const [loadingPlan, setLoadingPlan] = useState(false)
     const [savingPlan, setSavingPlan] = useState(false)
-    const [planNote, setPlanNote] = useState('')
+    const [planNote, setPlanNote] = useState(initialPlan?.plan?.note || '')
 
     // Self review & Manager feedback state
-    const [selfReviewText, setSelfReviewText] = useState('')
+    const [selfReviewText, setSelfReviewText] = useState(initialPlan?.plan?.selfReview || '')
     const [submittingReport, setSubmittingReport] = useState(false)
     const [managerFeedbackText, setManagerFeedbackText] = useState('')
     const [savingFeedback, setSavingFeedback] = useState(false)
@@ -661,8 +663,19 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     }, [])
 
     useEffect(() => {
-        requestGPS()
-    }, [requestGPS])
+        // Fast, non-blocking GPS pre-warm only for Sales Reps (Managers do not check in)
+        if (!isManager && typeof window !== 'undefined' && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude
+                    const lng = pos.coords.longitude
+                    setCoords({ lat, lng, address: `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}` })
+                },
+                () => {},
+                { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
+            )
+        }
+    }, [isManager])
 
     // -----------------------------------------------------------------
     // LOAD WEEKLY PLAN & REVIEWS
@@ -681,9 +694,15 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         setLoadingPlan(false)
     }, [selectedSalespersonId, currentWeek])
 
+    const isFirstWeeklyRef = useRef(true)
     useEffect(() => {
+        if (isManager) return // Manager doesn't need rep weekly plan
+        if (isFirstWeeklyRef.current && initialPlan) {
+            isFirstWeeklyRef.current = false
+            return
+        }
         loadWeeklyData()
-    }, [loadWeeklyData])
+    }, [isManager, loadWeeklyData, initialPlan])
 
     // Load History
     const fetchHistoryVisits = useCallback(async () => {
@@ -695,7 +714,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         setHistoryVisits(data || [])
     }, [isManager, selectedSalespersonId, filterDate, filterStatus])
 
+    const isFirstHistoryRef = useRef(true)
     useEffect(() => {
+        if (isFirstHistoryRef.current) {
+            isFirstHistoryRef.current = false
+            return
+        }
         fetchHistoryVisits()
     }, [fetchHistoryVisits])
 
@@ -712,11 +736,15 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         setLoadingTeam(false)
     }, [isManager, currentWeek])
 
+    const isFirstTeamRef = useRef(true)
     useEffect(() => {
-        if (isManager) {
-            loadTeamData()
+        if (!isManager) return
+        if (isFirstTeamRef.current && initialTeamData) {
+            isFirstTeamRef.current = false
+            return
         }
-    }, [isManager, currentWeek, loadTeamData])
+        loadTeamData()
+    }, [isManager, currentWeek, loadTeamData, initialTeamData])
 
     const teamMetrics = useMemo(() => {
         if (!teamData || !teamData.items) return null
@@ -745,7 +773,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
             return
         }
         if (!inspectFeedbackText.trim()) {
-            toast.error('Vui lòng nhập nội dung nhận xét hoặc chỉ đạo của Quản lý / CEO')
+            toast.error('Vui lòng nhập nội dung nhận xét')
             return
         }
         setSavingInspectFeedback(true)
@@ -755,7 +783,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
             managerId: currentUserId,
         })
         if (res.success) {
-            toast.success(`Đã phê duyệt và lưu nhận xét cho ${inspectingSale.salespersonName}!`)
+            toast.success(`Đã lưu nhận xét cho ${inspectingSale.salespersonName}`)
             await loadTeamData()
             setInspectingSale((prev: any) => prev ? {
                 ...prev,
@@ -1018,7 +1046,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         setSyncingOffline(false)
 
         if (successCount > 0) {
-            toast.success(`✓ Đã tự động đồng bộ thành công ${successCount} lượt check-in ngoại tuyến lên hệ thống!`)
+            toast.success(`Đã đồng bộ ${successCount} lượt check-in ngoại tuyến`)
             await loadWeeklyData()
             await fetchHistoryVisits()
         }
@@ -1218,7 +1246,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 Quản Lý Check-in Thị Trường
                             </h2>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                                Báo Cáo Giám Sát
+                                Báo Cáo Tuần
                             </span>
                         </div>
                     </div>
@@ -1284,11 +1312,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Đã Check-in Thực Tế</span>
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Đã Check-in</span>
                             <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                                 {teamMetrics.totalCompleted}
                             </div>
-                            <span className="text-[9px] text-slate-400">Điểm có ảnh & GPS</span>
+                            <span className="text-[9px] text-slate-400">Số điểm hoàn thành</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
@@ -1296,15 +1324,15 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <div className="text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
                                 {teamMetrics.overallRate}%
                             </div>
-                            <span className="text-[9px] text-slate-400">Tiến độ toàn đội</span>
+                            <span className="text-[9px] text-slate-400">Tiến độ kế hoạch</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Báo Cáo Chờ Duyệt</span>
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Chờ Duyệt</span>
                             <div className="text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
                                 {teamMetrics.pendingReview}
                             </div>
-                            <span className="text-[9px] text-slate-400">Chờ Quản lý/CEO duyệt</span>
+                            <span className="text-[9px] text-slate-400">Báo cáo tuần</span>
                         </div>
                     </div>
                 )}
@@ -1314,10 +1342,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="p-4 bg-slate-50/50 dark:bg-[#142433]/50 border-b border-slate-200 dark:border-[#223645] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h4 className="text-sm font-black text-slate-900 dark:text-white">
-                                Bảng Ma Trận Kế Hoạch vs Thực Tế Từng Nhân Viên
+                                Tiến Độ Kế Hoạch Theo Nhân Viên
                             </h4>
                             <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
-                                Bấm "Kiểm Tra Kế Hoạch & Soi Ảnh" để xem lịch chi tiết và duyệt ảnh thực địa của từng bạn
+                                Bấm "Xem chi tiết & Ảnh" để xem lịch trình và hình ảnh check-in của nhân viên
                             </p>
                         </div>
 
@@ -1336,7 +1364,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     {loadingTeam ? (
                         <div className="py-16 text-center text-xs text-slate-400">
                             <RefreshCw size={24} className="mx-auto animate-spin text-teal-600 mb-2" />
-                            Đang tổng hợp dữ liệu toàn đội sale...
+                            Đang tải dữ liệu...
                         </div>
                     ) : filteredTeamItems.length === 0 ? (
                         <div className="py-16 text-center text-xs text-slate-400">
@@ -1347,13 +1375,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <table className="w-full text-xs text-left">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
-                                        <th className="p-3.5 font-bold">Nhân Viên Sale</th>
-                                        <th className="p-3.5 font-bold text-center">Kế Hoạch (Lên Lịch)</th>
-                                        <th className="p-3.5 font-bold text-center">Thực Tế (Đã Check-in)</th>
-                                        <th className="p-3.5 font-bold text-center">Đột Xuất</th>
-                                        <th className="p-3.5 font-bold">Tiến Độ Hoàn Thành</th>
-                                        <th className="p-3.5 font-bold text-center">Trạng Thái Báo Cáo</th>
-                                        <th className="p-3.5 font-bold text-right">Thao Tác</th>
+                                        <th className="p-3.5 font-bold">Nhân viên</th>
+                                        <th className="p-3.5 font-bold text-center">Kế hoạch</th>
+                                        <th className="p-3.5 font-bold text-center">Thực tế</th>
+                                        <th className="p-3.5 font-bold text-center">Đột xuất</th>
+                                        <th className="p-3.5 font-bold">Tiến độ</th>
+                                        <th className="p-3.5 font-bold text-center">Trạng thái</th>
+                                        <th className="p-3.5 font-bold text-right">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
@@ -1419,7 +1447,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                                 >
                                                     <Eye size={13} />
-                                                    Kiểm Tra Kế Hoạch & Soi Ảnh
+                                                    Xem chi tiết & Ảnh
                                                 </button>
                                             </td>
                                         </tr>
@@ -1442,7 +1470,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] uppercase">
-                                            Chi Tiết Đi Thực Địa
+                                            Chi Tiết Lịch Trình
                                         </span>
                                         <span className="text-xs text-slate-400 font-mono">
                                             Tuần {currentWeek.week} / {currentWeek.year}
@@ -1486,7 +1514,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <Camera size={14} />
-                                    <span>Soi Ảnh Check-in Thực Tế ({inspectingSale.actualVisits?.length || 0})</span>
+                                    <span>Ảnh check-in ({inspectingSale.actualVisits?.length || 0})</span>
                                 </button>
 
                                 <button
@@ -1499,7 +1527,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <Calendar size={14} />
-                                    <span>Kế Hoạch Cả Tuần ({inspectingSale.plannedVisits?.length || 0})</span>
+                                    <span>Kế hoạch tuần ({inspectingSale.plannedVisits?.length || 0})</span>
                                 </button>
 
                                 <button
@@ -1512,7 +1540,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <CheckCircle2 size={14} />
-                                    <span>Tự Đánh Giá & Phê Duyệt</span>
+                                    <span>Đánh giá & Phê duyệt</span>
                                 </button>
                             </div>
 
@@ -1523,7 +1551,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         {(!inspectingSale.actualVisits || inspectingSale.actualVisits.length === 0) ? (
                                             <div className="py-16 text-center text-xs text-slate-400 space-y-2">
                                                 <Camera size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
-                                                <p className="font-semibold text-slate-600 dark:text-slate-300">Nhân viên này chưa có ảnh check-in nào trong tuần này.</p>
+                                                <p className="font-semibold text-slate-600 dark:text-slate-300">Chưa có ảnh check-in trong tuần này.</p>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1570,7 +1598,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                                 />
                                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
-                                                                    <Eye size={16} /> Bấm xem ảnh lớn & watermark
+                                                                    <Eye size={16} /> Xem ảnh chi tiết
                                                                 </div>
                                                             </div>
                                                         ) : (
@@ -1651,26 +1679,26 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         {/* Self Review Box */}
                                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-200 dark:border-[#223645] space-y-1.5">
                                             <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                                                <span>Nội dung nhân viên tự đánh giá tuần:</span>
+                                                <span>Nhân viên tự đánh giá:</span>
                                                 <span className="text-[10px] font-mono text-slate-400">
                                                     {inspectingSale.submittedAt ? `Nộp lúc: ${new Date(inspectingSale.submittedAt).toLocaleDateString('vi-VN')} ${new Date(inspectingSale.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa nộp'}
                                                 </span>
                                             </div>
                                             <p className="text-slate-800 dark:text-slate-100 italic bg-white dark:bg-[#111C24] p-3 rounded-lg border border-slate-200/70 dark:border-[#223645]">
-                                                {inspectingSale.selfReview || 'Nhân viên chưa viết tự đánh giá tuần này.'}
+                                                {inspectingSale.selfReview || 'Chưa có nội dung tự đánh giá.'}
                                             </p>
                                         </div>
 
                                         {/* Manager Feedback Form */}
                                         <div className="space-y-2">
                                             <label className="block font-bold text-slate-700 dark:text-slate-200">
-                                                Nhận xét & Chỉ đạo của Quản lý / CEO:
+                                                Nhận xét của Quản lý:
                                             </label>
                                             <textarea
                                                 rows={4}
                                                 value={inspectFeedbackText}
                                                 onChange={e => setInspectFeedbackText(e.target.value)}
-                                                placeholder="Ghi nhận xét đánh giá hiệu suất, khen thưởng hoặc nhắc nhở điểm bán cần lưu ý tuần tới..."
+                                                placeholder="Nhập nhận xét hoặc lưu ý cho nhân viên..."
                                                 className="w-full p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 text-xs"
                                             />
                                             <div className="flex items-center justify-between pt-2">
@@ -1684,7 +1712,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
                                                 >
                                                     <CheckCircle2 size={15} />
-                                                    {savingInspectFeedback ? 'Đang lưu...' : '✓ Phê Duyệt Kế Hoạch Tuần & Lưu Đánh Giá'}
+                                                    {savingInspectFeedback ? 'Đang lưu...' : 'Lưu đánh giá & Duyệt'}
                                                 </button>
                                             </div>
                                         </div>
@@ -1827,8 +1855,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <span>
                                             {!isNetworkOnline
-                                                ? 'Đang mất kết nối mạng (Khu vực hầm rượu)'
-                                                : `Có ${offlineDrafts.length} lượt check-in ngoại tuyến đang chờ đồng bộ`}
+                                                ? 'Mất kết nối mạng (Chế độ ngoại tuyến)'
+                                                : `Có ${offlineDrafts.length} lượt check-in đang chờ đồng bộ`}
                                         </span>
                                         <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono">
                                             {offlineDrafts.length} bản ghi
@@ -1836,8 +1864,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     </h4>
                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                                         {!isNetworkOnline
-                                            ? 'Ảnh và GPS đã được lưu tạm an toàn trong bộ nhớ máy. Khi có 4G/Wifi trở lại, hệ thống sẽ tự động gửi lên server.'
-                                            : 'Bản ghi ngoại tuyến sẵn sàng. Hệ thống sẽ tự động gửi hoặc bạn có thể bấm đồng bộ ngay.'}
+                                            ? 'Dữ liệu check-in được lưu tạm trên thiết bị và sẽ tự động gửi khi có kết nối mạng.'
+                                            : 'Dữ liệu ngoại tuyến sẵn sàng đồng bộ lên hệ thống.'}
                                     </p>
                                 </div>
                             </div>
@@ -1892,7 +1920,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 <Navigation size={13} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
                                 <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Vị trí hiện tại:</span>
                                 {gettingLocation ? (
-                                    <span className="text-slate-500 dark:text-slate-400 italic">Đang dò tìm toạ độ GPS...</span>
+                                    <span className="text-slate-500 dark:text-slate-400 italic">Đang xác định toạ độ...</span>
                                 ) : coords.lat ? (
                                     <span className="font-mono text-slate-900 dark:text-white truncate text-[11px]" title={coords.address}>
                                         {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
@@ -2161,7 +2189,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             {/* Single Photo Display: Ảnh Thực Tế Check-in */}
                                             <div className="space-y-1.5 pt-1">
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                                                    📸 Ảnh chụp thực địa tại điểm bán (GPS, Địa chỉ & Giờ):
+                                                    Hình ảnh tại điểm bán:
                                                 </span>
                                                 {v.checkInPhoto || v.checkOutPhoto ? (
                                                     <div
@@ -2174,7 +2202,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                         />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
-                                                            <Eye size={16} /> Bấm xem ảnh nét HD gốc
+                                                            <Eye size={16} /> Xem ảnh chi tiết
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -2887,11 +2915,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                                 <Award size={15} className="text-teal-600 dark:text-[#87CBB9]" />
-                                Báo Cáo Tự Đánh Giá Tuần Của Sale
+                                Tự Đánh Giá Tuần Của Nhân Viên
                             </h4>
                             {weeklyPlan?.submittedAt && (
                                 <span className="text-[10px] font-mono text-slate-400">
-                                    Đã nộp: {new Date(weeklyPlan.submittedAt).toLocaleString('vi-VN')}
+                                    Đã gửi: {new Date(weeklyPlan.submittedAt).toLocaleString('vi-VN')}
                                 </span>
                             )}
                         </div>
@@ -2900,13 +2928,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             rows={3}
                             value={selfReviewText}
                             onChange={e => setSelfReviewText(e.target.value)}
-                            placeholder="Sale tự tổng kết tuần: Những điểm làm tốt, kết quả đạt được, khó khăn tại thị trường HORECA, đề xuất chính sách giá / hỗ trợ mẫu rượu..."
+                            placeholder="Tổng kết tuần: Kết quả đạt được, khó khăn tại điểm bán, đề xuất hỗ trợ..."
                             className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition resize-y"
                         />
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
                             <span className="text-[10px] text-slate-400">
-                                Bắt buộc sale tự chốt vào cuối mỗi tuần để Trưởng phòng / Giám đốc kinh doanh phê duyệt.
+                                Gửi báo cáo vào cuối tuần để Quản lý kiểm tra và phê duyệt.
                             </span>
 
                             <button
@@ -2916,7 +2944,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 className="self-end sm:self-auto px-4 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                             >
                                 <Send size={13} />
-                                <span>{submittingReport ? 'Đang nộp...' : 'Chốt Báo Cáo Tuần'}</span>
+                                <span>{submittingReport ? 'Đang gửi...' : 'Gửi Báo Cáo Tuần'}</span>
                             </button>
                         </div>
                     </div>
@@ -2925,7 +2953,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50/60 dark:bg-[#142433]/60 border border-slate-200 dark:border-[#2A4355] space-y-2 shadow-xs">
                         <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                             <ShieldCheck size={15} className="text-teal-600 dark:text-[#87CBB9]" />
-                            Nhận Xét & Chỉ Đạo Của Quản Lý
+                            Nhận Xét Của Quản Lý
                         </h4>
 
                         {isManager ? (
@@ -2934,7 +2962,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     rows={2}
                                     value={managerFeedbackText}
                                     onChange={e => setManagerFeedbackText(e.target.value)}
-                                    placeholder="Quản lý nhập nhận xét, khen thưởng hoặc chỉ đạo bổ sung cho nhân viên..."
+                                    placeholder="Nhập nhận xét hoặc lưu ý cho nhân viên..."
                                     className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                                 />
                                 <div className="flex justify-end">
@@ -2945,7 +2973,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         className="px-4 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                                     >
                                         <Check size={13} />
-                                        <span>{savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Phê Duyệt'}</span>
+                                        <span>{savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Duyệt'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -3203,7 +3231,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center shadow-lg">
                                                             <Eye size={18} />
                                                         </div>
-                                                        <span className="text-[10px] font-bold tracking-wide">Phóng to ảnh HD</span>
+                                                        <span className="text-[10px] font-bold tracking-wide">Xem ảnh lớn</span>
                                                     </div>
                                                 </>
                                             ) : (
@@ -3300,7 +3328,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
                                             <th className="p-3.5 font-bold">Mã Visit</th>
                                             <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
-                                            <th className="p-3.5 font-bold text-center">Ảnh Thực Tế (GPS)</th>
+                                            <th className="p-3.5 font-bold text-center">Ảnh Check-in</th>
                                             <th className="p-3.5 font-bold text-center">Giờ Check-in</th>
                                             <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
                                             <th className="p-3.5 font-bold">Hoạt Động & Ghi Chú</th>

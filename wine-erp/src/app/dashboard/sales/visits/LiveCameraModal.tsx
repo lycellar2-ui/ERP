@@ -50,7 +50,7 @@ export function LiveCameraModal({
         stopActiveStream()
 
         if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            setCameraError('Trình duyệt chưa mở Camera trực tiếp. Bạn bấm nút bên dưới để chụp bằng Camera của máy!')
+            setCameraError('Trình duyệt không hỗ trợ mở camera trực tiếp. Vui lòng bấm bên dưới để mở camera thiết bị.')
             setStarting(false)
             return
         }
@@ -82,11 +82,11 @@ export function LiveCameraModal({
         } catch (e: any) {
             console.warn('Camera access warning:', e)
             if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn hãy bấm nút bên dưới để mở Camera máy!')
+                setCameraError('Chưa được cấp quyền truy cập camera. Vui lòng cấp quyền hoặc mở camera thiết bị.')
             } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setCameraError('Không tìm thấy luồng Camera trực tiếp. Bấm nút bên dưới để dùng Camera thiết bị!')
+                setCameraError('Không tìm thấy camera. Vui lòng mở camera thiết bị.')
             } else {
-                setCameraError('Chưa thể mở Camera trực tiếp. Bấm nút bên dưới để dùng Camera thiết bị chụp ảnh!')
+                setCameraError('Không thể mở camera trực tiếp. Vui lòng mở camera thiết bị.')
             }
         }
         setStarting(false)
@@ -267,7 +267,7 @@ export function LiveCameraModal({
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{subtitle || 'Bắt buộc chụp ảnh trực tiếp từ Camera'}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{subtitle || 'Chụp ảnh xác nhận từ camera'}</p>
                         </div>
                     </div>
                     <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer">
@@ -343,7 +343,7 @@ export function LiveCameraModal({
                                 onClick={() => fileInputRef.current?.click()}
                                 className="px-5 py-3 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] flex items-center gap-2 shadow-lg"
                             >
-                                <Camera size={16} /> Bật App Camera Chụp Thực Tế
+                                <Camera size={16} /> Mở camera thiết bị
                             </button>
                         </div>
                     )}
@@ -364,9 +364,9 @@ export function LiveCameraModal({
                 {/* Live Watermark Notice */}
                 <div className="px-4 py-2 bg-[#142433] flex items-center justify-between text-[10px] text-[#8AAEBB] border-t border-[#2A4355]">
                     <span className="flex items-center gap-1">
-                        <ShieldCheck size={12} className="text-[#87CBB9]" /> Bắt buộc chụp thực tế tại điểm bán
+                        <ShieldCheck size={12} className="text-[#87CBB9]" /> Ảnh chụp tại điểm đến
                     </span>
-                    <span>Tự động đóng dấu Thời gian</span>
+                    <span>Tự động ghi nhận thời gian</span>
                 </div>
 
                 {/* Footer Controls */}
