@@ -1970,7 +1970,7 @@ function SalesOrderMobileCard({
 }
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
-const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager']
+const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager', 'Trợ Lý', 'TRO_LY']
 
 type SalesPageResult = { 
     rows: SalesOrderRow[]
@@ -2012,6 +2012,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     userRoles.includes('Admin') || 
                     userRoles.includes('ADMIN') || 
                     userRoles.includes('DIRECTOR') || 
+                    userRoles.includes('Trợ Lý') || 
+                    userRoles.includes('TRO_LY') || 
                     userPermissions.includes('SYS:ADMIN')
 
     const canToggleInvoiceExempt = isAccountant || isAdmin

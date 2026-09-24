@@ -31,6 +31,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **CEO Board**: `wine-erp/src/app/dashboard` (**AI CEO Briefing**), `wine-erp/src/app/dashboard/kpi`, `wine-erp/src/app/dashboard/reports`
 - **Margin & Audit**: `wine-erp/src/app/dashboard/margin` (**Margin Simulation**), `wine-erp/src/app/dashboard/audit-log` (**Audit Log Viewer**)
 - **Sales Field**: `wine-erp/src/app/dashboard/sales/visits` (**Field Visit Check-in/Check-out**, GPS, Camera)
+- **HR & Personnel**: `wine-erp/src/app/dashboard/hr` (**Hồ sơ & Giấy tờ nhân sự**, HĐLĐ, CCCD, KSK, Cảnh báo thời hạn tự động, Liên kết User ERP)
 - **AI & Features**: `wine-erp/src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `wine-erp/src/app/api/ceo-summary` (**AI CEO Briefing**), `wine-erp/src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `wine-erp/src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `wine-erp/src/app/api/crm-analysis` (**AI CRM Analysis**), `wine-erp/src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `wine-erp/src/app/api/ai/status` (**AI Toggle Check**), `wine-erp/src/app/api/ai/reports` (**AI Report Save**)
 - **POS & QR**: `wine-erp/src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `wine-erp/src/app/dashboard/pos/loyalty`, `wine-erp/src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `wine-erp/src/app/partner-login` (**External Partner Login & Portal**)

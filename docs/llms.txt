@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-23 17:30
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, Central Customer Pricing Hub & Dynamic Pricing Engine
+> Last updated: 2026-09-24 12:00
+> Status: Production — 30 modules, 126 DB models, 79 enums, 36 dashboard routes, HRM & Employee Document Hub
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
@@ -11,7 +11,7 @@
  
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (124 models, 79 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (126 models, 79 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
 - ImgBB (product images) + Supabase Storage (private docs)
@@ -19,7 +19,7 @@
 - Vercel deploy + GitHub CI/CD
 - Pre-commit hook (.husky/pre-commit) — docs guardian
 
-## Module Registry (29 modules)
+## Module Registry (30 modules)
 SYS (RBAC/Auth) | MDM (Products/Suppliers/Customers) | CRM (360° + Pipeline)
 CNT (Contracts + RegDocs) | TAX (Tax Rates) | PRC (Procurement)
 SHP (Shipment Tracking) | CST (Product Costing) | AGN (Agency Portal)
@@ -30,6 +30,7 @@ STP (Wine Stamps) | RPT (Reports + BI) | DSH (CEO Dashboard) | KPI (Targets)
 AI (6 live: Pipeline/CRM/Catalog Analysis + CEO Briefing + Admin Toggle + Prompt Editor) | TLG (Telegram Bot) | MKT (Media Library)
 PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 AUD (Audit Log) | MGN (Margin Simulation) | SFV (Sales Field Visit — GPS + Camera)
+HRM (HR & Employee Document Hub — Contracts, National ID, Health Alerts, ERP Linking)
 
 ## Wine-Specific Concepts
 - Vintage: Year of grape harvest (managed at StockLot level) — affects pricing, allocation

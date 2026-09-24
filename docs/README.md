@@ -52,13 +52,12 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 124 |
+| **Prisma models** | 126 |
 | **Prisma enums** | 79 |
-| **Dashboard routes** | 35 folders |
-| **Server Action files** | 42 files |
-| **Module spec files** | 27 files |
-| **Sidebar nav items** | 37 items (7 groups) |
-| **Sidebar nav items** | 37 items (7 groups) |
+| **Dashboard routes** | 36 folders |
+| **Server Action files** | 43 files |
+| **Module spec files** | 28 files |
+| **Sidebar nav items** | 38 items (7 groups) |
 
 ### Bảng Module đầy đủ
 
@@ -93,8 +92,9 @@
 | 27 | `AUD` | Audit Log (Nhật ký thao tác) | [audit-log.md](./modules/audit-log.md) | `/audit-log` |
 | 28 | `MGN` | Margin Simulation (Mô phỏng biên lợi nhuận) | [margin.md](./modules/margin.md) | `/margin` |
 | 29 | `SFV` | Sales Field Visit (Viếng thăm điểm bán) | [sales-field-visit.md](./modules/sales-field-visit.md) | `/sales/visits` |
+| 30 | `HRM` | Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên | [hr.md](./modules/hr.md) | `/hr` |
 
-**Tổng: 29 modules** (28 có spec file riêng, 1 nằm trong spec file khác)
+**Tổng: 30 modules** (29 có spec file riêng, 1 nằm trong spec file khác)
 
 ---
 
@@ -221,7 +221,8 @@ docs/
     ├── approval-matrix.md         APM
     ├── audit-log.md               AUD (NEW)
     ├── margin.md                  MGN (NEW)
-    └── sales-field-visit.md       SFV (NEW)
+    ├── sales-field-visit.md       SFV (NEW)
+    └── hr.md                      HRM (NEW)
 ```
 
 ---
@@ -236,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-23 17:30 | Wine ERP v10.36 - Nâng cấp Trung Tâm Quản Lý Giá & Cơ Chế Giá Động Khách Hàng (Customer Pricing Hub & Dynamic Price Engine)*
+*Last updated: 2026-09-24 12:00 | Wine ERP v10.37 - Xây dựng phân hệ Quản lý Hồ sơ & Giấy tờ Nhân viên (HRM & Employee Document Hub)*
 

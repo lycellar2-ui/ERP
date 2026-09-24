@@ -113,11 +113,18 @@ export const ROLE_NAME_MAP: Record<string, string> = {
     'Thủ Kho': 'THU_KHO',
     'Thu Mua': 'THU_MUA',
     'Sales Admin': 'SALES_ADMIN',
+    'Trợ Lý': 'TRO_LY',
+    'Hành Chính Nhân Sự': 'HCNS',
+    'Nhân Sự': 'HCNS',
+    'HR': 'HCNS',
 }
 
 const ROLE_ALIASES: Record<string, string[]> = {
     'CEO': ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin'],
     'ADMIN': ['ADMIN', 'SYS:ADMIN', 'CEO'],
+    'TRO_LY': ['TRO_LY', 'Trợ Lý', 'Trợ lý', 'ASSISTANT'],
+    'Trợ Lý': ['TRO_LY', 'Trợ Lý', 'Trợ lý', 'ASSISTANT'],
+    'HCNS': ['HCNS', 'Hành Chính Nhân Sự', 'Nhân Sự', 'HR', 'HR_ADMIN'],
     'KE_TOAN': ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
     'Kế Toán': ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
     'SALES_MGR': ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG'],
@@ -131,7 +138,7 @@ const ROLE_ALIASES: Record<string, string[]> = {
 // Check if user has specific permission
 export function hasPermission(user: SessionUser, module: string, action: string): boolean {
     if (!user) return false
-    if (hasRole(user, 'CEO', 'ADMIN')) return true
+    if (hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')) return true
     if (action === 'READ' && hasRole(user, 'Kế Toán', 'KE_TOAN')) {
         if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS'].includes(module)) return true
     }
@@ -165,7 +172,7 @@ const REPORT_ROLE_MAP: Record<string, string[]> = {
 }
 
 export function canAccessReport(user: SessionUser, reportCode: string): boolean {
-    if (hasRole(user, 'CEO')) return true // CEO sees all
+    if (hasRole(user, 'CEO', 'TRO_LY')) return true // CEO & Trợ Lý see all
     const allowedRoles = REPORT_ROLE_MAP[reportCode]
     if (!allowedRoles) return false
     return allowedRoles.some(r => user.roles.includes(r))

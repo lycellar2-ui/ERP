@@ -94,6 +94,7 @@ const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Hệ Thống',
         items: [
+            { href: '/dashboard/hr', icon: Briefcase, label: 'Nhân Sự & Giấy Tờ', permission: 'HRM:READ' },
             { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', permission: 'SYS:READ' },
             { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', permission: 'SYS:ADMIN' },
             { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', permission: 'SYS:ADMIN' },
@@ -207,8 +208,8 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
             const visibleItems = group.items.filter(item => {
                 if (!currentUser) return false
 
-                // CEO / System Admin see all menu items
-                if (currentUser.roles.includes('CEO') || currentUser.roles.includes('CEO Secondary') || currentUser.roles.includes('ADMIN') || currentUser.roles.includes('Admin')) {
+                // CEO / System Admin / Trợ Lý see all menu items
+                if (currentUser.roles.includes('CEO') || currentUser.roles.includes('CEO Secondary') || currentUser.roles.includes('ADMIN') || currentUser.roles.includes('Admin') || currentUser.roles.includes('Trợ Lý') || currentUser.roles.includes('TRO_LY')) {
                     return true
                 }
 

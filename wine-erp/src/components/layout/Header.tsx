@@ -437,7 +437,18 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                     {currentUser?.email || 'admin@lyscellars.com'}
                                 </p>
                                 <div className="flex flex-wrap gap-1 mt-2.5">
-                                    {(currentUser?.roles || ['Admin']).map(r => (
+                                    {Array.from(new Set(
+                                        (currentUser?.roles || ['Admin']).filter(r => {
+                                            if (r === 'TRO_LY' && currentUser?.roles?.includes('Trợ Lý')) return false
+                                            if (r === 'KE_TOAN' && currentUser?.roles?.includes('Kế Toán')) return false
+                                            if (r === 'SALES_MGR' && currentUser?.roles?.includes('Sales Manager')) return false
+                                            if (r === 'SALES_REP' && currentUser?.roles?.includes('Sales Rep')) return false
+                                            if (r === 'THU_KHO' && currentUser?.roles?.includes('Thủ Kho')) return false
+                                            if (r === 'THU_MUA' && currentUser?.roles?.includes('Thu Mua')) return false
+                                            if (r === 'SALES_ADMIN' && currentUser?.roles?.includes('Sales Admin')) return false
+                                            return true
+                                        })
+                                    )).map(r => (
                                         <span key={r} className="text-xs px-1.5 py-0.5 rounded font-bold"
                                             style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
                                             {r}

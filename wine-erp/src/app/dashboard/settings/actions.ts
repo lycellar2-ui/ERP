@@ -492,7 +492,7 @@ export async function processApproval(input: {
 // ── Get pending approvals for a user ──────────────
 export async function getPendingApprovals(userId: string) {
     const sessionUser = await requireAuth()
-    const isCEO = sessionUser.roles.includes('CEO')
+    const isCEO = sessionUser.roles.includes('CEO') || sessionUser.roles.includes('Trợ Lý') || sessionUser.roles.includes('TRO_LY')
     const isAdmin = sessionUser.permissions.includes('SYS:ADMIN')
     if (sessionUser.id !== userId && !isCEO && !isAdmin) {
         throw new Error('Unauthorized')

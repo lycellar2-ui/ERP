@@ -29,7 +29,7 @@ export default async function SalesVisitsPage() {
         }) as any
     }
 
-    const managerRoleKeywords = ['admin', 'sales manager', 'ceo', 'manager', 'ban giám đốc', 'system admin']
+    const managerRoleKeywords = ['admin', 'sales manager', 'ceo', 'manager', 'ban giám đốc', 'system admin', 'trợ lý', 'tro ly', 'assistant']
     const isManager = Boolean(
         user?.roles?.some((r: any) => {
             const roleName = typeof r === 'string' ? r : r.role?.name || r.name

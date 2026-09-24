@@ -110,7 +110,7 @@ const inputStyle = {
     outline: 'none',
 }
 
-const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN']
+const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN', 'Trợ Lý', 'TRO_LY']
 
 export interface CloneSOData {
     customerId: string

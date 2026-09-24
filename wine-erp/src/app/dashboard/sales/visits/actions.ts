@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { requireAuth, SessionUser } from '@/lib/session'
 
-const MANAGER_ROLES = ['Admin', 'ADMIN', 'Sales Manager', 'SALES_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC']
+const MANAGER_ROLES = ['Admin', 'ADMIN', 'Sales Manager', 'SALES_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC', 'Trợ Lý', 'TRO_LY', 'Trợ lý', 'trợ lý', 'assistant', 'ASSISTANT']
 
 function checkIsManager(user: SessionUser): boolean {
     return user.roles?.some(r => MANAGER_ROLES.includes(r)) || false

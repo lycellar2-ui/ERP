@@ -49,6 +49,7 @@ model Department {
   users     User[]
   roles     Role[]
   proposals Proposal[]
+  employees Employee[]   @relation("DeptEmployees")
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
@@ -108,6 +109,7 @@ model User {
   assignedStockCounts    StockCountSession[] @relation("AssignedStockCounts")
   createdStockCounts     StockCountSession[] @relation("CreatedStockCounts")
   assignedCountLines     StockCountLine[]   @relation("AssignedCountLines")
+  employee               Employee?          @relation("EmployeeUser")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -3272,4 +3274,97 @@ model Notification {
   @@map("notifications")
   @@index([userId, isRead])
   @@index([userId, createdAt(sort: Desc)])
+}
+
+// =============================================================
+// HRM — Human Resources & Employee Document Management
+// =============================================================
+
+model Employee {
+  id                 String             @id @default(cuid())
+  code               String             @unique // Mã NV: e.g. NV-001, EMP-2026-001
+  userId             String?            @unique // Liên kết tài khoản ERP
+  user               User?              @relation("EmployeeUser", fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Thông tin cá nhân & định danh
+  fullName           String
+  avatarUrl          String?
+  gender             String?            // NAM, NU, KHAC
+  dateOfBirth        DateTime?
+  phone              String?
+  email              String?
+  nationalId         String?            // Số CCCD / CMND / Hộ chiếu
+  nationalIdDate     DateTime?          // Ngày cấp
+  nationalIdPlace    String?            // Nơi cấp
+  address            String?            // Địa chỉ thường trú
+  currentAddress     String?            // Nơi ở hiện nay
+  
+  // Người liên hệ khẩn cấp
+  emergencyContact   String?
+  emergencyPhone     String?
+  emergencyRelation  String?
+  
+  // Công tác & Phòng ban
+  deptId             String?
+  dept               Department?        @relation("DeptEmployees", fields: [deptId], references: [id], onDelete: SetNull)
+  position           String?            // Chức vụ / Vị trí
+  status             String             @default("ACTIVE") // ACTIVE, PROBATION, RESIGNED, ON_LEAVE
+  startDate          DateTime?
+  officialDate       DateTime?
+  
+  // Hợp đồng lao động
+  contractType       String?            // PROBATION, DEFINITE_1Y, DEFINITE_3Y, INDEFINITE, PART_TIME, SEASONAL
+  contractNumber     String?
+  contractStartDate  DateTime?
+  contractEndDate    DateTime?          // Hạn hợp đồng để tính cảnh báo
+  
+  // Tài chính & Bảo hiểm
+  bankAccountNo      String?
+  bankName           String?
+  bankAccountHolder  String?
+  taxCode            String?
+  socialInsuranceNo  String?
+  
+  // Sức khỏe định kỳ
+  healthCheckDate    DateTime?
+  healthCheckExpiry  DateTime?          // Hạn KSK để tính cảnh báo
+  
+  notes              String?
+  
+  documents          EmployeeDocument[]
+  
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("employees")
+  @@index([status])
+  @@index([deptId])
+  @@index([contractEndDate])
+}
+
+model EmployeeDocument {
+  id           String    @id @default(cuid())
+  employeeId   String
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  docType      String    // CONTRACT, NATIONAL_ID, DEGREE_CERT, HEALTH_CERT, CV, OTHER
+  title        String    // Tên giấy tờ
+  docNumber    String?   // Số hiệu văn bản
+  fileUrl      String    // URL xem / tải tệp (Supabase Storage: bucket erp-files)
+  filePath     String?   // Đường dẫn tệp nội bộ
+  fileType     String?   // pdf, image/jpeg, image/png, etc.
+  fileSize     Int?      // Dung lượng tệp (bytes)
+  
+  issueDate    DateTime? // Ngày ban hành / ngày cấp
+  expiryDate   DateTime? // Ngày hết hiệu lực (kích hoạt cảnh báo)
+  status       String    @default("ACTIVE") // ACTIVE, EXPIRED, ARCHIVED
+  notes        String?
+  uploadedBy   String?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([expiryDate])
+  @@map("employee_documents")
 }

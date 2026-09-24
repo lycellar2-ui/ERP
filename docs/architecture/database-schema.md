@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
-**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-07
+**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (124 models, 79 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (126 models, 79 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -761,6 +761,8 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `weekly_visit_plans` | `salesRepId`, `weekNumber`, `year`, `status`, `note`, `selfReview`, `managerFeedback`, `submittedAt`, `reviewedAt` |
 | `sales_visit_schedules` | `planId`, `customerId`, `visitDate`, `purpose`, `status`, `isUnplanned`, `salesVisitId`, `resultNotes` |
 | `sales_orders` | `isInvoiceExempt`, `invoiceExemptReason`, `invoiceExemptBy`, `invoiceExemptAt` (Nghiệp vụ miễn xuất HĐ VAT, bảo toàn đủ 100% VAT và doanh thu) |
+| `employees` | `code`, `userId`, `fullName`, `gender`, `dateOfBirth`, `phone`, `email`, `nationalId`, `address`, `emergencyContact`, `deptId`, `position`, `status`, `contractType`, `contractEndDate`, `bankAccountNo`, `taxCode`, `socialInsuranceNo`, `healthCheckExpiry` |
+| `employee_documents` | `employeeId`, `docType`, `title`, `docNumber`, `fileUrl`, `filePath`, `issueDate`, `expiryDate`, `status`, `uploadedBy` |
 
 ### D. Indexes Quan Trọng
 ```sql
