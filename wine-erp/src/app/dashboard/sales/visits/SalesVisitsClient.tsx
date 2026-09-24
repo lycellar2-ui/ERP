@@ -16,6 +16,7 @@ import {
 } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
 import { toast } from 'sonner'
+import { useVisitLocale, getVisitLocale, getLocalizedDayName, getLocalizedShortDayName, getActivityPresetLabel, type VisitLocale, VISIT_I18N } from './i18n'
 
 interface Props {
     initialVisits: any[]
@@ -38,11 +39,8 @@ export const ACTIVITY_PRESETS = [
     { value: 'OTHER', label: 'Mục đích khác', icon: '📌', color: '#90A4AE' },
 ]
 
-export function getVietnameseDayName(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(`${date.slice(0, 10)}T12:00:00+07:00`) : new Date(date)
-    const day = d.getDay() // 0 = Chủ Nhật, 1 = Thứ Hai, 2 = Thứ Ba, 3 = Thứ Tư, 4 = Thứ Năm, 5 = Thứ Sáu, 6 = Thứ Bảy
-    const names = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
-    return names[day]
+export function getVietnameseDayName(date: Date | string, locale: VisitLocale = 'vi'): string {
+    return getLocalizedDayName(date, locale)
 }
 
 export function formatLocalDateStr(d: Date): string {
@@ -71,12 +69,14 @@ function SearchableCustomerCombobox({
     customers,
     selectedCustomerId,
     onSelect,
-    onOpenQuickCreate
+    onOpenQuickCreate,
+    locale = 'vi'
 }: {
     customers: { id: string; code: string; name: string; channel: string | null }[]
     selectedCustomerId: string
     onSelect: (customer: any) => void
     onOpenQuickCreate?: () => void
+    locale?: VisitLocale
 }) {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
@@ -106,7 +106,9 @@ function SearchableCustomerCombobox({
                             {selectedCust.name}
                         </span>
                     ) : (
-                        <span className="text-slate-400 dark:text-[#8AAEBB] font-medium truncate">🔍 Bấm chọn khách hàng...</span>
+                        <span className="text-slate-400 dark:text-[#8AAEBB] font-medium truncate">
+                            {locale === 'en' ? '🔍 Click to select client...' : '🔍 Bấm chọn khách hàng...'}
+                        </span>
                     )}
                 </div>
                 {selectedCust ? (
@@ -133,7 +135,7 @@ function SearchableCustomerCombobox({
                                     autoFocus
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
-                                    placeholder="Gõ tên hoặc mã khách hàng..."
+                                    placeholder={locale === 'en' ? 'Type client name or code...' : 'Gõ tên hoặc mã khách hàng...'}
                                     className="w-full pl-8 pr-3 py-2 text-base sm:text-xs outline-none rounded-lg bg-slate-100 dark:bg-[#0D1A24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-[#87CBB9] placeholder:text-slate-400"
                                 />
                                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -143,9 +145,9 @@ function SearchableCustomerCombobox({
                                     type="button"
                                     onClick={() => { setOpen(false); onOpenQuickCreate(); }}
                                     className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#87CBB9] text-[#0A1926] hover:bg-[#72bca9] flex items-center gap-1 shrink-0 cursor-pointer"
-                                    title="Tạo khách mới"
+                                    title={locale === 'en' ? 'Create new client' : 'Tạo khách mới'}
                                 >
-                                    <Plus size={13} /> Khách mới
+                                    <Plus size={13} /> {locale === 'en' ? 'New Client' : 'Khách mới'}
                                 </button>
                             )}
                         </div>
@@ -153,14 +155,14 @@ function SearchableCustomerCombobox({
                         <div className="max-h-60 overflow-y-auto space-y-1">
                             {filtered.length === 0 ? (
                                 <div className="p-3 text-xs text-center text-slate-500 dark:text-[#8AAEBB]">
-                                    Không tìm thấy khách hàng khớp "{query}"
+                                    {locale === 'en' ? `No client found matching "${query}"` : `Không tìm thấy khách hàng khớp "${query}"`}
                                     {onOpenQuickCreate && (
                                         <button
                                             type="button"
                                             onClick={() => { setOpen(false); onOpenQuickCreate(); }}
                                             className="mt-2 block mx-auto text-xs text-[#0D8275] dark:text-[#87CBB9] font-bold underline cursor-pointer"
                                         >
-                                            + Tạo nhanh khách mới ngay
+                                            {locale === 'en' ? '+ Quick create new client now' : '+ Tạo nhanh khách mới ngay'}
                                         </button>
                                     )}
                                 </div>
@@ -201,14 +203,18 @@ function GpsPermissionGuideModal({
     onClose,
     onRetryGps,
     gettingLocation,
+    locale = 'vi',
 }: {
     isOpen: boolean
     onClose: () => void
     onRetryGps: () => Promise<any>
     gettingLocation: boolean
+    locale?: VisitLocale
 }) {
     const [tab, setTab] = useState<'IOS' | 'ANDROID'>('IOS')
     if (!isOpen) return null
+
+    const isEn = locale === 'en'
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
@@ -221,10 +227,10 @@ function GpsPermissionGuideModal({
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                Hướng Dẫn Bật Quyền Vị Trí (GPS)
+                                {isEn ? 'How to Enable GPS Location Permissions' : 'Hướng Dẫn Bật Quyền Vị Trí (GPS)'}
                             </h3>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Bắt buộc để gắn toạ độ thực địa vào ảnh check-in
+                                {isEn ? 'Required to watermark field coordinates onto check-in photos' : 'Bắt buộc để gắn toạ độ thực địa vào ảnh check-in'}
                             </p>
                         </div>
                     </div>
@@ -272,9 +278,11 @@ function GpsPermissionGuideModal({
                                     1
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Bấm nút "aA" hoặc biểu tượng trang web</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Tap "aA" or website settings icon' : 'Bấm nút "aA" hoặc biểu tượng trang web'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Nằm ở góc trái trên thanh nhập địa chỉ URL của trình duyệt Safari.
+                                        {isEn ? 'Located on the left side of Safari address bar.' : 'Nằm ở góc trái trên thanh nhập địa chỉ URL của trình duyệt Safari.'}
                                     </p>
                                 </div>
                             </div>
@@ -283,9 +291,11 @@ function GpsPermissionGuideModal({
                                     2
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Chọn "Cài đặt trang web" (Website Settings)</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Select "Website Settings"' : 'Chọn "Cài đặt trang web" (Website Settings)'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Tìm mục <strong>Vị trí (Location)</strong> ➔ Chuyển thành <strong>Cho phép (Allow)</strong>.
+                                        {isEn ? <>Find <strong>Location</strong> ➔ Change to <strong>Allow</strong>.</> : <>Tìm mục <strong>Vị trí (Location)</strong> ➔ Chuyển thành <strong>Cho phép (Allow)</strong>.</>}
                                     </p>
                                 </div>
                             </div>
@@ -294,9 +304,11 @@ function GpsPermissionGuideModal({
                                     3
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Bật dịch vụ định vị của máy</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Enable iOS Device Location' : 'Bật dịch vụ định vị của máy'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Vào Cài đặt máy ➔ Quyền riêng tư & Bảo mật ➔ Dịch vụ định vị ➔ Gạt BẬT.
+                                        {isEn ? 'Go to Settings ➔ Privacy & Security ➔ Location Services ➔ Turn ON.' : 'Vào Cài đặt máy ➔ Quyền riêng tư & Bảo mật ➔ Dịch vụ định vị ➔ Gạt BẬT.'}
                                     </p>
                                 </div>
                             </div>
@@ -308,9 +320,11 @@ function GpsPermissionGuideModal({
                                     1
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Bấm vào biểu tượng 🔒 (Khóa) hoặc ⚙️</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Tap the 🔒 (Lock) or ⚙️ icon' : 'Bấm vào biểu tượng 🔒 (Khóa) hoặc ⚙️'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Nằm ngay bên trái thanh địa chỉ URL của Google Chrome.
+                                        {isEn ? 'Located on the left side of Chrome address bar.' : 'Nằm ngay bên trái thanh địa chỉ URL của Google Chrome.'}
                                     </p>
                                 </div>
                             </div>
@@ -319,9 +333,11 @@ function GpsPermissionGuideModal({
                                     2
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Chọn "Quyền" (Permissions) ➔ "Vị trí"</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Select "Permissions" ➔ "Location"' : 'Chọn "Quyền" (Permissions) ➔ "Vị trí"'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Bật công tắc <strong>Vị trí</strong> thành <strong>Cho phép</strong> (màu xanh).
+                                        {isEn ? <>Turn <strong>Location</strong> switch to <strong>Allow</strong> (blue/green).</> : <>Bật công tắc <strong>Vị trí</strong> thành <strong>Cho phép</strong> (màu xanh).</>}
                                     </p>
                                 </div>
                             </div>
@@ -330,9 +346,11 @@ function GpsPermissionGuideModal({
                                     3
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900 dark:text-white">Bật GPS của điện thoại</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {isEn ? 'Turn on phone GPS' : 'Bật GPS của điện thoại'}
+                                    </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Kéo thanh thông báo từ trên xuống, chạm bật biểu tượng <strong>Vị trí (GPS)</strong>.
+                                        {isEn ? 'Swipe down notification shade, tap to enable Location (GPS).' : 'Kéo thanh thông báo từ trên xuống, chạm bật biểu tượng Vị trí (GPS).'}
                                     </p>
                                 </div>
                             </div>
@@ -346,17 +364,17 @@ function GpsPermissionGuideModal({
                             onClick={async () => {
                                 const loc = await onRetryGps()
                                 if (loc?.lat) {
-                                    toast.success('Đã nhận toạ độ GPS')
+                                    toast.success(isEn ? 'GPS coordinates acquired' : 'Đã nhận toạ độ GPS')
                                     onClose()
                                 } else {
-                                    toast.warning('Chưa nhận được toạ độ GPS. Vui lòng kiểm tra định vị trên thiết bị.')
+                                    toast.warning(isEn ? 'GPS coordinates not acquired yet. Please check device location settings.' : 'Chưa nhận được toạ độ GPS. Vui lòng kiểm tra định vị trên thiết bị.')
                                 }
                             }}
                             disabled={gettingLocation}
                             className="w-full py-3 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
                         >
                             <RefreshCw size={15} className={gettingLocation ? 'animate-spin' : ''} />
-                            {gettingLocation ? 'Đang xác định vị trí...' : 'Thử lại định vị GPS'}
+                            {gettingLocation ? (isEn ? 'Acquiring GPS location...' : 'Đang xác định vị trí...') : (isEn ? 'Retry GPS Location' : 'Thử lại định vị GPS')}
                         </button>
                     </div>
                 </div>
@@ -368,11 +386,13 @@ function GpsPermissionGuideModal({
 function PhotoViewerModal({
     viewPhoto,
     onClose,
-    loadingFullPhoto
+    loadingFullPhoto,
+    locale = 'vi'
 }: {
     viewPhoto: { title: string; url: string; visitId?: string } | null
     onClose: () => void
     loadingFullPhoto: boolean
+    locale?: VisitLocale
 }) {
     if (!viewPhoto) return null
     return (
@@ -389,11 +409,11 @@ function PhotoViewerModal({
                         <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                             {loadingFullPhoto ? (
                                 <span className="text-amber-500 font-medium flex items-center gap-1">
-                                    <RefreshCw size={11} className="animate-spin" /> Đang tải ảnh gốc...
+                                    <RefreshCw size={11} className="animate-spin" /> {locale === 'en' ? 'Loading original photo...' : 'Đang tải ảnh gốc...'}
                                 </span>
                             ) : (
                                 <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-                                    Ảnh check-in tại điểm bán
+                                    {locale === 'en' ? 'Store check-in photo' : 'Ảnh check-in tại điểm bán'}
                                 </span>
                             )}
                         </p>
@@ -405,7 +425,7 @@ function PhotoViewerModal({
                             download={`Sales_Visit_${Date.now()}.jpg`}
                             className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] hover:opacity-90 flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                         >
-                            <Download size={14} /> Tải Ảnh
+                            <Download size={14} /> {locale === 'en' ? 'Download' : 'Tải Ảnh'}
                         </a>
                         <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer">
                             <X size={20} />
@@ -422,7 +442,7 @@ function PhotoViewerModal({
                     {loadingFullPhoto && (
                         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-amber-500/40 shadow-xl animate-pulse">
                             <RefreshCw size={13} className="animate-spin text-amber-400" />
-                            <span>Đang tải ảnh gốc...</span>
+                            <span>{locale === 'en' ? 'Loading original photo...' : 'Đang tải ảnh gốc...'}</span>
                         </div>
                     )}
                 </div>
@@ -432,6 +452,7 @@ function PhotoViewerModal({
 }
 
 export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager, initialTeamData, initialPlan }: Props) {
+    const { locale, setLocale, toggleLocale, t } = useVisitLocale()
     const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
     const selectedSalespersonId = currentUserId
@@ -584,11 +605,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
         const handleOnline = () => {
             setIsNetworkOnline(true)
-            toast.success('📶 Đã có kết nối mạng trở lại! Hệ thống đang tự động kiểm tra đồng bộ...')
+            toast.success(getVisitLocale() === 'en' ? '📶 Network connection restored! Checking offline sync...' : '📶 Đã có kết nối mạng trở lại! Hệ thống đang tự động kiểm tra đồng bộ...')
         }
         const handleOffline = () => {
             setIsNetworkOnline(false)
-            toast.warning('📶 Bạn đã mất kết nối mạng. Các lượt check-in hầm rượu sẽ được lưu ngoại tuyến trên máy.')
+            toast.warning(getVisitLocale() === 'en' ? '📶 Network disconnected. Cellar check-in drafts will be saved offline.' : '📶 Bạn đã mất kết nối mạng. Các lượt check-in hầm rượu sẽ được lưu ngoại tuyến trên máy.')
         }
 
         window.addEventListener('online', handleOnline)
@@ -602,19 +623,20 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     // Lazy load full HD photo on demand when viewing enlarged photo
     useEffect(() => {
         if (!viewPhoto?.visitId) return
-        let active = true
+        let cancelled = false
         setLoadingFullPhoto(true)
-        getSalesVisitFullPhoto(viewPhoto.visitId)
-            .then(res => {
-                if (active && res.success && res.photo && res.photo !== viewPhoto.url) {
-                    setViewPhoto(prev => prev ? { ...prev, url: res.photo! } : null)
-                }
-            })
-            .catch(err => console.warn('Could not fetch full photo', err))
-            .finally(() => {
-                if (active) setLoadingFullPhoto(false)
-            })
-        return () => { active = false }
+
+        getSalesVisitFullPhoto(viewPhoto.visitId).then(res => {
+            if (!cancelled && res.success && res.photo) {
+                setViewPhoto(prev => prev ? { ...prev, url: res.photo! } : null)
+            }
+        }).catch(err => {
+            console.warn('Full photo load err', err)
+        }).finally(() => {
+            if (!cancelled) setLoadingFullPhoto(false)
+        })
+
+        return () => { cancelled = true }
     }, [viewPhoto?.visitId])
 
     // -----------------------------------------------------------------
@@ -622,7 +644,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     // -----------------------------------------------------------------
     const requestGPS = useCallback(async (): Promise<{ lat?: number; lng?: number; address?: string }> => {
         if (typeof window === 'undefined' || !navigator.geolocation) {
-            setGpsError('Trình duyệt không hỗ trợ Geolocation.')
+            setGpsError(locale === 'en' ? 'Browser does not support Geolocation.' : 'Trình duyệt không hỗ trợ Geolocation.')
             return {}
         }
 
@@ -634,7 +656,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 async (pos) => {
                     const lat = pos.coords.latitude
                     const lng = pos.coords.longitude
-                    let address = `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                    let address = locale === 'en' ? `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
                     try {
                         const geoRes = await reverseGeocodeAction(lat, lng)
                         if (geoRes.address) address = geoRes.address
@@ -649,10 +671,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 },
                 (err) => {
                     console.warn('GPS error', err)
-                    let msg = 'Không thể lấy GPS. Bạn hãy kiểm tra quyền Vị trí trên trình duyệt/điện thoại!'
-                    if (err.code === 1) msg = 'Quyền GPS đã bị từ chối trong Cài đặt trình duyệt!'
-                    if (err.code === 2) msg = 'Thiết bị đang tắt định vị GPS. Vui lòng bật GPS trên máy!'
-                    if (err.code === 3) msg = 'Hết thời gian chờ lấy toạ độ GPS (Timeout).'
+                    let msg = locale === 'en' ? 'Unable to acquire GPS. Please check location permissions on browser/phone!' : 'Không thể lấy GPS. Bạn hãy kiểm tra quyền Vị trí trên trình duyệt/điện thoại!'
+                    if (err.code === 1) msg = locale === 'en' ? 'GPS permission was denied in browser settings!' : 'Quyền GPS đã bị từ chối trong Cài đặt trình duyệt!'
+                    if (err.code === 2) msg = locale === 'en' ? 'Device location is turned off. Please turn on GPS on your phone!' : 'Thiết bị đang tắt định vị GPS. Vui lòng bật GPS trên máy!'
+                    if (err.code === 3) msg = locale === 'en' ? 'GPS location request timed out.' : 'Hết thời gian chờ lấy toạ độ GPS (Timeout).'
                     setGpsError(msg)
                     setGettingLocation(false)
                     resolve({})
@@ -731,10 +753,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         if (res.success) {
             setTeamData(res)
         } else {
-            toast.error(res.error || 'Lỗi tải tổng quan đội sale')
+            toast.error(res.error || (locale === 'en' ? 'Error loading sales team overview' : 'Lỗi tải tổng quan đội sale'))
         }
         setLoadingTeam(false)
-    }, [isManager, currentWeek])
+    }, [isManager, currentWeek, locale])
 
     const isFirstTeamRef = useRef(true)
     useEffect(() => {
@@ -769,11 +791,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
     const handleSaveInspectFeedback = async () => {
         if (!inspectingSale?.planId) {
-            toast.error('Nhân viên này chưa có bản ghi kế hoạch tuần để duyệt')
+            toast.error(locale === 'en' ? 'This sales rep does not have a weekly plan to review' : 'Nhân viên này chưa có bản ghi kế hoạch tuần để duyệt')
             return
         }
         if (!inspectFeedbackText.trim()) {
-            toast.error('Vui lòng nhập nội dung nhận xét')
+            toast.error(locale === 'en' ? 'Please enter feedback notes' : 'Vui lòng nhập nội dung nhận xét')
             return
         }
         setSavingInspectFeedback(true)
@@ -783,7 +805,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
             managerId: currentUserId,
         })
         if (res.success) {
-            toast.success(`Đã lưu nhận xét cho ${inspectingSale.salespersonName}`)
+            toast.success(locale === 'en' ? `Feedback saved for ${inspectingSale.salespersonName}` : `Đã lưu nhận xét cho ${inspectingSale.salespersonName}`)
             await loadTeamData()
             setInspectingSale((prev: any) => prev ? {
                 ...prev,
@@ -792,7 +814,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 reviewedAt: new Date().toISOString()
             } : null)
         } else {
-            toast.error(res.error || 'Lỗi khi lưu nhận xét')
+            toast.error(res.error || (locale === 'en' ? 'Error saving feedback' : 'Lỗi khi lưu nhận xét'))
         }
         setSavingInspectFeedback(false)
     }
@@ -856,7 +878,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     const handleQuickCreateCustomer = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!quickCustName.trim()) {
-            toast.error('Vui lòng nhập tên khách hàng')
+            toast.error(locale === 'en' ? 'Please enter customer / client name' : 'Vui lòng nhập tên khách hàng')
             return
         }
 
@@ -871,7 +893,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         })
 
         if (res.success && res.customer) {
-            toast.success(`Đã tạo nhanh khách hàng tiềm năng: ${res.customer.name}`)
+            toast.success(locale === 'en' ? `Prospect client created: ${res.customer.name}` : `Đã tạo nhanh khách hàng tiềm năng: ${res.customer.name}`)
             setLocalCustomers(prev => [res.customer, ...prev])
             
             // Auto-select if in quick add modal or unplanned modal
@@ -889,7 +911,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
             setQuickCustAddress('')
             setShowQuickCreateModal(false)
         } else {
-            toast.error(res.error || 'Lỗi tạo khách hàng mới')
+            toast.error(res.error || (locale === 'en' ? 'Error creating new customer' : 'Lỗi tạo khách hàng mới'))
         }
         setCreatingCustomer(false)
     }
@@ -899,13 +921,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     // -----------------------------------------------------------------
     const handleAddVisitToPlan = () => {
         if (!quickAddModal || !addCustomerId) {
-            toast.error('Vui lòng chọn khách hàng')
+            toast.error(locale === 'en' ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
             return
         }
 
         const selectedCust = localCustomers.find(c => c.id === addCustomerId)
-        const preset = ACTIVITY_PRESETS.find(p => p.value === addActivityType)
-        const purpose = addCustomPurpose.trim() || preset?.label || 'Chăm sóc khách hàng định kỳ'
+        const purpose = addCustomPurpose.trim() || getActivityPresetLabel(addActivityType, locale) || (locale === 'en' ? 'Periodic Customer Care' : 'Chăm sóc khách hàng định kỳ')
 
         const newScheduleItem = {
             id: `temp_${Date.now()}`,
@@ -917,7 +938,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         }
 
         setPlanVisits(prev => [...prev, newScheduleItem])
-        toast.success(`Đã thêm vào lịch ${quickAddModal.dayName}`)
+        toast.success(locale === 'en' ? `Added to schedule: ${getLocalizedDayName(quickAddModal.dateStr, locale)}` : `Đã thêm vào lịch ${quickAddModal.dayName}`)
         setQuickAddModal(null)
         setAddCustomerId('')
         setAddCustomPurpose('')
@@ -925,7 +946,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
     const handleRemovePlanVisit = (visitId: string) => {
         setPlanVisits(prev => prev.filter(v => v.id !== visitId))
-        toast.info('Đã xóa điểm viếng thăm khỏi kế hoạch')
+        toast.info(locale === 'en' ? 'Visit removed from schedule' : 'Đã xóa điểm viếng thăm khỏi kế hoạch')
     }
 
     const handleSavePlan = async () => {
@@ -945,10 +966,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         })
 
         if (res.success) {
-            toast.success('Đã lưu thành công kế hoạch tuần!')
+            toast.success(locale === 'en' ? 'Weekly plan saved successfully!' : 'Đã lưu thành công kế hoạch tuần!')
             await loadWeeklyData()
         } else {
-            toast.error('Lỗi khi lưu kế hoạch: ' + res.error)
+            toast.error((locale === 'en' ? 'Error saving plan: ' : 'Lỗi khi lưu kế hoạch: ') + res.error)
         }
         setSavingPlan(false)
     }
@@ -970,12 +991,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
     const startCheckInUnplanned = () => {
         if (!unplannedCustomerId) {
-            toast.error('Vui lòng chọn khách hàng')
+            toast.error(locale === 'en' ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
             return
         }
         const cust = localCustomers.find(c => c.id === unplannedCustomerId)
-        const preset = ACTIVITY_PRESETS.find(p => p.value === unplannedActivityType)
-        const purpose = unplannedPurpose.trim() || preset?.label || 'Chăm sóc khách hàng định kỳ'
+        const purpose = unplannedPurpose.trim() || getActivityPresetLabel(unplannedActivityType, locale) || (locale === 'en' ? 'Periodic Customer Care' : 'Chăm sóc khách hàng định kỳ')
 
         setShowUnplannedModal(false)
         setCameraTarget({
@@ -1046,11 +1066,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         setSyncingOffline(false)
 
         if (successCount > 0) {
-            toast.success(`Đã đồng bộ ${successCount} lượt check-in ngoại tuyến`)
+            toast.success(locale === 'en' ? `Synced ${successCount} offline check-in draft(s)` : `Đã đồng bộ ${successCount} lượt check-in ngoại tuyến`)
             await loadWeeklyData()
             await fetchHistoryVisits()
         }
-    }, [selectedSalespersonId, loadWeeklyData, fetchHistoryVisits])
+    }, [selectedSalespersonId, loadWeeklyData, fetchHistoryVisits, locale])
 
     // Auto-sync offline drafts when network recovers or when mounted online
     useEffect(() => {
@@ -1062,7 +1082,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     const handleConfirmCheckInPhoto = async (photoBase64: string, thumbnailBase64?: string) => {
         if (!cameraTarget || !cameraTarget.customerId) return
         const customerId = cameraTarget.customerId
-        const customerName = cameraTarget.customerName || 'Khách hàng'
+        const customerName = cameraTarget.customerName || (locale === 'en' ? 'Customer' : 'Khách hàng')
         const purpose = cameraTarget.purpose
         const activityType = cameraTarget.activityType
         const scheduleId = cameraTarget.scheduleId
@@ -1103,7 +1123,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 const updated = [draft, ...existing]
                 localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
                 setOfflineDrafts(updated)
-                toast.warning(`📶 Bạn đang mất sóng 4G (hầm rượu). Đã lưu tạm lượt check-in tại ${customerName} vào bộ nhớ máy! Hệ thống sẽ tự động đồng bộ khi có sóng trở lại.`, {
+                toast.warning(locale === 'en' ? `📶 No 4G connection (cellar). Check-in at ${customerName} saved offline! Will auto-sync when online.` : `📶 Bạn đang mất sóng 4G (hầm rượu). Đã lưu tạm lượt check-in tại ${customerName} vào bộ nhớ máy! Hệ thống sẽ tự động đồng bộ khi có sóng trở lại.`, {
                     duration: 8000
                 })
             } catch (e) {
@@ -1117,11 +1137,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         try {
             const res = await checkInSalesVisit(payload)
             if (res.success) {
-                toast.success(`Check-in thành công tại ${customerName}!`)
+                toast.success(locale === 'en' ? `Check-in successful at ${customerName}!` : `Check-in thành công tại ${customerName}!`)
                 await loadWeeklyData()
                 await fetchHistoryVisits()
             } else {
-                toast.error('Lỗi Check-in: ' + res.error)
+                toast.error((locale === 'en' ? 'Check-in error: ' : 'Lỗi Check-in: ') + res.error)
             }
         } catch (err: any) {
             console.warn('Network error during checkin, saving to offline draft', err)
@@ -1139,7 +1159,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 const updated = [draft, ...existing]
                 localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
                 setOfflineDrafts(updated)
-                toast.warning(`📶 Lỗi đường truyền mạng (hầm rượu/mất sóng). Đã lưu an toàn lượt check-in tại ${customerName} trên máy!`, {
+                toast.warning(locale === 'en' ? `📶 Network transmission error. Check-in at ${customerName} safely saved offline!` : `📶 Lỗi đường truyền mạng (hầm rượu/mất sóng). Đã lưu an toàn lượt check-in tại ${customerName} trên máy!`, {
                     duration: 8000
                 })
             } catch (e) {
@@ -1156,11 +1176,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     // -----------------------------------------------------------------
     const handleSubmitWeeklyReport = async () => {
         if (!weeklyPlan?.id) {
-            toast.error('Bạn cần bấm "Lưu Kế Hoạch" trước khi nộp báo cáo tuần')
+            toast.error(locale === 'en' ? 'You need to click "Save Plan" before submitting weekly report' : 'Bạn cần bấm "Lưu Kế Hoạch" trước khi nộp báo cáo tuần')
             return
         }
         if (!selfReviewText.trim() || selfReviewText.trim().length < 5) {
-            toast.error('Vui lòng nhập nội dung tự đánh giá tuần (tối thiểu 5 ký tự)')
+            toast.error(locale === 'en' ? 'Please enter self-evaluation content (at least 5 characters)' : 'Vui lòng nhập nội dung tự đánh giá tuần (tối thiểu 5 ký tự)')
             return
         }
 
@@ -1172,21 +1192,21 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         })
 
         if (res.success) {
-            toast.success('Đã nộp chốt báo cáo tuần thành công!')
+            toast.success(locale === 'en' ? 'Weekly report submitted successfully!' : 'Đã nộp chốt báo cáo tuần thành công!')
             await loadWeeklyData()
         } else {
-            toast.error('Lỗi chốt báo cáo: ' + res.error)
+            toast.error((locale === 'en' ? 'Report submission error: ' : 'Lỗi chốt báo cáo: ') + res.error)
         }
         setSubmittingReport(false)
     }
 
     const handleSaveManagerFeedback = async () => {
         if (!weeklyPlan?.id) {
-            toast.error('Chưa có dữ liệu kế hoạch tuần để nhận xét')
+            toast.error(locale === 'en' ? 'No weekly plan data to add review' : 'Chưa có dữ liệu kế hoạch tuần để nhận xét')
             return
         }
         if (!managerFeedbackText.trim()) {
-            toast.error('Vui lòng nhập nội dung nhận xét')
+            toast.error(locale === 'en' ? 'Please enter feedback notes' : 'Vui lòng nhập nội dung nhận xét')
             return
         }
 
@@ -1198,10 +1218,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
         })
 
         if (res.success) {
-            toast.success('Đã lưu nhận xét và phê duyệt tuần cho Sale!')
+            toast.success(locale === 'en' ? 'Feedback saved and weekly plan approved for Sales Rep!' : 'Đã lưu nhận xét và phê duyệt tuần cho Sale!')
             await loadWeeklyData()
         } else {
-            toast.error('Lỗi lưu nhận xét: ' + res.error)
+            toast.error((locale === 'en' ? 'Error saving feedback: ' : 'Lỗi lưu nhận xét: ') + res.error)
         }
         setSavingFeedback(false)
     }
@@ -1243,10 +1263,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         </div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                                Quản Lý Check-in Thị Trường
+                                {t.header.title}
                             </h2>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                                Báo Cáo Tuần
+                                {t.header.managerBadge}
                             </span>
                         </div>
                     </div>
@@ -1258,7 +1278,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 type="button"
                                 onClick={handlePrevWeek}
                                 className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer"
-                                title="Tuần trước"
+                                title={t.header.prevWeek}
                             >
                                 <ChevronLeft size={14} />
                             </button>
@@ -1267,15 +1287,43 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onClick={handleCurrentWeek}
                                 className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer"
                             >
-                                Tuần {currentWeek.week} / {currentWeek.year}
+                                {t.header.weekLabel} {currentWeek.week} / {currentWeek.year}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleNextWeek}
                                 className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer"
-                                title="Tuần sau"
+                                title={t.header.nextWeek}
                             >
                                 <ChevronRight size={14} />
+                            </button>
+                        </div>
+
+                        {/* Quick Language Toggle */}
+                        <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs font-bold">
+                            <button
+                                type="button"
+                                onClick={() => setLocale('vi')}
+                                className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                    locale === 'vi'
+                                        ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs'
+                                        : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                                title="Tiếng Việt"
+                            >
+                                VI
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLocale('en')}
+                                className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                    locale === 'en'
+                                        ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs'
+                                        : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                                title="English"
+                            >
+                                EN
                             </button>
                         </div>
 
@@ -1287,7 +1335,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             className="px-3 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50"
                         >
                             <RefreshCw size={12} className={loadingTeam ? "animate-spin" : ""} />
-                            <span>Làm mới</span>
+                            <span>{loadingTeam ? t.header.refreshing : t.header.refresh}</span>
                         </button>
                     </div>
                 </div>
@@ -1296,43 +1344,43 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 {teamMetrics && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Đội ngũ Sales</span>
+                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{t.kpis.totalSalesReps}</span>
                             <div className="text-xl font-black text-slate-900 dark:text-white font-mono">
                                 {teamMetrics.totalSales}
                             </div>
-                            <span className="text-[9px] text-slate-400">Nhân sự hoạt động</span>
+                            <span className="text-[9px] text-slate-400">{t.kpis.repsDesc}</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Tổng Kế Hoạch Tuần</span>
+                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{t.kpis.totalTargetVisits}</span>
                             <div className="text-xl font-black text-slate-900 dark:text-white font-mono">
                                 {teamMetrics.totalPlanned}
                             </div>
-                            <span className="text-[9px] text-slate-400">Điểm đã lên lịch</span>
+                            <span className="text-[9px] text-slate-400">{t.kpis.targetDesc}</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Đã Check-in</span>
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">{t.kpis.actualCheckins}</span>
                             <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                                 {teamMetrics.totalCompleted}
                             </div>
-                            <span className="text-[9px] text-slate-400">Số điểm hoàn thành</span>
+                            <span className="text-[9px] text-slate-400">{t.kpis.actualCheckinsDesc}</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ Lệ Hoàn Thành</span>
+                            <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9]">{t.kpis.completionRate}</span>
                             <div className="text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
                                 {teamMetrics.overallRate}%
                             </div>
-                            <span className="text-[9px] text-slate-400">Tiến độ kế hoạch</span>
+                            <span className="text-[9px] text-slate-400">{t.kpis.completionDesc}</span>
                         </div>
 
                         <div className="p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-0.5 shadow-xs">
-                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Chờ Duyệt</span>
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{t.kpis.pendingReports}</span>
                             <div className="text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
                                 {teamMetrics.pendingReview}
                             </div>
-                            <span className="text-[9px] text-slate-400">Báo cáo tuần</span>
+                            <span className="text-[9px] text-slate-400">{t.kpis.pendingReportsDesc}</span>
                         </div>
                     </div>
                 )}
@@ -1342,10 +1390,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="p-4 bg-slate-50/50 dark:bg-[#142433]/50 border-b border-slate-200 dark:border-[#223645] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h4 className="text-sm font-black text-slate-900 dark:text-white">
-                                Tiến Độ Kế Hoạch Theo Nhân Viên
+                                {locale === 'en' ? 'Weekly Target Progress by Sales Rep' : 'Tiến Độ Kế Hoạch Theo Nhân Viên'}
                             </h4>
                             <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
-                                Bấm "Xem chi tiết & Ảnh" để xem lịch trình và hình ảnh check-in của nhân viên
+                                {locale === 'en' ? 'Click "Audit" to inspect visit logs and GPS photos' : 'Bấm "Thẩm định" để xem lịch trình và hình ảnh check-in của nhân viên'}
                             </p>
                         </div>
 
@@ -1354,7 +1402,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 type="text"
                                 value={teamFilterSearch}
                                 onChange={e => setTeamFilterSearch(e.target.value)}
-                                placeholder="Tìm tên hoặc email sale..."
+                                placeholder={locale === 'en' ? 'Search sales rep name or email...' : 'Tìm tên hoặc email sale...'}
                                 className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-teal-500"
                             />
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1364,24 +1412,24 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     {loadingTeam ? (
                         <div className="py-16 text-center text-xs text-slate-400">
                             <RefreshCw size={24} className="mx-auto animate-spin text-teal-600 mb-2" />
-                            Đang tải dữ liệu...
+                            {locale === 'en' ? 'Loading data...' : 'Đang tải dữ liệu...'}
                         </div>
                     ) : filteredTeamItems.length === 0 ? (
                         <div className="py-16 text-center text-xs text-slate-400">
-                            Không tìm thấy nhân viên nào khớp với tìm kiếm.
+                            {locale === 'en' ? 'No sales representatives found matching your search.' : 'Không tìm thấy nhân viên nào khớp với tìm kiếm.'}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs text-left">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
-                                        <th className="p-3.5 font-bold">Nhân viên</th>
-                                        <th className="p-3.5 font-bold text-center">Kế hoạch</th>
-                                        <th className="p-3.5 font-bold text-center">Thực tế</th>
-                                        <th className="p-3.5 font-bold text-center">Đột xuất</th>
-                                        <th className="p-3.5 font-bold">Tiến độ</th>
-                                        <th className="p-3.5 font-bold text-center">Trạng thái</th>
-                                        <th className="p-3.5 font-bold text-right">Thao tác</th>
+                                        <th className="p-3.5 font-bold">{t.manager.colStaff}</th>
+                                        <th className="p-3.5 font-bold text-center">{t.manager.colPlan}</th>
+                                        <th className="p-3.5 font-bold text-center">{t.manager.colActual}</th>
+                                        <th className="p-3.5 font-bold text-center">{locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}</th>
+                                        <th className="p-3.5 font-bold">{locale === 'en' ? 'Progress' : 'Tiến độ'}</th>
+                                        <th className="p-3.5 font-bold text-center">{locale === 'en' ? 'Status' : 'Trạng thái'}</th>
+                                        <th className="p-3.5 font-bold text-right">{t.manager.colAction}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
@@ -1392,7 +1440,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     <User size={13} className="text-teal-600 dark:text-[#87CBB9]" />
                                                     {item.salespersonName}
                                                     {item.salespersonId === currentUserId && (
-                                                        <span className="text-[10px] text-slate-400 font-normal">(Tôi)</span>
+                                                        <span className="text-[10px] text-slate-400 font-normal">
+                                                            {locale === 'en' ? '(Me)' : '(Tôi)'}
+                                                        </span>
                                                     )}
                                                 </div>
                                                 <div className="text-[10px] text-slate-400 font-mono mt-0.5">
@@ -1400,10 +1450,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                 </div>
                                             </td>
                                             <td className="p-3.5 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                                                {item.plannedCount} điểm
+                                                {item.plannedCount} {locale === 'en' ? 'pts' : 'điểm'}
                                             </td>
                                             <td className="p-3.5 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                                {item.completedCount} điểm
+                                                {item.completedCount} {locale === 'en' ? 'pts' : 'điểm'}
                                             </td>
                                             <td className="p-3.5 text-center font-mono text-amber-600 dark:text-amber-400 font-bold">
                                                 {item.unplannedCount > 0 ? `+${item.unplannedCount}` : '—'}
@@ -1431,9 +1481,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     item.planStatus === 'DRAFT' ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300' :
                                                     'bg-slate-100 dark:bg-slate-800/60 text-slate-400'
                                                 }`}>
-                                                    {item.planStatus === 'APPROVED' ? '✓ Đã Duyệt' :
-                                                     item.planStatus === 'SUBMITTED' ? '⏳ Chờ Duyệt' :
-                                                     item.planStatus === 'DRAFT' ? 'Bản Nháp' : 'Chưa Lên Lịch'}
+                                                    {item.planStatus === 'APPROVED' ? (locale === 'en' ? '✓ Approved' : '✓ Đã Duyệt') :
+                                                     item.planStatus === 'SUBMITTED' ? (locale === 'en' ? '⏳ Pending' : '⏳ Chờ Duyệt') :
+                                                     item.planStatus === 'DRAFT' ? (locale === 'en' ? 'Draft' : 'Bản Nháp') : (locale === 'en' ? 'Not Scheduled' : 'Chưa Lên Lịch')}
                                                 </span>
                                             </td>
                                             <td className="p-3.5 text-right whitespace-nowrap">
@@ -1447,7 +1497,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                                 >
                                                     <Eye size={13} />
-                                                    Xem chi tiết & Ảnh
+                                                    {locale === 'en' ? 'Audit & Photos' : 'Xem chi tiết & Ảnh'}
                                                 </button>
                                             </td>
                                         </tr>
@@ -1470,10 +1520,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] uppercase">
-                                            Chi Tiết Lịch Trình
+                                            {locale === 'en' ? 'Itinerary Details' : 'Chi Tiết Lịch Trình'}
                                         </span>
                                         <span className="text-xs text-slate-400 font-mono">
-                                            Tuần {currentWeek.week} / {currentWeek.year}
+                                            {t.header.weekLabel} {currentWeek.week} / {currentWeek.year}
                                         </span>
                                     </div>
                                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1 flex items-center gap-2">
@@ -1486,10 +1536,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 <div className="flex items-center gap-3">
                                     <div className="text-right text-xs">
                                         <div className="font-bold text-teal-600 dark:text-[#87CBB9]">
-                                            {inspectingSale.completedCount}/{inspectingSale.plannedCount} Điểm ({inspectingSale.completionRate}%)
+                                            {inspectingSale.completedCount}/{inspectingSale.plannedCount} {locale === 'en' ? 'Points' : 'Điểm'} ({inspectingSale.completionRate}%)
                                         </div>
                                         <span className="text-[10px] text-slate-400 font-mono">
-                                            {inspectingSale.unplannedCount > 0 ? `+${inspectingSale.unplannedCount} đột xuất` : '0 đột xuất'}
+                                            {inspectingSale.unplannedCount > 0 ? (locale === 'en' ? `+${inspectingSale.unplannedCount} ad-hoc` : `+${inspectingSale.unplannedCount} đột xuất`) : (locale === 'en' ? '0 ad-hoc' : '0 đột xuất')}
                                         </span>
                                     </div>
                                     <button
@@ -1514,7 +1564,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <Camera size={14} />
-                                    <span>Ảnh check-in ({inspectingSale.actualVisits?.length || 0})</span>
+                                    <span>{locale === 'en' ? 'Check-in photos' : 'Ảnh check-in'} ({inspectingSale.actualVisits?.length || 0})</span>
                                 </button>
 
                                 <button
@@ -1527,7 +1577,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <Calendar size={14} />
-                                    <span>Kế hoạch tuần ({inspectingSale.plannedVisits?.length || 0})</span>
+                                    <span>{locale === 'en' ? 'Weekly plan' : 'Kế hoạch tuần'} ({inspectingSale.plannedVisits?.length || 0})</span>
                                 </button>
 
                                 <button
@@ -1540,7 +1590,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }`}
                                 >
                                     <CheckCircle2 size={14} />
-                                    <span>Đánh giá & Phê duyệt</span>
+                                    <span>{locale === 'en' ? 'Review & Approve' : 'Đánh giá & Phê duyệt'}</span>
                                 </button>
                             </div>
 
@@ -1551,7 +1601,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         {(!inspectingSale.actualVisits || inspectingSale.actualVisits.length === 0) ? (
                                             <div className="py-16 text-center text-xs text-slate-400 space-y-2">
                                                 <Camera size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
-                                                <p className="font-semibold text-slate-600 dark:text-slate-300">Chưa có ảnh check-in trong tuần này.</p>
+                                                <p className="font-semibold text-slate-600 dark:text-slate-300">
+                                                    {locale === 'en' ? 'No check-in photos recorded this week.' : 'Chưa có ảnh check-in trong tuần này.'}
+                                                </p>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1568,7 +1620,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                     </span>
                                                                     {v.isUnplanned && (
                                                                         <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                                                                            Đột xuất
+                                                                            {locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -1581,8 +1633,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             </div>
 
                                                             <div className="text-right font-mono text-xs font-bold text-teal-600 dark:text-[#87CBB9]">
-                                                                {new Date(v.checkInTime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {' '}
-                                                                {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                                {new Date(v.checkInTime).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit' })} {' '}
+                                                                {new Date(v.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
                                                         </div>
 
@@ -1590,7 +1642,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         {v.checkInPhoto ? (
                                                             <div
                                                                 className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
-                                                                onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName} (Sale: ${inspectingSale.salespersonName})`, url: v.checkInPhoto, visitId: v.id })}
+                                                                onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName} (${locale === 'en' ? 'Rep:' : 'Sale:'} ${inspectingSale.salespersonName})`, url: v.checkInPhoto, visitId: v.id })}
                                                             >
                                                                 <img
                                                                     src={v.checkInPhoto}
@@ -1598,12 +1650,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                                 />
                                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
-                                                                    <Eye size={16} /> Xem ảnh chi tiết
+                                                                    <Eye size={16} /> {locale === 'en' ? 'View Photo' : 'Xem ảnh chi tiết'}
                                                                 </div>
                                                             </div>
                                                         ) : (
                                                             <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400">
-                                                                Chưa có ảnh
+                                                                {locale === 'en' ? 'No photo' : 'Chưa có ảnh'}
                                                             </div>
                                                         )}
 
@@ -1628,7 +1680,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         {/* Notes */}
                                                         {v.notes && (
                                                             <div className="p-2 rounded-lg bg-white dark:bg-[#1B2E3D] text-[11px] text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-[#2A4355]">
-                                                                <strong>Ghi chú:</strong> {v.notes}
+                                                                <strong>{locale === 'en' ? 'Notes:' : 'Ghi chú:'}</strong> {v.notes}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1642,7 +1694,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <div className="space-y-3">
                                         {(!inspectingSale.plannedVisits || inspectingSale.plannedVisits.length === 0) ? (
                                             <div className="py-16 text-center text-xs text-slate-400">
-                                                Nhân viên chưa lên lịch khách nào trong kế hoạch tuần này.
+                                                {locale === 'en' ? 'No visits scheduled by sales rep for this week.' : 'Nhân viên chưa lên lịch khách nào trong kế hoạch tuần này.'}
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-slate-100 dark:divide-[#223645] border border-slate-200 dark:border-[#223645] rounded-xl overflow-hidden bg-white dark:bg-[#111C24]">
@@ -1651,21 +1703,21 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-mono text-teal-600 dark:text-[#87CBB9] font-bold">
-                                                                    {pv.visitDate} ({getVietnameseDayName(pv.visitDate)})
+                                                                    {pv.visitDate} ({getVietnameseDayName(pv.visitDate, locale)})
                                                                 </span>
                                                                 <span className="font-bold text-slate-900 dark:text-white">
                                                                     [{pv.customerCode}] {pv.customerName}
                                                                 </span>
                                                             </div>
                                                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                Mục tiêu: {pv.purpose}
+                                                                {locale === 'en' ? 'Purpose:' : 'Mục tiêu:'} {pv.purpose}
                                                             </p>
                                                         </div>
 
                                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                                                             pv.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-500'
                                                         }`}>
-                                                            {pv.status === 'COMPLETED' ? '✓ Đã viếng thăm' : 'Chưa đi'}
+                                                            {pv.status === 'COMPLETED' ? (locale === 'en' ? '✓ Visited' : '✓ Đã viếng thăm') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
                                                         </span>
                                                     </div>
                                                 ))}
@@ -1679,31 +1731,31 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         {/* Self Review Box */}
                                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-200 dark:border-[#223645] space-y-1.5">
                                             <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                                                <span>Nhân viên tự đánh giá:</span>
+                                                <span>{locale === 'en' ? 'Sales Rep Self-Evaluation:' : 'Nhân viên tự đánh giá:'}</span>
                                                 <span className="text-[10px] font-mono text-slate-400">
-                                                    {inspectingSale.submittedAt ? `Nộp lúc: ${new Date(inspectingSale.submittedAt).toLocaleDateString('vi-VN')} ${new Date(inspectingSale.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa nộp'}
+                                                    {inspectingSale.submittedAt ? (locale === 'en' ? `Submitted: ${new Date(inspectingSale.submittedAt).toLocaleDateString('en-US')}` : `Nộp lúc: ${new Date(inspectingSale.submittedAt).toLocaleDateString('vi-VN')} ${new Date(inspectingSale.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`) : (locale === 'en' ? 'Not submitted' : 'Chưa nộp')}
                                                 </span>
                                             </div>
                                             <p className="text-slate-800 dark:text-slate-100 italic bg-white dark:bg-[#111C24] p-3 rounded-lg border border-slate-200/70 dark:border-[#223645]">
-                                                {inspectingSale.selfReview || 'Chưa có nội dung tự đánh giá.'}
+                                                {inspectingSale.selfReview || (locale === 'en' ? 'No self-evaluation submitted yet.' : 'Chưa có nội dung tự đánh giá.')}
                                             </p>
                                         </div>
 
                                         {/* Manager Feedback Form */}
                                         <div className="space-y-2">
                                             <label className="block font-bold text-slate-700 dark:text-slate-200">
-                                                Nhận xét của Quản lý:
+                                                {locale === 'en' ? 'Manager Feedback:' : 'Nhận xét của Quản lý:'}
                                             </label>
                                             <textarea
                                                 rows={4}
                                                 value={inspectFeedbackText}
                                                 onChange={e => setInspectFeedbackText(e.target.value)}
-                                                placeholder="Nhập nhận xét hoặc lưu ý cho nhân viên..."
+                                                placeholder={locale === 'en' ? 'Enter feedback or notes for this sales rep...' : 'Nhập nhận xét hoặc lưu ý cho nhân viên...'}
                                                 className="w-full p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 text-xs"
                                             />
                                             <div className="flex items-center justify-between pt-2">
                                                 <span className="text-[11px] text-slate-400">
-                                                    {inspectingSale.reviewedAt && `Đã duyệt lần cuối: ${new Date(inspectingSale.reviewedAt).toLocaleDateString('vi-VN')}`}
+                                                    {inspectingSale.reviewedAt && (locale === 'en' ? `Last reviewed: ${new Date(inspectingSale.reviewedAt).toLocaleDateString('en-US')}` : `Đã duyệt lần cuối: ${new Date(inspectingSale.reviewedAt).toLocaleDateString('vi-VN')}`)}
                                                 </span>
                                                 <button
                                                     type="button"
@@ -1712,7 +1764,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
                                                 >
                                                     <CheckCircle2 size={15} />
-                                                    {savingInspectFeedback ? 'Đang lưu...' : 'Lưu đánh giá & Duyệt'}
+                                                    {savingInspectFeedback ? (locale === 'en' ? 'Saving...' : 'Đang lưu...') : (locale === 'en' ? 'Save Review & Approve' : 'Lưu đánh giá & Duyệt')}
                                                 </button>
                                             </div>
                                         </div>
@@ -1728,6 +1780,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     viewPhoto={viewPhoto}
                     onClose={() => setViewPhoto(null)}
                     loadingFullPhoto={loadingFullPhoto}
+                    locale={locale}
                 />
             </div>
         )
@@ -1748,18 +1801,42 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <MapPin size={17} />
                         </div>
                         <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                            Quản Lý Check-in Thị Trường
+                            {t.header.title}
                         </h2>
                     </div>
 
-                    {/* Mobile Only: Quick Action */}
-                    <button
-                        type="button"
-                        onClick={() => setShowQuickCreateModal(true)}
-                        className="md:hidden px-2.5 py-1.5 text-xs font-bold rounded-lg bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs active:scale-95"
-                    >
-                        <Plus size={13} /> Tạo Khách
-                    </button>
+                    <div className="flex items-center gap-2 md:hidden">
+                        {/* Mobile Quick Language Toggle */}
+                        <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-[10px] font-bold">
+                            <button
+                                type="button"
+                                onClick={() => setLocale('vi')}
+                                className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                                    locale === 'vi' ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs' : 'text-slate-500'
+                                }`}
+                            >
+                                VI
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLocale('en')}
+                                className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                                    locale === 'en' ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs' : 'text-slate-500'
+                                }`}
+                            >
+                                EN
+                            </button>
+                        </div>
+
+                        {/* Mobile Only: Quick Action */}
+                        <button
+                            type="button"
+                            onClick={() => setShowQuickCreateModal(true)}
+                            className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs active:scale-95"
+                        >
+                            <Plus size={13} /> {t.header.quickCreateCustomer}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Desktop Slim Segmented Tabs & Action Button */}
@@ -1775,7 +1852,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             }`}
                         >
                             <MapPin size={13} className={activeTab === 'CHECKIN' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                            <span>Check-in Hôm Nay</span>
+                            <span>{t.tabs.today}</span>
                             {todayPlanVisits.length > 0 && (
                                 <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-mono font-bold">
                                     {todayPlanVisits.length}
@@ -1793,7 +1870,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             }`}
                         >
                             <Calendar size={13} className={activeTab === 'PLANNING' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                            <span>Kế Hoạch Tuần</span>
+                            <span>{t.tabs.planning}</span>
                             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-bold">
                                 {planVisits.length}
                             </span>
@@ -1809,7 +1886,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             }`}
                         >
                             <TrendingUp size={13} className={activeTab === 'REVIEW' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                            <span>Tổng Kết Tuần</span>
+                            <span>{t.tabs.summary}</span>
                             {weeklyPlan?.status === 'SUBMITTED' && (
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             )}
@@ -1825,7 +1902,31 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             }`}
                         >
                             <FileText size={13} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
-                            <span>Lịch Sử & Ảnh</span>
+                            <span>{t.tabs.photos}</span>
+                        </button>
+                    </div>
+
+                    {/* Desktop Language Switcher */}
+                    <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs font-bold">
+                        <button
+                            type="button"
+                            onClick={() => setLocale('vi')}
+                            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                locale === 'vi' ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs' : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                            title="Tiếng Việt"
+                        >
+                            VI
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLocale('en')}
+                            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                locale === 'en' ? 'bg-white dark:bg-[#1F3342] text-slate-900 dark:text-white font-black shadow-xs' : 'text-slate-500 dark:text-[#8AAEBB] hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                            title="English"
+                        >
+                            EN
                         </button>
                     </div>
 
@@ -1834,7 +1935,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         onClick={() => setShowQuickCreateModal(true)}
                         className="px-3 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
                     >
-                        <Plus size={14} /> Tạo Khách Mới
+                        <Plus size={14} /> {t.header.quickCreateCustomer}
                     </button>
                 </div>
             </div>
@@ -1855,17 +1956,17 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <span>
                                             {!isNetworkOnline
-                                                ? 'Mất kết nối mạng (Chế độ ngoại tuyến)'
-                                                : `Có ${offlineDrafts.length} lượt check-in đang chờ đồng bộ`}
+                                                ? (locale === 'en' ? 'Offline Mode (No Internet Connection)' : 'Mất kết nối mạng (Chế độ ngoại tuyến)')
+                                                : (locale === 'en' ? `${offlineDrafts.length} check-in drafts pending sync` : `Có ${offlineDrafts.length} lượt check-in đang chờ đồng bộ`)}
                                         </span>
                                         <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono">
-                                            {offlineDrafts.length} bản ghi
+                                            {offlineDrafts.length} {locale === 'en' ? 'drafts' : 'bản ghi'}
                                         </span>
                                     </h4>
                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                                         {!isNetworkOnline
-                                            ? 'Dữ liệu check-in được lưu tạm trên thiết bị và sẽ tự động gửi khi có kết nối mạng.'
-                                            : 'Dữ liệu ngoại tuyến sẵn sàng đồng bộ lên hệ thống.'}
+                                            ? (locale === 'en' ? 'Check-in data is saved locally on device and will sync automatically once connection is restored.' : 'Dữ liệu check-in được lưu tạm trên thiết bị và sẽ tự động gửi khi có kết nối mạng.')
+                                            : (locale === 'en' ? 'Offline drafts ready to sync to cloud system.' : 'Dữ liệu ngoại tuyến sẵn sàng đồng bộ lên hệ thống.')}
                                     </p>
                                 </div>
                             </div>
@@ -1879,7 +1980,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50"
                                     >
                                         <RefreshCw size={12} className={syncingOffline ? 'animate-spin' : ''} />
-                                        {syncingOffline ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
+                                        {syncingOffline ? (locale === 'en' ? 'Syncing...' : 'Đang đồng bộ...') : (locale === 'en' ? 'Sync Now' : 'Đồng bộ ngay')}
                                     </button>
                                 )}
                             </div>
@@ -1891,11 +1992,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] uppercase tracking-wider text-teal-600 dark:text-[#87CBB9] font-black font-mono">
-                                    HÔM NAY: {getVietnameseDayName(today).toUpperCase()}, {today.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                    {locale === 'en' ? 'TODAY:' : 'HÔM NAY:'} {getVietnameseDayName(today, locale).toUpperCase()}, {locale === 'en' ? today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : today.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </span>
                                 <span className="text-slate-300 dark:text-[#2A4355] hidden sm:inline">•</span>
                                 <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                    Danh Sách Điểm Viếng Thăm Trong Ngày
+                                    {locale === 'en' ? 'Today Scheduled Store Visits' : 'Danh Sách Điểm Viếng Thăm Trong Ngày'}
                                 </h3>
                             </div>
 
@@ -1909,7 +2010,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }}
                                     className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                 >
-                                    <Sparkles size={13} /> Check-in Đột Xuất
+                                    <Sparkles size={13} /> {t.today.adHocCheckin}
                                 </button>
                             </div>
                         </div>
@@ -1918,22 +2019,28 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-xs">
                             <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
                                 <Navigation size={13} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
-                                <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">Vị trí hiện tại:</span>
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+                                    {locale === 'en' ? 'Current Location:' : 'Vị trí hiện tại:'}
+                                </span>
                                 {gettingLocation ? (
-                                    <span className="text-slate-500 dark:text-slate-400 italic">Đang xác định toạ độ...</span>
+                                    <span className="text-slate-500 dark:text-slate-400 italic">
+                                        {locale === 'en' ? 'Acquiring GPS coordinates...' : 'Đang xác định toạ độ...'}
+                                    </span>
                                 ) : coords.lat ? (
                                     <span className="font-mono text-slate-900 dark:text-white truncate text-[11px]" title={coords.address}>
                                         {coords.address || `${coords.lat.toFixed(5)}, ${coords.lng?.toFixed(5)}`}
                                     </span>
                                 ) : (
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-amber-600 dark:text-amber-400 text-[11px] font-medium">{gpsError || 'Chưa nhận toạ độ GPS.'}</span>
+                                        <span className="text-amber-600 dark:text-amber-400 text-[11px] font-medium">
+                                            {gpsError || (locale === 'en' ? 'No GPS coordinates acquired.' : 'Chưa nhận toạ độ GPS.')}
+                                        </span>
                                         <button
                                             type="button"
                                             onClick={() => setShowGpsGuideModal(true)}
                                             className="text-amber-600 dark:text-amber-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer bg-amber-500/10 px-2 py-0.5 rounded-md"
                                         >
-                                            <AlertCircle size={12} /> Xem cách bật quyền GPS
+                                            <AlertCircle size={12} /> {locale === 'en' ? 'How to enable GPS' : 'Xem cách bật quyền GPS'}
                                         </button>
                                     </div>
                                 )}
@@ -1946,7 +2053,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         onClick={() => setShowGpsGuideModal(true)}
                                         className="hidden sm:flex text-amber-600 dark:text-amber-400 hover:underline font-bold text-[11px] items-center gap-1 cursor-pointer"
                                     >
-                                        <AlertCircle size={12} /> Hướng dẫn GPS
+                                        <AlertCircle size={12} /> {locale === 'en' ? 'GPS Guide' : 'Hướng dẫn GPS'}
                                     </button>
                                 )}
                                 <button
@@ -1956,7 +2063,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1B2E3D] hover:bg-slate-100 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] border border-slate-200 dark:border-[#2A4355] text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
                                 >
                                     <RefreshCw size={11} className={gettingLocation ? "animate-spin" : ""} />
-                                    Làm mới GPS
+                                    {locale === 'en' ? 'Refresh GPS' : 'Làm mới GPS'}
                                 </button>
                             </div>
                         </div>
@@ -1967,10 +2074,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="p-8 text-center bg-white dark:bg-[#111C24] rounded-2xl border border-dashed border-slate-300 dark:border-[#223645] space-y-3">
                             <Calendar size={36} className="mx-auto text-slate-400 dark:text-slate-500" />
                             <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                Chưa có điểm viếng thăm nào trong kế hoạch ngày hôm nay
+                                {locale === 'en' ? 'No store visits scheduled for today' : 'Chưa có điểm viếng thăm nào trong kế hoạch ngày hôm nay'}
                             </h4>
                             <p className="text-xs text-slate-500 dark:text-[#8AAEBB] max-w-md mx-auto">
-                                Bạn có thể chuyển sang tab <strong>Kế Hoạch Tuần</strong> để lên lịch các điểm cần đi, hoặc bấm nút <strong>Check-in Đột Xuất</strong> bên trên để ghé thăm khách phát sinh.
+                                {locale === 'en'
+                                    ? 'You can switch to the Weekly Plan tab to schedule client stops, or tap the "+ Ad-hoc Check-in" button above to visit newly added clients.'
+                                    : 'Bạn có thể chuyển sang tab Kế Hoạch Tuần để lên lịch các điểm cần đi, hoặc bấm nút Check-in Đột Xuất bên trên để ghé thăm khách phát sinh.'}
                             </p>
                             <div className="flex items-center justify-center gap-2 pt-2">
                                 <button
@@ -1978,14 +2087,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     onClick={() => setActiveTab('PLANNING')}
                                     className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-800 dark:text-white transition cursor-pointer"
                                 >
-                                    📅 Lập Kế Hoạch Tuần
+                                    📅 {locale === 'en' ? 'Weekly Plan' : 'Lập Kế Hoạch Tuần'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowUnplannedModal(true)}
                                     className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition cursor-pointer"
                                 >
-                                    ⚡ Check-in Ngay
+                                    ⚡ {locale === 'en' ? 'Check-in Now' : 'Check-in Ngay'}
                                 </button>
                             </div>
                         </div>
@@ -2021,7 +2130,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         )}
                                                     </div>
                                                     <h4 className="text-base sm:text-sm font-black text-slate-900 dark:text-white mt-1 line-clamp-2" title={cust?.name}>
-                                                        {cust?.name || 'Khách hàng'}
+                                                        {cust?.name || (locale === 'en' ? 'Client' : 'Khách hàng')}
                                                     </h4>
                                                 </div>
 
@@ -2030,7 +2139,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                                                         : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-500 dark:text-slate-400'
                                                 }`}>
-                                                    {isItemCompleted ? '✓ Đã hoàn thành' : 'Chưa đi'}
+                                                    {isItemCompleted ? (locale === 'en' ? '✓ Completed' : '✓ Đã hoàn thành') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
                                                 </span>
                                             </div>
 
@@ -2053,16 +2162,16 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                 rel="noreferrer"
                                                                 className="flex-1 py-2 px-3 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/25 text-teal-700 dark:text-[#87CBB9] font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
                                                             >
-                                                                <Navigation size={13} /> Chỉ đường Maps
+                                                                <Navigation size={13} /> {locale === 'en' ? 'Directions' : 'Chỉ đường Maps'}
                                                             </a>
                                                         )}
                                                         {phoneStr && (
                                                             <a
                                                                 href={`tel:${phoneStr}`}
                                                                 className="py-2 px-3.5 rounded-xl bg-slate-200 dark:bg-[#1F3342] hover:bg-slate-300 active:bg-slate-400/50 text-slate-800 dark:text-slate-100 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
-                                                                title={`Gọi ${phoneStr}`}
+                                                                title={`${locale === 'en' ? 'Call' : 'Gọi'} ${phoneStr}`}
                                                             >
-                                                                <Phone size={13} className="text-emerald-500" /> Gọi điện
+                                                                <Phone size={13} className="text-emerald-500" /> {locale === 'en' ? 'Call' : 'Gọi điện'}
                                                             </a>
                                                         )}
                                                     </div>
@@ -2071,9 +2180,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                                             {/* Purpose & Activity */}
                                             <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-[#16232F]/70 border border-slate-100 dark:border-[#223645]/60 text-xs">
-                                                <div className="text-slate-400 text-[10px] font-semibold uppercase">Hoạt động dự kiến:</div>
+                                                <div className="text-slate-400 text-[10px] font-semibold uppercase">
+                                                    {locale === 'en' ? 'Planned Activity:' : 'Hoạt động dự kiến:'}
+                                                </div>
                                                 <div className="font-medium text-slate-800 dark:text-slate-200 mt-0.5 flex items-center gap-1.5">
-                                                    <span>{item.purpose || 'Chăm sóc khách hàng định kỳ'}</span>
+                                                    <span>{item.purpose || (locale === 'en' ? 'Periodic Customer Care' : 'Chăm sóc khách hàng định kỳ')}</span>
                                                 </div>
                                             </div>
 
@@ -2081,7 +2192,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             {item.resultNotes && (
                                                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300">
                                                     <div className="font-bold text-[10px] uppercase flex items-center gap-1">
-                                                        <Check size={11} /> Kết quả làm việc:
+                                                        <Check size={11} /> {locale === 'en' ? 'Work Result:' : 'Kết quả làm việc:'}
                                                     </div>
                                                     <p className="mt-0.5 leading-relaxed">{item.resultNotes}</p>
                                                 </div>
@@ -2092,7 +2203,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <div className="pt-1">
                                             {isItemCompleted ? (
                                                 <div className="py-3 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 min-h-[46px]">
-                                                    <CheckCircle2 size={16} /> ✓ Đã Hoàn Thành Viếng Thăm
+                                                    <CheckCircle2 size={16} /> {locale === 'en' ? '✓ Visit Completed' : '✓ Đã Hoàn Thành Viếng Thăm'}
                                                 </div>
                                             ) : (
                                                 <button
@@ -2102,7 +2213,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     className="w-full py-3.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-[0.98] disabled:opacity-40 cursor-pointer min-h-[48px]"
                                                 >
                                                     <Camera size={18} />
-                                                    <span>CHECK-IN & CHỤP 1 ẢNH</span>
+                                                    <span>{locale === 'en' ? 'CHECK-IN & TAKE 1 PHOTO' : 'CHECK-IN & CHỤP 1 ẢNH'}</span>
                                                 </button>
                                             )}
                                         </div>
@@ -2121,13 +2232,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                        Ảnh & Lượt Check-in Thực Tế Hôm Nay
+                                        {locale === 'en' ? "Today's Photos & Actual Check-ins" : 'Ảnh & Lượt Check-in Thực Tế Hôm Nay'}
                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9] font-mono">
-                                            {todayActualVisits.length} lượt
+                                            {todayActualVisits.length} {locale === 'en' ? 'visits' : 'lượt'}
                                         </span>
                                     </h4>
                                     <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
-                                        Ảnh chụp camera thực tế tại điểm bán, toạ độ GPS và kết quả làm việc
+                                        {locale === 'en' ? 'Live camera photo at store, GPS coordinates and work result' : 'Ảnh chụp camera thực tế tại điểm bán, toạ độ GPS và kết quả làm việc'}
                                     </p>
                                 </div>
                             </div>
@@ -2137,15 +2248,21 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onClick={fetchHistoryVisits}
                                 className="self-end sm:self-auto px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] flex items-center gap-1 transition cursor-pointer"
                             >
-                                <RefreshCw size={12} /> Tải lại dữ liệu
+                                <RefreshCw size={12} /> {locale === 'en' ? 'Reload' : 'Tải lại dữ liệu'}
                             </button>
                         </div>
 
                         {todayActualVisits.length === 0 ? (
                             <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
                                 <Camera size={28} className="mx-auto text-slate-300 dark:text-slate-600" />
-                                <p className="font-semibold text-slate-600 dark:text-slate-300">Chưa có ảnh check-in nào trong ngày hôm nay.</p>
-                                <p className="text-[11px]">Bấm nút <strong>Check-in Điểm Này</strong> hoặc <strong>Check-in Đột Xuất</strong> bên trên để bắt đầu ghi lại hình ảnh thực địa.</p>
+                                <p className="font-semibold text-slate-600 dark:text-slate-300">
+                                    {locale === 'en' ? 'No check-in photos yet today.' : 'Chưa có ảnh check-in nào trong ngày hôm nay.'}
+                                </p>
+                                <p className="text-[11px]">
+                                    {locale === 'en'
+                                        ? 'Click "Check-in & Take Photo" or "+ Ad-hoc Check-in" above to record field visits.'
+                                        : 'Bấm nút Check-in Điểm Này hoặc Check-in Đột Xuất bên trên để bắt đầu ghi lại hình ảnh thực địa.'}
+                                </p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2163,11 +2280,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         </span>
                                                         {v.isUnplanned && (
                                                             <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                                                                Đột xuất
+                                                                {locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}
                                                             </span>
                                                         )}
                                                         <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                                                            ✓ Đã Check-in
+                                                            {locale === 'en' ? '✓ Checked-in' : '✓ Đã Check-in'}
                                                         </span>
                                                     </div>
                                                     <h5 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
@@ -2180,21 +2297,23 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                                                 <div className="text-right text-xs">
                                                     <div className="font-mono font-bold text-teal-600 dark:text-[#87CBB9]">
-                                                        {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                        {new Date(v.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
-                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Hoàn thành</span>
+                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                                        {locale === 'en' ? '✓ Completed' : '✓ Hoàn thành'}
+                                                    </span>
                                                 </div>
                                             </div>
 
                                             {/* Single Photo Display: Ảnh Thực Tế Check-in */}
                                             <div className="space-y-1.5 pt-1">
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                                                    Hình ảnh tại điểm bán:
+                                                    {locale === 'en' ? 'Store photo:' : 'Hình ảnh tại điểm bán:'}
                                                 </span>
                                                 {v.checkInPhoto || v.checkOutPhoto ? (
                                                     <div
                                                         className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
-                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
+                                                        onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
                                                     >
                                                         <img
                                                             src={v.checkInPhoto || v.checkOutPhoto}
@@ -2202,12 +2321,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                         />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
-                                                            <Eye size={16} /> Xem ảnh chi tiết
+                                                            <Eye size={16} /> {locale === 'en' ? 'View details' : 'Xem ảnh chi tiết'}
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400">
-                                                        Chưa có ảnh
+                                                        {locale === 'en' ? 'No photo' : 'Chưa có ảnh'}
                                                     </div>
                                                 )}
                                             </div>
@@ -2224,7 +2343,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             rel="noreferrer"
                                                             className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/30 text-teal-700 dark:text-[#87CBB9] font-bold text-[11px] shrink-0 active:scale-95 transition min-h-[32px]"
                                                         >
-                                                            <Navigation size={11} /> Bản đồ
+                                                            <Navigation size={11} /> {locale === 'en' ? 'Map' : 'Bản đồ'}
                                                         </a>
                                                     )}
                                                 </div>
@@ -2234,7 +2353,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             {v.notes && (
                                                 <div className="p-2.5 rounded-xl bg-white dark:bg-[#1B2E3D] border border-slate-200/80 dark:border-[#2A4355] text-xs">
                                                     <div className="font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
-                                                        <Check size={11} className="text-emerald-500" /> Kết quả làm việc:
+                                                        <Check size={11} className="text-emerald-500" /> {locale === 'en' ? 'Work Result:' : 'Kết quả làm việc:'}
                                                     </div>
                                                     <p className="text-slate-800 dark:text-slate-200 mt-0.5 font-medium">{v.notes}</p>
                                                 </div>
@@ -2255,10 +2374,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             setShowUnplannedModal(true)
                         }}
                         className="md:hidden fixed bottom-20 right-4 z-30 flex items-center gap-2 px-4 py-3 rounded-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-black text-xs shadow-2xl ring-4 ring-amber-500/25 active:scale-95 transition-all cursor-pointer"
-                        aria-label="Check-in Đột Xuất"
+                        aria-label={locale === 'en' ? 'Ad-Hoc Check-in' : 'Check-in Đột Xuất'}
                     >
                         <Sparkles size={16} />
-                        <span>+ Check-in Đột Xuất</span>
+                        <span>{locale === 'en' ? '+ Ad-hoc Check-in' : '+ Check-in Đột Xuất'}</span>
                     </button>
                 </div>
             )}
@@ -2278,7 +2397,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         type="button"
                                         onClick={handlePrevWeek}
                                         className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
-                                        title="Tuần trước"
+                                        title={locale === 'en' ? 'Previous week' : 'Tuần trước'}
                                     >
                                         <ChevronLeft size={13} />
                                     </button>
@@ -2287,13 +2406,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         onClick={handleCurrentWeek}
                                         className="px-2 py-0.5 text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
                                     >
-                                        Tuần {currentWeek.week}
+                                        {locale === 'en' ? `Week ${currentWeek.week}` : `Tuần ${currentWeek.week}`}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleNextWeek}
                                         className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] transition cursor-pointer"
-                                        title="Tuần sau"
+                                        title={locale === 'en' ? 'Next week' : 'Tuần sau'}
                                     >
                                         <ChevronRight size={13} />
                                     </button>
@@ -2304,7 +2423,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 </span>
 
                                 <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9] font-mono">
-                                    {planVisits.length} điểm
+                                    {planVisits.length} {locale === 'en' ? 'stops' : 'điểm'}
                                 </span>
 
                                 {weeklyPlan?.status && (
@@ -2313,7 +2432,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         weeklyPlan.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
                                         'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     }`}>
-                                        {weeklyPlan.status === 'APPROVED' ? 'Đã duyệt' : weeklyPlan.status === 'SUBMITTED' ? 'Chờ duyệt' : 'Nháp'}
+                                        {weeklyPlan.status === 'APPROVED' ? (locale === 'en' ? 'Approved' : 'Đã duyệt') :
+                                         weeklyPlan.status === 'SUBMITTED' ? (locale === 'en' ? 'Pending' : 'Chờ duyệt') :
+                                         (locale === 'en' ? 'Draft' : 'Nháp')}
                                     </span>
                                 )}
                             </div>
@@ -2326,7 +2447,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 className="px-3 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center gap-1 shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
                             >
                                 <Save size={13} className={savingPlan ? "animate-spin" : ""} />
-                                <span>{savingPlan ? 'Đang lưu...' : 'Lưu'}</span>
+                                <span>{savingPlan ? (locale === 'en' ? 'Saving...' : 'Đang lưu...') : (locale === 'en' ? 'Save' : 'Lưu')}</span>
                             </button>
                         </div>
 
@@ -2337,7 +2458,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 type="text"
                                 value={planNote}
                                 onChange={e => setPlanNote(e.target.value)}
-                                placeholder="Mục tiêu tuần (chào hàng, công nợ...)"
+                                placeholder={locale === 'en' ? 'Weekly target (sales pitches, debt collection...)' : 'Mục tiêu tuần (chào hàng, công nợ...)'}
                                 className="w-full text-base sm:text-xs bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
                             />
                         </div>
@@ -2350,7 +2471,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             {weekDates.map(day => {
                                 const dayVisits = planVisits.filter(v => v.visitDate === day.dateStr)
                                 const isSelected = (mobileSelectedDate || todayStr) === day.dateStr
-                                const shortDay = day.dayName.replace('Thứ ', 'T').replace('Chủ Nhật', 'CN')
+                                const shortDay = getLocalizedShortDayName(getDayOfWeek(day.dateStr), locale)
                                 const dayNum = day.dateStr.split('-')[2]
                                 const monthNum = day.dateStr.split('-')[1]
 
@@ -2401,37 +2522,39 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#223645] pb-2">
                                         <div>
                                             <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                                                <span>{currentSelectedDay.dayName}</span>
+                                                <span>{getLocalizedDayName(currentSelectedDay.dateStr, locale)}</span>
                                                 <span className="text-[11px] font-mono text-slate-400 font-normal">({currentSelectedDay.dateStr.slice(5).replace('-', '/')})</span>
                                                 {currentSelectedDay.isToday && (
                                                     <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600 dark:text-[#87CBB9]">
-                                                        Hôm nay
+                                                        {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
                                             </h4>
                                             <p className="text-[10px] text-slate-400">
-                                                {dayVisits.length} điểm đã lên lịch
+                                                {dayVisits.length} {locale === 'en' ? 'stops scheduled' : 'điểm đã lên lịch'}
                                             </p>
                                         </div>
 
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setQuickAddModal({ open: true, dateStr: currentSelectedDay.dateStr, dayName: currentSelectedDay.dayName })
+                                                setQuickAddModal({ open: true, dateStr: currentSelectedDay.dateStr, dayName: getLocalizedDayName(currentSelectedDay.dateStr, locale) })
                                                 setAddCustomerId('')
                                                 setAddActivityType('PERIODIC_CARE')
                                                 setAddCustomPurpose('')
                                             }}
                                             className="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-xs min-h-[34px]"
                                         >
-                                            <Plus size={13} /> Thêm Điểm
+                                            <Plus size={13} /> {locale === 'en' ? 'Add Stop' : 'Thêm Điểm'}
                                         </button>
                                     </div>
 
                                     <div className="space-y-1.5">
                                         {dayVisits.length === 0 ? (
                                             <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-[#142433] rounded-xl border border-dashed border-slate-200 dark:border-[#2A4355]">
-                                                Chưa lên lịch điểm nào cho ngày {currentSelectedDay.dayName}. Bấm "Thêm Điểm" để lên lịch.
+                                                {locale === 'en'
+                                                    ? `No visits scheduled for ${getLocalizedDayName(currentSelectedDay.dateStr, locale)}. Tap "Add Stop" to schedule.`
+                                                    : `Chưa lên lịch điểm nào cho ngày ${currentSelectedDay.dayName}. Bấm "Thêm Điểm" để lên lịch.`}
                                             </div>
                                         ) : (
                                             dayVisits.map((item, vIdx) => {
@@ -2446,7 +2569,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                 <span className="font-mono text-[10px] text-teal-600 dark:text-[#87CBB9] mr-1">
                                                                     [{cust?.code || 'KH'}]
                                                                 </span>
-                                                                {cust?.name || 'Khách hàng'}
+                                                                {cust?.name || (locale === 'en' ? 'Client' : 'Khách hàng')}
                                                             </div>
                                                             <div className="text-[11px] text-slate-500 dark:text-[#8AAEBB] line-clamp-1">
                                                                 {item.purpose}
@@ -2456,7 +2579,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             type="button"
                                                             onClick={() => handleRemovePlanVisit(item.id)}
                                                             className="text-slate-400 hover:text-red-500 p-1 transition cursor-pointer"
-                                                            title="Xóa khỏi lịch"
+                                                            title={locale === 'en' ? 'Remove from schedule' : 'Xóa khỏi lịch'}
                                                         >
                                                             <X size={15} />
                                                         </button>
@@ -2489,7 +2612,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#223645] pb-2.5">
                                             <div>
                                                 <span className={`text-xs font-black ${day.isToday ? 'text-teal-600 dark:text-[#87CBB9]' : 'text-slate-800 dark:text-white'}`}>
-                                                    {day.dayName} {day.isToday ? '(Hôm nay)' : ''}
+                                                    {getLocalizedDayName(day.dateStr, locale)} {day.isToday ? (locale === 'en' ? '(Today)' : '(Hôm nay)') : ''}
                                                 </span>
                                                 <div className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
                                                     {day.dateStr}
@@ -2497,7 +2620,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             </div>
 
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-[#1B2E3D] text-slate-600 dark:text-slate-300 font-mono">
-                                                {dayVisits.length} điểm
+                                                {dayVisits.length} {locale === 'en' ? 'stops' : 'điểm'}
                                             </span>
                                         </div>
 
@@ -2505,7 +2628,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <div className="space-y-2 min-h-[140px]">
                                             {dayVisits.length === 0 ? (
                                                 <div className="h-full flex items-center justify-center text-center p-4 text-[11px] text-slate-400 dark:text-slate-500 italic">
-                                                    Chưa lên lịch điểm nào
+                                                    {locale === 'en' ? 'No visits scheduled' : 'Chưa lên lịch điểm nào'}
                                                 </div>
                                             ) : (
                                                 dayVisits.map((item, vIdx) => {
@@ -2520,13 +2643,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                     <span className="font-mono text-[10px] text-teal-600 dark:text-[#87CBB9] mr-1">
                                                                         [{cust?.code || 'KH'}]
                                                                     </span>
-                                                                    {cust?.name || 'Khách hàng'}
+                                                                    {cust?.name || (locale === 'en' ? 'Client' : 'Khách hàng')}
                                                                 </div>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemovePlanVisit(item.id)}
                                                                     className="text-slate-400 hover:text-red-500 p-0.5 transition cursor-pointer"
-                                                                    title="Xóa khỏi lịch"
+                                                                    title={locale === 'en' ? 'Remove from schedule' : 'Xóa khỏi lịch'}
                                                                 >
                                                                     <X size={13} />
                                                                 </button>
@@ -2545,14 +2668,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setQuickAddModal({ open: true, dateStr: day.dateStr, dayName: day.dayName })
+                                            setQuickAddModal({ open: true, dateStr: day.dateStr, dayName: getLocalizedDayName(day.dateStr, locale) })
                                             setAddCustomerId('')
                                             setAddActivityType('PERIODIC_CARE')
                                             setAddCustomPurpose('')
                                         }}
                                         className="w-full py-2 rounded-xl bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] font-bold text-xs flex items-center justify-center gap-1 transition cursor-pointer"
                                     >
-                                        <Plus size={13} /> Thêm Điểm
+                                        <Plus size={13} /> {locale === 'en' ? 'Add Stop' : 'Thêm Điểm'}
                                     </button>
                                 </div>
                             )
@@ -2570,13 +2693,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-[#111C24] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs">
                         <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#142433] p-0.5 rounded-lg border border-slate-200 dark:border-[#2A4355]">
-                                <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title="Tuần trước">
+                                <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title={locale === 'en' ? 'Previous week' : 'Tuần trước'}>
                                     <ChevronLeft size={14} />
                                 </button>
                                 <button type="button" onClick={handleCurrentWeek} className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
-                                    Tuần {currentWeek.week} / {currentWeek.year}
+                                    {locale === 'en' ? `Week ${currentWeek.week} / ${currentWeek.year}` : `Tuần ${currentWeek.week} / ${currentWeek.year}`}
                                 </button>
-                                <button type="button" onClick={handleNextWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title="Tuần sau">
+                                <button type="button" onClick={handleNextWeek} className="p-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer" title={locale === 'en' ? 'Next week' : 'Tuần sau'}>
                                     <ChevronRight size={14} />
                                 </button>
                             </div>
@@ -2587,10 +2710,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xs font-black text-slate-900 dark:text-white">
-                                    Tổng Kết Tuần
+                                    {locale === 'en' ? 'Weekly Summary' : 'Tổng Kết Tuần'}
                                 </span>
                                 <span className="text-[11px] text-slate-400 font-normal hidden md:inline">
-                                    • Đối soát Kế Hoạch vs Thực Tế
+                                    {locale === 'en' ? '• Plan vs Actual Reconciliation' : '• Đối soát Kế Hoạch vs Thực Tế'}
                                 </span>
                             </div>
                         </div>
@@ -2602,9 +2725,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 weeklyPlan?.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' :
                                 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                             }`}>
-                                {weeklyPlan?.status === 'APPROVED' ? '✓ QUẢN LÝ ĐÃ DUYỆT' :
-                                 weeklyPlan?.status === 'SUBMITTED' ? '⏳ ĐANG CHỜ DUYỆT' :
-                                 '📝 CHƯA CHỐT BÁO CÁO'}
+                                {weeklyPlan?.status === 'APPROVED' ? (locale === 'en' ? '✓ MANAGER APPROVED' : '✓ QUẢN LÝ ĐÃ DUYỆT') :
+                                 weeklyPlan?.status === 'SUBMITTED' ? (locale === 'en' ? '⏳ PENDING APPROVAL' : '⏳ ĐANG CHỜ DUYỆT') :
+                                 (locale === 'en' ? '📝 REPORT NOT SUBMITTED' : '📝 CHƯA CHỐT BÁO CÁO')}
                             </span>
                         </div>
                     </div>
@@ -2614,25 +2737,31 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-[#1E3040]">
                             {/* 1. Kế hoạch */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Kế hoạch</span>
+                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+                                    {locale === 'en' ? 'Planned' : 'Kế hoạch'}
+                                </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-mono">{reviewStats.plannedCount}</span>
-                                    <span className="text-[10px] text-slate-400">điểm</span>
+                                    <span className="text-[10px] text-slate-400">{locale === 'en' ? 'stops' : 'điểm'}</span>
                                 </div>
                             </div>
 
                             {/* 2. Thực tế */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Đã thực tế</span>
+                                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                    {locale === 'en' ? 'Completed' : 'Đã thực tế'}
+                                </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{reviewStats.completedCount}</span>
-                                    <span className="text-[10px] text-slate-400">điểm</span>
+                                    <span className="text-[10px] text-slate-400">{locale === 'en' ? 'stops' : 'điểm'}</span>
                                 </div>
                             </div>
 
                             {/* 3. Tỷ lệ hoàn thành */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9] uppercase tracking-wider">Tỷ lệ đạt</span>
+                                <span className="text-[10px] font-semibold text-teal-600 dark:text-[#87CBB9] uppercase tracking-wider">
+                                    {locale === 'en' ? 'Completion' : 'Tỷ lệ đạt'}
+                                </span>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">{reviewStats.rate}%</span>
                                     <div className="flex-1 max-w-[48px] bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
@@ -2643,16 +2772,20 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             {/* 4. Đi đột xuất */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Đi đột xuất</span>
+                                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                    {locale === 'en' ? 'Ad-hoc' : 'Đi đột xuất'}
+                                </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono">{reviewStats.unplannedCount}</span>
-                                    <span className="text-[10px] text-slate-400">ngoài KH</span>
+                                    <span className="text-[10px] text-slate-400">{locale === 'en' ? 'unscheduled' : 'ngoài KH'}</span>
                                 </div>
                             </div>
 
                             {/* 5. Khách mới mở */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Khách mới</span>
+                                <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                    {locale === 'en' ? 'New Clients' : 'Khách mới'}
+                                </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">{reviewStats.newLeads}</span>
                                     <span className="text-[10px] text-slate-400">leads</span>
@@ -2665,7 +2798,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="bg-white dark:bg-[#111C24] rounded-xl border border-slate-200 dark:border-[#223645] overflow-hidden shadow-xs">
                         <div className="px-3.5 py-2.5 border-b border-slate-200 dark:border-[#223645] bg-slate-50/60 dark:bg-[#16232F]/60 flex items-center justify-between">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                                Chi Tiết Đối Soát Lịch Trình Tuần
+                                {locale === 'en' ? 'Weekly Schedule Reconciliation Details' : 'Chi Tiết Đối Soát Lịch Trình Tuần'}
                             </h4>
                             <span className="text-[11px] text-slate-400 font-mono">
                                 {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
@@ -2690,15 +2823,17 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     return (
                                         <div key={day.dateStr} className="px-3.5 py-2 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 bg-slate-50/20 dark:bg-[#142433]/20">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-slate-500 dark:text-slate-400">{day.dayName}</span>
+                                                <span className="font-semibold text-slate-500 dark:text-slate-400">{getLocalizedDayName(day.dateStr, locale)}</span>
                                                 <span className="text-[11px] font-mono">({day.dateStr.slice(5).replace('-', '/')})</span>
                                                 {day.isToday && (
                                                     <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-[#87CBB9]">
-                                                        Hôm nay
+                                                        {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[10px] italic text-slate-400">Không có lịch trình & check-in</span>
+                                            <span className="text-[10px] italic text-slate-400">
+                                                {locale === 'en' ? 'No schedule & check-in activity' : 'Không có lịch trình & check-in'}
+                                            </span>
                                         </div>
                                     )
                                 }
@@ -2718,11 +2853,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     return {
                                         key: p.id || `plan_${idx}`,
                                         customerId: p.customerId,
-                                        customerName: cust?.name || 'Khách hàng',
+                                        customerName: cust?.name || (locale === 'en' ? 'Client' : 'Khách hàng'),
                                         customerCode: cust?.code || '',
                                         customerChannel: cust?.channel || null,
                                         isPlanned: true,
-                                        plannedPurpose: p.purpose || 'Chăm sóc khách hàng định kỳ',
+                                        plannedPurpose: p.purpose || (locale === 'en' ? 'Periodic Customer Care' : 'Chăm sóc khách hàng định kỳ'),
                                         actualVisit: actual || null,
                                         isCompleted: !!actual && (actual.status === 'COMPLETED' || !!actual.checkInTime),
                                     }
@@ -2735,7 +2870,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         return {
                                             key: a.id,
                                             customerId: a.customerId,
-                                            customerName: cust?.name || a.customerName || 'Khách hàng',
+                                            customerName: cust?.name || a.customerName || (locale === 'en' ? 'Client' : 'Khách hàng'),
                                             customerCode: cust?.code || a.customerCode || '',
                                             customerChannel: cust?.channel || a.customerChannel || null,
                                             isPlanned: false,
@@ -2755,31 +2890,31 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-1 border-b border-slate-100 dark:border-[#1E3040]">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white">
-                                                    {day.dayName} ({day.dateStr.slice(5).replace('-', '/')})
+                                                    {getLocalizedDayName(day.dateStr, locale)} ({day.dateStr.slice(5).replace('-', '/')})
                                                 </span>
                                                 {day.isToday && (
                                                     <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] font-bold">
-                                                        Hôm nay
+                                                        {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
                                                 <span className="text-[10px] text-slate-400 font-mono">
-                                                    ({unifiedItems.length} khách)
+                                                    ({unifiedItems.length} {locale === 'en' ? 'clients' : 'khách'})
                                                 </span>
                                             </div>
 
                                             <div className="flex items-center gap-2 text-[11px] font-mono flex-wrap">
                                                 <span className="text-slate-500 dark:text-slate-400">
-                                                    Kế hoạch: <strong className="text-slate-800 dark:text-slate-200">{dayPlanned.length}</strong>
+                                                    {locale === 'en' ? 'Planned:' : 'Kế hoạch:'} <strong className="text-slate-800 dark:text-slate-200">{dayPlanned.length}</strong>
                                                 </span>
                                                 <span className="text-slate-300 dark:text-slate-600">•</span>
                                                 <span className="text-emerald-600 dark:text-emerald-400">
-                                                    Thực tế: <strong>{completedCount}</strong>
+                                                    {locale === 'en' ? 'Actual:' : 'Thực tế:'} <strong>{completedCount}</strong>
                                                 </span>
                                                 {unplannedCount > 0 && (
                                                     <>
                                                         <span className="text-slate-300 dark:text-slate-600">•</span>
                                                         <span className="text-amber-600 dark:text-amber-400 font-bold">
-                                                            +{unplannedCount} đột xuất
+                                                            +{unplannedCount} {locale === 'en' ? 'ad-hoc' : 'đột xuất'}
                                                         </span>
                                                     </>
                                                 )}
@@ -2790,7 +2925,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <div className="space-y-2">
                                             {unifiedItems.map(item => {
                                                 const visitTime = item.actualVisit?.checkInTime
-                                                    ? new Date(item.actualVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                                                    ? new Date(item.actualVisit.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })
                                                     : null
 
                                                 return (
@@ -2807,11 +2942,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             <div className="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
                                                                 {item.isPlanned ? (
                                                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shrink-0">
-                                                                        📋 THEO KẾ HOẠCH
+                                                                        {locale === 'en' ? '📋 PLANNED' : '📋 THEO KẾ HOẠCH'}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
-                                                                        ⚡ ĐỘT XUẤT
+                                                                        {locale === 'en' ? '⚡ AD-HOC' : '⚡ ĐỘT XUẤT'}
                                                                     </span>
                                                                 )}
 
@@ -2836,12 +2971,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                 {item.isCompleted ? (
                                                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                                                         <CheckCircle2 size={11} />
-                                                                        <span>Đã hoàn thành</span>
+                                                                        <span>{locale === 'en' ? 'Completed' : 'Đã hoàn thành'}</span>
                                                                     </span>
                                                                 ) : (
                                                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center gap-1">
                                                                         <Clock size={11} />
-                                                                        <span>Chưa đi / Bỏ lỡ</span>
+                                                                        <span>{locale === 'en' ? 'Not visited / Missed' : 'Chưa đi / Bỏ lỡ'}</span>
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -2851,39 +2986,43 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-100 dark:border-[#1E3040]">
                                                             {/* Cột Kế hoạch dự kiến */}
                                                             <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70 dark:bg-[#111C24]/60">
-                                                                <span className="text-slate-400 shrink-0 font-bold">🎯 Kế hoạch:</span>
+                                                                <span className="text-slate-400 shrink-0 font-bold">
+                                                                    {locale === 'en' ? '🎯 Planned:' : '🎯 Kế hoạch:'}
+                                                                </span>
                                                                 {item.isPlanned ? (
                                                                     <span className="text-slate-700 dark:text-slate-300 font-medium">
                                                                         {item.plannedPurpose}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-amber-600 dark:text-amber-400 italic">
-                                                                        Không có trong kế hoạch ban đầu (Phát sinh tại thị trường)
+                                                                        {locale === 'en' ? 'Not in initial plan (Ad-hoc field visit)' : 'Không có trong kế hoạch ban đầu (Phát sinh tại thị trường)'}
                                                                     </span>
                                                                 )}
                                                             </div>
 
                                                             {/* Cột Thực tế thực hiện */}
                                                             <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70 dark:bg-[#111C24]/60">
-                                                                <span className="text-slate-400 shrink-0 font-bold">📍 Thực tế:</span>
+                                                                <span className="text-slate-400 shrink-0 font-bold">
+                                                                    {locale === 'en' ? '📍 Actual:' : '📍 Thực tế:'}
+                                                                </span>
                                                                 {item.actualVisit ? (
                                                                     <div className="space-y-1 flex-1 min-w-0">
                                                                         <div className="flex items-center gap-2 flex-wrap">
                                                                             <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                                                                                Giờ check-in: {visitTime}
+                                                                                {locale === 'en' ? 'Check-in time:' : 'Giờ check-in:'} {visitTime}
                                                                             </span>
                                                                             {item.actualVisit.checkInPhoto && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => setViewPhoto({
-                                                                                        title: `Ảnh Check-in: ${item.customerName}`,
+                                                                                        title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${item.customerName}`,
                                                                                         url: item.actualVisit.checkInPhoto,
                                                                                         visitId: item.actualVisit.id
                                                                                     })}
                                                                                     className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[10px] font-bold hover:underline cursor-pointer ml-auto"
-                                                                                    title="Xem ảnh check-in thực tế"
+                                                                                    title={locale === 'en' ? 'View actual check-in photo' : 'Xem ảnh check-in thực tế'}
                                                                                 >
-                                                                                    <Camera size={10} /> Xem ảnh
+                                                                                    <Camera size={10} /> {locale === 'en' ? 'View photo' : 'Xem ảnh'}
                                                                                 </button>
                                                                             )}
                                                                         </div>
@@ -2895,7 +3034,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                     </div>
                                                                 ) : (
                                                                     <span className="text-slate-400 italic">
-                                                                        Chưa có lượt check-in thực tế nào
+                                                                        {locale === 'en' ? 'No actual check-in recorded yet' : 'Chưa có lượt check-in thực tế nào'}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -2915,11 +3054,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                                 <Award size={15} className="text-teal-600 dark:text-[#87CBB9]" />
-                                Tự Đánh Giá Tuần Của Nhân Viên
+                                {locale === 'en' ? "Staff's Weekly Self-Evaluation" : 'Tự Đánh Giá Tuần Của Nhân Viên'}
                             </h4>
                             {weeklyPlan?.submittedAt && (
                                 <span className="text-[10px] font-mono text-slate-400">
-                                    Đã gửi: {new Date(weeklyPlan.submittedAt).toLocaleString('vi-VN')}
+                                    {locale === 'en' ? 'Submitted at:' : 'Đã gửi:'} {new Date(weeklyPlan.submittedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                 </span>
                             )}
                         </div>
@@ -2928,13 +3067,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             rows={3}
                             value={selfReviewText}
                             onChange={e => setSelfReviewText(e.target.value)}
-                            placeholder="Tổng kết tuần: Kết quả đạt được, khó khăn tại điểm bán, đề xuất hỗ trợ..."
+                            placeholder={locale === 'en' ? 'Weekly summary: Achievements, market challenges, requested support...' : 'Tổng kết tuần: Kết quả đạt được, khó khăn tại điểm bán, đề xuất hỗ trợ...'}
                             className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition resize-y"
                         />
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
                             <span className="text-[10px] text-slate-400">
-                                Gửi báo cáo vào cuối tuần để Quản lý kiểm tra và phê duyệt.
+                                {locale === 'en' ? 'Submit report at the end of the week for Manager review and approval.' : 'Gửi báo cáo vào cuối tuần để Quản lý kiểm tra và phê duyệt.'}
                             </span>
 
                             <button
@@ -2944,7 +3083,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 className="self-end sm:self-auto px-4 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                             >
                                 <Send size={13} />
-                                <span>{submittingReport ? 'Đang gửi...' : 'Gửi Báo Cáo Tuần'}</span>
+                                <span>{submittingReport ? (locale === 'en' ? 'Submitting...' : 'Đang gửi...') : (locale === 'en' ? 'Submit Weekly Report' : 'Gửi Báo Cáo Tuần')}</span>
                             </button>
                         </div>
                     </div>
@@ -2953,7 +3092,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50/60 dark:bg-[#142433]/60 border border-slate-200 dark:border-[#2A4355] space-y-2 shadow-xs">
                         <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                             <ShieldCheck size={15} className="text-teal-600 dark:text-[#87CBB9]" />
-                            Nhận Xét Của Quản Lý
+                            {locale === 'en' ? "Manager's Feedback & Review" : 'Nhận Xét Của Quản Lý'}
                         </h4>
 
                         {isManager ? (
@@ -2962,7 +3101,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     rows={2}
                                     value={managerFeedbackText}
                                     onChange={e => setManagerFeedbackText(e.target.value)}
-                                    placeholder="Nhập nhận xét hoặc lưu ý cho nhân viên..."
+                                    placeholder={locale === 'en' ? 'Enter feedback or instructions for staff...' : 'Nhập nhận xét hoặc lưu ý cho nhân viên...'}
                                     className="w-full p-2.5 text-base sm:text-xs rounded-lg bg-white dark:bg-[#1B2E3D] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                                 />
                                 <div className="flex justify-end">
@@ -2973,7 +3112,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         className="px-4 py-1.5 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                                     >
                                         <Check size={13} />
-                                        <span>{savingFeedback ? 'Đang lưu...' : 'Lưu Nhận Xét & Duyệt'}</span>
+                                        <span>{savingFeedback ? (locale === 'en' ? 'Saving...' : 'Đang lưu...') : (locale === 'en' ? 'Save Feedback & Approve' : 'Lưu Nhận Xét & Duyệt')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -2984,12 +3123,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         <p className="font-semibold text-slate-800 dark:text-white">{managerFeedbackText}</p>
                                         {weeklyPlan?.reviewedAt && (
                                             <span className="text-[10px] text-slate-400 font-mono">
-                                                Đã duyệt lúc: {new Date(weeklyPlan.reviewedAt).toLocaleString('vi-VN')}
+                                                {locale === 'en' ? 'Approved at:' : 'Đã duyệt lúc:'} {new Date(weeklyPlan.reviewedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                             </span>
                                         )}
                                     </div>
                                 ) : (
-                                    <span className="text-slate-400 italic">Quản lý chưa để lại nhận xét cho tuần này.</span>
+                                    <span className="text-slate-400 italic">
+                                        {locale === 'en' ? 'Manager has not left any feedback for this week yet.' : 'Quản lý chưa để lại nhận xét cho tuần này.'}
+                                    </span>
                                 )}
                             </div>
                         )}
@@ -3011,7 +3152,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     type="text"
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
-                                    placeholder="Tìm theo tên khách, mã KH, ghi chú..."
+                                    placeholder={locale === 'en' ? 'Search by client, code, notes...' : 'Tìm theo tên khách, mã KH, ghi chú...'}
                                     className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 transition"
                                 />
                             </div>
@@ -3029,7 +3170,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >
-                                    Tất Cả
+                                    {locale === 'en' ? 'All' : 'Tất Cả'}
                                 </button>
                                 <button
                                     type="button"
@@ -3040,7 +3181,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >
-                                    Hôm Nay
+                                    {locale === 'en' ? 'Today' : 'Hôm Nay'}
                                 </button>
                             </div>
 
@@ -3058,7 +3199,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                         type="button"
                                         onClick={() => setFilterDate('')}
                                         className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5 cursor-pointer"
-                                        title="Bỏ chọn ngày"
+                                        title={locale === 'en' ? 'Clear date' : 'Bỏ chọn ngày'}
                                     >
                                         <X size={13} />
                                     </button>
@@ -3071,9 +3212,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onChange={e => setFilterStatus(e.target.value)}
                                 className="px-2.5 py-1.5 text-base sm:text-xs rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-800 dark:text-white outline-none cursor-pointer font-bold"
                             >
-                                <option value="ALL">Tất cả trạng thái</option>
-                                <option value="IN_PROGRESS">Đang viếng thăm</option>
-                                <option value="COMPLETED">Đã hoàn thành</option>
+                                <option value="ALL">{locale === 'en' ? 'All statuses' : 'Tất cả trạng thái'}</option>
+                                <option value="IN_PROGRESS">{locale === 'en' ? 'In progress' : 'Đang viếng thăm'}</option>
+                                <option value="COMPLETED">{locale === 'en' ? 'Completed' : 'Đã hoàn thành'}</option>
                             </select>
 
                             {/* View Switcher: Grid vs Table */}
@@ -3086,10 +3227,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             ? 'bg-white dark:bg-[#1F3342] text-teal-600 dark:text-[#87CBB9] shadow-xs'
                                             : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title="Chế độ Lưới ảnh trực quan"
+                                    title={locale === 'en' ? 'Photo grid view' : 'Chế độ Lưới ảnh trực quan'}
                                 >
                                     <LayoutGrid size={13} />
-                                    <span className="hidden sm:inline">Lưới ảnh</span>
+                                    <span className="hidden sm:inline">{locale === 'en' ? 'Grid' : 'Lưới ảnh'}</span>
                                 </button>
                                 <button
                                     type="button"
@@ -3099,10 +3240,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             ? 'bg-white dark:bg-[#1F3342] text-teal-600 dark:text-[#87CBB9] shadow-xs'
                                             : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                     }`}
-                                    title="Chế độ Bảng danh sách"
+                                    title={locale === 'en' ? 'Table audit view' : 'Chế độ Bảng danh sách'}
                                 >
                                     <List size={13} />
-                                    <span className="hidden sm:inline">Bảng</span>
+                                    <span className="hidden sm:inline">{locale === 'en' ? 'Table' : 'Bảng'}</span>
                                 </button>
                             </div>
 
@@ -3111,7 +3252,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 type="button"
                                 onClick={fetchHistoryVisits}
                                 className="p-2 rounded-xl bg-slate-100 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-600 dark:text-[#8AAEBB] hover:bg-slate-200 dark:hover:bg-[#1B2E3D] transition cursor-pointer"
-                                title="Làm mới danh sách"
+                                title={locale === 'en' ? 'Refresh list' : 'Làm mới danh sách'}
                             >
                                 <RefreshCw size={14} />
                             </button>
@@ -3121,15 +3262,17 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     {/* 2. Sub-summary & Quick Stats */}
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8AAEBB] px-1">
                         <div className="flex items-center gap-2">
-                            <span>Hiển thị <strong>{filteredHistoryVisits.length}</strong> lượt viếng thăm</span>
+                            <span>{locale === 'en' ? 'Showing' : 'Hiển thị'} <strong>{filteredHistoryVisits.length}</strong> {locale === 'en' ? 'visits' : 'lượt viếng thăm'}</span>
                             <span>•</span>
                             <span className="text-teal-600 dark:text-[#87CBB9] font-bold">
-                                {filteredHistoryVisits.filter(v => !!(v.checkInPhoto || v.checkOutPhoto)).length} có ảnh chụp thực tế
+                                {locale === 'en'
+                                    ? `${filteredHistoryVisits.filter(v => !!(v.checkInPhoto || v.checkOutPhoto)).length} with verified photo`
+                                    : `${filteredHistoryVisits.filter(v => !!(v.checkInPhoto || v.checkOutPhoto)).length} có ảnh chụp thực tế`}
                             </span>
                         </div>
                         {filterDate && (
                             <span className="font-mono text-[11px] bg-slate-100 dark:bg-[#142433] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#2A4355]">
-                                Ngày: {filterDate}
+                                {locale === 'en' ? 'Date:' : 'Ngày:'} {filterDate}
                             </span>
                         )}
                     </div>
@@ -3140,7 +3283,9 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1E3040] text-slate-400 flex items-center justify-center mx-auto">
                                 <Camera size={24} />
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Không tìm thấy hình ảnh hoặc lượt check-in nào phù hợp bộ lọc.</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {locale === 'en' ? 'No check-in visits or photos matched the current filter.' : 'Không tìm thấy hình ảnh hoặc lượt check-in nào phù hợp bộ lọc.'}
+                            </p>
                             {(filterDate || filterSearch || filterStatus !== 'ALL') && (
                                 <button
                                     type="button"
@@ -3151,7 +3296,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     }}
                                     className="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-[#87CBB9] text-xs font-bold cursor-pointer hover:underline"
                                 >
-                                    Xóa bộ lọc để xem tất cả
+                                    {locale === 'en' ? 'Clear filters to view all' : 'Xóa bộ lọc để xem tất cả'}
                                 </button>
                             )}
                         </div>
@@ -3160,8 +3305,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4">
                             {filteredHistoryVisits.map(v => {
                                 const photoUrl = v.checkInPhoto || v.checkOutPhoto
-                                const timeStr = v.checkInTime ? new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''
-                                const dateStr = v.checkInTime ? new Date(v.checkInTime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : ''
+                                const timeStr = v.checkInTime ? new Date(v.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''
+                                const dateStr = v.checkInTime ? new Date(v.checkInTime).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit' }) : ''
 
                                 return (
                                     <div
@@ -3174,7 +3319,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             onClick={() => {
                                                 if (photoUrl) {
                                                     setViewPhoto({
-                                                        title: `Ảnh Check-in: ${v.customerName}`,
+                                                        title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`,
                                                         url: photoUrl,
                                                         visitId: v.id
                                                     })
@@ -3202,11 +3347,11 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                                                         {v.isUnplanned ? (
                                                             <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs">
-                                                                ⚡ ĐỘT XUẤT
+                                                                ⚡ {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                             </span>
                                                         ) : (
                                                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white shadow-xs">
-                                                                📋 KẾ HOẠCH
+                                                                📋 {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -3231,13 +3376,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center shadow-lg">
                                                             <Eye size={18} />
                                                         </div>
-                                                        <span className="text-[10px] font-bold tracking-wide">Xem ảnh lớn</span>
+                                                        <span className="text-[10px] font-bold tracking-wide">{locale === 'en' ? 'Enlarge photo' : 'Xem ảnh lớn'}</span>
                                                     </div>
                                                 </>
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
                                                     <Camera size={26} className="opacity-40" />
-                                                    <span className="text-[10px] italic">Chưa có ảnh check-in</span>
+                                                    <span className="text-[10px] italic">{locale === 'en' ? 'No check-in photo' : 'Chưa có ảnh check-in'}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -3291,7 +3436,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="text-[10px] font-bold text-slate-500 hover:text-teal-600 dark:hover:text-[#87CBB9] flex items-center gap-0.5 transition"
-                                                            title="Xem vị trí trên Google Maps"
+                                                            title={locale === 'en' ? 'View on Google Maps' : 'Xem vị trí trên Google Maps'}
                                                         >
                                                             <Navigation size={10} />
                                                             <span>Maps</span>
@@ -3302,14 +3447,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                         <button
                                                             type="button"
                                                             onClick={() => setViewPhoto({
-                                                                title: `Ảnh Check-in: ${v.customerName}`,
+                                                                title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`,
                                                                 url: photoUrl,
                                                                 visitId: v.id
                                                             })}
                                                             className="text-[10px] font-bold text-teal-600 dark:text-[#87CBB9] hover:underline flex items-center gap-0.5 cursor-pointer"
                                                         >
                                                             <Eye size={11} />
-                                                            <span>Xem ảnh</span>
+                                                            <span>{locale === 'en' ? 'View photo' : 'Xem ảnh'}</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -3326,13 +3471,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 <table className="w-full text-xs text-left">
                                     <thead>
                                         <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
-                                            <th className="p-3.5 font-bold">Mã Visit</th>
-                                            <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
-                                            <th className="p-3.5 font-bold text-center">Ảnh Check-in</th>
-                                            <th className="p-3.5 font-bold text-center">Giờ Check-in</th>
-                                            <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
-                                            <th className="p-3.5 font-bold">Hoạt Động & Ghi Chú</th>
-                                            <th className="p-3.5 font-bold text-center">Trạng Thái</th>
+                                            <th className="p-3.5 font-bold">{locale === 'en' ? 'Visit Code' : 'Mã Visit'}</th>
+                                            <th className="p-3.5 font-bold">{locale === 'en' ? 'Client & Sales Rep' : 'Khách Hàng & Sale'}</th>
+                                            <th className="p-3.5 font-bold text-center">{locale === 'en' ? 'Check-in Photo' : 'Ảnh Check-in'}</th>
+                                            <th className="p-3.5 font-bold text-center">{locale === 'en' ? 'Check-in Time' : 'Giờ Check-in'}</th>
+                                            <th className="p-3.5 font-bold">{locale === 'en' ? 'Coordinates & GPS' : 'Toạ Độ & Vị Trí'}</th>
+                                            <th className="p-3.5 font-bold">{locale === 'en' ? 'Activity & Notes' : 'Hoạt Động & Ghi Chú'}</th>
+                                            <th className="p-3.5 font-bold text-center">{locale === 'en' ? 'Status' : 'Trạng Thái'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
@@ -3342,7 +3487,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                     {v.visitNo}
                                                     {v.isUnplanned && (
                                                         <span className="block text-[9px] font-sans font-bold text-amber-500">
-                                                            Đột xuất
+                                                            {locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}
                                                         </span>
                                                     )}
                                                 </td>
@@ -3358,12 +3503,12 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                             src={v.checkInPhoto || v.checkOutPhoto}
                                                             alt="Check-in"
                                                             className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
-                                                            onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
+                                                            onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
                                                         />
-                                                    ) : <span className="text-slate-400 italic">Chưa có</span>}
+                                                    ) : <span className="text-slate-400 italic">{locale === 'en' ? 'None' : 'Chưa có'}</span>}
                                                 </td>
                                                 <td className="p-3.5 text-center font-bold font-mono text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
-                                                    {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(v.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                 </td>
                                                 <td className="p-3.5 max-w-xs">
                                                     {v.checkInLat && v.checkInLng ? (
@@ -3382,16 +3527,16 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                                 </p>
                                                             )}
                                                         </div>
-                                                    ) : <span className="text-slate-400">Không có GPS</span>}
+                                                    ) : <span className="text-slate-400">{locale === 'en' ? 'No GPS' : 'Không có GPS'}</span>}
                                                 </td>
                                                 <td className="p-3.5 max-w-xs text-slate-700 dark:text-slate-200 text-xs">
                                                     <div className="line-clamp-2" title={v.notes || v.purpose}>
-                                                        {v.notes || v.purpose || <span className="text-slate-400 italic">Chưa có</span>}
+                                                        {v.notes || v.purpose || <span className="text-slate-400 italic">{locale === 'en' ? 'None' : 'Chưa có'}</span>}
                                                     </div>
                                                 </td>
                                                 <td className="p-3.5 text-center whitespace-nowrap">
                                                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                                                        ✓ Hoàn thành
+                                                        ✓ {locale === 'en' ? 'Completed' : 'Hoàn thành'}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -3419,7 +3564,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <Sparkles size={18} className="text-amber-500" />
-                                Check-in Đột Xuất Ngoài Kế Hoạch
+                                {locale === 'en' ? 'Ad-Hoc Unplanned Check-in' : 'Check-in Đột Xuất Ngoài Kế Hoạch'}
                             </h3>
                             <button onClick={() => setShowUnplannedModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                                 <X size={18} />
@@ -3429,19 +3574,20 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="space-y-3.5 text-xs">
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Chọn khách hàng:
+                                    {locale === 'en' ? 'Select customer / client:' : 'Chọn khách hàng:'}
                                 </label>
                                 <SearchableCustomerCombobox
                                     customers={localCustomers}
                                     selectedCustomerId={unplannedCustomerId}
                                     onSelect={c => setUnplannedCustomerId(c.id)}
                                     onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                                    locale={locale}
                                 />
                             </div>
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Loại hoạt động:
+                                    {locale === 'en' ? 'Activity type:' : 'Loại hoạt động:'}
                                 </label>
                                 <select
                                     value={unplannedActivityType}
@@ -3450,7 +3596,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
-                                            {p.icon} {p.label}
+                                            {p.icon} {getActivityPresetLabel(p.value, locale)}
                                         </option>
                                     ))}
                                 </select>
@@ -3458,13 +3604,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Mục đích cụ thể (tùy chọn):
+                                    {locale === 'en' ? 'Specific purpose (optional):' : 'Mục đích cụ thể (tùy chọn):'}
                                 </label>
                                 <input
                                     type="text"
                                     value={unplannedPurpose}
                                     onChange={e => setUnplannedPurpose(e.target.value)}
-                                    placeholder="Ghi rõ việc sẽ làm tại khách này..."
+                                    placeholder={locale === 'en' ? 'Describe planned tasks at this client...' : 'Ghi rõ việc sẽ làm tại khách này...'}
                                     className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
@@ -3476,23 +3622,20 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onClick={() => setShowUnplannedModal(false)}
                                 className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
-                                Hủy
+                                {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="button"
                                 onClick={startCheckInUnplanned}
                                 className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer min-h-[44px]"
                             >
-                                <Camera size={16} /> Mở Camera Check-in
+                                <Camera size={16} /> {locale === 'en' ? 'Open Check-in Camera' : 'Mở Camera Check-in'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ============================================================== */}
-            {/* MODAL: QUICK ADD VISIT TO PLANNING DAY */}
-            {/* ============================================================== */}
             {/* ============================================================== */}
             {/* MODAL: QUICK ADD VISIT TO PLANNING DAY */}
             {/* ============================================================== */}
@@ -3511,7 +3654,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    Thêm Điểm Đến: {quickAddModal.dayName}
+                                    {locale === 'en' ? 'Add Destination:' : 'Thêm Điểm Đến:'} {getLocalizedDayName(quickAddModal.dateStr, locale)}
                                 </h3>
                                 <p className="text-[11px] font-mono text-slate-400">{quickAddModal.dateStr}</p>
                             </div>
@@ -3523,19 +3666,20 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="space-y-3.5 text-xs">
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Chọn khách hàng:
+                                    {locale === 'en' ? 'Select customer / client:' : 'Chọn khách hàng:'}
                                 </label>
                                 <SearchableCustomerCombobox
                                     customers={localCustomers}
                                     selectedCustomerId={addCustomerId}
                                     onSelect={c => setAddCustomerId(c.id)}
                                     onOpenQuickCreate={() => setShowQuickCreateModal(true)}
+                                    locale={locale}
                                 />
                             </div>
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Hoạt động dự kiến:
+                                    {locale === 'en' ? 'Planned activity:' : 'Hoạt động dự kiến:'}
                                 </label>
                                 <select
                                     value={addActivityType}
@@ -3544,7 +3688,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
-                                            {p.icon} {p.label}
+                                            {p.icon} {getActivityPresetLabel(p.value, locale)}
                                         </option>
                                     ))}
                                 </select>
@@ -3552,13 +3696,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Ghi chú bổ sung (tùy chọn):
+                                    {locale === 'en' ? 'Additional notes (optional):' : 'Ghi chú bổ sung (tùy chọn):'}
                                 </label>
                                 <input
                                     type="text"
                                     value={addCustomPurpose}
                                     onChange={e => setAddCustomPurpose(e.target.value)}
-                                    placeholder="Ví dụ: Giới thiệu vang trắng mới, thu công nợ 5 triệu..."
+                                    placeholder={locale === 'en' ? 'e.g. Introduce new vintage, collect payment...' : 'Ví dụ: Giới thiệu vang trắng mới, thu công nợ 5 triệu...'}
                                     className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
@@ -3570,14 +3714,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onClick={() => setQuickAddModal(null)}
                                 className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
-                                Hủy
+                                {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleAddVisitToPlan}
                                 className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer min-h-[44px]"
                             >
-                                <Plus size={15} /> Thêm Vào Lịch
+                                <Plus size={15} /> {locale === 'en' ? 'Add to Schedule' : 'Thêm Vào Lịch'}
                             </button>
                         </div>
                     </div>
@@ -3603,7 +3747,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <Plus size={18} className="text-teal-600 dark:text-[#87CBB9]" />
-                                Tạo Nhanh Khách Hàng Tiềm Năng
+                                {locale === 'en' ? 'Quick Create Prospect Client' : 'Tạo Nhanh Khách Hàng Tiềm Năng'}
                             </h3>
                             <button type="button" onClick={() => setShowQuickCreateModal(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center">
                                 <X size={18} />
@@ -3613,14 +3757,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                         <div className="space-y-3 text-xs">
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Tên nhà hàng / Khách hàng <span className="text-red-500">*</span>
+                                    {locale === 'en' ? <>Restaurant / Client Name <span className="text-red-500">*</span></> : <>Tên nhà hàng / Khách hàng <span className="text-red-500">*</span></>}
                                 </label>
                                 <input
                                     type="text"
                                     required
                                     value={quickCustName}
                                     onChange={e => setQuickCustName(e.target.value)}
-                                    placeholder="Ví dụ: Nhà hàng La Maison, Wine Bar 1985..."
+                                    placeholder={locale === 'en' ? 'e.g. La Maison Restaurant, Wine Bar 1985...' : 'Ví dụ: Nhà hàng La Maison, Wine Bar 1985...'}
                                     className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 text-base sm:text-xs"
                                 />
                             </div>
@@ -3628,29 +3772,29 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                        Kênh kinh doanh:
+                                        {locale === 'en' ? 'Business channel:' : 'Kênh kinh doanh:'}
                                     </label>
                                     <select
                                         value={quickCustChannel}
                                         onChange={e => setQuickCustChannel(e.target.value)}
                                         className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                     >
-                                        <option value="HORECA">HORECA (Nhà hàng/Bar)</option>
-                                        <option value="WHOLESALE_DISTRIBUTOR">Đại lý phân phối</option>
-                                        <option value="VIP_RETAIL">Bán lẻ VIP</option>
-                                        <option value="RETAIL">Bán lẻ thông thường</option>
+                                        <option value="HORECA">{locale === 'en' ? 'HORECA (Restaurant/Bar/Hotel)' : 'HORECA (Nhà hàng/Bar)'}</option>
+                                        <option value="WHOLESALE_DISTRIBUTOR">{locale === 'en' ? 'Wholesale Distributor' : 'Đại lý phân phối'}</option>
+                                        <option value="VIP_RETAIL">{locale === 'en' ? 'VIP Retail' : 'Bán lẻ VIP'}</option>
+                                        <option value="RETAIL">{locale === 'en' ? 'General Retail' : 'Bán lẻ thông thường'}</option>
                                     </select>
                                 </div>
 
                                 <div>
                                     <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                        Người liên hệ:
+                                        {locale === 'en' ? 'Contact person:' : 'Người liên hệ:'}
                                     </label>
                                     <input
                                         type="text"
                                         value={quickCustContact}
                                         onChange={e => setQuickCustContact(e.target.value)}
-                                        placeholder="Quản lý, Sommelier..."
+                                        placeholder={locale === 'en' ? 'Manager, Sommelier, Owner...' : 'Quản lý, Sommelier...'}
                                         className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                     />
                                 </div>
@@ -3658,7 +3802,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Số điện thoại liên hệ:
+                                    {locale === 'en' ? 'Contact phone number:' : 'Số điện thoại liên hệ:'}
                                 </label>
                                 <input
                                     type="text"
@@ -3671,13 +3815,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
                             <div>
                                 <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Địa chỉ điểm bán:
+                                    {locale === 'en' ? 'Outlet / Store address:' : 'Địa chỉ điểm bán:'}
                                 </label>
                                 <input
                                     type="text"
                                     value={quickCustAddress}
                                     onChange={e => setQuickCustAddress(e.target.value)}
-                                    placeholder="Số nhà, đường, phường, quận..."
+                                    placeholder={locale === 'en' ? 'Street, ward, district, city...' : 'Số nhà, đường, phường, quận...'}
                                     className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none text-base sm:text-xs"
                                 />
                             </div>
@@ -3689,7 +3833,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 onClick={() => setShowQuickCreateModal(false)}
                                 className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer min-h-[42px]"
                             >
-                                Hủy
+                                {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="submit"
@@ -3697,7 +3841,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                 className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer disabled:opacity-50 min-h-[44px]"
                             >
                                 <Plus size={15} />
-                                {creatingCustomer ? 'Đang tạo...' : 'Tạo Khách Tiềm Năng'}
+                                {creatingCustomer ? (locale === 'en' ? 'Creating...' : 'Đang tạo...') : (locale === 'en' ? 'Create Prospect' : 'Tạo Khách Tiềm Năng')}
                             </button>
                         </div>
                     </form>
@@ -3709,8 +3853,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
             {/* ============================================================== */}
             {cameraTarget && (
                 <LiveCameraModal
-                    title="Chụp Ảnh Check-in & Toạ Độ GPS"
-                    subtitle="Chụp ảnh thực tế mặt tiền hoặc quầy trưng bày rượu tại khách hàng"
+                    title={locale === 'en' ? 'Field Check-in & GPS Capture' : 'Chụp Ảnh Check-in & Toạ Độ GPS'}
+                    subtitle={locale === 'en' ? 'Capture real-time photo of storefront or wine display shelf' : 'Chụp ảnh thực tế mặt tiền hoặc quầy trưng bày rượu tại khách hàng'}
                     customerName={cameraTarget.customerName}
                     salespersonName={currentUserName}
                     locationInfo={coords.address}
@@ -3718,6 +3862,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     onClose={() => setCameraTarget(null)}
                     onOpenGpsGuide={() => setShowGpsGuideModal(true)}
                     gpsError={gpsError}
+                    locale={locale}
                 />
             )}
 
@@ -3729,6 +3874,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 onClose={() => setShowGpsGuideModal(false)}
                 onRetryGps={requestGPS}
                 gettingLocation={gettingLocation}
+                locale={locale}
             />
 
             {/* ============================================================== */}
@@ -3738,6 +3884,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 viewPhoto={viewPhoto}
                 onClose={() => setViewPhoto(null)}
                 loadingFullPhoto={loadingFullPhoto}
+                locale={locale}
             />
 
             {/* ============================================================== */}
@@ -3756,7 +3903,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'CHECKIN' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <MapPin size={18} />
                     </div>
-                    <span className="text-[10px] mt-0.5 tracking-tight">Hôm nay</span>
+                    <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Today' : 'Hôm nay'}</span>
                     {todayPlanVisits.length > 0 && (
                         <span className="absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500 text-white font-mono font-bold leading-tight shadow-xs">
                             {todayPlanVisits.length}
@@ -3776,7 +3923,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'PLANNING' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <Calendar size={18} />
                     </div>
-                    <span className="text-[10px] mt-0.5 tracking-tight">Lịch tuần</span>
+                    <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Plan' : 'Lịch tuần'}</span>
                     {planVisits.length > 0 && (
                         <span className="absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-bold leading-tight">
                             {planVisits.length}
@@ -3796,7 +3943,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'REVIEW' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <TrendingUp size={18} />
                     </div>
-                    <span className="text-[10px] mt-0.5 tracking-tight">Tổng kết</span>
+                    <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Summary' : 'Tổng kết'}</span>
                     {weeklyPlan?.status === 'SUBMITTED' && (
                         <span className="absolute top-1 right-3 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0E1A24]" />
                     )}
@@ -3814,7 +3961,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'HISTORY' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <Camera size={18} />
                     </div>
-                    <span className="text-[10px] mt-0.5 tracking-tight">Hình ảnh</span>
+                    <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Photos' : 'Hình ảnh'}</span>
                 </button>
             </div>
         </div>

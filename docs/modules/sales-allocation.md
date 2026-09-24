@@ -633,7 +633,17 @@ Tích hợp trực tiếp Web Service VNPT e-Invoice 2 chiều (Chuẩn tài li�
 | **Cảnh Báo Ngày Lập HĐ (NĐ 123 & NĐ 70)** | `src/lib/vnpt/date-utils.ts`, `src/app/dashboard/sales/SalesClient.tsx` | Kiểm tra ngày tạo đơn vs ngày xuất HĐ hôm nay. Nếu lệch tháng (khác kỳ kê khai thuế GTGT), bật cảnh báo mức `DANGER` kèm trích dẫn Điều 9 NĐ 123/2020/NĐ-CP và Điều 24 NĐ 125/2020/NĐ-CP. Nếu lệch > 2 ngày bật cảnh báo mức `WARNING`. Kế toán bắt buộc phải rà soát xác nhận trước khi đẩy nháp. |
 | **Cronjob Đồng Bộ Tự Động VNPT** | `src/app/api/cron/sync-vnpt/route.ts` | Endpoint quét tối đa 50 hóa đơn nháp, tự động gọi VNPT lấy số HĐ chính thức, mã CQT, link PDF cho cả 2 pháp nhân TA & LC, tự động ghi Audit Log và làm mới cache (Kích hoạt qua Webhook / Cron ngoài hoặc Cronjob Vercel Pro). |
 | **Ánh Xạ Tên Hóa Đơn Tự Công Bố (25.07)** | `src/lib/vnpt/product-invoice-names.ts` | Ánh xạ toàn bộ 151 SKU sang Tên xuất hóa đơn chuẩn theo hồ sơ Tự Công Bố từ file `Bảng giá tổng hợp 25.07.xlsx` (ví dụ: `Rượu vang đỏ Maison Blanche Bordeaux Rouge` thay vì tên thương mại ngắn `Maison Blanche Bordeaux Rouge`). Tự động áp dụng khi đẩy WebService VNPT và khi xuất file Excel VNPT mà không làm thay đổi tên thương mại trên giao diện Bán hàng/Kho. |
-| **UI Drawer Hóa Đơn (SODetailDrawer)** | `src/app/dashboard/sales/SalesClient.tsx` | • Khi ở trạng thái nháp: Hiển thị nút **"Kéo Số HĐ Từ VNPT"** (kèm loader), nút **"Đồng Bộ Lại"**, nút **"Xóa Bản Nháp"**.<br>• Khi đã ký số thành công: Tự động đổi sang badge xanh lá **"VNPT Đã Ký Số"**, hiển thị số HĐ chính thức, hiển thị **Mã CQT** (`MCCQThue`), nút **"📄 Tải PDF"** và nút **"🌐 Portal"** mở trực tiếp hóa đơn gốc từ VNPT. |
+#### 🚀 Session 16 — Trung Tâm Quản Lý Cơ Chế Giá & Bảng Giá Đặc Biệt Khách Hàng (23/09/2026)
 
-*Last updated: 2026-09-17 11:05 | Wine ERP v11.1*
+Tập trung hóa toàn bộ phân hệ quản lý giá khách hàng trực tiếp trên `/dashboard/price-list` (Tab `🏢 Cơ Chế & Giá Khách Hàng`):
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Cơ Chế Định Giá Động Mặc Định (Toàn Kho)** | `prisma/schema.prisma` (`basePriceType`, `defaultDiscountPct`), `customer-rules-actions.ts:resolveCustomerProductPrice` | Cho phép cấu hình cơ chế giá mặc định theo từng khách hàng (VD: Bảng giá Buôn `WHOLESALE -10%` hoặc Lẻ `RETAIL -5%`). Khi công ty nhập thêm bất kỳ chai vang mới nào về kho, hệ thống **tự động áp dụng giá theo công thức** `[Giá Gốc] × (1 - defaultDiscountPct)` mà không cần cài đặt thủ công từng chai. |
+| **Ma Trận Khách Hàng & 4 Thẻ KPI Điều Hành** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:getCustomerPricingMasterOverview` | Hiển thị bảng tổng quan toàn bộ khách hàng kèm Kênh, Cơ chế giá mặc định toàn kho, Tình trạng giá đặc biệt (số lượng chai và preview tên chai kèm giá). Đi kèm 4 thẻ KPI: Tổng Khách Hàng, Khách Có Chiết Khấu Riêng, Khách Có Giá Đặc Biệt, Đề Xuất Chờ Duyệt. |
+| **Dual-View Switcher (2 Chế Độ Xem)** | `CustomerRulesTab.tsx` | Chuyển đổi linh hoạt giữa: (1) `Theo Khách Hàng (Tổng Quan Cơ Chế & Giá)` phục vụ quản lý & sales và (2) `Toàn Bộ Quy Tắc (Audit & Duyệt Deal)` phục vụ Ban Giám Đốc rà soát, duyệt/từ chối tờ trình deal. |
+| **Slide-out Drawer So Sánh Giá Chi Tiết** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:getCustomerSpecialPriceDetail` | Drawer trượt từ bên phải hiển thị danh mục toàn bộ chai giá đặc biệt của khách hàng, đối chiếu Giá Niêm Yết vs Giá Thỏa Thuận, tỷ lệ Tiết Kiệm (%), Thời hạn hiệu lực và Người duyệt. |
+| **Modal Cấu Hình Cơ Chế Nhanh & Audit Log** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:updateCustomerDefaultPricing` | Modal điều chỉnh bảng giá gốc và % chiết khấu mặc định trực tiếp từ ma trận, tự động ghi Audit Log lịch sử thay đổi chính sách giá. |
+
+*Last updated: 2026-09-23 23:15 | Wine ERP v11.2*
 

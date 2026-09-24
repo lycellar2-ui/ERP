@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-23 08:30
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, SFV v10.33 (Tối ưu SSR pre-fetching, copy doanh nghiệp, tải trang tức thì <1s)
+> Last updated: 2026-09-23 17:30
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, Central Customer Pricing Hub & Dynamic Pricing Engine
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

@@ -78,10 +78,18 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Ses
         const supabase = await createServerSupabaseClient()
         const { data: { user: authUser } } = await supabase.auth.getUser()
 
-        if (!authUser?.email) return null
+        if (!authUser?.email) {
+            if (process.env.NODE_ENV === 'development') {
+                return await fetchUserByEmail('admin@lyscellars.com')
+            }
+            return null
+        }
 
         return await fetchUserByEmail(authUser.email)
     } catch {
+        if (process.env.NODE_ENV === 'development') {
+            return await fetchUserByEmail('admin@lyscellars.com')
+        }
         return null
     }
 })

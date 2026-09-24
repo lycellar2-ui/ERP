@@ -17,6 +17,7 @@ const mockPrisma = {
     priceListLine: { findMany: vi.fn() },
     approvalConfig: { findUnique: vi.fn() },
     product: { findMany: vi.fn() },
+    productMarginPrice: { findMany: vi.fn(), findFirst: vi.fn() },
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
@@ -26,12 +27,15 @@ const {
     getCustomerResolvedPrices,
     createCustomerPriceRule,
     updateCustomerPriceRule,
+    updateCustomerDefaultPricing,
 } = await import('@/app/dashboard/price-list/customer-rules-actions')
 
 beforeEach(() => {
     vi.clearAllMocks()
     // Default mock behavior for config to return null (using DEFAULT_CHANNEL_MAPPING)
     mockPrisma.approvalConfig.findUnique.mockResolvedValue(null)
+    mockPrisma.productMarginPrice.findMany.mockResolvedValue([])
+    mockPrisma.productMarginPrice.findFirst.mockResolvedValue(null)
 })
 
 describe('Pricing Engine: resolveCustomerProductPrice', () => {
@@ -426,3 +430,87 @@ describe('Pricing Actions: Rule Validations', () => {
         expect(res3.error).toContain('phải sau hoặc bằng')
     })
 })
+
+describe('Dynamic Customer Default Pricing Engine (Wholesale -X%, Retail -Y%)', () => {
+    const customerId = 'cust-pincho-horeca'
+    const newWineSku = 'prod-chateau-latour-2026-new'
+
+    it('should automatically compute dynamic price for newly added products with Wholesale - 10%', async () => {
+        // Customer has basePriceType = WHOLESALE and defaultDiscountPct = 10%
+        mockPrisma.customer.findUnique.mockResolvedValue({
+            id: customerId,
+            channel: 'HORECA',
+            basePriceType: 'WHOLESALE',
+            defaultDiscountPct: 10,
+            parentId: null,
+        })
+
+        // Base price in WHOLESALE_DISTRIBUTOR price list is 2,000,000 VND
+        mockPrisma.priceList.findFirst.mockResolvedValue({
+            id: 'list-ws',
+            channel: 'WHOLESALE_DISTRIBUTOR',
+            lines: [{ productId: newWineSku, unitPrice: 2000000 }]
+        })
+
+        // No individual rules created for this new bottle
+        mockPrisma.customerPriceRule.findMany.mockResolvedValue([])
+
+        const result = await resolveCustomerProductPrice(customerId, newWineSku)
+
+        // 2,000,000 - 10% = 1,800,000 VND
+        expect(result.price).toBe(1800000)
+        expect(result.source).toBe('CUSTOMER_DEFAULT_DISCOUNT')
+        expect(result.discountPct).toBe(10)
+        expect(result.basePrice).toBe(2000000)
+    })
+
+    it('should allow specific product SPECIAL_PRICE to override the default 10% discount', async () => {
+        // Customer has default discount 10%
+        mockPrisma.customer.findUnique.mockResolvedValue({
+            id: customerId,
+            channel: 'HORECA',
+            basePriceType: 'WHOLESALE',
+            defaultDiscountPct: 10,
+            parentId: null,
+        })
+
+        mockPrisma.priceList.findFirst.mockResolvedValue({
+            id: 'list-ws',
+            channel: 'WHOLESALE_DISTRIBUTOR',
+            lines: [{ productId: newWineSku, unitPrice: 2000000 }]
+        })
+
+        // But has a special agreed price for this specific bottle: 1,500,000 VND
+        mockPrisma.customerPriceRule.findMany.mockResolvedValue([{
+            id: 'rule-special-deal',
+            ruleType: 'SPECIAL_PRICE',
+            value: 1500000,
+            status: 'APPROVED',
+            startDate: new Date('2026-01-01'),
+            endDate: null,
+        }])
+
+        const result = await resolveCustomerProductPrice(customerId, newWineSku)
+
+        expect(result.price).toBe(1500000)
+        expect(result.source).toBe('SPECIAL_PRICE')
+        expect(result.ruleId).toBe('rule-special-deal')
+    })
+
+    it('should validate and reject negative or >100% default discount in updateCustomerDefaultPricing', async () => {
+        const resNegative = await updateCustomerDefaultPricing(customerId, {
+            basePriceType: 'WHOLESALE',
+            defaultDiscountPct: -5,
+        })
+        expect(resNegative.success).toBe(false)
+        expect(resNegative.error).toContain('từ 0% đến 100%')
+
+        const resExcessive = await updateCustomerDefaultPricing(customerId, {
+            basePriceType: 'WHOLESALE',
+            defaultDiscountPct: 120,
+        })
+        expect(resExcessive.success).toBe(false)
+        expect(resExcessive.error).toContain('từ 0% đến 100%')
+    })
+})
+

@@ -191,6 +191,8 @@ erDiagram
         tax_id          string
         customer_type   enum
         channel         enum
+        base_price_type string
+        default_discount_pct decimal
         payment_term    string
         credit_limit    decimal
         sales_rep_id    uuid FK

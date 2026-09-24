@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { Camera, X, RefreshCw, CheckCircle2, ShieldCheck, VideoOff, Upload, AlertCircle } from 'lucide-react'
+import { type VisitLocale, VISIT_I18N } from './i18n'
 
 interface Props {
     title: string
@@ -13,6 +14,7 @@ interface Props {
     onClose: () => void
     onOpenGpsGuide?: () => void
     gpsError?: string | null
+    locale?: VisitLocale
 }
 
 export function LiveCameraModal({
@@ -25,6 +27,7 @@ export function LiveCameraModal({
     onClose,
     onOpenGpsGuide,
     gpsError,
+    locale = 'vi',
 }: Props) {
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -49,8 +52,9 @@ export function LiveCameraModal({
         setCameraError(null)
         stopActiveStream()
 
+        const tCam = VISIT_I18N[locale].camera
         if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            setCameraError('Trình duyệt không hỗ trợ mở camera trực tiếp. Vui lòng bấm bên dưới để mở camera thiết bị.')
+            setCameraError(tCam.browserNotSupported)
             setStarting(false)
             return
         }
@@ -82,11 +86,11 @@ export function LiveCameraModal({
         } catch (e: any) {
             console.warn('Camera access warning:', e)
             if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setCameraError('Chưa được cấp quyền truy cập camera. Vui lòng cấp quyền hoặc mở camera thiết bị.')
+                setCameraError(tCam.permDenied)
             } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setCameraError('Không tìm thấy camera. Vui lòng mở camera thiết bị.')
+                setCameraError(tCam.notFound)
             } else {
-                setCameraError('Không thể mở camera trực tiếp. Vui lòng mở camera thiết bị.')
+                setCameraError(tCam.unknownError)
             }
         }
         setStarting(false)
@@ -116,12 +120,15 @@ export function LiveCameraModal({
         ctx.fillStyle = '#87CBB9'
         ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, Math.max(3, Math.round(3.5 * scale)))
 
-        // Format Vietnamese date & time
+        // Format date & time based on locale
+        const tDays = VISIT_I18N[locale].days
         const now = new Date()
-        const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+        const dayNames = [tDays.sunday, tDays.monday, tDays.tuesday, tDays.wednesday, tDays.thursday, tDays.friday, tDays.saturday]
         const dayName = dayNames[now.getDay()]
-        const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+        const timeStr = now.toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        const dateStr = locale === 'en'
+            ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+            : `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
         const fullTimeStr = `⏱️ ${timeStr} - ${dayName}, ${dateStr}`
 
         // LINE 1: THỜI GIAN (LÀM TO & RÕ RÀNG - MÀU VÀNG NỔI BẬT)
@@ -134,7 +141,7 @@ export function LiveCameraModal({
         const fontLocSize = Math.round(17 * scale)
         ctx.font = `bold ${fontLocSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
         ctx.fillStyle = '#FFFFFF'
-        const locText = locationInfo ? `📍 ${locationInfo}` : '📍 Đang dò tìm toạ độ GPS thực địa...'
+        const locText = locationInfo ? `📍 ${locationInfo}` : (locale === 'en' ? '📍 Acquiring field GPS coordinates...' : '📍 Đang dò tìm toạ độ GPS thực địa...')
         
         // Auto-truncate if location text exceeds canvas width
         let displayLoc = locText
@@ -149,8 +156,8 @@ export function LiveCameraModal({
         ctx.font = `bold ${fontMetaSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
         ctx.fillStyle = '#87CBB9'
         const metaParts = ['LYS CELLARS ERP']
-        if (customerName) metaParts.push(`Khách: ${customerName}`)
-        if (salespersonName) metaParts.push(`Sale: ${salespersonName}`)
+        if (customerName) metaParts.push(`${locale === 'en' ? 'Client' : 'Khách'}: ${customerName}`)
+        if (salespersonName) metaParts.push(`${locale === 'en' ? 'Staff' : 'Sale'}: ${salespersonName}`)
         ctx.fillText(metaParts.join(' • '), padX, canvas.height - bannerHeight + Math.round(94 * scale))
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
@@ -267,7 +274,9 @@ export function LiveCameraModal({
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{subtitle || 'Chụp ảnh xác nhận từ camera'}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {subtitle || (locale === 'en' ? 'Capture verified field photo' : 'Chụp ảnh xác nhận từ camera')}
+                            </p>
                         </div>
                     </div>
                     <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer">
@@ -299,7 +308,7 @@ export function LiveCameraModal({
                                 type="button"
                                 onClick={toggleCameraMode}
                                 className="absolute top-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur text-white hover:bg-black/80 transition"
-                                title="Đổi camera trước/sau"
+                                title={locale === 'en' ? 'Switch front/back camera' : 'Đổi camera trước/sau'}
                             >
                                 <RefreshCw size={16} />
                             </button>
@@ -313,10 +322,12 @@ export function LiveCameraModal({
                                 >
                                     <span className="flex items-center gap-1.5 truncate">
                                         <AlertCircle size={14} className="shrink-0 text-amber-100" />
-                                        <span className="truncate">Chưa có GPS ({gpsError || 'bị tắt hoặc từ chối'})</span>
+                                        <span className="truncate">
+                                            {locale === 'en' ? `GPS missing (${gpsError || 'disabled'})` : `Chưa có GPS (${gpsError || 'bị tắt hoặc từ chối'})`}
+                                        </span>
                                     </span>
                                     <span className="shrink-0 text-[11px] underline font-bold ml-1 bg-amber-700/60 px-2 py-0.5 rounded-md">
-                                        Xem cách bật ➔
+                                        {locale === 'en' ? 'How to enable ➔' : 'Xem cách bật ➔'}
                                     </span>
                                 </button>
                             )}
@@ -336,14 +347,16 @@ export function LiveCameraModal({
                     {cameraError && !capturedImage && (
                         <div className="absolute inset-0 bg-[#0D1E2B] p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
                             <VideoOff size={36} className="text-[#D4A853]" />
-                            <h4 className="text-sm font-bold text-white">Chụp Ảnh Qua Camera Thiết Bị</h4>
+                            <h4 className="text-sm font-bold text-white">
+                                {locale === 'en' ? 'Open Device Camera' : 'Chụp Ảnh Qua Camera Thiết Bị'}
+                            </h4>
                             <p className="text-xs text-[#8AAEBB] max-w-xs">{cameraError}</p>
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 className="px-5 py-3 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] flex items-center gap-2 shadow-lg"
                             >
-                                <Camera size={16} /> Mở camera thiết bị
+                                <Camera size={16} /> {locale === 'en' ? 'Open device camera' : 'Mở camera thiết bị'}
                             </button>
                         </div>
                     )}
@@ -364,9 +377,10 @@ export function LiveCameraModal({
                 {/* Live Watermark Notice */}
                 <div className="px-4 py-2 bg-[#142433] flex items-center justify-between text-[10px] text-[#8AAEBB] border-t border-[#2A4355]">
                     <span className="flex items-center gap-1">
-                        <ShieldCheck size={12} className="text-[#87CBB9]" /> Ảnh chụp tại điểm đến
+                        <ShieldCheck size={12} className="text-[#87CBB9]" /> 
+                        {locale === 'en' ? 'Field photo at destination' : 'Ảnh chụp tại điểm đến'}
                     </span>
-                    <span>Tự động ghi nhận thời gian</span>
+                    <span>{locale === 'en' ? 'Auto-recorded timestamp' : 'Tự động ghi nhận thời gian'}</span>
                 </div>
 
                 {/* Footer Controls */}
@@ -378,7 +392,7 @@ export function LiveCameraModal({
                                 onClick={() => { stopActiveStream(); onClose(); }}
                                 className="px-4 py-2.5 text-xs font-medium rounded-xl text-[#8AAEBB] hover:bg-[#1B2E3D]"
                             >
-                                Hủy
+                                {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             
                             {!cameraError ? (
@@ -389,7 +403,7 @@ export function LiveCameraModal({
                                     className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                                     style={{ background: '#87CBB9', color: '#0A1926' }}
                                 >
-                                    <Camera size={16} /> Chụp Ảnh Điểm Bán
+                                    <Camera size={16} /> {locale === 'en' ? 'Take Field Photo' : 'Chụp Ảnh Điểm Bán'}
                                 </button>
                             ) : (
                                 <button
@@ -397,7 +411,7 @@ export function LiveCameraModal({
                                     onClick={() => fileInputRef.current?.click()}
                                     className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#87CBB9] text-[#0A1926]"
                                 >
-                                    <Camera size={16} /> Mở Camera Chụp Ngay
+                                    <Camera size={16} /> {locale === 'en' ? 'Open Camera Now' : 'Mở Camera Chụp Ngay'}
                                 </button>
                             )}
                         </>
@@ -408,14 +422,14 @@ export function LiveCameraModal({
                                 onClick={retakePhoto}
                                 className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#2A4355] border border-[#2A4355]"
                             >
-                                <RefreshCw size={14} className="inline mr-1" /> Chụp Lại
+                                <RefreshCw size={14} className="inline mr-1" /> {locale === 'en' ? 'Retake' : 'Chụp Lại'}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleConfirm}
                                 className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#87CBB9] text-[#0A1926]"
                             >
-                                <CheckCircle2 size={16} /> Xác Nhận Ảnh Này
+                                <CheckCircle2 size={16} /> {locale === 'en' ? 'Confirm Photo' : 'Xác Nhận Ảnh Này'}
                             </button>
                         </>
                     )}

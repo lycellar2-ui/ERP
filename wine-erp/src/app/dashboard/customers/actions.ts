@@ -245,6 +245,8 @@ export async function getCustomerById(id: string) {
         receiverPhone: c.receiverPhone,
         deliveryNotes: c.deliveryNotes,
         orderChannel: c.orderChannel,
+        basePriceType: c.basePriceType ?? 'BY_CHANNEL',
+        defaultDiscountPct: Number(c.defaultDiscountPct ?? 0),
     }
 }
 
@@ -430,6 +432,8 @@ const customerSchema = z.object({
     vatAddress: z.string().nullable().optional(),
     vatEmail: z.string().nullable().optional(),
     channel: z.enum(['HORECA', 'CORPORATE', 'RETAIL']).default('HORECA'),
+    basePriceType: z.string().nullable().optional(),
+    defaultDiscountPct: z.number().nullable().optional(),
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
@@ -678,6 +682,8 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.receiverName !== undefined) updateData.receiverName = customerData.receiverName
         if (customerData.receiverPhone !== undefined) updateData.receiverPhone = customerData.receiverPhone
         if (customerData.deliveryNotes !== undefined) updateData.deliveryNotes = customerData.deliveryNotes
+        if (customerData.basePriceType !== undefined) updateData.basePriceType = customerData.basePriceType
+        if (customerData.defaultDiscountPct !== undefined) updateData.defaultDiscountPct = customerData.defaultDiscountPct
         if (customerData.orderChannel !== undefined) updateData.orderChannel = customerData.orderChannel
 
         const currentEntityType = customerData.entityType ?? oldCustomer.entityType

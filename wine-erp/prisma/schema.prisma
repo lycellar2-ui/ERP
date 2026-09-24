@@ -521,6 +521,8 @@ model Customer {
   vatEmail       String?               // Email Nhận Hóa Đơn VAT
   customerType  CustomerType?
   channel       SalesChannel           @default(HORECA)
+  basePriceType String?                @default("BY_CHANNEL") // BY_CHANNEL, WHOLESALE, RETAIL, HORECA
+  defaultDiscountPct Decimal           @default(0) // Chiết khấu mặc định toàn kho (VD: 10 nghĩa là Wholesale -10%)
   paymentTerm   String                 @default("NET30")
   creditLimit   Decimal                @default(0)
   creditHold    Boolean                @default(false)

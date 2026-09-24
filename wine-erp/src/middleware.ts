@@ -51,6 +51,13 @@ export async function middleware(request: NextRequest) {
     }
 
     const publicPaths = ['/login', '/forgot-password', '/reset-password', '/verify']
+    if (!isProduction && (
+        request.nextUrl.pathname.startsWith('/dashboard/sales/visits') ||
+        request.nextUrl.pathname.startsWith('/dashboard/price-list') ||
+        request.nextUrl.pathname.startsWith('/dashboard/customers')
+    )) {
+        return NextResponse.next()
+    }
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')

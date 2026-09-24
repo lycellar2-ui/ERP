@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-23 08:30 | Wine ERP v10.33 - Tối ưu tốc độ tải trang Check-in thị trường (<1s) & Chuẩn hóa copy ERP*
+*Last updated: 2026-09-23 17:30 | Wine ERP v10.36 - Nâng cấp Trung Tâm Quản Lý Giá & Cơ Chế Giá Động Khách Hàng (Customer Pricing Hub & Dynamic Price Engine)*
 

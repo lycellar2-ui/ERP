@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import Link from 'next/link'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
-    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown, FileText,
+    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown, FileText, Tag, ArrowUpRight
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -189,13 +190,15 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         receiverPhone: data.receiverPhone,
                         deliveryNotes: data.deliveryNotes,
                         orderChannel: data.orderChannel as any,
+                        basePriceType: (data as any).basePriceType || 'BY_CHANNEL',
+                        defaultDiscountPct: Number((data as any).defaultDiscountPct || 0),
                     })
                     setOfficialCodeInput('')
                     setApprovalError('')
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 })
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
@@ -1073,6 +1076,61 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
                                     onChange={e => set('deliveryNotes', e.target.value || null)}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            </div>
+
+                            {/* CƠ CHẾ GIÁ & CHIẾT KHẤU MẶC ĐỊNH */}
+                            <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.25)' }}>
+                                <div className="flex items-center justify-between flex-wrap gap-1">
+                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                                        <Tag size={14} /> Cơ Chế Giá & Chiết Khấu Mặc Định (Toàn Kho)
+                                    </p>
+                                    {isEdit && (
+                                        <Link href="/dashboard/price-list" className="text-[11px] text-[#87CBB9] hover:underline flex items-center gap-1 font-semibold">
+                                            Trung tâm giá <ArrowUpRight size={12} />
+                                        </Link>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                            Bảng giá gốc áp dụng
+                                        </label>
+                                        <select
+                                            className={inputCls}
+                                            style={inputStyle}
+                                            value={form.basePriceType ?? 'BY_CHANNEL'}
+                                            onChange={e => set('basePriceType', e.target.value)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                        >
+                                            <option value="BY_CHANNEL">Theo kênh bán hàng ({form.channel || 'HORECA'})</option>
+                                            <option value="WHOLESALE">Bảng giá Buôn (Wholesale)</option>
+                                            <option value="RETAIL">Bảng giá Lẻ (Retail)</option>
+                                            <option value="HORECA">Bảng giá HORECA</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                            Chiết khấu mặc định toàn kho (%)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            step={0.5}
+                                            className={inputCls}
+                                            style={inputStyle}
+                                            value={form.defaultDiscountPct ?? 0}
+                                            placeholder="Ví dụ: 10 (nghĩa là -10%)"
+                                            onChange={e => set('defaultDiscountPct', Number(e.target.value))}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-slate-400">
+                                    💡 <em>Tự động áp dụng cho mọi sản phẩm trong kho & hàng mới về: [Bảng giá gốc] - [X% chiết khấu].</em>
+                                </p>
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Tín Dụng & Thanh Toán</p>

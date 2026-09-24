@@ -99,15 +99,34 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
     - Lọc trạng thái check-in (Đang diễn ra / Hoàn tất).
     - Nút chuyển đổi nhanh 2 chế độ hiển thị: **Lưới ảnh (Visual Grid)** và **Bảng kê (Audit Table)**.
 
+### 10. Chuyển Đổi Ngôn Ngữ Song Ngữ (Bilingual English / Tiếng Việt)
+- **Tích Hợp Nút Chuyển Ngôn Ngữ Tại Header:**
+  - Nút chuyển đổi nhanh **`[ VI | EN ]`** được tích hợp ngay trên thanh Header chính của hệ thống (`Header.tsx`), tự động hiển thị khi người dùng truy cập trang `/dashboard/sales/visits`.
+  - Đồng bộ hoá 2 chiều tức thì giữa Header và giao diện trang thông qua Custom Event `sales_visits_locale_change` và lưu trữ `localStorage` (`sales_visits_locale`), không gây lag giật hay phải tải lại trang.
+  - Tiêu đề trên Header tự động chuyển đổi giữa `Quản Lý Check-in Thị Trường` (VI) và `Field Check-in Management` (EN).
+- **Dịch Toàn Bộ Nhãn Giao Diện & Thao Tác (UI Labels):**
+  - **4 Tab Tác Nghiệp & Mobile Bottom Bar:** Check-in Hôm Nay / Today's Check-in, Kế Hoạch Tuần / Weekly Plan, Tổng Kết Tuần / Weekly Summary, Hình Ảnh / Photos.
+  - **Bảng Giám Sát Quản Lý (Executive Matrix):** 5 Thẻ KPI, tên cột bảng đối soát (Nhân sự, Kế hoạch, Thực tế, Tỷ lệ, Báo cáo, Thao tác), modal thẩm định báo cáo và xếp loại KPI.
+  - **7 Loại Hoạt Động Định Nghĩa Sẵn (Activity Presets):** Chăm sóc định kỳ, Thử rượu & giới thiệu mẫu mới, Kiểm tra tồn kho & POS, Thu hồi công nợ, Ký kết hợp đồng, Xử lý khiếu nại, Mục đích khác.
+  - **Live Camera Viewfinder:** Toàn bộ thông báo lỗi quyền camera, watermark thời gian/toạ độ GPS, các nút Chụp ảnh/Chụp lại/Xác nhận và kính ngắm chụp.
+  - **Modal Hướng Dẫn GPS:** Đầy đủ hướng dẫn chi tiết cho cả iOS Safari và Android Chrome bằng cả 2 ngôn ngữ.
+  - **Bộ Lọc Lịch Sử & Thư Viện Ảnh:** Các bộ lọc ngày, trạng thái, chuyển đổi Lưới ảnh/Bảng kê, các huy hiệu Kế hoạch / Đột xuất.
+- **Bảo Toàn Toàn Bộ Dữ Liệu Nhập Liệu (Zero Mutation on User Data):**
+  - Giữ nguyên vẹn 100% các dữ liệu do người dùng nhập: Tên khách hàng, mã khách hàng, số điện thoại, địa chỉ, ghi chú thực địa của Sale, nội dung báo cáo tự đánh giá, và nhận xét thẩm định của Ban Quản lý.
+
 ## Files
 
 | File | Vai trò |
 |---|---|
 | `next.config.ts` | Cấu hình `Permissions-Policy: camera=(self), geolocation=(self)` cho phép trình duyệt sử dụng Camera và GPS |
+| `i18n.ts` | Từ điển song ngữ (VI/EN) chuẩn hóa toàn bộ nhãn UI, preset hoạt động, ngày trong tuần, hook `useVisitLocale()`, và bộ phát sự kiện đồng bộ `sales_visits_locale_change` |
+| `Header.tsx` | Thanh Header hệ thống tích hợp cụm nút chuyển ngữ `[ VI | EN ]` hiển thị riêng khi truy cập module Check-in, đồng bộ tiêu đề trang song ngữ |
 | `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()` |
 | `SalesVisitsClient.tsx` | Client component: 4 tab tác nghiệp Sales (Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh), Bảng Giám Sát Thị Trường Toàn Đội (Quản lý/CEO), tích hợp Offline Draft Queue và Modal hướng dẫn bật GPS |
-| `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, tạo micro-thumbnail song song, watermark chân thực, cảnh báo GPS trong kính ngắm, hỗ trợ native camera fallback |
+| `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, tạo micro-thumbnail song song, watermark chân thực, cảnh báo GPS trong kính ngắm, hỗ trợ native camera fallback, hỗ trợ đa ngôn ngữ VI/EN |
 | `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ khách hàng tối ưu (không query thừa) |
+| `docs/user-guide-sales-field-visit.md` | Sổ tay hướng dẫn sử dụng thực chiến (SOP) chi tiết cho Sales Rep (5 bước check-in, offline hầm rượu, kế hoạch tuần) & Quản lý (5 KPI, thẩm định GPS watermark, duyệt KPI) |
+| `docs/Huong_Dan_Su_Dung_Checkin_Wine_ERP.pdf` | File hướng dẫn sử dụng định dạng PDF 7 trang A4 chuẩn in ấn doanh nghiệp kèm toàn bộ ảnh chụp màn hình thật từ hệ thống |
 
 ## Prisma Models
 

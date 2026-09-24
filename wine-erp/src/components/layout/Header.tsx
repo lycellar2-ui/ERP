@@ -9,6 +9,7 @@ import { signOut } from '@/app/login/actions'
 import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
 import { toast } from 'sonner'
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/lib/notifications'
+import { getVisitLocale, setVisitLocale, VISIT_LOCALE_CHANGE_EVENT, type VisitLocale } from '@/app/dashboard/sales/visits/i18n'
 
 interface HeaderProps {
     title?: string
@@ -61,6 +62,23 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
     const [showMyAccount, setShowMyAccount] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const [visitLocale, setVisitLocaleState] = useState<VisitLocale>('vi')
+
+    useEffect(() => {
+        setVisitLocaleState(getVisitLocale())
+        const handleLocaleChange = (e: Event) => {
+            const customEvent = e as CustomEvent<VisitLocale>
+            if (customEvent.detail) setVisitLocaleState(customEvent.detail)
+            else setVisitLocaleState(getVisitLocale())
+        }
+        window.addEventListener(VISIT_LOCALE_CHANGE_EVENT, handleLocaleChange)
+        return () => window.removeEventListener(VISIT_LOCALE_CHANGE_EVENT, handleLocaleChange)
+    }, [])
+
+    const handleSetVisitLocale = (newLoc: VisitLocale) => {
+        setVisitLocaleState(newLoc)
+        setVisitLocale(newLoc)
+    }
 
     const fetchNotifications = useCallback(async (isLoadMore = false) => {
         if (loadingNoti) return
@@ -165,7 +183,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/warehouse', title: 'Kho Hàng' },
             { path: '/dashboard/transfers', title: 'Chuyển Kho' },
             { path: '/dashboard/stock-count', title: 'Kiểm Kê' },
-            { path: '/dashboard/sales/visits', title: 'Quản Lý Check-in Thị Trường' },
+            { path: '/dashboard/sales/visits', title: visitLocale === 'en' ? 'Field Check-in Management' : 'Quản Lý Check-in Thị Trường' },
             { path: '/dashboard/sales', title: 'Đơn Bán Hàng' },
             { path: '/dashboard/quotations', title: 'Báo Giá' },
             { path: '/dashboard/price-list', title: 'Bảng Giá' },
@@ -233,6 +251,36 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
             {/* Right side */}
             <div className="flex items-center gap-2">
+                {/* Language Switcher for Field Check-in */}
+                {pathname.startsWith('/dashboard/sales/visits') && (
+                    <div className="flex items-center p-0.5 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-[11px] font-bold shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => handleSetVisitLocale('vi')}
+                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                visitLocale === 'vi'
+                                    ? 'bg-[#87CBB9] text-[#0A1926] font-black shadow-xs'
+                                    : 'text-[#8AAEBB] hover:text-white'
+                            }`}
+                            title="Tiếng Việt"
+                        >
+                            VI
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleSetVisitLocale('en')}
+                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                visitLocale === 'en'
+                                    ? 'bg-[#87CBB9] text-[#0A1926] font-black shadow-xs'
+                                    : 'text-[#8AAEBB] hover:text-white'
+                            }`}
+                            title="English"
+                        >
+                            EN
+                        </button>
+                    </div>
+                )}
+
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
                     <button

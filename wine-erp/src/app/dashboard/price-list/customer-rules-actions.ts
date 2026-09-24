@@ -345,7 +345,7 @@ export async function deleteCustomerPriceRule(id: string): Promise<{ success: bo
 // ─── CORE PRICE RESOLUTION ENGINE ────────────────
 export type ResolvedPrice = {
     price: number
-    source: 'SPECIAL_PRICE' | 'FIXED_PRICE' | 'FIXED_DISCOUNT' | 'CHANNEL_BASE' | 'RETAIL_FALLBACK' | 'DEFAULT_ZERO'
+    source: 'SPECIAL_PRICE' | 'FIXED_PRICE' | 'FIXED_DISCOUNT' | 'CUSTOMER_DEFAULT_DISCOUNT' | 'CHANNEL_BASE' | 'RETAIL_FALLBACK' | 'DEFAULT_ZERO'
     ruleId?: string
     discountPct?: number
     basePrice?: number
@@ -369,13 +369,23 @@ export async function resolveCustomerProductPrice(
     // 2. Fetch Customer Info
     const customer = await prisma.customer.findUnique({
         where: { id: customerId },
-        select: { channel: true, parentId: true },
+        select: { channel: true, parentId: true, basePriceType: true, defaultDiscountPct: true },
     })
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
+    const defaultDiscountPct = Number(customer?.defaultDiscountPct ?? 0)
 
-    // 3. Load active mappings
-    const mapping = await getChannelPriceMapping()
-    const targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
+    // 3. Load active mappings or customer basePriceType
+    let targetChannel = 'DIRECT_INDIVIDUAL'
+    if (customer?.basePriceType === 'WHOLESALE') {
+        targetChannel = 'WHOLESALE_DISTRIBUTOR'
+    } else if (customer?.basePriceType === 'RETAIL') {
+        targetChannel = 'DIRECT_INDIVIDUAL'
+    } else if (customer?.basePriceType === 'HORECA') {
+        targetChannel = 'HORECA'
+    } else {
+        const mapping = await getChannelPriceMapping()
+        targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
+    }
 
     // 4. Fetch base price from price lists
     const basePrice = await getChannelBasePrice(productId, targetChannel, now)
@@ -413,6 +423,8 @@ export async function resolveCustomerProductPrice(
             price: Number(specialRule.value),
             source: 'SPECIAL_PRICE',
             ruleId: specialRule.id,
+            basePrice: basePrice ?? undefined,
+            discountPct: basePrice && basePrice > 0 ? Math.round(((basePrice - Number(specialRule.value)) / basePrice) * 100) : undefined,
         }
     }
 
@@ -423,6 +435,8 @@ export async function resolveCustomerProductPrice(
             price: Number(fixedPriceRule.value),
             source: 'FIXED_PRICE',
             ruleId: fixedPriceRule.id,
+            basePrice: basePrice ?? undefined,
+            discountPct: basePrice && basePrice > 0 ? Math.round(((basePrice - Number(fixedPriceRule.value)) / basePrice) * 100) : undefined,
         }
     }
 
@@ -440,7 +454,20 @@ export async function resolveCustomerProductPrice(
         }
     }
 
-    // Priority 4: Channel Base
+    // Priority 4: Dynamic Customer Default Discount (e.g. Wholesale -10%)
+    if (defaultDiscountPct > 0) {
+        if (basePrice !== null) {
+            const price = Math.round(basePrice * (1 - defaultDiscountPct / 100))
+            return {
+                price,
+                source: 'CUSTOMER_DEFAULT_DISCOUNT',
+                discountPct: defaultDiscountPct,
+                basePrice,
+            }
+        }
+    }
+
+    // Priority 5: Channel Base
     if (basePrice !== null) {
         return {
             price: basePrice,
@@ -448,21 +475,38 @@ export async function resolveCustomerProductPrice(
         }
     }
 
-    // Priority 4.5: Wholesale Margin Fallback for HORECA/Wholesale customers
+    // Priority 5.5: Wholesale Margin Fallback for HORECA/Wholesale customers
     const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
     if (isWholesaleChannel) {
         const margin = await prisma.productMarginPrice.findFirst({ where: { productId } })
         if (margin && Number(margin.wholesalePrice) > 0) {
+            const rawWholesale = Number(margin.wholesalePrice)
+            if (defaultDiscountPct > 0) {
+                return {
+                    price: Math.round(rawWholesale * (1 - defaultDiscountPct / 100)),
+                    source: 'CUSTOMER_DEFAULT_DISCOUNT',
+                    discountPct: defaultDiscountPct,
+                    basePrice: rawWholesale,
+                }
+            }
             return {
-                price: Number(margin.wholesalePrice),
+                price: rawWholesale,
                 source: 'CHANNEL_BASE',
             }
         }
     }
 
-    // Priority 5: Retail Fallback
+    // Priority 6: Retail Fallback
     const retailPrice = await getChannelBasePrice(productId, 'DIRECT_INDIVIDUAL', now)
     if (retailPrice !== null) {
+        if (defaultDiscountPct > 0) {
+            return {
+                price: Math.round(retailPrice * (1 - defaultDiscountPct / 100)),
+                source: 'CUSTOMER_DEFAULT_DISCOUNT',
+                discountPct: defaultDiscountPct,
+                basePrice: retailPrice,
+            }
+        }
         return {
             price: retailPrice,
             source: 'RETAIL_FALLBACK',
@@ -569,11 +613,22 @@ export async function getCustomerResolvedPrices(
     // 3. Get customer channel and target price list
     const customer = await prisma.customer.findUnique({
         where: { id: customerId },
-        select: { channel: true, parentId: true }
+        select: { channel: true, parentId: true, basePriceType: true, defaultDiscountPct: true }
     })
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
-    const mapping = await getChannelPriceMapping()
-    const targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
+    const defaultDiscountPct = Number(customer?.defaultDiscountPct ?? 0)
+
+    let targetChannel = 'DIRECT_INDIVIDUAL'
+    if (customer?.basePriceType === 'WHOLESALE') {
+        targetChannel = 'WHOLESALE_DISTRIBUTOR'
+    } else if (customer?.basePriceType === 'RETAIL') {
+        targetChannel = 'DIRECT_INDIVIDUAL'
+    } else if (customer?.basePriceType === 'HORECA') {
+        targetChannel = 'HORECA'
+    } else {
+        const mapping = await getChannelPriceMapping()
+        targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
+    }
     const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
 
     // 4. Fetch target channel base price list lines
@@ -616,6 +671,21 @@ export async function getCustomerResolvedPrices(
             results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
         } else if (marginRetailMap[pId] !== undefined && marginRetailMap[pId] > 0) {
             results[pId] = { price: marginRetailMap[pId], source: 'RETAIL_FALLBACK' }
+        }
+    }
+
+    // 4.5 Apply dynamic customer default discount across all base prices
+    if (defaultDiscountPct > 0) {
+        for (const pId of Object.keys(results)) {
+            const current = results[pId]
+            if ((current.source === 'CHANNEL_BASE' || current.source === 'RETAIL_FALLBACK') && current.price > 0) {
+                results[pId] = {
+                    price: Math.round(current.price * (1 - defaultDiscountPct / 100)),
+                    source: 'CUSTOMER_DEFAULT_DISCOUNT',
+                    discountPct: defaultDiscountPct,
+                    basePrice: current.price,
+                }
+            }
         }
     }
 
@@ -851,3 +921,279 @@ export async function cloneCustomerPriceRules(input: {
         return { success: false, error: err.message }
     }
 }
+
+// ─── CUSTOMER PRICING MASTER OVERVIEW & MANAGEMENT (CENTRAL HUB) ───
+
+export type CustomerPricingMasterRow = {
+    id: string
+    code: string
+    name: string
+    shortName: string | null
+    channel: string
+    brandGroup: string | null
+    basePriceType: string // 'BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA'
+    defaultDiscountPct: number
+    specialRuleCount: number
+    pendingRuleCount: number
+    activeRulesSummary: {
+        id: string
+        productName: string
+        skuCode: string
+        ruleType: string
+        value: number
+        status: string
+        startDate: Date
+        endDate: Date | null
+    }[]
+    updatedAt: Date
+}
+
+export type CustomerPricingMasterResult = {
+    customers: CustomerPricingMasterRow[]
+    kpis: {
+        totalCustomers: number
+        customPolicyCount: number
+        hasSpecialPriceCount: number
+        pendingRulesCount: number
+    }
+}
+
+export async function getCustomerPricingMasterOverview(filters?: {
+    search?: string
+    channel?: string
+    filterType?: 'ALL' | 'HAS_SPECIAL' | 'HAS_CUSTOM_DISCOUNT' | 'PENDING'
+}): Promise<CustomerPricingMasterResult> {
+    const where: any = { deletedAt: null }
+    if (filters?.channel && filters.channel !== 'ALL') {
+        where.channel = filters.channel
+    }
+    if (filters?.search && filters.search.trim()) {
+        const s = filters.search.trim()
+        where.OR = [
+            { name: { contains: s, mode: 'insensitive' } },
+            { code: { contains: s, mode: 'insensitive' } },
+            { shortName: { contains: s, mode: 'insensitive' } },
+        ]
+    }
+
+    const customers = await prisma.customer.findMany({
+        where,
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            shortName: true,
+            channel: true,
+            brandGroup: true,
+            basePriceType: true,
+            defaultDiscountPct: true,
+            updatedAt: true,
+            priceRules: {
+                select: {
+                    id: true,
+                    ruleType: true,
+                    value: true,
+                    status: true,
+                    startDate: true,
+                    endDate: true,
+                    product: { select: { productName: true, skuCode: true } }
+                },
+                orderBy: { createdAt: 'desc' }
+            }
+        },
+        orderBy: [{ channel: 'asc' }, { name: 'asc' }]
+    })
+
+    const now = new Date()
+
+    let totalCustomers = customers.length
+    let customPolicyCount = 0
+    let hasSpecialPriceCount = 0
+    let pendingRulesCount = 0
+
+    const rows: CustomerPricingMasterRow[] = []
+
+    for (const c of customers) {
+        const approvedRules = c.priceRules.filter(r => r.status === 'APPROVED' && r.startDate <= now && (!r.endDate || r.endDate >= now))
+        const pendingRules = c.priceRules.filter(r => r.status === 'PENDING_APPROVAL')
+
+        const basePriceType = c.basePriceType || 'BY_CHANNEL'
+        const defaultDiscountPct = Number(c.defaultDiscountPct || 0)
+
+        const isCustomPolicy = defaultDiscountPct > 0 || (basePriceType !== 'BY_CHANNEL')
+        const hasSpecialPrice = approvedRules.length > 0
+
+        if (isCustomPolicy) customPolicyCount++
+        if (hasSpecialPrice) hasSpecialPriceCount++
+        pendingRulesCount += pendingRules.length
+
+        // Filter by filterType if selected
+        if (filters?.filterType === 'HAS_SPECIAL' && !hasSpecialPrice) continue
+        if (filters?.filterType === 'HAS_CUSTOM_DISCOUNT' && !isCustomPolicy) continue
+        if (filters?.filterType === 'PENDING' && pendingRules.length === 0) continue
+
+        rows.push({
+            id: c.id,
+            code: c.code,
+            name: c.name,
+            shortName: c.shortName,
+            channel: c.channel,
+            brandGroup: c.brandGroup,
+            basePriceType,
+            defaultDiscountPct,
+            specialRuleCount: approvedRules.length,
+            pendingRuleCount: pendingRules.length,
+            activeRulesSummary: c.priceRules.slice(0, 5).map(r => ({
+                id: r.id,
+                productName: r.product.productName,
+                skuCode: r.product.skuCode,
+                ruleType: r.ruleType,
+                value: Number(r.value),
+                status: r.status,
+                startDate: r.startDate,
+                endDate: r.endDate,
+            })),
+            updatedAt: c.updatedAt
+        })
+    }
+
+    return {
+        customers: rows,
+        kpis: {
+            totalCustomers,
+            customPolicyCount,
+            hasSpecialPriceCount,
+            pendingRulesCount,
+        }
+    }
+}
+
+export async function updateCustomerDefaultPricing(
+    customerId: string,
+    input: {
+        basePriceType: string
+        defaultDiscountPct: number
+    }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requirePermission('SLS', 'CREATE')
+        if (input.defaultDiscountPct < 0 || input.defaultDiscountPct > 100) {
+            return { success: false, error: 'Mức chiết khấu mặc định phải từ 0% đến 100%' }
+        }
+
+        const validTypes = ['BY_CHANNEL', 'WHOLESALE', 'RETAIL', 'HORECA']
+        if (!validTypes.includes(input.basePriceType)) {
+            return { success: false, error: 'Loại bảng giá gốc không hợp lệ' }
+        }
+
+        const oldCustomer = await prisma.customer.findUnique({
+            where: { id: customerId },
+            select: { name: true, code: true, basePriceType: true, defaultDiscountPct: true }
+        })
+
+        if (!oldCustomer) {
+            return { success: false, error: 'Không tìm thấy khách hàng' }
+        }
+
+        await prisma.customer.update({
+            where: { id: customerId },
+            data: {
+                basePriceType: input.basePriceType,
+                defaultDiscountPct: input.defaultDiscountPct,
+            }
+        })
+
+        logAudit({
+            userId: user.id,
+            userName: user.name,
+            action: 'UPDATE',
+            entityType: 'CustomerPricingPolicy',
+            entityId: customerId,
+            oldValue: { basePriceType: oldCustomer.basePriceType, defaultDiscountPct: Number(oldCustomer.defaultDiscountPct) },
+            newValue: { basePriceType: input.basePriceType, defaultDiscountPct: input.defaultDiscountPct },
+        })
+
+        revalidateCache('pricing')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/customers')
+        revalidatePath('/dashboard/sales')
+
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getCustomerSpecialPriceDetail(customerId: string) {
+    const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            channel: true,
+            basePriceType: true,
+            defaultDiscountPct: true,
+        }
+    })
+    if (!customer) return null
+
+    const rules = await prisma.customerPriceRule.findMany({
+        where: { customerId },
+        include: {
+            product: { select: { id: true, productName: true, skuCode: true } },
+            requester: { select: { name: true, email: true } },
+            approver: { select: { name: true, email: true } },
+        },
+        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }]
+    })
+
+    const now = new Date()
+    const mapping = await getChannelPriceMapping()
+    const targetChannel = customer.basePriceType === 'WHOLESALE' ? 'WHOLESALE_DISTRIBUTOR'
+        : customer.basePriceType === 'RETAIL' ? 'DIRECT_INDIVIDUAL'
+        : customer.basePriceType === 'HORECA' ? 'HORECA'
+        : mapping[customer.channel] ?? 'DIRECT_INDIVIDUAL'
+
+    const detailedRules = await Promise.all(rules.map(async r => {
+        const basePrice = await getChannelBasePrice(r.productId, targetChannel, now)
+        let savingsPct = 0
+        let effectivePrice = Number(r.value)
+        if (r.ruleType === 'FIXED_DISCOUNT') {
+            savingsPct = Number(r.value)
+            if (basePrice) effectivePrice = Math.round(basePrice * (1 - savingsPct / 100))
+        } else if (basePrice && basePrice > 0) {
+            savingsPct = Math.round(((basePrice - effectivePrice) / basePrice) * 100 * 10) / 10
+        }
+
+        return {
+            id: r.id,
+            productId: r.productId,
+            productName: r.product.productName,
+            skuCode: r.product.skuCode,
+            ruleType: r.ruleType,
+            value: Number(r.value),
+            basePrice,
+            effectivePrice,
+            savingsPct,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            status: r.status,
+            requesterName: r.requester.name ?? r.requester.email,
+            approverName: r.approver ? (r.approver.name ?? r.approver.email) : null,
+            approvedAt: r.approvedAt,
+            notes: r.notes,
+            isCurrentlyActive: r.status === 'APPROVED' && r.startDate <= now && (!r.endDate || r.endDate >= now)
+        }
+    }))
+
+    return {
+        customer: {
+            ...customer,
+            defaultDiscountPct: Number(customer.defaultDiscountPct || 0),
+            basePriceType: customer.basePriceType || 'BY_CHANNEL'
+        },
+        rules: detailedRules
+    }
+}
+

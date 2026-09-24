@@ -132,13 +132,13 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                        {activeTab === 'general' ? 'Bảng Giá Niêm Yết (PRC)' : activeTab === 'customer' ? 'Chính Sách Giá Khách Hàng (Customer Pricing)' : 'Cấu Hình Ánh Xạ Kênh Giá Mặc Định'}
+                        {activeTab === 'general' ? 'Bảng Giá Niêm Yết (PRC)' : activeTab === 'customer' ? 'Trung Tâm Cơ Chế & Giá Khách Hàng (Customer Pricing Hub)' : 'Cấu Hình Ánh Xạ Kênh Giá Mặc Định'}
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
                         {activeTab === 'general' 
                             ? 'Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp' 
                             : activeTab === 'customer'
-                            ? 'Bảng giá đặc biệt và chiết khấu phân bổ cho từng khách hàng cụ thể'
+                            ? 'Quản lý cơ chế giá mặc định (Wholesale -X%, Retail -Y%) và toàn bộ danh mục giá đặc biệt riêng của từng khách hàng'
                             : 'Phân bổ bảng giá niêm yết mặc định cho từng nhóm đối tượng khách hàng khi không có giá đặc biệt'}
                     </p>
                 </div>
@@ -175,7 +175,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                         borderColor: activeTab === 'customer' ? '#87CBB9' : 'transparent',
                     }}
                 >
-                    Giá Khách Hàng
+                    🏢 Cơ Chế & Giá Khách Hàng
                 </button>
                 <button
                     onClick={() => setActiveTab('mapping')}
