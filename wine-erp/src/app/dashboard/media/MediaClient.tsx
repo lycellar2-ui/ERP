@@ -30,14 +30,14 @@ function StatCard({ label, value, icon: Icon, accent }: {
 }) {
     return (
         <div className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
                 style={{ background: `${accent}20` }}>
                 <Icon size={20} style={{ color: accent }} />
             </div>
             <div>
-                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
+                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
             </div>
         </div>
     )
@@ -125,16 +125,16 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h1 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Thư Viện Ảnh
                     </h1>
-                    <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-1" style={{ color: '#64748B' }}>
                         Quản lý tất cả hình ảnh sản phẩm — Marketing Module
                     </p>
                 </div>
                 <button onClick={() => setShowUpload(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     <Upload size={16} /> Upload ảnh
                 </button>
             </div>
@@ -150,20 +150,20 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Filters */}
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 min-w-[250px] relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
                         placeholder="Tìm theo tên SP hoặc SKU..."
                         className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                     />
                 </div>
 
                 <select value={typeFilter} onChange={e => handleTypeFilter(e.target.value)}
                     className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                     <option value="">Tất cả loại</option>
                     {Object.entries(MEDIA_TYPE_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v.emoji} {v.label}</option>
@@ -178,15 +178,15 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                     </button>
                 )}
 
-                <span className="text-xs ml-auto" style={{ color: '#4A6A7A' }}>
+                <span className="text-xs ml-auto" style={{ color: '#64748B' }}>
                     {total} ảnh · Trang {page}/{totalPages || 1}
                 </span>
             </div>
 
             {/* Select all bar */}
             {items.length > 0 && (
-                <div className="flex items-center gap-3 text-xs" style={{ color: '#4A6A7A' }}>
-                    <button onClick={selectAll} className="flex items-center gap-1.5 hover:text-[#87CBB9] transition-colors">
+                <div className="flex items-center gap-3 text-xs" style={{ color: '#64748B' }}>
+                    <button onClick={selectAll} className="flex items-center gap-1.5 hover:text-[#0891B2] transition-colors">
                         {selected.size === items.length ? <CheckSquare size={14} /> : <Square size={14} />}
                         {selected.size === items.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                     </button>
@@ -197,7 +197,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Media Grid */}
             {loading ? (
                 <div className="flex items-center justify-center h-48">
-                    <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                    <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
                 </div>
             ) : items.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -205,8 +205,8 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                         <div key={item.id}
                             className="group relative rounded-xl overflow-hidden cursor-pointer transition-all"
                             style={{
-                                border: selected.has(item.id) ? '2px solid #87CBB9' : '1px solid #2A4355',
-                                background: '#1B2E3D',
+                                border: selected.has(item.id) ? '2px solid #87CBB9' : '1px solid #E2E8F0',
+                                background: '#FFFFFF',
                                 aspectRatio: '1',
                             }}>
                             <img src={item.thumbnailUrl || item.url} alt={item.product.productName}
@@ -216,31 +216,31 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                             {/* Primary badge */}
                             {item.isPrimary && (
                                 <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
-                                    style={{ background: 'rgba(135,203,185,0.9)', color: '#0A1926' }}>
+                                    style={{ background: 'rgba(135,203,185,0.9)', color: '#0F172A' }}>
                                     <Star size={8} /> Chính
                                 </div>
                             )}
 
                             {/* Type badge */}
                             <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-semibold"
-                                style={{ background: 'rgba(10,25,38,0.8)', color: '#8AAEBB' }}>
+                                style={{ background: 'rgba(15, 23, 42, 0.45)', color: '#475569' }}>
                                 {MEDIA_TYPE_LABELS[item.mediaType]?.emoji ?? '📸'}
                             </div>
 
                             {/* Select checkbox */}
                             <button onClick={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
                                 className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                style={{ color: selected.has(item.id) ? '#87CBB9' : '#8AAEBB' }}>
+                                style={{ color: selected.has(item.id) ? '#87CBB9' : '#475569' }}>
                                 {!item.isPrimary && (selected.has(item.id) ? <CheckSquare size={16} /> : <Square size={16} />)}
                             </button>
 
                             {/* Product name overlay */}
                             <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                 style={{ background: 'linear-gradient(transparent, rgba(10,25,38,0.9))' }}>
-                                <p className="text-[10px] font-semibold truncate" style={{ color: '#E8F1F2' }}>
+                                <p className="text-[10px] font-semibold truncate" style={{ color: '#0F172A' }}>
                                     {item.product.productName}
                                 </p>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs" style={{ color: '#64748B' }}>
                                     {item.product.skuCode}
                                 </p>
                             </div>
@@ -251,7 +251,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                                 <div className="pointer-events-auto flex gap-2">
                                     <button onClick={(e) => { e.stopPropagation(); setLightbox(item) }}
                                         className="p-2 rounded-lg" title="Xem lớn"
-                                        style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2' }}>
                                         <ExternalLink size={14} />
                                     </button>
                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
@@ -266,12 +266,12 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                 </div>
             ) : (
                 <div className="flex flex-col items-center gap-3 py-16 rounded-xl"
-                    style={{ background: '#142433', border: '1px dashed #2A4355' }}>
-                    <ImageIcon size={48} style={{ color: '#2A4355' }} />
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có hình ảnh nào</p>
+                    style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
+                    <ImageIcon size={48} style={{ color: '#E2E8F0' }} />
+                    <p className="text-sm" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
                     <button onClick={() => setShowUpload(true)}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold mt-2"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         <Upload size={14} /> Upload ảnh đầu tiên
                     </button>
                 </div>
@@ -286,9 +286,9 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                         <button key={p} onClick={() => handlePage(p)}
                             className="w-8 h-8 rounded-lg text-xs font-bold transition-all"
                             style={{
-                                background: p === page ? '#87CBB9' : '#1B2E3D',
-                                color: p === page ? '#0A1926' : '#4A6A7A',
-                                border: `1px solid ${p === page ? '#87CBB9' : '#2A4355'}`,
+                                background: p === page ? '#87CBB9' : '#FFFFFF',
+                                color: p === page ? '#F8FAFC' : '#64748B',
+                                border: `1px solid ${p === page ? '#87CBB9' : '#E2E8F0'}`,
                             }}>
                             {p}
                         </button>
@@ -306,21 +306,21 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                             className="max-w-full max-h-[80vh] rounded-xl object-contain" />
                         <div className="mt-3 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                                     {lightbox.product.productName}
                                 </p>
-                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
                                     {lightbox.product.skuCode} · {MEDIA_TYPE_LABELS[lightbox.mediaType]?.label ?? lightbox.mediaType}
                                     {lightbox.isPrimary && ' · ⭐ Ảnh chính'}
                                 </p>
                             </div>
                             <div className="flex gap-2">
                                 <a href={lightbox.url} target="_blank" rel="noopener noreferrer"
-                                    className="p-2 rounded-lg" style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9' }}>
+                                    className="p-2 rounded-lg" style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2' }}>
                                     <ExternalLink size={16} />
                                 </a>
                                 <button onClick={() => setLightbox(null)}
-                                    className="p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)', color: '#E8F1F2' }}>
+                                    className="p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)', color: '#0F172A' }}>
                                     <X size={16} />
                                 </button>
                             </div>
@@ -397,13 +397,13 @@ function UploadModal({ onClose }: { onClose: () => void }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ background: 'rgba(10,5,2,0.8)' }} onClick={onClose}>
             <div className="w-full max-w-md rounded-2xl p-6 space-y-5"
-                style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}
+                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                         Upload Ảnh Sản Phẩm
                     </h3>
-                    <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: '#4A6A7A' }}>
+                    <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: '#64748B' }}>
                         <X size={16} />
                     </button>
                 </div>
@@ -411,10 +411,10 @@ function UploadModal({ onClose }: { onClose: () => void }) {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5"
-                            style={{ color: '#4A6A7A' }}>Sản phẩm *</label>
+                            style={{ color: '#64748B' }}>Sản phẩm *</label>
                         <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}
                             className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             <option value="">— Chọn sản phẩm —</option>
                             {products.map(p => (
                                 <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
@@ -424,10 +424,10 @@ function UploadModal({ onClose }: { onClose: () => void }) {
 
                     <div>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5"
-                            style={{ color: '#4A6A7A' }}>Loại ảnh</label>
+                            style={{ color: '#64748B' }}>Loại ảnh</label>
                         <select value={mediaType} onChange={e => setMediaType(e.target.value)}
                             className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             {Object.entries(MEDIA_TYPE_LABELS).map(([k, v]) => (
                                 <option key={k} value={k}>{v.emoji} {v.label}</option>
                             ))}
@@ -436,14 +436,14 @@ function UploadModal({ onClose }: { onClose: () => void }) {
 
                     <label className={`flex flex-col items-center justify-center gap-3 py-8 rounded-xl cursor-pointer transition-all
                         ${!selectedProduct ? 'opacity-50 pointer-events-none' : ''}`}
-                        style={{ background: '#1B2E3D', border: '2px dashed #2A4355' }}>
+                        style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0' }}>
                         {uploading ? (
-                            <><Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
-                                <span className="text-xs" style={{ color: '#87CBB9' }}>Đang upload...</span></>
+                            <><Loader2 size={28} className="animate-spin" style={{ color: '#0891B2' }} />
+                                <span className="text-xs" style={{ color: '#0891B2' }}>Đang upload...</span></>
                         ) : (
-                            <><Upload size={28} style={{ color: '#4A6A7A' }} />
-                                <span className="text-xs" style={{ color: '#4A6A7A' }}>Click hoặc kéo thả ảnh vào đây</span>
-                                <span className="text-[10px]" style={{ color: '#2A4355' }}>Hỗ trợ nhiều file · JPG, PNG, WebP · Max 10MB</span></>
+                            <><Upload size={28} style={{ color: '#64748B' }} />
+                                <span className="text-xs" style={{ color: '#64748B' }}>Click hoặc kéo thả ảnh vào đây</span>
+                                <span className="text-[10px]" style={{ color: '#E2E8F0' }}>Hỗ trợ nhiều file · JPG, PNG, WebP · Max 10MB</span></>
                         )}
                         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp"
                             multiple className="hidden" onChange={handleUpload} disabled={!selectedProduct || uploading} />

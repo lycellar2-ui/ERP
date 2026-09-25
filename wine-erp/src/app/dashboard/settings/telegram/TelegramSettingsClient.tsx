@@ -38,7 +38,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                 <Link
                     href="/dashboard/settings"
                     style={{
-                        color: '#8AAEBB',
+                        color: '#475569',
                         textDecoration: 'none',
                         fontSize: '14px',
                         display: 'inline-flex',
@@ -50,7 +50,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                     ← Quay lại Cài Đặt
                 </Link>
                 <h1 style={{
-                    color: '#E8F1F2',
+                    color: '#0F172A',
                     fontSize: '28px',
                     fontWeight: 700,
                     margin: '0 0 8px 0',
@@ -60,7 +60,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                 }}>
                     🤖 Telegram Bot
                 </h1>
-                <p style={{ color: '#8AAEBB', margin: 0 }}>
+                <p style={{ color: '#475569', margin: 0 }}>
                     Quản lý kết nối Telegram Bot cho CEO Dashboard & thông báo tự động
                 </p>
             </div>
@@ -74,7 +74,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
             }}>
                 {/* Connection Status */}
                 <div style={{
-                    background: '#1B2E3D',
+                    background: '#FFFFFF',
                     borderRadius: '12px',
                     padding: '20px',
                     border: `1px solid ${status.configured ? '#5BA88A33' : '#E0525233'}`,
@@ -92,16 +92,16 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             background: status.configured ? '#5BA88A' : '#E05252',
                             boxShadow: `0 0 8px ${status.configured ? '#5BA88A' : '#E05252'}`,
                         }} />
-                        <span style={{ color: '#8AAEBB', fontSize: '13px', fontWeight: 600 }}>BOT TOKEN</span>
+                        <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>BOT TOKEN</span>
                     </div>
-                    <div style={{ color: '#E8F1F2', fontSize: '16px', fontWeight: 600 }}>
+                    <div style={{ color: '#0F172A', fontSize: '16px', fontWeight: 600 }}>
                         {status.configured ? '✅ Đã cấu hình' : '❌ Chưa cấu hình'}
                     </div>
                 </div>
 
                 {/* Webhook Status */}
                 <div style={{
-                    background: '#1B2E3D',
+                    background: '#FFFFFF',
                     borderRadius: '12px',
                     padding: '20px',
                     border: `1px solid ${status.webhookActive ? '#5BA88A33' : '#D4A85333'}`,
@@ -119,14 +119,14 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             background: status.webhookActive ? '#5BA88A' : '#D4A853',
                             boxShadow: `0 0 8px ${status.webhookActive ? '#5BA88A' : '#D4A853'}`,
                         }} />
-                        <span style={{ color: '#8AAEBB', fontSize: '13px', fontWeight: 600 }}>WEBHOOK</span>
+                        <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>WEBHOOK</span>
                     </div>
-                    <div style={{ color: '#E8F1F2', fontSize: '16px', fontWeight: 600 }}>
+                    <div style={{ color: '#0F172A', fontSize: '16px', fontWeight: 600 }}>
                         {status.webhookActive ? '🟢 Đã kích hoạt' : '🟡 Chưa kích hoạt'}
                     </div>
                     {status.webhookUrl && (
                         <div style={{
-                            color: '#8AAEBB',
+                            color: '#475569',
                             fontSize: '12px',
                             marginTop: '8px',
                             wordBreak: 'break-all',
@@ -138,7 +138,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
                 {/* CEO Chat */}
                 <div style={{
-                    background: '#1B2E3D',
+                    background: '#FFFFFF',
                     borderRadius: '12px',
                     padding: '20px',
                     border: `1px solid ${status.ceoChatId ? '#5BA88A33' : '#E0525233'}`,
@@ -156,9 +156,9 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             background: status.ceoChatId ? '#5BA88A' : '#E05252',
                             boxShadow: `0 0 8px ${status.ceoChatId ? '#5BA88A' : '#E05252'}`,
                         }} />
-                        <span style={{ color: '#8AAEBB', fontSize: '13px', fontWeight: 600 }}>CEO CHAT ID</span>
+                        <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>CEO CHAT ID</span>
                     </div>
-                    <div style={{ color: '#E8F1F2', fontSize: '16px', fontWeight: 600 }}>
+                    <div style={{ color: '#0F172A', fontSize: '16px', fontWeight: 600 }}>
                         {status.ceoChatId ? `✅ ${status.ceoChatId}` : '❌ Chưa cấu hình'}
                     </div>
                 </div>
@@ -181,12 +181,12 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
             {/* Commands Section */}
             <div style={{
-                background: '#1B2E3D',
+                background: '#FFFFFF',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
             }}>
-                <h2 style={{ color: '#E8F1F2', fontSize: '18px', margin: '0 0 16px 0' }}>
+                <h2 style={{ color: '#0F172A', fontSize: '18px', margin: '0 0 16px 0' }}>
                     📋 Các lệnh Bot
                 </h2>
                 <div style={{
@@ -216,11 +216,11 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             <span style={{ fontSize: '20px' }}>{c.icon}</span>
                             <div>
                                 <code style={{
-                                    color: '#87CBB9',
+                                    color: '#0891B2',
                                     fontSize: '14px',
                                     fontWeight: 600,
                                 }}>{c.cmd}</code>
-                                <div style={{ color: '#8AAEBB', fontSize: '12px', marginTop: '2px' }}>
+                                <div style={{ color: '#475569', fontSize: '12px', marginTop: '2px' }}>
                                     {c.desc}
                                 </div>
                             </div>
@@ -231,12 +231,12 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
             {/* Notification Events Section */}
             <div style={{
-                background: '#1B2E3D',
+                background: '#FFFFFF',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
             }}>
-                <h2 style={{ color: '#E8F1F2', fontSize: '18px', margin: '0 0 16px 0' }}>
+                <h2 style={{ color: '#0F172A', fontSize: '18px', margin: '0 0 16px 0' }}>
                     🔔 Thông báo tự động (Push)
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -256,7 +256,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             borderRadius: '8px',
                         }}>
                             <span style={{ fontSize: '18px' }}>{n.icon}</span>
-                            <span style={{ color: '#E8F1F2', fontSize: '14px', flex: 1 }}>{n.event}</span>
+                            <span style={{ color: '#0F172A', fontSize: '14px', flex: 1 }}>{n.event}</span>
                             <span style={{
                                 fontSize: '12px',
                                 padding: '4px 10px',
@@ -274,12 +274,12 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
             {/* Actions */}
             <div style={{
-                background: '#1B2E3D',
+                background: '#FFFFFF',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
             }}>
-                <h2 style={{ color: '#E8F1F2', fontSize: '18px', margin: '0 0 16px 0' }}>
+                <h2 style={{ color: '#0F172A', fontSize: '18px', margin: '0 0 16px 0' }}>
                     ⚡ Hành động
                 </h2>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -288,7 +288,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                         disabled={testing || !status.configured}
                         style={{
                             background: testing ? '#5BA88A66' : '#5BA88A',
-                            color: '#0A1926',
+                            color: '#0F172A',
                             border: 'none',
                             borderRadius: '8px',
                             padding: '12px 24px',
@@ -317,29 +317,29 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
             {/* Setup Guide */}
             <div style={{
-                background: '#1B2E3D',
+                background: '#FFFFFF',
                 borderRadius: '12px',
                 padding: '24px',
             }}>
-                <h2 style={{ color: '#E8F1F2', fontSize: '18px', margin: '0 0 16px 0' }}>
+                <h2 style={{ color: '#0F172A', fontSize: '18px', margin: '0 0 16px 0' }}>
                     📖 Hướng dẫn cài đặt
                 </h2>
                 <ol style={{
-                    color: '#8AAEBB',
+                    color: '#475569',
                     fontSize: '14px',
                     lineHeight: '2',
                     paddingLeft: '20px',
                     margin: 0,
                 }}>
-                    <li>Tạo bot trên Telegram qua <strong>@BotFather</strong> → nhận <code style={{ color: '#87CBB9' }}>BOT_TOKEN</code></li>
-                    <li>Thêm vào <code style={{ color: '#87CBB9' }}>.env</code>:
+                    <li>Tạo bot trên Telegram qua <strong>@BotFather</strong> → nhận <code style={{ color: '#0891B2' }}>BOT_TOKEN</code></li>
+                    <li>Thêm vào <code style={{ color: '#0891B2' }}>.env</code>:
                         <pre style={{
                             background: '#0F202D',
                             padding: '12px',
                             borderRadius: '8px',
                             marginTop: '8px',
                             overflow: 'auto',
-                            color: '#E8F1F2',
+                            color: '#0F172A',
                             fontSize: '13px',
                         }}>
                             {`TELEGRAM_BOT_TOKEN=your_bot_token
@@ -349,7 +349,7 @@ TELEGRAM_ALLOWED_CHAT_IDS=id1,id2
 TELEGRAM_SETUP_SECRET=lyscellars-setup-2026`}
                         </pre>
                     </li>
-                    <li>Mở bot trên Telegram, gửi <code style={{ color: '#87CBB9' }}>/start</code> → ghi lại Telegram ID hiển thị</li>
+                    <li>Mở bot trên Telegram, gửi <code style={{ color: '#0891B2' }}>/start</code> → ghi lại Telegram ID hiển thị</li>
                     <li>Deploy lên Vercel, sau đó truy cập URL:
                         <pre style={{
                             background: '#0F202D',
@@ -357,13 +357,13 @@ TELEGRAM_SETUP_SECRET=lyscellars-setup-2026`}
                             borderRadius: '8px',
                             marginTop: '8px',
                             overflow: 'auto',
-                            color: '#E8F1F2',
+                            color: '#0F172A',
                             fontSize: '13px',
                         }}>
                             {`https://your-domain.com/api/telegram/setup?action=register&secret=lyscellars-setup-2026`}
                         </pre>
                     </li>
-                    <li>Quay lại Telegram → gõ <code style={{ color: '#87CBB9' }}>/menu</code> để bắt đầu sử dụng 🎉</li>
+                    <li>Quay lại Telegram → gõ <code style={{ color: '#0891B2' }}>/menu</code> để bắt đầu sử dụng 🎉</li>
                 </ol>
             </div>
         </div>

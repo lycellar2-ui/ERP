@@ -40,11 +40,11 @@ function calcStatus(pct: number): KpiSummary['status'] {
 
 // Default targets when no DB config exists
 const DEFAULT_TARGETS: Record<string, { value: number; unit: string; label: string; color: string }> = {
-    REVENUE: { value: 5_000_000_000, unit: 'VND', label: 'Doanh Thu Tháng', color: '#87CBB9' },
+    REVENUE: { value: 5_000_000_000, unit: 'VND', label: 'Doanh Thu Tháng', color: '#0891B2' },
     ORDERS: { value: 50, unit: 'đơn', label: 'Số Đơn Bán Hàng', color: '#4A8FAB' },
     NEW_CUSTOMERS: { value: 5, unit: 'KH', label: 'Khách Hàng Mới', color: '#5BA88A' },
     AR_LIMIT: { value: 2_000_000_000, unit: 'VND', label: 'Công Nợ AR (Giới hạn)', color: '#D4A853' },
-    STOCK_VALUE: { value: 10_000_000_000, unit: 'VND', label: 'Giá Trị Tồn Kho', color: '#8AAEBB' },
+    STOCK_VALUE: { value: 10_000_000_000, unit: 'VND', label: 'Giá Trị Tồn Kho', color: '#475569' },
 }
 
 // ─── Get KPI Summary (with DB targets) ────────────

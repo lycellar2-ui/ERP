@@ -17,7 +17,7 @@ function TagSelector({
 }) {
     return (
         <div>
-            <p className="text-xs font-semibold mb-2" style={{ color: '#4A6A7A' }}>{label}</p>
+            <p className="text-xs font-semibold mb-2" style={{ color: '#64748B' }}>{label}</p>
             <div className="flex flex-wrap gap-1.5">
                 {presets.map(item => {
                     const isSelected = selected.includes(item)
@@ -25,9 +25,9 @@ function TagSelector({
                         <button key={item} onClick={() => onToggle(item)}
                             className="px-2 py-1 text-xs rounded-full font-medium transition-all"
                             style={{
-                                background: isSelected ? `${color}20` : '#142433',
-                                color: isSelected ? color : '#4A6A7A',
-                                border: `1px solid ${isSelected ? `${color}40` : '#2A4355'}`,
+                                background: isSelected ? `${color}20` : '#FFFFFF',
+                                color: isSelected ? color : '#64748B',
+                                border: `1px solid ${isSelected ? `${color}40` : '#E2E8F0'}`,
                             }}>
                             {item}
                         </button>
@@ -103,29 +103,29 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
     if (loading) {
         return (
             <div className="flex items-center gap-2 py-3">
-                <Loader2 size={12} className="animate-spin" style={{ color: '#87CBB9' }} />
-                <span className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải sở thích...</span>
+                <Loader2 size={12} className="animate-spin" style={{ color: '#0891B2' }} />
+                <span className="text-xs" style={{ color: '#64748B' }}>Đang tải sở thích...</span>
             </div>
         )
     }
 
     return (
-        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <Wine size={14} style={{ color: '#8B1A2E' }} />
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                         Sở Thích Rượu Vang
                     </p>
                 </div>
                 {!editing ? (
                     <button onClick={() => setEditing(true)}
                         className="text-xs px-2 py-1 rounded font-medium"
-                        style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                        style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
                         {pref ? 'Sửa' : '+ Thêm'}
                     </button>
                 ) : (
-                    <button onClick={() => setEditing(false)} className="p-1" style={{ color: '#4A6A7A' }}>
+                    <button onClick={() => setEditing(false)} className="p-1" style={{ color: '#64748B' }}>
                         <X size={12} />
                     </button>
                 )}
@@ -136,7 +136,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Grapes */}
                     {pref.grapeVarieties.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#4A6A7A' }}>Giống nho</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Giống nho</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.grapeVarieties.map(g => (
                                     <span key={g} className="text-xs px-2 py-0.5 rounded-full"
@@ -148,7 +148,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Regions */}
                     {pref.regions.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#4A6A7A' }}>Vùng ưa thích</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Vùng ưa thích</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.regions.map(r => (
                                     <span key={r} className="text-xs px-2 py-0.5 rounded-full"
@@ -160,7 +160,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Taste */}
                     {pref.tasteProfile.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#4A6A7A' }}>Khẩu vị</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Khẩu vị</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.tasteProfile.map(t => (
                                     <span key={t} className="text-xs px-2 py-0.5 rounded-full"
@@ -171,19 +171,19 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     )}
                     {/* Price Range */}
                     <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: '#4A6A7A' }}>Tầm giá:</span>
-                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
+                        <span className="text-xs" style={{ color: '#64748B' }}>Tầm giá:</span>
+                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
                             {formatVND(pref.priceRangeMin)} – {formatVND(pref.priceRangeMax)}
                         </span>
                     </div>
                     {pref.notes && (
-                        <p className="text-xs italic" style={{ color: '#4A6A7A' }}>"{pref.notes}"</p>
+                        <p className="text-xs italic" style={{ color: '#64748B' }}>"{pref.notes}"</p>
                     )}
                 </div>
             )}
 
             {!editing && !pref && (
-                <p className="text-xs text-center py-4" style={{ color: '#4A6A7A' }}>
+                <p className="text-xs text-center py-4" style={{ color: '#64748B' }}>
                     Chưa có thông tin sở thích. Nhấn "+ Thêm" để tạo.
                 </p>
             )}
@@ -199,29 +199,29 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Giá tối thiểu (₫)</p>
+                            <p className="text-xs mb-1" style={{ color: '#64748B' }}>Giá tối thiểu (₫)</p>
                             <input type="number" className="w-full px-3 py-2 rounded text-sm outline-none"
-                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} />
                         </div>
                         <div>
-                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Giá tối đa (₫)</p>
+                            <p className="text-xs mb-1" style={{ color: '#64748B' }}>Giá tối đa (₫)</p>
                             <input type="number" className="w-full px-3 py-2 rounded text-sm outline-none"
-                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} />
                         </div>
                     </div>
 
                     <div>
-                        <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Ghi chú</p>
+                        <p className="text-xs mb-1" style={{ color: '#64748B' }}>Ghi chú</p>
                         <textarea className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
                     </div>
 
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-3 py-2 rounded text-xs font-semibold disabled:opacity-50"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                         {saving ? 'Đang lưu...' : 'Lưu Sở Thích'}
                     </button>

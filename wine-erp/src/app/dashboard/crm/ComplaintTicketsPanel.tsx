@@ -16,7 +16,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
     OPEN: { label: 'Mở', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
     IN_PROGRESS: { label: 'Đang xử lý', color: '#4A8FAB', bg: 'rgba(74,143,171,0.12)' },
     RESOLVED: { label: 'Đã giải quyết', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)' },
-    CLOSED: { label: 'Đã đóng', color: '#4A6A7A', bg: 'rgba(74,106,122,0.12)' },
+    CLOSED: { label: 'Đã đóng', color: '#64748B', bg: 'rgba(74,106,122,0.12)' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -76,7 +76,7 @@ export function ComplaintTicketsPanel() {
         return (
             <div className="flex items-center justify-center py-16 gap-2">
                 <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
-                <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tải tickets...</span>
+                <span className="text-sm" style={{ color: '#64748B' }}>Đang tải tickets...</span>
             </div>
         )
     }
@@ -87,7 +87,7 @@ export function ComplaintTicketsPanel() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <AlertTriangle size={18} style={{ color: '#D4A853' }} />
-                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Phiếu Khiếu Nại
                     </h3>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
@@ -110,7 +110,7 @@ export function ComplaintTicketsPanel() {
             {/* Filters */}
             <div className="flex gap-2">
                 <select className="px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                     value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); load(e.target.value, severityFilter) }}>
                     <option value="">Tất cả trạng thái</option>
@@ -120,7 +120,7 @@ export function ComplaintTicketsPanel() {
                     <option value="CLOSED">Đã đóng</option>
                 </select>
                 <select className="px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                     value={severityFilter}
                     onChange={e => { setSeverityFilter(e.target.value); load(statusFilter, e.target.value) }}>
                     <option value="">Tất cả mức độ</option>
@@ -133,7 +133,7 @@ export function ComplaintTicketsPanel() {
 
             {/* Tickets */}
             {tickets.length === 0 ? (
-                <div className="text-center py-16 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <CheckCircle2 size={28} style={{ color: '#5BA88A', margin: '0 auto' }} />
                     <p className="text-sm mt-3" style={{ color: '#5BA88A' }}>Không có phiếu khiếu nại</p>
                 </div>
@@ -146,17 +146,17 @@ export function ComplaintTicketsPanel() {
                         return (
                             <div key={t.id} className="rounded-lg overflow-hidden"
                                 style={{
-                                    background: '#1B2E3D',
-                                    border: `1px solid ${t.isOverSLA ? 'rgba(224,82,82,0.4)' : '#2A4355'}`,
+                                    background: '#FFFFFF',
+                                    border: `1px solid ${t.isOverSLA ? 'rgba(224,82,82,0.4)' : '#E2E8F0'}`,
                                     borderLeft: `3px solid ${t.isOverSLA ? '#E05252' : sevCfg.color}`,
                                 }}>
                                 <button onClick={() => setExpandedId(isExpanded ? null : t.id)}
                                     className="w-full text-left p-4 flex items-center justify-between">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
+                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#0891B2' }}>
                                             {t.ticketNo}
                                         </span>
-                                        <span className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>
+                                        <span className="text-sm font-medium truncate" style={{ color: '#0F172A' }}>
                                             {t.subject}
                                         </span>
                                     </div>
@@ -172,7 +172,7 @@ export function ComplaintTicketsPanel() {
                                                 style={{ color: '#E05252', background: 'rgba(224,82,82,0.12)' }}>⏰ SLA</span>
                                         )}
                                         <ChevronDown size={14} style={{
-                                            color: '#4A6A7A',
+                                            color: '#64748B',
                                             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
                                             transition: 'transform 0.2s'
                                         }} />
@@ -180,46 +180,46 @@ export function ComplaintTicketsPanel() {
                                 </button>
 
                                 {isExpanded && (
-                                    <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid #2A4355' }}>
+                                    <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid #E2E8F0' }}>
                                         <div className="grid grid-cols-3 gap-3 pt-3">
                                             <div>
-                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Khách hàng</p>
-                                                <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{t.customerName}</p>
+                                                <p className="text-xs" style={{ color: '#64748B' }}>Khách hàng</p>
+                                                <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{t.customerName}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Loại</p>
-                                                <p className="text-sm font-medium" style={{ color: '#8AAEBB' }}>
+                                                <p className="text-xs" style={{ color: '#64748B' }}>Loại</p>
+                                                <p className="text-sm font-medium" style={{ color: '#475569' }}>
                                                     {TYPE_LABEL[t.type] ?? t.type}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Ngày tạo</p>
-                                                <p className="text-xs font-medium" style={{ color: '#8AAEBB' }}>
+                                                <p className="text-xs" style={{ color: '#64748B' }}>Ngày tạo</p>
+                                                <p className="text-xs font-medium" style={{ color: '#475569' }}>
                                                     {new Date(t.createdAt).toLocaleDateString('vi-VN')}
                                                 </p>
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Mô tả</p>
-                                            <p className="text-sm" style={{ color: '#E8F1F2' }}>{t.description}</p>
+                                            <p className="text-xs mb-1" style={{ color: '#64748B' }}>Mô tả</p>
+                                            <p className="text-sm" style={{ color: '#0F172A' }}>{t.description}</p>
                                         </div>
                                         {t.resolution && (
                                             <div className="p-3 rounded" style={{ background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.2)' }}>
                                                 <p className="text-xs font-semibold mb-1" style={{ color: '#5BA88A' }}>✅ Giải quyết</p>
-                                                <p className="text-sm" style={{ color: '#E8F1F2' }}>{t.resolution}</p>
+                                                <p className="text-sm" style={{ color: '#0F172A' }}>{t.resolution}</p>
                                             </div>
                                         )}
                                         {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
                                             <div className="flex items-center gap-2">
                                                 <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-                                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                     placeholder="Nhập giải pháp..."
                                                     value={resolving === t.id ? resolutionText : resolutionText}
                                                     onChange={e => setResolutionText(e.target.value)} />
                                                 <button onClick={() => handleResolve(t.id)}
                                                     disabled={resolving === t.id || !resolutionText.trim()}
                                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                                                    style={{ background: '#5BA88A', color: '#0A1926' }}>
+                                                    style={{ background: '#5BA88A', color: '#0F172A' }}>
                                                     {resolving === t.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                                                     Giải quyết
                                                 </button>

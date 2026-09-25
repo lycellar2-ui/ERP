@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'Hệ thống quản lý nhập khẩu và phân phối rượu vang',
         start_url: '/dashboard',
         display: 'standalone',
-        background_color: '#0A1926',
-        theme_color: '#87CBB9',
+        background_color: '#F8FAFC',
+        theme_color: '#0891B2',
         icons: [
             {
                 src: '/favicon.ico',

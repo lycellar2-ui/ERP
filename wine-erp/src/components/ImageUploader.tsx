@@ -61,18 +61,18 @@ export function ImageUploader({
     return (
         <div>
             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5"
-                style={{ color: '#4A6A7A' }}>{label}</label>
+                style={{ color: '#64748B' }}>{label}</label>
 
             {preview ? (
                 <div className="relative group rounded-xl overflow-hidden"
-                    style={{ width: size, height: size, background: '#1B2E3D' }}>
+                    style={{ width: size, height: size, background: '#FFFFFF' }}>
                     <img src={preview} alt={label}
                         className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105" />
 
                     {uploading && (
                         <div className="absolute inset-0 flex items-center justify-center"
-                            style={{ background: 'rgba(10,25,38,0.75)' }}>
-                            <Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
+                            style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
+                            <Loader2 size={28} className="animate-spin" style={{ color: '#0891B2' }} />
                         </div>
                     )}
 
@@ -83,7 +83,7 @@ export function ImageUploader({
                             <button onClick={() => inputRef.current?.click()}
                                 className="p-2 rounded-lg transition-colors"
                                 title="Thay đổi ảnh"
-                                style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9' }}>
+                                style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2' }}>
                                 <Upload size={18} />
                             </button>
                             <button onClick={handleRemove}
@@ -102,12 +102,12 @@ export function ImageUploader({
                         transition-all hover:border-solid cursor-pointer"
                     style={{
                         width: size, height: size,
-                        background: '#1B2E3D',
-                        border: '2px dashed #2A4355',
-                        color: '#4A6A7A',
+                        background: '#FFFFFF',
+                        border: '2px dashed #E2E8F0',
+                        color: '#64748B',
                     }}>
                     {uploading ? (
-                        <Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
+                        <Loader2 size={28} className="animate-spin" style={{ color: '#0891B2' }} />
                     ) : (
                         <>
                             <ImageIcon size={32} />

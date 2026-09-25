@@ -607,6 +607,11 @@ export async function saveWeeklyPlanAction(input: {
                     }
                 })
             } else {
+                // Nếu không phải quản lý và kế hoạch đã chốt nộp hoặc duyệt -> chặn sửa
+                if (!isMgr && (plan.status === 'SUBMITTED' || plan.status === 'APPROVED')) {
+                    throw new Error('Kế hoạch tuần này đã được nộp hoặc phê duyệt, nhân viên không thể tự ý sửa đổi.')
+                }
+
                 plan = await tx.weeklyVisitPlan.update({
                     where: { id: plan.id },
                     data: {
@@ -621,8 +626,49 @@ export async function saveWeeklyPlanAction(input: {
             })
 
             const incomingIds = input.visits.filter(v => v.id).map(v => v.id)
-            // Delete only visits that are NOT completed and NOT in the incoming list
-            const toDelete = existingVisits.filter(v => !incomingIds.includes(v.id) && v.status !== 'COMPLETED' && v.status !== 'IN_PROGRESS')
+            const todayVnStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date())
+
+            // BẢO VỆ DỮ LIỆU: Sale không được xóa hoặc sửa điểm kế hoạch của các ngày đã qua
+            if (!isMgr) {
+                // 1. Chặn xóa các điểm kế hoạch của ngày đã qua
+                const pastMissingVisits = existingVisits.filter(ev => {
+                    const evDateStr = ev.visitDate.toISOString().split('T')[0]
+                    return evDateStr < todayVnStr && !incomingIds.includes(ev.id)
+                })
+                if (pastMissingVisits.length > 0) {
+                    throw new Error('Nhân viên không được phép xóa điểm kế hoạch của các ngày đã qua trong tuần.')
+                }
+
+                // 2. Chặn đổi ngày hoặc đổi khách hàng của các điểm đã qua
+                for (const v of input.visits) {
+                    if (v.id) {
+                        const orig = existingVisits.find(e => e.id === v.id)
+                        if (orig) {
+                            const origDateStr = orig.visitDate.toISOString().split('T')[0]
+                            if (origDateStr < todayVnStr) {
+                                if (origDateStr !== v.visitDate || orig.customerId !== v.customerId) {
+                                    throw new Error('Không thể thay đổi ngày hoặc khách hàng của các điểm kế hoạch đã qua.')
+                                }
+                            }
+                        }
+                    } else {
+                        // Không được thêm mới điểm kế hoạch vào ngày đã qua
+                        if (v.visitDate < todayVnStr) {
+                            throw new Error('Không thể thêm điểm kế hoạch vào các ngày đã qua.')
+                        }
+                    }
+                }
+            }
+
+            // Delete only visits that are NOT completed, NOT in incoming, and NOT in past days for non-manager
+            const toDelete = existingVisits.filter(v => {
+                if (incomingIds.includes(v.id)) return false
+                if (v.status === 'COMPLETED' || v.status === 'IN_PROGRESS') return false
+                const vDateStr = v.visitDate.toISOString().split('T')[0]
+                if (!isMgr && vDateStr < todayVnStr) return false
+                return true
+            })
+
             if (toDelete.length > 0) {
                 await tx.salesVisitSchedule.deleteMany({
                     where: { id: { in: toDelete.map(d => d.id) } }
@@ -875,4 +921,92 @@ export async function getTeamWeeklySalesOverview(weekNumber: number, year: numbe
         return { success: false, error: err.message || 'Lỗi khi tải tổng quan đội sale' }
     }
 }
+
+/**
+ * Cập nhật báo cáo nhanh / kết quả làm việc cho lượt viếng thăm (SalesVisit).
+ * Cho phép nhân viên sale ghi báo cáo sau khi check-in hoặc quản lý ghi chú đánh giá.
+ */
+export async function updateSalesVisitReportAction(visitId: string, notes: string): Promise<{ success: boolean; error?: string; notes?: string }> {
+    try {
+        const user = await requireAuth()
+        const isMgr = checkIsManager(user)
+
+        const visit = await prisma.salesVisit.findUnique({
+            where: { id: visitId },
+            select: { id: true, salespersonId: true, scheduleId: true, checkInTime: true, notes: true }
+        })
+
+        if (!visit) {
+            return { success: false, error: 'Không tìm thấy lượt viếng thăm này' }
+        }
+
+        // Sale chỉ được sửa báo cáo của chính mình, quản lý có quyền cập nhật mọi báo cáo
+        if (!isMgr && visit.salespersonId !== user.id) {
+            return { success: false, error: 'Bạn chỉ có thể ghi báo cáo cho lượt viếng thăm của chính mình' }
+        }
+
+        const trimmedNotes = notes.trim()
+
+        // BẢO VỆ DỮ LIỆU: Sale không được xóa trắng báo cáo, không sửa báo cáo của tuần cũ hoặc kế hoạch đã chốt
+        if (!isMgr) {
+            // 1. Không cho phép xóa trắng nội dung báo cáo nếu trước đó đã có báo cáo
+            if (!trimmedNotes && visit.notes && visit.notes.trim()) {
+                return { success: false, error: 'Không thể xóa báo cáo thực địa đã ghi. Chỉ Quản lý mới có quyền điều chỉnh.' }
+            }
+
+            // 2. Cho phép sửa báo cáo trong tuần hiện tại. Chặn sửa báo cáo của các tuần trước.
+            const todayVnStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date())
+            const [y, m, d] = todayVnStr.split('-').map(Number)
+            const dObj = new Date(y, m - 1, d)
+            const dayOfWeek = dObj.getDay()
+            const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+            const currentMonObj = new Date(dObj)
+            currentMonObj.setDate(dObj.getDate() + diffToMon)
+            const currentWeekMondayStr = `${currentMonObj.getFullYear()}-${String(currentMonObj.getMonth() + 1).padStart(2, '0')}-${String(currentMonObj.getDate()).padStart(2, '0')}`
+
+            const checkInDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(visit.checkInTime))
+            if (checkInDateStr < currentWeekMondayStr) {
+                return { success: false, error: 'Không thể chỉnh sửa báo cáo của các tuần trước. Dữ liệu đã được khóa tự động sau khi kết thúc tuần.' }
+            }
+
+            // 3. Nếu lượt viếng thăm thuộc kế hoạch tuần đã nộp hoặc được duyệt -> khóa
+            if (visit.scheduleId) {
+                const schedule = await prisma.salesVisitSchedule.findUnique({
+                    where: { id: visit.scheduleId },
+                    include: { plan: { select: { status: true } } }
+                })
+                if (schedule?.plan && (schedule.plan.status === 'SUBMITTED' || schedule.plan.status === 'APPROVED')) {
+                    return { success: false, error: 'Kế hoạch tuần này đã được nộp hoặc phê duyệt, không thể thay đổi báo cáo.' }
+                }
+            }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.salesVisit.update({
+                where: { id: visitId },
+                data: {
+                    notes: trimmedNotes,
+                    updatedAt: new Date()
+                }
+            })
+
+            // Đồng bộ luôn sang lịch trình nếu có liên kết
+            if (visit.scheduleId) {
+                await tx.salesVisitSchedule.update({
+                    where: { id: visit.scheduleId },
+                    data: {
+                        resultNotes: trimmedNotes,
+                    }
+                }).catch(() => {})
+            }
+        })
+
+        revalidatePath('/dashboard/sales/visits')
+        return { success: true, notes: trimmedNotes }
+    } catch (e: any) {
+        console.error('updateSalesVisitReportAction error:', e)
+        return { success: false, error: e.message || 'Lỗi khi cập nhật báo cáo viếng thăm' }
+    }
+}
+
 

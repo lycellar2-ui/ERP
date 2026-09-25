@@ -3,7 +3,7 @@
 
 
 @theme {
-  /* ── LY's Cellars — Oceanic Cellar Design Tokens (Premium Light Mode) ── */
+  /* ── LY's Cellars — Oceanic Cellar Design Tokens (Light ERP Aesthetic) ── */
 
   /* Core Backgrounds */
   --color-lys-bg: #F8FAFC;
@@ -12,8 +12,12 @@
   /* Pure White Surface */
   --color-lys-card: #FFFFFF;
   /* Pure White Card */
+  --color-lys-subtle: #F1F5F9;
+  /* Slate 100 Subtle Background */
   --color-lys-border: #E2E8F0;
   /* Light Gray Border */
+  --color-lys-border-strong: #CBD5E1;
+  /* Slate 300 Stronger Border */
 
   /* Brand Accents */
   --color-lys-teal: #0891B2;
@@ -23,17 +27,22 @@
   --color-lys-navy: #1E3A8A;
   /* Deep Navy */
   --color-lys-wine: #B91C1C;
-  /* Red/Alert */
+  /* Burgundy / Wine Red / Alert */
   --color-lys-amber: #D97706;
-  /* Amber/Warning */
+  /* Amber / Warning */
 
   /* Text Scale */
+  --color-lys-primary: #0F172A;
+  /* Primary Text: Dark Slate 900 */
+  --color-lys-secondary: #475569;
+  /* Secondary Text: Medium Slate 600 */
+  --color-lys-muted: #64748B;
+  /* Muted Text: Slate 500 */
+  --color-lys-dim: #94A3B8;
+  /* Tertiary / Dim Text: Slate 400 */
+
+  /* Legacy Aliases for backwards compatibility */
   --color-lys-ivory: #0F172A;
-  /* Primary Text: Dark Slate */
-  --color-lys-muted: #475569;
-  /* Secondary Text: Medium Slate */
-  --color-lys-dim: #64748B;
-  /* Tertiary Text: Muted Slate */
 
   /* Semantic */
   --color-success: #16A34A;
@@ -72,263 +81,28 @@ html {
   color-scheme: light;
 }
 
-/* ─── Inline Style Overrides Map (Option C - Light Mode mapping) ─── */
-
-/* 1. Backgrounds (#0A1926) -> var(--color-lys-bg) */
-[style*="#0A1926"],
-[style*="#0a1926"],
-[style*="rgb(10, 25, 38)"] {
-  background: var(--color-lys-bg) !important;
-  background-color: var(--color-lys-bg) !important;
-}
-[class*="bg-[#0A1926]"],
-[class*="bg-[#0a1926]"] {
-  background-color: var(--color-lys-bg) !important;
-}
-
-/* 2. Surfaces / Sticky headers (#142433 / rgba(20,36,51,0.92)) -> var(--color-lys-surface) */
-[style*="#142433"],
-[style*="rgb(20, 36, 51)"],
-[style*="rgba(20,36,51"],
-[style*="rgba(20, 36, 51"] {
-  background: var(--color-lys-surface) !important;
-  background-color: var(--color-lys-surface) !important;
-}
-[class*="bg-[#142433]"],
-[class*="bg-[#142433]/40"] {
-  background-color: var(--color-lys-surface) !important;
-}
-
-/* 3. Cards / Inputs / Popups (#1B2E3D / #0F2133 / #0F1E2E / #1F3547 / #16232F) -> var(--color-lys-card) */
-[style*="#1B2E3D"],
-[style*="#1b2e3d"],
-[style*="#0F2133"],
-[style*="#0f2133"],
-[style*="#0F1E2E"],
-[style*="#0f1e2e"],
-[style*="#1F3547"],
-[style*="#1f3547"],
-[style*="#1F3E4D"],
-[style*="#1f3e4d"],
-[style*="#16232F"],
-[style*="#16232f"],
-[style*="#111C24"],
-[style*="#111c24"],
-[style*="#0E1A24"],
-[style*="#0e1a24"],
-[style*="#1A3040"],
-[style*="#1a3040"],
-[style*="rgb(27, 46, 61)"] {
-  background: var(--color-lys-card) !important;
-  background-color: var(--color-lys-card) !important;
-}
-[class*="bg-[#1B2E3D]"],
-[class*="bg-[#0F2133]"],
-[class*="bg-[#0F1E2E]"],
-[class*="bg-[#1F3547]"],
-[class*="bg-[#1F3E4D]"],
-[class*="bg-[#16232F]"],
-[class*="bg-[#111C24]"],
-[class*="bg-[#0E1A24]"],
-[class*="bg-[#1A3040]"] {
-  background-color: var(--color-lys-card) !important;
-}
-
-/* 4. Midnight ocean secondary backgrounds (#0D1E2B / #0F1D2B / #0D1B25) -> var(--color-lys-surface) */
-[style*="#0D1E2B"],
-[style*="#0d1e2b"],
-[style*="#0F1D2B"],
-[style*="#0f1d2b"],
-[style*="#0D1B25"],
-[style*="#0d1b25"],
-[style*="rgb(13, 30, 43)"],
-[style*="rgba(13,30,43)"],
-[style*="rgba(13, 30, 43)"] {
-  background: var(--color-lys-surface) !important;
-  background-color: var(--color-lys-surface) !important;
-}
-[class*="bg-[#0D1E2B]"],
-[class*="bg-[#0d1e2b]"],
-[class*="bg-[#0F1D2B]"],
-[class*="bg-[#0f1d2b]"],
-[class*="bg-[#0D1B25]"],
-[class*="bg-[#0d1b25]"] {
-  background-color: var(--color-lys-surface) !important;
-}
-
-/* 5. Borders (#2A4355 / #1F3547 / #223645) -> var(--color-lys-border) */
-[style*="border"][style*="#2A4355"],
-[style*="border"][style*="#2a4355"],
-[style*="border"][style*="#1F3547"],
-[style*="border"][style*="#1f3547"],
-[style*="border"][style*="#223645"],
-[style*="border"][style*="#223645"],
-[style*="border-color: #2A4355"],
-[style*="border-color:#2A4355"],
-[style*="border-color: #1F3547"],
-[style*="border-color:#1F3547"],
-[style*="border-top"][style*="#2A4355"],
-[style*="border-bottom"][style*="#2A4355"],
-[style*="border-left"][style*="#2A4355"],
-[style*="border-right"][style*="#2A4355"],
-div[style*="border: 1px solid #2A4355"],
-div[style*="border:1px solid #2A4355"],
-div[style*="border: 1px solid #1F3547"],
-div[style*="border:1px solid #1F3547"],
-div[style*="border: 1px dashed #2A4355"],
-div[style*="border:1px dashed #2A4355"],
-table[style*="border-top: 1px solid #2A4355"],
-table[style*="border-top:1px solid #2A4355"] {
-  border-color: var(--color-lys-border) !important;
-}
-[class*="border-[#2A4355]"],
-[class*="border-[#2a4355]"],
-[class*="border-[#1F3547]"],
-[class*="border-[#1f3547]"],
-[class*="border-[#223645]"],
-[class*="divide-[#1F3547]"],
-[class*="divide-[#2A4355]"] {
-  border-color: var(--color-lys-border) !important;
-}
-
-/* 6. Text primary (#E8F1F2 / #C8D8E4) -> var(--color-lys-ivory) */
-[style*="color: #E8F1F2"],
-[style*="color:#E8F1F2"],
-[style*="color: #e8f1f2"],
-[style*="color:#e8f1f2"],
-[style*="color: #C8D8E4"],
-[style*="color:#C8D8E4"],
-[style*="color: #c8d8e4"],
-[style*="color:#c8d8e4"],
-[style*="color: rgb(232, 241, 242)"],
-[style*="color:rgb(232, 241, 242)"] {
-  color: var(--color-lys-ivory) !important;
-}
-[class*="text-[#E8F1F2]"],
-[class*="text-[#e8f1f2]"],
-[class*="text-[#C8D8E4]"],
-[class*="text-[#c8d8e4]"] {
-  color: var(--color-lys-ivory) !important;
-}
-
-/* 7. Text secondary / labels (#8AAEBB) -> var(--color-lys-muted) */
-[style*="color: #8AAEBB"],
-[style*="color:#8AAEBB"],
-[style*="color: #8aaebb"],
-[style*="color:#8aaebb"],
-[style*="color: rgb(138, 174, 187)"],
-[style*="color:rgb(138, 174, 187)"] {
-  color: var(--color-lys-muted) !important;
-}
-[class*="text-[#8AAEBB]"],
-[class*="text-[#8aaebb]"] {
-  color: var(--color-lys-muted) !important;
-}
-
-/* 8. Text dim / placeholders (#4A6A7A or #2A4355 when used as color) -> var(--color-lys-dim) */
-[style*="color: #4A6A7A"],
-[style*="color:#4A6A7A"],
-[style*="color: #4a6a7a"],
-[style*="color:#4a6a7a"],
-[style*="color: #2A4355"],
-[style*="color:#2A4355"],
-[style*="color: #2a4355"],
-[style*="color:#2a4355"],
-[style*="color: rgb(74, 106, 122)"],
-[style*="color:rgb(74, 106, 122)"] {
-  color: var(--color-lys-dim) !important;
-}
-[class*="text-[#4A6A7A]"],
-[class*="text-[#4a6a7a]"],
-[class*="text-[#2A4355]"] {
-  color: var(--color-lys-dim) !important;
-}
-
-/* 9. Accent Teal text/bg (#87CBB9) -> var(--color-lys-teal) */
-span[style*="#87CBB9"],
-p[style*="#87CBB9"],
-strong[style*="#87CBB9"],
-th[style*="#87CBB9"],
-button[style*="color: #87CBB9"],
-button[style*="color:#87CBB9"] {
-  color: var(--color-lys-teal) !important;
-}
-[class*="text-[#87CBB9]"],
-[class*="text-[#87cbb9]"] {
-  color: var(--color-lys-teal) !important;
-}
-button[style*="background: #87CBB9"],
-button[style*="background:#87CBB9"] {
-  background: var(--color-lys-teal) !important;
-  color: #FFFFFF !important;
-}
-a[style*="background: #87CBB9"],
-a[style*="background:#87CBB9"] {
-  background: var(--color-lys-teal) !important;
-  color: #FFFFFF !important;
-}
-
-/* 10. Table hover borders and backgrounds */
-tr[style*="border-bottom: 1px solid rgba(61,43,31"],
-tr[style*="border-bottom: 1px solid rgba(61, 43, 31"],
-tr[style*="border-bottom:1px solid rgba(61,43,31"] {
-  border-bottom-color: var(--color-lys-border) !important;
-}
+/* ── Clean Global Table Utilities ── */
 tbody tr:hover {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC;
 }
-button[style*="#1B2E3D"]:hover,
-button[style*="#1b2e3d"]:hover {
-  background-color: #F1F5F9 !important;
-}
-
-/* 11. Handle hover transparency for badges */
-[style*="rgba(135,203,185,0.12)"],
-[style*="rgba(135,203,185,0.15)"],
-[style*="rgba(135, 203, 185, 0.12)"],
-[style*="rgba(135, 203, 185, 0.15)"] {
-  background-color: rgba(8, 145, 178, 0.08) !important;
-  color: var(--color-lys-teal) !important;
-}
-
-/* 12. Skeletons */
-[class*="bg-[#2A4355]/30"],
-[class*="bg-[#2a4355]/30"],
-[class*="bg-[#2A4355]/20"],
-[class*="bg-[#2a4355]/20"] {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* 13. Map Tailwind utility text colors on overridden backgrounds (Fixes white-on-white text) */
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-white, .text-gray-50, .text-gray-100, .text-gray-200, .text-slate-50, .text-slate-100, .text-slate-200),
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-white, .text-gray-50, .text-gray-100, .text-gray-200, .text-slate-50, .text-slate-100, .text-slate-200) {
-  color: var(--color-lys-ivory) !important;
-}
-
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-gray-300, .text-slate-300, .text-gray-400, .text-slate-400),
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-gray-300, .text-slate-300, .text-gray-400, .text-slate-400) {
-  color: var(--color-lys-muted) !important;
-}
-
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-gray-500, .text-slate-500),
-:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-gray-500, .text-slate-500) {
-  color: var(--color-lys-dim) !important;
-}
-
 
 :root {
   --color-lys-bg: #F8FAFC;
   --color-lys-surface: #FFFFFF;
   --color-lys-card: #FFFFFF;
+  --color-lys-subtle: #F1F5F9;
   --color-lys-border: #E2E8F0;
+  --color-lys-border-strong: #CBD5E1;
   --color-lys-teal: #0891B2;
   --color-lys-teal-light: #06B6D4;
   --color-lys-navy: #1E3A8A;
   --color-lys-wine: #B91C1C;
   --color-lys-amber: #D97706;
+  --color-lys-primary: #0F172A;
+  --color-lys-secondary: #475569;
+  --color-lys-muted: #64748B;
+  --color-lys-dim: #94A3B8;
   --color-lys-ivory: #0F172A;
-  --color-lys-muted: #475569;
-  --color-lys-dim: #64748B;
   --font-ui: var(--font-sans);
   --font-brand: var(--font-display);
   --font-code: var(--font-sans);

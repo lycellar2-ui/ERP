@@ -24,15 +24,15 @@ export default function DashboardError({
                 maxWidth: '520px',
                 textAlign: 'center',
                 padding: '48px 32px',
-                background: '#1B2E3D',
-                border: '1px solid #2A4355',
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
                 borderRadius: '12px',
             }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔌</div>
-                <h2 style={{ color: '#E8F1F2', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
+                <h2 style={{ color: '#0F172A', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
                     Không thể tải Dashboard
                 </h2>
-                <p style={{ color: '#4A6A7A', fontSize: '14px', marginBottom: '8px', lineHeight: 1.6 }}>
+                <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '8px', lineHeight: 1.6 }}>
                     Có thể do mất kết nối database hoặc lỗi server. Vui lòng thử lại.
                 </p>
                 {error.message && (
@@ -41,7 +41,7 @@ export default function DashboardError({
                     </p>
                 )}
                 {error.digest && (
-                    <p className="font-mono" style={{ color: '#4A6A7A', fontSize: '11px', marginBottom: '16px' }}>
+                    <p className="font-mono" style={{ color: '#64748B', fontSize: '11px', marginBottom: '16px' }}>
                         Digest: {error.digest}
                     </p>
                 )}
@@ -50,9 +50,9 @@ export default function DashboardError({
                         onClick={reset}
                         style={{
                             padding: '10px 24px',
-                            background: 'rgba(135,203,185,0.15)',
-                            color: '#87CBB9',
-                            border: '1px solid rgba(135,203,185,0.3)',
+                            background: 'rgba(8, 145, 178, 0.08)',
+                            color: '#0891B2',
+                            border: '1px solid rgba(8, 145, 178, 0.25)',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '14px',
@@ -65,9 +65,9 @@ export default function DashboardError({
                         onClick={() => window.location.href = '/login'}
                         style={{
                             padding: '10px 24px',
-                            background: '#142433',
-                            color: '#8AAEBB',
-                            border: '1px solid #2A4355',
+                            background: '#FFFFFF',
+                            color: '#475569',
+                            border: '1px solid #E2E8F0',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '14px',

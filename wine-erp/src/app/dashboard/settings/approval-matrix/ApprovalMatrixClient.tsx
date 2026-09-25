@@ -158,10 +158,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <Shield size={24} style={{ color: '#E05252' }} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                        <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                             Ma Trận Phân Quyền & Luồng Duyệt
                         </h2>
-                        <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                        <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                             Chủ động tùy chỉnh số cấp duyệt, phân quyền Role Tạo & Role Duyệt cho từng loại Tờ trình
                         </p>
                     </div>
@@ -169,15 +169,15 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 1: Proposal Routing Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 {/* Section header */}
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <FileText size={18} style={{ color: '#87CBB9' }} />
+                        <FileText size={18} style={{ color: '#0891B2' }} />
                         <div>
-                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Luồng Duyệt Tờ Trình (Theo Cấp & Role)</h3>
-                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước</p>
+                            <h3 className="text-sm font-bold" style={{ color: '#0F172A' }}>Cấu Hình Luồng Duyệt Tờ Trình (Theo Cấp & Role)</h3>
+                            <p className="text-[11px]" style={{ color: '#64748B' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước</p>
                         </div>
                     </div>
                     <button
@@ -185,8 +185,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         disabled={!dirty.routes || savingRoutes}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
                         style={{
-                            background: dirty.routes ? '#87CBB9' : 'rgba(135,203,185,0.15)',
-                            color: dirty.routes ? '#0A1926' : '#4A6A7A',
+                            background: dirty.routes ? '#87CBB9' : 'rgba(8, 145, 178, 0.08)',
+                            color: dirty.routes ? '#F8FAFC' : '#64748B',
                         }}
                     >
                         {savingRoutes ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -198,17 +198,17 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
                         <thead>
-                            <tr style={{ background: '#0D1E2B' }}>
+                            <tr style={{ background: '#F8FAFC' }}>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '25%' }}>Loại Tờ Trình</th>
+                                    style={{ color: '#64748B', width: '25%' }}>Loại Tờ Trình</th>
                                 <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '10%' }}>Số Cấp</th>
+                                    style={{ color: '#64748B', width: '10%' }}>Số Cấp</th>
                                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '25%' }}>Quyền Tạo</th>
+                                    style={{ color: '#64748B', width: '25%' }}>Quyền Tạo</th>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
+                                    style={{ color: '#64748B', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
                                 <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '10%' }}>Tùy Chỉnh</th>
+                                    style={{ color: '#64748B', width: '10%' }}>Tùy Chỉnh</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -223,10 +223,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             borderBottom: '1px solid rgba(42,67,85,0.5)',
                                             background: idx % 2 === 0 ? 'transparent' : 'rgba(20,36,51,0.4)',
                                         }}
-                                        className="hover:bg-[#1B2E3D]/50 transition"
+                                        className="hover:bg-white/50 transition"
                                     >
                                         <td className="px-5 py-3.5">
-                                            <span className="text-sm font-bold block" style={{ color: '#E8F1F2' }}>
+                                            <span className="text-sm font-bold block" style={{ color: '#0F172A' }}>
                                                 {catLabel}
                                             </span>
                                             <span className="text-[10px] font-mono text-[#6A8A9A]">{route.category}</span>
@@ -248,7 +248,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 <div className="flex gap-1 flex-wrap">
                                                     {creatorRoles.map(rCode => (
                                                         <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
-                                                            style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}>
+                                                            style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}>
                                                             {getRoleName(rCode)}
                                                         </span>
                                                     ))}
@@ -271,7 +271,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             {getRoleName(st.role)}
                                                         </span>
                                                         {i < steps.length - 1 && (
-                                                            <ChevronRight size={14} style={{ color: '#4A6A7A' }} />
+                                                            <ChevronRight size={14} style={{ color: '#64748B' }} />
                                                         )}
                                                     </span>
                                                 ))}
@@ -283,7 +283,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             <button
                                                 onClick={() => openEditModal(route)}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
-                                                style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}
+                                                style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}
                                                 title="Sửa số cấp và phân quyền Role"
                                             >
                                                 <Edit3 size={13} /> Sửa
@@ -298,14 +298,14 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 2: PO Approval Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
                         <ShoppingBag size={18} style={{ color: '#D4A853' }} />
                         <div>
-                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Luồng Duyệt Đơn Mua Hàng (PO - Procurement)</h3>
-                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước đơn mua hàng</p>
+                            <h3 className="text-sm font-bold" style={{ color: '#0F172A' }}>Cấu Hình Luồng Duyệt Đơn Mua Hàng (PO - Procurement)</h3>
+                            <p className="text-[11px]" style={{ color: '#64748B' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước đơn mua hàng</p>
                         </div>
                     </div>
                     <button
@@ -314,7 +314,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
                         style={{
                             background: dirty.po ? '#D4A853' : 'rgba(212,168,83,0.15)',
-                            color: dirty.po ? '#0A1926' : '#4A6A7A',
+                            color: dirty.po ? '#F8FAFC' : '#64748B',
                         }}
                     >
                         {savingPoRoute ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -325,23 +325,23 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
                         <thead>
-                            <tr style={{ background: '#0D1E2B' }}>
+                            <tr style={{ background: '#F8FAFC' }}>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '25%' }}>Nghiệp Vụ</th>
+                                    style={{ color: '#64748B', width: '25%' }}>Nghiệp Vụ</th>
                                 <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '10%' }}>Số Cấp</th>
+                                    style={{ color: '#64748B', width: '10%' }}>Số Cấp</th>
                                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '25%' }}>Quyền Tạo PO</th>
+                                    style={{ color: '#64748B', width: '25%' }}>Quyền Tạo PO</th>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
+                                    style={{ color: '#64748B', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
                                 <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '10%' }}>Tùy Chỉnh</th>
+                                    style={{ color: '#64748B', width: '10%' }}>Tùy Chỉnh</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr style={{ background: 'transparent' }} className="hover:bg-[#1B2E3D]/50 transition">
+                            <tr style={{ background: 'transparent' }} className="hover:bg-white/50 transition">
                                 <td className="px-5 py-3.5">
-                                    <span className="text-sm font-bold block" style={{ color: '#E8F1F2' }}>
+                                    <span className="text-sm font-bold block" style={{ color: '#0F172A' }}>
                                         📦 Đơn Mua Hàng Quốc Tế & Nội Địa
                                     </span>
                                     <span className="text-[10px] font-mono text-[#6A8A9A]">procurement.purchase_order</span>
@@ -361,7 +361,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         <div className="flex gap-1 flex-wrap">
                                             {poRoute.creatorRoles.map(rCode => (
                                                 <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
-                                                    style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}>
+                                                    style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}>
                                                     {getRoleName(rCode)}
                                                 </span>
                                             ))}
@@ -383,7 +383,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                     {st.label || getRoleName(st.role)}
                                                 </span>
                                                 {i < poRoute.steps.length - 1 && (
-                                                    <ChevronRight size={14} style={{ color: '#4A6A7A' }} />
+                                                    <ChevronRight size={14} style={{ color: '#64748B' }} />
                                                 )}
                                             </span>
                                         ))}
@@ -394,7 +394,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                     <button
                                         onClick={openPoEditModal}
                                         className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
-                                        style={{ background: '#1B2E3D', color: '#D4A853', border: '1px solid #2A4355' }}
+                                        style={{ background: '#FFFFFF', color: '#D4A853', border: '1px solid #E2E8F0' }}
                                         title="Sửa số cấp và phân quyền Role duyệt PO"
                                     >
                                         <Edit3 size={13} /> Sửa
@@ -407,14 +407,14 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 3: Threshold Configuration ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
                         <Settings2 size={18} style={{ color: '#D4A853' }} />
                         <div>
-                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Ngưỡng Phê Duyệt Tự Động</h3>
-                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Khi vượt ngưỡng → tự động yêu cầu CEO phê duyệt</p>
+                            <h3 className="text-sm font-bold" style={{ color: '#0F172A' }}>Ngưỡng Phê Duyệt Tự Động</h3>
+                            <p className="text-[11px]" style={{ color: '#64748B' }}>Khi vượt ngưỡng → tự động yêu cầu CEO phê duyệt</p>
                         </div>
                     </div>
                     <button
@@ -423,7 +423,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
                         style={{
                             background: dirty.thresholds ? '#D4A853' : 'rgba(212,168,83,0.15)',
-                            color: dirty.thresholds ? '#0A1926' : '#4A6A7A',
+                            color: dirty.thresholds ? '#F8FAFC' : '#64748B',
                         }}
                     >
                         {savingThresholds ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -431,7 +431,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0" style={{ background: '#0D1E2B' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0" style={{ background: '#F8FAFC' }}>
                     {thresholds.map((t, idx) => {
                         const isPercent = t.key.includes('discount') || t.key.includes('percent')
                         const Icon = isPercent ? Percent : DollarSign
@@ -447,8 +447,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                     <Icon size={18} style={{ color: isPercent ? '#4A8FAB' : '#D4A853' }} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{t.label}</p>
-                                    <p className="text-[11px] mt-0.5" style={{ color: '#4A6A7A' }}>{t.description}</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.label}</p>
+                                    <p className="text-[11px] mt-0.5" style={{ color: '#64748B' }}>{t.description}</p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <input
@@ -457,15 +457,15 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         onChange={e => updateThreshold(idx, Number(e.target.value))}
                                         className="w-40 px-3 py-2.5 rounded-lg text-sm text-right outline-none font-bold"
                                         style={{
-                                            background: '#1B2E3D',
-                                            border: '1px solid #2A4355',
-                                            color: '#87CBB9',
+                                            background: '#FFFFFF',
+                                            border: '1px solid #E2E8F0',
+                                            color: '#0891B2',
                                         }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                         step={isPercent ? 1 : 1_000_000}
                                     />
-                                    <span className="text-xs font-bold" style={{ color: '#4A6A7A' }}>
+                                    <span className="text-xs font-bold" style={{ color: '#64748B' }}>
                                         {isPercent ? '%' : '₫'}
                                     </span>
                                 </div>
@@ -479,16 +479,16 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             {editDraft && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
                     <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                     Cấu Hình Luồng Phê Duyệt: {CATEGORY_LABELS[editDraft.category] ?? editDraft.category}
                                 </h3>
-                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Mã danh mục: {editDraft.category}</p>
+                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mã danh mục: {editDraft.category}</p>
                             </div>
-                            <button onClick={() => { setEditingCategory(null); setEditDraft(null); }} className="p-1 rounded hover:bg-[#1B2E3D]">
+                            <button onClick={() => { setEditingCategory(null); setEditDraft(null); }} className="p-1 rounded hover:bg-white">
                                 <X size={20} className="text-gray-400" />
                             </button>
                         </div>
@@ -497,7 +497,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <div className="p-6 space-y-6 overflow-y-auto flex-1">
                             {/* 1. Creator Roles Selection */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#87CBB9' }}>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#0891B2' }}>
                                     1. Quyền Tạo Tờ Trình (Các Role được mở form tạo)
                                 </label>
                                 <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo loại tờ trình này.</p>
@@ -517,10 +517,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         return { ...prev, creatorRoles: nextRoles }
                                                     })
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#87CBB9]' : 'bg-[#1B2E3D] border-[#2A4355] text-gray-300'}`}
+                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#0891B2]' : 'bg-white border-slate-200 text-gray-300'}`}
                                             >
                                                 <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
-                                                    {isChecked && <Check size={12} className="text-[#0A1926]" />}
+                                                    {isChecked && <Check size={12} className="text-slate-900" />}
                                                 </div>
                                                 <span>{r.name}</span>
                                             </button>
@@ -530,7 +530,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             </div>
 
                             {/* 2. Number of Approval Steps & Roles */}
-                            <div className="pt-4 border-t border-[#2A4355]">
+                            <div className="pt-4 border-t border-slate-200">
                                 <div className="flex items-center justify-between mb-3">
                                     <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
                                         2. Số Cấp & Role Phê Duyệt Theo Thứ Tự
@@ -549,7 +549,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 }
                                             })
                                         }}
-                                        className="text-xs flex items-center gap-1 font-bold text-[#87CBB9] hover:underline disabled:opacity-40"
+                                        className="text-xs flex items-center gap-1 font-bold text-[#0891B2] hover:underline disabled:opacity-40"
                                     >
                                         <Plus size={14} /> Thêm cấp duyệt
                                     </button>
@@ -557,7 +557,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {editDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-[#2A4355]" style={{ background: '#1B2E3D' }}>
+                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200" style={{ background: '#FFFFFF' }}>
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
                                                 style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
                                                 {idx + 1}
@@ -577,7 +577,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         })
                                                     }}
                                                     className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                 >
                                                     {availableRoles.map(r => (
                                                         <option key={r.code} value={r.code}>{r.name}</option>
@@ -610,11 +610,11 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3" style={{ background: '#102230' }}>
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3" style={{ background: '#102230' }}>
                             <button
                                 type="button"
                                 onClick={() => { setEditingCategory(null); setEditDraft(null); }}
-                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-[#1B2E3D]"
+                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-white"
                             >
                                 Huỷ
                             </button>
@@ -622,7 +622,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                 type="button"
                                 onClick={handleSaveEditDraft}
                                 className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                                style={{ background: '#0891B2', color: '#FFFFFF' }}
                             >
                                 Áp Dụng Thay Đổi
                             </button>
@@ -635,16 +635,16 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             {editingPoModal && poDraft && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
                     <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                     Cấu Hình Luồng Phê Duyệt: Đơn Mua Hàng (PO)
                                 </h3>
-                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Mã cấu hình: procurement.purchase_order</p>
+                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mã cấu hình: procurement.purchase_order</p>
                             </div>
-                            <button onClick={() => { setEditingPoModal(false); setPoDraft(null); }} className="p-1 rounded hover:bg-[#1B2E3D]">
+                            <button onClick={() => { setEditingPoModal(false); setPoDraft(null); }} className="p-1 rounded hover:bg-white">
                                 <X size={20} className="text-gray-400" />
                             </button>
                         </div>
@@ -653,7 +653,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <div className="p-6 space-y-6 overflow-y-auto flex-1">
                             {/* 1. Creator Roles Selection */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#87CBB9' }}>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#0891B2' }}>
                                     1. Quyền Tạo Đơn Mua Hàng (Role được mở form tạo PO)
                                 </label>
                                 <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo PO.</p>
@@ -673,10 +673,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         return { ...prev, creatorRoles: nextRoles }
                                                     })
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#87CBB9]' : 'bg-[#1B2E3D] border-[#2A4355] text-gray-300'}`}
+                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#0891B2]' : 'bg-white border-slate-200 text-gray-300'}`}
                                             >
                                                 <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
-                                                    {isChecked && <Check size={12} className="text-[#0A1926]" />}
+                                                    {isChecked && <Check size={12} className="text-slate-900" />}
                                                 </div>
                                                 <span>{r.name}</span>
                                             </button>
@@ -686,7 +686,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             </div>
 
                             {/* 2. Number of Approval Steps & Roles */}
-                            <div className="pt-4 border-t border-[#2A4355]">
+                            <div className="pt-4 border-t border-slate-200">
                                 <div className="flex items-center justify-between mb-3">
                                     <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
                                         2. Số Cấp & Role Phê Duyệt PO Theo Thứ Tự
@@ -706,7 +706,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 }
                                             })
                                         }}
-                                        className="text-xs flex items-center gap-1 font-bold text-[#87CBB9] hover:underline disabled:opacity-40"
+                                        className="text-xs flex items-center gap-1 font-bold text-[#0891B2] hover:underline disabled:opacity-40"
                                     >
                                         <Plus size={14} /> Thêm cấp duyệt
                                     </button>
@@ -714,7 +714,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {poDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-[#2A4355]" style={{ background: '#1B2E3D' }}>
+                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200" style={{ background: '#FFFFFF' }}>
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
                                                 style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
                                                 {idx + 1}
@@ -735,7 +735,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             })
                                                         }}
                                                         className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                     >
                                                         {availableRoles.map(r => (
                                                             <option key={r.code} value={r.code}>{r.name}</option>
@@ -758,7 +758,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             })
                                                         }}
                                                         className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                     />
                                                 </div>
                                             </div>
@@ -787,11 +787,11 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3" style={{ background: '#102230' }}>
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3" style={{ background: '#102230' }}>
                             <button
                                 type="button"
                                 onClick={() => { setEditingPoModal(false); setPoDraft(null); }}
-                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-[#1B2E3D]"
+                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-white"
                             >
                                 Huỷ
                             </button>
@@ -799,7 +799,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                 type="button"
                                 onClick={handleSavePoDraft}
                                 className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
-                                style={{ background: '#D4A853', color: '#0A1926' }}
+                                style={{ background: '#D97706', color: '#FFFFFF' }}
                             >
                                 Áp Dụng Thay Đổi
                             </button>

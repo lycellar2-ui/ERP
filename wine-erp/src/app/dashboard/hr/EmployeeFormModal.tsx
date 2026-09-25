@@ -190,18 +190,18 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-xl border border-[#2A4355] bg-[#142433] shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A4355] bg-[#1B2E3D]/50 shrink-0">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white/50 shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-lg bg-[#87CBB9]/20 text-[#87CBB9]">
+                        <div className="p-2 rounded-lg bg-[#87CBB9]/20 text-[#0891B2]">
                             {isEdit ? <Save className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-[#E8F1F2]">
+                            <h3 className="text-base font-bold text-slate-900">
                                 {isEdit ? `Chỉnh Sửa Hồ Sơ: ${employee.fullName}` : 'Thêm Mới Hồ Sơ Nhân Viên'}
                             </h3>
-                            <p className="text-xs text-[#8AAEBB]">
+                            <p className="text-xs text-slate-600">
                                 {isEdit ? `Mã NV: ${employee.code}` : 'Hệ thống tự động đồng bộ và theo dõi hạn giấy tờ'}
                             </p>
                         </div>
@@ -209,21 +209,21 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                     <button
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-white hover:bg-[#2A4355] transition-colors"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Sub-tabs Navigation */}
-                <div className="flex items-center gap-1 px-6 pt-3 border-b border-[#2A4355] bg-[#142433] shrink-0 overflow-x-auto">
+                <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-200 bg-white shrink-0 overflow-x-auto">
                     <button
                         type="button"
                         onClick={() => setActiveTab('BASIC')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'BASIC'
-                                ? 'border-[#87CBB9] text-[#87CBB9] bg-[#1B2E3D]'
-                                : 'border-transparent text-[#8AAEBB] hover:text-white'
+                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                : 'border-transparent text-slate-600 hover:text-white'
                         }`}
                     >
                         <FileText className="w-4 h-4" />
@@ -234,8 +234,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('WORK')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'WORK'
-                                ? 'border-[#87CBB9] text-[#87CBB9] bg-[#1B2E3D]'
-                                : 'border-transparent text-[#8AAEBB] hover:text-white'
+                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                : 'border-transparent text-slate-600 hover:text-white'
                         }`}
                     >
                         <Building className="w-4 h-4" />
@@ -246,8 +246,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('FINANCE')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'FINANCE'
-                                ? 'border-[#87CBB9] text-[#87CBB9] bg-[#1B2E3D]'
-                                : 'border-transparent text-[#8AAEBB] hover:text-white'
+                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                : 'border-transparent text-slate-600 hover:text-white'
                         }`}
                     >
                         <CreditCard className="w-4 h-4" />
@@ -258,8 +258,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('ACCOUNT')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'ACCOUNT'
-                                ? 'border-[#87CBB9] text-[#87CBB9] bg-[#1B2E3D]'
-                                : 'border-transparent text-[#8AAEBB] hover:text-white'
+                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                : 'border-transparent text-slate-600 hover:text-white'
                         }`}
                     >
                         <Link2 className="w-4 h-4" />
@@ -275,7 +275,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">
+                                        <label className="block font-semibold text-slate-600 mb-1">
                                             Mã nhân viên (Để trống để tự tạo)
                                         </label>
                                         <input
@@ -283,11 +283,11 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="VD: NV-001"
                                             value={formData.code || ''}
                                             onChange={e => handleChange('code', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div className="sm:col-span-2">
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">
+                                        <label className="block font-semibold text-slate-600 mb-1">
                                             Họ và tên nhân viên <span className="text-rose-400">*</span>
                                         </label>
                                         <input
@@ -296,18 +296,18 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             value={formData.fullName}
                                             onChange={e => handleChange('fullName', e.target.value)}
                                             required
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Giới tính</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Giới tính</label>
                                         <select
                                             value={formData.gender || 'NAM'}
                                             onChange={e => handleChange('gender', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         >
                                             <option value="NAM">Nam</option>
                                             <option value="NU">Nữ</option>
@@ -315,113 +315,113 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Ngày sinh</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Ngày sinh</label>
                                         <input
                                             type="date"
                                             value={formData.dateOfBirth || ''}
                                             onChange={e => handleChange('dateOfBirth', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Số điện thoại</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Số điện thoại</label>
                                         <input
                                             type="tel"
                                             placeholder="0912 345 678"
                                             value={formData.phone || ''}
                                             onChange={e => handleChange('phone', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Số CCCD / Hộ chiếu</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Số CCCD / Hộ chiếu</label>
                                         <input
                                             type="text"
                                             placeholder="12 chữ số CCCD..."
                                             value={formData.nationalId || ''}
                                             onChange={e => handleChange('nationalId', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Ngày cấp CCCD</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Ngày cấp CCCD</label>
                                         <input
                                             type="date"
                                             value={formData.nationalIdDate || ''}
                                             onChange={e => handleChange('nationalIdDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Nơi cấp</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Nơi cấp</label>
                                         <input
                                             type="text"
                                             placeholder="Cục CS QLHC về TTXH..."
                                             value={formData.nationalIdPlace || ''}
                                             onChange={e => handleChange('nationalIdPlace', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Địa chỉ thường trú</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Địa chỉ thường trú</label>
                                         <input
                                             type="text"
                                             placeholder="Địa chỉ theo hộ khẩu / CCCD..."
                                             value={formData.address || ''}
                                             onChange={e => handleChange('address', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Nơi ở hiện nay</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Nơi ở hiện nay</label>
                                         <input
                                             type="text"
                                             placeholder="Địa chỉ tạm trú thực tế..."
                                             value={formData.currentAddress || ''}
                                             onChange={e => handleChange('currentAddress', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Emergency Contact */}
-                                <div className="p-3 rounded-lg bg-[#0D1822] border border-[#2A4355]/60 space-y-2.5">
-                                    <p className="font-bold text-[#87CBB9] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
+                                <div className="p-3 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-2.5">
+                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Tên người liên hệ</label>
+                                            <label className="block text-slate-600 mb-1">Tên người liên hệ</label>
                                             <input
                                                 type="text"
                                                 placeholder="Bố/Mẹ/Vợ/Chồng..."
                                                 value={formData.emergencyContact || ''}
                                                 onChange={e => handleChange('emergencyContact', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Số điện thoại liên hệ</label>
+                                            <label className="block text-slate-600 mb-1">Số điện thoại liên hệ</label>
                                             <input
                                                 type="tel"
                                                 placeholder="SĐT người thân..."
                                                 value={formData.emergencyPhone || ''}
                                                 onChange={e => handleChange('emergencyPhone', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Mối quan hệ</label>
+                                            <label className="block text-slate-600 mb-1">Mối quan hệ</label>
                                             <input
                                                 type="text"
                                                 placeholder="Quan hệ gia đình..."
                                                 value={formData.emergencyRelation || ''}
                                                 onChange={e => handleChange('emergencyRelation', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                     </div>
@@ -434,11 +434,11 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Phòng ban</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Phòng ban</label>
                                         <select
                                             value={formData.deptId || ''}
                                             onChange={e => handleChange('deptId', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         >
                                             <option value="">-- Chưa phân phòng ban --</option>
                                             {departments.map(d => (
@@ -447,21 +447,21 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Chức danh / Vị trí</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Chức danh / Vị trí</label>
                                         <input
                                             type="text"
                                             placeholder="VD: Nhân viên Sales, Kế toán kho..."
                                             value={formData.position || ''}
                                             onChange={e => handleChange('position', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Trạng thái công tác</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Trạng thái công tác</label>
                                         <select
                                             value={formData.status || 'ACTIVE'}
                                             onChange={e => handleChange('status', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         >
                                             {STATUS_OPTIONS.map(s => (
                                                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -472,39 +472,39 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Ngày vào làm việc</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Ngày vào làm việc</label>
                                         <input
                                             type="date"
                                             value={formData.startDate || ''}
                                             onChange={e => handleChange('startDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Ngày tiếp nhận chính thức</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Ngày tiếp nhận chính thức</label>
                                         <input
                                             type="date"
                                             value={formData.officialDate || ''}
                                             onChange={e => handleChange('officialDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Contract Section */}
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-[#2A4355]/60 space-y-3">
+                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <p className="font-bold text-[#87CBB9] uppercase tracking-wider text-[11px]">Thông Tin Hợp Đồng Lao Động</p>
+                                        <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Thông Tin Hợp Đồng Lao Động</p>
                                         <span className="text-[11px] text-amber-300">Tự động cảnh báo trước 30 ngày hết hạn</span>
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Loại hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">Loại hợp đồng</label>
                                             <select
                                                 value={formData.contractType || 'DEFINITE_1Y'}
                                                 onChange={e => handleChange('contractType', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             >
                                                 {CONTRACT_TYPES.map(c => (
                                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -512,36 +512,36 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Số hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">Số hợp đồng</label>
                                             <input
                                                 type="text"
                                                 placeholder="VD: HĐLĐ-2026/01/LYS..."
                                                 value={formData.contractNumber || ''}
                                                 onChange={e => handleChange('contractNumber', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Ngày bắt đầu hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">Ngày bắt đầu hợp đồng</label>
                                             <input
                                                 type="date"
                                                 value={formData.contractStartDate || ''}
                                                 onChange={e => handleChange('contractStartDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">
+                                            <label className="block text-slate-600 mb-1">
                                                 Ngày kết thúc hợp đồng <span className="text-amber-400 font-bold">*</span>
                                             </label>
                                             <input
                                                 type="date"
                                                 value={formData.contractEndDate || ''}
                                                 onChange={e => handleChange('contractEndDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                     </div>
@@ -552,37 +552,37 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         {/* TAB 3: FINANCE & HEALTH */}
                         {activeTab === 'FINANCE' && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-[#2A4355]/60 space-y-3">
-                                    <p className="font-bold text-[#87CBB9] uppercase tracking-wider text-[11px]">Tài Khoản Ngân Hàng & Chi Trả Lương</p>
+                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
+                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Tài Khoản Ngân Hàng & Chi Trả Lương</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Số tài khoản</label>
+                                            <label className="block text-slate-600 mb-1">Số tài khoản</label>
                                             <input
                                                 type="text"
                                                 placeholder="Số TK ngân hàng..."
                                                 value={formData.bankAccountNo || ''}
                                                 onChange={e => handleChange('bankAccountNo', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Tên ngân hàng & Chi nhánh</label>
+                                            <label className="block text-slate-600 mb-1">Tên ngân hàng & Chi nhánh</label>
                                             <input
                                                 type="text"
                                                 placeholder="VD: Vietcombank - CN Tân Bình"
                                                 value={formData.bankName || ''}
                                                 onChange={e => handleChange('bankName', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Tên chủ tài khoản</label>
+                                            <label className="block text-slate-600 mb-1">Tên chủ tài khoản</label>
                                             <input
                                                 type="text"
                                                 placeholder="Tên in hoa không dấu..."
                                                 value={formData.bankAccountHolder || ''}
                                                 onChange={e => handleChange('bankAccountHolder', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                     </div>
@@ -590,30 +590,30 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Mã số thuế cá nhân (MST)</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Mã số thuế cá nhân (MST)</label>
                                         <input
                                             type="text"
                                             placeholder="MST 10 số..."
                                             value={formData.taxCode || ''}
                                             onChange={e => handleChange('taxCode', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-[#8AAEBB] mb-1">Số sổ Bảo Hiểm Xã Hội (BHXH)</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">Số sổ Bảo Hiểm Xã Hội (BHXH)</label>
                                         <input
                                             type="text"
                                             placeholder="Mã số BHXH..."
                                             value={formData.socialInsuranceNo || ''}
                                             onChange={e => handleChange('socialInsuranceNo', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-[#2A4355]/60 space-y-3">
+                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <p className="font-bold text-[#87CBB9] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                        <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                                             <HeartPulse className="w-4 h-4 text-rose-400" />
                                             Khám Sức Khỏe Định Kỳ
                                         </p>
@@ -621,34 +621,34 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Ngày khám sức khỏe gần nhất</label>
+                                            <label className="block text-slate-600 mb-1">Ngày khám sức khỏe gần nhất</label>
                                             <input
                                                 type="date"
                                                 value={formData.healthCheckDate || ''}
                                                 onChange={e => handleChange('healthCheckDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[#8AAEBB] mb-1">Ngày hết hạn giấy khám sức khỏe</label>
+                                            <label className="block text-slate-600 mb-1">Ngày hết hạn giấy khám sức khỏe</label>
                                             <input
                                                 type="date"
                                                 value={formData.healthCheckExpiry || ''}
                                                 onChange={e => handleChange('healthCheckExpiry', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block font-semibold text-[#8AAEBB] mb-1">Ghi chú nội bộ</label>
+                                    <label className="block font-semibold text-slate-600 mb-1">Ghi chú nội bộ</label>
                                     <textarea
                                         rows={2}
                                         placeholder="Ghi chú về nhân viên..."
                                         value={formData.notes || ''}
                                         onChange={e => handleChange('notes', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9] resize-none"
+                                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9] resize-none"
                                     />
                                 </div>
                             </div>
@@ -657,9 +657,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         {/* TAB 4: ACCOUNT LINKING */}
                         {activeTab === 'ACCOUNT' && (
                             <div className="space-y-4">
-                                <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[#8AAEBB]">
+                                <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-slate-600">
                                     <div className="flex items-start gap-3">
-                                        <Link2 className="w-5 h-5 text-[#87CBB9] mt-0.5 shrink-0" />
+                                        <Link2 className="w-5 h-5 text-[#0891B2] mt-0.5 shrink-0" />
                                         <div>
                                             <h4 className="text-sm font-bold text-white mb-1">Liên Kết Tài Khoản Đăng Nhập ERP</h4>
                                             <p className="leading-relaxed">
@@ -670,13 +670,13 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 <div>
-                                    <label className="block font-semibold text-[#8AAEBB] mb-1.5">
+                                    <label className="block font-semibold text-slate-600 mb-1.5">
                                         Chọn tài khoản ERP trong hệ thống
                                     </label>
                                     <select
                                         value={formData.userId || ''}
                                         onChange={e => handleChange('userId', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white text-xs focus:outline-hidden focus:border-[#87CBB9]"
+                                        className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:outline-hidden focus:border-[#87CBB9]"
                                     >
                                         <option value="">-- Không liên kết (Nhân viên chưa có hoặc không cần tài khoản ERP) --</option>
                                         {availableUsers.map(u => (
@@ -692,9 +692,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 {formData.userId && (
-                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-[#0D1822] border border-[#2A4355]">
-                                        <Shield className="w-4 h-4 text-[#87CBB9]" />
-                                        <span className="text-[#E8F1F2]">
+                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-[#0D1822] border border-slate-200">
+                                        <Shield className="w-4 h-4 text-[#0891B2]" />
+                                        <span className="text-slate-900">
                                             Tài khoản đã chọn: <strong>{availableUsers.find(u => u.id === formData.userId)?.name}</strong> ({availableUsers.find(u => u.id === formData.userId)?.email})
                                         </span>
                                     </div>
@@ -704,8 +704,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                     </div>
 
                     {/* Footer Buttons */}
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-[#2A4355] bg-[#142433] shrink-0">
-                        <div className="flex items-center gap-1.5 text-xs text-[#8AAEBB]">
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white shrink-0">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
                             <span>Tab {activeTab === 'BASIC' ? '1/4' : activeTab === 'WORK' ? '2/4' : activeTab === 'FINANCE' ? '3/4' : '4/4'}</span>
                         </div>
                         <div className="flex items-center gap-3">
@@ -713,14 +713,14 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 type="button"
                                 onClick={onClose}
                                 disabled={isSubmitting}
-                                className="px-4 py-2 text-xs font-semibold rounded-lg text-[#8AAEBB] hover:text-white bg-[#1B2E3D] hover:bg-[#2A4355] transition-colors"
+                                className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 bg-white hover:bg-[#E2E8F0] transition-colors"
                             >
                                 Hủy bỏ
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-lg bg-[#87CBB9] text-[#0A1926] hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
+                                className="flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-lg bg-[#0891B2] text-white hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
                             >
                                 {isSubmitting ? (
                                     <>

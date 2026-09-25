@@ -32,15 +32,15 @@ export function DataPagination({
 
     return (
         <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
+            style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
             <div className="flex items-center gap-3">
-                <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                    Hiển thị <span style={{ color: '#8AAEBB' }}>{start}–{end}</span> trong <span style={{ color: '#8AAEBB' }}>{total.toLocaleString()}</span>
+                <p className="text-xs" style={{ color: '#64748B' }}>
+                    Hiển thị <span style={{ color: '#475569' }}>{start}–{end}</span> trong <span style={{ color: '#475569' }}>{total.toLocaleString()}</span>
                 </p>
                 {onPageSizeChange && (
                     <select value={pageSize} onChange={e => onPageSizeChange(Number(e.target.value))}
                         className="px-2 py-1 text-xs outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', borderRadius: '4px' }}>
                         {pageSizeOptions.map(s => <option key={s} value={s}>{s} / trang</option>)}
                     </select>
                 )}
@@ -48,20 +48,20 @@ export function DataPagination({
             <div className="flex items-center gap-1">
                 <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
                     className="p-1.5 rounded disabled:opacity-30 transition-colors"
-                    style={{ color: '#8AAEBB' }}
-                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#1B2E3D')}
+                    style={{ color: '#475569' }}
+                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#FFFFFF')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <ChevronLeft size={16} />
                 </button>
                 {getPageNumbers().map((p, i) =>
                     p === '...' ? (
-                        <span key={`e${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
+                        <span key={`e${i}`} className="px-1 text-xs" style={{ color: '#64748B' }}>…</span>
                     ) : (
                         <button key={p} onClick={() => onPageChange(p)}
                             className="min-w-[32px] h-8 px-2 rounded text-xs font-medium transition-all"
                             style={{
                                 background: p === page ? '#87CBB9' : 'transparent',
-                                color: p === page ? '#0A1926' : '#8AAEBB',
+                                color: p === page ? '#F8FAFC' : '#475569',
                             }}>
                             {p}
                         </button>
@@ -69,8 +69,8 @@ export function DataPagination({
                 )}
                 <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
                     className="p-1.5 rounded disabled:opacity-30 transition-colors"
-                    style={{ color: '#8AAEBB' }}
-                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#1B2E3D')}
+                    style={{ color: '#475569' }}
+                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#FFFFFF')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <ChevronRight size={16} />
                 </button>

@@ -213,19 +213,19 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A1926] text-white">
-                <Loader2 className="animate-spin text-[#87CBB9] mb-4" size={36} />
-                <p className="text-sm text-[#8AAEBB]">Đang tải dữ liệu đơn hàng...</p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white">
+                <Loader2 className="animate-spin text-[#0891B2] mb-4" size={36} />
+                <p className="text-sm text-slate-600">Đang tải dữ liệu đơn hàng...</p>
             </div>
         )
     }
 
     if (error || !order) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A1926] text-white px-4">
-                <div className="p-6 rounded-lg max-w-md w-full bg-[#1B2E3D] border border-[#EF4444]/30 text-center">
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white px-4">
+                <div className="p-6 rounded-lg max-w-md w-full bg-white border border-[#EF4444]/30 text-center">
                     <p className="text-sm font-bold text-[#EF4444] mb-4">⚠ Lỗi hệ thống</p>
-                    <p className="text-sm text-[#E8F1F2] mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
+                    <p className="text-sm text-slate-900 mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
                     <button onClick={() => window.close()} className="px-4 py-2 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-500 transition-colors">
                         Đóng cửa sổ
                     </button>
@@ -309,7 +309,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         : (order.customer.channel || '—')
 
     return (
-        <div className="min-h-screen bg-[#0A1926] text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
+        <div className="min-h-screen bg-slate-50 text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
             {/* Embedded Print CSS to force pure white background and hide browser header/footer */}
             <style>{`
                 @media print {
@@ -329,26 +329,26 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
             `}</style>
 
             {/* Top Toolbar (Hidden on print) */}
-            <div className="max-w-[850px] mx-auto mb-3 px-4 py-2 bg-[#1B2E3D] border border-[#2A4355] rounded-md flex flex-wrap items-center justify-between gap-2 no-print">
+            <div className="max-w-[850px] mx-auto mb-3 px-4 py-2 bg-white border border-slate-200 rounded-md flex flex-wrap items-center justify-between gap-2 no-print">
                 <button 
                     onClick={() => window.close()} 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-[#8AAEBB] hover:text-[#E8F1F2] transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
                 >
                     <ArrowLeft size={14} /> {t.back}
                 </button>
 
                 {/* Language Switcher Bar */}
-                <div className="flex items-center gap-1 bg-[#0F1E2A] p-1 rounded-lg border border-[#2A4355]">
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#8AAEBB] px-2">
-                        <Globe size={13} className="text-[#87CBB9]" /> {t.langLabel}
+                <div className="flex items-center gap-1 bg-[#0F1E2A] p-1 rounded-lg border border-slate-200">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-slate-600 px-2">
+                        <Globe size={13} className="text-[#0891B2]" /> {t.langLabel}
                     </span>
                     <button
                         type="button"
                         onClick={() => setLang('vi')}
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'vi' 
-                                ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs' 
-                                : 'text-slate-300 hover:text-white hover:bg-[#1B2E3D]'
+                                ? 'bg-[#0891B2] text-white shadow-xs' 
+                                : 'text-slate-300 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         🇻🇳 {t.viBtn}
@@ -358,8 +358,8 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         onClick={() => setLang('en')}
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'en' 
-                                ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs' 
-                                : 'text-slate-300 hover:text-white hover:bg-[#1B2E3D]'
+                                ? 'bg-[#0891B2] text-white shadow-xs' 
+                                : 'text-slate-300 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         🇬🇧 {t.enBtn}
@@ -369,7 +369,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 <div className="flex gap-2">
                     <button 
                         onClick={() => window.print()} 
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0] transition-colors shadow-sm cursor-pointer"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white hover:bg-[#A5DED0] transition-colors shadow-sm cursor-pointer"
                     >
                         <Printer size={14} /> {t.printDoc}
                     </button>

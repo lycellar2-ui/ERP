@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 108 Rules rút ra từ 77 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 109 Rules rút ra từ 78 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-24 12:00 | Wine ERP v10.37 - Xây dựng phân hệ Quản lý Hồ sơ & Giấy tờ Nhân viên (HRM & Employee Document Hub)*
+*Last updated: 2026-09-24 19:10 | Wine ERP v10.39 - Bổ sung tính năng Ghi Báo Cáo Nhanh Thực Địa & Bảng Tin Trực Tiếp Cho Quản Lý (SFV)*
 

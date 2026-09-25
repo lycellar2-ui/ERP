@@ -43,18 +43,18 @@ export function ContractsPage({
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#E8F1F2' }}>
-                        <Scale size={24} style={{ color: '#87CBB9' }} />
+                    <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#0F172A' }}>
+                        <Scale size={24} style={{ color: '#0891B2' }} />
                         Trung Tâm Pháp Lý & Tuân Thủ
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý hợp đồng, giấy phép, chứng nhận và chứng từ có thời hạn
                     </p>
                 </div>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {TABS.map(tab => {
                     const Icon = tab.icon
                     const isActive = activeTab === tab.key
@@ -65,15 +65,15 @@ export function ContractsPage({
                             onClick={() => setActiveTab(tab.key)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-all relative"
                             style={{
-                                background: isActive ? 'rgba(135,203,185,0.12)' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#4A6A7A',
+                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                color: isActive ? '#87CBB9' : '#64748B',
                                 borderBottom: isActive ? '2px solid #87CBB9' : '2px solid transparent',
                             }}
                             onMouseEnter={e => {
-                                if (!isActive) e.currentTarget.style.color = '#8AAEBB'
+                                if (!isActive) e.currentTarget.style.color = '#475569'
                             }}
                             onMouseLeave={e => {
-                                if (!isActive) e.currentTarget.style.color = '#4A6A7A'
+                                if (!isActive) e.currentTarget.style.color = '#64748B'
                             }}>
                             <Icon size={16} />
                             {tab.label}

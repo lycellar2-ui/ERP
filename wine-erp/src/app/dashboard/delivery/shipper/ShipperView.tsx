@@ -47,37 +47,37 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
     // If no driver selected → Driver Select screen
     if (!selectedDriverId) {
         return (
-            <div className="min-h-screen flex flex-col" style={{ background: '#0A1926' }}>
-                <div className="px-4 pt-6 pb-4 text-center" style={{ background: 'linear-gradient(180deg, #142433 0%, #0A1926 100%)' }}>
+            <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
+                <div className="px-4 pt-6 pb-4 text-center" style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)' }}>
                     <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-3"
-                        style={{ background: 'rgba(135,203,185,0.15)' }}>
-                        <Truck size={28} style={{ color: '#87CBB9' }} />
+                        style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                        <Truck size={28} style={{ color: '#0891B2' }} />
                     </div>
-                    <h1 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h1 className="text-xl font-bold" style={{ color: '#0F172A' }}>
                         Giao Hàng
                     </h1>
-                    <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>Chọn tài xế để xem lộ trình hôm nay</p>
+                    <p className="text-sm mt-1" style={{ color: '#64748B' }}>Chọn tài xế để xem lộ trình hôm nay</p>
                 </div>
 
                 <div className="flex-1 px-4 py-4 space-y-3">
                     {drivers.length === 0 ? (
                         <div className="text-center py-10">
-                            <Truck size={40} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tài xế nào</p>
+                            <Truck size={40} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
+                            <p className="text-sm" style={{ color: '#64748B' }}>Chưa có tài xế nào</p>
                         </div>
                     ) : drivers.map(d => (
                         <button key={d.id} onClick={() => handleDriverSelect(d.id)}
                             className="w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98]"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-                                style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                 {d.name.charAt(0)}
                             </div>
                             <div className="flex-1 text-left">
-                                <p className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>{d.name}</p>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>{d.phone}</p>
+                                <p className="font-semibold text-sm" style={{ color: '#0F172A' }}>{d.name}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{d.phone}</p>
                             </div>
-                            <ChevronRight size={18} style={{ color: '#4A6A7A' }} />
+                            <ChevronRight size={18} style={{ color: '#64748B' }} />
                         </button>
                     ))}
                 </div>
@@ -88,10 +88,10 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
     // Loading state
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A1926' }}>
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#F8FAFC' }}>
                 <div className="text-center">
-                    <Loader2 size={32} className="animate-spin mx-auto mb-3" style={{ color: '#87CBB9' }} />
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Đang tải lộ trình...</p>
+                    <Loader2 size={32} className="animate-spin mx-auto mb-3" style={{ color: '#0891B2' }} />
+                    <p className="text-sm" style={{ color: '#64748B' }}>Đang tải lộ trình...</p>
                 </div>
             </div>
         )
@@ -114,19 +114,19 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
     // No manifest for today
     if (!manifest) {
         return (
-            <div className="min-h-screen flex flex-col" style={{ background: '#0A1926' }}>
-                <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+            <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
+                <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <button onClick={() => setSelectedDriverId('')} className="p-2 rounded-lg"
-                        style={{ background: '#1B2E3D' }}>
-                        <ArrowLeft size={18} style={{ color: '#8AAEBB' }} />
+                        style={{ background: '#FFFFFF' }}>
+                        <ArrowLeft size={18} style={{ color: '#475569' }} />
                     </button>
-                    <h2 className="font-semibold" style={{ color: '#E8F1F2' }}>Lộ Trình Hôm Nay</h2>
+                    <h2 className="font-semibold" style={{ color: '#0F172A' }}>Lộ Trình Hôm Nay</h2>
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center px-8">
-                        <Clock size={48} className="mx-auto mb-4" style={{ color: '#2A4355' }} />
-                        <p className="text-lg font-semibold mb-1" style={{ color: '#E8F1F2' }}>Không có lộ trình</p>
-                        <p className="text-sm" style={{ color: '#4A6A7A' }}>
+                        <Clock size={48} className="mx-auto mb-4" style={{ color: '#E2E8F0' }} />
+                        <p className="text-lg font-semibold mb-1" style={{ color: '#0F172A' }}>Không có lộ trình</p>
+                        <p className="text-sm" style={{ color: '#64748B' }}>
                             Tài xế chưa được phân công giao hàng hôm nay.
                         </p>
                     </div>
@@ -141,26 +141,26 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
         : 0
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ background: '#0A1926' }}>
+        <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
             {/* Header */}
-            <div className="px-4 pt-4 pb-3" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+            <div className="px-4 pt-4 pb-3" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-3 mb-3">
                     <button onClick={() => setSelectedDriverId('')} className="p-2 rounded-lg"
-                        style={{ background: '#1B2E3D' }}>
-                        <ArrowLeft size={18} style={{ color: '#8AAEBB' }} />
+                        style={{ background: '#FFFFFF' }}>
+                        <ArrowLeft size={18} style={{ color: '#475569' }} />
                     </button>
                     <div className="flex-1">
-                        <h2 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>
+                        <h2 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
                             {manifest.driverName}
                         </h2>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                        <p className="text-xs" style={{ color: '#64748B' }}>
                             {manifest.vehiclePlate} • {new Date(manifest.routeDate).toLocaleDateString('vi-VN')}
                         </p>
                     </div>
                     {manifest.status === 'PLANNED' && (
                         <button onClick={handleStartRoute}
                             className="px-3 py-2 rounded-lg text-xs font-bold"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             Bắt Đầu
                         </button>
                     )}
@@ -168,31 +168,31 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
 
                 {/* Progress bar */}
                 <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: '#0D1E2B' }}>
+                    <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: '#F8FAFC' }}>
                         <div className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${pct}%`, background: pct === 100 ? '#5BA88A' : '#87CBB9' }} />
                     </div>
-                    <span className="text-xs font-bold whitespace-nowrap" style={{ color: '#87CBB9' }}>
+                    <span className="text-xs font-bold whitespace-nowrap" style={{ color: '#0891B2' }}>
                         {manifest.deliveredStops}/{manifest.totalStops}
                     </span>
                 </div>
 
                 {/* Quick stats */}
                 <div className="grid grid-cols-3 gap-2 mt-3">
-                    <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng Điểm</p>
-                        <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                    <div className="p-2 rounded-lg text-center" style={{ background: '#F8FAFC' }}>
+                        <p className="text-xs" style={{ color: '#64748B' }}>Tổng Điểm</p>
+                        <p className="text-lg font-bold" style={{ color: '#0F172A' }}>
                             {manifest.totalStops}
                         </p>
                     </div>
-                    <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Đã Giao</p>
+                    <div className="p-2 rounded-lg text-center" style={{ background: '#F8FAFC' }}>
+                        <p className="text-xs" style={{ color: '#64748B' }}>Đã Giao</p>
                         <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>
                             {manifest.deliveredStops}
                         </p>
                     </div>
-                    <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>COD</p>
+                    <div className="p-2 rounded-lg text-center" style={{ background: '#F8FAFC' }}>
+                        <p className="text-xs" style={{ color: '#64748B' }}>COD</p>
                         <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
                             {formatVND(manifest.totalCod)}
                         </p>
@@ -208,7 +208,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
 
                     return (
                         <div key={stop.id} className="rounded-xl overflow-hidden"
-                            style={{ background: '#1B2E3D', border: `1px solid ${isDelivered ? 'rgba(91,168,138,0.3)' : '#2A4355'}` }}>
+                            style={{ background: '#FFFFFF', border: `1px solid ${isDelivered ? 'rgba(91,168,138,0.3)' : '#E2E8F0'}` }}>
                             {/* Stop header */}
                             <div className="flex items-start gap-3 p-4">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
@@ -217,7 +217,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <p className="font-semibold text-sm truncate" style={{ color: '#E8F1F2' }}>
+                                        <p className="font-semibold text-sm truncate" style={{ color: '#0F172A' }}>
                                             {stop.customerName}
                                         </p>
                                         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0"
@@ -227,28 +227,28 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                     </div>
                                     {stop.customerPhone && (
                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                            <Phone size={11} style={{ color: '#87CBB9' }} />
+                                            <Phone size={11} style={{ color: '#0891B2' }} />
                                             <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
                                                 className="text-xs font-mono font-bold hover:underline"
-                                                style={{ color: '#87CBB9' }}
+                                                style={{ color: '#0891B2' }}
                                                 onClick={e => e.stopPropagation()}>
                                                 {stop.customerPhone}
                                             </a>
                                             {stop.receiverName && stop.receiverName !== stop.customerName && (
-                                                <span className="text-[10px] truncate max-w-[120px]" style={{ color: '#8AAEBB' }}>
+                                                <span className="text-[10px] truncate max-w-[120px]" style={{ color: '#475569' }}>
                                                     ({stop.receiverName})
                                                 </span>
                                             )}
                                         </div>
                                     )}
-                                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#4A6A7A' }}>
+                                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#64748B' }}>
                                         <MapPin size={10} className="inline mr-1" />{stop.address}
                                     </p>
                                     <div className="flex items-center gap-3 mt-1.5">
-                                        <span className="text-[10px]" style={{ color: '#8AAEBB' }}>
+                                        <span className="text-[10px]" style={{ color: '#475569' }}>
                                             {stop.soNo}
                                         </span>
-                                        <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                        <span className="text-[10px]" style={{ color: '#64748B' }}>
                                             {stop.itemCount} SP
                                         </span>
                                         {stop.codAmount > 0 && (
@@ -266,19 +266,19 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                     {stop.customerPhone && (
                                         <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
                                             className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold justify-center"
-                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                             <Phone size={12} /> Gọi
                                         </a>
                                     )}
                                     <a href={`https://maps.google.com/?q=${encodeURIComponent(stop.address)}`}
                                         target="_blank" rel="noopener"
                                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold flex-1 justify-center"
-                                        style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.2)' }}>
+                                        style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', border: '1px solid rgba(138,174,187,0.2)' }}>
                                         <Navigation size={12} /> Bản Đồ
                                     </a>
                                     <button onClick={() => setActiveStop(stop)}
                                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold flex-1 justify-center"
-                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                         <CheckCircle2 size={12} /> Giao
                                     </button>
                                 </div>
@@ -299,11 +299,11 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                         <div className="flex gap-2 mt-2">
                                             {stop.photoUrl && (
                                                 <img src={stop.photoUrl} alt="POD" className="w-16 h-16 rounded object-cover"
-                                                    style={{ border: '1px solid #2A4355' }} />
+                                                    style={{ border: '1px solid #E2E8F0' }} />
                                             )}
                                             {stop.signatureUrl && (
                                                 <img src={stop.signatureUrl} alt="Ký" className="w-20 h-16 rounded object-contain"
-                                                    style={{ border: '1px solid #2A4355', background: '#0D1E2B' }} />
+                                                    style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }} />
                                             )}
                                         </div>
                                     )}
@@ -331,7 +331,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
     const [saving, setSaving] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '10px' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '10px' }
 
     const watermarkImage = (file: File, customerName: string): Promise<{ file: File; dataUrl: string }> => {
         return new Promise((resolve) => {
@@ -444,38 +444,38 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
     }
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ background: '#0A1926' }}>
+        <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #2A4355', background: '#142433' }}>
-                <button onClick={onBack} className="p-2 rounded-lg" style={{ background: '#1B2E3D' }}>
-                    <ArrowLeft size={18} style={{ color: '#8AAEBB' }} />
+            <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+                <button onClick={onBack} className="p-2 rounded-lg" style={{ background: '#FFFFFF' }}>
+                    <ArrowLeft size={18} style={{ color: '#475569' }} />
                 </button>
                 <div>
-                    <h2 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>Xác Nhận Giao Hàng</h2>
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                    <h2 className="font-semibold text-sm" style={{ color: '#0F172A' }}>Xác Nhận Giao Hàng</h2>
+                    <p className="text-xs" style={{ color: '#64748B' }}>
                         #{stop.sequence} — {stop.customerName}
                     </p>
                 </div>
             </div>
 
             {/* Stop info card */}
-            <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{stop.customerName}</p>
                     {stop.customerPhone && (
                         <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold shrink-0"
-                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                             <Phone size={11} /> {stop.customerPhone}
                         </a>
                     )}
                 </div>
-                <p className="text-xs mb-2" style={{ color: '#4A6A7A' }}>
+                <p className="text-xs mb-2" style={{ color: '#64748B' }}>
                     <MapPin size={10} className="inline mr-1" />{stop.address}
                 </p>
                 <div className="flex gap-4">
-                    <span className="text-xs" style={{ color: '#8AAEBB' }}>{stop.soNo}</span>
-                    <span className="text-xs" style={{ color: '#4A6A7A' }}>{stop.itemCount} sản phẩm</span>
+                    <span className="text-xs" style={{ color: '#475569' }}>{stop.soNo}</span>
+                    <span className="text-xs" style={{ color: '#64748B' }}>{stop.itemCount} sản phẩm</span>
                     {stop.codAmount > 0 && (
                         <span className="text-xs font-bold" style={{ color: '#D4A853' }}>
                             COD: {formatVND(stop.codAmount)}
@@ -488,7 +488,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
                 {/* Receiver name */}
                 <div>
-                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#4A6A7A' }}>
+                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
                         Người Nhận <span style={{ color: '#E05252' }}>*</span>
                     </label>
                     <input type="text" value={name} onChange={e => setName(e.target.value)}
@@ -499,7 +499,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
 
                 {/* Notes */}
                 <div>
-                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#4A6A7A' }}>
+                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
                         Ghi Chú
                     </label>
                     <textarea value={notes} onChange={e => setNotes(e.target.value)}
@@ -511,7 +511,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
 
                 {/* Signature */}
                 <div>
-                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#4A6A7A' }}>
+                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
                         Chữ Ký Khách Hàng <span style={{ color: '#E05252' }}>*</span>
                     </label>
                     <SignaturePad onEnd={url => setSignatureUrl(url)} />
@@ -519,7 +519,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
 
                 {/* Photo */}
                 <div>
-                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#4A6A7A' }}>
+                    <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
                         Ảnh Bằng Chứng
                     </label>
                     <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden"
@@ -544,18 +544,18 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                             }
                         }} />
                     {photoPreview ? (
-                        <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                        <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                             <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover" />
                             <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
                                 className="absolute top-2 right-2 p-1.5 rounded-full"
                                 style={{ background: 'rgba(0,0,0,0.7)' }}>
-                                <X size={14} style={{ color: '#E8F1F2' }} />
+                                <X size={14} style={{ color: '#0F172A' }} />
                             </button>
                         </div>
                     ) : (
                         <button type="button" onClick={() => fileInputRef.current?.click()}
                             className="flex flex-col items-center gap-2 w-full py-6 rounded-xl text-sm"
-                            style={{ background: '#1B2E3D', border: '2px dashed #2A4355', color: '#4A6A7A' }}>
+                            style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0', color: '#64748B' }}>
                             <Camera size={24} />
                             <span>Chụp ảnh hoặc chọn từ thư viện</span>
                         </button>
@@ -564,11 +564,11 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
             </div>
 
             {/* Bottom action */}
-            <div className="px-4 pb-6 pt-3" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
+            <div className="px-4 pb-6 pt-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <button onClick={handleSave}
                     disabled={!name.trim() || !signatureUrl || saving}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all active:scale-[0.98]"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     {saving
                         ? <><Loader2 size={16} className="animate-spin" /> Đang lưu...</>
                         : <><CheckCircle2 size={16} /> Xác Nhận Đã Giao</>}

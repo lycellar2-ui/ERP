@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
     ACTIVE: { label: 'Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
     PAUSED: { label: 'Tạm Dừng', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    COMPLETED: { label: 'Hoàn Tất', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    COMPLETED: { label: 'Hoàn Tất', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     CANCELLED: { label: 'Hủy', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
 }
 
@@ -76,15 +76,15 @@ export function AllocationClient({ initialCampaigns, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Allocation Engine
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý hạn mức phân bổ sản phẩm theo Sales Rep / Khách hàng / Kênh
                     </p>
                 </div>
                 <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
                     <Plus size={16} /> Tạo Campaign
                 </button>
             </div>
@@ -96,8 +96,8 @@ export function AllocationClient({ initialCampaigns, stats }: {
                     { label: 'Đang Active', value: stats.active, accent: '#5BA88A' },
                     { label: 'Campaigns List', value: campaigns.length, accent: '#D4A853' },
                 ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
                         <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
                     </div>
                 ))}
@@ -107,10 +107,10 @@ export function AllocationClient({ initialCampaigns, stats }: {
             <div className="grid grid-cols-12 gap-5">
                 {/* Left: Campaign list */}
                 <div className="col-span-5 space-y-2">
-                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Campaigns</p>
+                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>Campaigns</p>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto">
                         {campaigns.length === 0 ? (
-                            <p className="text-sm py-8 text-center" style={{ color: '#4A6A7A' }}>Chưa có campaign — Tạo mới bên phải</p>
+                            <p className="text-sm py-8 text-center" style={{ color: '#64748B' }}>Chưa có campaign — Tạo mới bên phải</p>
                         ) : campaigns.map(c => {
                             const st = STATUS_MAP[c.status] ?? STATUS_MAP.ACTIVE
                             const pct = c.totalQty > 0 ? (c.soldQty / c.totalQty) * 100 : 0
@@ -121,21 +121,21 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 <button key={c.id} onClick={() => handleSelectCampaign(c)}
                                     className="w-full text-left p-4 rounded-md transition-all"
                                     style={{
-                                        background: selected?.id === c.id ? 'rgba(135,203,185,0.08)' : '#1B2E3D',
-                                        border: `1px solid ${selected?.id === c.id ? '#87CBB9' : '#2A4355'}`,
+                                        background: selected?.id === c.id ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
+                                        border: `1px solid ${selected?.id === c.id ? '#87CBB9' : '#E2E8F0'}`,
                                         borderLeft: `3px solid ${selected?.id === c.id ? '#87CBB9' : 'transparent'}`,
                                     }}>
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
-                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{c.name}</p>
-                                            <p className="text-xs" style={{ color: '#87CBB9' }}>{c.skuCode}</p>
+                                            <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{c.name}</p>
+                                            <p className="text-xs" style={{ color: '#0891B2' }}>{c.skuCode}</p>
                                         </div>
                                         <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </div>
-                                    <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#142433' }}>
+                                    <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#FFFFFF' }}>
                                         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
                                     </div>
-                                    <div className="flex justify-between items-center text-xs" style={{ color: '#4A6A7A' }}>
+                                    <div className="flex justify-between items-center text-xs" style={{ color: '#64748B' }}>
                                         <span>Đã bán: {c.soldQty}/{c.totalQty} {c.unit}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] font-semibold" style={{ color: statusColor }}>{statusLabel}</span>
@@ -151,66 +151,66 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 {/* Right: Quota matrix */}
                 <div className="col-span-7 space-y-4">
                     {!selected ? (
-                        <div className="flex flex-col items-center justify-center py-20 rounded-md" style={{ border: '1px dashed #2A4355' }}>
-                            <Target size={36} style={{ color: '#2A4355' }} />
-                            <p className="text-sm mt-3" style={{ color: '#4A6A7A' }}>Chọn một Campaign để xem ma trận phân bổ</p>
+                        <div className="flex flex-col items-center justify-center py-20 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
+                            <Target size={36} style={{ color: '#E2E8F0' }} />
+                            <p className="text-sm mt-3" style={{ color: '#64748B' }}>Chọn một Campaign để xem ma trận phân bổ</p>
                         </div>
                     ) : (
                         <>
-                            <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
+                            <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                             {selected.name}
                                         </h3>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>
                                             {selected.skuCode} — {selected.productName} | {new Date(selected.startDate).toLocaleDateString('vi-VN')} → {new Date(selected.endDate).toLocaleDateString('vi-VN')}
                                         </p>
                                     </div>
                                     <button onClick={() => { setAddQuotaOpen(true) }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                         <Plus size={12} /> Thêm Quota
                                     </button>
                                 </div>
 
                                 {/* Summary bars */}
                                 <div className="grid grid-cols-3 gap-2 mb-3">
-                                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{selected.totalQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tổng {selected.unit}</p>
+                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{selected.totalQty}</p>
+                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Tổng {selected.unit}</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                         <p className="text-sm font-bold" style={{ color: '#D4A853' }}>{selected.allocatedQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đã phân bổ</p>
+                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Đã phân bổ</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                         <p className="text-sm font-bold" style={{ color: '#5BA88A' }}>{selected.soldQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đã bán</p>
+                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Đã bán</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Quota Table */}
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
-                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['Đối tượng', 'Loại', 'Hạn mức', 'Đã bán', 'Còn lại', '% Sử dụng'].map(h => (
-                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {quotas.length === 0 ? (
-                                            <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                                            <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
                                                 Chưa có quota — Nhấn "Thêm Quota" để phân bổ
                                             </td></tr>
                                         ) : quotas.map(q => (
                                             <tr key={q.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{q.targetName}</td>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>{q.targetName}</td>
                                                 <td className="px-3 py-2.5">
                                                     <span className="text-xs px-2 py-0.5 rounded" style={{
-                                                        background: q.targetType === 'SALES_REP' ? 'rgba(74,143,171,0.15)' : 'rgba(135,203,185,0.15)',
+                                                        background: q.targetType === 'SALES_REP' ? 'rgba(74,143,171,0.15)' : 'rgba(8, 145, 178, 0.08)',
                                                         color: q.targetType === 'SALES_REP' ? '#4A8FAB' : '#87CBB9',
                                                     }}>{q.targetType === 'SALES_REP' ? 'Sales Rep' : q.targetType === 'CUSTOMER' ? 'Khách hàng' : 'Kênh'}</span>
                                                 </td>
@@ -233,13 +233,13 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                             <div className="h-full rounded-full" style={{
                                                                 width: `${Math.min(q.pctUsed, 100)}%`,
                                                                 background: q.pctUsed > 90 ? '#8B1A2E' : q.pctUsed > 70 ? '#D4A853' : '#87CBB9',
                                                             }} />
                                                         </div>
-                                                        <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{q.pctUsed.toFixed(0)}%</span>
+                                                        <span className="text-xs font-bold" style={{ color: '#475569' }}>{q.pctUsed.toFixed(0)}%</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -255,10 +255,10 @@ export function AllocationClient({ initialCampaigns, stats }: {
             {/* Create Campaign Drawer */}
             {createOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Campaign Mới</h3>
-                            <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Campaign Mới</h3>
+                            <button onClick={() => setCreateOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-3">
                             {[
@@ -268,30 +268,30 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 { label: 'Ngày Kết Thúc', key: 'endDate', type: 'date' },
                             ].map(f => (
                                 <div key={f.key}>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>{f.label}</label>
+                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>{f.label}</label>
                                     <input type={f.type} value={(form as any)[f.key]}
                                         onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                                 </div>
                             ))}
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Sản Phẩm</label>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Sản Phẩm</label>
                                 <select value={form.productId} onChange={e => setForm(prev => ({ ...prev, productId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                     <option value="">— Chọn SP —</option>
                                     {options.products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Đơn Vị</label>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Đơn Vị</label>
                                 <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                     <option value="CASE">Case</option>
                                     <option value="BOTTLE">Bottle</option>
                                 </select>
                             </div>
                             <button onClick={handleCreateCampaign} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                 <Save size={14} /> Tạo Campaign
                             </button>
                         </div>
@@ -302,28 +302,28 @@ export function AllocationClient({ initialCampaigns, stats }: {
             {/* Add Quota Drawer */}
             {addQuotaOpen && selected && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Thêm Quota</h3>
-                            <button onClick={() => setAddQuotaOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Thêm Quota</h3>
+                            <button onClick={() => setAddQuotaOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-3">
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Campaign: <span style={{ color: '#87CBB9' }}>{selected.name}</span></p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Campaign: <span style={{ color: '#0891B2' }}>{selected.name}</span></p>
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Loại Đối Tượng</label>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Loại Đối Tượng</label>
                                 <select value={quotaForm.targetType}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, targetType: e.target.value, targetId: '' }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                     <option value="SALES_REP">Sales Rep</option>
                                     <option value="CUSTOMER">Khách hàng</option>
                                     <option value="CHANNEL">Kênh</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Đối Tượng</label>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Đối Tượng</label>
                                 <select value={quotaForm.targetId}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, targetId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                     <option value="">— Chọn —</option>
                                     {quotaForm.targetType === 'SALES_REP' && options.users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     {quotaForm.targetType === 'CUSTOMER' && options.customers.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
@@ -331,13 +331,13 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Hạn Mức ({selected.unit})</label>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Hạn Mức ({selected.unit})</label>
                                 <input type="number" value={quotaForm.qtyAllocated}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, qtyAllocated: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }} />
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }} />
                             </div>
                             <button onClick={handleAddQuota} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                 <Save size={14} /> Thêm Quota
                             </button>
                         </div>

@@ -183,7 +183,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#87CBB9] text-[#0A1926] flex items-center justify-center font-black shrink-0 shadow-2xs">
+                        <div className="w-10 h-10 rounded-2xl bg-[#0891B2] text-white flex items-center justify-center font-black shrink-0 shadow-2xs">
                             <Activity className="w-5 h-5" />
                         </div>
                         <div>
@@ -594,7 +594,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black text-xs rounded-xl shadow-xs cursor-pointer"
+                        className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black text-xs rounded-xl shadow-xs cursor-pointer"
                     >
                         Hoàn Tất & Đóng Bảng
                     </button>
@@ -668,7 +668,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <div className="pt-3 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
-                                className="px-5 py-2 bg-[#87CBB9] text-[#0A1926] font-extrabold text-xs rounded-xl shadow-xs"
+                                className="px-5 py-2 bg-[#0891B2] text-white font-extrabold text-xs rounded-xl shadow-xs"
                             >
                                 Đã Hiểu & Đóng
                             </button>

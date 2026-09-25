@@ -119,7 +119,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         <button
                             onClick={handleApprove}
                             disabled={isApproving}
-                            className="px-4 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                            className="px-4 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
                         >
                             <ShieldCheck className="w-4 h-4" />
                             {isApproving ? 'Đang duyệt...' : 'Duyệt & Tạo Bút Toán ADJ'}

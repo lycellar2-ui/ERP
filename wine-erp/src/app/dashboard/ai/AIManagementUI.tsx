@@ -66,7 +66,7 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
@@ -74,8 +74,8 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                         <Power size={16} style={{ color: config.aiEnabled ? '#5BA88A' : '#E05252' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>AI System Control</h3>
-                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Bật/tắt toàn bộ AI features cho CEO & users</p>
+                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI System Control</h3>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>Bật/tắt toàn bộ AI features cho CEO & users</p>
                     </div>
                 </div>
                 <button onClick={handleToggle} disabled={saving}
@@ -102,19 +102,19 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                             disabled={!config.aiEnabled}
                             className="p-3 rounded-md text-left transition-all hover:scale-[1.01]"
                             style={{
-                                background: active ? 'rgba(91,168,138,0.06)' : '#142433',
+                                background: active ? 'rgba(91,168,138,0.06)' : '#FFFFFF',
                                 border: `1px solid ${active ? 'rgba(91,168,138,0.2)' : '#1E3545'}`,
                                 opacity: config.aiEnabled ? 1 : 0.4,
                             }}>
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-lg">{mod.icon}</span>
                                 <div className="w-3 h-3 rounded-full" style={{
-                                    background: active ? '#5BA88A' : '#2A4355',
+                                    background: active ? '#5BA88A' : '#E2E8F0',
                                     boxShadow: active ? '0 0 6px rgba(91,168,138,0.5)' : 'none',
                                 }} />
                             </div>
-                            <p className="text-[11px] font-semibold" style={{ color: active ? '#E8F1F2' : '#4A6A7A' }}>{mod.label}</p>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{mod.desc}</p>
+                            <p className="text-[11px] font-semibold" style={{ color: active ? '#0F172A' : '#64748B' }}>{mod.label}</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>{mod.desc}</p>
                         </button>
                     )
                 })}
@@ -163,7 +163,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
@@ -171,20 +171,20 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                         <FileText size={16} style={{ color: '#D4A853' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Báo Cáo AI Đã Lưu</h3>
-                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{reports.length} báo cáo · ghim {reports.filter(r => r.isPinned).length}</p>
+                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Báo Cáo AI Đã Lưu</h3>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{reports.length} báo cáo · ghim {reports.filter(r => r.isPinned).length}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
                     <button onClick={() => setFilter('all')}
                         className="px-2 py-1 rounded text-[10px] font-semibold"
-                        style={{ background: filter === 'all' ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === 'all' ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: filter === 'all' ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === 'all' ? '#0F172A' : '#64748B' }}>
                         Tất cả
                     </button>
                     {modules.map(m => (
                         <button key={m} onClick={() => setFilter(m)}
                             className="px-2 py-1 rounded text-[10px] font-semibold capitalize"
-                            style={{ background: filter === m ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === m ? '#E8F1F2' : '#4A6A7A' }}>
+                            style={{ background: filter === m ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === m ? '#0F172A' : '#64748B' }}>
                             {m}
                         </button>
                     ))}
@@ -193,8 +193,8 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
 
             {filtered.length === 0 ? (
                 <div className="py-6 text-center">
-                    <FileText size={24} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có báo cáo. Sử dụng AI Analysis trên Pipeline, CRM hoặc Products để tạo.</p>
+                    <FileText size={24} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
+                    <p className="text-xs" style={{ color: '#64748B' }}>Chưa có báo cáo. Sử dụng AI Analysis trên Pipeline, CRM hoặc Products để tạo.</p>
                 </div>
             ) : (
                 <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
@@ -203,34 +203,34 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                         const isExpanded = expandedId === report.id
                         return (
                             <div key={report.id} className="rounded-md overflow-hidden"
-                                style={{ background: '#142433', border: `1px solid ${report.isPinned ? 'rgba(212,168,83,0.2)' : '#1E3545'}` }}>
+                                style={{ background: '#FFFFFF', border: `1px solid ${report.isPinned ? 'rgba(212,168,83,0.2)' : '#1E3545'}` }}>
                                 <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
                                     onClick={() => setExpandedId(isExpanded ? null : report.id)}>
                                     <div className="flex items-center gap-2 min-w-0">
                                         {report.isPinned && <Pin size={10} style={{ color: '#D4A853' }} />}
-                                        <ModIcon size={13} style={{ color: '#87CBB9' }} />
-                                        <span className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{report.title}</span>
+                                        <ModIcon size={13} style={{ color: '#0891B2' }} />
+                                        <span className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{report.title}</span>
                                         <span className="text-xs px-1.5 py-0.5 rounded capitalize"
                                             style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>{report.module}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                        <span className="text-xs" style={{ color: '#64748B' }}>
                                             <Clock size={9} className="inline mr-0.5" />
                                             {new Date(report.createdAt).toLocaleDateString('vi-VN')}
                                         </span>
                                         <button onClick={e => { e.stopPropagation(); handlePin(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Ghim">
-                                            <Pin size={11} style={{ color: report.isPinned ? '#D4A853' : '#4A6A7A' }} />
+                                            <Pin size={11} style={{ color: report.isPinned ? '#D4A853' : '#64748B' }} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleArchive(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Lưu trữ">
-                                            <Archive size={11} style={{ color: '#4A6A7A' }} />
+                                            <Archive size={11} style={{ color: '#64748B' }} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleDelete(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Xóa">
                                             <Trash2 size={11} style={{ color: '#E05252' }} />
                                         </button>
-                                        {isExpanded ? <ChevronUp size={12} style={{ color: '#4A6A7A' }} /> : <ChevronDown size={12} style={{ color: '#4A6A7A' }} />}
+                                        {isExpanded ? <ChevronUp size={12} style={{ color: '#64748B' }} /> : <ChevronDown size={12} style={{ color: '#64748B' }} />}
                                     </div>
                                 </div>
                                 {isExpanded && (
@@ -240,7 +240,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                                                 const isH = line.startsWith('#') || line.startsWith('**')
                                                 return (
                                                     <p key={i} className="text-[12px] leading-relaxed" style={{
-                                                        color: isH ? '#E8F1F2' : '#8AAEBB',
+                                                        color: isH ? '#0F172A' : '#475569',
                                                         fontWeight: isH ? 700 : 400,
                                                         paddingTop: isH ? '6px' : '0',
                                                     }}>

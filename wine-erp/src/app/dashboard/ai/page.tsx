@@ -16,7 +16,7 @@ const AI_FEATURES = [
         desc: 'Google Vision API đọc tờ khai hải quan PDF → Extract dữ liệu tự động',
         model: 'Google Vision API',
         status: 'Sẵn sàng cấu hình',
-        color: '#87CBB9',
+        color: '#0891B2',
     },
     {
         icon: '🍷',
@@ -78,10 +78,10 @@ export default async function AIPage() {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                     AI Features & Phân Tích Thông Minh
                 </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                     Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready • Admin Control
                 </p>
             </div>
@@ -93,22 +93,22 @@ export default async function AIPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {AI_FEATURES.map(f => (
                     <div key={f.title} className="p-5 rounded-md"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-start justify-between mb-3">
                             <span className="text-3xl">{f.icon}</span>
                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                                 style={{
-                                    color: f.status.includes('✓') ? '#5BA88A' : '#4A6A7A',
+                                    color: f.status.includes('✓') ? '#5BA88A' : '#64748B',
                                     background: f.status.includes('✓') ? 'rgba(91,168,138,0.15)' : 'rgba(74,106,122,0.15)',
                                 }}>
                                 {f.status}
                             </span>
                         </div>
-                        <h3 className="font-semibold mb-1" style={{ color: '#E8F1F2' }}>{f.title}</h3>
-                        <p className="text-xs mb-3" style={{ color: '#4A6A7A' }}>{f.desc}</p>
-                        <div className="flex items-center gap-2 p-2 rounded-md" style={{ background: '#142433' }}>
+                        <h3 className="font-semibold mb-1" style={{ color: '#0F172A' }}>{f.title}</h3>
+                        <p className="text-xs mb-3" style={{ color: '#64748B' }}>{f.desc}</p>
+                        <div className="flex items-center gap-2 p-2 rounded-md" style={{ background: '#FFFFFF' }}>
                             <Brain size={12} style={{ color: f.color }} />
-                            <span className="text-xs font-mono" style={{ color: '#8AAEBB' }}>{f.model}</span>
+                            <span className="text-xs font-mono" style={{ color: '#475569' }}>{f.model}</span>
                         </div>
                     </div>
                 ))}

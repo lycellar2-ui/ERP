@@ -581,16 +581,17 @@ module.exports = {
 
 ## 14. Nhật Ký Kiểm Tra & Chuẩn Hóa Giao Diện (System Design Audit Log)
 
-- **Ngày thực hiện:** 2026-08-09
-- **Phạm vi kiểm tra:** 189 tệp giao diện TSX/JSX thuộc 35 phân hệ ứng dụng.
-- **kết quả:**
-  - ✅ Loại bỏ 100% các mã màu Tím (`#8B5CF6`, `#A78BFA`, `#7C3AED`, `purple-`) vi phạm quy tắc Anti-Purple Rule tại Audit Log, CRM Pipeline, Bảng giá và Modal Barcode.
-  - ✅ Tối ưu triệt để **Giao Diện Kiểm Kê Kho Trên Điện Thoại (`MobileLocationCounter.tsx`)**: Rút gọn thanh điều hướng top, kéo dãn khoảng cách card, thiết kế lại bộ đếm số lượng Thùng & Chai Lẻ với nút tăng giảm to rõ, đảm bảo thao tác 1 tay siêu mượt.
-  - ✅ Bổ sung **Card Hóa Danh Sách Phiếu Kiểm Kê Cho Di Động (`StockCountClient.tsx`)** giúp tránh cuộn ngang bảng trên màn hình nhỏ.
-  - ✅ Chuyển đổi 100% các thẻ danh sách tối màu cũ (`bg-slate-900`, `bg-slate-950`) tại Kho Hàng Mobile (Thẻ kho N-X-T, Quản lý kệ, Phiếu chuyển kho, Lô hàng cách ly) sang Light ERP Design System Cards (`bg-white border-slate-200 text-slate-900 shadow-2xs`).
-  - ✅ Tối ưu bảng in Biên bản A4 (`PrintableAuditReport.tsx`) sang header sáng tiết kiệm mực in.
-  - ✅ Kiểm tra build `npx tsc --noEmit` đạt 0 lỗi và đẩy mã nguồn đã chuẩn hóa lên `main`.
+- **Ngày thực hiện:** 2026-09-24 (Phiên bản v2.2)
+- **Phạm vi kiểm tra & Codemod:** Toàn bộ 123 tệp giao diện TSX/JSX thuộc 35 phân hệ ứng dụng và layout chung.
+- **Kết quả:**
+  - ✅ **Chuẩn hóa Design Tokens:** Cập nhật bảng Design Tokens `@theme` trong `globals.css` với các semantic tokens cho Light Mode (`lys-bg`, `lys-surface`, `lys-card`, `lys-subtle`, `lys-border`, `lys-border-strong`, `lys-primary`, `lys-secondary`, `lys-muted`, `lys-dim`, `lys-teal`, `lys-navy`, `lys-wine`, `lys-amber`).
+  - ✅ **Xóa bỏ 100% Khối CSS Overrides:** Loại bỏ hoàn toàn 240+ dòng CSS selector `[style*="#..."]` đè `!important` trong `globals.css`, giải quyết dứt điểm các lỗi tương phản (contrast bugs) và xung đột CSS.
+  - ✅ **Chuyển đổi 123 Tệp Mã Nguồn:** Thay thế toàn bộ các mã màu dark navy hardcoded (`#0A1926`, `#142433`, `#1B2E3D`, `#2A4355`, `#E8F1F2`, `#8AAEBB`, `#4A6A7A`) sang Tailwind tokens chuẩn Light Mode (`bg-white`, `border-slate-200`, `text-slate-900`, `text-slate-600`, `text-slate-500`, `text-cyan-600`).
+  - ✅ **Chuẩn hóa Email HTML Templates (`notifications.ts`):** Chuyển đổi toàn bộ template email thông báo nội bộ sang bảng màu sáng chuyên nghiệp, tương thích hoàn hảo với Gmail, Outlook, Apple Mail.
+  - ✅ **Đồng bộ Trang Báo Giá Public (`QuotationPublicView.tsx`):** Chuyển sang Light Luxury Wine theme, chuẩn nhận diện thương hiệu LY's Cellars.
+  - ✅ **Kiểm tra biên dịch:** `npx tsc --noEmit` đạt 0 lỗi.
 
 ---
-*Design System v2.1 — LY's Cellars "Oceanic Cellar" & Light ERP Aesthetic | Updated 2026-08-09*
+*Design System v2.2 — LY's Cellars Pure Light ERP System | Updated 2026-09-24*
 *Inspired by the Mediterranean Navy door of LY's Cellars showroom, số 12.*
+

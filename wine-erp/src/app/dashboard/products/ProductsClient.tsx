@@ -24,16 +24,16 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    WHITE: { label: 'Vang trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    WHITE: { label: 'Vang trắng', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
     SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
     ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
-    FORTIFIED: { label: 'Fortified', color: '#87CBB9', bg: 'rgba(168,130,204,0.15)' },
+    FORTIFIED: { label: 'Fortified', color: '#0891B2', bg: 'rgba(168,130,204,0.15)' },
     DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
 }
 
 export function WineTypeBadge({ type }: { type: string }) {
-    const cfg = WINE_TYPE_CONFIG[type] ?? { label: type, color: '#8AAEBB', bg: 'rgba(168,152,128,0.15)' }
+    const cfg = WINE_TYPE_CONFIG[type] ?? { label: type, color: '#475569', bg: 'rgba(168,152,128,0.15)' }
     return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
             style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
@@ -43,9 +43,9 @@ export function WineTypeBadge({ type }: { type: string }) {
 export function StatusBadge({ status }: { status: string }) {
     const cfg = {
         ACTIVE: { label: 'Đang bán', color: '#5BA88A', bg: 'rgba(74,124,89,0.15)' },
-        DISCONTINUED: { label: 'Ngừng KD', color: '#4A6A7A', bg: 'rgba(107,90,78,0.15)' },
-        ALLOCATION_ONLY: { label: 'Allocation', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
-    }[status] ?? { label: status, color: '#8AAEBB', bg: 'rgba(168,152,128,0.15)' }
+        DISCONTINUED: { label: 'Ngừng KD', color: '#64748B', bg: 'rgba(107,90,78,0.15)' },
+        ALLOCATION_ONLY: { label: 'Allocation', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+    }[status] ?? { label: status, color: '#475569', bg: 'rgba(168,152,128,0.15)' }
     return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
             style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
@@ -57,14 +57,14 @@ function StatCard({ label, value, icon: Icon, accent }: {
 }) {
     return (
         <div className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
                 style={{ background: `${accent}20` }}>
                 <Icon size={20} style={{ color: accent }} />
             </div>
             <div>
-                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
+                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
             </div>
         </div>
     )
@@ -272,27 +272,27 @@ export function ProductsClient({
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0D1E2B]/40 p-3 rounded-xl border border-[#2A4355]/30">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/40 p-3 rounded-xl border border-slate-200/30">
                 <div className="flex flex-wrap items-center gap-4">
                     <div>
-                        <h2 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                        <h2 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                             Danh Mục Sản Phẩm
                         </h2>
                     </div>
                     
                     {/* Compact Metrics Pill Row */}
                     <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#87CBB9' }}>
-                            Tổng: &nbsp;<strong className="text-[#E8F1F2]">{stats.total}</strong>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#0891B2' }}>
+                            Tổng: &nbsp;<strong className="text-slate-900">{stats.total}</strong>
                         </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#5BA88A' }}>
-                            Đang bán: &nbsp;<strong className="text-[#E8F1F2]">{stats.active}</strong>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#5BA88A' }}>
+                            Đang bán: &nbsp;<strong className="text-slate-900">{stats.active}</strong>
                         </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#E05252' }}>
-                            Hết hàng: &nbsp;<strong className="text-[#E8F1F2]">{stats.outOfStock}</strong>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#E05252' }}>
+                            Hết hàng: &nbsp;<strong className="text-slate-900">{stats.outOfStock}</strong>
                         </span>
-                        <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#4A8FAB' }}>
-                            Nổi bật: &nbsp;<strong className="text-[#E8F1F2] font-mono">{topTypeLabel}</strong>
+                        <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#4A8FAB' }}>
+                            Nổi bật: &nbsp;<strong className="text-slate-900 font-mono">{topTypeLabel}</strong>
                         </span>
                     </div>
                 </div>
@@ -302,9 +302,9 @@ export function ProductsClient({
                         onClick={handleExport}
                         disabled={exporting}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#5BA88A' } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
+                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}
+                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#5BA88A' } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}
                     >
                         <Download size={13} /> {exporting ? 'Đang xuất...' : 'Export'}
                     </button>
@@ -313,16 +313,16 @@ export function ProductsClient({
                             <button
                                 onClick={() => setImportOpen(true)}
                                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                                style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
-                                onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
+                                style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}
                             >
                                 <Upload size={13} /> Import
                             </button>
                             <button
                                 onClick={() => { setEditingId(null); setDrawerOpen(true) }}
                                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                                style={{ background: '#0891B2', color: '#FFFFFF' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                                 onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
                             >
@@ -337,16 +337,16 @@ export function ProductsClient({
             <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                         <input
                             type="text"
                             placeholder="Tìm theo tên, SKU, nhà SX..."
                             value={search}
                             onChange={e => handleSearchChange(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                         />
                     </div>
                     {/* Collapsible Trigger Button for Mobile Filters */}
@@ -354,9 +354,9 @@ export function ProductsClient({
                         onClick={() => setShowMobileFilters(!showMobileFilters)}
                         className="flex md:hidden items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
                         style={{ 
-                            background: '#1B2E3D', 
-                            color: showMobileFilters ? '#87CBB9' : '#8AAEBB', 
-                            borderColor: showMobileFilters ? '#87CBB9' : '#2A4355' 
+                            background: '#FFFFFF', 
+                            color: showMobileFilters ? '#87CBB9' : '#475569', 
+                            borderColor: showMobileFilters ? '#87CBB9' : '#E2E8F0' 
                         }}
                     >
                         <SlidersHorizontal size={13} />
@@ -369,7 +369,7 @@ export function ProductsClient({
                     <select value={typeFilter}
                         onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
                         className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả loại</option>
                         <option value="WHITE">Vang trắng</option>
                         <option value="RED">Vang đỏ</option>
@@ -379,7 +379,7 @@ export function ProductsClient({
                     <select value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
                         className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả trạng thái</option>
                         <option value="ACTIVE">Đang bán</option>
                         <option value="DISCONTINUED">Ngừng KD</option>
@@ -389,7 +389,7 @@ export function ProductsClient({
                     <select value={countryFilter}
                         onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
                         className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: countryFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: countryFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả quốc gia</option>
                         {countries.map(c => (
                             <option key={c.code} value={c.code}>
@@ -401,7 +401,7 @@ export function ProductsClient({
                     <select value={producerFilter}
                         onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
                         className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer md:max-w-[180px]"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: producerFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: producerFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả NCC / Nhà SX</option>
                         {producers.map(p => (
                             <option key={p.id} value={p.id}>{p.name}</option>

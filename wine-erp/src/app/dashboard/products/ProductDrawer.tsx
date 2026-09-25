@@ -20,7 +20,7 @@ function Field({ label, required, error, children }: {
 }) {
     return (
         <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+            <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                 {label}{required && <span style={{ color: '#8B1A2E' }}> *</span>}
             </label>
             {children}
@@ -37,9 +37,9 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
     return (
         <input
             className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 ${className}`}
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
             {...props}
         />
     )
@@ -49,9 +49,9 @@ function Select({ children, className = '', ...props }: React.SelectHTMLAttribut
     return (
         <select
             className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 cursor-pointer ${className}`}
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
             {...props}
         >
             {children}
@@ -346,27 +346,27 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300"
                 style={{
                     width: 'min(560px, 95vw)',
-                    background: '#0D1E2B',
-                    borderLeft: '1px solid #2A4355',
+                    background: '#F8FAFC',
+                    borderLeft: '1px solid #E2E8F0',
                     transform: open ? 'translateX(0)' : 'translateX(100%)',
                 }}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-                    style={{ borderBottom: '1px solid #2A4355' }}>
+                    style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <Wine size={16} style={{ color: '#87CBB9' }} />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <Wine size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                                 {isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Điền thông tin đầy đủ về chai rượu</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Điền thông tin đầy đủ về chai rượu</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#4A6A7A' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#64748B' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
                         <X size={18} />
                     </button>
@@ -375,9 +375,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 {/* Body (scrollable) */}
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 relative">
                     {loading && (
-                        <div className="absolute inset-0 bg-[#0D1E2B]/80 flex flex-col items-center justify-center gap-3 z-30">
-                            <Loader2 size={32} className="animate-spin text-[#87CBB9]" />
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải thông tin sản phẩm...</p>
+                        <div className="absolute inset-0 bg-slate-50/80 flex flex-col items-center justify-center gap-3 z-30">
+                            <Loader2 size={32} className="animate-spin text-[#0891B2]" />
+                            <p className="text-xs" style={{ color: '#64748B' }}>Đang tải thông tin sản phẩm...</p>
                         </div>
                     )}
 
@@ -391,7 +391,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Thông tin cơ bản */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Thông Tin Cơ Bản
                         </p>
 
@@ -438,7 +438,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Đóng gói */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Quy Cách Đóng Gói
                         </p>
                         <div className="grid grid-cols-3 gap-4">
@@ -476,7 +476,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Xuất xứ */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Xuất Xứ & Nhà Sản Xuất
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -513,9 +513,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         type="button"
                                         onClick={() => setShowNewProducer(true)}
                                         className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#87CBB9' }}
-                                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0891B2' }}
+                                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                         title="Tạo nhà SX mới">
                                         +
                                     </button>
@@ -531,8 +531,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                         {/* Inline producer creation */}
                         {showNewProducer && (
-                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>Tạo Nhà SX Mới</p>
+                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <p className="text-xs font-bold" style={{ color: '#0891B2' }}>Tạo Nhà SX Mới</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Input
                                         value={newProducerName}
@@ -550,7 +550,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     </Select>
                                 </div>
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => setShowNewProducer(false)} className="text-xs px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                    <button onClick={() => setShowNewProducer(false)} className="text-xs px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
                                     <button
                                         disabled={!newProducerName.trim() || creatingProducer}
                                         onClick={async () => {
@@ -568,7 +568,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             setCreatingProducer(false)
                                         }}
                                         className="text-xs px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                         {creatingProducer ? 'Đang tạo...' : 'Tạo'}
                                     </button>
                                 </div>
@@ -589,7 +589,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: HS Code, Giá & Trạng thái */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Giá, Phân Loại & Trạng Thái
                         </p>
                         <div className="grid grid-cols-2 gap-4">
@@ -614,7 +614,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Drinking window */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Best Drinking Window
                         </p>
                         <div className="grid grid-cols-2 gap-4">
@@ -639,7 +639,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Tài liệu & Link công bố */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Tài Liệu & Đường Link
                         </p>
                         <div className="space-y-4">
@@ -664,7 +664,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Đặc tính sản phẩm (Wine Profile) */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Đặc Tính Sản Phẩm (Wine Profile)
                         </p>
                         
@@ -722,7 +722,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <Field label="Hương thơm (Aromas / Nose)">
                             <textarea
                                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={form.aromas ?? ''}
                                 onChange={e => set('aromas', e.target.value || null)}
                                 placeholder="Quả sung khô, mứt anh đào, quả mâm xôi đen, thảo mộc khô..."
@@ -733,7 +733,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <Field label="Vị giác (Palate)">
                             <textarea
                                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={form.palate ?? ''}
                                 onChange={e => set('palate', e.target.value || null)}
                                 placeholder="Mềm mượt, đậm đà (full-bodied), tannin mịn màng..."
@@ -763,7 +763,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: Hình ảnh sản phẩm */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Hình Ảnh Sản Phẩm
                         </p>
 
@@ -771,9 +771,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <>
                                 {/* Upload button */}
                                 <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all"
-                                    style={{ background: '#1B2E3D', border: '2px dashed #2A4355', color: '#4A6A7A' }}
-                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#87CBB9'; e.currentTarget.style.color = '#87CBB9' }}
-                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#2A4355'; e.currentTarget.style.color = '#4A6A7A' }}>
+                                    style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0', color: '#64748B' }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#0891B2'; e.currentTarget.style.color = '#0891B2' }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.color = '#64748B' }}>
                                     {uploadingMedia
                                         ? <><Loader2 size={16} className="animate-spin" /> Đang upload...</>
                                         : <><UploadCloud size={16} /> Thêm hình ảnh (JPG, PNG, WEBP)</>
@@ -837,13 +837,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <div className="grid grid-cols-3 gap-3">
                                         {mediaList.map(m => (
                                             <div key={m.id} className="relative group rounded-lg overflow-hidden"
-                                                style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #2A4355', aspectRatio: '3/4', background: '#142433' }}>
+                                                style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #E2E8F0', aspectRatio: '3/4', background: '#FFFFFF' }}>
                                                 <img src={m.url} alt="Product" className="w-full h-full object-contain p-1" />
 
                                                 {/* Primary badge */}
                                                 {m.isPrimary && (
                                                     <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
-                                                        style={{ background: 'rgba(135,203,185,0.9)', color: '#0A1926' }}>
+                                                        style={{ background: 'rgba(135,203,185,0.9)', color: '#0F172A' }}>
                                                         <Star size={8} /> Ảnh chính
                                                     </div>
                                                 )}
@@ -859,7 +859,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                                 }
                                                             }}
                                                             className="p-2 rounded-lg transition-colors"
-                                                            style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9' }}
+                                                            style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2' }}
                                                             title="Đặt làm ảnh chính">
                                                             <Star size={14} />
                                                         </button>
@@ -882,16 +882,16 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433' }}>
-                                        <ImageIcon size={24} style={{ color: '#2A4355' }} />
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có hình ảnh nào</p>
+                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                        <ImageIcon size={24} style={{ color: '#E2E8F0' }} />
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
-                                <UploadCloud size={24} style={{ color: '#2A4355' }} />
-                                <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                            <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
+                                <UploadCloud size={24} style={{ color: '#E2E8F0' }} />
+                                <p className="text-xs text-center" style={{ color: '#64748B' }}>
                                     Lưu sản phẩm trước, sau đó mở chỉnh sửa để thêm hình ảnh
                                 </p>
                             </div>
@@ -918,7 +918,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <>
                                 {/* Add form */}
                                 {showAwardForm && (
-                                    <div className="p-4 rounded-lg space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Field label="Nguồn">
                                                 <Select value={awardSource} onChange={e => setAwardSource(e.target.value)}>
@@ -959,7 +959,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         </div>
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setShowAwardForm(false)}
-                                                className="px-3 py-1.5 text-xs rounded" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                                className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Hủy</button>
                                             <button
                                                 disabled={savingAward || !awardSource}
                                                 onClick={async () => {
@@ -985,7 +985,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     })
                                                 }}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                                                style={{ background: '#D4A853', color: '#0A1926' }}>
+                                                style={{ background: '#D97706', color: '#FFFFFF' }}>
                                                 {savingAward ? <Loader2 size={10} className="animate-spin" /> : <Award size={10} />} Lưu
                                             </button>
                                         </div>
@@ -997,7 +997,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <div className="space-y-2">
                                         {awards.map(aw => (
                                             <div key={aw.id} className="flex items-center gap-3 p-3 rounded-lg group"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
                                                     style={{ background: 'rgba(212,168,83,0.12)' }}>
                                                     {aw.medalLabel?.charAt(0) ?? '🏅'}
@@ -1006,7 +1006,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{aw.source}</span>
                                                         {aw.score && (
-                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>
                                                                 {aw.score}/100
                                                             </span>
                                                         )}
@@ -1016,7 +1016,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>
                                                         {aw.vintage && `Vintage ${aw.vintage} `}
                                                         {aw.vintage && aw.awardedYear && ' · '}
                                                         {aw.awardedYear && `Năm ${aw.awardedYear} `}
@@ -1037,16 +1037,16 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         ))}
                                     </div>
                                 ) : !showAwardForm && (
-                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433' }}>
-                                        <Award size={24} style={{ color: '#2A4355' }} />
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có giải thưởng nào</p>
+                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                        <Award size={24} style={{ color: '#E2E8F0' }} />
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Chưa có giải thưởng nào</p>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
-                                <Award size={24} style={{ color: '#2A4355' }} />
-                                <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                            <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
+                                <Award size={24} style={{ color: '#E2E8F0' }} />
+                                <p className="text-xs text-center" style={{ color: '#64748B' }}>
                                     Lưu sản phẩm trước, sau đó mở chỉnh sửa để thêm giải thưởng
                                 </p>
                             </div>
@@ -1057,12 +1057,12 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0"
-                    style={{ borderTop: '1px solid #2A4355' }}>
+                    style={{ borderTop: '1px solid #E2E8F0' }}>
                     <button
                         onClick={onClose}
                         className="px-4 py-2.5 rounded-lg text-sm transition-colors duration-150"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                         Hủy
@@ -1071,7 +1071,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         onClick={handleSave}
                         disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-60"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                         onMouseEnter={e => !saving && (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
                     >

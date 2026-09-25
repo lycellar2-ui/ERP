@@ -28,7 +28,7 @@ const WINE_TYPE_COLOR: Record<string, string> = {
 
 const MODULE_COLORS: Record<string, string> = {
     WMS: '#5BA88A', SLS: '#87CBB9', FIN: '#D4A853', CST: '#4A8FAB',
-    PRC: '#8AAEBB', CRM: '#C45A2A', STM: '#A5DED0', TAX: '#E05252',
+    PRC: '#475569', CRM: '#C45A2A', STM: '#A5DED0', TAX: '#E05252',
 }
 
 const TABS = [
@@ -99,16 +99,16 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                     Báo Cáo & Phân Tích (RPT)
                 </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                     Doanh thu, sản phẩm bán chạy, kênh, tồn kho — Tổng hợp từ mọi module
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
                 {TABS.map(t => {
                     const Icon = t.icon
                     const isActive = tab === t.key
@@ -116,9 +116,9 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                         <button key={t.key} onClick={() => t.key === 'schedule' ? loadSchedules() : setTab(t.key)}
                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
                             style={{
-                                background: isActive ? '#1B2E3D' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#4A6A7A',
-                                border: isActive ? '1px solid #2A4355' : '1px solid transparent',
+                                background: isActive ? '#FFFFFF' : 'transparent',
+                                color: isActive ? '#87CBB9' : '#64748B',
+                                border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
                             }}>
                             <Icon size={14} />
                             {t.label}
@@ -131,26 +131,26 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                 <>
                     {/* Summary cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu 6 Tháng</p>
-                            <p className="text-xl font-bold mt-1" style={{ color: '#87CBB9' }}>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Doanh Thu 6 Tháng</p>
+                            <p className="text-xl font-bold mt-1" style={{ color: '#0891B2' }}>
                                 ₫{(totalRevenue / 1e9).toFixed(2)}T
                             </p>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Giá Trị Tồn Kho</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Giá Trị Tồn Kho</p>
                             <p className="text-xl font-bold mt-1" style={{ color: '#5BA88A' }}>
                                 ₫{(stockValuation.totalValue / 1e9).toFixed(2)}T
                             </p>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #D4A853' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Tổng Tồn Kho</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #D4A853' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Tổng Tồn Kho</p>
                             <p className="text-xl font-bold mt-1" style={{ color: '#D4A853' }}>
                                 {stockValuation.totalQty.toLocaleString()} chai
                             </p>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #4A8FAB' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Đang Có Hàng</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #4A8FAB' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>SKU Đang Có Hàng</p>
                             <p className="text-xl font-bold mt-1" style={{ color: '#4A8FAB' }}>
                                 {stockValuation.productCount}
                             </p>
@@ -159,15 +159,15 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
 
                     {/* Financial Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}>
                             <div className="flex justify-between items-center mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Công Nợ Khách Hàng (AR)</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Công Nợ Khách Hàng (AR)</p>
                                 <Wallet size={16} style={{ color: '#5BA88A' }} />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tổng Chưa Thu</p>
-                                    <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{formatVND(financialSummary.ar.unpaid)}</p>
+                                    <p className="text-[11px]" style={{ color: '#64748B' }}>Tổng Chưa Thu</p>
+                                    <p className="text-lg font-bold" style={{ color: '#0F172A' }}>{formatVND(financialSummary.ar.unpaid)}</p>
                                 </div>
                                 <div>
                                     <p className="text-[11px]" style={{ color: '#E05252' }}>Trong đó Quá Hạn</p>
@@ -175,15 +175,15 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #C45A2A' }}>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #C45A2A' }}>
                             <div className="flex justify-between items-center mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Công Nợ Nhà Cung Cấp (AP)</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Công Nợ Nhà Cung Cấp (AP)</p>
                                 <Wallet size={16} style={{ color: '#C45A2A' }} />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tổng Chưa Trả</p>
-                                    <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{formatVND(financialSummary.ap.unpaid)}</p>
+                                    <p className="text-[11px]" style={{ color: '#64748B' }}>Tổng Chưa Trả</p>
+                                    <p className="text-lg font-bold" style={{ color: '#0F172A' }}>{formatVND(financialSummary.ap.unpaid)}</p>
                                 </div>
                                 <div>
                                     <p className="text-[11px]" style={{ color: '#E05252' }}>Trong đó Quá Hạn</p>
@@ -196,10 +196,10 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     <div className="grid grid-cols-12 gap-5">
                         {/* Monthly revenue bar chart */}
                         <div className="col-span-12 lg:col-span-8 p-5 rounded-md"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
-                                <BarChart3 size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Doanh Thu 6 Tháng Gần Nhất</h3>
+                                <BarChart3 size={18} style={{ color: '#0891B2' }} />
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Doanh Thu 6 Tháng Gần Nhất</h3>
                             </div>
                             <div className="flex items-end gap-3 h-48">
                                 {monthlyRevenue.map((m) => {
@@ -207,19 +207,19 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                     return (
                                         <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1 group relative">
                                             {/* Tooltip on hover */}
-                                            <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#87CBB9', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                            <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#F8FAFC', color: '#0891B2', border: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>
                                                 {formatVND(m.revenue)}
                                             </div>
-                                            <p className="text-[10px] font-bold text-center w-full" style={{ color: '#87CBB9' }}>
+                                            <p className="text-[10px] font-bold text-center w-full" style={{ color: '#0891B2' }}>
                                                 {m.revenue > 0 ? `${(m.revenue / 1e6).toFixed(0)}M` : ''}
                                             </p>
                                             <div className="w-full rounded-t-md transition-all duration-500"
                                                 style={{
                                                     height: `${Math.max(4, (pct / 100) * 140)}px`,
-                                                    background: pct > 70 ? '#87CBB9' : pct > 40 ? '#5BA88A' : '#2A4355',
+                                                    background: pct > 70 ? '#87CBB9' : pct > 40 ? '#5BA88A' : '#E2E8F0',
                                                 }}
                                             />
-                                            <p className="text-xs font-medium" style={{ color: '#4A6A7A' }}>{m.label}</p>
+                                            <p className="text-xs font-medium" style={{ color: '#64748B' }}>{m.label}</p>
                                         </div>
                                     )
                                 })}
@@ -228,30 +228,30 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
 
                         {/* Channel breakdown */}
                         <div className="col-span-12 lg:col-span-4 p-5 rounded-md"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
-                                <TrendingUp size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Theo Kênh Bán</h3>
+                                <TrendingUp size={18} style={{ color: '#0891B2' }} />
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Theo Kênh Bán</h3>
                             </div>
                             {channelBreakdown.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có dữ liệu</p>
                             ) : (
                                 <div className="space-y-3">
                                     {channelBreakdown.map(c => {
                                         const pct = totalChannelRevenue > 0 ? (c.revenue / totalChannelRevenue) * 100 : 0
-                                        const color = CHANNEL_COLOR[c.channel] ?? '#8AAEBB'
+                                        const color = CHANNEL_COLOR[c.channel] ?? '#475569'
                                         return (
                                             <div key={c.channel}>
                                                 <div className="flex justify-between mb-1">
-                                                    <span className="text-xs" style={{ color: '#E8F1F2' }}>{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
+                                                    <span className="text-xs" style={{ color: '#0F172A' }}>{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold" style={{ color }}>
                                                             {(c.revenue / 1e6).toFixed(0)}M
                                                         </span>
-                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>{pct.toFixed(0)}%</span>
+                                                        <span className="text-xs" style={{ color: '#64748B' }}>{pct.toFixed(0)}%</span>
                                                     </div>
                                                 </div>
-                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                     <div className="h-full rounded-full transition-all duration-500"
                                                         style={{ width: `${pct}%`, background: color }} />
                                                 </div>
@@ -266,25 +266,25 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     {/* Top SKUs & Brand Breakdown Grid */}
                     <div className="grid grid-cols-12 gap-5">
                         {/* Top SKUs */}
-                        <div className="col-span-12 lg:col-span-7 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="col-span-12 lg:col-span-7 p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
-                                <Wine size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top 10 SKU Bán Chạy Nhất</h3>
+                                <Wine size={18} style={{ color: '#0891B2' }} />
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Top 10 SKU Bán Chạy Nhất</h3>
                             </div>
                             {topSKUs.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu bán hàng</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có dữ liệu bán hàng</p>
                             ) : (
                                 <div className="space-y-2">
                                     {topSKUs.map((sku, i) => {
                                         const pct = (sku.qtyOrdered / maxQty) * 100
-                                        const typeColor = WINE_TYPE_COLOR[sku.wineType] ?? '#8AAEBB'
+                                        const typeColor = WINE_TYPE_COLOR[sku.wineType] ?? '#475569'
                                         return (
                                             <div key={sku.productId} className="flex items-center gap-3 py-1 group relative">
                                                 {/* Tooltip */}
-                                                <div className="absolute right-0 bottom-full mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#E8F1F2', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                                <div className="absolute right-0 bottom-full mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#F8FAFC', color: '#0F172A', border: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>
                                                     {sku.productName}
                                                 </div>
-                                                <span className="text-[10px] font-bold w-4 text-center flex-shrink-0 rounded-full" style={{ color: i < 3 ? '#142433' : '#4A6A7A', background: i === 0 ? '#D4A853' : i === 1 ? '#8AAEBB' : i === 2 ? '#C45A2A' : 'transparent' }}>
+                                                <span className="text-[10px] font-bold w-4 text-center flex-shrink-0 rounded-full" style={{ color: i < 3 ? '#FFFFFF' : '#64748B', background: i === 0 ? '#D4A853' : i === 1 ? '#475569' : i === 2 ? '#C45A2A' : 'transparent' }}>
                                                     {i + 1}
                                                 </span>
                                                 <div className="flex-1">
@@ -294,16 +294,16 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                                 style={{ background: `${typeColor}20`, color: typeColor }}>
                                                                 {sku.wineType}
                                                             </span>
-                                                            <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{sku.skuCode}</span>
-                                                            <span className="text-[11px] hidden md:block truncate max-w-[200px]" style={{ color: '#4A6A7A' }}>
+                                                            <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{sku.skuCode}</span>
+                                                            <span className="text-[11px] hidden md:block truncate max-w-[200px]" style={{ color: '#64748B' }}>
                                                                 {sku.productName}
                                                             </span>
                                                         </div>
-                                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
+                                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#0891B2' }}>
                                                             {sku.qtyOrdered.toLocaleString()} chai
                                                         </span>
                                                     </div>
-                                                    <div className="h-1 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                    <div className="h-1 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                         <div className="h-full rounded-full transition-all duration-500"
                                                             style={{ width: `${pct}%`, background: typeColor }} />
                                                     </div>
@@ -316,35 +316,35 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                         </div>
 
                         {/* Brand Breakdown */}
-                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
-                                <TrendingUp size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Doanh Thu Theo Brand</h3>
+                                <TrendingUp size={18} style={{ color: '#0891B2' }} />
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Doanh Thu Theo Brand</h3>
                             </div>
                             {brandBreakdown.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có dữ liệu</p>
                             ) : (() => {
                                 const totalBrandRevenue = brandBreakdown.reduce((sum, x) => sum + x.revenue, 0)
                                 return (
-                                    <div className="space-y-4 max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#2A4355 transparent' }}>
+                                    <div className="space-y-4 max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
                                         {brandBreakdown.map(b => {
                                             const pct = totalBrandRevenue > 0 ? (b.revenue / totalBrandRevenue) * 100 : 0
                                             return (
                                                 <div key={b.brand} className="group relative">
                                                     {/* Tooltip */}
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#E8F1F2', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#F8FAFC', color: '#0F172A', border: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>
                                                         {b.orderCount} đơn hàng • TB {formatVND(b.avgOrderValue)}/đơn
                                                     </div>
                                                 <div className="flex justify-between mb-1">
-                                                    <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{b.brand}</span>
+                                                    <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{b.brand}</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold text-[#87CBB9]">
+                                                        <span className="text-xs font-bold text-[#0891B2]">
                                                             {formatVND(b.revenue)}
                                                         </span>
-                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>{pct.toFixed(0)}%</span>
+                                                        <span className="text-xs" style={{ color: '#64748B' }}>{pct.toFixed(0)}%</span>
                                                     </div>
                                                 </div>
-                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                     <div className="h-full rounded-full transition-all duration-500 bg-[#87CBB9]"
                                                         style={{ width: `${pct}%` }} />
                                                 </div>
@@ -360,13 +360,13 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     {/* Low Stock & Sales Rep & Top Customers */}
                     <div className="grid grid-cols-12 gap-5">
                         {/* Top Customers */}
-                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
-                                <Users size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top 5 Khách Hàng (Theo Doanh Thu)</h3>
+                                <Users size={18} style={{ color: '#0891B2' }} />
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Top 5 Khách Hàng (Theo Doanh Thu)</h3>
                             </div>
                             {topCustomers.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có dữ liệu</p>
                             ) : (
                                 <div className="space-y-4">
                                     {topCustomers.map(c => {
@@ -375,10 +375,10 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                         return (
                                             <div key={c.customerId}>
                                                 <div className="flex justify-between mb-1">
-                                                    <span className="text-xs font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }}>{c.name}</span>
-                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{formatVND(c.revenue)}</span>
+                                                    <span className="text-xs font-semibold truncate max-w-[200px]" style={{ color: '#0F172A' }}>{c.name}</span>
+                                                    <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{formatVND(c.revenue)}</span>
                                                 </div>
-                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: '#87CBB9' }} />
                                                 </div>
                                             </div>
@@ -389,25 +389,25 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                         </div>
 
                         {/* Sales Rep Performance */}
-                        <div className="col-span-12 lg:col-span-3 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="col-span-12 lg:col-span-3 p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center gap-2 mb-5">
                                 <Trophy size={18} style={{ color: '#D4A853' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top Sale Rep</h3>
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Top Sale Rep</h3>
                             </div>
                             {salesRepPerformance.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có dữ liệu</p>
                             ) : (
                                 <div className="space-y-4">
                                     {salesRepPerformance.map((r, i) => (
                                         <div key={r.salesRepId} className="flex items-center gap-3">
-                                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: i === 0 ? '#D4A853' : i === 1 ? '#8AAEBB' : i === 2 ? '#C45A2A' : '#142433', color: i < 3 ? '#142433' : '#4A6A7A' }}>
+                                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: i === 0 ? '#D4A853' : i === 1 ? '#475569' : i === 2 ? '#C45A2A' : '#FFFFFF', color: i < 3 ? '#FFFFFF' : '#64748B' }}>
                                                 {i + 1}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{r.name}</p>
-                                                <p className="text-[10px] truncate" style={{ color: '#4A6A7A' }}>{r.orders} đơn hàng</p>
+                                                <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{r.name}</p>
+                                                <p className="text-[10px] truncate" style={{ color: '#64748B' }}>{r.orders} đơn hàng</p>
                                             </div>
-                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{(r.revenue / 1e6).toFixed(0)}M</span>
+                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{(r.revenue / 1e6).toFixed(0)}M</span>
                                         </div>
                                     ))}
                                 </div>
@@ -418,17 +418,17 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                         <div className="col-span-12 lg:col-span-4 p-5 rounded-md" style={{ background: 'rgba(224, 82, 82, 0.05)', border: '1px solid rgba(224, 82, 82, 0.2)' }}>
                             <div className="flex items-center gap-2 mb-5">
                                 <AlertTriangle size={18} style={{ color: '#E05252' }} />
-                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Cảnh Báo Tồn Kho Thấp</h3>
+                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>Cảnh Báo Tồn Kho Thấp</h3>
                             </div>
                             {lowStockAlerts.length === 0 ? (
-                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Không có sản phẩm nào sắp hết hàng</p>
+                                <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Không có sản phẩm nào sắp hết hàng</p>
                             ) : (
                                 <div className="space-y-3">
                                     {lowStockAlerts.map(l => (
                                         <div key={l.productId} className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(224, 82, 82, 0.1)' }}>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{l.skuCode}</p>
-                                                <p className="text-[10px] truncate" style={{ color: '#4A6A7A' }}>{l.productName}</p>
+                                                <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{l.skuCode}</p>
+                                                <p className="text-[10px] truncate" style={{ color: '#64748B' }}>{l.productName}</p>
                                             </div>
                                             <div className="text-right ml-3 flex-shrink-0">
                                                 <p className="text-xs font-bold" style={{ color: '#E05252' }}>{l.qtyAvailable} chai</p>
@@ -444,20 +444,20 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
 
             {tab === 'export' && (
                 <div className="space-y-4">
-                    <div className="p-4 rounded-md" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.15)' }}>
-                        <p className="text-xs" style={{ color: '#87CBB9' }}>
+                    <div className="p-4 rounded-md" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(8, 145, 178, 0.08)' }}>
+                        <p className="text-xs" style={{ color: '#0891B2' }}>
                             <FileSpreadsheet size={14} className="inline mr-1.5" />
                             16 báo cáo chuẩn — Xuất file Excel (.xlsx) với header công ty, format VND, auto-filter. Nhấn vào nút Xuất để tải.
                         </p>
                     </div>
 
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Mã', 'Tên Báo Cáo', 'Module', 'Hành Động'].map(h => (
                                         <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#4A6A7A' }}>{h}</th>
+                                            style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -465,18 +465,18 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                 {REPORT_CATALOG.map(r => {
                                     const isDownloading = downloading === r.key
                                     const justDownloaded = lastDownloaded === r.key
-                                    const moduleColor = MODULE_COLORS[r.module] ?? '#8AAEBB'
+                                    const moduleColor = MODULE_COLORS[r.module] ?? '#475569'
                                     return (
                                         <tr key={r.key}
                                             style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                             <td className="px-4 py-3">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded font-mono" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded font-mono" style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
                                                     {r.code}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-sm font-medium" style={{ color: '#E8F1F2' }}>
+                                            <td className="px-4 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>
                                                 {r.name}
                                             </td>
                                             <td className="px-4 py-3">
@@ -493,9 +493,9 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                     style={{
                                                         background: justDownloaded ? 'rgba(91,168,138,0.15)' : 'rgba(135,203,185,0.1)',
                                                         color: justDownloaded ? '#5BA88A' : '#87CBB9',
-                                                        border: `1px solid ${justDownloaded ? 'rgba(91,168,138,0.3)' : 'rgba(135,203,185,0.2)'}`,
+                                                        border: `1px solid ${justDownloaded ? 'rgba(91,168,138,0.3)' : 'rgba(8, 145, 178, 0.15)'}`,
                                                     }}
-                                                    onMouseEnter={e => { if (!isDownloading) e.currentTarget.style.background = 'rgba(135,203,185,0.2)' }}
+                                                    onMouseEnter={e => { if (!isDownloading) e.currentTarget.style.background = 'rgba(8, 145, 178, 0.15)' }}
                                                     onMouseLeave={e => { if (!isDownloading) e.currentTarget.style.background = justDownloaded ? 'rgba(91,168,138,0.15)' : 'rgba(135,203,185,0.1)' }}>
                                                     {isDownloading ? (
                                                         <><Loader2 size={12} className="animate-spin" /> Đang xuất...</>
@@ -528,15 +528,15 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     {scheduleLoading ? (
                         <div className="flex items-center justify-center py-16 gap-2">
                             <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
-                            <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tải lịch...</span>
+                            <span className="text-sm" style={{ color: '#64748B' }}>Đang tải lịch...</span>
                         </div>
                     ) : schedules && schedules.length > 0 ? (
-                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                         {['Template', 'Tần Suất', 'Người Nhận', 'Chạy Lần Cuối', 'Chạy Tiếp', 'Trạng Thái'].map(h => (
-                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -546,7 +546,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                         const isActive = s.status === 'ACTIVE'
                                         return (
                                             <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                <td className="px-4 py-3 text-sm font-medium" style={{ color: '#E8F1F2' }}>{s.templateName}</td>
+                                                <td className="px-4 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>{s.templateName}</td>
                                                 <td className="px-4 py-3">
                                                     <span className="flex items-center gap-1.5 text-xs" style={{ color: '#D4A853' }}>
                                                         <Clock size={11} /> {freqLabel}
@@ -555,14 +555,14 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-wrap gap-1">
                                                         {s.recipients.map(r => (
-                                                            <span key={r} className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#142433', color: '#8AAEBB' }}>{r}</span>
+                                                            <span key={r} className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#FFFFFF', color: '#475569' }}>{r}</span>
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#64748B' }}>
                                                     {s.lastRunAt ? formatDate(s.lastRunAt) : '—'}
                                                 </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: '#87CBB9' }}>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#0891B2' }}>
                                                     {s.nextRunAt ? formatDate(s.nextRunAt) : '—'}
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -588,10 +588,10 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                             </table>
                         </div>
                     ) : (
-                        <div className="text-center py-16 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <Calendar size={28} style={{ color: '#2A4355', margin: '0 auto' }} />
-                            <p className="text-sm mt-3" style={{ color: '#4A6A7A' }}>Chưa có lịch báo cáo tự động</p>
-                            <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>Tạo lịch qua API: <code className="text-xs" style={{ color: '#87CBB9' }}>createReportSchedule()</code></p>
+                        <div className="text-center py-16 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <Calendar size={28} style={{ color: '#E2E8F0', margin: '0 auto' }} />
+                            <p className="text-sm mt-3" style={{ color: '#64748B' }}>Chưa có lịch báo cáo tự động</p>
+                            <p className="text-xs mt-1" style={{ color: '#64748B' }}>Tạo lịch qua API: <code className="text-xs" style={{ color: '#0891B2' }}>createReportSchedule()</code></p>
                         </div>
                     )}
                 </div>

@@ -655,7 +655,7 @@ export async function getARAgingChart() {
             totalOutstanding: Object.values(buckets).reduce((a, b) => a + b, 0),
             buckets: [
                 { label: 'Chưa đến hạn', amount: buckets.current, color: '#5BA88A' },
-                { label: '1-30 ngày', amount: buckets.d30, color: '#87CBB9' },
+                { label: '1-30 ngày', amount: buckets.d30, color: '#0891B2' },
                 { label: '31-60 ngày', amount: buckets.d60, color: '#D4A853' },
                 { label: '61-90 ngày', amount: buckets.d90, color: '#E05252' },
                 { label: '>90 ngày', amount: buckets.d90plus, color: '#8B1A2E' },
@@ -753,7 +753,7 @@ export async function getCostWaterfall() {
         const bars: WaterfallBar[] = [
             { label: 'Doanh Thu', value: revenue, type: 'total', color: '#5BA88A', pct: 100 },
             { label: 'Giá Vốn (COGS)', value: -cogs, type: 'negative', color: '#E05252', pct: pct(cogs) },
-            { label: 'Lãi Gộp', value: grossProfit, type: 'total', color: '#87CBB9', pct: pct(grossProfit) },
+            { label: 'Lãi Gộp', value: grossProfit, type: 'total', color: '#0891B2', pct: pct(grossProfit) },
             { label: 'CP Bán Hàng (641)', value: -sellingExp, type: 'negative', color: '#D4A853', pct: pct(sellingExp) },
             { label: 'CP Quản Lý (642)', value: -adminExp, type: 'negative', color: '#C45A2A', pct: pct(adminExp) },
             { label: 'CP Tài Chính (635)', value: -financialExp, type: 'negative', color: '#4A8FAB', pct: pct(financialExp) },
@@ -1197,8 +1197,8 @@ export async function getRevenueByChannel(options?: DashboardFilterOptions) {
             WHOLESALE: '#4A8FAB',
             VIP_RETAIL: '#D4A853',
             POS: '#5BA88A',
-            CONSIGNMENT: '#8AAEBB',
-            OTHER: '#4A6A7A',
+            CONSIGNMENT: '#475569',
+            OTHER: '#64748B',
         }
 
         return {
@@ -1209,7 +1209,7 @@ export async function getRevenueByChannel(options?: DashboardFilterOptions) {
                     label: CHANNEL_LABELS[ch] ?? ch,
                     revenue: rev,
                     pct: total > 0 ? Math.round((rev / total) * 100) : 0,
-                    color: CHANNEL_COLORS[ch] ?? '#4A6A7A',
+                    color: CHANNEL_COLORS[ch] ?? '#64748B',
                 }))
                 .sort((a, b) => b.revenue - a.revenue),
         }

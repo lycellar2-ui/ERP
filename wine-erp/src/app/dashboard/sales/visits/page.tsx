@@ -81,7 +81,7 @@ export default async function SalesVisitsPage() {
     }
 
     return (
-        <Suspense fallback={<div className="p-8 text-[#8AAEBB] text-xs">Đang tải dữ liệu...</div>}>
+        <Suspense fallback={<div className="p-8 text-slate-600 text-xs">Đang tải dữ liệu...</div>}>
             <SalesVisitsClient
                 initialVisits={visits}
                 customers={customers}

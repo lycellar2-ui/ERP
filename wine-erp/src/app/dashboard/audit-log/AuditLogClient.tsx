@@ -23,7 +23,7 @@ const ACTION_CONFIG: Record<string, { icon: typeof Plus; color: string; bgColor:
     CONFIRM: { icon: CheckCircle2, color: '#06B6D4', bgColor: 'rgba(6,182,212,0.12)', label: 'Xác nhận' },
     LOGIN: { icon: User, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Đăng nhập' },
     EXPORT: { icon: ArrowRight, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Xuất dữ liệu' },
-    SIGN: { icon: FileSignature, color: '#87CBB9', bgColor: 'rgba(135,203,185,0.12)', label: 'Ký duyệt' },
+    SIGN: { icon: FileSignature, color: '#0891B2', bgColor: 'rgba(8, 145, 178, 0.08)', label: 'Ký duyệt' },
     RETURN: { icon: RefreshCw, color: '#F59E0B', bgColor: 'rgba(245,158,11,0.12)', label: 'Trả lại' },
 }
 
@@ -78,11 +78,11 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 6).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#4A6A7A' }}>{key}:</span>
+                        <span style={{ color: '#64748B' }}>{key}:</span>
                         <span style={{ color: '#22C55E' }}>{formatFieldValue(val)}</span>
                     </div>
                 ))}
-                {entries.length > 6 && <span className="text-xs" style={{ color: '#4A6A7A' }}>+{entries.length - 6} trường khác</span>}
+                {entries.length > 6 && <span className="text-xs" style={{ color: '#64748B' }}>+{entries.length - 6} trường khác</span>}
             </div>
         )
     }
@@ -94,7 +94,7 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 4).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#4A6A7A' }}>{key}:</span>
+                        <span style={{ color: '#64748B' }}>{key}:</span>
                         <span style={{ color: '#EF4444', textDecoration: 'line-through' }}>{formatFieldValue(val)}</span>
                     </div>
                 ))}
@@ -110,13 +110,13 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                 <div className="mt-2 space-y-1.5">
                     {fieldChanges.slice(0, 5).map((fc: any, i: number) => (
                         <div key={i} className="flex items-center gap-1.5 text-xs flex-wrap">
-                            <span className="font-medium" style={{ color: '#8AAEBB' }}>{fc.field}:</span>
+                            <span className="font-medium" style={{ color: '#475569' }}>{fc.field}:</span>
                             <span style={{ color: '#EF4444' }}>{formatFieldValue(fc.from)}</span>
-                            <ArrowRight size={10} style={{ color: '#4A6A7A' }} />
+                            <ArrowRight size={10} style={{ color: '#64748B' }} />
                             <span style={{ color: '#22C55E' }}>{formatFieldValue(fc.to)}</span>
                         </div>
                     ))}
-                    {fieldChanges.length > 5 && <span className="text-xs" style={{ color: '#4A6A7A' }}>+{fieldChanges.length - 5} trường khác</span>}
+                    {fieldChanges.length > 5 && <span className="text-xs" style={{ color: '#64748B' }}>+{fieldChanges.length - 5} trường khác</span>}
                 </div>
             )
         }
@@ -134,9 +134,9 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                 <div className="mt-2 space-y-1.5">
                     {changes.slice(0, 5).map(([key, val]) => (
                         <div key={key} className="flex items-center gap-1.5 text-xs flex-wrap">
-                            <span className="font-medium" style={{ color: '#8AAEBB' }}>{key}:</span>
+                            <span className="font-medium" style={{ color: '#475569' }}>{key}:</span>
                             <span style={{ color: '#EF4444' }}>{formatFieldValue((oldValue as any)[key])}</span>
-                            <ArrowRight size={10} style={{ color: '#4A6A7A' }} />
+                            <ArrowRight size={10} style={{ color: '#64748B' }} />
                             <span style={{ color: '#22C55E' }}>{formatFieldValue(val)}</span>
                         </div>
                     ))}
@@ -153,8 +153,8 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 4).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#4A6A7A' }}>{key}:</span>
-                        <span style={{ color: '#87CBB9' }}>{formatFieldValue(val)}</span>
+                        <span style={{ color: '#64748B' }}>{key}:</span>
+                        <span style={{ color: '#0891B2' }}>{formatFieldValue(val)}</span>
                     </div>
                 ))}
             </div>
@@ -182,15 +182,15 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
     return (
         <div
             className="p-4 rounded-lg"
-            style={{ background: '#142433', border: '1px solid #2A4355' }}
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
         >
             <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{label}</span>
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#64748B' }}>{label}</span>
                 <div className="p-1.5 rounded-md" style={{ background: `${color}18` }}>
                     <Icon size={14} style={{ color }} />
                 </div>
             </div>
-            <p className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+            <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                 {typeof value === 'number' ? value.toLocaleString('vi-VN') : value}
             </p>
         </div>
@@ -261,17 +261,17 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#E8F1F2' }}>
-                        <ScrollText size={26} style={{ color: '#87CBB9' }} />
+                    <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#0F172A' }}>
+                        <ScrollText size={26} style={{ color: '#0891B2' }} />
                         Nhật Ký Hệ Thống
                     </h1>
-                    <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-1" style={{ color: '#64748B' }}>
                         Theo dõi mọi thay đổi quan trọng trong hệ thống ERP
                     </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Tổng sự kiện</p>
-                    <p className="text-xl font-bold" style={{ color: '#87CBB9' }}>{stats.total.toLocaleString('vi-VN')}</p>
+                    <p className="text-sm" style={{ color: '#64748B' }}>Tổng sự kiện</p>
+                    <p className="text-xl font-bold" style={{ color: '#0891B2' }}>{stats.total.toLocaleString('vi-VN')}</p>
                 </div>
             </div>
 
@@ -286,8 +286,8 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             {/* Top Actions & Modules Mini Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Top Actions */}
-                <div className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
+                <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
                         Loại Hành Động
                     </p>
                     <div className="space-y-2">
@@ -298,15 +298,15 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                 <div key={a.action} className="flex items-center gap-3">
                                     <div className="flex items-center gap-2 w-28">
                                         <config.icon size={12} style={{ color: config.color }} />
-                                        <span className="text-xs truncate" style={{ color: '#8AAEBB' }}>{config.label}</span>
+                                        <span className="text-xs truncate" style={{ color: '#475569' }}>{config.label}</span>
                                     </div>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1B2E3D' }}>
+                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
                                             style={{ width: `${Math.max(pct, 2)}%`, background: config.color }}
                                         />
                                     </div>
-                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#4A6A7A' }}>{a.count}</span>
+                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#64748B' }}>{a.count}</span>
                                 </div>
                             )
                         })}
@@ -314,8 +314,8 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                 </div>
 
                 {/* Top Modules */}
-                <div className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
+                <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
                         Module Hoạt Động
                     </p>
                     <div className="space-y-2">
@@ -324,14 +324,14 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             const pct = (m.count / maxCount * 100)
                             return (
                                 <div key={m.entityType} className="flex items-center gap-3">
-                                    <span className="text-xs w-32 truncate" style={{ color: '#8AAEBB' }}>{formatEntityType(m.entityType)}</span>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1B2E3D' }}>
+                                    <span className="text-xs w-32 truncate" style={{ color: '#475569' }}>{formatEntityType(m.entityType)}</span>
+                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
                                             style={{ width: `${Math.max(pct, 2)}%`, background: '#87CBB9' }}
                                         />
                                     </div>
-                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#4A6A7A' }}>{m.count}</span>
+                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#64748B' }}>{m.count}</span>
                                 </div>
                             )
                         })}
@@ -340,11 +340,11 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             </div>
 
             {/* Search & Filters */}
-            <div className="p-4 rounded-lg space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-3 flex-wrap">
                     {/* Search */}
-                    <div className="flex items-center flex-1 min-w-[200px] gap-2 px-3 py-2 rounded-md" style={{ background: '#0A1926', border: '1px solid #2A4355' }}>
-                        <Search size={14} style={{ color: '#4A6A7A' }} />
+                    <div className="flex items-center flex-1 min-w-[200px] gap-2 px-3 py-2 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                        <Search size={14} style={{ color: '#64748B' }} />
                         <input
                             type="text"
                             placeholder="Tìm theo user, module, entity ID..."
@@ -352,14 +352,14 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             onChange={e => setSearch(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSearch()}
                             className="flex-1 bg-transparent text-sm outline-none"
-                            style={{ color: '#E8F1F2' }}
+                            style={{ color: '#0F172A' }}
                         />
                     </div>
 
                     <button
                         onClick={handleSearch}
                         className="px-4 py-2 text-sm font-medium rounded-md transition-all"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                     >
                         Tìm kiếm
                     </button>
@@ -368,9 +368,9 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                         onClick={() => setShowFilters(!showFilters)}
                         className="px-3 py-2 text-sm rounded-md flex items-center gap-2 transition-all"
                         style={{
-                            background: showFilters ? 'rgba(135,203,185,0.12)' : 'transparent',
-                            border: '1px solid #2A4355',
-                            color: showFilters ? '#87CBB9' : '#8AAEBB',
+                            background: showFilters ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                            border: '1px solid #E2E8F0',
+                            color: showFilters ? '#87CBB9' : '#475569',
                         }}
                     >
                         <Filter size={14} />
@@ -384,7 +384,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                         <button
                             onClick={handleClearFilters}
                             className="px-3 py-2 text-xs rounded-md transition-all"
-                            style={{ border: '1px solid #2A4355', color: '#EF4444' }}
+                            style={{ border: '1px solid #E2E8F0', color: '#EF4444' }}
                         >
                             Xóa bộ lọc
                         </button>
@@ -393,14 +393,14 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
 
                 {/* Filter Row */}
                 {showFilters && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2" style={{ borderTop: '1px solid #1B2E3D' }}>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2" style={{ borderTop: '1px solid #FFFFFF' }}>
                         <div>
-                            <label className="block text-xs mb-1" style={{ color: '#4A6A7A' }}>Module</label>
+                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Module</label>
                             <select
                                 value={filters.entityType ?? ''}
                                 onChange={e => handleFilterChange('entityType', e.target.value)}
                                 className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             >
                                 <option value="">Tất cả</option>
                                 {filterOptions.entityTypes.map(t => (
@@ -409,12 +409,12 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs mb-1" style={{ color: '#4A6A7A' }}>Hành động</label>
+                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Hành động</label>
                             <select
                                 value={filters.action ?? ''}
                                 onChange={e => handleFilterChange('action', e.target.value)}
                                 className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             >
                                 <option value="">Tất cả</option>
                                 {filterOptions.actions.map(a => (
@@ -423,23 +423,23 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs mb-1" style={{ color: '#4A6A7A' }}>Từ ngày</label>
+                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Từ ngày</label>
                             <input
                                 type="date"
                                 value={filters.dateFrom ?? ''}
                                 onChange={e => handleFilterChange('dateFrom', e.target.value)}
                                 className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             />
                         </div>
                         <div>
-                            <label className="block text-xs mb-1" style={{ color: '#4A6A7A' }}>Đến ngày</label>
+                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Đến ngày</label>
                             <input
                                 type="date"
                                 value={filters.dateTo ?? ''}
                                 onChange={e => handleFilterChange('dateTo', e.target.value)}
                                 className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             />
                         </div>
                     </div>
@@ -447,13 +447,13 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             </div>
 
             {/* Timeline */}
-            <div className="rounded-lg overflow-hidden" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="rounded-lg overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {/* Header */}
-                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #1B2E3D' }}>
-                    <span className="text-sm font-medium" style={{ color: '#8AAEBB' }}>
+                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #FFFFFF' }}>
+                    <span className="text-sm font-medium" style={{ color: '#475569' }}>
                         {total.toLocaleString('vi-VN')} sự kiện
                     </span>
-                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                    <span className="text-xs" style={{ color: '#64748B' }}>
                         Trang {page}/{totalPages || 1}
                     </span>
                 </div>
@@ -461,11 +461,11 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                 {/* Timeline Entries */}
                 {rows.length === 0 ? (
                     <div className="py-16 text-center">
-                        <ScrollText size={40} style={{ color: '#2A4355', margin: '0 auto 12px' }} />
-                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có sự kiện nào</p>
+                        <ScrollText size={40} style={{ color: '#E2E8F0', margin: '0 auto 12px' }} />
+                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có sự kiện nào</p>
                     </div>
                 ) : (
-                    <div className="divide-y" style={{ borderColor: '#1B2E3D' }}>
+                    <div className="divide-y" style={{ borderColor: '#FFFFFF' }}>
                         {rows.map((row) => {
                             const config = getActionConfig(row.action)
                             const Icon = config.icon
@@ -477,7 +477,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                     key={row.id}
                                     className="px-4 py-3 transition-all duration-150 cursor-pointer"
                                     style={{
-                                        background: isExpanded ? '#1B2E3D' : 'transparent',
+                                        background: isExpanded ? '#FFFFFF' : 'transparent',
                                         borderLeft: isDangerous ? '3px solid #EF4444' : '3px solid transparent',
                                     }}
                                     onClick={() => setExpandedRow(isExpanded ? null : row.id)}
@@ -500,11 +500,11 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                                 >
                                                     {config.label}
                                                 </span>
-                                                <span className="font-medium text-sm" style={{ color: '#E8F1F2' }}>
+                                                <span className="font-medium text-sm" style={{ color: '#0F172A' }}>
                                                     {formatEntityType(row.entityType)}
                                                 </span>
                                                 {row.entityId && (
-                                                    <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: '#0A1926', color: '#4A6A7A' }}>
+                                                    <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: '#F8FAFC', color: '#64748B' }}>
                                                         {row.entityId.length > 12 ? `...${row.entityId.slice(-8)}` : row.entityId}
                                                     </span>
                                                 )}
@@ -526,14 +526,14 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                         {/* Meta */}
                                         <div className="flex-shrink-0 text-right">
                                             <div className="flex items-center gap-1.5">
-                                                <User size={10} style={{ color: '#4A6A7A' }} />
-                                                <span className="text-xs" style={{ color: '#8AAEBB' }}>
+                                                <User size={10} style={{ color: '#64748B' }} />
+                                                <span className="text-xs" style={{ color: '#475569' }}>
                                                     {row.userName ?? 'Hệ thống'}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-1 justify-end">
-                                                <Clock size={10} style={{ color: '#4A6A7A' }} />
-                                                <span className="text-xs" style={{ color: '#4A6A7A' }} title={formatDateTime(row.createdAt)}>
+                                                <Clock size={10} style={{ color: '#64748B' }} />
+                                                <span className="text-xs" style={{ color: '#64748B' }} title={formatDateTime(row.createdAt)}>
                                                     {formatTimeAgo(row.createdAt)}
                                                 </span>
                                             </div>
@@ -547,12 +547,12 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #1B2E3D' }}>
+                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #FFFFFF' }}>
                         <button
                             onClick={() => handlePageChange(page - 1)}
                             disabled={page <= 1}
                             className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md transition-all disabled:opacity-30"
-                            style={{ border: '1px solid #2A4355', color: '#8AAEBB' }}
+                            style={{ border: '1px solid #E2E8F0', color: '#475569' }}
                         >
                             <ChevronLeft size={12} /> Trước
                         </button>
@@ -576,7 +576,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                         className="w-8 h-8 text-xs rounded-md transition-all"
                                         style={{
                                             background: page === pageNum ? '#87CBB9' : 'transparent',
-                                            color: page === pageNum ? '#0A1926' : '#4A6A7A',
+                                            color: page === pageNum ? '#F8FAFC' : '#64748B',
                                             fontWeight: page === pageNum ? 600 : 400,
                                         }}
                                     >
@@ -590,7 +590,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             onClick={() => handlePageChange(page + 1)}
                             disabled={page >= totalPages}
                             className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md transition-all disabled:opacity-30"
-                            style={{ border: '1px solid #2A4355', color: '#8AAEBB' }}
+                            style={{ border: '1px solid #E2E8F0', color: '#475569' }}
                         >
                             Sau <ChevronRight size={12} />
                         </button>

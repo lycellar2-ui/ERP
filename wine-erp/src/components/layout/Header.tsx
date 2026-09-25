@@ -234,16 +234,16 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             className="sticky top-0 z-10 flex items-center justify-between px-4"
             style={{
                 height: '42px',
-                background: 'rgba(20,36,51,0.95)',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(12px)',
-                borderBottom: '1px solid #2A4355',
+                borderBottom: '1px solid #E2E8F0',
             }}
         >
             {/* Page title */}
             <div className="flex items-center">
                 {mobileMenuButton}
                 <div>
-                    <h1 className="font-bold text-sm leading-none tracking-wide" style={{ color: '#E8F1F2' }}>
+                    <h1 className="font-bold text-sm leading-none tracking-wide" style={{ color: '#0F172A' }}>
                         {title}
                     </h1>
                 </div>
@@ -253,14 +253,14 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             <div className="flex items-center gap-2">
                 {/* Language Switcher for Field Check-in */}
                 {pathname.startsWith('/dashboard/sales/visits') && (
-                    <div className="flex items-center p-0.5 rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-[11px] font-bold shadow-xs">
+                    <div className="flex items-center p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold shadow-xs">
                         <button
                             type="button"
                             onClick={() => handleSetVisitLocale('vi')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 visitLocale === 'vi'
-                                    ? 'bg-[#87CBB9] text-[#0A1926] font-black shadow-xs'
-                                    : 'text-[#8AAEBB] hover:text-white'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-white'
                             }`}
                             title="Tiếng Việt"
                         >
@@ -271,8 +271,8 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             onClick={() => handleSetVisitLocale('en')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 visitLocale === 'en'
-                                    ? 'bg-[#87CBB9] text-[#0A1926] font-black shadow-xs'
-                                    : 'text-[#8AAEBB] hover:text-white'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-white'
                             }`}
                             title="English"
                         >
@@ -287,13 +287,13 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         onClick={handleToggleNoti}
                         className="relative flex items-center justify-center w-7 h-7 transition-all duration-150"
                         style={{
-                            background: '#1B2E3D',
-                            border: '1px solid #2A4355',
-                            color: '#8AAEBB',
+                            background: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
+                            color: '#475569',
                             borderRadius: '5px',
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                     >
                         <Bell size={14} />
                         {/* Notification badge */}
@@ -312,17 +312,17 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         <div
                             className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 overflow-hidden"
                             style={{
-                                background: '#142433',
-                                border: '1px solid #2A4355',
+                                background: '#FFFFFF',
+                                border: '1px solid #E2E8F0',
                                 boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                             }}
                         >
-                            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#2A4355' }}>
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Thông Báo</span>
+                            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E2E8F0' }}>
+                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Thông Báo</span>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={handleMarkAllAsRead}
-                                        className="text-[10px] font-semibold hover:underline text-[#87CBB9]"
+                                        className="text-[10px] font-semibold hover:underline text-[#0891B2]"
                                     >
                                         Đọc tất cả
                                     </button>
@@ -330,7 +330,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             </div>
                             <div className="max-h-64 overflow-y-auto">
                                 {notifications.length === 0 ? (
-                                    <div className="py-8 text-center text-xs" style={{ color: '#4A6A7A' }}>
+                                    <div className="py-8 text-center text-xs" style={{ color: '#64748B' }}>
                                         Không có thông báo mới
                                     </div>
                                 ) : (
@@ -341,7 +341,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                 onClick={() => handleNotificationClick(n)}
                                                 className="px-4 py-3 transition-colors duration-150 cursor-pointer border-b last:border-b-0"
                                                 style={{
-                                                    borderColor: '#2A4355',
+                                                    borderColor: '#E2E8F0',
                                                     background: n.isRead ? 'transparent' : 'rgba(135,203,185,0.04)',
                                                 }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}
@@ -352,7 +352,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                         {n.type === 'success' ? '🟢' : n.type === 'warning' ? '🟡' : n.type === 'error' ? '🔴' : '🔵'}
                                                     </span>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-xs font-semibold leading-normal" style={{ color: n.isRead ? '#8AAEBB' : '#E8F1F2' }}>
+                                                        <p className="text-xs font-semibold leading-normal" style={{ color: n.isRead ? '#475569' : '#0F172A' }}>
                                                             {n.title}
                                                         </p>
                                                         {n.content && (
@@ -360,7 +360,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                                 {n.content}
                                                             </p>
                                                         )}
-                                                        <span className="text-[10px] block mt-1" style={{ color: '#4A6A7A' }}>
+                                                        <span className="text-[10px] block mt-1" style={{ color: '#64748B' }}>
                                                             {formatNotiTime(n.createdAt)}
                                                         </span>
                                                     </div>
@@ -373,8 +373,8 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                 disabled={loadingNoti}
                                                 className="w-full py-2 text-center text-[10px] font-bold border-t hover:underline transition-all"
                                                 style={{ 
-                                                    borderColor: '#2A4355', 
-                                                    color: '#87CBB9', 
+                                                    borderColor: '#E2E8F0', 
+                                                    color: '#0891B2', 
                                                     background: 'rgba(135,203,185,0.02)' 
                                                 }}
                                             >
@@ -394,26 +394,26 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         onClick={() => setShowProfile(!showProfile)}
                         className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 transition-all duration-150"
                         style={{
-                            background: '#1B2E3D',
-                            border: '1px solid #2A4355',
+                            background: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
                             borderRadius: '5px',
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                     >
                         {/* Avatar circle — Teal */}
                         <div
                             className="w-6 h-6 flex items-center justify-center text-[11px] font-bold"
                             style={{
-                                background: 'rgba(135,203,185,0.2)',
-                                color: '#87CBB9',
-                                border: '1px solid rgba(135,203,185,0.3)',
+                                background: 'rgba(8, 145, 178, 0.15)',
+                                color: '#0891B2',
+                                border: '1px solid rgba(8, 145, 178, 0.25)',
                                 borderRadius: '4px',
                             }}
                         >
                             {(currentUser?.name?.[0] || 'A').toUpperCase()}
                         </div>
-                        <span className="text-xs font-semibold hidden sm:inline" style={{ color: '#8AAEBB' }}>
+                        <span className="text-xs font-semibold hidden sm:inline" style={{ color: '#475569' }}>
                             {currentUser?.name || 'Admin'}
                         </span>
                     </button>
@@ -423,17 +423,17 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         <div
                             className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 overflow-hidden"
                             style={{
-                                background: '#142433',
-                                border: '1px solid #2A4355',
+                                background: '#FFFFFF',
+                                border: '1px solid #E2E8F0',
                                 boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                             }}
                         >
-                            <div className="p-4 border-b" style={{ borderColor: '#2A4355' }}>
-                                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Thông Tin Cá Nhân</p>
-                                <p className="text-sm font-semibold truncate" style={{ color: '#E8F1F2' }}>
+                            <div className="p-4 border-b" style={{ borderColor: '#E2E8F0' }}>
+                                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#475569' }}>Thông Tin Cá Nhân</p>
+                                <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>
                                     {currentUser?.name || 'Admin'}
                                 </p>
-                                <p className="text-xs truncate mt-0.5" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs truncate mt-0.5" style={{ color: '#64748B' }}>
                                     {currentUser?.email || 'admin@lyscellars.com'}
                                 </p>
                                 <div className="flex flex-wrap gap-1 mt-2.5">
@@ -450,21 +450,21 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                         })
                                     )).map(r => (
                                         <span key={r} className="text-xs px-1.5 py-0.5 rounded font-bold"
-                                            style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                             {r}
                                         </span>
                                     ))}
                                 </div>
                             </div>
-                            <div className="p-2 border-b" style={{ borderColor: '#2A4355' }}>
+                            <div className="p-2 border-b" style={{ borderColor: '#E2E8F0' }}>
                                 <button
                                     onClick={() => {
                                         setShowProfile(false)
                                         setShowMyAccount(true)
                                     }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-300 hover:bg-[#1B2E3D]"
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-300 hover:bg-white"
                                 >
-                                    <User size={14} style={{ color: '#87CBB9' }} />
+                                    <User size={14} style={{ color: '#0891B2' }} />
                                     Tài khoản của tôi
                                 </button>
                             </div>
@@ -529,9 +529,9 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
         width: '100%',
         padding: '10px 12px',
         borderRadius: '6px',
-        border: '1px solid #2A4355',
-        background: '#142433',
-        color: '#E8F1F2',
+        border: '1px solid #E2E8F0',
+        background: '#FFFFFF',
+        color: '#0F172A',
         fontSize: '14px',
         outline: 'none',
         transition: 'border-color 0.15s ease-in-out',
@@ -573,17 +573,17 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex justify-end" style={{ background: 'rgba(10,25,38,0.75)' }}>
+        <div className="fixed inset-0 z-[9999] flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
-                style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>
                         <div className="flex items-center gap-2">
-                            <User size={18} style={{ color: '#87CBB9' }} />
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tài Khoản Của Tôi</h3>
+                            <User size={18} style={{ color: '#0891B2' }} />
+                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tài Khoản Của Tôi</h3>
                         </div>
                         <button onClick={onClose} className="hover:opacity-80 transition-opacity">
-                            <X size={18} style={{ color: '#4A6A7A' }} />
+                            <X size={18} style={{ color: '#64748B' }} />
                         </button>
                     </div>
 
@@ -596,18 +596,18 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
-                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
+                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
                                 {currentUser.email}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
-                            <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Vai Trò</label>
+                            <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 {(currentUser.roles || []).map(r => (
                                     <span key={r} className="text-xs px-2 py-0.5 rounded font-bold"
-                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                         {r}
                                     </span>
                                 ))}
@@ -615,7 +615,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Họ Tên *</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên *</label>
                             <input 
                                 style={inputStyle} 
                                 placeholder="Họ và tên của bạn"
@@ -624,15 +624,15 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                             />
                         </div>
 
-                        <div className="pt-4 border-t" style={{ borderColor: '#142433' }}>
+                        <div className="pt-4 border-t" style={{ borderColor: '#FFFFFF' }}>
                             <div className="flex items-center gap-1.5 mb-3">
-                                <Key size={14} style={{ color: '#87CBB9' }} />
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Đổi Mật Khẩu</span>
+                                <Key size={14} style={{ color: '#0891B2' }} />
+                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Đổi Mật Khẩu</span>
                             </div>
                             
                             <div className="space-y-3">
                                 <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Mật Khẩu Mới</label>
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>Mật Khẩu Mới</label>
                                     <input 
                                         style={inputStyle} 
                                         type="password" 
@@ -642,7 +642,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Xác Nhận Mật Khẩu Mới</label>
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>Xác Nhận Mật Khẩu Mới</label>
                                     <input 
                                         style={inputStyle} 
                                         type="password" 
@@ -660,7 +660,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                     onClick={handleSave} 
                     disabled={saving}
                     className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                 >
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu thay đổi...' : 'Lưu Thay Đổi'}

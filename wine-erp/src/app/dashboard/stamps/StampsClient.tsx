@@ -43,7 +43,7 @@ interface Props {
 // Shared style tokens
 const card = {
     background: '#1A2F3F',
-    border: '1px solid #2A4355',
+    border: '1px solid #E2E8F0',
     borderRadius: '12px',
     padding: '24px',
 }
@@ -183,8 +183,8 @@ export default function StampsClient({ purchases, summary }: Props) {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
-                    <h1 style={{ color: '#E8F1F2', fontSize: '28px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Stamp size={28} style={{ color: '#87CBB9' }} />
+                    <h1 style={{ color: '#0F172A', fontSize: '28px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Stamp size={28} style={{ color: '#0891B2' }} />
                         Quản Lý Tem Rượu Nhập Khẩu
                     </h1>
                     <p style={{ color: '#6B8A99', marginTop: '6px', fontSize: '14px' }}>
@@ -196,7 +196,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
                         padding: '10px 20px', borderRadius: '8px', border: 'none',
-                        background: '#87CBB9', color: '#0D1B25', fontWeight: 600,
+                        background: '#87CBB9', color: '#F8FAFC', fontWeight: 600,
                         cursor: 'pointer', fontSize: '14px',
                     }}
                 >
@@ -207,7 +207,7 @@ export default function StampsClient({ purchases, summary }: Props) {
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
                 {[
-                    { label: 'Tem < 20° ABV', data: summary.under20, color: '#87CBB9' },
+                    { label: 'Tem < 20° ABV', data: summary.under20, color: '#0891B2' },
                     { label: 'Tem ≥ 20° ABV', data: summary.over20, color: '#E8A87C' },
                     { label: 'Tổng Cộng', data: summary.all, color: '#B6C9F0' },
                 ].map(({ label, data, color }) => (
@@ -222,7 +222,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                             </span>
                         </div>
                         {/* Progress bar */}
-                        <div style={{ background: '#0D1B25', borderRadius: '6px', height: '8px', overflow: 'hidden' }}>
+                        <div style={{ background: '#F8FAFC', borderRadius: '6px', height: '8px', overflow: 'hidden' }}>
                             <div style={{
                                 background: pct(data.used, data.total) > 90 ? '#E85D5D' : color,
                                 width: `${pct(data.used, data.total)}%`,
@@ -244,7 +244,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                 <div style={{ ...card, marginBottom: '24px', borderColor: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                         <ShieldAlert size={18} style={{ color: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }} />
-                        <h3 style={{ color: '#E8F1F2', margin: 0, fontSize: '15px', fontWeight: 600 }}>
+                        <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600 }}>
                             Cảnh Báo Tem ({alerts.length})
                         </h3>
                     </div>
@@ -275,8 +275,8 @@ export default function StampsClient({ purchases, summary }: Props) {
 
             {/* Add Stamp Form */}
             {showAddForm && (
-                <div style={{ ...card, marginBottom: '24px', borderColor: '#87CBB9' }}>
-                    <h3 style={{ color: '#E8F1F2', margin: '0 0 20px', fontSize: '16px' }}>
+                <div style={{ ...card, marginBottom: '24px', borderColor: '#0891B2' }}>
+                    <h3 style={{ color: '#0F172A', margin: '0 0 20px', fontSize: '16px' }}>
                         📋 Nhập Lô Tem Từ Cơ Quan Thuế
                     </h3>
                     <form onSubmit={handleAddPurchase} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
@@ -360,7 +360,7 @@ export default function StampsClient({ purchases, summary }: Props) {
 
             {/* Stamp Batches Table */}
             <div style={card}>
-                <h3 style={{ color: '#E8F1F2', margin: '0 0 20px', fontSize: '16px' }}>
+                <h3 style={{ color: '#0F172A', margin: '0 0 20px', fontSize: '16px' }}>
                     📦 Danh Sách Lô Tem Đã Nhập
                 </h3>
 
@@ -372,7 +372,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                 ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
                                 {['Ngày Mua', 'Loại', 'Ký Hiệu', 'Seri', 'Tổng', 'Đã Dùng', 'Còn Lại', 'Trạng Thái', ''].map(h => (
                                     <th key={h} style={{ ...thStyle }}>{h}</th>
                                 ))}
@@ -392,13 +392,13 @@ export default function StampsClient({ purchases, summary }: Props) {
                                         <td style={tdStyle}>
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
-                                                background: p.stampType === 'UNDER_20_ABV' ? 'rgba(135,203,185,0.15)' : 'rgba(232,168,124,0.15)',
+                                                background: p.stampType === 'UNDER_20_ABV' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(232,168,124,0.15)',
                                                 color: p.stampType === 'UNDER_20_ABV' ? '#87CBB9' : '#E8A87C',
                                             }}>
                                                 {p.stampType === 'UNDER_20_ABV' ? '< 20°' : '≥ 20°'}
                                             </span>
                                         </td>
-                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#E8F1F2' }}>{p.symbol}</td>
+                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{p.symbol}</td>
                                         <td className="font-mono" style={{ ...tdStyle, fontSize: '12px' }}>
                                             {p.serialStart} → {p.serialEnd}
                                         </td>
@@ -417,7 +417,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                                     <AlertTriangle size={14} /> Sắp hết
                                                 </span>
                                             ) : (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#87CBB9', fontSize: '12px' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0891B2', fontSize: '12px' }}>
                                                     <CheckCircle size={14} /> Đang dùng
                                                 </span>
                                             )}
@@ -428,8 +428,8 @@ export default function StampsClient({ purchases, summary }: Props) {
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setShowUsageForm(showUsageForm === p.id ? null : p.id) }}
                                                         style={{
-                                                            padding: '5px 12px', borderRadius: '6px', border: '1px solid #2A4355',
-                                                            background: 'transparent', color: '#87CBB9', cursor: 'pointer', fontSize: '12px',
+                                                            padding: '5px 12px', borderRadius: '6px', border: '1px solid #E2E8F0',
+                                                            background: 'transparent', color: '#0891B2', cursor: 'pointer', fontSize: '12px',
                                                         }}
                                                     >
                                                         Ghi Nhận Dán
@@ -466,10 +466,10 @@ export default function StampsClient({ purchases, summary }: Props) {
                     onClick={() => setShowUsageForm(null)}
                 >
                     <div
-                        style={{ ...card, width: '480px', borderColor: '#87CBB9' }}
+                        style={{ ...card, width: '480px', borderColor: '#0891B2' }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <h3 style={{ color: '#E8F1F2', margin: '0 0 20px' }}>🏷️ Ghi Nhận Sử Dụng Tem</h3>
+                        <h3 style={{ color: '#0F172A', margin: '0 0 20px' }}>🏷️ Ghi Nhận Sử Dụng Tem</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div>
                                 <label style={labelStyle}>Số Lượng Dán</label>
@@ -528,7 +528,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                         style={{ ...card, width: '520px', borderColor: '#E85D5D' }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <h3 style={{ color: '#E8F1F2', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 style={{ color: '#0F172A', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Trash2 size={18} style={{ color: '#E85D5D' }} /> Biên Bản Hủy Tem
                         </h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -600,7 +600,7 @@ export default function StampsClient({ purchases, summary }: Props) {
             {destructions.length > 0 && (
                 <div style={{ ...card, marginTop: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h3 style={{ color: '#E8F1F2', margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 style={{ color: '#0F172A', margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Trash2 size={16} style={{ color: '#E85D5D' }} /> Lịch Sử Hủy Tem ({destructions.length})
                         </h3>
                         <button onClick={() => setShowDestroyHistory(!showDestroyHistory)}
@@ -611,7 +611,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                     {showDestroyHistory && (
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     {['Ngày Hủy', 'Lô Tem', 'SL Hủy', 'Lý Do', 'Chứng Kiến'].map(h => (
                                         <th key={h} style={{ ...thStyle }}>{h}</th>
                                     ))}
@@ -621,7 +621,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                 {destructions.map(d => (
                                     <tr key={d.id} style={{ borderBottom: '1px solid #1E3344' }}>
                                         <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
-                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#E8F1F2' }}>{d.purchaseSymbol}</td>
+                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{d.purchaseSymbol}</td>
                                         <td style={{ ...tdStyle, textAlign: 'right', color: '#E85D5D', fontWeight: 600 }}>{d.qtyDestroyed.toLocaleString()}</td>
                                         <td style={{ ...tdStyle, maxWidth: '200px' }}>{d.reason}</td>
                                         <td style={tdStyle}>{d.witnessName}</td>
@@ -641,9 +641,9 @@ const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
     borderRadius: '8px',
-    border: '1px solid #2A4355',
-    background: '#0D1B25',
-    color: '#E8F1F2',
+    border: '1px solid #E2E8F0',
+    background: '#F8FAFC',
+    color: '#0F172A',
     fontSize: '14px',
     outline: 'none',
 }
@@ -653,7 +653,7 @@ const btnPrimary: React.CSSProperties = {
     borderRadius: '8px',
     border: 'none',
     background: '#87CBB9',
-    color: '#0D1B25',
+    color: '#F8FAFC',
     fontWeight: 600,
     cursor: 'pointer',
     fontSize: '14px',
@@ -662,9 +662,9 @@ const btnPrimary: React.CSSProperties = {
 const btnSecondary: React.CSSProperties = {
     padding: '10px 24px',
     borderRadius: '8px',
-    border: '1px solid #2A4355',
+    border: '1px solid #E2E8F0',
     background: 'transparent',
-    color: '#8AAEBB',
+    color: '#475569',
     cursor: 'pointer',
     fontSize: '14px',
 }
@@ -681,6 +681,6 @@ const thStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
     padding: '12px',
-    color: '#8AAEBB',
+    color: '#475569',
     fontSize: '14px',
 }

@@ -265,9 +265,9 @@ export function LiveCameraModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 animate-in zoom-in-95 duration-150">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <div className="flex items-center gap-2.5">
                         <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
                             <Camera size={18} />
@@ -298,7 +298,7 @@ export function LiveCameraModal({
                             />
                             
                             {/* Live Badge */}
-                            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#87CBB9] border border-[#87CBB9]/30">
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#0891B2] border border-[#87CBB9]/30">
                                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                                 LIVE CAMERA
                             </div>
@@ -345,16 +345,16 @@ export function LiveCameraModal({
 
                     {/* Error / Native Camera Trigger Fallback */}
                     {cameraError && !capturedImage && (
-                        <div className="absolute inset-0 bg-[#0D1E2B] p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
+                        <div className="absolute inset-0 bg-slate-50 p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
                             <VideoOff size={36} className="text-[#D4A853]" />
                             <h4 className="text-sm font-bold text-white">
                                 {locale === 'en' ? 'Open Device Camera' : 'Chụp Ảnh Qua Camera Thiết Bị'}
                             </h4>
-                            <p className="text-xs text-[#8AAEBB] max-w-xs">{cameraError}</p>
+                            <p className="text-xs text-slate-600 max-w-xs">{cameraError}</p>
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-5 py-3 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] flex items-center gap-2 shadow-lg"
+                                className="px-5 py-3 text-xs font-bold rounded-xl bg-[#0891B2] text-white flex items-center gap-2 shadow-lg"
                             >
                                 <Camera size={16} /> {locale === 'en' ? 'Open device camera' : 'Mở camera thiết bị'}
                             </button>
@@ -375,22 +375,22 @@ export function LiveCameraModal({
                 </div>
 
                 {/* Live Watermark Notice */}
-                <div className="px-4 py-2 bg-[#142433] flex items-center justify-between text-[10px] text-[#8AAEBB] border-t border-[#2A4355]">
+                <div className="px-4 py-2 bg-white flex items-center justify-between text-[10px] text-slate-600 border-t border-slate-200">
                     <span className="flex items-center gap-1">
-                        <ShieldCheck size={12} className="text-[#87CBB9]" /> 
+                        <ShieldCheck size={12} className="text-[#0891B2]" /> 
                         {locale === 'en' ? 'Field photo at destination' : 'Ảnh chụp tại điểm đến'}
                     </span>
                     <span>{locale === 'en' ? 'Auto-recorded timestamp' : 'Tự động ghi nhận thời gian'}</span>
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-4 bg-[#0D1E2B] flex items-center justify-between gap-3 border-t border-[#2A4355]">
+                <div className="p-4 bg-slate-50 flex items-center justify-between gap-3 border-t border-slate-200">
                     {!capturedImage ? (
                         <>
                             <button
                                 type="button"
                                 onClick={() => { stopActiveStream(); onClose(); }}
-                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-[#8AAEBB] hover:bg-[#1B2E3D]"
+                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-600 hover:bg-white"
                             >
                                 {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
@@ -401,7 +401,7 @@ export function LiveCameraModal({
                                     onClick={takeSnapshot}
                                     disabled={starting}
                                     className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Take Field Photo' : 'Chụp Ảnh Điểm Bán'}
                                 </button>
@@ -409,7 +409,7 @@ export function LiveCameraModal({
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#87CBB9] text-[#0A1926]"
+                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#0891B2] text-white"
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Open Camera Now' : 'Mở Camera Chụp Ngay'}
                                 </button>
@@ -420,14 +420,14 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={retakePhoto}
-                                className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#2A4355] border border-[#2A4355]"
+                                className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-white text-slate-600 hover:bg-[#E2E8F0] border border-slate-200"
                             >
                                 <RefreshCw size={14} className="inline mr-1" /> {locale === 'en' ? 'Retake' : 'Chụp Lại'}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#87CBB9] text-[#0A1926]"
+                                className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#0891B2] text-white"
                             >
                                 <CheckCircle2 size={16} /> {locale === 'en' ? 'Confirm Photo' : 'Xác Nhận Ảnh Này'}
                             </button>

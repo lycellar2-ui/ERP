@@ -139,14 +139,14 @@ export default function POSClient() {
                 {/* Shift Stats Bar */}
                 {shiftSummary && (
                     <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#142433', borderRadius: '8px', border: '1px solid #2A4355' }}>
-                            <BarChart3 size={14} style={{ color: '#87CBB9' }} />
-                            <span style={{ fontSize: '12px', color: '#8AAEBB' }}>Ca hôm nay:</span>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#E8F1F2' }}>{shiftSummary.transactionCount} đơn</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                            <BarChart3 size={14} style={{ color: '#0891B2' }} />
+                            <span style={{ fontSize: '12px', color: '#475569' }}>Ca hôm nay:</span>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{shiftSummary.transactionCount} đơn</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#142433', borderRadius: '8px', border: '1px solid #2A4355' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                             <Receipt size={14} style={{ color: '#5BA88A' }} />
-                            <span style={{ fontSize: '12px', color: '#8AAEBB' }}>Doanh thu:</span>
+                            <span style={{ fontSize: '12px', color: '#475569' }}>Doanh thu:</span>
                             <span style={{ fontSize: '13px', fontWeight: 700, color: '#5BA88A' }}>{formatVND(shiftSummary.totalRevenue)}</span>
                         </div>
                         <Link href="/dashboard/pos/loyalty"
@@ -168,7 +168,7 @@ export default function POSClient() {
                             onKeyDown={e => { if (e.key === 'Enter') handleBarcodeScan(barcodeInput) }}
                             style={{
                                 width: '100%', padding: '8px 10px 8px 34px', borderRadius: '8px',
-                                background: '#142433', border: `1px solid ${barcodeError ? '#8B1A2E' : '#2A4355'}`, color: '#E8F1F2',
+                                background: '#FFFFFF', border: `1px solid ${barcodeError ? '#8B1A2E' : '#E2E8F0'}`, color: '#0F172A',
                                 fontSize: '13px', outline: 'none', fontFamily: 'var(--font-sans)',
                             }}
                         />
@@ -188,13 +188,13 @@ export default function POSClient() {
                 {/* Search & Filters */}
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                     <div style={{ flex: 1, position: 'relative' }}>
-                        <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: '#4A6A7A' }} />
+                        <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: '#64748B' }} />
                         <input
                             type="text" placeholder="Tìm sản phẩm hoặc mã SKU..."
                             value={search} onChange={e => setSearch(e.target.value)}
                             style={{
                                 width: '100%', padding: '8px 10px 8px 34px', borderRadius: '8px',
-                                background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2',
+                                background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A',
                                 fontSize: '13px', outline: 'none',
                             }}
                         />
@@ -209,8 +209,8 @@ export default function POSClient() {
                             padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
                             border: '1px solid', cursor: 'pointer',
                             ...(activeCategory === 'ALL'
-                                ? { background: '#87CBB9', color: '#0B1A2B', borderColor: '#87CBB9' }
-                                : { background: 'transparent', color: '#8AAEBB', borderColor: '#2A4355' }),
+                                ? { background: '#87CBB9', color: '#0B1A2B', borderColor: '#0891B2' }
+                                : { background: 'transparent', color: '#475569', borderColor: '#E2E8F0' }),
                         }}
                     >Tất cả</button>
                     {categories.map(cat => (
@@ -220,8 +220,8 @@ export default function POSClient() {
                                 padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
                                 border: '1px solid', cursor: 'pointer',
                                 ...(activeCategory === cat.value
-                                    ? { background: '#87CBB9', color: '#0B1A2B', borderColor: '#87CBB9' }
-                                    : { background: 'transparent', color: '#8AAEBB', borderColor: '#2A4355' }),
+                                    ? { background: '#87CBB9', color: '#0B1A2B', borderColor: '#0891B2' }
+                                    : { background: 'transparent', color: '#475569', borderColor: '#E2E8F0' }),
                             }}
                         >{cat.label} ({cat.count})</button>
                     ))}
@@ -239,25 +239,25 @@ export default function POSClient() {
                             disabled={p.qtyAvailable <= 0}
                             style={{
                                 padding: '14px 12px', borderRadius: '10px', cursor: p.qtyAvailable > 0 ? 'pointer' : 'not-allowed',
-                                background: '#142433', border: '1px solid #2A4355', textAlign: 'left',
+                                background: '#FFFFFF', border: '1px solid #E2E8F0', textAlign: 'left',
                                 opacity: p.qtyAvailable <= 0 ? 0.4 : 1,
                                 transition: 'border-color 0.15s',
                             }}
-                            onMouseEnter={e => { if (p.qtyAvailable > 0) e.currentTarget.style.borderColor = '#87CBB9' }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#2A4355' }}
+                            onMouseEnter={e => { if (p.qtyAvailable > 0) e.currentTarget.style.borderColor = '#0891B2' }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E8F0' }}
                         >
                             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                                <Wine size={26} style={{ color: '#87CBB9' }} />
+                                <Wine size={26} style={{ color: '#0891B2' }} />
                             </div>
-                            <p style={{ fontSize: '11px', color: '#4A6A7A', marginBottom: '2px' }}>{p.skuCode}</p>
-                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#E8F1F2', lineHeight: '1.3', minHeight: '32px' }}>
+                            <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '2px' }}>{p.skuCode}</p>
+                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', lineHeight: '1.3', minHeight: '32px' }}>
                                 {p.productName.length > 30 ? p.productName.slice(0, 30) + '…' : p.productName}
                             </p>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#87CBB9' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0891B2' }}>
                                     {p.unitPrice > 0 ? formatVND(p.unitPrice) : '—'}
                                 </span>
-                                <span style={{ fontSize: '11px', color: p.qtyAvailable <= 5 ? '#D4A853' : '#4A6A7A' }}>
+                                <span style={{ fontSize: '11px', color: p.qtyAvailable <= 5 ? '#D4A853' : '#64748B' }}>
                                     SL: {p.qtyAvailable}
                                 </span>
                             </div>
@@ -268,14 +268,14 @@ export default function POSClient() {
 
             {/* RIGHT: Cart */}
             <div style={{
-                width: '360px', background: '#101E2E', borderLeft: '1px solid #2A4355',
+                width: '360px', background: '#101E2E', borderLeft: '1px solid #E2E8F0',
                 display: 'flex', flexDirection: 'column',
             }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #2A4355' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <ShoppingCart size={18} style={{ color: '#87CBB9' }} />
-                        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#E8F1F2', margin: 0 }}>
-                            Giỏ hàng <span style={{ color: '#4A6A7A', fontWeight: 400 }}>({cart.length})</span>
+                        <ShoppingCart size={18} style={{ color: '#0891B2' }} />
+                        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                            Giỏ hàng <span style={{ color: '#64748B', fontWeight: 400 }}>({cart.length})</span>
                         </h2>
                     </div>
                 </div>
@@ -283,19 +283,19 @@ export default function POSClient() {
                 {/* Cart Items */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
                     {cart.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: '#4A6A7A', marginTop: '40px', fontSize: '13px' }}>
+                        <p style={{ textAlign: 'center', color: '#64748B', marginTop: '40px', fontSize: '13px' }}>
                             Chọn sản phẩm để thêm vào giỏ
                         </p>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {cart.map(item => (
                                 <div key={item.productId} style={{
-                                    padding: '10px', borderRadius: '8px', background: '#142433', border: '1px solid #2A4355',
+                                    padding: '10px', borderRadius: '8px', background: '#FFFFFF', border: '1px solid #E2E8F0',
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                                         <div>
-                                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#E8F1F2', margin: 0 }}>{item.productName.slice(0, 25)}</p>
-                                            <p style={{ fontSize: '11px', color: '#4A6A7A', margin: 0 }}>{item.skuCode}</p>
+                                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', margin: 0 }}>{item.productName.slice(0, 25)}</p>
+                                            <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>{item.skuCode}</p>
                                         </div>
                                         <button onClick={() => removeFromCart(item.productId)}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
@@ -305,16 +305,16 @@ export default function POSClient() {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <button onClick={() => updateQty(item.productId, -1)}
-                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #2A4355', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Minus size={12} style={{ color: '#8AAEBB' }} />
+                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Minus size={12} style={{ color: '#475569' }} />
                                             </button>
-                                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#E8F1F2', minWidth: '24px', textAlign: 'center' }}>{item.qty}</span>
+                                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', minWidth: '24px', textAlign: 'center' }}>{item.qty}</span>
                                             <button onClick={() => updateQty(item.productId, 1)}
-                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #2A4355', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Plus size={12} style={{ color: '#87CBB9' }} />
+                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Plus size={12} style={{ color: '#0891B2' }} />
                                             </button>
                                         </div>
-                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#87CBB9' }}>
+                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#0891B2' }}>
                                             {formatVND(item.qty * item.unitPrice)}
                                         </span>
                                     </div>
@@ -325,10 +325,10 @@ export default function POSClient() {
                 </div>
 
                 {/* Cart Footer */}
-                <div style={{ borderTop: '1px solid #2A4355', padding: '16px 20px' }}>
+                <div style={{ borderTop: '1px solid #E2E8F0', padding: '16px 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span style={{ fontSize: '14px', color: '#8AAEBB' }}>Tổng cộng</span>
-                        <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#E8F1F2' }}>
+                        <span style={{ fontSize: '14px', color: '#475569' }}>Tổng cộng</span>
+                        <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>
                             {formatVND(cartTotal)}
                         </span>
                     </div>
@@ -339,8 +339,8 @@ export default function POSClient() {
                             disabled={cart.length === 0}
                             style={{
                                 width: '100%', padding: '12px', borderRadius: '8px', border: 'none',
-                                background: cart.length > 0 ? '#5BA88A' : '#2A4355',
-                                color: cart.length > 0 ? '#fff' : '#4A6A7A',
+                                background: cart.length > 0 ? '#5BA88A' : '#E2E8F0',
+                                color: cart.length > 0 ? '#fff' : '#64748B',
                                 fontSize: '14px', fontWeight: 700, cursor: cart.length > 0 ? 'pointer' : 'not-allowed',
                             }}
                         >
@@ -364,7 +364,7 @@ export default function POSClient() {
                                             cursor: 'pointer', fontSize: '10px', fontWeight: 600,
                                             ...(paymentMethod === method
                                                 ? { background: 'rgba(91,168,138,0.15)', borderColor: '#5BA88A', color: '#5BA88A' }
-                                                : { background: 'transparent', borderColor: '#2A4355', color: '#8AAEBB' }),
+                                                : { background: 'transparent', borderColor: '#E2E8F0', color: '#475569' }),
                                         }}
                                     >
                                         <Icon size={16} />
@@ -379,7 +379,7 @@ export default function POSClient() {
                                     value={cashReceived} onChange={e => setCashReceived(e.target.value)}
                                     style={{
                                         width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px',
-                                        background: '#0B1A2B', border: '1px solid #2A4355', color: '#E8F1F2',
+                                        background: '#0B1A2B', border: '1px solid #E2E8F0', color: '#0F172A',
                                         fontSize: '14px', fontWeight: 600, outline: 'none',
                                     }}
                                 />
@@ -387,7 +387,7 @@ export default function POSClient() {
 
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => setShowPayment(false)}
-                                    style={{ flex: 1, padding: '10px', borderRadius: '6px', background: '#2A4355', border: 'none', color: '#8AAEBB', cursor: 'pointer', fontWeight: 600 }}>
+                                    style={{ flex: 1, padding: '10px', borderRadius: '6px', background: '#E2E8F0', border: 'none', color: '#475569', cursor: 'pointer', fontWeight: 600 }}>
                                     Huỷ
                                 </button>
                                 <button onClick={handleCheckout} disabled={loading}
@@ -410,8 +410,8 @@ export default function POSClient() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
                     }}>
                         <div style={{
-                            background: '#142433', borderRadius: '12px', padding: '32px',
-                            width: '360px', border: '1px solid #2A4355', textAlign: 'center',
+                            background: '#FFFFFF', borderRadius: '12px', padding: '32px',
+                            width: '360px', border: '1px solid #E2E8F0', textAlign: 'center',
                         }}>
                             <div style={{
                                 width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 16px',
@@ -419,16 +419,16 @@ export default function POSClient() {
                             }}>
                                 <Check size={28} style={{ color: '#5BA88A' }} />
                             </div>
-                            <h3 style={{ color: '#E8F1F2', margin: '0 0 8px', fontSize: '18px' }}>Thanh toán thành công!</h3>
-                            <p style={{ color: '#4A6A7A', fontSize: '13px', margin: '0 0 16px' }}>Mã đơn: {lastSale.soNo}</p>
+                            <h3 style={{ color: '#0F172A', margin: '0 0 8px', fontSize: '18px' }}>Thanh toán thành công!</h3>
+                            <p style={{ color: '#64748B', fontSize: '13px', margin: '0 0 16px' }}>Mã đơn: {lastSale.soNo}</p>
                             <div style={{ padding: '12px', background: '#0B1A2B', borderRadius: '8px', marginBottom: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ color: '#8AAEBB', fontSize: '13px' }}>Tổng tiền</span>
-                                    <span style={{ color: '#E8F1F2', fontWeight: 700, fontSize: '16px' }}>{formatVND(lastSale.totalAmount)}</span>
+                                    <span style={{ color: '#475569', fontSize: '13px' }}>Tổng tiền</span>
+                                    <span style={{ color: '#0F172A', fontWeight: 700, fontSize: '16px' }}>{formatVND(lastSale.totalAmount)}</span>
                                 </div>
                                 {lastSale.change !== undefined && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ color: '#8AAEBB', fontSize: '13px' }}>Tiền thối</span>
+                                        <span style={{ color: '#475569', fontSize: '13px' }}>Tiền thối</span>
                                         <span style={{ color: '#D4A853', fontWeight: 700, fontSize: '16px' }}>{formatVND(lastSale.change)}</span>
                                     </div>
                                 )}
@@ -442,7 +442,7 @@ export default function POSClient() {
                             </button>
                             <button onClick={handleVATInvoice} disabled={vatLoading}
                                 style={{
-                                    width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #2A4355',
+                                    width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #E2E8F0',
                                     background: 'transparent', color: '#D4A853', fontWeight: 700, cursor: 'pointer', fontSize: '13px',
                                     marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                                 }}

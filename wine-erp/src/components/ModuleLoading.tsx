@@ -4,10 +4,10 @@
  */
 
 const S = {
-    bg: '#1B2E3D',
-    dim: '#142433',
-    border: '#2A4355',
-    dark: '#0A1926',
+    bg: '#FFFFFF',
+    dim: '#FFFFFF',
+    border: '#E2E8F0',
+    dark: '#F8FAFC',
 }
 
 function SkeletonBar({ w, h = 'h-3' }: { w: string; h?: string }) {

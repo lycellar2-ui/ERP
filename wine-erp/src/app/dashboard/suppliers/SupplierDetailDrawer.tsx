@@ -17,7 +17,7 @@ import { formatVND } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
-    DRAFT: { color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' },
+    DRAFT: { color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
     CONFIRMED: { color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
     SHIPPED: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     RECEIVED: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
@@ -26,7 +26,7 @@ const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
 
 const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
     A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    B: { color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    B: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     C: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
     F: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
@@ -41,23 +41,23 @@ type Tab = 'overview' | 'orders' | 'finance' | 'contracts' | 'shipments' | 'docs
 function InfoRow({ label, value, accent }: { label: string; value: React.ReactNode; accent?: string }) {
     return (
         <div className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{label}</span>
-            <span className="text-sm font-semibold" style={{ color: accent ?? '#E8F1F2' }}>{value}</span>
+            <span className="text-xs uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</span>
+            <span className="text-sm font-semibold" style={{ color: accent ?? '#0F172A' }}>{value}</span>
         </div>
     )
 }
 
 function MiniCard({ label, value, accent }: { label: string; value: string | number; accent: string }) {
     return (
-        <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>{label}</p>
+        <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>{label}</p>
             <p className="text-lg font-bold mt-0.5 font-mono" style={{ color: accent }}>{value}</p>
         </div>
     )
 }
 
 function StatusBadge({ status }: { status: string }) {
-    const cfg = PO_STATUS_COLOR[status] ?? { color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' }
+    const cfg = PO_STATUS_COLOR[status] ?? { color: '#64748B', bg: 'rgba(74,106,122,0.15)' }
     return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ color: cfg.color, background: cfg.bg }}>{status}</span>
 }
 
@@ -252,11 +252,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                 onClick={onClose}
             />
             <div
-                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
                 style={{ width: 'min(720px, 97vw)' }}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
                             <Building2 size={20} />
@@ -281,8 +281,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                         <button key={t.key} onClick={() => loadTab(t.key)}
                             className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-t-lg transition-all whitespace-nowrap"
                             style={{
-                                background: tab === t.key ? '#1B2E3D' : 'transparent',
-                                color: tab === t.key ? '#87CBB9' : '#4A6A7A',
+                                background: tab === t.key ? '#FFFFFF' : 'transparent',
+                                color: tab === t.key ? '#87CBB9' : '#64748B',
                                 borderBottom: tab === t.key ? '2px solid #87CBB9' : '2px solid transparent',
                             }}>
                             <t.icon size={12} /> {t.label}
@@ -293,9 +293,9 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                     {loading ? (
-                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                     ) : !detail ? (
-                        <div className="text-center py-20 text-sm" style={{ color: '#4A6A7A' }}>Không tìm thấy NCC</div>
+                        <div className="text-center py-20 text-sm" style={{ color: '#64748B' }}>Không tìm thấy NCC</div>
                     ) : (
                         <>
                             {/* ── OVERVIEW ── */}
@@ -303,17 +303,17 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                 <div className="space-y-5">
                                     {/* Scorecard badge */}
                                     {scorecard && (
-                                        <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold"
                                                 style={{ background: GRADE_COLOR[scorecard.grade]?.bg, color: GRADE_COLOR[scorecard.grade]?.color }}>
                                                 {scorecard.grade}
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>Supplier Scorecard</p>
+                                                <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>Supplier Scorecard</p>
                                                 <div className="flex gap-4 mt-1">
-                                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>Điểm: <b style={{ color: '#E8F1F2' }}>{scorecard.overallScore}/100</b></span>
-                                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>Đúng hạn: <b style={{ color: '#5BA88A' }}>{scorecard.onTimeRate}%</b></span>
-                                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>Chất lượng: <b style={{ color: '#87CBB9' }}>{scorecard.qualityScore}/100</b></span>
+                                                    <span className="text-xs" style={{ color: '#475569' }}>Điểm: <b style={{ color: '#0F172A' }}>{scorecard.overallScore}/100</b></span>
+                                                    <span className="text-xs" style={{ color: '#475569' }}>Đúng hạn: <b style={{ color: '#5BA88A' }}>{scorecard.onTimeRate}%</b></span>
+                                                    <span className="text-xs" style={{ color: '#475569' }}>Chất lượng: <b style={{ color: '#0891B2' }}>{scorecard.qualityScore}/100</b></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -330,10 +330,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {/* Info */}
                                     <div className="grid grid-cols-2 gap-5">
                                         <div className="space-y-0">
-                                            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#87CBB9' }}>── Thương Mại</p>
+                                            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#0891B2' }}>── Thương Mại</p>
                                             <InfoRow label="Loại" value={detail.supplier.type} />
                                             <InfoRow label="Quốc gia" value={detail.supplier.country} />
-                                            <InfoRow label="Hiệp định" value={detail.supplier.tradeAgreement ?? 'MFN'} accent={detail.supplier.tradeAgreement ? '#5BA88A' : '#4A6A7A'} />
+                                            <InfoRow label="Hiệp định" value={detail.supplier.tradeAgreement ?? 'MFN'} accent={detail.supplier.tradeAgreement ? '#5BA88A' : '#64748B'} />
                                             <InfoRow label="C/O Form" value={detail.supplier.coFormType ?? '—'} />
                                             <InfoRow label="Incoterms" value={detail.supplier.incoterms ?? '—'} />
                                             <InfoRow label="Thanh toán" value={detail.supplier.paymentTerm ?? '—'} />
@@ -345,41 +345,41 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             {/* Contacts */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Liên Hệ</p>
+                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Liên Hệ</p>
                                                     <button onClick={() => setShowContactForm(!showContactForm)}
                                                         className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all"
-                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                                         <Plus size={10} /> Thêm
                                                     </button>
                                                 </div>
 
                                                 {/* Add contact inline form */}
                                                 {showContactForm && (
-                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>Thêm Liên Hệ Phụ</p>
+                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#0891B2' }}>Thêm Liên Hệ Phụ</p>
                                                         <div>
                                                             <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
-                                                                placeholder="Tên người liên hệ *" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Tên người liên hệ *" className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <input type="text" value={contactTitle} onChange={e => setContactTitle(e.target.value)}
-                                                                placeholder="Chức vụ" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Chức vụ" className="px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                             <input type="text" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
-                                                                placeholder="Số điện thoại" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Số điện thoại" className="px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
                                                         <div>
                                                             <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}
-                                                                placeholder="Email" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Email" className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
                                                         <label className="flex items-center gap-2 cursor-pointer select-none">
                                                             <input type="checkbox" checked={contactIsPrimary} onChange={e => setContactIsPrimary(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
-                                                            <span className="text-[10px]" style={{ color: '#8AAEBB' }}>Đặt làm liên hệ chính</span>
+                                                            <span className="text-[10px]" style={{ color: '#475569' }}>Đặt làm liên hệ chính</span>
                                                         </label>
                                                         <div className="flex justify-end gap-2 pt-1">
-                                                            <button onClick={() => setShowContactForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                                            <button onClick={() => setShowContactForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
                                                             <button onClick={handleAddContact} disabled={!contactName.trim() || savingContact}
                                                                 className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                                                 {savingContact ? 'Đang tạo...' : 'Lưu'}
                                                             </button>
                                                         </div>
@@ -387,50 +387,50 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 )}
 
                                                 {detail.contacts.length > 0 ? detail.contacts.map(c => (
-                                                    <div key={c.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <div key={c.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</span>
+                                                                <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{c.name}</span>
                                                                 {c.isPrimary && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
                                                             </div>
                                                             {!c.isPrimary && (
                                                                 <button onClick={() => handleDeleteContact(c.id, c.name)}
                                                                     className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
-                                                                    style={{ color: '#4A6A7A' }}
+                                                                    style={{ color: '#64748B' }}
                                                                     onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#4A6A7A'; e.currentTarget.style.background = '' }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
                                                                     title="Xóa liên hệ">
                                                                     <Trash2 size={13} />
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        {c.title && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{c.title}</p>}
-                                                        {c.phone && <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#8AAEBB' }}><Phone size={10} /> {c.phone}</p>}
-                                                        {c.email && <p className="text-xs flex items-center gap-1" style={{ color: '#8AAEBB' }}><Mail size={10} /> {c.email}</p>}
+                                                        {c.title && <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{c.title}</p>}
+                                                        {c.phone && <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#475569' }}><Phone size={10} /> {c.phone}</p>}
+                                                        {c.email && <p className="text-xs flex items-center gap-1" style={{ color: '#475569' }}><Mail size={10} /> {c.email}</p>}
                                                     </div>
-                                                )) : <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có liên hệ</p>}
+                                                )) : <p className="text-xs" style={{ color: '#64748B' }}>Chưa có liên hệ</p>}
                                             </div>
                                             {/* Addresses */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Địa Chỉ</p>
+                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Địa Chỉ</p>
                                                     <button onClick={() => setShowAddressForm(!showAddressForm)}
                                                         className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all"
-                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                                         <Plus size={10} /> Thêm
                                                     </button>
                                                 </div>
 
                                                 {/* Add address inline form */}
                                                 {showAddressForm && (
-                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>Thêm Địa Chỉ Mới</p>
+                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#0891B2' }}>Thêm Địa Chỉ Mới</p>
                                                         
                                                         {/* Label Select Dropdown */}
                                                         <div>
-                                                            <label className="block text-xs uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Loại địa chỉ</label>
+                                                            <label className="block text-xs uppercase tracking-wider font-bold mb-1" style={{ color: '#64748B' }}>Loại địa chỉ</label>
                                                             <select value={addressLabel} onChange={e => setAddressLabel(e.target.value)}
-                                                                className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none cursor-pointer">
+                                                                className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none cursor-pointer">
                                                                 <option value="Warehouse">Warehouse (Kho hàng)</option>
                                                                 <option value="Pickup Point">Pickup Point (Điểm nhận hàng)</option>
                                                                 <option value="Office">Office (Văn phòng)</option>
@@ -442,35 +442,35 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         {/* Address Input */}
                                                         <div>
                                                             <input type="text" value={addressVal} onChange={e => setAddressVal(e.target.value)}
-                                                                placeholder="Địa chỉ chi tiết *" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Địa chỉ chi tiết *" className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
 
                                                         {/* City & Region */}
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <input type="text" value={addressCity} onChange={e => setAddressCity(e.target.value)}
-                                                                placeholder="Thành phố" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Thành phố" className="px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                             <input type="text" value={addressRegion} onChange={e => setAddressRegion(e.target.value)}
-                                                                placeholder="Bang/Vùng" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder="Bang/Vùng" className="px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
 
                                                         {/* Country */}
                                                         <div>
                                                             <input type="text" value={addressCountry} onChange={e => setAddressCountry(e.target.value)}
-                                                                placeholder={`Mã quốc gia (Ví dụ: ${detail.supplier.country})`} className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                                placeholder={`Mã quốc gia (Ví dụ: ${detail.supplier.country})`} className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
 
                                                         {/* Default checkbox */}
                                                         <label className="flex items-center gap-2 cursor-pointer select-none">
                                                             <input type="checkbox" checked={addressIsDefault} onChange={e => setAddressIsDefault(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
-                                                            <span className="text-[10px]" style={{ color: '#8AAEBB' }}>Đặt làm địa chỉ mặc định</span>
+                                                            <span className="text-[10px]" style={{ color: '#475569' }}>Đặt làm địa chỉ mặc định</span>
                                                         </label>
 
                                                         {/* Buttons */}
                                                         <div className="flex justify-end gap-2 pt-1">
-                                                            <button onClick={() => setShowAddressForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                                            <button onClick={() => setShowAddressForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
                                                             <button onClick={handleAddAddress} disabled={!addressVal.trim() || savingAddress}
                                                                 className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                                                 {savingAddress ? 'Đang tạo...' : 'Lưu'}
                                                             </button>
                                                         </div>
@@ -478,27 +478,27 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 )}
 
                                                 {detail.addresses.length > 0 ? detail.addresses.map(a => (
-                                                    <div key={a.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <div key={a.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{a.label}</span>
+                                                                <span className="text-xs font-bold" style={{ color: '#475569' }}>{a.label}</span>
                                                                 {a.isDefault && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Mặc định</span>}
                                                             </div>
                                                             {!a.isDefault && (
                                                                 <button onClick={() => handleDeleteAddress(a.id, a.label)}
                                                                     className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
-                                                                    style={{ color: '#4A6A7A' }}
+                                                                    style={{ color: '#64748B' }}
                                                                     onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#4A6A7A'; e.currentTarget.style.background = '' }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
                                                                     title="Xóa địa chỉ">
                                                                     <Trash2 size={13} />
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#E8F1F2' }}><MapPin size={10} /> {a.address}</p>
-                                                        {(a.city || a.region || a.country) && <p className="text-xs" style={{ color: '#4A6A7A' }}>{[a.city, a.region, a.country].filter(Boolean).join(', ')}</p>}
+                                                        <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#0F172A' }}><MapPin size={10} /> {a.address}</p>
+                                                        {(a.city || a.region || a.country) && <p className="text-xs" style={{ color: '#64748B' }}>{[a.city, a.region, a.country].filter(Boolean).join(', ')}</p>}
                                                     </div>
-                                                )) : <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có địa chỉ</p>}
+                                                )) : <p className="text-xs" style={{ color: '#64748B' }}>Chưa có địa chỉ</p>}
                                             </div>
                                             {detail.supplier.website && (
                                                 <a href={detail.supplier.website} target="_blank" rel="noopener noreferrer"
@@ -511,24 +511,24 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {(detail.supplier.pickupInfo || detail.supplier.bankAccountInfo) && (
                                         <div className="grid grid-cols-2 gap-4">
                                             {detail.supplier.pickupInfo && (
-                                                <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#87CBB9' }}>📍 Thông tin Pickup</p>
-                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#8AAEBB' }}>{detail.supplier.pickupInfo}</p>
+                                                <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#0891B2' }}>📍 Thông tin Pickup</p>
+                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#475569' }}>{detail.supplier.pickupInfo}</p>
                                                 </div>
                                             )}
                                             {detail.supplier.bankAccountInfo && (
-                                                <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#87CBB9' }}>💳 Tài khoản ngân hàng</p>
-                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#8AAEBB' }}>{detail.supplier.bankAccountInfo}</p>
+                                                <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#0891B2' }}>💳 Tài khoản ngân hàng</p>
+                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#475569' }}>{detail.supplier.bankAccountInfo}</p>
                                                 </div>
                                             )}
                                         </div>
                                     )}
 
                                     {detail.supplier.notes && (
-                                        <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Ghi chú</p>
-                                            <p className="text-xs whitespace-pre-wrap" style={{ color: '#8AAEBB' }}>{detail.supplier.notes}</p>
+                                        <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                            <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#64748B' }}>Ghi chú</p>
+                                            <p className="text-xs whitespace-pre-wrap" style={{ color: '#475569' }}>{detail.supplier.notes}</p>
                                         </div>
                                     )}
                                 </div>
@@ -539,18 +539,18 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                 <div className="space-y-5">
                                     {/* PO list */}
                                     <div>
-                                        <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#87CBB9' }}>── Lịch Sử Đơn Hàng (PO)</p>
-                                        {!pos ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
-                                            pos.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có PO</p> : (
+                                        <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#0891B2' }}>── Lịch Sử Đơn Hàng (PO)</p>
+                                        {!pos ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
+                                            pos.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có PO</p> : (
                                                 <div className="space-y-2">
                                                     {pos.map(po => (
-                                                        <div key={po.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                        <div key={po.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                             <div>
-                                                                <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{po.poNo}</span>
-                                                                <span className="text-xs ml-3" style={{ color: '#4A6A7A' }}>{fmtDate(po.createdAt)}</span>
+                                                                <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{po.poNo}</span>
+                                                                <span className="text-xs ml-3" style={{ color: '#64748B' }}>{fmtDate(po.createdAt)}</span>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>
+                                                                <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>
                                                                     {fmtCurrency(po.totalValue, po.currency)}
                                                                 </span>
                                                                 <StatusBadge status={po.status} />
@@ -564,18 +564,18 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {/* Products */}
                                     {products && products.length > 0 && (
                                         <div>
-                                            <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#87CBB9' }}>── Danh Mục Sản Phẩm ({products.length})</p>
+                                            <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#0891B2' }}>── Danh Mục Sản Phẩm ({products.length})</p>
                                             <div className="space-y-1.5">
                                                 {products.slice(0, 15).map(p => (
-                                                    <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#142433' }}>
+                                                    <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF' }}>
                                                         <div>
-                                                            <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{p.productName}</span>
-                                                            <span className="text-[10px] ml-2" style={{ color: '#4A6A7A' }}>{p.skuCode}</span>
+                                                            <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{p.productName}</span>
+                                                            <span className="text-[10px] ml-2" style={{ color: '#64748B' }}>{p.skuCode}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 text-[10px]">
-                                                            <span style={{ color: '#8AAEBB' }}>{p.totalQty.toLocaleString()} chai</span>
-                                                            <span style={{ color: '#87CBB9' }}>~${p.avgUnitPrice}</span>
-                                                            <span style={{ color: '#4A6A7A' }}>{p.orderCount} PO</span>
+                                                            <span style={{ color: '#475569' }}>{p.totalQty.toLocaleString()} chai</span>
+                                                            <span style={{ color: '#0891B2' }}>~${p.avgUnitPrice}</span>
+                                                            <span style={{ color: '#64748B' }}>{p.orderCount} PO</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -586,16 +586,16 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {/* Pricing trend */}
                                     {pricing && pricing.length > 0 && (
                                         <div>
-                                            <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#87CBB9' }}>
+                                            <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#0891B2' }}>
                                                 <TrendingUp size={11} className="inline mr-1" /> Lịch Sử Giá
                                             </p>
                                             <div className="space-y-1">
                                                 {pricing.slice(0, 20).map((p, i) => (
-                                                    <div key={i} className="flex items-center justify-between text-xs py-1.5 px-3 rounded" style={{ background: i % 2 === 0 ? '#142433' : 'transparent' }}>
-                                                        <span style={{ color: '#4A6A7A' }}>{fmtDate(p.date)}</span>
-                                                        <span style={{ color: '#8AAEBB' }}>{p.productName.slice(0, 30)}</span>
-                                                        <span style={{ color: '#87CBB9' }}>{p.currency} {p.unitPrice}</span>
-                                                        <span style={{ color: '#4A6A7A' }}>×{p.qty}</span>
+                                                    <div key={i} className="flex items-center justify-between text-xs py-1.5 px-3 rounded" style={{ background: i % 2 === 0 ? '#FFFFFF' : 'transparent' }}>
+                                                        <span style={{ color: '#64748B' }}>{fmtDate(p.date)}</span>
+                                                        <span style={{ color: '#475569' }}>{p.productName.slice(0, 30)}</span>
+                                                        <span style={{ color: '#0891B2' }}>{p.currency} {p.unitPrice}</span>
+                                                        <span style={{ color: '#64748B' }}>×{p.qty}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -612,19 +612,19 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount, detail.supplier.defaultCurrency)} accent="#87CBB9" />
                                         <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
                                     </div>
-                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Danh Sách AP Invoice</p>
-                                    {!invoices ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
-                                        invoices.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có hoá đơn</p> : (
+                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Danh Sách AP Invoice</p>
+                                    {!invoices ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
+                                        invoices.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có hoá đơn</p> : (
                                             <div className="space-y-2">
                                                 {invoices.map(inv => (
-                                                    <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <div>
-                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{inv.invoiceNo}</span>
-                                                            <span className="text-xs ml-2" style={{ color: '#4A6A7A' }}>PO: {inv.poNo}</span>
+                                                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{inv.invoiceNo}</span>
+                                                            <span className="text-xs ml-2" style={{ color: '#64748B' }}>PO: {inv.poNo}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>Due: {fmtDate(inv.dueDate)}</span>
-                                                            <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>
+                                                            <span className="text-xs" style={{ color: '#64748B' }}>Due: {fmtDate(inv.dueDate)}</span>
+                                                            <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>
                                                                 {fmtCurrency(inv.amount, inv.currency)}
                                                             </span>
                                                             <StatusBadge status={inv.status} />
@@ -639,18 +639,18 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {/* ── CONTRACTS ── */}
                             {tab === 'contracts' && (
                                 <div className="space-y-3">
-                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Hợp Đồng ({detail.contractCount})</p>
-                                    {!contracts ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
-                                        contracts.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có hợp đồng</p> : (
+                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Hợp Đồng ({detail.contractCount})</p>
+                                    {!contracts ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
+                                        contracts.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có hợp đồng</p> : (
                                             contracts.map(c => (
-                                                <div key={c.id} className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                <div key={c.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{c.contractNo}</span>
+                                                        <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{c.contractNo}</span>
                                                         <StatusBadge status={c.status} />
                                                     </div>
-                                                    <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
                                                         <span>Loại: <b>{c.type}</b></span>
-                                                        <span>Giá trị: <b style={{ color: '#87CBB9' }}>{fmtCurrency(c.value, c.currency)}</b></span>
+                                                        <span>Giá trị: <b style={{ color: '#0891B2' }}>{fmtCurrency(c.value, c.currency)}</b></span>
                                                         <span>{fmtDate(c.startDate)} → {fmtDate(c.endDate)}</span>
                                                     </div>
                                                 </div>
@@ -662,22 +662,22 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {/* ── SHIPMENTS ── */}
                             {tab === 'shipments' && (
                                 <div className="space-y-3">
-                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Lô Hàng ({detail.shipmentCount})</p>
-                                    {!shipments ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
-                                        shipments.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có lô hàng</p> : (
+                                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Lô Hàng ({detail.shipmentCount})</p>
+                                    {!shipments ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
+                                        shipments.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có lô hàng</p> : (
                                             shipments.map(s => (
-                                                <div key={s.id} className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                <div key={s.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div>
-                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>🚢 {s.billOfLading}</span>
-                                                            <span className="text-xs ml-2" style={{ color: '#4A6A7A' }}>PO: {s.poNo}</span>
+                                                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>🚢 {s.billOfLading}</span>
+                                                            <span className="text-xs ml-2" style={{ color: '#64748B' }}>PO: {s.poNo}</span>
                                                         </div>
                                                         <StatusBadge status={s.status} />
                                                     </div>
-                                                    <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
                                                         {s.vesselName && <span>Tàu: {s.vesselName}</span>}
                                                         <span>ETA: {fmtDate(s.eta)}</span>
-                                                        <span>CIF: <b style={{ color: '#87CBB9' }}>${s.cifAmount.toLocaleString()}</b></span>
+                                                        <span>CIF: <b style={{ color: '#0891B2' }}>${s.cifAmount.toLocaleString()}</b></span>
                                                     </div>
                                                 </div>
                                             ))
@@ -689,39 +689,39 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {tab === 'docs' && (
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Giấy Tờ Pháp Lý</p>
-                                        <a href={`/dashboard/contracts`} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Giấy Tờ Pháp Lý</p>
+                                        <a href={`/dashboard/contracts`} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
                                             Quản lý →
                                         </a>
                                     </div>
-                                    {!regDocs ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
+                                    {!regDocs ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
                                         regDocs.length === 0 ? (
                                             <div className="text-center py-10">
-                                                <Shield size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
-                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có giấy tờ pháp lý nào gắn với NCC này</p>
-                                                <p className="text-[10px] mt-1" style={{ color: '#4A6A7A' }}>Vào Trung tâm Pháp lý → Thêm Giấy Tờ → Phạm vi: Nhà cung cấp</p>
+                                                <Shield size={28} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
+                                                <p className="text-xs" style={{ color: '#64748B' }}>Chưa có giấy tờ pháp lý nào gắn với NCC này</p>
+                                                <p className="text-[10px] mt-1" style={{ color: '#64748B' }}>Vào Trung tâm Pháp lý → Thêm Giấy Tờ → Phạm vi: Nhà cung cấp</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
                                                 {regDocs.map((d: any) => {
                                                     const isExpired = d.status === 'EXPIRED' || d.status === 'REVOKED'
                                                     const isExpiring = d.daysRemaining !== null && d.daysRemaining <= 30 && d.daysRemaining > 0
-                                                    const borderColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : '#2A4355'
-                                                    const statusColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : d.status === 'ACTIVE' ? '#5BA88A' : '#4A6A7A'
+                                                    const borderColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : '#E2E8F0'
+                                                    const statusColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : d.status === 'ACTIVE' ? '#5BA88A' : '#64748B'
                                                     return (
-                                                        <div key={d.id} className="p-4 rounded-lg" style={{ background: '#142433', border: `1px solid ${borderColor}` }}>
+                                                        <div key={d.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: `1px solid ${borderColor}` }}>
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">
                                                                     {(isExpired || isExpiring) && <AlertTriangle size={12} style={{ color: borderColor }} />}
-                                                                    <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{d.name}</span>
+                                                                    <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{d.name}</span>
                                                                 </div>
                                                                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ color: statusColor, background: `${statusColor}18` }}>
                                                                     {REG_DOC_STATUS_LABELS[d.status] ?? d.status}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
+                                                            <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
                                                                 <span>{REG_DOC_TYPE_LABELS[d.type] ?? d.type}</span>
-                                                                <span style={{ color: '#4A6A7A' }}>{d.docNo}</span>
+                                                                <span style={{ color: '#64748B' }}>{d.docNo}</span>
                                                                 {d.expiryDate && (
                                                                     <span style={{ color: statusColor }}>
                                                                         {d.daysRemaining !== null && d.daysRemaining <= 0
@@ -731,7 +731,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                                                 : fmtDate(d.expiryDate)}
                                                                     </span>
                                                                 )}
-                                                                {d.issuingAuthority && <span style={{ color: '#4A6A7A' }}>{d.issuingAuthority}</span>}
+                                                                {d.issuingAuthority && <span style={{ color: '#64748B' }}>{d.issuingAuthority}</span>}
                                                             </div>
                                                             {d.latestFile && (
                                                                 <div className="mt-2">
@@ -753,11 +753,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {tab === 'notes' && (
                                 <div className="space-y-4">
                                     {/* Add note form */}
-                                    <div className="p-4 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="flex items-center gap-2 mb-3">
                                             <select value={noteType} onChange={e => setNoteType(e.target.value)}
                                                 className="px-2 py-1.5 rounded-lg text-xs outline-none"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                                 <option value="NOTE">📝 Ghi chú</option>
                                                 <option value="CALL">📞 Cuộc gọi</option>
                                                 <option value="EMAIL">✉️ Email</option>
@@ -766,12 +766,12 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         </div>
                                         <textarea value={newNote} onChange={e => setNewNote(e.target.value)}
                                             className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
-                                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', minHeight: 80 }}
+                                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', minHeight: 80 }}
                                             placeholder="Thêm ghi chú về NCC..." />
                                         <div className="flex justify-end mt-2">
                                             <button onClick={handleAddNote} disabled={!newNote.trim() || savingNote}
                                                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                                 {savingNote ? <Loader2 size={12} className="animate-spin" /> : <MessageSquare size={12} />}
                                                 {savingNote ? 'Đang lưu...' : 'Thêm ghi chú'}
                                             </button>
@@ -779,17 +779,17 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     </div>
 
                                     {/* Activity timeline */}
-                                    {!activities ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
-                                        activities.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có hoạt động</p> : (
+                                    {!activities ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
+                                        activities.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có hoạt động</p> : (
                                             <div className="space-y-2">
                                                 {activities.map((a: any) => (
-                                                    <div key={a.id} className="flex gap-3 p-3 rounded-lg" style={{ background: '#142433' }}>
+                                                    <div key={a.id} className="flex gap-3 p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
                                                         <span className="text-lg">{ACTIVITY_ICONS[a.type] ?? '📝'}</span>
                                                         <div className="flex-1">
-                                                            <p className="text-xs" style={{ color: '#E8F1F2' }}>{a.description}</p>
+                                                            <p className="text-xs" style={{ color: '#0F172A' }}>{a.description}</p>
                                                             <div className="flex gap-3 mt-1">
-                                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{fmtDate(a.occurredAt)}</span>
-                                                                {a.performedBy && <span className="text-[10px]" style={{ color: '#4A6A7A' }}>bởi {a.performedBy}</span>}
+                                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{fmtDate(a.occurredAt)}</span>
+                                                                {a.performedBy && <span className="text-[10px]" style={{ color: '#64748B' }}>bởi {a.performedBy}</span>}
                                                             </div>
                                                         </div>
                                                     </div>

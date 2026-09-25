@@ -5,7 +5,7 @@ import { Key, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, Zap, FileText, Act
 import { type ApiKeyRow, type PromptTemplateRow, saveApiKey, toggleApiKey, deleteApiKey, testApiKey, createPromptTemplate, deletePromptTemplate } from './vault-actions'
 
 const PROVIDERS = [
-    { value: 'gemini', label: 'Google Gemini', color: '#87CBB9' },
+    { value: 'gemini', label: 'Google Gemini', color: '#0891B2' },
     { value: 'vision', label: 'Google Vision', color: '#4A8FAB' },
     { value: 'anthropic', label: 'Anthropic Claude', color: '#D4A853' },
     { value: 'openai', label: 'OpenAI GPT', color: '#5BA88A' },
@@ -52,44 +52,44 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
                     <Key size={16} style={{ color: '#D4A853' }} /> API Key Vault
                 </h3>
                 <button onClick={() => { setShowAdd(!showAdd); setSaveError('') }}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     <Plus size={12} /> Thêm Key
                 </button>
             </div>
 
             {/* Add Form */}
             {showAdd && (
-                <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Provider</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Provider</label>
                             <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                 {PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Budget/tháng (USD)</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Budget/tháng (USD)</label>
                             <input type="number" value={form.monthlyBudget} onChange={e => setForm({ ...form, monthlyBudget: e.target.value })}
                                 placeholder="10.00"
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>API Key</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>API Key</label>
                         <input type="password" value={form.apiKey} onChange={e => setForm({ ...form, apiKey: e.target.value })}
                             placeholder="AIza... hoặc sk-..."
                             className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
-                            style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     {saveError && (
                         <div className="text-xs p-2 rounded" style={{
@@ -100,10 +100,10 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                         </div>
                     )}
                     <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#4A6A7A' }}>Hủy</button>
+                        <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.apiKey || loading === 'save'}
                             className="text-xs px-4 py-2 rounded font-semibold"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : '🔒 Mã hóa & Lưu'}
                         </button>
                     </div>
@@ -112,24 +112,24 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 
             {/* Keys List */}
             {keys.length === 0 ? (
-                <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Chưa có API Key. Nhấn "Thêm Key" để bắt đầu.</p>
+                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có API Key. Nhấn "Thêm Key" để bắt đầu.</p>
             ) : (
                 <div className="space-y-3">
-                    <p className="text-[10px] uppercase font-semibold" style={{ color: '#4A6A7A' }}>
+                    <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>
                         {keys.length} KEY{keys.length > 1 ? 'S' : ''} ĐANG LƯU TRỮ
                     </p>
                     {keys.map(k => {
                         const prov = PROVIDERS.find(p => p.value === k.provider)
                         return (
                             <div key={k.id} className="rounded-lg overflow-hidden"
-                                style={{ background: '#142433', border: `1px solid ${k.isActive ? '#2A4355' : 'rgba(224,82,82,0.3)'}` }}>
+                                style={{ background: '#FFFFFF', border: `1px solid ${k.isActive ? '#E2E8F0' : 'rgba(224,82,82,0.3)'}` }}>
 
                                 {/* Key Info Row */}
                                 <div className="p-4">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                             style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
-                                        <span className="text-sm font-bold" style={{ color: prov?.color || '#E8F1F2' }}>
+                                        <span className="text-sm font-bold" style={{ color: prov?.color || '#0F172A' }}>
                                             {k.label}
                                         </span>
                                         <span className="text-[10px] px-2 py-0.5 rounded-full"
@@ -143,24 +143,24 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 
                                     <div className="grid grid-cols-2 gap-3 text-[11px]">
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>API Key</p>
-                                            <p className="font-mono" style={{ color: '#8AAEBB' }}>{k.maskedKey || '••••••••••••'}</p>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>API Key</p>
+                                            <p className="font-mono" style={{ color: '#475569' }}>{k.maskedKey || '••••••••••••'}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Provider</p>
-                                            <p style={{ color: '#8AAEBB' }}>{k.provider}</p>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Provider</p>
+                                            <p style={{ color: '#475569' }}>{k.provider}</p>
                                         </div>
                                         {k.monthlyBudget != null && (
                                             <div>
-                                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Budget Tháng</p>
+                                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Budget Tháng</p>
                                                 <p className="font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
                                                     ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
                                                 </p>
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Lần Test Cuối</p>
-                                            <p style={{ color: '#8AAEBB' }}>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Lần Test Cuối</p>
+                                            <p style={{ color: '#475569' }}>
                                                 {k.lastTestedAt
                                                     ? new Date(k.lastTestedAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
                                                     : 'Chưa test'}
@@ -183,16 +183,16 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                 )}
 
                                 {/* Action Buttons */}
-                                <div className="flex border-t" style={{ borderColor: '#2A4355' }}>
+                                <div className="flex border-t" style={{ borderColor: '#E2E8F0' }}>
                                     <button onClick={() => handleTest(k.id)} disabled={loading === k.id}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
-                                        style={{ color: '#87CBB9', borderRight: '1px solid #2A4355' }}>
+                                        style={{ color: '#0891B2', borderRight: '1px solid #E2E8F0' }}>
                                         {loading === k.id ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
                                         Test Key
                                     </button>
                                     <button onClick={() => handleToggle(k.id)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
-                                        style={{ color: k.isActive ? '#D4A853' : '#5BA88A', borderRight: '1px solid #2A4355' }}>
+                                        style={{ color: k.isActive ? '#D4A853' : '#5BA88A', borderRight: '1px solid #E2E8F0' }}>
                                         {k.isActive ? <><ToggleRight size={14} /> Tắt</> : <><ToggleLeft size={14} /> Bật</>}
                                     </button>
                                     <button onClick={() => handleDelete(k.id)}
@@ -243,77 +243,77 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
                     <FileText size={16} style={{ color: '#4A8FAB' }} /> Prompt Library
                 </h3>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     <Plus size={12} /> Tạo Prompt
                 </button>
             </div>
 
             {/* Create Form */}
             {showCreate && (
-                <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Slug *</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Slug *</label>
                             <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })}
                                 placeholder="product-description"
                                 className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Tên *</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Tên *</label>
                             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                                 placeholder="Mô tả sản phẩm"
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>System Prompt</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>System Prompt</label>
                         <textarea value={form.systemPrompt} onChange={e => setForm({ ...form, systemPrompt: e.target.value })}
                             rows={3} placeholder="Bạn là chuyên gia rượu vang..."
                             className="w-full px-3 py-2 text-xs rounded outline-none resize-none"
-                            style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>User Template (dùng {'{{biến}}'} )</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>User Template (dùng {'{{biến}}'} )</label>
                         <textarea value={form.userTemplate} onChange={e => setForm({ ...form, userTemplate: e.target.value })}
                             rows={2} placeholder={'Hãy tạo mô tả cho {{product_name}} vintage {{vintage}}'}
                             className="w-full px-3 py-2 text-xs rounded outline-none resize-none font-mono"
-                            style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Biến (phẩy cách)</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Biến (phẩy cách)</label>
                             <input value={form.variables} onChange={e => setForm({ ...form, variables: e.target.value })}
                                 placeholder="product_name, vintage"
                                 className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Temperature</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Temperature</label>
                             <input type="number" step="0.1" value={form.temperature} onChange={e => setForm({ ...form, temperature: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Max Tokens</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Max Tokens</label>
                             <input type="number" value={form.maxTokens} onChange={e => setForm({ ...form, maxTokens: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
-                                style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                     </div>
                     <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2" style={{ color: '#4A6A7A' }}>Hủy</button>
+                        <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleCreate} disabled={!form.slug || !form.name || loading}
                             className="text-xs px-4 py-2 rounded font-semibold"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             {loading ? <Loader2 size={12} className="animate-spin" /> : 'Tạo'}
                         </button>
                     </div>
@@ -322,19 +322,19 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
 
             {/* Templates List */}
             {templates.length === 0 ? (
-                <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Chưa có Prompt Template. Nhấn "Tạo Prompt" để bắt đầu.</p>
+                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có Prompt Template. Nhấn "Tạo Prompt" để bắt đầu.</p>
             ) : (
                 <div className="space-y-2">
                     {templates.map(t => (
-                        <div key={t.id} className="p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        <div key={t.id} className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{t.name}</p>
+                                    <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{t.name}</p>
                                     <p className="text-[10px] font-mono" style={{ color: '#4A8FAB' }}>{t.slug}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full"
-                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                         {t.runCount} runs
                                     </span>
                                     <button onClick={() => handleDelete(t.id)} className="p-1" style={{ color: '#E05252' }}>
@@ -351,7 +351,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                                         </span>
                                     ))}
                                     <span className="text-xs px-1.5 py-0.5 rounded"
-                                        style={{ color: '#4A6A7A' }}>
+                                        style={{ color: '#64748B' }}>
                                         T={t.temperature} | {t.maxTokens} tokens
                                     </span>
                                 </div>
@@ -366,21 +366,21 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
 
 export function AiUsageCard({ stats }: { stats: { totalRuns: number; monthRuns: number; failedRuns: number; monthTokens: number; monthCostUsd: number; avgDurationMs: number } }) {
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-            <h3 className="font-semibold flex items-center gap-2 mb-4" style={{ color: '#E8F1F2' }}>
-                <Activity size={16} style={{ color: '#87CBB9' }} /> AI Usage This Month
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <h3 className="font-semibold flex items-center gap-2 mb-4" style={{ color: '#0F172A' }}>
+                <Activity size={16} style={{ color: '#0891B2' }} /> AI Usage This Month
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                 {[
-                    { label: 'Total Runs', value: stats.totalRuns.toLocaleString(), color: '#E8F1F2' },
-                    { label: 'This Month', value: stats.monthRuns.toLocaleString(), color: '#87CBB9' },
+                    { label: 'Total Runs', value: stats.totalRuns.toLocaleString(), color: '#0F172A' },
+                    { label: 'This Month', value: stats.monthRuns.toLocaleString(), color: '#0891B2' },
                     { label: 'Failed', value: stats.failedRuns.toLocaleString(), color: stats.failedRuns > 0 ? '#E05252' : '#5BA88A' },
                     { label: 'Tokens', value: stats.monthTokens.toLocaleString(), color: '#D4A853' },
                     { label: 'Cost', value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#4A8FAB' },
                     { label: 'Avg Speed', value: `${stats.avgDurationMs}ms`, color: '#A5DED0' },
                 ].map(s => (
-                    <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                        <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                    <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{s.label}</p>
                         <p className="text-sm font-bold font-mono" style={{ color: s.color }}>{s.value}</p>
                     </div>
                 ))}

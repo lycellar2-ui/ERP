@@ -10,7 +10,7 @@ import {
     addCustomerTag, removeCustomerTag
 } from './actions'
 
-const inputStyle = { background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }
+const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }
 
 // ── Contacts Panel ──────────────────────────
 export function ContactsPanel({ customerId }: { customerId: string }) {
@@ -31,7 +31,7 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
         load()
         return (
             <div className="p-4 text-center">
-                <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#4A6A7A' }} />
+                <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#64748B' }} />
             </div>
         )
     }
@@ -65,59 +65,59 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>
+                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
                     <User size={12} className="inline mr-1" /> Liên Hệ ({contacts.length})
                 </h4>
                 <button onClick={() => { setShowForm(true); setEditId(null); setForm({ name: '', title: '', phone: '', email: '', isPrimary: false }) }}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
-                    style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                    style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
                     <Plus size={10} /> Thêm
                 </button>
             </div>
 
             {contacts.length === 0 && !showForm && (
-                <p className="text-xs text-center py-3" style={{ color: '#4A6A7A' }}>
+                <p className="text-xs text-center py-3" style={{ color: '#64748B' }}>
                     Chưa có liên hệ nào
                 </p>
             )}
 
             {contacts.map(c => (
                 <div key={c.id} className="flex items-start gap-3 p-3 rounded-lg group"
-                    style={{ background: '#142433', border: c.isPrimary ? '1px solid rgba(212,168,83,0.3)' : '1px solid transparent' }}>
+                    style={{ background: '#FFFFFF', border: c.isPrimary ? '1px solid rgba(212,168,83,0.3)' : '1px solid transparent' }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
                         style={{ background: c.isPrimary ? 'rgba(212,168,83,0.15)' : 'rgba(135,203,185,0.1)', color: c.isPrimary ? '#D4A853' : '#87CBB9' }}>
                         {c.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</span>
+                            <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{c.name}</span>
                             {c.isPrimary && (
                                 <Star size={10} style={{ color: '#D4A853' }} fill="#D4A853" />
                             )}
                         </div>
-                        {c.title && <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{c.title}</p>}
+                        {c.title && <p className="text-[10px]" style={{ color: '#64748B' }}>{c.title}</p>}
                         <div className="flex gap-3 mt-1">
                             {c.phone && (
-                                <a href={`tel:${c.phone}`} className="text-xs flex items-center gap-1" style={{ color: '#8AAEBB' }}>
+                                <a href={`tel:${c.phone}`} className="text-xs flex items-center gap-1" style={{ color: '#475569' }}>
                                     <Phone size={9} /> {c.phone}
                                 </a>
                             )}
                             {c.email && (
-                                <a href={`mailto:${c.email}`} className="text-xs flex items-center gap-1" style={{ color: '#8AAEBB' }}>
+                                <a href={`mailto:${c.email}`} className="text-xs flex items-center gap-1" style={{ color: '#475569' }}>
                                     <Mail size={9} /> {c.email}
                                 </a>
                             )}
                         </div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEdit(c)} className="p-1 rounded" style={{ color: '#4A6A7A' }}><Edit2 size={12} /></button>
+                        <button onClick={() => handleEdit(c)} className="p-1 rounded" style={{ color: '#64748B' }}><Edit2 size={12} /></button>
                         <button onClick={() => handleDelete(c.id)} className="p-1 rounded" style={{ color: '#E05252' }}><Trash2 size={12} /></button>
                     </div>
                 </div>
             ))}
 
             {showForm && (
-                <div className="p-3 rounded-lg space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                         placeholder="Tên liên hệ *" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                     <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
@@ -128,16 +128,16 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
                         <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                             placeholder="Email" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                     </div>
-                    <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: '#4A6A7A' }}>
+                    <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: '#64748B' }}>
                         <input type="checkbox" checked={form.isPrimary} onChange={e => setForm(f => ({ ...f, isPrimary: e.target.checked }))} />
                         <Star size={10} /> Liên hệ chính
                     </label>
                     <div className="flex gap-2 justify-end">
                         <button onClick={() => { setShowForm(false); setEditId(null) }}
-                            className="px-3 py-1.5 text-xs rounded" style={{ color: '#4A6A7A' }}>Hủy</button>
+                            className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.name.trim() || saving}
                             className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
                             {editId ? 'Cập Nhật' : 'Thêm'}
                         </button>
@@ -161,9 +161,9 @@ export function TagsPanel({ customerId }: { customerId: string }) {
         { tag: 'At-risk', color: '#E05252' },
         { tag: 'Price-sensitive', color: '#4A8FAB' },
         { tag: 'EVFTA', color: '#5BA88A' },
-        { tag: 'New', color: '#87CBB9' },
+        { tag: 'New', color: '#0891B2' },
         { tag: 'Top Buyer', color: '#A5DED0' },
-        { tag: 'HORECA Key', color: '#8AAEBB' },
+        { tag: 'HORECA Key', color: '#475569' },
     ]
 
     const load = useCallback(async () => {
@@ -176,7 +176,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
         load()
         return (
             <div className="p-4 text-center">
-                <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#4A6A7A' }} />
+                <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#64748B' }} />
             </div>
         )
     }
@@ -204,12 +204,12 @@ export function TagsPanel({ customerId }: { customerId: string }) {
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>
+                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
                     <Tag size={12} className="inline mr-1" /> Nhãn
                 </h4>
                 <button onClick={() => setShowPicker(!showPicker)}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
-                    style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                    style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
                     <Plus size={10} /> Gắn
                 </button>
             </div>
@@ -217,7 +217,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
             {/* Current tags */}
             <div className="flex flex-wrap gap-1.5">
                 {tags.length === 0 && (
-                    <span className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có nhãn</span>
+                    <span className="text-xs" style={{ color: '#64748B' }}>Chưa có nhãn</span>
                 )}
                 {tags.map(t => (
                     <span key={t.id} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-semibold group"
@@ -233,8 +233,8 @@ export function TagsPanel({ customerId }: { customerId: string }) {
 
             {/* Tag picker */}
             {showPicker && (
-                <div className="p-3 rounded-lg space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                    <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Nhãn có sẵn</p>
+                <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <p className="text-[10px] uppercase font-bold" style={{ color: '#64748B' }}>Nhãn có sẵn</p>
                     <div className="flex flex-wrap gap-1.5">
                         {presets.filter(p => !existingTags.has(p.tag)).map(p => (
                             <button key={p.tag} onClick={() => handleAdd(p.tag, p.color)} disabled={saving}
@@ -244,7 +244,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                             </button>
                         ))}
                         {presets.every(p => existingTags.has(p.tag)) && (
-                            <span className="text-xs" style={{ color: '#4A6A7A' }}>Đã gắn hết nhãn có sẵn</span>
+                            <span className="text-xs" style={{ color: '#64748B' }}>Đã gắn hết nhãn có sẵn</span>
                         )}
                     </div>
                     <div className="flex gap-2 mt-2">
@@ -254,7 +254,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                             onKeyDown={e => e.key === 'Enter' && handleCustom()} />
                         <button onClick={handleCustom} disabled={!customTag.trim() || saving}
                             className="px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             Thêm
                         </button>
                     </div>

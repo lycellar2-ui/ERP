@@ -602,8 +602,8 @@ function renderHtml(qt: any, style: string): string {
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .btn-print-primary { background: ${t.accent}; color: ${isDark ? '#0A1926' : '#FFFFFF'}; }
-        .btn-print-secondary { background: ${isDark ? '#2C4558' : '#E5E7EB'}; color: ${isDark ? '#E8F1F2' : '#333'}; }
+        .btn-print-primary { background: ${t.accent}; color: ${isDark ? '#F8FAFC' : '#FFFFFF'}; }
+        .btn-print-secondary { background: ${isDark ? '#2C4558' : '#E5E7EB'}; color: ${isDark ? '#0F172A' : '#333'}; }
 
         @media print {
             .no-print { display: none !important; }

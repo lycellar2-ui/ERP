@@ -17,12 +17,12 @@ import { SupplierDetailDrawer } from './SupplierDetailDrawer'
 import { toast } from 'sonner'
 
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
-    WINERY: { label: 'Winery', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
+    WINERY: { label: 'Winery', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     NEGOCIANT: { label: 'Négociant', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
     DISTRIBUTOR: { label: 'Distributor', color: '#5BA88A', bg: 'rgba(74,124,89,0.12)' },
-    LOGISTICS: { label: 'Logistics', color: '#87CBB9', bg: 'rgba(168,130,204,0.12)' },
+    LOGISTICS: { label: 'Logistics', color: '#0891B2', bg: 'rgba(168,130,204,0.12)' },
     FORWARDER: { label: 'Forwarder', color: '#4A8FAB', bg: 'rgba(46,91,122,0.15)' },
-    CUSTOMS_BROKER: { label: 'Customs Broker', color: '#8AAEBB', bg: 'rgba(168,152,128,0.12)' },
+    CUSTOMS_BROKER: { label: 'Customs Broker', color: '#475569', bg: 'rgba(168,152,128,0.12)' },
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -31,12 +31,12 @@ const COUNTRY_FLAGS: Record<string, string> = {
 }
 
 function TypeBadge({ type }: { type: string }) {
-    const cfg = SUPPLIER_TYPE[type] ?? { label: type, color: '#8AAEBB', bg: 'rgba(168,152,128,0.12)' }
+    const cfg = SUPPLIER_TYPE[type] ?? { label: type, color: '#475569', bg: 'rgba(168,152,128,0.12)' }
     return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
 }
 
 function StatusDot({ status }: { status: string }) {
-    const color = status === 'ACTIVE' ? '#5BA88A' : status === 'BLACKLISTED' ? '#8B1A2E' : '#4A6A7A'
+    const color = status === 'ACTIVE' ? '#5BA88A' : status === 'BLACKLISTED' ? '#8B1A2E' : '#64748B'
     const label = status === 'ACTIVE' ? 'Hoạt động' : status === 'BLACKLISTED' ? 'Blacklist' : 'Tạm dừng'
     return <span className="flex items-center gap-1.5 text-xs" style={{ color }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />{label}</span>
 }
@@ -79,7 +79,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
 
     const set = (k: keyof SupplierInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
         const e: Record<string, string> = {}
@@ -123,10 +123,10 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                 onClick={onClose}
             />
             <div
-                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
                 style={{ width: 'min(560px, 95vw)' }}
             >
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
                             <Building2 size={16} />
@@ -147,7 +147,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                     {loading ? (
-                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                     ) : (<>
                         {errors._global && (
                             <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
@@ -156,16 +156,16 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             </div>
                         )}
 
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Thông Tin Cơ Bản</p>
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.code ?? ''} disabled={isEdit}
                                     onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SUP-LVMH" />
                                 {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Loại NCC</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại NCC</label>
                                 <select className={inputCls} style={inputStyle} value={form.type ?? 'WINERY'} onChange={e => set('type', e.target.value)}>
                                     <option value="WINERY">Winery</option><option value="NEGOCIANT">Négociant</option>
                                     <option value="DISTRIBUTOR">Distributor</option><option value="LOGISTICS">Logistics</option>
@@ -174,13 +174,13 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
                             <input className={inputCls} style={inputStyle} value={form.name ?? ''} onChange={e => set('name', e.target.value)} placeholder="LVMH Wines & Spirits" />
                             {errors.name && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.name}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Quốc gia <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quốc gia <span style={{ color: '#8B1A2E' }}>*</span></label>
                                 <select className={inputCls} style={inputStyle} value={form.country ?? ''} onChange={e => set('country', e.target.value)}>
                                     <option value="">Chọn...</option>
                                     <option value="FR">🇫🇷 Pháp</option><option value="IT">🇮🇹 Ý</option><option value="ES">🇪🇸 TBN</option>
@@ -190,57 +190,57 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                 {errors.country && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.country}</p>}
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã thuế</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã thuế</label>
                                 <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} onChange={e => set('taxId', e.target.value || null)} placeholder="FR12345678901" />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ Chính</p>
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ Chính</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Người liên hệ</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} onChange={e => set('contactName', e.target.value || null)} placeholder="Jean-Pierre Dupont" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Chức vụ</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Chức vụ</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactTitle ?? ''} onChange={e => set('contactTitle', e.target.value || null)} placeholder="Export Manager" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Email</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactEmail ?? ''} onChange={e => set('contactEmail', e.target.value || null)} placeholder="jp@winery.fr" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Điện thoại</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Điện thoại</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactPhone ?? ''} onChange={e => set('contactPhone', e.target.value || null)} placeholder="+33 1 23 45 67" />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Điều Khoản Thương Mại</p>
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Điều Khoản Thương Mại</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Hiệp định</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hiệp định</label>
                                 <select className={inputCls} style={inputStyle} value={form.tradeAgreement ?? ''} onChange={e => set('tradeAgreement', e.target.value || null)}>
                                     <option value="">Không / MFN</option><option value="EVFTA">EVFTA (EU)</option>
                                     <option value="AANZFTA">AANZFTA</option><option value="CPTPP">CPTPP</option><option value="UKVFTA">UKVFTA</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>C/O Form</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>C/O Form</label>
                                 <input className={inputCls} style={inputStyle} value={form.coFormType ?? ''} onChange={e => set('coFormType', e.target.value || null)} placeholder="EUR.1" />
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thanh toán</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thanh toán</label>
                                 <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET60'} onChange={e => set('paymentTerm', e.target.value)}>
                                     <option value="NET30">NET 30</option><option value="NET45">NET 45</option><option value="NET60">NET 60</option>
                                     <option value="NET90">NET 90</option><option value="LC">L/C</option><option value="TT_ADVANCE">T/T Advance</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tiền tệ</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tiền tệ</label>
                                 <select 
                                     className={inputCls} 
                                     style={{ ...inputStyle, opacity: isEdit ? 0.6 : 1, cursor: isEdit ? 'not-allowed' : 'default' }} 
@@ -256,66 +256,66 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Lead time (ngày)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lead time (ngày)</label>
                                 <input type="number" className={inputCls} style={inputStyle} value={form.leadTimeDays ?? 45} onChange={e => set('leadTimeDays', Number(e.target.value))} min={1} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Incoterms</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Incoterms</label>
                                 <input className={inputCls} style={inputStyle} value={form.incoterms ?? ''} onChange={e => set('incoterms', e.target.value || null)} placeholder="CIF Ho Chi Minh" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Website</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Website</label>
                                 <input className={inputCls} style={inputStyle} value={form.website ?? ''} onChange={e => set('website', e.target.value || null)} placeholder="https://winery.fr" />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Pickup & Ngân Hàng</p>
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Pickup & Ngân Hàng</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thông tin Pickup</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thông tin Pickup</label>
                                 <input className={inputCls} style={inputStyle} value={form.pickupInfo ?? ''} onChange={e => set('pickupInfo', e.target.value || null)} placeholder="Winery Warehouse, Ex-works Bordeaux..." />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tài khoản ngân hàng</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tài khoản ngân hàng</label>
                                 <input className={inputCls} style={inputStyle} value={form.bankAccountInfo ?? ''} onChange={e => set('bankAccountInfo', e.target.value || null)} placeholder="Bank Name, IBAN, Swift Code..." />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Địa Chỉ & Trạng Thái</p>
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Địa Chỉ & Trạng Thái</p>
                         <div>
-                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Địa chỉ</label>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ</label>
                             <input className={inputCls} style={inputStyle} value={form.address ?? ''} onChange={e => set('address', e.target.value || null)} placeholder="33 Rue du Commerce, Bordeaux" />
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thành phố</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
                                 <input className={inputCls} style={inputStyle} value={form.city ?? ''} onChange={e => set('city', e.target.value || null)} placeholder="Bordeaux" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Vùng</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Vùng</label>
                                 <input className={inputCls} style={inputStyle} value={form.region ?? ''} onChange={e => set('region', e.target.value || null)} placeholder="Nouvelle-Aquitaine" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Trạng thái</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Trạng thái</label>
                                 <select className={inputCls} style={inputStyle} value={form.status ?? 'ACTIVE'} onChange={e => set('status', e.target.value as any)}>
                                     <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Tạm dừng</option><option value="BLACKLISTED">Blacklist</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Ghi chú nội bộ</label>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Ghi chú nội bộ</label>
                             <textarea className={inputCls + ' resize-none'} style={{ ...inputStyle, minHeight: 60 }} value={form.notes ?? ''} onChange={e => set('notes', e.target.value || null)} placeholder="Ghi chú..." />
                         </div>
                     </>)}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #2A4355' }}>
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm" style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Hủy</button>
+                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0' }}>
+                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm" style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving || loading}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo NCC'}
                     </button>
@@ -406,7 +406,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     }
 
     const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
-        A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' }, B: { color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+        A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' }, B: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
         C: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' }, D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
         F: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
     }
@@ -416,23 +416,23 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>Nhà Cung Cấp</h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>Winery, Négociant, Distributor, Forwarder — {stats.total} đối tác</p>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>Nhà Cung Cấp</h2>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>Winery, Négociant, Distributor, Forwarder — {stats.total} đối tác</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={handleExport} disabled={exporting}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}>
                         <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
                     </button>
                     <button onClick={() => setImportOpen(true)}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}>
                         <Upload size={16} /> Import Excel
                     </button>
                     <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         <Plus size={16} /> Thêm NCC
                     </button>
                 </div>
@@ -446,20 +446,20 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     { label: 'Quốc gia', value: stats.countries, icon: Globe, accent: '#4A8FAB' },
                     { label: 'Avg Lead Time', value: `${stats.avgLeadTime} ngày`, icon: Clock, accent: '#87CBB9' },
                 ].map(s => (
-                    <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.accent}20` }}>
                             <s.icon size={20} style={{ color: s.accent }} />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
+                            <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
                 {([
                     { key: 'list', label: 'Danh Sách NCC', icon: Building2 },
                     { key: 'scorecard', label: 'Scorecard', icon: Award },
@@ -469,9 +469,9 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         onClick={() => tab.key === 'scorecard' ? loadScorecards() : tab.key === 'duplicates' ? loadDuplicates() : setActiveTab('list')}
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                         style={{
-                            background: activeTab === tab.key ? '#1B2E3D' : 'transparent',
-                            color: activeTab === tab.key ? '#87CBB9' : '#4A6A7A',
-                            border: activeTab === tab.key ? '1px solid #2A4355' : '1px solid transparent',
+                            background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
+                            color: activeTab === tab.key ? '#87CBB9' : '#64748B',
+                            border: activeTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
                         }}>
                         <tab.icon size={13} /> {tab.label}
                     </button>
@@ -483,21 +483,21 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[200px]">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                         <input type="text" placeholder="Tìm NCC (tên, mã, MST, email)..."
                             value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
                             className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
                         className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả loại</option>
                         {Object.entries(SUPPLIER_TYPE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                     <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
                         className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Trạng thái</option>
                         <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Tạm dừng</option><option value="BLACKLISTED">Blacklist</option>
                     </select>
@@ -508,26 +508,26 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 </div>
 
                 {/* Table */}
-                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
                                     {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái', ''].map(h => (
-                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
-                                        {Array.from({ length: 9 }).map((_, j) => <td key={j} className="px-4 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#1B2E3D', width: j === 0 ? '80%' : '55%' }} /></td>)}
+                                        {Array.from({ length: 9 }).map((_, j) => <td key={j} className="px-4 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} /></td>)}
                                     </tr>
                                 )) : rows.length === 0 ? (
                                     <tr><td colSpan={9}>
                                         <div className="flex flex-col items-center py-16 gap-3">
                                             <span className="text-3xl">🏭</span>
-                                            <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có nhà cung cấp nào</p>
+                                            <p style={{ color: '#64748B' }} className="text-sm">Chưa có nhà cung cấp nào</p>
                                         </div>
                                     </td></tr>
                                 ) : rows.map(row => (
@@ -537,20 +537,20 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                                         onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
                                         <td className="px-4 py-3">
-                                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                            <p className="text-xs mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
+                                            <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>
+                                            <p className="text-xs mt-0.5 font-mono" style={{ color: '#64748B' }}>{row.code}</p>
                                             {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#4A8FAB' }}>👤 {row.contactName}</p>}
                                         </td>
                                         <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
-                                        <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>{COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}</td>
+                                        <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>{COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}</td>
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>{row.tradeAgreement ?? 'MFN'}</p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
+                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#E2E8F0' }}>{row.tradeAgreement ?? 'MFN'}</p>
+                                            <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{row.coFormType ?? '—'}</p>
                                         </td>
-                                        <td className="px-4 py-3 text-xs font-mono" style={{ color: '#8AAEBB' }}>{row.paymentTerm ?? '—'}</td>
-                                        <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
+                                        <td className="px-4 py-3 text-xs font-mono" style={{ color: '#475569' }}>{row.paymentTerm ?? '—'}</td>
+                                        <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#475569' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355' }}>{row.poCount}</span>
+                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#87CBB9' : '#E2E8F0' }}>{row.poCount}</span>
                                         </td>
                                         <td className="px-4 py-3"><StatusDot status={row.status} /></td>
                                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
@@ -560,11 +560,11 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                                     <Eye size={14} />
                                                 </button>
                                                 <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#8AAEBB' }} title="Chỉnh sửa">
+                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#475569' }} title="Chỉnh sửa">
                                                     <Edit2 size={14} />
                                                 </button>
                                                 <button onClick={() => handleDelete(row.id, row.name)}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#4A6A7A' }} title="Xóa">
+                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#64748B' }} title="Xóa">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>
@@ -576,15 +576,15 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     </div>
 
                     {total > 0 && (
-                        <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                                Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * 25 + 1}–{Math.min(page * 25, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
+                        <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
+                                Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * 25 + 1}–{Math.min(page * 25, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
                             </p>
                             <div className="flex items-center gap-1">
                                 {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
                                     <button key={i} onClick={() => { setPage(i + 1); reload(undefined, undefined, undefined, i + 1) }}
                                         className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                        style={{ background: page === i + 1 ? '#87CBB9' : 'transparent', color: page === i + 1 ? '#0A1926' : '#8AAEBB' }}>
+                                        style={{ background: page === i + 1 ? '#87CBB9' : 'transparent', color: page === i + 1 ? '#F8FAFC' : '#475569' }}>
                                         {i + 1}
                                     </button>
                                 ))}
@@ -596,15 +596,15 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
 
             {/* Tab: Scorecard */}
             {activeTab === 'scorecard' && (
-                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                     {scoreLoading ? (
-                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#87CBB9' }} /><span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tính Scorecard...</span></div>
+                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang tính Scorecard...</span></div>
                     ) : scorecards && scorecards.length > 0 ? (
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['NCC', 'Giao Đúng Hạn', 'Chất Lượng', 'Lead Time TB', 'Tổng PO', 'Xếp Hạng'].map(h => (
-                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -613,25 +613,25 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                     const gc = GRADE_COLOR[sc.grade] ?? GRADE_COLOR.C
                                     return (
                                         <tr key={sc.supplierId} style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
-                                            <td className="px-4 py-3"><p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{sc.supplierName}</p></td>
+                                            <td className="px-4 py-3"><p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{sc.supplierName}</p></td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
+                                                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
                                                         <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
                                                     </div>
                                                     <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E' }}>{sc.onTimeRate.toFixed(0)}%</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#5BA88A' : '#D4A853' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
-                                            <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
-                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#87CBB9' }}>{sc.totalPOs}</td>
+                                            <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
+                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#0891B2' }}>{sc.totalPOs}</td>
                                             <td className="px-4 py-3"><span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold" style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span></td>
                                         </tr>
                                     )
                                 })}
                             </tbody>
                         </table>
-                    ) : <div className="text-center py-16 text-sm" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu scorecard</div>}
+                    ) : <div className="text-center py-16 text-sm" style={{ color: '#64748B' }}>Chưa có dữ liệu scorecard</div>}
                 </div>
             )}
 
@@ -639,10 +639,10 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             {activeTab === 'duplicates' && (
                 <div className="space-y-3">
                     {dupLoading ? (
-                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} /><span className="text-sm" style={{ color: '#4A6A7A' }}>Đang quét trùng...</span></div>
+                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang quét trùng...</span></div>
                     ) : duplicates && duplicates.length > 0 ? (
                         duplicates.map((dup, i) => (
-                            <div key={i} className="p-4 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid rgba(212,168,83,0.3)' }}>
+                            <div key={i} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid rgba(212,168,83,0.3)' }}>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full" style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
                                         {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
@@ -650,19 +650,19 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                     <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{dup.similarity}% giống</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Mục 1</p>
-                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{dup.itemA.name}</p>
+                                    <div className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Mục 1</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{dup.itemA.name}</p>
                                     </div>
-                                    <div className="p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Mục 2</p>
-                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{dup.itemB.name}</p>
+                                    <div className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Mục 2</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{dup.itemB.name}</p>
                                     </div>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-16 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <span className="text-3xl">✅</span>
                             <p className="text-sm mt-3" style={{ color: '#5BA88A' }}>Không phát hiện dữ liệu trùng lặp</p>
                         </div>

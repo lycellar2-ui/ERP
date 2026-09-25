@@ -6,9 +6,9 @@ import { getLoyaltyInfo, type LoyaltyInfo } from './actions'
 import { formatVND } from '@/lib/utils'
 
 const TIER_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    PLATINUM: { label: 'Platinum', color: '#E8F1F2', bg: 'rgba(232,241,242,0.12)', icon: '💎' },
+    PLATINUM: { label: 'Platinum', color: '#0F172A', bg: 'rgba(232,241,242,0.12)', icon: '💎' },
     GOLD: { label: 'Gold', color: '#D4A853', bg: 'rgba(212,168,83,0.12)', icon: '👑' },
-    SILVER: { label: 'Silver', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: '🥈' },
+    SILVER: { label: 'Silver', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: '🥈' },
     BRONZE: { label: 'Bronze', color: '#C07434', bg: 'rgba(192,116,52,0.12)', icon: '🥉' },
 }
 
@@ -35,16 +35,16 @@ export function LoyaltyPanel() {
             {/* Search */}
             <div className="flex items-center gap-2">
                 <Star size={18} style={{ color: '#D4A853' }} />
-                <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
+                <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                     Chương Trình Loyalty
                 </h3>
             </div>
 
             <div className="flex gap-2">
                 <div className="relative flex-1">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         placeholder="Nhập Customer ID..."
                         value={customerId}
                         onChange={e => setCustomerId(e.target.value)}
@@ -52,7 +52,7 @@ export function LoyaltyPanel() {
                 </div>
                 <button onClick={lookup} disabled={loading || !customerId.trim()}
                     className="px-4 py-2.5 rounded-lg text-xs font-semibold disabled:opacity-50"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Tra Cứu'}
                 </button>
             </div>
@@ -64,12 +64,12 @@ export function LoyaltyPanel() {
                 <div className="space-y-4">
                     {/* Main card */}
                     <div className="p-5 rounded-lg" style={{
-                        background: 'linear-gradient(135deg, #1B2E3D 0%, #142433 100%)',
+                        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)',
                         border: `1px solid ${tierCfg.color}30`,
                     }}>
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{info.customerName}</p>
+                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{info.customerName}</p>
                                 <span className="text-xs font-bold px-2 py-0.5 rounded-full mt-1 inline-block"
                                     style={{ color: tierCfg.color, background: tierCfg.bg }}>
                                     {tierCfg.icon} {tierCfg.label}
@@ -79,7 +79,7 @@ export function LoyaltyPanel() {
                                 <p className="text-2xl font-bold" style={{ color: '#D4A853' }}>
                                     {info.pointsBalance.toLocaleString('vi-VN')}
                                 </p>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>điểm khả dụng</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>điểm khả dụng</p>
                             </div>
                         </div>
 
@@ -87,40 +87,40 @@ export function LoyaltyPanel() {
                             {[
                                 { label: 'Tổng Tích', value: info.totalEarned.toLocaleString('vi-VN'), color: '#5BA88A' },
                                 { label: 'Đã Đổi', value: info.totalRedeemed.toLocaleString('vi-VN'), color: '#C07434' },
-                                { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), color: '#87CBB9' },
+                                { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), color: '#0891B2' },
                             ].map(s => (
-                                <div key={s.label} className="text-center p-2 rounded" style={{ background: '#0D1E2B' }}>
+                                <div key={s.label} className="text-center p-2 rounded" style={{ background: '#F8FAFC' }}>
                                     <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                                    <p className="text-xs" style={{ color: '#64748B' }}>{s.label}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* History */}
-                    <div className="p-4 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
+                    <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
                             Lịch Sử Giao Dịch
                         </p>
                         <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
                             {info.history.length === 0 ? (
-                                <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Chưa có giao dịch</p>
+                                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có giao dịch</p>
                             ) : (
                                 info.history.map((h, i) => (
-                                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#142433' }}>
+                                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF' }}>
                                         <div className="flex items-center gap-2">
                                             {h.type === 'EARN' ? (
                                                 <ArrowUpRight size={12} style={{ color: '#5BA88A' }} />
                                             ) : (
                                                 <ArrowDownLeft size={12} style={{ color: '#C07434' }} />
                                             )}
-                                            <span className="text-xs" style={{ color: '#E8F1F2' }}>{h.description}</span>
+                                            <span className="text-xs" style={{ color: '#0F172A' }}>{h.description}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className="text-xs font-bold" style={{ color: h.type === 'EARN' ? '#5BA88A' : '#C07434' }}>
                                                 {h.type === 'EARN' ? '+' : ''}{h.points}
                                             </span>
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>
                                                 {new Date(h.date).toLocaleDateString('vi-VN')}
                                             </span>
                                         </div>
@@ -134,22 +134,22 @@ export function LoyaltyPanel() {
 
             {/* Tier Info */}
             {!info && !loading && (
-                <div className="p-5 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
+                <div className="p-5 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
                         Cấp Bậc Loyalty
                     </p>
                     <div className="grid grid-cols-4 gap-2">
                         {Object.entries(TIER_CFG).map(([key, cfg]) => (
-                            <div key={key} className="text-center p-3 rounded" style={{ background: '#142433' }}>
+                            <div key={key} className="text-center p-3 rounded" style={{ background: '#FFFFFF' }}>
                                 <p className="text-lg">{cfg.icon}</p>
                                 <p className="text-xs font-semibold mt-1" style={{ color: cfg.color }}>{cfg.label}</p>
-                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
                                     {key === 'PLATINUM' ? '≥5000' : key === 'GOLD' ? '≥2000' : key === 'SILVER' ? '≥500' : '<500'}
                                 </p>
                             </div>
                         ))}
                     </div>
-                    <p className="text-xs mt-3" style={{ color: '#4A6A7A' }}>
+                    <p className="text-xs mt-3" style={{ color: '#64748B' }}>
                         Mỗi 10,000₫ đơn hàng = 1 điểm. 1 điểm = 1,000₫ giảm giá khi đổi.
                     </p>
                 </div>

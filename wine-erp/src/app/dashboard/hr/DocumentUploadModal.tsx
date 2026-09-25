@@ -105,20 +105,20 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-            <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-[#2A4355] bg-[#142433] shadow-2xl">
+            <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A4355] bg-[#1B2E3D]/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white/50">
                     <div>
-                        <h3 className="text-base font-bold text-[#E8F1F2] flex items-center gap-2">
-                            <Upload className="w-5 h-5 text-[#87CBB9]" />
+                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <Upload className="w-5 h-5 text-[#0891B2]" />
                             Tải Lên Giấy Tờ & Hồ Sơ Số Hóa
                         </h3>
-                        <p className="text-xs text-[#8AAEBB] mt-0.5">Nhân viên: <span className="font-semibold text-white">{employeeName}</span></p>
+                        <p className="text-xs text-slate-600 mt-0.5">Nhân viên: <span className="font-semibold text-white">{employeeName}</span></p>
                     </div>
                     <button
                         onClick={onClose}
                         disabled={isUploading}
-                        className="p-1 rounded-lg text-[#8AAEBB] hover:text-white hover:bg-[#2A4355] transition-colors"
+                        className="p-1 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -128,10 +128,10 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                 <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                     {/* File Dropzone */}
                     <div>
-                        <label className="block text-xs font-semibold text-[#8AAEBB] mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                             Chọn tệp giấy tờ (PDF, JPG, PNG - Tối đa 10MB) <span className="text-rose-400">*</span>
                         </label>
-                        <div className="relative flex flex-col items-center justify-center p-5 border-2 border-dashed border-[#2A4355] hover:border-[#87CBB9] rounded-xl bg-[#0D1822]/60 transition-colors">
+                        <div className="relative flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-200 hover:border-[#87CBB9] rounded-xl bg-[#0D1822]/60 transition-colors">
                             <input
                                 type="file"
                                 accept=".pdf,image/jpeg,image/png,image/webp"
@@ -141,19 +141,19 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             />
                             {file ? (
                                 <div className="flex items-center gap-3 text-left">
-                                    <div className="p-2.5 rounded-lg bg-[#87CBB9]/20 text-[#87CBB9]">
+                                    <div className="p-2.5 rounded-lg bg-[#87CBB9]/20 text-[#0891B2]">
                                         <FileText className="w-6 h-6" />
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-sm font-semibold text-white truncate max-w-[280px]">{file.name}</p>
-                                        <p className="text-xs text-[#8AAEBB]">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                        <p className="text-xs text-slate-600">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="text-center">
-                                    <Upload className="w-8 h-8 text-[#87CBB9] mx-auto mb-2 opacity-80" />
-                                    <p className="text-xs font-medium text-[#E8F1F2]">Kéo thả file vào đây hoặc <span className="text-[#87CBB9] underline">bấm để chọn</span></p>
-                                    <p className="text-[11px] text-[#8AAEBB] mt-1">Hỗ trợ PDF scan, ảnh CCCD, chứng chỉ rõ nét</p>
+                                    <Upload className="w-8 h-8 text-[#0891B2] mx-auto mb-2 opacity-80" />
+                                    <p className="text-xs font-medium text-slate-900">Kéo thả file vào đây hoặc <span className="text-[#0891B2] underline">bấm để chọn</span></p>
+                                    <p className="text-[11px] text-slate-600 mt-1">Hỗ trợ PDF scan, ảnh CCCD, chứng chỉ rõ nét</p>
                                 </div>
                             )}
                         </div>
@@ -162,13 +162,13 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     {/* Doc Type & Title */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold text-[#8AAEBB] mb-1">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
                                 Loại giấy tờ <span className="text-rose-400">*</span>
                             </label>
                             <select
                                 value={docType}
                                 onChange={e => setDocType(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                             >
                                 {DOC_TYPES.map(t => (
                                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -176,7 +176,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-[#8AAEBB] mb-1">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
                                 Số hiệu / Mã văn bản
                             </label>
                             <input
@@ -184,13 +184,13 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                                 placeholder="VD: HĐ-2026/01, 079..."
                                 value={docNumber}
                                 onChange={e => setDocNumber(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#8AAEBB] mb-1">
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">
                             Tên giấy tờ / Tiêu đề <span className="text-rose-400">*</span>
                         </label>
                         <input
@@ -199,34 +199,34 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             required
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                         />
                     </div>
 
                     {/* Dates */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold text-[#8AAEBB] mb-1">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
                                 Ngày ban hành / Ngày ký
                             </label>
                             <input
                                 type="date"
                                 value={issueDate}
                                 onChange={e => setIssueDate(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                                className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                             />
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-1">
-                                <label className="text-xs font-semibold text-[#8AAEBB]">
+                                <label className="text-xs font-semibold text-slate-600">
                                     Ngày hết hạn hiệu lực
                                 </label>
-                                <label className="flex items-center gap-1.5 text-[11px] text-[#8AAEBB] cursor-pointer">
+                                <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={hasNoExpiry}
                                         onChange={e => setHasNoExpiry(e.target.checked)}
-                                        className="rounded border-[#2A4355] bg-[#1B2E3D] text-[#87CBB9] focus:ring-0"
+                                        className="rounded border-slate-200 bg-white text-[#0891B2] focus:ring-0"
                                     />
                                     Vô thời hạn
                                 </label>
@@ -236,7 +236,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                                 value={expiryDate}
                                 onChange={e => setExpiryDate(e.target.value)}
                                 disabled={hasNoExpiry}
-                                className={`w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9] ${hasNoExpiry ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                className={`w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9] ${hasNoExpiry ? 'opacity-40 cursor-not-allowed' : ''}`}
                             />
                         </div>
                     </div>
@@ -251,7 +251,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
 
                     {/* Notes */}
                     <div>
-                        <label className="block text-xs font-semibold text-[#8AAEBB] mb-1">
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">
                             Ghi chú nội bộ
                         </label>
                         <textarea
@@ -259,24 +259,24 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             placeholder="Ghi chú về tình trạng tài liệu, bản gốc lưu tại đâu..."
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9] resize-none"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9] resize-none"
                         />
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#2A4355]">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={isUploading}
-                            className="px-4 py-2 text-xs font-semibold rounded-lg text-[#8AAEBB] hover:text-white bg-[#1B2E3D] hover:bg-[#2A4355] transition-colors"
+                            className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 bg-white hover:bg-[#E2E8F0] transition-colors"
                         >
                             Hủy bỏ
                         </button>
                         <button
                             type="submit"
                             disabled={isUploading || !file}
-                            className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-lg bg-[#87CBB9] text-[#0A1926] hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-lg bg-[#0891B2] text-white hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
                         >
                             {isUploading ? (
                                 <>

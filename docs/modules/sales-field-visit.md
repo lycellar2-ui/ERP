@@ -114,6 +114,55 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 - **Bảo Toàn Toàn Bộ Dữ Liệu Nhập Liệu (Zero Mutation on User Data):**
   - Giữ nguyên vẹn 100% các dữ liệu do người dùng nhập: Tên khách hàng, mã khách hàng, số điện thoại, địa chỉ, ghi chú thực địa của Sale, nội dung báo cáo tự đánh giá, và nhận xét thẩm định của Ban Quản lý.
 
+### 11. Báo Cáo Nhanh Thực Địa & Bảng Tin Trực Tiếp Của Quản Lý (Quick Field Report & Today's Live Feed)
+- **Dành cho Nhân viên Sales (Tác Nghiệp Nhanh):**
+  - **Quy trình 2 nhịp mượt mà:** Check-in chụp 1 ảnh camera nhanh trước cửa hàng để ghi nhận toạ độ và thời gian thực. Sau đó, tại thẻ khách hàng trong mục "Ảnh & Lượt Check-in Thực Tế Hôm Nay" hoặc ngay tại điểm kế hoạch đã hoàn thành, xuất hiện nút **`[📝 Ghi Báo Cáo Nhanh / Kết Quả]`** (hoặc `[✏️ Sửa Báo Cáo Nhanh]`).
+  - **Hộp thoại Báo Cáo Nhanh (`QuickReportModal.tsx`):**
+    - 7 Thẻ gợi ý 1-chạm (Quick Tag Chips) thực chiến đặc thù ngành rượu: *Khách quan tâm vang Ý, Đã gửi mẫu thử tasting, Quầy hết tồn cần lên đơn, Thu công nợ/đối soát, Đàm phán hợp đồng/menu, Khách phản ánh giá, Chăm sóc định kỳ tốt*.
+    - Chạm thẻ nào sẽ tự động điền hoặc chèn thêm gạch đầu dòng vào nội dung báo cáo mà không cần gõ phím nhiều trên điện thoại.
+    - Khung nhập liệu chi tiết kèm bộ đếm ký tự trực quan.
+    - Tích hợp Server Action `updateSalesVisitReportAction` cập nhật ngay lập tức trường `SalesVisit.notes`, đồng bộ sang `SalesVisitSchedule.resultNotes`.
+- **Dành cho Quản lý / Ban Giám Đốc (Giám Sát Trực Tiếp Trong Ngày):**
+  - **Bảng Tin Báo Cáo Thực Địa Hôm Nay (`TodayLiveFeed.tsx`):**
+    - Đặt nổi bật ngay trên màn hình Quản lý (nằm giữa cụm 5 Thẻ KPI và Bảng ma trận nhân viên).
+    - Huy hiệu `LIVE` nhấp nháy đỏ thời gian thực thể hiện các lượt check-in phát sinh trong ngày hôm nay.
+    - 3 Thẻ thống kê nhanh: Tổng lượt check-in hôm nay, Đã có báo cáo thực địa, Đang chờ báo cáo.
+    - Bộ lọc đa chiều: Dropdown chọn lọc theo từng nhân viên Sales, 3 nút lọc nhanh (Tất cả / Đã có báo cáo / Chưa có báo cáo), và thanh tìm kiếm toàn văn theo tên khách, mã khách, tên nhân viên hoặc từ khoá trong nội dung báo cáo.
+    - Danh sách thẻ báo cáo chi tiết:
+      - Tên khách hàng, mã khách, phân loại kênh (HORECA/Wholesale/Retail).
+      - Tên nhân viên phụ trách viếng thăm.
+      - Ảnh chụp thực địa kèm chức năng bấm xem ảnh phóng to chi tiết.
+      - Địa chỉ GPS và link mở Google Maps xác minh vị trí.
+      - Khối trích dẫn nội dung báo cáo nhanh nổi bật với tông màu sáng dịu mắt.
+      - Nút hỗ trợ Quản lý chỉnh sửa hoặc bổ sung ý kiến trực tiếp vào báo cáo.
+  - **Tích hợp trong Modal Thẩm Định Chi Tiết:**
+    - Trong tab "Ảnh check-in" của từng nhân viên khi Quản lý bấm "Thẩm định", mỗi thẻ lượt đi đều có khối Báo Cáo Nhanh kèm nút `[✏️ Sửa báo cáo]` / `[+ Ghi báo cáo]`.
+
+### 12. Cơ Chế Khóa Dữ Liệu Quá Khứ & Quyền Sửa Báo Cáo Trong Tuần (Past Day Data Protection & Active Week Report Editing)
+- **Mục đích:** Đảm bảo tính trung thực của dữ liệu thị trường (ngăn Sales xóa dấu vết kế hoạch quá khứ hoặc xóa sạch báo cáo), đồng thời **vẫn tạo điều kiện cho Sales chủ động cập nhật, bổ sung báo cáo thực địa cho các ngày trong tuần** trước khi nộp tổng kết tuần.
+- **Bảo Vệ Kế Hoạch Tuần (Weekly Plan Protection):**
+  - **Giao diện Client (Mobile & Desktop):**
+    - Các ngày trong tuần đã trôi qua (`dateStr < todayStr`), hệ thống tự động ẩn nút xóa `[X]` và nút `[+ Thêm Điểm]`, thay thế bằng huy hiệu `🔒 Đã khóa (Ngày đã qua)`.
+    - Hàm xóa điểm `handleRemovePlanVisit` chặn mọi thao tác xóa điểm thuộc ngày đã qua và hiển thị cảnh báo toast.
+  - **Server Action `saveWeeklyPlanAction` (Bảo mật 2 lớp):**
+    - Kiểm tra danh sách điểm kế hoạch gửi lên: Nếu phát hiện thiếu bất kỳ điểm kế hoạch nào của các ngày trong quá khứ (`evDateStr < todayVnStr`), hệ thống lập tức từ chối và thông báo lỗi `Nhân viên không được phép xóa điểm kế hoạch của các ngày đã qua trong tuần.`
+    - Chặn đổi ngày hoặc đổi khách hàng của các điểm đã qua. Chặn thêm mới điểm vào các ngày đã qua.
+    - Bộ lọc `toDelete` trên DB tuyệt đối không bao giờ xóa các điểm thuộc ngày đã qua đối với tài khoản Sales.
+    - Nếu kế hoạch tuần đã nộp (`SUBMITTED`) hoặc đã được duyệt (`APPROVED`), khóa hoàn toàn quyền chỉnh sửa đối với Sales.
+- **Quy Tắc Quản Lý Báo Cáo Thực Địa (Field Report Management):**
+  - **Cho phép sửa báo cáo trong tuần đang diễn ra (Active Week Editing):**
+    - Nhân viên Sales **được toàn quyền sửa đổi, bổ sung nội dung báo cáo** cho bất kỳ lượt viếng thăm nào thuộc tuần làm việc hiện tại (từ Thứ Hai đến Chủ Nhật).
+    - Thao tác sửa/bổ sung báo cáo có thể thực hiện nhanh chóng ở mọi nơi: Tab *Check-in hôm nay*, Tab *Tổng kết tuần* (Review), và Tab *Lịch sử viếng thăm* (History).
+  - **Chặn xóa trắng báo cáo (Anti-Erase):**
+    - Nếu lượt viếng thăm đã được ghi nhận báo cáo trước đó, Sales không thể xóa sạch nội dung về chuỗi rỗng (`notes.trim() === ''`). Chỉ Quản lý mới có quyền hiệu chỉnh đặc biệt này.
+  - **Khóa khi kết thúc tuần hoặc chốt nộp (Lock on Week End / Submission):**
+    - Báo cáo của các tuần trước (`checkInDateStr < currentWeekMondayStr` theo giờ Việt Nam) sẽ tự động bị khóa chỉ đọc (`readOnly={true}`).
+    - Khi kế hoạch tuần đã được bấm chốt nộp (`SUBMITTED`) hoặc Quản lý đã phê duyệt (`APPROVED`), toàn bộ báo cáo tuần đó được đóng băng để phục vụ đối soát và tính KPI.
+  - **Giao diện Client (`QuickReportModal.tsx`):**
+    - Khi ở trạng thái khóa chỉ đọc, hiển thị banner cảnh báo: `🔒 Báo cáo đã khóa: Báo cáo của tuần trước hoặc kế hoạch đã chốt duyệt không thể chỉnh sửa bởi nhân viên sales.` và vô hiệu hóa các nút lưu/thẻ gợi ý.
+- **Quyền Quản Trị Của Quản Lý (Manager Override):**
+  - Quản lý / Ban Giám Đốc (`isManager === true`) giữ toàn quyền điều chỉnh, bổ sung nhận xét hoặc thẩm định lại bất kỳ kế hoạch và báo cáo nào trong quá khứ khi cần thiết.
+
 ## Files
 
 | File | Vai trò |
@@ -121,8 +170,10 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
 | `next.config.ts` | Cấu hình `Permissions-Policy: camera=(self), geolocation=(self)` cho phép trình duyệt sử dụng Camera và GPS |
 | `i18n.ts` | Từ điển song ngữ (VI/EN) chuẩn hóa toàn bộ nhãn UI, preset hoạt động, ngày trong tuần, hook `useVisitLocale()`, và bộ phát sự kiện đồng bộ `sales_visits_locale_change` |
 | `Header.tsx` | Thanh Header hệ thống tích hợp cụm nút chuyển ngữ `[ VI | EN ]` hiển thị riêng khi truy cập module Check-in, đồng bộ tiêu đề trang song ngữ |
-| `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()` |
-| `SalesVisitsClient.tsx` | Client component: 4 tab tác nghiệp Sales (Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh), Bảng Giám Sát Thị Trường Toàn Đội (Quản lý/CEO), tích hợp Offline Draft Queue và Modal hướng dẫn bật GPS |
+| `actions.ts` | Server Actions được bảo vệ bởi `requireAuth()`: `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()`, `getSalesVisitFullPhoto()`, `updateSalesVisitReportAction()` |
+| `SalesVisitsClient.tsx` | Client component: 4 tab tác nghiệp Sales (Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh), Bảng Giám Sát Thị Trường Toàn Đội (Quản lý/CEO), tích hợp Offline Draft Queue, Modal hướng dẫn bật GPS, Bảng Tin Thực Địa Trực Tiếp và Modal Ghi Báo Cáo Nhanh |
+| `QuickReportModal.tsx` | Modal ghi báo cáo nhanh thực địa: gợi ý thẻ 1-chạm ngành rượu vang, nhập ghi chú kết quả, đếm ký tự, lưu tức thì qua Server Action |
+| `TodayLiveFeed.tsx` | Bảng tin báo cáo thực địa hôm nay của Ban Quản Lý: cập nhật theo thời gian thực, lọc theo nhân viên/trạng thái báo cáo, tìm kiếm toàn văn, xem ảnh camera và GPS |
 | `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, tạo micro-thumbnail song song, watermark chân thực, cảnh báo GPS trong kính ngắm, hỗ trợ native camera fallback, hỗ trợ đa ngôn ngữ VI/EN |
 | `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ khách hàng tối ưu (không query thừa) |
 | `docs/user-guide-sales-field-visit.md` | Sổ tay hướng dẫn sử dụng thực chiến (SOP) chi tiết cho Sales Rep (5 bước check-in, offline hầm rượu, kế hoạch tuần) & Quản lý (5 KPI, thẩm định GPS watermark, duyệt KPI) |

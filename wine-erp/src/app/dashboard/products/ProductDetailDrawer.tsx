@@ -33,10 +33,10 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-    WHITE: { label: 'Vang trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    WHITE: { label: 'Vang trắng', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
     SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
-    FORTIFIED: { label: 'Fortified', color: '#87CBB9', bg: 'rgba(168,130,204,0.15)' },
+    FORTIFIED: { label: 'Fortified', color: '#0891B2', bg: 'rgba(168,130,204,0.15)' },
     DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
 }
 
@@ -49,8 +49,8 @@ const LOT_STATUS: Record<string, { label: string; color: string; bg: string }> =
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     ACTIVE: { label: 'Đang kinh doanh', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    DISCONTINUED: { label: 'Ngừng kinh doanh', color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' },
-    ALLOCATION_ONLY: { label: 'Phân bổ (Allocation)', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    DISCONTINUED: { label: 'Ngừng kinh doanh', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
+    ALLOCATION_ONLY: { label: 'Phân bổ (Allocation)', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
 }
 
 export function ProductDetailDrawer({ open, productId, initialData, cachedData, onClose, canEdit, onEditTrigger }: ProductDetailDrawerProps) {
@@ -123,13 +123,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300 items-center justify-center gap-3"
                     style={{
                         width: 'min(640px, 95vw)',
-                        background: '#0D1E2B',
-                        borderLeft: '1px solid #2A4355',
+                        background: '#F8FAFC',
+                        borderLeft: '1px solid #E2E8F0',
                         transform: animate ? 'translateX(0)' : 'translateX(100%)',
                     }}
                 >
-                    <Loader2 size={32} className="animate-spin text-[#87CBB9]" />
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải chi tiết...</p>
+                    <Loader2 size={32} className="animate-spin text-[#0891B2]" />
+                    <p className="text-xs" style={{ color: '#64748B' }}>Đang tải chi tiết...</p>
                 </div>
             </>
         )
@@ -162,47 +162,47 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                 className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300"
                 style={{
                     width: 'min(640px, 95vw)',
-                    background: '#0D1E2B',
-                    borderLeft: '1px solid #2A4355',
+                    background: '#F8FAFC',
+                    borderLeft: '1px solid #E2E8F0',
                     transform: animate ? 'translateX(0)' : 'translateX(100%)',
                 }}
             >
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-                    style={{ borderBottom: '1px solid #2A4355' }}>
+                    style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <Wine size={16} style={{ color: '#87CBB9' }} />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <Wine size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-lg flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                            <h3 className="font-semibold text-lg flex items-center gap-2" style={{ color: '#0F172A' }}>
                                 Chi Tiết Sản Phẩm
-                                {loading && <Loader2 size={14} className="animate-spin text-[#87CBB9]" />}
+                                {loading && <Loader2 size={14} className="animate-spin text-[#0891B2]" />}
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Xem thông tin chi tiết và tồn kho sản phẩm</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Xem thông tin chi tiết và tồn kho sản phẩm</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#4A6A7A' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#64748B' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
                         <X size={18} />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 relative">
-                    <div className="flex flex-col md:flex-row gap-5 items-start bg-[#142433]/40 p-4 rounded-xl border border-[#2A4355]/30">
-                        <div className="w-full md:w-36 h-48 rounded-lg flex-shrink-0 flex flex-col items-center justify-center relative bg-[#142433] border border-[#2A4355]/60 overflow-hidden">
+                    <div className="flex flex-col md:flex-row gap-5 items-start bg-white/40 p-4 rounded-xl border border-slate-200/30">
+                        <div className="w-full md:w-36 h-48 rounded-lg flex-shrink-0 flex flex-col items-center justify-center relative bg-white border border-slate-200/60 overflow-hidden">
                             {activeImage ? (
                                 <img src={activeImage} alt={activeProduct.productName} className="h-full object-contain p-2" />
                             ) : (
-                                <Wine size={48} style={{ color: '#2A4355' }} />
+                                <Wine size={48} style={{ color: '#E2E8F0' }} />
                             )}
                         </div>
 
                         <div className="flex-1 space-y-2 min-w-0">
-                            <h2 className="text-xl font-bold leading-snug" style={{ color: '#E8F1F2' }}>
+                            <h2 className="text-xl font-bold leading-snug" style={{ color: '#0F172A' }}>
                                 {activeProduct.productName}
                             </h2>
-                            <p className="text-xs font-sans tracking-wide" style={{ color: '#87CBB9' }}>{activeProduct.skuCode}</p>
+                            <p className="text-xs font-sans tracking-wide" style={{ color: '#0891B2' }}>{activeProduct.skuCode}</p>
                             
                             <div className="flex flex-wrap gap-2 pt-1">
                                 {wineTypeBadge && (
@@ -216,19 +216,19 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     </span>
                                 )}
                                 {effectiveIsAllocation && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
                                         Allocation
                                     </span>
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-[#2A4355]/20 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-slate-200/20 text-xs">
                                 <div>
-                                    <span style={{ color: '#4A6A7A' }}>Nhà sản xuất: </span>
-                                    <span className="font-semibold block" style={{ color: '#8AAEBB' }}>{activeProduct.producerName}</span>
+                                    <span style={{ color: '#64748B' }}>Nhà sản xuất: </span>
+                                    <span className="font-semibold block" style={{ color: '#475569' }}>{activeProduct.producerName}</span>
                                 </div>
                                 <div>
-                                    <span style={{ color: '#4A6A7A' }}>Khả dụng bán: </span>
+                                    <span style={{ color: '#64748B' }}>Khả dụng bán: </span>
                                     <span className="font-bold text-sm block font-sans" style={{ color: totalStockQty > 0 ? '#5BA88A' : '#E05252' }}>
                                         {totalStockQty.toLocaleString()} chai
                                     </span>
@@ -245,15 +245,15 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 return (
                                     <div className="pt-2 space-y-1.5">
                                         <div className="grid grid-cols-3 gap-1.5 text-center">
-                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
+                                            <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
                                                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Tồn Sổ</span>
                                                 <span className="text-xs font-bold font-mono text-slate-200">{totalBookQty.toLocaleString()}</span>
                                             </div>
-                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
-                                                <span className="text-[10px] uppercase font-bold text-[#87CBB9] block">On-hand</span>
-                                                <span className="text-xs font-bold font-mono text-[#87CBB9]">{totalOnHandQty.toLocaleString()}</span>
+                                            <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
+                                                <span className="text-[10px] uppercase font-bold text-[#0891B2] block">On-hand</span>
+                                                <span className="text-xs font-bold font-mono text-[#0891B2]">{totalOnHandQty.toLocaleString()}</span>
                                             </div>
-                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
+                                            <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
                                                 <span className="text-[10px] uppercase font-bold text-[#D4A853] block">Khả Dụng</span>
                                                 <span className="text-xs font-bold font-mono text-[#D4A853]">{totalAvailQty.toLocaleString()}</span>
                                                 {totalResQty > 0 && <span className="text-[9px] text-sky-400 block">(Đặt: {totalResQty})</span>}
@@ -274,10 +274,10 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     </div>
 
                     <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <Layers size={13} /> Thông Số Kỹ Thuật
                         </h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-xl text-xs" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-xl text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             {[
                                 { label: 'Xuất xứ', value: `${flag} ${countryName}` },
                                 { label: 'Vùng trồng (Appellation)', value: activeProduct.appellationName ?? '—' },
@@ -292,28 +292,28 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 { label: 'Phân hạng rượu', value: activeProduct.classification ?? '—' },
                                 { label: 'Thuế suất VAT', value: `${(data as any)?.vatRate ?? (activeProduct as any).vatRate ?? 10}%` },
                             ].map((spec, i) => (
-                                <div key={i} className="flex justify-between py-1.5 border-b border-[#2A4355]/20 last:border-b-0">
-                                    <span style={{ color: '#4A6A7A' }}>{spec.label}</span>
-                                    <span className="font-semibold text-right flex items-center justify-end font-sans tabular-nums" style={{ color: '#E8F1F2' }}>{spec.value}</span>
+                                <div key={i} className="flex justify-between py-1.5 border-b border-slate-200/20 last:border-b-0">
+                                    <span style={{ color: '#64748B' }}>{spec.label}</span>
+                                    <span className="font-semibold text-right flex items-center justify-end font-sans tabular-nums" style={{ color: '#0F172A' }}>{spec.value}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <DollarSign size={13} /> Giá Bán Theo Kênh (VND)
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Lẻ Niêm Yết</span>
-                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
+                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Giá Bán Lẻ Niêm Yết</span>
+                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#0891B2' }}>
                                     {effectiveRetailPrice ? formatVND(effectiveRetailPrice) : 'Chưa thiết lập'}
                                 </span>
                             </div>
-                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Buôn (Wholesale)</span>
-                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
+                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Giá Bán Buôn (Wholesale)</span>
+                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#0891B2' }}>
                                     {effectiveWholesalePrice ? formatVND(effectiveWholesalePrice) : 'Chưa thiết lập'}
                                 </span>
                             </div>
@@ -322,7 +322,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
 
                     {((activeProduct as any)?.selfDeclarationUrl || (activeProduct as any)?.tastingNoteUrl) && (
                         <div className="space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Clipboard size={13} /> Tài Liệu & Đường Link
                             </h4>
                             <div className="flex flex-wrap gap-3">
@@ -332,7 +332,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                        style={{ background: 'rgba(135,203,185,0.12)', border: '1px solid rgba(135,203,185,0.3)', color: '#87CBB9' }}
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid rgba(8, 145, 178, 0.25)', color: '#0891B2' }}
                                     >
                                         📄 Xem bản Tự Công Bố ↗
                                     </a>
@@ -355,74 +355,74 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
 
                     {effectiveProfile && (
                         <div className="space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
-                            <div className="p-4 rounded-xl space-y-3 text-xs leading-relaxed" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <div className="p-4 rounded-xl space-y-3 text-xs leading-relaxed" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <div className="grid grid-cols-2 gap-4">
                                     {effectiveProfile.grapes && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Giống nho</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.grapes}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Giống nho</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.grapes}</span>
                                         </div>
                                     )}
                                     {effectiveProfile.servingTemp && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Nhiệt độ phục vụ</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.servingTemp}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Nhiệt độ phục vụ</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.servingTemp}</span>
                                         </div>
                                     )}
                                     {effectiveProfile.originDetail && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Xuất xứ chi tiết</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.originDetail}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Xuất xứ chi tiết</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.originDetail}</span>
                                         </div>
                                     )}
                                     {effectiveProfile.certification && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Chứng chỉ</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.certification}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Chứng chỉ</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.certification}</span>
                                         </div>
                                     )}
                                     {effectiveProfile.color && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Màu sắc</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.color}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Màu sắc</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.color}</span>
                                         </div>
                                     )}
                                     {effectiveProfile.style && (
                                         <div>
-                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phong cách</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.style}</span>
+                                            <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Phong cách</span>
+                                            <span style={{ color: '#0F172A' }} className="font-medium">{effectiveProfile.style}</span>
                                         </div>
                                     )}
                                 </div>
                                 
                                 {effectiveProfile.aromas && (
-                                    <div className="pt-2 border-t border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Hương thơm (Nose)</span>
-                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.aromas}</span>
+                                    <div className="pt-2 border-t border-slate-200/20">
+                                        <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Hương thơm (Nose)</span>
+                                        <span style={{ color: '#475569' }}>{effectiveProfile.aromas}</span>
                                     </div>
                                 )}
                                 
                                 {effectiveProfile.palate && (
-                                    <div className="pt-2 border-t border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Vị giác (Palate)</span>
-                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.palate}</span>
+                                    <div className="pt-2 border-t border-slate-200/20">
+                                        <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Vị giác (Palate)</span>
+                                        <span style={{ color: '#475569' }}>{effectiveProfile.palate}</span>
                                     </div>
                                 )}
                                 
                                 {effectiveProfile.foodPairings && (
-                                    <div className="pt-2 border-t border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Món ăn kèm</span>
-                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.foodPairings}</span>
+                                    <div className="pt-2 border-t border-slate-200/20">
+                                        <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Món ăn kèm</span>
+                                        <span style={{ color: '#475569' }}>{effectiveProfile.foodPairings}</span>
                                     </div>
                                 )}
 
                                 {effectiveProfile.bestSuitedFor && (
-                                    <div className="pt-2 border-t border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phù hợp với</span>
-                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.bestSuitedFor}</span>
+                                    <div className="pt-2 border-t border-slate-200/20">
+                                        <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Phù hợp với</span>
+                                        <span style={{ color: '#475569' }}>{effectiveProfile.bestSuitedFor}</span>
                                     </div>
                                 )}
                             </div>
@@ -431,16 +431,16 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
 
                     {loading && !data && (
                         <div className="space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Award size={13} /> Giải Thưởng & Điểm Số
                             </h4>
                             <div className="grid grid-cols-2 gap-2">
                                 {[1, 2].map(i => (
-                                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg animate-pulse" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                        <div className="w-8 h-8 rounded-lg bg-[#2A4355]/20 flex-shrink-0" />
+                                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg animate-pulse" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                        <div className="w-8 h-8 rounded-lg bg-[#E2E8F0]/20 flex-shrink-0" />
                                         <div className="flex-1 space-y-1.5">
-                                            <div className="h-3 bg-[#2A4355]/30 rounded w-3/4" />
-                                            <div className="h-2 bg-[#2A4355]/30 rounded w-1/2" />
+                                            <div className="h-3 bg-[#E2E8F0]/30 rounded w-3/4" />
+                                            <div className="h-2 bg-[#E2E8F0]/30 rounded w-1/2" />
                                         </div>
                                     </div>
                                 ))}
@@ -449,21 +449,21 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     )}
                     {data && data.awards.length > 0 && (
                         <div className="space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Award size={13} /> Giải Thưởng & Điểm Số
                             </h4>
                             <div className="grid grid-cols-2 gap-2">
                                 {data.awards.map(a => (
-                                    <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg text-xs" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.1)' }}>
                                             <Award size={16} style={{ color: '#D4A853' }} />
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="font-bold truncate" style={{ color: '#E8F1F2' }}>
+                                            <p className="font-bold truncate" style={{ color: '#0F172A' }}>
                                                 {a.source}
-                                                {a.score && <span className="ml-1.5 text-xs text-[#87CBB9] font-sans font-bold">{a.score}pt</span>}
+                                                {a.score && <span className="ml-1.5 text-xs text-[#0891B2] font-sans font-bold">{a.score}pt</span>}
                                             </p>
-                                            <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
                                                 {a.medalLabel ?? ''} {a.vintage ? `(Vintage: ${a.vintage})` : ''}
                                             </p>
                                         </div>
@@ -474,28 +474,28 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     )}
 
                     <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                        <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <Boxes size={13} /> Chi Tiết Tồn Kho Vật Lý
                         </h4>
                         
                         {loading && !data ? (
-                            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                                 <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
-                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['Kho', 'Vị Trí', 'Mã Lô', 'Trạng Thái', 'Tồn Kho'].map((h, idx) => (
-                                                <th key={idx} className="px-3 py-2 uppercase font-semibold text-[10px]" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                <th key={idx} className="px-3 py-2 uppercase font-semibold text-[10px]" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody className="animate-pulse">
                                         {[1, 2].map(i => (
                                             <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
-                                                <td className="px-3 py-3"><div className="h-3 bg-[#2A4355]/30 rounded w-24" /></td>
-                                                <td className="px-3 py-3"><div className="h-3 bg-[#2A4355]/30 rounded w-12" /></td>
-                                                <td className="px-3 py-3"><div className="h-3 bg-[#2A4355]/30 rounded w-16" /></td>
-                                                <td className="px-3 py-3"><div className="h-3 bg-[#2A4355]/30 rounded w-16" /></td>
-                                                <td className="px-3 py-3 text-right"><div className="h-3 bg-[#2A4355]/30 rounded w-8 ml-auto" /></td>
+                                                <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-24" /></td>
+                                                <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-12" /></td>
+                                                <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-16" /></td>
+                                                <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-16" /></td>
+                                                <td className="px-3 py-3 text-right"><div className="h-3 bg-[#E2E8F0]/30 rounded w-8 ml-auto" /></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -504,39 +504,39 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         ) : (
                             data && (
                                 data.stockLots.length === 0 ? (
-                                    <div className="flex flex-col items-center py-8 gap-2 rounded-xl text-center" style={{ border: '1px dashed #2A4355', background: '#142433/30' }}>
-                                        <AlertCircle size={24} style={{ color: '#2A4355' }} />
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Không có hàng tồn kho khả dụng cho sản phẩm này.</p>
+                                    <div className="flex flex-col items-center py-8 gap-2 rounded-xl text-center" style={{ border: '1px dashed #E2E8F0', background: '#FFFFFF/30' }}>
+                                        <AlertCircle size={24} style={{ color: '#E2E8F0' }} />
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Không có hàng tồn kho khả dụng cho sản phẩm này.</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                                         <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                                             <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                 <thead>
-                                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
                                                         {['Kho', 'Vị Trí', 'Mã Lô', 'VTG', 'Tồn Sổ', 'On-hand', 'Khả Dụng', 'Trạng Thái'].map((h, idx) => (
-                                                            <th key={idx} className={`px-2.5 py-2 uppercase font-semibold text-[10px] ${idx >= 4 && idx <= 6 ? 'text-center' : ''}`} style={{ color: '#4A6A7A' }}>{h}</th>
+                                                            <th key={idx} className={`px-2.5 py-2 uppercase font-semibold text-[10px] ${idx >= 4 && idx <= 6 ? 'text-center' : ''}`} style={{ color: '#64748B' }}>{h}</th>
                                                         ))}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {data.stockLots.map(lot => {
-                                                        const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB', bg: 'rgba(168,152,128,0.1)' }
+                                                        const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#475569', bg: 'rgba(168,152,128,0.1)' }
                                                         const bookQty = lot.qtyBook ?? lot.qtyReceived ?? 0
                                                         const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable ?? 0
                                                         const variance = lot.variance ?? (onHandQty - bookQty)
 
                                                         return (
-                                                            <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }} className="hover:bg-[#142433]/50">
-                                                                <td className="px-2.5 py-2 font-medium" style={{ color: '#E8F1F2' }}>{lot.warehouseName}</td>
-                                                                <td className="px-2.5 py-2 font-sans font-semibold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
-                                                                <td className="px-2.5 py-2 font-sans font-mono text-[11px]" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
-                                                                <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#87CBB9' : '#4A6A7A' }}>{lot.vintage ?? 'NV'}</td>
-                                                                <td className="px-2.5 py-2 text-center font-mono font-bold" style={{ color: '#8AAEBB' }}>
+                                                            <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }} className="hover:bg-white/50">
+                                                                <td className="px-2.5 py-2 font-medium" style={{ color: '#0F172A' }}>{lot.warehouseName}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-semibold" style={{ color: '#475569' }}>{lot.locationCode}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-mono text-[11px]" style={{ color: '#64748B' }}>{lot.lotNo}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#87CBB9' : '#64748B' }}>{lot.vintage ?? 'NV'}</td>
+                                                                <td className="px-2.5 py-2 text-center font-mono font-bold" style={{ color: '#475569' }}>
                                                                     {bookQty.toLocaleString()}
                                                                 </td>
                                                                 <td className="px-2.5 py-2 text-center font-mono font-bold">
-                                                                    <span style={{ color: '#87CBB9' }}>{onHandQty.toLocaleString()}</span>
+                                                                    <span style={{ color: '#0891B2' }}>{onHandQty.toLocaleString()}</span>
                                                                     {variance !== 0 && (
                                                                         <span className={`block text-[9px] font-semibold ${variance < 0 ? 'text-rose-400' : 'text-amber-400'}`}>
                                                                             ({variance > 0 ? `+${variance}` : variance})
@@ -570,14 +570,14 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                 </div>
 
                 {activeProduct && canEdit && (
-                    <div className="px-6 py-4 flex-shrink-0 flex justify-end gap-3" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
+                    <div className="px-6 py-4 flex-shrink-0 flex justify-end gap-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                         <button
                             onClick={() => {
                                 onClose()
                                 onEditTrigger(activeProduct.id)
                             }}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}
                             onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                             onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
                         >

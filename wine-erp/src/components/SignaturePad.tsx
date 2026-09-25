@@ -87,7 +87,7 @@ export function SignaturePad({ onEnd }: SignaturePadProps) {
 
     return (
         <div className="space-y-2">
-            <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+            <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <canvas
                     ref={canvasRef}
                     width={400}
@@ -103,7 +103,7 @@ export function SignaturePad({ onEnd }: SignaturePadProps) {
                 />
             </div>
             <div className="flex justify-end">
-                <button type="button" onClick={clear} className="text-xs px-2 py-1 rounded hover:bg-white/10" style={{ color: '#4A6A7A' }}>
+                <button type="button" onClick={clear} className="text-xs px-2 py-1 rounded hover:bg-white/10" style={{ color: '#64748B' }}>
                     Xóa Chữ Ký
                 </button>
             </div>

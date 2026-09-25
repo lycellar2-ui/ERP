@@ -101,25 +101,25 @@ export function OCRUploadWidget() {
         setLoading(false)
     }
 
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '8px' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '8px' }
     const hasResult = customsResult || logisticsResult
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: 'rgba(135,203,185,0.15)' }}>
-                        <FileText size={16} style={{ color: '#87CBB9' }} />
+                        style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                        <FileText size={16} style={{ color: '#0891B2' }} />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>OCR — Đọc Tờ Khai / Invoice</h3>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Upload PDF hoặc paste nội dung → trích xuất tự động</p>
+                        <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>OCR — Đọc Tờ Khai / Invoice</h3>
+                        <p className="text-xs" style={{ color: '#64748B' }}>Upload PDF hoặc paste nội dung → trích xuất tự động</p>
                     </div>
                 </div>
                 {hasResult && (
-                    <button onClick={resetState} className="text-xs px-2 py-1 rounded" style={{ color: '#4A6A7A' }}>
+                    <button onClick={resetState} className="text-xs px-2 py-1 rounded" style={{ color: '#64748B' }}>
                         <X size={14} className="inline mr-1" />Làm Mới
                     </button>
                 )}
@@ -134,13 +134,13 @@ export function OCRUploadWidget() {
                     <button key={m.key} onClick={() => { setMode(m.key); resetState() }}
                         className="flex-1 p-3 rounded-lg text-left transition-all"
                         style={{
-                            background: mode === m.key ? 'rgba(135,203,185,0.08)' : '#142433',
-                            border: `1px solid ${mode === m.key ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                            background: mode === m.key ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
+                            border: `1px solid ${mode === m.key ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
                         }}>
-                        <span className="text-sm font-semibold block" style={{ color: mode === m.key ? '#87CBB9' : '#8AAEBB' }}>
+                        <span className="text-sm font-semibold block" style={{ color: mode === m.key ? '#87CBB9' : '#475569' }}>
                             {m.label}
                         </span>
-                        <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{m.desc}</span>
+                        <span className="text-[10px]" style={{ color: '#64748B' }}>{m.desc}</span>
                     </button>
                 ))}
             </div>
@@ -155,8 +155,8 @@ export function OCRUploadWidget() {
                         onClick={() => fileInputRef.current?.click()}
                         className="relative rounded-lg cursor-pointer transition-all"
                         style={{
-                            background: dragging ? 'rgba(135,203,185,0.06)' : '#142433',
-                            border: `2px dashed ${dragging ? '#87CBB9' : file ? '#5BA88A' : '#2A4355'}`,
+                            background: dragging ? 'rgba(135,203,185,0.06)' : '#FFFFFF',
+                            border: `2px dashed ${dragging ? '#87CBB9' : file ? '#5BA88A' : '#E2E8F0'}`,
                             padding: file ? '12px 16px' : '24px 16px',
                         }}>
                         <input ref={fileInputRef} type="file" accept=".pdf,.txt,.png,.jpg,.jpeg" className="hidden"
@@ -165,19 +165,19 @@ export function OCRUploadWidget() {
                             <div className="flex items-center gap-3">
                                 <FileText size={20} style={{ color: '#5BA88A' }} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold truncate" style={{ color: '#E8F1F2' }}>{file.name}</p>
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{(file.size / 1024).toFixed(0)} KB</p>
+                                    <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{file.name}</p>
+                                    <p className="text-xs" style={{ color: '#64748B' }}>{(file.size / 1024).toFixed(0)} KB</p>
                                 </div>
                                 <button onClick={e => { e.stopPropagation(); setFile(null) }}
-                                    className="p-1 rounded" style={{ color: '#4A6A7A' }}><X size={14} /></button>
+                                    className="p-1 rounded" style={{ color: '#64748B' }}><X size={14} /></button>
                             </div>
                         ) : (
                             <div className="text-center">
-                                <Upload size={28} className="mx-auto mb-2" style={{ color: dragging ? '#87CBB9' : '#2A4355' }} />
-                                <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>
+                                <Upload size={28} className="mx-auto mb-2" style={{ color: dragging ? '#87CBB9' : '#E2E8F0' }} />
+                                <p className="text-sm font-semibold" style={{ color: '#475569' }}>
                                     Kéo thả file vào đây
                                 </p>
-                                <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs mt-1" style={{ color: '#64748B' }}>
                                     Hỗ trợ: PDF, ảnh (PNG/JPG), text • Tối đa 10MB
                                 </p>
                             </div>
@@ -186,7 +186,7 @@ export function OCRUploadWidget() {
 
                     {/* Text Input Area */}
                     <div className="mt-3">
-                        <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                             Hoặc paste nội dung text trực tiếp:
                         </label>
                         <textarea
@@ -211,7 +211,7 @@ export function OCRUploadWidget() {
                     <button onClick={file ? handleExtract : handleManualProcess}
                         disabled={loading || (!file && !extractedText.trim())}
                         className="w-full flex items-center justify-center gap-2 mt-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {loading
                             ? <><Loader2 size={14} className="animate-spin" /> Đang xử lý OCR...</>
                             : <><ArrowRight size={14} /> Trích Xuất Dữ Liệu</>}
@@ -256,21 +256,21 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
                 <CheckCircle2 size={14} style={{ color: '#5BA88A' }} />
                 <span className="text-sm font-semibold" style={{ color: '#5BA88A' }}>Trích xuất thành công — Tờ Khai Hải Quan</span>
             </div>
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 {fields.map((f, i) => (
                     <div key={f.label} className="flex items-center justify-between px-4 py-2.5"
                         style={{
-                            background: i % 2 === 0 ? '#142433' : '#1B2E3D',
+                            background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
                             borderBottom: i < fields.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
                         }}>
-                        <span className="text-xs" style={{ color: '#4A6A7A' }}>{f.label}</span>
-                        <span className="text-sm font-semibold" style={{ color: (f as any).color ?? '#E8F1F2', fontWeight: (f as any).bold ? 700 : undefined }}>
+                        <span className="text-xs" style={{ color: '#64748B' }}>{f.label}</span>
+                        <span className="text-sm font-semibold" style={{ color: (f as any).color ?? '#0F172A', fontWeight: (f as any).bold ? 700 : undefined }}>
                             {f.value}
                         </span>
                     </div>
                 ))}
             </div>
-            <p className="text-[10px] text-center" style={{ color: '#4A6A7A' }}>
+            <p className="text-[10px] text-center" style={{ color: '#64748B' }}>
                 * Kết quả mang tính tham khảo. Vui lòng kiểm tra lại trước khi import vào hệ thống.
             </p>
         </div>
@@ -296,31 +296,31 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
 
             <div className="grid grid-cols-2 gap-3">
                 {result.invoiceNo && (
-                    <div className="p-3 rounded-lg" style={{ background: '#142433' }}>
-                        <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Số Invoice</p>
-                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{result.invoiceNo}</p>
+                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Số Invoice</p>
+                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{result.invoiceNo}</p>
                     </div>
                 )}
                 {result.supplierName && (
-                    <div className="p-3 rounded-lg" style={{ background: '#142433' }}>
-                        <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Nhà Cung Cấp</p>
-                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{result.supplierName}</p>
+                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Nhà Cung Cấp</p>
+                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{result.supplierName}</p>
                     </div>
                 )}
             </div>
 
             {result.costItems && result.costItems.length > 0 && (
-                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                    <div className="px-4 py-2" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                        <span className="text-xs font-semibold uppercase" style={{ color: '#4A6A7A' }}>Chi Tiết Chi Phí</span>
+                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="px-4 py-2" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                        <span className="text-xs font-semibold uppercase" style={{ color: '#64748B' }}>Chi Tiết Chi Phí</span>
                     </div>
                     {result.costItems.map((item, i) => (
                         <div key={i} className="flex items-center justify-between px-4 py-2.5"
                             style={{
-                                background: i % 2 === 0 ? '#1B2E3D' : '#142433',
+                                background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
                                 borderBottom: i < result.costItems!.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
                             }}>
-                            <span className="text-xs" style={{ color: '#8AAEBB' }}>{item.description}</span>
+                            <span className="text-xs" style={{ color: '#475569' }}>{item.description}</span>
                             <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                 {item.amount.toLocaleString()} {item.currency}
                             </span>
@@ -330,15 +330,15 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
             )}
 
             {result.totalAmount != null && (
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(135,203,185,0.2)' }}>
-                    <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>TỔNG</span>
-                    <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>
+                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                    <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>TỔNG</span>
+                    <span className="text-lg font-bold" style={{ color: '#0891B2' }}>
                         {result.totalAmount.toLocaleString()} USD
                     </span>
                 </div>
             )}
 
-            <p className="text-[10px] text-center" style={{ color: '#4A6A7A' }}>
+            <p className="text-[10px] text-center" style={{ color: '#64748B' }}>
                 * Kết quả mang tính tham khảo. Kiểm tra lại trước khi import.
             </p>
         </div>

@@ -23,12 +23,12 @@ const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODr
 })
 
 const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: FileText },
     PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
     PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', color: '#0891B2', bg: 'rgba(8,145,178,0.12)', icon: Clock },
     CONFIRMED: { label: 'Đã Xác Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
     PARTIALLY_DELIVERED: { label: 'Giao 1 Phần', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Truck },
-    DELIVERED: { label: 'Đã Giao', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Truck },
+    DELIVERED: { label: 'Đã Giao', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', icon: Truck },
     INVOICED: { label: 'Đã Xuất HĐ', color: '#A5DED0', bg: 'rgba(165,222,208,0.12)', icon: ReceiptText },
     PAID: { label: 'Đã Thu Tiền', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)', icon: DollarSign },
     CANCELLED: { label: 'Huỷ', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)', icon: XCircle },
@@ -183,41 +183,41 @@ export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; d
 const SODetailSkeleton = () => (
     <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 animate-pulse">
         {/* Progress bar skeleton */}
-        <div className="py-3 px-4 rounded-lg space-y-3 animate-pulse" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+        <div className="py-3 px-4 rounded-lg space-y-3 animate-pulse" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex justify-between">
-                <div className="h-3 w-24 bg-[#2A4355] rounded animate-pulse" />
-                <div className="h-4 w-16 bg-[#2A4355] rounded-full animate-pulse" />
+                <div className="h-3 w-24 bg-[#E2E8F0] rounded animate-pulse" />
+                <div className="h-4 w-16 bg-[#E2E8F0] rounded-full animate-pulse" />
             </div>
-            <div className="h-6 bg-[#2A4355] rounded w-full animate-pulse" />
+            <div className="h-6 bg-[#E2E8F0] rounded w-full animate-pulse" />
         </div>
 
         {/* Two column layout skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#2A4355]/40 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200/40 animate-pulse">
             <div className="space-y-4 animate-pulse">
-                <div className="h-4 bg-[#2A4355] rounded w-1/3 font-bold animate-pulse" />
+                <div className="h-4 bg-[#E2E8F0] rounded w-1/3 font-bold animate-pulse" />
                 <div className="space-y-2 animate-pulse">
-                    <div className="h-3 bg-[#2A4355] rounded w-3/4 animate-pulse" />
-                    <div className="h-3 bg-[#2A4355] rounded w-1/2 animate-pulse" />
-                    <div className="h-3 bg-[#2A4355] rounded w-2/3 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-1/2 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-2/3 animate-pulse" />
                 </div>
             </div>
             <div className="space-y-4 animate-pulse">
-                <div className="h-4 bg-[#2A4355] rounded w-1/3 font-bold animate-pulse" />
+                <div className="h-4 bg-[#E2E8F0] rounded w-1/3 font-bold animate-pulse" />
                 <div className="space-y-2 animate-pulse">
-                    <div className="h-3 bg-[#2A4355] rounded w-3/4 animate-pulse" />
-                    <div className="h-3 bg-[#2A4355] rounded w-1/2 animate-pulse" />
-                    <div className="h-3 bg-[#2A4355] rounded w-2/3 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-1/2 animate-pulse" />
+                    <div className="h-3 bg-[#E2E8F0] rounded w-2/3 animate-pulse" />
                 </div>
             </div>
         </div>
 
         {/* Lines/Items list table skeleton */}
         <div className="space-y-3 animate-pulse">
-            <div className="h-4 bg-[#2A4355] rounded w-1/4 animate-pulse" />
+            <div className="h-4 bg-[#E2E8F0] rounded w-1/4 animate-pulse" />
             <div className="space-y-2 animate-pulse">
-                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
-                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
-                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
+                <div className="h-10 bg-[#E2E8F0] rounded w-full animate-pulse" />
+                <div className="h-10 bg-[#E2E8F0] rounded w-full animate-pulse" />
+                <div className="h-10 bg-[#E2E8F0] rounded w-full animate-pulse" />
             </div>
         </div>
     </div>
@@ -228,7 +228,7 @@ const getPriceBadgeStyle = (source: string | null) => {
         case 'SPECIAL_PRICE':
             return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
         case 'FIXED_PRICE':
-            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+            return { background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }
         case 'FIXED_DISCOUNT':
             return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
         case 'CHANNEL_BASE':
@@ -236,7 +236,7 @@ const getPriceBadgeStyle = (source: string | null) => {
         case 'RETAIL_FALLBACK':
             return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
         default:
-            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+            return { background: 'rgba(74,106,122,0.1)', color: '#64748B', border: '1px solid rgba(74,106,122,0.2)' }
     }
 }
 
@@ -324,15 +324,15 @@ function DeliveryStatusBadge({
 function SOStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
     return (
         <div className="p-4 rounded-md flex items-center gap-4"
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{ background: `${accent}20` }}>
                 <div className="w-3 h-3 rounded-sm" style={{ background: accent }} />
             </div>
             <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
-                {sub && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{sub}</p>}
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
+                {sub && <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{sub}</p>}
             </div>
         </div>
     )
@@ -356,15 +356,15 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                     <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab as SOStatus)}
                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-all"
                         style={{
-                            background: isActive ? 'rgba(135,203,185,0.15)' : 'transparent',
-                            color: isActive ? '#87CBB9' : '#4A6A7A',
-                            border: `1px solid ${isActive ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
+                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                            color: isActive ? '#87CBB9' : '#64748B',
+                            border: `1px solid ${isActive ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
                         }}
                         onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(135,203,185,0.06)')}
                         onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
                         {TAB_LABELS[tab]}
                         <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
-                            style={{ background: isActive ? 'rgba(135,203,185,0.2)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#4A6A7A' }}>
+                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#64748B' }}>
                             {count}
                         </span>
                     </button>
@@ -379,7 +379,7 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
     const isActive = current === field
     return (
         <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#8AAEBB', ...style }}
+            style={{ color: isActive ? '#87CBB9' : '#475569', ...style }}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
@@ -761,16 +761,16 @@ function SODetailDrawer({
     return (
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[740px]" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[740px]" style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div>
-                        <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                        <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                             {loading ? 'Chi Tiết Đơn Hàng' : `SO: ${detail?.soNo}`}
                         </h3>
                         {detail && (
                             <div className="flex items-center gap-2 mt-1">
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>{detail.customer.name} · {detail.paymentTerm}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{detail.customer.name} · {detail.paymentTerm}</p>
                                 <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />
                             </div>
                         )}
@@ -808,19 +808,19 @@ function SODetailDrawer({
                                 )}
                                 <button onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
                                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
-                                    style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
+                                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
                                     title="In ấn đơn hàng">
                                     <Printer size={12} /> In Đơn
                                 </button>
                                 <button onClick={() => onClone(soId)}
                                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
-                                    style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
+                                    style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}
                                     title="Tạo đơn tương tự">
                                     <Copy size={12} /> Clone
                                 </button>
                             </>
                         )}
-                        <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                        <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                     </div>
 
                 </div>
@@ -828,7 +828,7 @@ function SODetailDrawer({
                 {loading ? (
                     <SODetailSkeleton />
                 ) : !detail ? (
-                    <p className="text-center py-8" style={{ color: '#4A6A7A' }}>Không tìm thấy đơn</p>
+                    <p className="text-center py-8" style={{ color: '#64748B' }}>Không tìm thấy đơn</p>
                 ) : (
                     <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
                         
@@ -845,9 +845,9 @@ function SODetailDrawer({
                         )}
 
                         {/* Tiến Trình Đơn Hàng */}
-                        <div className="py-3 px-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        <div className="py-3 px-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-between text-xs mb-4">
-                                <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#4A6A7A' }}>Tiến Trình Đơn Hàng</span>
+                                <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>Tiến Trình Đơn Hàng</span>
                                 <span className="font-semibold text-xs px-2 py-0.5 rounded-full"
                                     style={{ background: STATUS_CFG[detail.status as SOStatus]?.bg, color: STATUS_CFG[detail.status as SOStatus]?.color }}>
                                     {STATUS_CFG[detail.status as SOStatus]?.label}
@@ -855,7 +855,7 @@ function SODetailDrawer({
                             </div>
                             
                             <div className="relative pt-2 pb-1">
-                                <div className="absolute top-[12px] h-[2px] z-0" style={{ background: '#2A4355', left: '8.33%', right: '8.33%' }}>
+                                <div className="absolute top-[12px] h-[2px] z-0" style={{ background: '#E2E8F0', left: '8.33%', right: '8.33%' }}>
                                     {(() => {
                                         let activeIdx = 0
                                         switch (detail.status) {
@@ -927,7 +927,7 @@ function SODetailDrawer({
                                                     {/* Vòng tròn trạng thái */}
                                                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all relative z-10"
                                                         style={{
-                                                            backgroundColor: isDone ? '#5ba889' : '#1B2E3D',
+                                                            backgroundColor: isDone ? '#5ba889' : '#FFFFFF',
                                                             color: isDone ? '#0d1e2c' : '#4a6a79',
                                                             border: isCurrent ? '2px solid #87cbb8' : isDone ? 'none' : '2px solid #2a4354',
                                                             boxShadow: isCurrent ? '0 0 8px rgba(135,203,185,0.4)' : 'none',
@@ -938,13 +938,13 @@ function SODetailDrawer({
                                                     
                                                     {/* Nhãn bước */}
                                                     <span className="text-[10px] font-bold mt-2 whitespace-nowrap block" 
-                                                        style={{ color: isCurrent ? '#87CBB9' : isDone ? '#E8F1F2' : '#4A6A7A' }}>
+                                                        style={{ color: isCurrent ? '#87CBB9' : isDone ? '#0F172A' : '#64748B' }}>
                                                         {label}
                                                     </span>
                                                     
                                                     {/* Mốc thời gian */}
                                                     <span className="text-[8px] font-mono mt-0.5 block leading-none h-2" 
-                                                        style={{ color: isDone ? '#8AAEBB' : '#2A4355' }}>
+                                                        style={{ color: isDone ? '#475569' : '#E2E8F0' }}>
                                                         {ts ? formatStepTime(ts) : '—'}
                                                     </span>
                                                 </div>
@@ -956,14 +956,14 @@ function SODetailDrawer({
                         </div>
 
                         {/* General Info & Financials (Two-Column Grid) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#2A4355]/40">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200/40">
                             {/* Column 1: Customer details */}
                             <div className="space-y-3">
-                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thông tin chung</h4>
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thông tin chung</h4>
                                 <div className="space-y-2 text-xs">
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Khách hàng:</span>
-                                        <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.name}</span>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>Khách hàng:</span>
+                                        <span className="font-semibold text-right" style={{ color: '#0F172A' }}>{detail.customer.name}</span>
                                     </div>
                                     {detail.orderType === 'TASTING' && (
                                         <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-500/50 bg-amber-950/40 text-xs">
@@ -978,15 +978,15 @@ function SODetailDrawer({
                                         </div>
                                     )}
                                     {detail.customer.parent && (
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Khách hàng cha:</span>
-                                            <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.parent.name}</span>
+                                        <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                            <span style={{ color: '#64748B' }}>Khách hàng cha:</span>
+                                            <span className="font-semibold text-right" style={{ color: '#0F172A' }}>{detail.customer.parent.name}</span>
                                         </div>
                                     )}
                                     {(detail.customer.taxId || (detail.customer as any).parent?.taxId) && (
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>MST:</span>
-                                            <span className="font-semibold font-mono" style={{ color: '#8AAEBB' }}>
+                                        <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                            <span style={{ color: '#64748B' }}>MST:</span>
+                                            <span className="font-semibold font-mono" style={{ color: '#475569' }}>
                                                 {detail.customer.taxId ? (
                                                     detail.customer.taxId
                                                 ) : (
@@ -995,78 +995,78 @@ function SODetailDrawer({
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Mã KH / Kênh:</span>
-                                        <span className="font-semibold" style={{ color: '#8AAEBB' }}>{detail.customer.code} ({CHANNEL_LABEL[detail.channel] ?? detail.channel})</span>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>Mã KH / Kênh:</span>
+                                        <span className="font-semibold" style={{ color: '#475569' }}>{detail.customer.code} ({CHANNEL_LABEL[detail.channel] ?? detail.channel})</span>
                                     </div>
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Nhân viên Sales:</span>
-                                        <span className="font-semibold" style={{ color: '#E8F1F2' }}>{detail.salesRep.name}</span>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>Nhân viên Sales:</span>
+                                        <span className="font-semibold" style={{ color: '#0F172A' }}>{detail.salesRep.name}</span>
                                     </div>
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>SĐT nhận hàng:</span>
-                                        <span className="font-semibold font-mono" style={{ color: '#87CBB9' }}>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>SĐT nhận hàng:</span>
+                                        <span className="font-semibold font-mono" style={{ color: '#0891B2' }}>
                                             {(detail.customer as any).receiverPhone || (detail.customer as any).purchasingPhone || (detail.customer as any).contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
                                             {(detail.customer as any).receiverName && (detail.customer as any).receiverName !== detail.customer.name && (
-                                                <span className="text-[10px] ml-1 text-[#8AAEBB]">({(detail.customer as any).receiverName})</span>
+                                                <span className="text-[10px] ml-1 text-slate-600">({(detail.customer as any).receiverName})</span>
                                             )}
                                         </span>
                                     </div>
                                     {detail.shippingAddress && (
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }} className="shrink-0">Địa chỉ giao:</span>
-                                            <span className="font-medium text-right text-[#E8F1F2] text-[11px] ml-2">
+                                        <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                            <span style={{ color: '#64748B' }} className="shrink-0">Địa chỉ giao:</span>
+                                            <span className="font-medium text-right text-slate-900 text-[11px] ml-2">
                                                 {[detail.shippingAddress.address, detail.shippingAddress.ward, detail.shippingAddress.district, detail.shippingAddress.city].filter(Boolean).join(', ')}
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Kỳ hạn thanh toán:</span>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>Kỳ hạn thanh toán:</span>
                                         <span className="font-semibold" style={{ color: '#D4A853' }}>{detail.paymentTerm}</span>
                                     </div>
-                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Ngày tạo đơn:</span>
-                                        <span className="font-semibold" style={{ color: '#8AAEBB' }}>{formatDate(detail.createdAt)}</span>
+                                    <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                        <span style={{ color: '#64748B' }}>Ngày tạo đơn:</span>
+                                        <span className="font-semibold" style={{ color: '#475569' }}>{formatDate(detail.createdAt)}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Column 2: Financial summary */}
                             <div className="space-y-3">
-                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Chỉ số tài chính</h4>
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Chỉ số tài chính</h4>
                                 {canSeeMargin && !marginData ? (
-                                    <div className="py-6 rounded-lg flex flex-col items-center justify-center gap-2 border border-[#2A4355]/30 bg-[#142433]/40">
-                                        <Loader2 size={16} className="animate-spin text-[#87CBB9]" />
-                                        <span className="text-[11px]" style={{ color: '#4A6A7A' }}>Đang tính toán tỷ suất lợi nhuận...</span>
+                                    <div className="py-6 rounded-lg flex flex-col items-center justify-center gap-2 border border-slate-200/30 bg-white/40">
+                                        <Loader2 size={16} className="animate-spin text-[#0891B2]" />
+                                        <span className="text-[11px]" style={{ color: '#64748B' }}>Đang tính toán tỷ suất lợi nhuận...</span>
                                     </div>
                                 ) : (
                                     <div className="space-y-2 text-xs">
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tổng tiền trước thuế (Sau CK):</span>
-                                            <span className="font-bold font-mono text-sm" style={{ color: '#E8F1F2' }}>{formatVND(Number(detail.totalAmount))}</span>
+                                        <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                            <span style={{ color: '#64748B' }}>Tổng tiền trước thuế (Sau CK):</span>
+                                            <span className="font-bold font-mono text-sm" style={{ color: '#0F172A' }}>{formatVND(Number(detail.totalAmount))}</span>
                                         </div>
                                         {detailVatBreakdown.length > 1 ? (
                                             <>
                                                 {detailVatBreakdown.map((vb: { rate: number; amount: number }) => (
-                                                    <div key={vb.rate} className="flex justify-between py-0.5 pl-2 text-[11px]" style={{ color: '#8AAEBB' }}>
+                                                    <div key={vb.rate} className="flex justify-between py-0.5 pl-2 text-[11px]" style={{ color: '#475569' }}>
                                                         <span>↳ Thuế GTGT ({vb.rate}%):</span>
                                                         <span className="font-mono">{formatVND(vb.amount)}</span>
                                                     </div>
                                                 ))}
-                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                    <span style={{ color: '#4A6A7A' }}>Tổng tiền thuế VAT:</span>
-                                                    <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
+                                                <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                    <span style={{ color: '#64748B' }}>Tổng tiền thuế VAT:</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#475569' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
                                                 </div>
                                             </>
                                         ) : (
-                                            <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                <span style={{ color: '#4A6A7A' }}>Tiền thuế VAT ({detailVatBreakdown[0]?.rate ?? (detail as any).vatRate ?? 10}%):</span>
-                                                <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
+                                            <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                <span style={{ color: '#64748B' }}>Tiền thuế VAT ({detailVatBreakdown[0]?.rate ?? (detail as any).vatRate ?? 10}%):</span>
+                                                <span className="font-bold font-mono" style={{ color: '#475569' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tổng thanh toán (Có VAT):</span>
-                                            <span className="font-bold font-mono text-sm text-[#87CBB9]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>
+                                        <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                            <span style={{ color: '#64748B' }}>Tổng thanh toán (Có VAT):</span>
+                                            <span className="font-bold font-mono text-sm text-[#0891B2]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>
                                         </div>
                                         {detail.isInvoiceExempt && (
                                             <div className="p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 mt-2 flex items-start gap-2">
@@ -1079,22 +1079,22 @@ function SODetailDrawer({
                                         )}
                                         {marginData && canSeeMargin ? (
                                             <>
-                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                    <span style={{ color: '#4A6A7A' }}>Doanh thu Net (trước VAT):</span>
-                                                    <span className="font-bold font-mono" style={{ color: '#87CBB9' }}>{formatVND(marginData.totalRevenue)}</span>
+                                                <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                    <span style={{ color: '#64748B' }}>Doanh thu Net (trước VAT):</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#0891B2' }}>{formatVND(marginData.totalRevenue)}</span>
                                                 </div>
-                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                    <span style={{ color: '#4A6A7A' }}>Tổng giá vốn (COGS):</span>
+                                                <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                    <span style={{ color: '#64748B' }}>Tổng giá vốn (COGS):</span>
                                                     <span className="font-bold font-mono" style={{ color: '#D4A853' }}>{formatVND(marginData.totalCOGS)}</span>
                                                 </div>
-                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                    <span style={{ color: '#4A6A7A' }}>Lợi nhuận gộp:</span>
+                                                <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                    <span style={{ color: '#64748B' }}>Lợi nhuận gộp:</span>
                                                     <span className={`font-bold font-mono ${marginData.totalMargin >= 0 ? 'text-[#5BA88A]' : 'text-[#EF4444]'}`}>
                                                         {marginData.totalMargin >= 0 ? '' : '-'}{formatVND(Math.abs(marginData.totalMargin))}
                                                     </span>
                                                 </div>
-                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                                    <span style={{ color: '#4A6A7A' }}>Biên lợi nhuận gộp:</span>
+                                                <div className="flex justify-between py-1 border-b border-slate-200/20">
+                                                    <span style={{ color: '#64748B' }}>Biên lợi nhuận gộp:</span>
                                                     <span className="font-semibold flex items-center gap-1" style={{ color: marginData.totalMarginPct >= 20 ? '#5BA88A' : marginData.totalMarginPct >= 0 ? '#D4A853' : '#EF4444' }}>
                                                         {marginData.totalMarginPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                                                         {marginData.totalMarginPct.toFixed(1)}%
@@ -1102,7 +1102,7 @@ function SODetailDrawer({
                                                 </div>
                                             </>
                                         ) : !canSeeMargin ? (
-                                            <div className="py-3 px-3 rounded text-[11px] leading-relaxed bg-[#142433]/40 border border-[#2A4355]/30" style={{ color: '#4A6A7A' }}>
+                                            <div className="py-3 px-3 rounded text-[11px] leading-relaxed bg-white/40 border border-slate-200/30" style={{ color: '#64748B' }}>
                                                 🔒 Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Nhân viên Sales / Trợ lý Sales.
                                             </div>
                                         ) : null}
@@ -1113,25 +1113,25 @@ function SODetailDrawer({
 
                         {/* Diễn giải / Ghi chú đơn hàng */}
                         {detail.notes && (
-                            <div className="p-3 rounded-md bg-[#142433] border border-[#2A4355]/40 text-xs">
-                                <span className="font-bold text-[10px] uppercase tracking-wider block mb-1" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3 rounded-md bg-white border border-slate-200/40 text-xs">
+                                <span className="font-bold text-[10px] uppercase tracking-wider block mb-1" style={{ color: '#64748B' }}>
                                     📝 Ghi Chú / Diễn Giải Đơn Hàng
                                 </span>
-                                <p className="text-[#E8F1F2] leading-relaxed whitespace-pre-wrap">{detail.notes}</p>
+                                <p className="text-slate-900 leading-relaxed whitespace-pre-wrap">{detail.notes}</p>
                             </div>
                         )}
 
                         {/* 3. PRODUCTS LIST */}
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-2.5" style={{ color: '#4A6A7A' }}>Sản Phẩm Trong Đơn Hàng ({detail.lines.length} dòng)</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2.5" style={{ color: '#64748B' }}>Sản Phẩm Trong Đơn Hàng ({detail.lines.length} dòng)</p>
                             
                             {/* Desktop Table View */}
-                            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
-                                        <thead><tr style={{ background: '#142433' }}>
+                                        <thead><tr style={{ background: '#FFFFFF' }}>
                                             {(canSeeMargin ? ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn', 'Lãi Gộp', 'Biên %'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền']).map(h => (
-                                                <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr></thead>
                                         <tbody>
@@ -1145,9 +1145,9 @@ function SODetailDrawer({
                                             }))).map(ml => {
                                                 const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
                                                 return (
-                                                <tr key={ml.lineId} style={{ borderTop: '1px solid #2A4355', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
+                                                <tr key={ml.lineId} style={{ borderTop: '1px solid #E2E8F0', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
                                                     <td className="px-2.5 py-2">
-                                                        <div className="font-semibold text-[#87CBB9] font-mono flex items-center gap-1.5">
+                                                        <div className="font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                             {custCode && (
                                                                 <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
                                                                     [{custCode}]
@@ -1155,10 +1155,10 @@ function SODetailDrawer({
                                                             )}
                                                             {ml.skuCode}
                                                         </div>
-                                                        <div className="text-[10px] text-[#8AAEBB] mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
+                                                        <div className="text-[10px] text-slate-600 mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#E8F1F2' }}>{ml.qty}</td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB' }}>{formatVND(ml.unitPrice)}</td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#0F172A' }}>{ml.qty}</td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#475569' }}>{formatVND(ml.unitPrice)}</td>
                                                     <td className="px-2.5 py-2">
                                                         {ml.priceSource ? (
                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
@@ -1166,17 +1166,17 @@ function SODetailDrawer({
                                                                 {getPriceBadgeLabel(ml.priceSource)}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Mặc định</span>
+                                                            <span className="text-[10px]" style={{ color: '#64748B' }}>Mặc định</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9' }}>{formatVND(ml.revenue)}</td>
+                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatVND(ml.revenue)}</td>
                                                     {canSeeMargin && (
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853' }}>
-                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#E2E8F0' }}>—</span>}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A' }}>
+                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#64748B' }}>
                                                             {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
                                                         </td>
                                                     )}
@@ -1190,7 +1190,7 @@ function SODetailDrawer({
                                                                     {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                                                                     {ml.marginPct.toFixed(1)}%
                                                                 </span>
-                                                            ) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                            ) : <span style={{ color: '#E2E8F0' }}>—</span>}
                                                         </td>
                                                     )}
                                                 </tr>
@@ -1214,10 +1214,10 @@ function SODetailDrawer({
                                     const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
                                     return (
                                     <div key={ml.lineId} className="p-3 rounded-md space-y-1.5" 
-                                        style={{ background: '#1B2E3D', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#2A4355'}` }}>
+                                        style={{ background: '#FFFFFF', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#E2E8F0'}` }}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-[#87CBB9] font-mono flex items-center gap-1.5">
+                                                <p className="text-xs font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                     {custCode && (
                                                         <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
                                                             [{custCode}]
@@ -1225,7 +1225,7 @@ function SODetailDrawer({
                                                     )}
                                                     {ml.skuCode}
                                                 </p>
-                                                <p className="text-[11px] text-[#E8F1F2] truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
+                                                <p className="text-[11px] text-slate-900 truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
                                             </div>
                                             {ml.priceSource && (
                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold"
@@ -1235,35 +1235,35 @@ function SODetailDrawer({
                                             )}
                                         </div>
                                         
-                                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/30 text-xs">
+                                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/30 text-xs">
                                             <div>
-                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Số Lượng</p>
-                                                <p className="font-bold font-mono text-[#E8F1F2] mt-0.5">{ml.qty}</p>
+                                                <p className="text-[10px]" style={{ color: '#64748B' }}>Số Lượng</p>
+                                                <p className="font-bold font-mono text-slate-900 mt-0.5">{ml.qty}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
-                                                <p className="font-semibold font-mono text-[#E8F1F2] mt-0.5">{formatVND(ml.unitPrice)}</p>
+                                                <p className="text-[10px]" style={{ color: '#64748B' }}>Đơn Giá</p>
+                                                <p className="font-semibold font-mono text-slate-900 mt-0.5">{formatVND(ml.unitPrice)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Thành Tiền</p>
-                                                <p className="font-bold font-mono text-[#87CBB9] mt-0.5">{formatVND(ml.revenue)}</p>
+                                                <p className="text-[10px]" style={{ color: '#64748B' }}>Thành Tiền</p>
+                                                <p className="font-bold font-mono text-[#0891B2] mt-0.5">{formatVND(ml.revenue)}</p>
                                             </div>
                                         </div>
 
                                         {canSeeMargin && ml.avgCost > 0 && (
-                                            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/20 text-xs">
+                                            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/20 text-xs">
                                                 <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Giá Vốn</p>
+                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>Giá Vốn</p>
                                                     <p className="font-semibold font-mono text-[#D4A853] mt-0.5">{formatVND(ml.avgCost)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Lãi Gộp</p>
+                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>Lãi Gộp</p>
                                                     <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#5BA88A' : '#EF4444' }}>
                                                         {ml.margin >= 0 ? '' : '-'}{formatVND(Math.abs(ml.margin))}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Biên %</p>
+                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>Biên %</p>
                                                     <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
                                                         {ml.marginPct.toFixed(1)}%
                                                     </p>
@@ -1278,28 +1278,28 @@ function SODetailDrawer({
 
                         {/* 4. DELIVERY ORDERS & AR INVOICES */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Lệnh Giao Hàng (DO)</p>
+                            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Lệnh Giao Hàng (DO)</p>
                                 {detail.deliveryOrders.length === 0 ? (
-                                    <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa có lệnh giao hàng</p>
+                                    <p className="text-xs py-4 text-center" style={{ color: '#64748B' }}>Chưa có lệnh giao hàng</p>
                                 ) : (
                                     <div className="space-y-1.5">
                                         {detail.deliveryOrders.map(do_ => (
-                                            <div key={do_.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{do_.doNo}</span>
-                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>{do_.status}</span>
+                                            <div key={do_.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{do_.doNo}</span>
+                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>{do_.status}</span>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
 
-                            <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Hóa Đơn Công Nợ (AR)</p>
+                                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Hóa Đơn Công Nợ (AR)</p>
                                         {detail.arInvoices.length > 0 && (
-                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#2A4355]/60 text-[#87CBB9]">
+                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#E2E8F0]/60 text-[#0891B2]">
                                                 {detail.arInvoices.length}
                                             </span>
                                         )}
@@ -1320,7 +1320,7 @@ function SODetailDrawer({
                                             <button
                                                 onClick={handleCreateInvoice}
                                                 disabled={creatingInvoice}
-                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-[#87CBB9]/40 text-[#87CBB9] hover:bg-[#87CBB9]/10 shadow-xs cursor-pointer disabled:opacity-50"
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-[#87CBB9]/40 text-[#0891B2] hover:bg-[#87CBB9]/10 shadow-xs cursor-pointer disabled:opacity-50"
                                                 title="Gắn thêm mã hóa đơn VAT cho đơn hàng này"
                                             >
                                                 {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
@@ -1342,16 +1342,16 @@ function SODetailDrawer({
                                                         Đã duyệt miễn HĐ
                                                     </span>
                                                 </div>
-                                                <p className="text-xs mt-1 text-[#E8F1F2]">
-                                                    <span className="text-[#8AAEBB]">Lý do: </span>
+                                                <p className="text-xs mt-1 text-slate-900">
+                                                    <span className="text-slate-600">Lý do: </span>
                                                     {detail.invoiceExemptReason || 'Khách không lấy hóa đơn VAT'}
                                                 </p>
-                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-[#4A6A7A]">
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500">
                                                     {detail.invoiceExemptBy && (
-                                                        <span>Người duyệt: <strong className="text-[#8AAEBB]">{detail.invoiceExemptBy}</strong></span>
+                                                        <span>Người duyệt: <strong className="text-slate-600">{detail.invoiceExemptBy}</strong></span>
                                                     )}
                                                     {detail.invoiceExemptAt && (
-                                                        <span>Thời gian: <strong className="text-[#8AAEBB]">{formatDateTime(detail.invoiceExemptAt)}</strong></span>
+                                                        <span>Thời gian: <strong className="text-slate-600">{formatDateTime(detail.invoiceExemptAt)}</strong></span>
                                                     )}
                                                 </div>
                                                 {detail.status === 'DELIVERED' && canToggleInvoiceExempt && (
@@ -1371,12 +1371,12 @@ function SODetailDrawer({
                                         </div>
                                     </div>
                                 ) : detail.arInvoices.length === 0 ? (
-                                    <div className="py-5 px-4 rounded-lg text-center" style={{ background: 'rgba(27,46,61,0.4)', border: '1px dashed #2A4355' }}>
+                                    <div className="py-5 px-4 rounded-lg text-center" style={{ background: 'rgba(27,46,61,0.4)', border: '1px dashed #E2E8F0' }}>
                                         <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-2">
                                             <ReceiptText size={18} />
                                         </div>
-                                        <h5 className="text-xs font-bold text-[#E8F1F2] mb-0.5">Chưa xuất hóa đơn cho đơn hàng này</h5>
-                                        <p className="text-[11px] text-[#8AAEBB] max-w-sm mx-auto mb-3.5">
+                                        <h5 className="text-xs font-bold text-slate-900 mb-0.5">Chưa xuất hóa đơn cho đơn hàng này</h5>
+                                        <p className="text-[11px] text-slate-600 max-w-sm mx-auto mb-3.5">
                                             Bạn có thể phát hành hóa đơn điện tử tự động qua VNPT hoặc gắn số hóa đơn thủ công.
                                         </p>
                                         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -1395,7 +1395,7 @@ function SODetailDrawer({
                                                 <button
                                                     onClick={handleCreateInvoice}
                                                     disabled={creatingInvoice}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-semibold inline-flex items-center gap-1.5 transition-all border border-[#87CBB9]/40 text-[#87CBB9] bg-[#87CBB9]/10 hover:bg-[#87CBB9]/20 shadow-xs cursor-pointer disabled:opacity-50"
+                                                    className="text-xs px-3 py-1.5 rounded-md font-semibold inline-flex items-center gap-1.5 transition-all border border-[#87CBB9]/40 text-[#0891B2] bg-[#87CBB9]/10 hover:bg-[#87CBB9]/20 shadow-xs cursor-pointer disabled:opacity-50"
                                                     title="Gắn số hóa đơn VAT xuất từ hệ thống khác (MISA, Viettel, v.v.)"
                                                 >
                                                     {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
@@ -1431,14 +1431,14 @@ function SODetailDrawer({
                                                     key={inv.id}
                                                     className="p-3 rounded-md transition-all"
                                                     style={{
-                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : isVnptPublished ? 'rgba(16,185,129,0.06)' : '#1B2E3D',
-                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : isVnptPublished ? '1px solid rgba(16,185,129,0.35)' : '1px solid #2A4355',
+                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : isVnptPublished ? 'rgba(16,185,129,0.06)' : '#FFFFFF',
+                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : isVnptPublished ? '1px solid rgba(16,185,129,0.35)' : '1px solid #E2E8F0',
                                                     }}
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : isVnptPublished ? 'text-emerald-300' : 'text-[#87CBB9]'}`}>
+                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : isVnptPublished ? 'text-emerald-300' : 'text-[#0891B2]'}`}>
                                                                     {inv.invoiceNo}
                                                                 </span>
                                                                 {isDraftVnpt ? (
@@ -1456,7 +1456,7 @@ function SODetailDrawer({
                                                                         <button
                                                                             onClick={() => handleEditInvoice(inv.id, inv.invoiceNo)}
                                                                             disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
-                                                                            className="p-1 rounded text-[#8AAEBB] hover:text-[#87CBB9] hover:bg-[#2A4355]/40 transition-colors"
+                                                                            className="p-1 rounded text-slate-600 hover:text-[#0891B2] hover:bg-[#E2E8F0]/40 transition-colors"
                                                                             title="Chỉnh sửa mã số hóa đơn"
                                                                         >
                                                                             {editingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
@@ -1467,7 +1467,7 @@ function SODetailDrawer({
                                                                     <button
                                                                         onClick={() => isDraftVnpt ? handleDeleteVnptDraft() : handleDeleteInvoice(inv.id, inv.invoiceNo)}
                                                                         disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id || deletingVnpt}
-                                                                        className="p-1 rounded text-[#8AAEBB] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                                                        className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                                                                         title={isDraftVnpt ? "Xóa bản nháp trên cổng VNPT" : "Gỡ bỏ hóa đơn"}
                                                                     >
                                                                         {(deletingInvoiceId === inv.id || (isDraftVnpt && deletingVnpt)) ? (
@@ -1478,7 +1478,7 @@ function SODetailDrawer({
                                                                     </button>
                                                                 )}
                                                             </div>
-                                                            <p className="text-[11px] mt-1 text-[#8AAEBB]">
+                                                            <p className="text-[11px] mt-1 text-slate-600">
                                                                 {isDraftVnpt
                                                                     ? 'Đã tải lên VNPT e-Invoice. Sau khi ký số trên Portal VNPT, bấm "Kéo Số HĐ" bên dưới.'
                                                                     : isVnptPublished && vnptMeta?.taxAuthorityCode
@@ -1487,7 +1487,7 @@ function SODetailDrawer({
                                                             </p>
                                                         </div>
                                                         <div className="text-right shrink-0">
-                                                            <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>
+                                                            <span className="text-xs font-bold font-mono block" style={{ color: '#0F172A' }}>
                                                                 {formatVND(Number(inv.amount))}
                                                             </span>
                                                             <span
@@ -1533,7 +1533,7 @@ function SODetailDrawer({
 
                                                     {isVnptPublished && vnptMeta && (
                                                         <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
-                                                            <div className="flex items-center gap-2 text-[10px] text-[#8AAEBB]">
+                                                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
                                                                 <span>Ký hiệu: <code className="font-mono text-emerald-200">{vnptMeta.pattern} / {vnptMeta.serial}</code></span>
                                                                 {vnptMeta.syncedAt && <span>• {formatDateTime(vnptMeta.syncedAt)}</span>}
                                                             </div>
@@ -1566,7 +1566,7 @@ function SODetailDrawer({
                                                                     <button
                                                                         onClick={handleSyncVnptInvoice}
                                                                         disabled={syncingVnpt}
-                                                                        className="text-[10px] px-1.5 py-1 rounded text-[#8AAEBB] hover:text-white hover:bg-[#2A4355]/40 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="text-[10px] px-1.5 py-1 rounded text-slate-600 hover:text-white hover:bg-[#E2E8F0]/40 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Kiểm tra lại trạng thái CQT từ VNPT"
                                                                     >
                                                                         {syncingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
@@ -1584,31 +1584,31 @@ function SODetailDrawer({
                         </div>
 
                         {/* 5. HISTORY & AUDIT LOGS */}
-                        <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Nhật Ký Hoạt Động</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>Nhật Ký Hoạt Động</p>
                             {timelineLoading ? (
-                                <div className="flex items-center justify-center py-6 gap-2 text-xs" style={{ color: '#4A6A7A' }}>
-                                    <Loader2 size={14} className="animate-spin text-[#87CBB9]" />
+                                <div className="flex items-center justify-center py-6 gap-2 text-xs" style={{ color: '#64748B' }}>
+                                    <Loader2 size={14} className="animate-spin text-[#0891B2]" />
                                     <span>Đang tải nhật ký hoạt động...</span>
                                 </div>
                             ) : timeline.length === 0 ? (
-                                <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa ghi nhận hoạt động nào</p>
+                                <p className="text-xs py-4 text-center" style={{ color: '#64748B' }}>Chưa ghi nhận hoạt động nào</p>
                             ) : (
                                 <div className="space-y-0 relative pl-1">
-                                    <div className="absolute left-3 top-2 bottom-2 w-[1px]" style={{ background: '#2A4355' }} />
+                                    <div className="absolute left-3 top-2 bottom-2 w-[1px]" style={{ background: '#E2E8F0' }} />
                                     {timeline.map((ev, i) => (
                                         <div key={ev.id} className="flex gap-3 py-2 relative">
                                             <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 z-10"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                 {ACTION_ICON[ev.action] ?? '●'}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{ev.action}</span>
-                                                    {ev.userName && <span className="text-[10px]" style={{ color: '#4A6A7A' }}>— {ev.userName}</span>}
-                                                    <span className="text-xs ml-auto" style={{ color: '#4A6A7A' }}>{formatDate(ev.createdAt)}</span>
+                                                    <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{ev.action}</span>
+                                                    {ev.userName && <span className="text-[10px]" style={{ color: '#64748B' }}>— {ev.userName}</span>}
+                                                    <span className="text-xs ml-auto" style={{ color: '#64748B' }}>{formatDate(ev.createdAt)}</span>
                                                 </div>
-                                                {ev.description && <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>{ev.description}</p>}
+                                                {ev.description && <p className="text-xs mt-0.5" style={{ color: '#475569' }}>{ev.description}</p>}
                                             </div>
                                         </div>
                                     ))}
@@ -1624,7 +1624,7 @@ function SODetailDrawer({
             {dateWarningModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div 
-                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white dark:bg-[#0D1E2B] border-slate-200 dark:border-[#2A4355]"
+                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white dark:bg-slate-50 border-slate-200 dark:border-slate-200"
                     >
                         {/* Header */}
                         <div 
@@ -1654,42 +1654,42 @@ function SODetailDrawer({
                                             ? 'CẢNH BÁO LỆCH KỲ THUẾ (KHÁC THÁNG)' 
                                             : 'LƯU Ý THỜI ĐIỂM LẬP HÓA ĐƠN'}
                                     </h3>
-                                    <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB] mt-0.5">
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-600 mt-0.5">
                                         Đơn hàng: <span className="font-mono font-bold text-slate-800 dark:text-white">{detail?.soNo}</span>
                                     </p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setDateWarningModal(null)}
-                                className="text-slate-400 hover:text-slate-700 dark:text-[#8AAEBB] dark:hover:text-white p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                className="text-slate-400 hover:text-slate-700 dark:text-slate-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
                         {/* Body */}
-                        <div className="p-5 space-y-4 text-xs text-slate-700 dark:text-[#E8F1F2]">
+                        <div className="p-5 space-y-4 text-xs text-slate-700 dark:text-slate-900">
                             {/* Legal Entity & Date Comparison */}
-                            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355]/60 space-y-3">
-                                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-[#2A4355]/30">
-                                    <span className="text-slate-500 dark:text-[#8AAEBB] font-medium">Pháp nhân phát hành:</span>
+                            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200/60 space-y-3">
+                                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-200/30">
+                                    <span className="text-slate-500 dark:text-slate-600 font-medium">Pháp nhân phát hành:</span>
                                     <span className="font-bold text-slate-900 dark:text-white">
                                         {detail?.legalEntity?.name || (detail?.legalEntity?.code === 'TA' ? 'Công ty Cổ phần Thắng Ân (TA)' : detail?.legalEntity?.code === 'LC' ? "Công ty TNHH Phân phối Ly's Cellar (LC)" : 'Thắng Ân (TA)')}
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 pt-0.5">
-                                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#0D1E2B] border border-slate-200 dark:border-[#2A4355]/40 text-center shadow-2xs">
-                                        <span className="text-[10px] text-slate-500 dark:text-[#8AAEBB] block uppercase tracking-wider font-semibold mb-1">Ngày lập đơn ERP</span>
-                                        <span className="font-mono font-bold text-sm text-teal-700 dark:text-[#87CBB9]">{dateWarningModal.orderDateFormatted}</span>
+                                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200/40 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-600 block uppercase tracking-wider font-semibold mb-1">Ngày lập đơn ERP</span>
+                                        <span className="font-mono font-bold text-sm text-teal-700 dark:text-[#0891B2]">{dateWarningModal.orderDateFormatted}</span>
                                     </div>
-                                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#0D1E2B] border border-slate-200 dark:border-[#2A4355]/40 text-center shadow-2xs">
-                                        <span className="text-[10px] text-slate-500 dark:text-[#8AAEBB] block uppercase tracking-wider font-semibold mb-1">Ngày xuất HĐ VNPT</span>
+                                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200/40 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-600 block uppercase tracking-wider font-semibold mb-1">Ngày xuất HĐ VNPT</span>
                                         <span className="font-mono font-bold text-sm text-amber-700 dark:text-amber-400">
                                             {dateWarningModal.invoiceDateFormatted} <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">(Hôm nay)</span>
                                         </span>
                                     </div>
                                 </div>
-                                <div className="text-center pt-1 text-[11px] text-slate-500 dark:text-[#8AAEBB] flex items-center justify-center gap-1.5">
+                                <div className="text-center pt-1 text-[11px] text-slate-500 dark:text-slate-600 flex items-center justify-center gap-1.5">
                                     <span>Khoảng cách thời gian:</span>
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold text-xs ${
                                         dateWarningModal.level === 'DANGER'
@@ -1724,11 +1724,11 @@ function SODetailDrawer({
                         </div>
 
                         {/* Footer Buttons */}
-                        <div className="px-5 py-3.5 bg-slate-50 dark:bg-[#142433] border-t border-slate-200 dark:border-[#2A4355] flex items-center justify-end gap-2.5">
+                        <div className="px-5 py-3.5 bg-slate-50 dark:bg-white border-t border-slate-200 dark:border-slate-200 flex items-center justify-end gap-2.5">
                             <button
                                 type="button"
                                 onClick={() => setDateWarningModal(null)}
-                                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 dark:text-[#8AAEBB] dark:hover:text-white dark:bg-transparent dark:border-[#2A4355] dark:hover:bg-white/5 transition-all cursor-pointer"
+                                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 dark:text-slate-600 dark:hover:text-white dark:bg-transparent dark:border-slate-200 dark:hover:bg-white/5 transition-all cursor-pointer"
                             >
                                 Hủy Bỏ
                             </button>
@@ -1788,14 +1788,14 @@ function SalesOrderMobileCard({
     const isActLoading = actionLoading === row.id
 
     return (
-        <div className="p-3.5 flex flex-col gap-2.5 rounded-lg border transition-all duration-150 relative bg-[#0D1E2B]"
-            style={{ borderColor: '#2A4355' }}
+        <div className="p-3.5 flex flex-col gap-2.5 rounded-lg border transition-all duration-150 relative bg-slate-50"
+            style={{ borderColor: '#E2E8F0' }}
             onClick={onViewDetail}>
             
             {/* Header: SO code & Date */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
+                    <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
                         {row.soNo}
                     </span>
                     {row.orderType === 'TASTING' && (
@@ -1804,17 +1804,17 @@ function SalesOrderMobileCard({
                         </span>
                     )}
                 </div>
-                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                <span className="text-[10px]" style={{ color: '#64748B' }}>
                     {formatDateTime(row.createdAt)}
                 </span>
             </div>
 
             {/* Customer information */}
             <div>
-                <p className="text-sm font-semibold leading-snug" style={{ color: '#E8F1F2' }}>
+                <p className="text-sm font-semibold leading-snug" style={{ color: '#0F172A' }}>
                     {row.customerName}
                 </p>
-                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>
+                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#64748B' }}>
                     {row.customerCode}
                 </p>
             </div>
@@ -1823,7 +1823,7 @@ function SalesOrderMobileCard({
             <div className="flex flex-wrap items-center gap-2">
                 {/* Channel Badge */}
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: 'rgba(135,203,185,0.08)', color: '#8AAEBB' }}>
+                    style={{ background: 'rgba(135,203,185,0.08)', color: '#475569' }}>
                     {CHANNEL_LABEL[row.channel] ?? row.channel}
                 </span>
 
@@ -1831,7 +1831,7 @@ function SalesOrderMobileCard({
                 {row.legalEntityCode && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                         style={{ 
-                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', 
+                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(8, 145, 178, 0.08)', 
                             color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' 
                         }}>
                         {row.legalEntityCode}
@@ -1841,7 +1841,7 @@ function SalesOrderMobileCard({
                 {/* Invoice Number Badge */}
                 {row.invoiceNo ? (
                     <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
-                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
+                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
                         title={`Số hóa đơn: ${row.invoiceNo}`}>
                         HĐ: {row.invoiceNo}
                     </span>
@@ -1854,16 +1854,16 @@ function SalesOrderMobileCard({
                 ) : null}
 
                 {/* Sales Rep Name */}
-                <span className="text-[10px] ml-auto" style={{ color: '#8AAEBB' }}>
+                <span className="text-[10px] ml-auto" style={{ color: '#475569' }}>
                     Rep: <span className="font-medium">{row.salesRepName}</span>
                 </span>
             </div>
 
             {/* Financial summary & Status */}
-            <div className="flex items-center justify-between pt-1.5 border-t border-[#2A4355]/30">
+            <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/30">
                 {/* Total amount & discount */}
                 <div>
-                    <span className="text-sm font-bold font-mono" style={{ color: '#E8F1F2' }}>
+                    <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>
                         {formatVND(row.totalAmount)}
                     </span>
                     {row.orderDiscount > 0 && (
@@ -1881,13 +1881,13 @@ function SalesOrderMobileCard({
             </div>
 
             {/* Actions Footer */}
-            <div className="flex items-center justify-end gap-1.5 flex-wrap pt-2 border-t border-[#2A4355]/30"
+            <div className="flex items-center justify-end gap-1.5 flex-wrap pt-2 border-t border-slate-200/30"
                 onClick={e => e.stopPropagation() /* Prevent card click onViewDetail */}>
                 
                 {/* Eye Detail button (always shown) */}
                 <button onClick={onViewDetail}
                     className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(135,203,185,0.06)', color: '#87CBB9', borderColor: 'rgba(135,203,185,0.2)' }}
+                    style={{ background: 'rgba(135,203,185,0.06)', color: '#0891B2', borderColor: 'rgba(8, 145, 178, 0.15)' }}
                     title="Chi tiết">
                     <Eye size={12} />
                 </button>
@@ -1895,7 +1895,7 @@ function SalesOrderMobileCard({
                 {/* Clone button */}
                 <button onClick={onClone} disabled={actionLoading === row.id}
                     className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', borderColor: 'rgba(138,174,187,0.25)' }}
+                    style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', borderColor: 'rgba(138,174,187,0.25)' }}
                     title="Nhân bản đơn hàng">
                     <Copy size={12} />
                 </button>
@@ -2606,14 +2606,14 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 <div className="flex items-center gap-3">
                     {/* Inline Quick Stats */}
                     <div className="hidden xl:flex items-center gap-x-3 text-xs">
-                        <span style={{ color: '#8AAEBB' }}>Tổng DT: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(2)}T</strong></span>
-                        <span className="text-[#2A4355]">|</span>
-                        <span style={{ color: '#8AAEBB' }} title="Doanh thu đã xuất hóa đơn VAT">Có HĐ: <strong className="font-mono text-sm ml-1 text-emerald-400">₫{((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
-                        <span className="text-[#2A4355]">|</span>
-                        <span style={{ color: '#8AAEBB' }} title="Doanh thu không xuất hóa đơn VAT (vẫn tính đủ 100% VAT)">Không HĐ: <strong className="font-mono text-sm ml-1 text-amber-400">₫{((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
-                        <span className="text-[#2A4355]">|</span>
-                        <span style={{ color: '#8AAEBB' }}>Đơn: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
+                        <span style={{ color: '#475569' }}>Tổng DT: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>₫{(stats.monthRevenue / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#E2E8F0]">|</span>
+                        <span style={{ color: '#475569' }} title="Doanh thu đã xuất hóa đơn VAT">Có HĐ: <strong className="font-mono text-sm ml-1 text-emerald-400">₫{((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#E2E8F0]">|</span>
+                        <span style={{ color: '#475569' }} title="Doanh thu không xuất hóa đơn VAT (vẫn tính đủ 100% VAT)">Không HĐ: <strong className="font-mono text-sm ml-1 text-amber-400">₫{((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T</strong></span>
+                        <span className="text-[#E2E8F0]">|</span>
+                        <span style={{ color: '#475569' }}>Đơn: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
+                        <span style={{ color: '#475569' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
                     </div>
                 </div>
                 
@@ -2621,9 +2621,9 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     <button onClick={() => setShowStats(!showStats)}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
                         style={{ 
-                            background: showStats ? 'rgba(135,203,185,0.15)' : 'rgba(138,174,187,0.1)', 
-                            color: showStats ? '#87CBB9' : '#8AAEBB', 
-                            border: `1px solid ${showStats ? 'rgba(135,203,185,0.3)' : 'rgba(138,174,187,0.25)'}` 
+                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(138,174,187,0.1)', 
+                            color: showStats ? '#87CBB9' : '#475569', 
+                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(138,174,187,0.25)'}` 
                         }}
                         onMouseEnter={e => {
                             if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)'
@@ -2636,7 +2636,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </button>
                     <button onClick={handleExport}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
+                        style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.2)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
                         <Download size={14} /> Excel
@@ -2660,7 +2660,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     {canCreateSO && (
                         <button onClick={() => { setCloneData(null); setCreateOpen(true) }}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
-                            style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                            style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
                             onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                             onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                             <Plus size={16} /> Tạo Đơn Mới
@@ -2673,8 +2673,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {showStats && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết Doanh Thu & Đơn Hàng</span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết Doanh Thu & Đơn Hàng</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
                             Thu gọn chỉ số ✕
                         </button>
                     </div>
@@ -2690,7 +2690,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             )}
 
             {/* Toolbar: Tabs & Main Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
                 {/* Left side: Quick Filter Tabs */}
                 <div className="flex-1 min-w-0">
                     <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
@@ -2880,7 +2880,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold text-slate-600">
                             <input type="checkbox" checked={pendingActionFilter} 
                                 onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
-                                className="rounded border-[#2A4355] text-[#87CBB9] focus:ring-0 focus:ring-offset-0 bg-[#1B2E3D] w-4 h-4" />
+                                className="rounded border-slate-200 text-[#0891B2] focus:ring-0 focus:ring-offset-0 bg-white w-4 h-4" />
                             <span>⚠️ Cần xử lý</span>
                         </label>
                     </div>
@@ -2888,35 +2888,35 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             )}
 
             {/* Table (Desktop View) */}
-            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 1050 }}>
                         <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Số Hóa Đơn</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '17%' }}>Khách Hàng</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '6%' }}>Kênh</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '6%' }}>Pháp Nhân</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>Số Hóa Đơn</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '17%' }}>Khách Hàng</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '6%' }}>Kênh</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '6%' }}>Pháp Nhân</th>
                                 <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '10%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Nhân viên Sales</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Trạng Thái Đơn</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Giao Hàng</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>Nhân viên Sales</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>Trạng Thái Đơn</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>Giao Hàng</th>
                                 <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '7%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '15%' }}>Hành Động</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#475569', width: '15%' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={11} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={11} className="text-center py-12" style={{ color: '#64748B' }}>
                                     <Loader2 size={20} className="inline animate-spin mr-2" />Đang tải...
                                 </td></tr>
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={11} className="text-center py-16" style={{ color: '#4A6A7A' }}>
-                                    <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                                <tr><td colSpan={11} className="text-center py-16" style={{ color: '#64748B' }}>
+                                    <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
                                     <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
                                     {hasActiveFilters && (
-                                         <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#87CBB9', color: '#0A1926' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                         <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#0891B2', color: '#FFFFFF' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                              Xóa Bộ Lọc
                                          </button>
                                     )}
@@ -2927,12 +2927,12 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#87CBB9' }}>{row.soNo}</span>
+                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#0891B2' }}>{row.soNo}</span>
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
                                         {row.invoiceNo ? (
                                             <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded"
-                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
+                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}
                                                 title={row.invoiceNo}>
                                                 {row.invoiceNo}
                                             </span>
@@ -2945,43 +2945,43 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         ) : null}
                                     </td>
                                     <td className="px-4 py-1.5">
-                                        <p className="text-[13px] font-semibold truncate max-w-[220px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
-                                        <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
+                                        <p className="text-[13px] font-semibold truncate max-w-[220px]" style={{ color: '#0F172A' }} title={row.customerName}>{row.customerName}</p>
+                                        <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{row.customerCode}</p>
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
                                         <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>
+                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#475569' }}>
                                             {CHANNEL_LABEL[row.channel] ?? row.channel}
                                         </span>
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
                                         {row.legalEntityCode ? (
                                             <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
-                                                style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
+                                                style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(8, 145, 178, 0.08)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
                                                 {row.legalEntityCode}
                                             </span>
                                         ) : (
-                                            <span className="text-[11px]" style={{ color: '#2A4355' }}>—</span>
+                                            <span className="text-[11px]" style={{ color: '#E2E8F0' }}>—</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <p className="text-[13px] font-bold font-mono" style={{ color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
+                                        <p className="text-[13px] font-bold font-mono" style={{ color: '#0F172A' }}>{formatVND(row.totalAmount)}</p>
                                         {row.orderDiscount > 0 && <p className="text-[10px]" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
                                     </td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#475569' }}>{row.salesRepName}</td>
                                     <td className="px-3 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
                                     <td className="px-3 py-1.5 whitespace-nowrap"><DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} /></td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDateTime(row.createdAt)}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#64748B' }}>{formatDateTime(row.createdAt)}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                                             <button onClick={() => setDetailId(row.id)} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
+                                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}>
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)')}>
                                                 <Eye size={11} /> Xem
                                             </button>
                                             <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                style={{ background: 'rgba(138,174,187,0.15)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.3)' }}
+                                                style={{ background: 'rgba(138,174,187,0.15)', color: '#475569', border: '1px solid rgba(138,174,187,0.3)' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.25)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.15)')}>
                                                 <Printer size={11} /> In
@@ -3068,31 +3068,31 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             <div className={`block md:hidden space-y-3 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                 {rows.length === 0 && loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="p-4 space-y-3 rounded-lg border border-[#2A4355]/30 bg-[#0D1E2B] animate-pulse">
+                        <div key={i} className="p-4 space-y-3 rounded-lg border border-slate-200/30 bg-slate-50 animate-pulse">
                             <div className="flex justify-between">
-                                <div className="h-4 bg-[#1B2E3D] rounded w-1/3" />
-                                <div className="h-3 bg-[#1B2E3D] rounded w-1/4" />
+                                <div className="h-4 bg-white rounded w-1/3" />
+                                <div className="h-3 bg-white rounded w-1/4" />
                             </div>
                             <div className="space-y-2">
-                                <div className="h-4 bg-[#1B2E3D] rounded w-3/4" />
-                                <div className="h-3 bg-[#1B2E3D] rounded w-1/2" />
+                                <div className="h-4 bg-white rounded w-3/4" />
+                                <div className="h-3 bg-white rounded w-1/2" />
                             </div>
                             <div className="flex gap-2">
-                                <div className="h-5 bg-[#1B2E3D] rounded w-16" />
-                                <div className="h-5 bg-[#1B2E3D] rounded w-12" />
+                                <div className="h-5 bg-white rounded w-16" />
+                                <div className="h-5 bg-white rounded w-12" />
                             </div>
-                            <div className="flex justify-between pt-2 border-t border-[#2A4355]/20">
-                                <div className="h-4 bg-[#1B2E3D] rounded w-24" />
-                                <div className="h-5 bg-[#1B2E3D] rounded w-20" />
+                            <div className="flex justify-between pt-2 border-t border-slate-200/20">
+                                <div className="h-4 bg-white rounded w-24" />
+                                <div className="h-5 bg-white rounded w-20" />
                             </div>
                         </div>
                     ))
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-16 rounded-md border border-[#2A4355] bg-[#0D1E2B]" style={{ color: '#4A6A7A' }}>
-                        <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                    <div className="text-center py-16 rounded-md border border-slate-200 bg-slate-50" style={{ color: '#64748B' }}>
+                        <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
                         <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
                         {hasActiveFilters && (
-                             <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#87CBB9', color: '#0A1926' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                             <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#0891B2', color: '#FFFFFF' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                  Xóa Bộ Lọc
                              </button>
                         )}
@@ -3131,12 +3131,12 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
             {/* Pagination */}
             {total > 0 && (
-                <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-4 py-3 bg-[#142433] border border-[#2A4355] rounded-md animate-none">
-                    <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: '#4A6A7A' }}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-200 rounded-md animate-none">
+                    <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: '#64748B' }}>
                         <span>
-                            Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span> đơn hàng
+                            Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span> đơn hàng
                         </span>
-                        <div className="flex items-center gap-1.5 border-l border-[#2A4355] pl-3">
+                        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
                             <span>Hiển thị:</span>
                             <select
                                 value={pageSize}
@@ -3146,7 +3146,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     setPage(1)
                                     reload({ pageSize: newSize, page: 1 }, true)
                                 }}
-                                className="bg-[#0D1E2B] border border-[#2A4355] rounded px-2 py-1 text-xs text-[#8AAEBB] focus:outline-none focus:border-[#87CBB9]"
+                                className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:outline-none focus:border-[#87CBB9]"
                             >
                                 <option value={20}>20 / trang</option>
                                 <option value={50}>50 / trang</option>
@@ -3160,8 +3160,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 onClick={() => handlePageChange(1)}
                                 disabled={page <= 1}
                                 title="Trang đầu"
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
                             >
                                 <ChevronsLeft size={15} />
                             </button>
@@ -3169,23 +3169,23 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 onClick={() => handlePageChange(page - 1)}
                                 disabled={page <= 1}
                                 title="Trang trước"
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
                             >
                                 <ChevronLeft size={15} />
                             </button>
                             {getPageNumbers().map((p, i) =>
                                 p === '...' ? (
-                                    <span key={`dots-${i}`} className="px-1 text-xs select-none" style={{ color: '#4A6A7A' }}>…</span>
+                                    <span key={`dots-${i}`} className="px-1 text-xs select-none" style={{ color: '#64748B' }}>…</span>
                                 ) : (
                                     <button
                                         key={p}
                                         onClick={() => handlePageChange(p as number)}
                                         className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
                                         style={{
-                                            background: p === page ? 'rgba(135,203,185,0.15)' : 'transparent',
-                                            color: p === page ? '#87CBB9' : '#8AAEBB',
-                                            border: `1px solid ${p === page ? '#87CBB9' : '#2A4355'}`,
+                                            background: p === page ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                            color: p === page ? '#87CBB9' : '#475569',
+                                            border: `1px solid ${p === page ? '#87CBB9' : '#E2E8F0'}`,
                                             borderRadius: '4px',
                                         }}
                                     >
@@ -3197,8 +3197,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 onClick={() => handlePageChange(page + 1)}
                                 disabled={page >= totalPages}
                                 title="Trang sau"
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
                             >
                                 <ChevronRight size={15} />
                             </button>
@@ -3206,8 +3206,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 onClick={() => handlePageChange(totalPages)}
                                 disabled={page >= totalPages}
                                 title="Trang cuối"
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1B2E3D]"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '4px' }}
+                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
                             >
                                 <ChevronsRight size={15} />
                             </button>
@@ -3287,7 +3287,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {acctModalId && (
                 <>
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setAcctModalId(null)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                             <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base font-bold">🏛️</span>
                             Kế Toán Duyệt Đơn
@@ -3299,7 +3299,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             <select
                                 value={acctEntityId}
                                 onChange={e => setAcctEntityId(e.target.value)}
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                             >
                                 <option value="">— Chưa chọn —</option>
                                 {legalEntities.map(e => (
@@ -3311,7 +3311,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             <button
                                 type="button"
                                 onClick={() => setAcctModalId(null)}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             >
                                 Huỷ
                             </button>
@@ -3452,8 +3452,8 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-[#223645] pb-3">
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-200 pb-3">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-bold">🍷</span>
                         Duyệt Đơn Hàng & Chỉ Định Vintage
@@ -3484,7 +3484,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             <select
                                 value={selectedWarehouseId}
                                 onChange={e => setSelectedWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium"
+                                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium"
                             >
                                 <option value="">— Chọn kho xuất hàng —</option>
                                 {warehouses
@@ -3513,7 +3513,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             {detail.lines.map((line: any) => {
                                 const avail = availableVintages[line.productId] || []
                                 return (
-                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-200 dark:border-[#223645] flex flex-col gap-2">
+                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200 flex flex-col gap-2">
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
                                                 <p className="text-xs font-bold truncate text-slate-900 dark:text-white" title={line.product.productName}>
@@ -3536,7 +3536,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                         const val = Number(e.target.value)
                                                         setSelectedVintages(prev => ({ ...prev, [line.id]: val }))
                                                     }}
-                                                    className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#111C24] text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                                                    className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-slate-50 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                                                 >
                                                     <option value="">— Chọn Vintage khả dụng —</option>
                                                     {avail.map(v => (
@@ -3554,12 +3554,12 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             })}
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-[#223645]">
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-200">
                             <button
                                 type="button"
                                 onClick={onClose}
                                 disabled={submitting}
-                                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+                                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                             >
                                 Huỷ
                             </button>

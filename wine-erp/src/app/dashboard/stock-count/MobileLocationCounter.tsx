@@ -236,7 +236,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     {onOpenTableModal && (
                         <button
                             onClick={onOpenTableModal}
-                            className="py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
+                            className="py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
                         >
                             📊 Bảng Điền Trực Tiếp
                         </button>
@@ -281,7 +281,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
             {/* Success Toast Notification */}
             {showSuccessToast && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#87CBB9] text-[#0A1926] font-extrabold text-xs px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#0891B2] text-white font-extrabold text-xs px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
                     <CheckCircle2 className="w-4 h-4" /> Đã lưu số lượng thành công!
                 </div>
             )}
@@ -399,7 +399,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     setSearchTerm('')
                                     setActiveIdx(0)
                                 }}
-                                className="px-4 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
+                                className="px-4 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                             >
                                 ↺ Xóa từ khóa để xem lại tất cả {lines.length} sản phẩm
                             </button>
@@ -552,7 +552,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => saveCurrentLineAndNext(currentItem)}
                                     disabled={savingLineId === currentItem.id}
-                                    className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-[#0A1926] font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                                    className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-slate-900 font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
                                 >
                                     {savingLineId === currentItem.id ? (
                                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -735,7 +735,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                         <button
                             onClick={() => setShowZoneReportModal(false)}
-                            className="w-full py-3 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black text-xs rounded-2xl shadow-sm cursor-pointer"
+                            className="w-full py-3 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black text-xs rounded-2xl shadow-sm cursor-pointer"
                         >
                             HOÀN TẤT VÀ TIẾP TỤC
                         </button>
@@ -761,7 +761,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
                     <button
                         onClick={() => setViewMode('ZONES')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Grid className="w-4 h-4" />
                         Vị Trí Kho
@@ -769,7 +769,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <button
                         onClick={() => setViewMode('FOCUS')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Sparkles className="w-4 h-4" />
                         Đếm Tập Trung
@@ -777,7 +777,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <button
                         onClick={() => setViewMode('LIST')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <ListFilter className="w-4 h-4" />
                         Danh Sách

@@ -17,18 +17,18 @@ const AR_STATUS: Record<string, { label: string; color: string }> = {
     PARTIALLY_PAID: { label: 'Đã Thu 1 Phần', color: '#4A8FAB' },
     PAID: { label: 'Đã Thu Đủ', color: '#5BA88A' },
     OVERDUE: { label: 'Quá Hạn', color: '#8B1A2E' },
-    CANCELLED: { label: 'Huỷ', color: '#4A6A7A' },
+    CANCELLED: { label: 'Huỷ', color: '#64748B' },
 }
 
 function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
     label: string; value: string; sub?: string; accent: string; icon: React.FC<any>
 }) {
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${accent}` }}>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${accent}` }}>
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>{label}</p>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>{label}</p>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#0F172A' }}>{value}</p>
                     {sub && <p className="text-xs mt-1" style={{ color: accent }}>{sub}</p>}
                 </div>
                 <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: `${accent}18` }}>
@@ -50,8 +50,8 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
     ]
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-            <h3 className="font-semibold mb-4" style={{ color: '#E8F1F2' }}>AR Aging Report – Phân Tầng Công Nợ</h3>
+        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <h3 className="font-semibold mb-4" style={{ color: '#0F172A' }}>AR Aging Report – Phân Tầng Công Nợ</h3>
             <div className="space-y-3">
                 {bars.map(b => {
                     const val = (buckets as any)[b.key] ?? 0
@@ -59,15 +59,15 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
                     return (
                         <div key={b.key}>
                             <div className="flex justify-between mb-1">
-                                <span className="text-xs" style={{ color: '#8AAEBB' }}>{b.label}</span>
+                                <span className="text-xs" style={{ color: '#475569' }}>{b.label}</span>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>
+                                    <span className="text-xs font-bold" style={{ color: '#0F172A' }}>
                                         {formatVND(val)}
                                     </span>
                                     <span className="text-xs w-12 text-right" style={{ color: b.color }}>{pct.toFixed(1)}%</span>
                                 </div>
                             </div>
-                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                 <div className="h-full rounded-full transition-all duration-500"
                                     style={{ width: `${pct}%`, background: b.color }} />
                             </div>
@@ -75,9 +75,9 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
                     )
                 })}
             </div>
-            <div className="flex justify-between pt-4 mt-4" style={{ borderTop: '1px solid #2A4355' }}>
-                <span className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng AR Outstanding</span>
-                <span className="text-sm font-bold" style={{ color: '#87CBB9' }}>
+            <div className="flex justify-between pt-4 mt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
+                <span className="text-sm font-semibold" style={{ color: '#475569' }}>Tổng AR Outstanding</span>
+                <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
                     {formatVND(total)}
                 </span>
             </div>
@@ -87,19 +87,19 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
 
 function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) => void }) {
     return (
-        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
             <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
                             {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {rows.length === 0 ? (
-                            <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                            <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
                                 Không có hóa đơn nào
                             </td></tr>
                         ) : rows.map(row => (
@@ -111,20 +111,20 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                 <td className="px-3 py-3">
                                     <div className="flex items-center gap-1.5">
                                         {row.isOverdue && <AlertCircle size={12} style={{ color: '#8B1A2E' }} />}
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.invoiceNo}</span>
+                                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</span>
                                     </div>
                                 </td>
                                 <td className="px-3 py-3">
-                                    <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
+                                    <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
+                                    <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
                                 </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.soNo ?? '–'}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(row.amount)}</td>
+                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.soNo ?? '–'}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.amount)}</td>
                                 <td className="px-3 py-3 text-sm" style={{ color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
                                 <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
                                     {formatVND(row.outstanding)}
                                 </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>
+                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#475569' }}>
                                     {formatDate(row.dueDate)}
                                     {row.isOverdue && row.daysOverdue > 0 && (
                                         <p className="font-bold" style={{ color: '#8B1A2E' }}>+{row.daysOverdue}d</p>
@@ -288,10 +288,10 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Tài Chính & Kế Toán
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý công nợ AR/AP vận hành — Bút toán xuất sang PM kế toán
                     </p>
                 </div>
@@ -300,7 +300,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     <div className="w-2 h-2 rounded-full" style={{ background: '#D4A853' }} />
                     <div>
                         <p className="text-xs font-bold" style={{ color: '#D4A853' }}>Export-Only</p>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Xuất bút toán → PM kế toán</p>
+                        <p className="text-xs" style={{ color: '#64748B' }}>Xuất bút toán → PM kế toán</p>
                     </div>
                 </div>
             </div>
@@ -315,18 +315,18 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             </div>
 
             {/* Tabs — 2 groups: Operational | Accounting */}
-            <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#2A4355 transparent' }}>
-                <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#142433', width: 'max-content', minWidth: '100%' }}>
+            <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
+                <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#FFFFFF', width: 'max-content', minWidth: '100%' }}>
                     {/* Group: Operational */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#2A4355' }}>Vận hành</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#E2E8F0' }}>Vận hành</span>
                     {tabs.filter(t => t.group === 'ops').map(t => {
                         const Icon = t.icon
                         return (
                             <button key={t.key} onClick={() => setTab(t.key)}
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
                                 style={{
-                                    background: tab === t.key ? '#1B2E3D' : 'transparent',
-                                    color: tab === t.key ? '#87CBB9' : '#4A6A7A',
+                                    background: tab === t.key ? '#FFFFFF' : 'transparent',
+                                    color: tab === t.key ? '#87CBB9' : '#64748B',
                                 }}>
                                 <Icon size={13} />
                                 {t.label}
@@ -334,17 +334,17 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         )
                     })}
                     {/* Divider */}
-                    <div className="w-px h-6 mx-1" style={{ background: '#2A4355' }} />
+                    <div className="w-px h-6 mx-1" style={{ background: '#E2E8F0' }} />
                     {/* Group: Accounting */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#2A4355' }}>Kế toán</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#E2E8F0' }}>Kế toán</span>
                     {tabs.filter(t => t.group === 'acct').map(t => {
                         const Icon = t.icon
                         return (
                             <button key={t.key} onClick={() => setTab(t.key)}
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
                                 style={{
-                                    background: tab === t.key ? '#1B2E3D' : 'transparent',
-                                    color: tab === t.key ? '#D4A853' : '#4A6A7A',
+                                    background: tab === t.key ? '#FFFFFF' : 'transparent',
+                                    color: tab === t.key ? '#D4A853' : '#64748B',
                                 }}>
                                 <Icon size={13} />
                                 {t.label}
@@ -393,19 +393,19 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         }]}
                         onClearAll={() => { setApSearch(''); setApStatus(''); setApPage(1); reloadAP('', '', 1) }}
                     />
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
                                         {['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tỷ Giá', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
-                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {apRows.length === 0 ? (
-                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Không có AP nào</td></tr>
+                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>Không có AP nào</td></tr>
                                     ) : apRows.map(row => {
                                         const isMultiCurrency = row.currency !== 'VND'
                                         const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
@@ -415,18 +415,18 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
                                             >
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>{row.invoiceNo}</td>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</td>
                                                 <td className="px-3 py-3">
-                                                    <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
-                                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.supplierCode}</p>
+                                                    <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.supplierName}</p>
+                                                    <p className="text-xs" style={{ color: '#64748B' }}>{row.supplierCode}</p>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.poNo ?? '–'}</td>
+                                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.poNo ?? '–'}</td>
                                                 <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                                    <p className="text-sm font-bold" style={{ color: '#0F172A' }}>
                                                         {isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}
                                                     </p>
                                                     {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>
                                                             ≈ {formatVND(row.amountVND)}
                                                         </p>
                                                     )}
@@ -434,7 +434,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 <td className="px-3 py-3">
                                                     <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{row.currency}</span>
                                                     {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>
                                                             ×{row.exchangeRate.toLocaleString()}
                                                         </p>
                                                     )}
@@ -444,12 +444,12 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                         {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
                                                     </p>
                                                     {isMultiCurrency && row.outstanding > 0 && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>
                                                             ≈ {formatVND(row.outstandingVND)}
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>{formatDate(row.dueDate)}</td>
+                                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#475569' }}>{formatDate(row.dueDate)}</td>
                                                 <td className="px-3 py-3">
                                                     <span className="text-xs px-2 py-0.5 rounded-full"
                                                         style={{
@@ -498,7 +498,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 toast.success('Đã xuất AR Aging Excel')
                             } catch { toast.error('Lỗi xuất Excel') }
                         }} className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-md font-semibold"
-                            style={{ border: '1px solid #2A4355', color: '#D4A853' }}>
+                            style={{ border: '1px solid #E2E8F0', color: '#D4A853' }}>
                             <ArrowDownRight size={13} /> Export AR Aging Excel
                         </button>
                     </div>
@@ -528,54 +528,54 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* AR Payment modal */}
             {paymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(10,25,38,0.8)' }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
                     <div className="w-full max-w-sm p-6 rounded-md"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', boxShadow: '0 24px 64px rgba(10,25,38,0.7)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#E8F1F2' }}>Ghi Nhận Thanh Toán AR</h3>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
+                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AR</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số Tiền Thu (VND)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tiền Thu (VND)</label>
                                 <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Phương Thức</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phương Thức</label>
                                     <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
                                         className="w-full px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
                                         <option value="BANK_TRANSFER">Chuyển Khoản</option>
                                         <option value="CASH">Tiền Mặt</option>
                                         <option value="COD">COD</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Ngày Thanh Toán</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Ngày Thanh Toán</label>
                                     <input type="date" value={payDate} onChange={e => setPayDate(e.target.value)}
                                         className="w-full px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số Tham Chiếu (tùy chọn)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tham Chiếu (tùy chọn)</label>
                                 <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
                                     placeholder="Số chứng từ NH, mã GD..."
                                     className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-5">
                             <button onClick={() => { setPaymentModal(null); setPayReference(''); setPayDate(new Date().toISOString().slice(0, 10)) }} className="px-4 py-2 text-sm"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>Huỷ</button>
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
                             <button onClick={handlePayment} disabled={payLoading || !payAmount}
                                 className="px-5 py-2 text-sm font-semibold transition-all"
-                                style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
                                 {payLoading ? 'Đang lưu...' : 'Xác Nhận'}
                             </button>
                         </div>
@@ -585,45 +585,45 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* AP Payment modal */}
             {apPaymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(10,25,38,0.8)' }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
                     <div className="w-full max-w-sm p-6 rounded-md"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', boxShadow: '0 24px 64px rgba(10,25,38,0.7)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#E8F1F2' }}>Ghi Nhận Thanh Toán AP</h3>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
+                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AP</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số Tiền Thanh Toán</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tiền Thanh Toán</label>
                                 <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Phương Thức</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phương Thức</label>
                                 <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
                                     <option value="BANK_TRANSFER">Chuyển Khoản</option>
                                     <option value="CASH">Tiền Mặt</option>
                                     <option value="CHECK">Séc</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số Tham Chiếu (tùy chọn)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tham Chiếu (tùy chọn)</label>
                                 <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
                                     placeholder="Số chứng từ, mã GD..."
                                     className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-5">
                             <button onClick={() => setApPaymentModal(null)} className="px-4 py-2 text-sm"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>Huỷ</button>
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
                             <button onClick={handleAPPayment} disabled={payLoading || !payAmount}
                                 className="px-5 py-2 text-sm font-semibold"
-                                style={{ background: '#D4A853', color: '#0A1926', borderRadius: '6px' }}>
+                                style={{ background: '#D97706', color: '#FFFFFF', borderRadius: '6px' }}>
                                 {payLoading ? 'Đang lưu...' : 'Xác Nhận Thanh Toán'}
                             </button>
                         </div>

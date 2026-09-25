@@ -27,7 +27,7 @@ const getPriceBadgeStyle = (source: string) => {
         case 'SPECIAL_PRICE':
             return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
         case 'FIXED_PRICE':
-            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+            return { background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }
         case 'FIXED_DISCOUNT':
             return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
         case 'CHANNEL_BASE':
@@ -35,7 +35,7 @@ const getPriceBadgeStyle = (source: string) => {
         case 'RETAIL_FALLBACK':
             return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
         default:
-            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+            return { background: 'rgba(74,106,122,0.1)', color: '#64748B', border: '1px solid rgba(74,106,122,0.2)' }
     }
 }
 
@@ -658,10 +658,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             <div className="hidden md:block md:flex-1" onClick={onClose} />
 
             {/* Drawer */}
-            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-[#111C24] shadow-2xl border-l border-slate-200 dark:border-[#223645]">
+            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-slate-50 shadow-2xl border-l border-slate-200 dark:border-slate-200">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
                             <ShoppingBag size={20} />
@@ -689,7 +689,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 <div className="flex-1 overflow-y-auto p-6 space-y-5">
                     {loadingData && (
                         <div className="flex items-center justify-center py-8">
-                            <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                            <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
                         </div>
                     )}
 
@@ -842,7 +842,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Customer Autocomplete Search */}
                                 <div className="md:col-span-5">
                                     <div className="flex items-center justify-between mb-1">
-                                        <label className="block text-[11px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                                        <label className="block text-[11px] font-bold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                             Khách Hàng *
                                         </label>
                                         {selectedCustomer && (
@@ -983,11 +983,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                 {/* Shipping Address Selection */}
                                 <div className="md:col-span-4">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#64748B' }}>
                                         Địa Chỉ Giao Hàng *
                                     </label>
                                     {!selectedCustomer ? (
-                                        <div className="w-full px-3 py-2 text-xs rounded border border-[#2A4355] text-gray-500 bg-[#0A1926]/40">
+                                        <div className="w-full px-3 py-2 text-xs rounded border border-slate-200 text-gray-500 bg-slate-50/40">
                                             Chưa chọn khách hàng
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
@@ -1015,7 +1015,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                 {/* Order Date Selection */}
                                 <div className="md:col-span-3">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#64748B' }}>
                                         📅 Ngày Đơn Hàng *
                                     </label>
                                     <input
@@ -1030,15 +1030,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Compact Order Info & Credit Status */}
                             {selectedCustomer && (
-                                <div className="flex flex-col gap-2 p-2 rounded-md" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
+                                <div className="flex flex-col gap-2 p-2 rounded-md" style={{ background: '#FFFFFF/60', border: '1px solid #E2E8F0' }}>
                                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                                         <div className="flex items-center gap-3">
                                             <span className="font-bold" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
                                                 {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
                                             </span>
-                                            <span style={{ color: '#4A6A7A' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
-                                            <span style={{ color: '#4A6A7A' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
-                                            <span style={{ color: '#4A6A7A' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
                                         </div>
                                         {canOverride && (
                                             <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}>
@@ -1085,27 +1085,27 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             {/* SO Lines */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                         Sản Phẩm *
                                     </label>
                                     <button onClick={addLine}
                                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold transition-all"
-                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', borderRadius: '4px' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}>
                                         <Plus size={13} /> Thêm dòng
                                     </button>
                                 </div>
 
                                 {lines.length === 0 ? (
-                                    <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #2A4355' }}>
-                                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có sản phẩm — Click "+ Thêm dòng"</p>
+                                    <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
+                                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có sản phẩm — Click "+ Thêm dòng"</p>
                                     </div>
                                 ) : (
                                     <>
                                         {/* Desktop Table View */}
-                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full" style={{ minHeight: '280px' }}>
+                                        <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-md bg-white max-w-full" style={{ minHeight: '280px' }}>
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
-                                                    <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
+                                                    <tr className="bg-white text-slate-500 border-b border-slate-200 font-semibold">
                                                         <th className="px-3 py-2.5" style={{ minWidth: '300px' }}>Sản Phẩm *</th>
                                                         {hasCustomerCodes && (
                                                             <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">Mã Khách</th>
@@ -1118,7 +1118,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         <th className="px-3 py-2.5 w-10 text-center"></th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-[#2A4355]/40">
+                                                <tbody className="divide-y divide-slate-200/40">
                                                     {lines.map((line, i) => {
                                                         const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
                                                         const lowStock = line.productId ? line.qtyOrdered > line.stock : false
@@ -1127,7 +1127,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         const resolved = priceMap[line.productId]
                                                         const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
                                                         return (
-                                                            <tr key={i} className={`hover:bg-[#1B2E3D]/30 transition-colors ${lowStock || quotaExceeded ? 'bg-red-950/10' : ''}`}>
+                                                            <tr key={i} className={`hover:bg-white/30 transition-colors ${lowStock || quotaExceeded ? 'bg-red-950/10' : ''}`}>
                                                                 <td className="px-3 py-2 relative">
                                                                     <div className="relative">
                                                                         <input
@@ -1161,7 +1161,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
-                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] w-[520px] shadow-xl">
+                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-white border border-slate-200 dark:border-slate-200 w-[520px] shadow-xl">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                                     <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
                                                                                         Không tìm thấy sản phẩm
@@ -1174,7 +1174,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                 updateLine(i, 'productId', p.id)
                                                                                                 setActiveDropdownIndex(null)
                                                                                             }}
-                                                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
+                                                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-white transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-200/30 last:border-b-0"
                                                                                         >
                                                                                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                                 {customerCodesMap[p.id] && (
@@ -1182,8 +1182,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                         [{customerCodesMap[p.id]}]
                                                                                                     </span>
                                                                                                 )}
-                                                                                                <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
-                                                                                                <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
+                                                                                                <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                                                <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
                                                                                             </div>
                                                                                             <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
                                                                                         </div>
@@ -1216,7 +1216,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     </td>
                                                                 )}
                                                                 <td className="px-3 py-2 text-center">
-                                                                    <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-[#8AAEBB]'}`}>
+                                                                    <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-slate-600'}`}>
                                                                         {line.productId ? line.stock : '—'}
                                                                     </span>
                                                                 </td>
@@ -1231,7 +1231,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     />
                                                                     {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
                                                                 </td>
-                                                                <td className="px-3 py-2 text-right font-mono text-[#8AAEBB]">
+                                                                <td className="px-3 py-2 text-right font-mono text-slate-600">
                                                                     {formatVND(line.unitPrice)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
@@ -1245,7 +1245,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         style={{ ...inputStyle }}
                                                                     />
                                                                 </td>
-                                                                <td className="px-3 py-2 text-right font-mono font-bold text-[#87CBB9]">
+                                                                <td className="px-3 py-2 text-right font-mono font-bold text-[#0891B2]">
                                                                     {formatVND(lineTotal)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
@@ -1271,7 +1271,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
                                                 return (
                                                     <div key={i} className="p-3 rounded-md space-y-2"
-                                                        style={{ background: '#142433', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
+                                                        style={{ background: '#FFFFFF', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#E2E8F0'}` }}>
                                                         <div className="flex items-start gap-2">
                                                             <div className="flex-1 relative">
                                                                 <input
@@ -1305,7 +1305,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 />
                                                                 
                                                                 {activeDropdownIndex === i && (
-                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white dark:bg-[#142433] border-slate-200 dark:border-[#2A4355]">
+                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white dark:bg-white border-slate-200 dark:border-slate-200">
                                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                             <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
                                                                                 Không tìm thấy sản phẩm
@@ -1318,7 +1318,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                         updateLine(i, 'productId', p.id)
                                                                                         setActiveDropdownIndex(null)
                                                                                     }}
-                                                                                    className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
+                                                                                    className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-white transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-200/30 last:border-b-0"
                                                                                 >
                                                                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                         {customerCodesMap[p.id] && (
@@ -1326,8 +1326,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                 [{customerCodesMap[p.id]}]
                                                                                             </span>
                                                                                         )}
-                                                                                        <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
-                                                                                        <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
+                                                                                        <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                                        <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
                                                                                     </div>
                                                                                     <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
                                                                                 </div>
@@ -1359,16 +1359,16 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         </div>
                                                         <div className="grid grid-cols-4 gap-2">
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Số Lượng</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Số Lượng</p>
                                                                 <input type="number" min="1" value={line.qtyOrdered}
                                                                     onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
-                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#2A4355'}` }}
+                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#E2E8F0'}` }}
                                                                 />
                                                                 {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn ({line.stock})</p>}
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Đơn Giá</p>
                                                                 <input type="number" min="0" value={line.unitPrice}
                                                                     readOnly
                                                                     className="w-full px-2 py-1 text-xs outline-none opacity-70 cursor-not-allowed"
@@ -1376,7 +1376,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK (%)</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>CK (%)</p>
                                                                 <input type="number" min="0" max="100" value={line.lineDiscountPct}
                                                                     onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
@@ -1384,7 +1384,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>VAT (%)</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>VAT (%)</p>
                                                                 <select value={line.vatRate ?? 10}
                                                                     onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
@@ -1395,7 +1395,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                             </div>
                                                         </div>
                                                         <div className="flex justify-end">
-                                                            <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>
+                                                            <p className="text-xs font-bold" style={{ color: '#0891B2' }}>
                                                                 = {formatVND(lineTotal)}
                                                             </p>
                                                         </div>
@@ -1409,9 +1409,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Order discount + Total */}
                             {lines.length > 0 && (
-                                <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between mb-3">
-                                        <label className="text-xs font-semibold" style={{ color: '#4A6A7A' }}>Chiết Khấu Tổng Đơn (%)</label>
+                                        <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Chiết Khấu Tổng Đơn (%)</label>
                                         <input type="number" min="0" max="100" value={orderDiscount}
                                             onChange={e => setOrderDiscount(Number(e.target.value))}
                                             className="w-24 px-2.5 py-1.5 text-sm outline-none text-right"
@@ -1423,38 +1423,38 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <span>🏷️ Kênh {channel}: Giá bán lẻ niêm yết <strong>ĐÃ BAO GỒM VAT</strong></span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-1.5">
+                                    <div className="flex justify-between items-center text-xs text-slate-600 mb-1.5">
                                         <p>{isVatInclusive ? 'Thành tiền hàng (Sau CK)' : 'Trước thuế (Sau CK)'}</p>
                                         <p className="font-mono">{formatVND(isVatInclusive ? Math.round(subtotal * (1 - orderDiscount / 100)) : netSubtotal)}</p>
                                     </div>
                                     {isVatInclusive && (
-                                        <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-1.5">
+                                        <div className="flex justify-between items-center text-xs text-slate-600 mb-1.5">
                                             <p>↳ Giá trị trước thuế (bóc tách)</p>
                                             <p className="font-mono">{formatVND(netSubtotal)}</p>
                                         </div>
                                     )}
                                     {vatBreakdown.length > 1 ? (
-                                        <div className="space-y-1 my-2 py-2 border-y border-[#2A4355]/40 text-xs text-[#8AAEBB]">
+                                        <div className="space-y-1 my-2 py-2 border-y border-slate-200/40 text-xs text-slate-600">
                                             {vatBreakdown.map(vb => (
                                                 <div key={vb.rate} className="flex justify-between items-center pl-2">
                                                     <p>↳ Thuế GTGT ({vb.rate}%) {isVatInclusive ? '(bóc tách)' : ''}</p>
                                                     <p className="font-mono">{formatVND(Math.round(vb.amount))}</p>
                                                 </div>
                                             ))}
-                                            <div className="flex justify-between items-center font-semibold pt-1 text-[#E8F1F2]">
+                                            <div className="flex justify-between items-center font-semibold pt-1 text-slate-900">
                                                 <p>Tổng tiền thuế VAT</p>
                                                 <p className="font-mono">{formatVND(vatAmount)}</p>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-2.5">
+                                        <div className="flex justify-between items-center text-xs text-slate-600 mb-2.5">
                                             <p>{isVatInclusive ? '↳ Thuế VAT bóc tách' : 'Thuế VAT'} ({vatBreakdown[0]?.rate ?? 10}%)</p>
                                             <p className="font-mono">{formatVND(vatAmount)}</p>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #2A4355' }}>
-                                        <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng Thanh Toán (Gồm VAT)</p>
-                                        <p className="text-xl font-bold" style={{ color: '#87CBB9' }}>
+                                    <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                        <p className="text-sm font-semibold" style={{ color: '#475569' }}>Tổng Thanh Toán (Gồm VAT)</p>
+                                        <p className="text-xl font-bold" style={{ color: '#0891B2' }}>
                                             {formatVND(finalTotal)}
                                         </p>
                                     </div>
@@ -1467,7 +1467,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50 shrink-0">
+                <div className="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50 shrink-0">
                     <button
                         type="button"
                         onClick={() => {
@@ -1481,7 +1481,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             }
                             setPreviewOpen(true)
                         }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors bg-white dark:bg-[#16232F] hover:bg-slate-100 dark:hover:bg-[#1F3547] text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-[#2A4355] shadow-xs cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors bg-white dark:bg-white hover:bg-slate-100 dark:hover:bg-slate-50 text-slate-700 dark:text-slate-900 border border-slate-300 dark:border-slate-200 shadow-xs cursor-pointer"
                         title="Xem trước phiếu đơn hàng trước khi tạo đơn"
                     >
                         <Printer size={15} className="text-amber-500" /> Xem File In
@@ -1491,7 +1491,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1F3547] transition-colors cursor-pointer"
+                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-50 transition-colors cursor-pointer"
                         >
                             Huỷ
                         </button>
@@ -1511,9 +1511,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             {/* PRINT PREVIEW MODAL */}
             {previewOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-[#0D1821] border border-[#2A4355] rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                    <div className="bg-[#0D1821] border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433] print:hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                                 <Printer size={18} />
                                 <span>{orderType === 'TASTING' ? 'XEM TRƯỚC PHIẾU ĐƠN HÀNG TASTING (PRINT PREVIEW)' : 'XEM TRƯỚC PHIẾU ĐƠN BÁN HÀNG (PRINT PREVIEW)'}</span>
@@ -1527,7 +1527,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 </button>
                                 <button
                                     onClick={() => setPreviewOpen(false)}
-                                    className="p-1 text-slate-400 hover:text-white rounded bg-[#1F3547]"
+                                    className="p-1 text-slate-400 hover:text-slate-900 rounded bg-slate-50"
                                 >
                                     <X size={18} />
                                 </button>

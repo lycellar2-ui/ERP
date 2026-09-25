@@ -106,7 +106,7 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="absolute right-2 px-4 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-xs rounded-lg shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                className="absolute right-2 px-4 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold text-xs rounded-lg shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                             >
                                 {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Tra Cứu'}
                             </button>

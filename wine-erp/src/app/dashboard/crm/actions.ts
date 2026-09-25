@@ -414,9 +414,9 @@ const PRESET_TAGS: { tag: string; color: string }[] = [
     { tag: 'At-risk', color: '#E05252' },
     { tag: 'Price-sensitive', color: '#4A8FAB' },
     { tag: 'EVFTA', color: '#5BA88A' },
-    { tag: 'New', color: '#87CBB9' },
+    { tag: 'New', color: '#0891B2' },
     { tag: 'Top Buyer', color: '#A5DED0' },
-    { tag: 'HORECA Key', color: '#8AAEBB' },
+    { tag: 'HORECA Key', color: '#475569' },
 ]
 
 export async function getPresetTags() {

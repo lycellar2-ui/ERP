@@ -46,18 +46,18 @@ export function FilterBar({
     return (
         <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                 <input type="text" placeholder={searchPlaceholder} value={localSearch}
                     onChange={e => handleSearch(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
+                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
             </div>
             {filters.map(f => (
                 <select key={f.key} value={f.value} onChange={e => f.onChange(e.target.value)}
                     className="px-3 py-2.5 text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: f.value ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: f.value ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                     <option value="">{f.label}</option>
                     {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
@@ -65,8 +65,8 @@ export function FilterBar({
             {hasActiveFilters && onClearAll && (
                 <button onClick={onClearAll}
                     className="flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all"
-                    style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                    style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <X size={12} /> Xóa bộ lọc
                 </button>

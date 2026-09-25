@@ -13,7 +13,7 @@ export default async function ApprovalMatrixPage() {
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center py-32">
-                <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full" style={{ borderColor: '#87CBB9', borderTopColor: 'transparent' }} />
+                <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full" style={{ borderColor: '#0891B2', borderTopColor: 'transparent' }} />
             </div>
         }>
             <ApprovalMatrixClient initialData={data} />

@@ -25,7 +25,7 @@ export default function LoginPage() {
         <div
             className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
             style={{
-                background: 'linear-gradient(135deg, #0A1926 0%, #142433 50%, #1B2E3D 100%)',
+                background: 'linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%, #FFFFFF 100%)',
             }}
         >
             {/* Subtle ambient glows — Navy/Teal */}
@@ -63,12 +63,12 @@ export default function LoginPage() {
                 <div
                     className="rounded-md p-8"
                     style={{
-                        background: '#1B2E3D',
-                        border: '1px solid #2A4355',
-                        boxShadow: '0 24px 64px rgba(10,25,38,0.7)',
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)',
                     }}
                 >
-                    <h2 className="text-xl font-semibold mb-6" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-xl font-semibold mb-6" style={{ color: '#0F172A' }}>
                         Đăng nhập
                     </h2>
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
                     <form className="space-y-5" onSubmit={handleSubmit}>
                         {/* Email */}
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium" style={{ color: '#8AAEBB' }} htmlFor="email">
+                            <label className="block text-sm font-medium" style={{ color: '#475569' }} htmlFor="email">
                                 Email
                             </label>
                             <input
@@ -97,25 +97,25 @@ export default function LoginPage() {
                                 className="w-full px-4 text-sm"
                                 style={{
                                     height: '44px',
-                                    background: '#142433',
-                                    border: '1px solid #2A4355',
-                                    color: '#E8F1F2',
+                                    background: '#FFFFFF',
+                                    border: '1px solid #E2E8F0',
+                                    color: '#0F172A',
                                     outline: 'none',
                                     borderRadius: '6px',
                                     transition: 'border-color 150ms',
                                 }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                             />
                         </div>
 
                         {/* Password */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium" style={{ color: '#8AAEBB' }} htmlFor="password">
+                                <label className="block text-sm font-medium" style={{ color: '#475569' }} htmlFor="password">
                                     Mật khẩu
                                 </label>
-                                <a href="/forgot-password" className="text-xs" style={{ color: '#87CBB9' }}>
+                                <a href="/forgot-password" className="text-xs" style={{ color: '#0891B2' }}>
                                     Quên mật khẩu?
                                 </a>
                             </div>
@@ -129,15 +129,15 @@ export default function LoginPage() {
                                 className="w-full px-4 text-sm"
                                 style={{
                                     height: '44px',
-                                    background: '#142433',
-                                    border: '1px solid #2A4355',
-                                    color: '#E8F1F2',
+                                    background: '#FFFFFF',
+                                    border: '1px solid #E2E8F0',
+                                    color: '#0F172A',
                                     outline: 'none',
                                     borderRadius: '6px',
                                     transition: 'border-color 150ms',
                                 }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                             />
                         </div>
 
@@ -149,7 +149,7 @@ export default function LoginPage() {
                             style={{
                                 height: '44px',
                                 background: loading ? '#5ba396' : '#87CBB9',
-                                color: '#0A1926',
+                                color: '#0F172A',
                                 border: 'none',
                                 cursor: loading ? 'wait' : 'pointer',
                                 borderRadius: '6px',
@@ -163,7 +163,7 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <p className="text-center mt-6 text-xs" style={{ color: '#4A6A7A' }}>
+                <p className="text-center mt-6 text-xs" style={{ color: '#64748B' }}>
                     © 2026 LY&apos;s Cellars · Chỉ dành cho nhân viên nội bộ
                 </p>
             </div>

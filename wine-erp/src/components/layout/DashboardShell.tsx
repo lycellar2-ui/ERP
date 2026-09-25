@@ -12,21 +12,21 @@ function PageSkeleton() {
         <div className="space-y-6 max-w-screen-2xl animate-pulse">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div className="h-7 w-56 rounded" style={{ background: '#1B2E3D' }} />
-                    <div className="h-4 w-80 rounded mt-2" style={{ background: '#142433' }} />
+                    <div className="h-7 w-56 rounded" style={{ background: '#FFFFFF' }} />
+                    <div className="h-4 w-80 rounded mt-2" style={{ background: '#FFFFFF' }} />
                 </div>
-                <div className="h-10 w-32 rounded" style={{ background: '#1B2E3D' }} />
+                <div className="h-10 w-32 rounded" style={{ background: '#FFFFFF' }} />
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <div className="h-3 w-24 rounded mb-3" style={{ background: '#142433' }} />
-                        <div className="h-8 w-20 rounded" style={{ background: '#142433' }} />
+                    <div key={i} className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div className="h-3 w-24 rounded mb-3" style={{ background: '#FFFFFF' }} />
+                        <div className="h-8 w-20 rounded" style={{ background: '#FFFFFF' }} />
                     </div>
                 ))}
             </div>
-            <div className="h-12 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }} />
-            <div className="h-72 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }} />
+            <div className="h-12 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} />
+            <div className="h-72 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} />
         </div>
     )
 }
@@ -53,14 +53,14 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
     }, [isMobile])
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ background: '#0A1926' }}>
+        <div className="flex h-screen overflow-hidden" style={{ background: '#F8FAFC' }}>
             <NavigationProgress />
 
             {/* Mobile overlay */}
             {isMobile && mobileOpen && (
                 <div
                     className="fixed inset-0 z-40"
-                    style={{ background: 'rgba(10,25,38,0.75)' }}
+                    style={{ background: 'rgba(15, 23, 42, 0.45)' }}
                     onClick={() => setMobileOpen(false)}
                 />
             )}
@@ -88,7 +88,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                         <button
                             onClick={() => setMobileOpen(true)}
                             className="p-2 rounded-lg mr-2"
-                            style={{ color: '#87CBB9' }}
+                            style={{ color: '#0891B2' }}
                         >
                             <Menu size={20} />
                         </button>

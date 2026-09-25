@@ -82,7 +82,7 @@ export function DocumentUploader({
     return (
         <div className="space-y-3">
             <label className="text-xs font-semibold uppercase tracking-wide block"
-                style={{ color: '#4A6A7A' }}>{label}</label>
+                style={{ color: '#64748B' }}>{label}</label>
 
             {/* Existing documents */}
             {documents.length > 0 && (
@@ -90,14 +90,14 @@ export function DocumentUploader({
                     {documents.map((doc, i) => (
                         <div key={doc.id ?? i}
                             className="flex items-center gap-3 p-3 rounded-lg"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <span className="text-lg">{getFileIcon(doc.name)}</span>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm truncate" style={{ color: '#E0E8EF' }}>
                                     {doc.name}
                                 </p>
                                 {doc.size && (
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                    <p className="text-xs" style={{ color: '#64748B' }}>
                                         {formatFileSize(doc.size)}
                                     </p>
                                 )}
@@ -105,12 +105,12 @@ export function DocumentUploader({
                             <div className="flex gap-1">
                                 <a href={doc.url} target="_blank" rel="noopener noreferrer"
                                     className="p-1.5 rounded-md transition-colors hover:bg-white/5"
-                                    style={{ color: '#87CBB9' }} title="Mở file">
+                                    style={{ color: '#0891B2' }} title="Mở file">
                                     <ExternalLink size={14} />
                                 </a>
                                 <a href={doc.url} download={doc.name}
                                     className="p-1.5 rounded-md transition-colors hover:bg-white/5"
-                                    style={{ color: '#87CBB9' }} title="Tải về">
+                                    style={{ color: '#0891B2' }} title="Tải về">
                                     <Download size={14} />
                                 </a>
                                 {onDelete && doc.id && (
@@ -132,9 +132,9 @@ export function DocumentUploader({
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm
                     transition-all cursor-pointer"
                 style={{
-                    background: '#1B2E3D',
-                    border: '1px dashed #2A4355',
-                    color: uploading ? '#4A6A7A' : '#87CBB9',
+                    background: '#FFFFFF',
+                    border: '1px dashed #E2E8F0',
+                    color: uploading ? '#64748B' : '#87CBB9',
                 }}>
                 {uploading ? (
                     <><Loader2 size={16} className="animate-spin" /> Đang upload...</>

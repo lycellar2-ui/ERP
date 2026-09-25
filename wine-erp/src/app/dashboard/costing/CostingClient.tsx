@@ -51,16 +51,16 @@ export function CostingClient({ products }: Props) {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                     Tính Giá Vốn & Đề Xuất Giá (CST)
                 </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                     Landed cost / chai • Margin analysis • Đề xuất giá theo kênh
                 </p>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {TABS.map(t => {
                     const isActive = tab === t.key
                     const Icon = t.icon
@@ -68,9 +68,9 @@ export function CostingClient({ products }: Props) {
                         <button key={t.key} onClick={() => setTab(t.key)}
                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
                             style={{
-                                background: isActive ? '#1B2E3D' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#4A6A7A',
-                                border: isActive ? '1px solid #2A4355' : '1px solid transparent',
+                                background: isActive ? '#FFFFFF' : 'transparent',
+                                color: isActive ? '#87CBB9' : '#64748B',
+                                border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
                             }}>
                             <Icon size={14} />
                             {t.label}
@@ -84,16 +84,16 @@ export function CostingClient({ products }: Props) {
                 <>
                     {/* Summary */}
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Đang Bán</p>
-                            <p className="text-2xl font-bold" style={{ color: '#87CBB9' }}>{products.length}</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>SKU Đang Bán</p>
+                            <p className="text-2xl font-bold" style={{ color: '#0891B2' }}>{products.length}</p>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Margin TB</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Margin TB</p>
                             <p className="text-2xl font-bold" style={{ color: '#5BA88A' }}>{avgMargin.toFixed(1)}%</p>
                         </div>
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${lossCount > 0 ? '#8B1A2E' : '#5BA88A'}` }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Bán Dưới Giá Vốn</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${lossCount > 0 ? '#8B1A2E' : '#5BA88A'}` }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>SKU Bán Dưới Giá Vốn</p>
                             <p className="text-2xl font-bold" style={{ color: lossCount > 0 ? '#8B1A2E' : '#5BA88A' }}>
                                 {lossCount}
                             </p>
@@ -106,29 +106,29 @@ export function CostingClient({ products }: Props) {
                             <input type="text" placeholder="Tìm SKU hoặc tên sản phẩm..."
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                             />
 
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
-                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['SKU', 'Sản Phẩm', 'Giá Vốn/Chai', 'Giá Bán', 'Margin', 'Tồn'].map(h => (
-                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {filtered.length === 0 ? (
-                                            <tr><td colSpan={6} className="text-center py-10 text-sm" style={{ color: '#4A6A7A' }}>
-                                                <Wine size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
+                                            <tr><td colSpan={6} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>
+                                                <Wine size={28} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
                                                 Chưa có SKU có dữ liệu tồn kho
                                             </td></tr>
                                         ) : filtered.map(p => {
                                             const isSelected = selected?.id === p.id
-                                            const typeColor = WINE_COLORS[p.wineType] ?? '#8AAEBB'
+                                            const typeColor = WINE_COLORS[p.wineType] ?? '#475569'
                                             const marginOk = (p.marginPct ?? 0) >= 30
                                             return (
                                                 <tr key={p.id}
@@ -149,9 +149,9 @@ export function CostingClient({ products }: Props) {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2.5">
-                                                        <p className="text-xs font-medium truncate max-w-[170px]" style={{ color: '#E8F1F2' }}>{p.productName}</p>
+                                                        <p className="text-xs font-medium truncate max-w-[170px]" style={{ color: '#0F172A' }}>{p.productName}</p>
                                                         {p.abvPercent && (
-                                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                            <p className="text-xs" style={{ color: '#64748B' }}>
                                                                 {p.abvPercent}° — {p.abvPercent >= 20 ? SCT_NOTE.high : SCT_NOTE.low}
                                                             </p>
                                                         )}
@@ -159,7 +159,7 @@ export function CostingClient({ products }: Props) {
                                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                                         {p.unitLandedCost > 0 ? formatVND(p.unitLandedCost) : '—'}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>
+                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>
                                                         {p.listPrice ? formatVND(p.listPrice) : '—'}
                                                     </td>
                                                     <td className="px-3 py-2.5">
@@ -172,7 +172,7 @@ export function CostingClient({ products }: Props) {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
                                                         {p.stockQty.toLocaleString()}
                                                     </td>
                                                 </tr>
@@ -186,25 +186,25 @@ export function CostingClient({ products }: Props) {
                         {/* Right — Price suggestion panel */}
                         <div className="col-span-12 lg:col-span-5">
                             {selected ? (
-                                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center gap-2 mb-4">
-                                        <Calculator size={18} style={{ color: '#87CBB9' }} />
+                                        <Calculator size={18} style={{ color: '#0891B2' }} />
                                         <div>
-                                            <h3 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>Đề Xuất Giá Bán</h3>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{selected.skuCode} — {selected.productName}</p>
+                                            <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>Đề Xuất Giá Bán</h3>
+                                            <p className="text-xs" style={{ color: '#64748B' }}>{selected.skuCode} — {selected.productName}</p>
                                         </div>
                                     </div>
 
-                                    <div className="p-3 rounded-md mb-4" style={{ background: '#142433' }}>
+                                    <div className="p-3 rounded-md mb-4" style={{ background: '#FFFFFF' }}>
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>Giá Vốn / Chai (WA)</span>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>Giá Vốn / Chai (WA)</span>
                                             <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {formatVND(selected.unitLandedCost)}
                                             </span>
                                         </div>
                                         {selected.abvPercent && (
                                             <div className="flex justify-between">
-                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>Thuế TTĐB áp dụng</span>
+                                                <span className="text-xs" style={{ color: '#64748B' }}>Thuế TTĐB áp dụng</span>
                                                 <span className="text-xs font-bold" style={{ color: selected.abvPercent >= 20 ? '#8B1A2E' : '#D4A853' }}>
                                                     {selected.abvPercent >= 20 ? '65%' : '35%'} ({selected.abvPercent}° ABV)
                                                 </span>
@@ -223,28 +223,28 @@ export function CostingClient({ products }: Props) {
                                     )}
 
                                     <div className="space-y-3">
-                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                             Đề Xuất Theo Kênh (Target Margin)
                                         </p>
                                         {suggestions.map(s => (
-                                            <div key={s.channel} className="p-3 rounded-md" style={{ background: '#142433' }}>
+                                            <div key={s.channel} className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <p className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{CHANNEL_LABEL[s.channel]}</p>
+                                                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{CHANNEL_LABEL[s.channel]}</p>
                                                     <span className="text-xs px-1.5 py-0.5 rounded-full"
-                                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                                         {s.margin}% margin
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between items-end">
                                                     <div>
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chính xác</p>
-                                                        <p className="text-sm font-bold" style={{ color: '#8AAEBB' }}>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>Chính xác</p>
+                                                        <p className="text-sm font-bold" style={{ color: '#475569' }}>
                                                             {formatVND(s.price)}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Làm tròn (±50k)</p>
-                                                        <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>Làm tròn (±50k)</p>
+                                                        <p className="text-lg font-bold" style={{ color: '#0891B2' }}>
                                                             {formatVND(s.rounded)}
                                                         </p>
                                                     </div>
@@ -254,9 +254,9 @@ export function CostingClient({ products }: Props) {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-8 rounded-md text-center" style={{ background: '#1B2E3D', border: '1px dashed #2A4355' }}>
-                                    <Calculator size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn một SKU để xem đề xuất giá bán</p>
+                                <div className="p-8 rounded-md text-center" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
+                                    <Calculator size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
+                                    <p className="text-sm" style={{ color: '#64748B' }}>Chọn một SKU để xem đề xuất giá bán</p>
                                 </div>
                             )}
                         </div>
@@ -293,16 +293,16 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
         <div className="space-y-5">
             {/* Preset Scenarios Grid */}
             <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#E8F1F2' }}>⚡ Kịch Bản Có Sẵn</h4>
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>⚡ Kịch Bản Có Sẵn</h4>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {presets.map((s, i) => (
                         <button key={i} onClick={() => runAnalysis(s)}
                             className="p-3 text-left rounded-md transition-all"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                            <p className="text-xs font-bold mb-1" style={{ color: '#E8F1F2' }}>{s.label}</p>
-                            <div className="flex gap-3 text-[10px]" style={{ color: '#4A6A7A' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                            <p className="text-xs font-bold mb-1" style={{ color: '#0F172A' }}>{s.label}</p>
+                            <div className="flex gap-3 text-[10px]" style={{ color: '#64748B' }}>
                                 {s.exchangeRateChange !== 0 && <span>FX: {s.exchangeRateChange > 0 ? '+' : ''}{s.exchangeRateChange}%</span>}
                                 {s.importTaxChange !== 0 && <span>NK: {s.importTaxChange > 0 ? '+' : ''}{s.importTaxChange}%</span>}
                                 {s.sctChange !== 0 && <span>SCT: {s.sctChange > 0 ? '+' : ''}{s.sctChange}%</span>}
@@ -313,49 +313,49 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
             </div>
 
             {/* Custom Input */}
-            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <h4 className="text-sm font-semibold mb-3" style={{ color: '#D4A853' }}>🔧 Kịch Bản Tùy Chỉnh</h4>
                 <div className="grid grid-cols-3 gap-3">
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>Tỷ giá Δ (%)</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Tỷ giá Δ (%)</label>
                         <input type="number" value={custom.exchangeRateChange}
                             onChange={e => setCustom({ ...custom, exchangeRateChange: Number(e.target.value) })}
                             className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                             step={1} placeholder="VD: +5" />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>Thuế NK Δ (%)</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Thuế NK Δ (%)</label>
                         <input type="number" value={custom.importTaxChange}
                             onChange={e => setCustom({ ...custom, importTaxChange: Number(e.target.value) })}
                             className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                             step={1} placeholder="VD: -10" />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>TTĐB Δ (%)</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>TTĐB Δ (%)</label>
                         <input type="number" value={custom.sctChange}
                             onChange={e => setCustom({ ...custom, sctChange: Number(e.target.value) })}
                             className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                             step={1} placeholder="VD: +5" />
                     </div>
                 </div>
                 <button onClick={() => runAnalysis(custom)} disabled={loading}
                     className="mt-3 w-full py-2 text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                    style={{ background: '#D4A853', color: '#0A1926', borderRadius: '6px' }}>
+                    style={{ background: '#D97706', color: '#FFFFFF', borderRadius: '6px' }}>
                     <Beaker size={14} />{loading ? 'Đang tính...' : 'Chạy Phân Tích'}
                 </button>
             </div>
 
             {/* Results Table */}
             {results.length > 0 && (
-                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 {['SKU', 'Giá vốn hiện tại', 'Giá vốn mới', 'Δ Chi phí', 'Margin hiện tại', 'Margin mới', 'Δ Margin'].map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -367,8 +367,8 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                 const marginDown = (sc.marginDelta ?? 0) < 0
                                 return (
                                     <tr key={r.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.skuCode}</td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{formatVND(r.currentUnitCost)}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>{r.skuCode}</td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{formatVND(r.currentUnitCost)}</td>
                                         <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#E85D5D' : '#5BA88A' }}>{formatVND(sc.newUnitCost)}</td>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{
@@ -378,7 +378,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                                 {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
                                             </span>
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
                                         <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: marginDown ? '#E85D5D' : '#5BA88A' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
                                         <td className="px-3 py-2.5">
                                             {sc.marginDelta !== null ? (
@@ -388,7 +388,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                                         {sc.marginDelta > 0 ? '+' : ''}{sc.marginDelta.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                            ) : <span className="text-xs" style={{ color: '#4A6A7A' }}>—</span>}
+                                            ) : <span className="text-xs" style={{ color: '#64748B' }}>—</span>}
                                         </td>
                                     </tr>
                                 )

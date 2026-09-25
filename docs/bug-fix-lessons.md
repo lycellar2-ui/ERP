@@ -66,6 +66,7 @@
 57. [BUG-110: Vercel Deployment Bị Chặn Do Vượt Quá Giới Hạn Cron Jobs Gói Hobby](#bug-110-vercel-deployment-bị-chặn-do-vượt-quá-giới-hạn-cron-jobs-gói-hobby)
 58. [BUG-111: Bảng Ma Trận & Giám Sát Check-in Thị Trường Hiển Thị Toàn Bộ Tài Khoản Thay Vì Chỉ Tài Khoản Sale](#bug-111-bảng-ma-trận--giám-sát-check-in-thị-trường-hiển-thị-toàn-bộ-tài-khoản-thay-vì-chỉ-tài-khoản-sale)
 59. [BUG-112: Tải Màn Hình Check-in Thị Trường Chậm (5-8s) — SSR Over-fetching, Duplicate Client Waterfall & GPS Blocking](#bug-112-tải-màn-hình-check-in-thị-trường-chậm-5-8s--ssr-over-fetching-duplicate-client-waterfall--gps-blocking)
+60. [BUG-113: Sai Lệch Giá Bán Buôn, Bán Lẻ & Cơ Chế Giá Đặc Biệt Vang Ý (Anselmi L10039 & Nhóm Vang Ý)](#bug-113-sai-lệch-giá-bán-buôn-bán-lẻ--cơ-chế-giá-đặc-biệt-vang-ý-anselmi-l10039--nhóm-vang-ý)
 
 ---
 
@@ -3051,6 +3052,41 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 112: Trong Next.js App Router, tuyệt đối không gọi lại cùng một Server Action trong `useEffect` trên mount nếu dữ liệu đã được fetch ở Server Component `page.tsx`; Phải pre-fetch đúng dữ liệu theo Role người dùng để loại bỏ client waterfall; Không kích hoạt phần cứng GPS độ chính xác cao hoặc gọi API Geocoding bên thứ ba chặn giao diện khi vừa mở trang.**
+
+---
+
+## BUG-113: Sai Lệch Giá Bán Buôn, Bán Lẻ & Cơ Chế Giá Đặc Biệt Vang Ý (Anselmi L10039 & Nhóm Vang Ý)
+
+**Ngày:** 2026-09-24  
+**Người sửa:** AI Assistant  
+**Module:** MDM / SLS / MGN — Master Data Pricing (`ProductMarginPrice`, `CustomerPriceRule`, `Quotation new italian wine sept26.xlsx`)  
+**Mức độ:** 🔴 High (Lệch giá niêm yết bán lẻ và nguy cơ bán hoà/dưới giá vốn trên bảng báo giá đặc biệt)
+
+### Mô tả lỗi
+1. **Lệch giá Bán buôn & Bán đặc biệt (Anselmi `L10039`):**
+   - Trong file Excel `Quotation new italian wine sept26.xlsx`, chai Anselmi San Vincenzo Bianco Veneto bị copy-paste nhầm giá Wholesale của 2 dòng Monteforte ở trên (`309,000 đ` thay vì `555,000 đ`).
+   - Cột Special Price (-10%) kéo theo mức giá `278,100 đ`, bán ngang giá vốn nhập khẩu (`276,168 đ`, lãi gộp ~0.7%).
+   - Tờ trình `TT-2026-045` (Dragon Cello) và 7 bản ghi `CustomerPriceRule` (Bouchon, Ambry, Dragon Cello) kế thừa con số sai `278,100 đ`.
+2. **Lệch giá Bán lẻ toàn bộ nhóm 8 chai vang Ý (`ProductMarginPrice`):**
+   - Đối soát với Bảng giá tổng hợp chuẩn hóa theo Tự Công Bố (`D:\Lyscellar\Price\Bảng giá 25.07 - Chuẩn hóa.xlsx`), toàn bộ 8 chai vang Ý trong ERP có giá bán buôn khớp 100% nhưng giá bán lẻ (`retailPrice`) bị nhập sai lệch nghiêm trọng:
+     - Anselmi `L10039`: ERP lưu `2,120,000 đ` (chuẩn gồm VAT là `945,000 đ`).
+     - Chianti `L10040`: ERP lưu `1,690,000 đ` (chuẩn gồm VAT là `650,000 đ`).
+     - Pa'ro Orange `L10044`: ERP lưu `2,840,000 đ` (chuẩn gồm VAT là `1,145,000 đ`).
+     - Pa'ro Rosso `L10043`: ERP lưu `1,420,000 đ` (chuẩn gồm VAT là `1,145,000 đ`).
+     - Petra Zingari `L10042`: ERP lưu `1,590,000 đ` (chuẩn gồm VAT là `1,100,000 đ`).
+     - Monteforte Rosso `L10045`: ERP lưu `980,000 đ` (chuẩn gồm VAT là `530,000 đ`).
+
+### Cách khắc phục
+1. **Đồng bộ Master Data `ProductMarginPrice`:**
+   - Cập nhật chuẩn hóa `wholesalePrice` và `retailPrice` cho cả 8 chai vang Ý theo đúng Bảng giá 25.07 (Anselmi: Wholesale 555,000 đ, Retail 945,000 đ).
+2. **Cập nhật Quy tắc giá đặc biệt (`CustomerPriceRule`):**
+   - Đưa giá `SPECIAL_PRICE` của Anselmi (`L10039`) từ `278,100 đ` lên `499,500 đ` (chiết khấu 10% từ Wholesale chuẩn 555,000 đ) trên 7 tài khoản khách hàng: `HR-AMBRYS`, `HR10064-01`, `HR-BOUCHON`, `HR10064-02`, `HR10064-03`, `HR10064-04`, `HR10038-01`.
+3. **Cập nhật Tờ trình & Bảng tính:**
+   - Cập nhật lại `ProposalPriceItem` trong tờ trình `TT-2026-045`.
+   - Cập nhật ô H13 (`555,000`) và I13 (`499,500`) trong file `d:\Lyruou\Quotation new italian wine sept26.xlsx`.
+
+### Bài học
+> ⚠️ **RULE 113: Khi import sản phẩm hoặc tạo cơ chế giá đặc biệt từ các file bảng tính bên ngoài, BẮT BUỘC đối soát chéo với Master Data Bảng giá chuẩn hóa của công ty (Bảng giá 25.07 - Chuẩn hóa) và kiểm tra biên độ lãi gộp so với giá vốn (Gross Margin vs Cost) để ngăn chặn rủi ro copy nhầm số liệu hoặc bán dưới giá vốn.**
 
 
 

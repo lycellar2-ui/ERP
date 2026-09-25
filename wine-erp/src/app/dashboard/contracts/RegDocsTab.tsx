@@ -22,7 +22,7 @@ import { toast } from 'sonner'
 // ═══════════════════════════════════════════════════
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
     ACTIVE: { label: 'Hiệu Lực', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
     EXPIRING: { label: 'Sắp Hết Hạn', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     EXPIRED: { label: 'Đã Hết Hạn', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
@@ -104,8 +104,8 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
     if (!open) return null
 
     const inputCls = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none'
-    const baseStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
-    const focusStyle = { borderColor: '#87CBB9' }
+    const baseStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
+    const focusStyle = { borderColor: '#0891B2' }
 
     const availableTypes = CATEGORY_TYPE_MAP[form.category] ?? []
 
@@ -154,7 +154,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
 
     const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
         <div>
-            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>{label}</label>
+            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{label}</label>
             {children}
         </div>
     )
@@ -162,22 +162,22 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
     return (
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(560px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(560px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: isRenew ? 'rgba(74,143,171,0.15)' : 'rgba(135,203,185,0.15)' }}>
-                            {isRenew ? <RefreshCw size={16} style={{ color: '#4A8FAB' }} /> : <Shield size={16} style={{ color: '#87CBB9' }} />}
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: isRenew ? 'rgba(74,143,171,0.15)' : 'rgba(8, 145, 178, 0.08)' }}>
+                            {isRenew ? <RefreshCw size={16} style={{ color: '#4A8FAB' }} /> : <Shield size={16} style={{ color: '#0891B2' }} />}
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                                 {isRenew ? `Gia Hạn: ${renewFrom.name}` : 'Thêm Giấy Tờ Pháp Lý'}
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
                                 {isRenew ? `Version ${renewFrom.version} → ${renewFrom.version + 1}` : 'Tạo mới chứng từ / giấy phép'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -193,13 +193,13 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                             <input className={inputCls} style={baseStyle} value={form.docNo}
                                 onChange={e => setForm(f => ({ ...f, docNo: e.target.value }))}
                                 onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                         </Row>
                         <Row label="Tên Giấy Tờ *">
                             <input className={inputCls} style={baseStyle} value={form.name}
                                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                 placeholder="VD: GP Phân phối rượu 2026" />
                         </Row>
                     </div>
@@ -236,9 +236,9 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                         <button key={k} onClick={() => setForm(f => ({ ...f, scope: k }))}
                                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
                                             style={{
-                                                background: form.scope === k ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                                                border: `1px solid ${form.scope === k ? '#87CBB9' : '#2A4355'}`,
-                                                color: form.scope === k ? '#87CBB9' : '#4A6A7A',
+                                                background: form.scope === k ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                                border: `1px solid ${form.scope === k ? '#87CBB9' : '#E2E8F0'}`,
+                                                color: form.scope === k ? '#87CBB9' : '#64748B',
                                             }}>
                                             {SCOPE_ICONS[k]} {v}
                                         </button>
@@ -302,7 +302,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                             onChange={e => setForm(f => ({ ...f, issuingAuthority: e.target.value }))}
                             placeholder="VD: Sở Công Thương HCM, Cảnh sát PCCC..."
                             onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     {!isRenew && (
@@ -311,7 +311,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                                 placeholder="Ghi chú thêm về giấy tờ..."
                                 onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                         </Row>
                     )}
 
@@ -322,9 +322,9 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                     <button key={String(v)} onClick={() => setForm(f => ({ ...f, keepHistory: v }))}
                                         className="flex-1 py-2 text-sm font-semibold rounded-lg"
                                         style={{
-                                            background: form.keepHistory === v ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                                            border: `1px solid ${form.keepHistory === v ? '#87CBB9' : '#2A4355'}`,
-                                            color: form.keepHistory === v ? '#87CBB9' : '#4A6A7A',
+                                            background: form.keepHistory === v ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                            border: `1px solid ${form.keepHistory === v ? '#87CBB9' : '#E2E8F0'}`,
+                                            color: form.keepHistory === v ? '#87CBB9' : '#64748B',
                                         }}>
                                         {v ? '✅ Giữ lịch sử (RENEWED)' : '🗑️ Xóa bản cũ'}
                                     </button>
@@ -334,12 +334,12 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                     )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Hủy</button>
+                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: isRenew ? '#4A8FAB' : '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: isRenew ? '#4A8FAB' : '#87CBB9', color: '#0F172A' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : isRenew ? <RefreshCw size={14} /> : <Save size={14} />}
                         {saving ? 'Đang lưu...' : isRenew ? 'Gia Hạn' : 'Tạo Giấy Tờ'}
                     </button>
@@ -367,46 +367,46 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
     }, [doc.id])
 
     return (
-        <tr style={{ background: '#142433' }}>
+        <tr style={{ background: '#FFFFFF' }}>
             <td colSpan={10} className="px-6 py-4">
                 <div className="space-y-4">
                     {/* Info grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Cơ Quan Cấp</p>
-                            <p className="text-sm" style={{ color: '#E8F1F2' }}>{doc.issuingAuthority || '—'}</p>
+                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Cơ Quan Cấp</p>
+                            <p className="text-sm" style={{ color: '#0F172A' }}>{doc.issuingAuthority || '—'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Phạm Vi</p>
-                            <p className="text-sm flex items-center gap-1" style={{ color: '#E8F1F2' }}>
+                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Phạm Vi</p>
+                            <p className="text-sm flex items-center gap-1" style={{ color: '#0F172A' }}>
                                 {SCOPE_ICONS[doc.scope]} {REG_DOC_SCOPE_LABELS[doc.scope] ?? doc.scope}
                             </p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Liên Kết</p>
-                            <p className="text-sm" style={{ color: '#87CBB9' }}>{doc.linkedEntity || 'Không'}</p>
+                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Liên Kết</p>
+                            <p className="text-sm" style={{ color: '#0891B2' }}>{doc.linkedEntity || 'Không'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Version</p>
-                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>v{doc.version}</p>
+                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Version</p>
+                            <p className="text-sm font-bold" style={{ color: '#0F172A' }}>v{doc.version}</p>
                         </div>
                     </div>
 
                     {/* Files */}
                     <div className="pt-3" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#87CBB9' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>
                                 File Đính Kèm ({files?.length ?? 0})
                             </p>
                             <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
-                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                 <UploadCloud size={12} /> Upload
                                 <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
                                     onChange={(e) => onUpload(doc.id, e)} />
                             </label>
                         </div>
                         {loadingFiles ? (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
                                 <Loader2 size={12} className="animate-spin" /> Đang tải...
                             </div>
                         ) : files && files.length > 0 ? (
@@ -414,19 +414,19 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                                 {files.map((f: any) => (
                                     <a key={f.id} href={f.fileUrl} target="_blank" rel="noreferrer"
                                         className="flex items-center gap-3 p-2.5 rounded transition-colors"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = '#2A4355')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = '#1B2E3D')}>
-                                        <FileText size={16} style={{ color: '#8AAEBB' }} />
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}>
+                                        <FileText size={16} style={{ color: '#475569' }} />
                                         <div className="overflow-hidden">
-                                            <p className="text-xs font-medium truncate" style={{ color: '#E8F1F2' }}>{f.name}</p>
-                                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{formatDate(f.uploadedAt)}</p>
+                                            <p className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{f.name}</p>
+                                            <p className="text-[10px]" style={{ color: '#64748B' }}>{formatDate(f.uploadedAt)}</p>
                                         </div>
                                     </a>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có file đính kèm.</p>
+                            <p className="text-xs italic" style={{ color: '#64748B' }}>Chưa có file đính kèm.</p>
                         )}
                     </div>
 
@@ -525,11 +525,11 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                     const Icon = s.icon
                     return (
                         <div key={s.label} className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
+                                <p className="text-xl font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -539,19 +539,19 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
             {/* Filters + Create */}
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 max-w-xs">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input type="text" placeholder="Tìm mã / tên giấy tờ..."
                         value={search}
                         onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
                         className="w-full pl-9 pr-3 py-2 text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
+                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                 </div>
                 <select value={categoryFilter}
                     onChange={e => { setCategoryFilter(e.target.value); reload(undefined, e.target.value) }}
                     className="px-3 py-2 text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: categoryFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: categoryFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                     <option value="">Tất cả nhóm</option>
                     {Object.entries(REG_DOC_CATEGORY_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
@@ -560,7 +560,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                 <select value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); reload(undefined, undefined, e.target.value) }}
                     className="px-3 py-2 text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(STATUS_CFG).map(([k, v]) => (
                         <option key={k} value={k}>{v.label}</option>
@@ -568,7 +568,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                 </select>
                 <button onClick={() => { setRenewTarget(null); setDrawerOpen(true) }}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ml-auto"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                     onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                     <Plus size={16} /> Thêm Giấy Tờ
@@ -576,26 +576,26 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {['Mã GT', 'Nhóm', 'Loại', 'Tên', 'Ngày Cấp', 'Hết Hạn', 'Còn Lại', 'Liên Kết', 'Files', 'Trạng Thái'].map(h => (
                                 <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                    style={{ color: '#4A6A7A' }}>{h}</th>
+                                    style={{ color: '#64748B' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={10} className="text-center py-10 text-sm" style={{ color: '#4A6A7A' }}>Đang tải...</td></tr>
+                            <tr><td colSpan={10} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>Đang tải...</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={10} className="text-center py-16" style={{ color: '#4A6A7A' }}>
-                                <Shield size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                            <tr><td colSpan={10} className="text-center py-16" style={{ color: '#64748B' }}>
+                                <Shield size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
                                 <p>Chưa có giấy tờ nào</p>
                             </td></tr>
                         ) : rows.map(row => {
-                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#8AAEBB', bg: 'transparent' }
+                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#475569', bg: 'transparent' }
                             const isExpanded = selectedId === row.id
                             return (
                                 <React.Fragment key={row.id}>
@@ -606,22 +606,22 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.docNo}</span>
+                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.docNo}</span>
                                         </td>
                                         <td className="px-3 py-3">
                                             <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#87CBB9' }}>
+                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2' }}>
                                                 {CATEGORY_ICONS[row.category]} {REG_DOC_CATEGORY_LABELS[row.category] ?? row.category}
                                             </span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs" style={{ color: '#8AAEBB' }}>{REG_DOC_TYPE_LABELS[row.type] ?? row.type}</span>
+                                            <span className="text-xs" style={{ color: '#475569' }}>{REG_DOC_TYPE_LABELS[row.type] ?? row.type}</span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <p className="text-sm font-medium truncate max-w-[180px]" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                            <p className="text-sm font-medium truncate max-w-[180px]" style={{ color: '#0F172A' }}>{row.name}</p>
                                         </td>
-                                        <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(row.issueDate)}</td>
-                                        <td className="px-3 py-3 text-xs" style={{ color: row.expiryDate ? getDaysColor(row.daysRemaining) : '#4A6A7A' }}>
+                                        <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{formatDate(row.issueDate)}</td>
+                                        <td className="px-3 py-3 text-xs" style={{ color: row.expiryDate ? getDaysColor(row.daysRemaining) : '#64748B' }}>
                                             {row.expiryDate ? formatDate(row.expiryDate) : 'Vô hạn'}
                                         </td>
                                         <td className="px-3 py-3">
@@ -631,11 +631,11 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                         </td>
                                         <td className="px-3 py-3">
                                             {row.linkedEntity ? (
-                                                <span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
+                                                <span className="flex items-center gap-1 text-xs" style={{ color: '#475569' }}>
                                                     {SCOPE_ICONS[row.scope]} <span className="truncate max-w-[120px]">{row.linkedEntity}</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>—</span>
+                                                <span className="text-xs" style={{ color: '#64748B' }}>—</span>
                                             )}
                                         </td>
                                         <td className="px-3 py-3">

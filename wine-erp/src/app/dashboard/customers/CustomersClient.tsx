@@ -21,7 +21,7 @@ import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
 
 const CUSTOMER_TYPE: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
-    HORECA: { label: 'HORECA', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)', emoji: '🏨' },
+    HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', emoji: '🏨' },
     CORPORATE: { label: 'Corporate', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)', emoji: '🏢' },
     RETAIL: { label: 'Retail', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)', emoji: '🛍️' },
 }
@@ -39,7 +39,7 @@ const CITIES = [
 
 function TypeBadge({ type }: { type: string | null }) {
     const key = type ?? 'HORECA'
-    const cfg = CUSTOMER_TYPE[key] ?? { label: key, color: '#8AAEBB', bg: 'rgba(168,152,128,0.12)', emoji: '🏢' }
+    const cfg = CUSTOMER_TYPE[key] ?? { label: key, color: '#475569', bg: 'rgba(168,152,128,0.12)', emoji: '🏢' }
     return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
             style={{ color: cfg.color, background: cfg.bg }}>
@@ -51,11 +51,11 @@ function TypeBadge({ type }: { type: string | null }) {
 function StatusDot({ status }: { status: string }) {
     const color = { 
         ACTIVE: '#5BA88A', 
-        INACTIVE: '#4A6A7A', 
+        INACTIVE: '#64748B', 
         CREDIT_HOLD: '#D4963A',
         PENDING_APPROVAL: '#E0A96D',
         REJECTED: '#E05252',
-    }[status] ?? '#4A6A7A'
+    }[status] ?? '#64748B'
     const label = { 
         ACTIVE: 'Hoạt động', 
         INACTIVE: 'Tạm dừng', 
@@ -72,21 +72,21 @@ function StatusDot({ status }: { status: string }) {
 }
 
 function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string; sortDir?: string }) {
-    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#2A4355' }} />
+    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#E2E8F0' }} />
     return sortDir === 'asc'
-        ? <ArrowUp size={11} style={{ color: '#87CBB9' }} />
-        : <ArrowDown size={11} style={{ color: '#87CBB9' }} />
+        ? <ArrowUp size={11} style={{ color: '#0891B2' }} />
+        : <ArrowDown size={11} style={{ color: '#0891B2' }} />
 }
 
 function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string | number; icon: React.FC<any>; accent: string }) {
     return (
-        <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl min-w-0" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl min-w-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accent}20` }}>
                 <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: accent }} />
             </div>
             <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
+                <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold truncate" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate font-mono" style={{ color: '#0F172A' }}>{value}</p>
             </div>
         </div>
     )
@@ -286,7 +286,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handlePrintCustomer = () => {
         if (!form) return
@@ -561,29 +561,29 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
                 onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
-                style={{ width: 'min(560px, 95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #2A4355' }}>
+                style={{ width: 'min(560px, 95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <Users size={16} style={{ color: '#87CBB9' }} />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <Users size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                                 {isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
                                 {isEdit ? 'Điền thông tin đầy đủ về khách hàng' : 'Khách sạn, nhà hàng, phân phối, VIP retail'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#4A6A7A' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                    <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#64748B' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                     {loading ? (
-                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                     ) : (
                         <>
                             {errors._global && (
@@ -599,7 +599,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         <span className="text-lg">⚖️</span>
                                         <div>
                                             <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A]">Yêu cầu tạo Khách Hàng</p>
-                                            <p className="text-[11px]" style={{ color: '#8AAEBB' }}>Khách hàng này do Sale tạo với mã tạm thời là <strong className="font-mono">{form.code}</strong>. Vui lòng ấn định mã chính thức để duyệt.</p>
+                                            <p className="text-[11px]" style={{ color: '#475569' }}>Khách hàng này do Sale tạo với mã tạm thời là <strong className="font-mono">{form.code}</strong>. Vui lòng ấn định mã chính thức để duyệt.</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 pt-1">
@@ -608,8 +608,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 value={officialCodeInput}
                                                 onChange={e => setOfficialCodeInput(e.target.value.toUpperCase())}
                                                 className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                                                style={{ background: '#0D1E2B', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={handleReject} disabled={approving} type="button"
@@ -617,7 +617,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 Từ chối
                                             </button>
                                             <button onClick={handleApprove} disabled={approving} type="button"
-                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#5BA88A] hover:bg-[#72BF9E] text-[#0D1E2B] disabled:opacity-60">
+                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#5BA88A] hover:bg-[#72BF9E] text-slate-900 disabled:opacity-60">
                                                 {approving ? <Loader2 size={14} className="animate-spin" /> : null}
                                                 Duyệt
                                             </button>
@@ -632,7 +632,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A] flex items-center gap-1.5">
                                         <AlertCircle size={15} /> Cảnh báo trùng lặp thông tin Khách Hàng
                                     </p>
-                                    <div className="space-y-1 text-xs" style={{ color: '#E8F1F2' }}>
+                                    <div className="space-y-1 text-xs" style={{ color: '#0F172A' }}>
                                         {duplicateWarnings.map((w, idx) => (
                                             <div key={idx} className="flex items-start gap-1.5">
                                                 <span className="text-[#D4963A] font-bold">•</span>
@@ -643,25 +643,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             )}
 
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Thông Tin Cơ Bản</p>
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
                                     <div className="flex gap-2">
                                         <input className={inputCls} style={inputStyle} 
                                             value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
                                             placeholder={isSalesRep ? 'Sẽ được sinh tự động' : 'VD: HR10023'}
                                             onChange={e => set('code', e.target.value.toUpperCase())} 
                                             disabled={isEdit || isSalesRep}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         {!isEdit && !isSalesRep && (
                                             <button
                                                 type="button"
                                                 onClick={() => handleAutoGenerateCode()}
                                                 disabled={generatingCode}
                                                 title="Tạo mã tự động theo chuẩn Master Data"
-                                                className="px-2.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#2A4355] text-[#87CBB9] border border-[#2A4355] whitespace-nowrap"
-                                                style={{ background: '#1B2E3D' }}
+                                                className="px-2.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-[#0891B2] border border-slate-200 whitespace-nowrap"
+                                                style={{ background: '#FFFFFF' }}
                                             >
                                                 {generatingCode ? <Loader2 size={13} className="animate-spin" /> : '🎲 Sinh mã'}
                                             </button>
@@ -670,7 +670,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh bán hàng *</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh bán hàng *</label>
                                     <select className={inputCls} style={inputStyle} value={form.channel ?? 'HORECA'}
                                         onChange={e => {
                                             const val = e.target.value as any
@@ -683,7 +683,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 handleAutoGenerateCode(val, val !== 'HORECA' ? null : form.parentId)
                                             }
                                         }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                         <option value="HORECA">🏨 HORECA (Nhà hàng / Khách sạn)</option>
                                         <option value="CORPORATE">🏢 Corporate (Doanh nghiệp)</option>
                                         <option value="RETAIL">🛍️ Retail (Bán lẻ)</option>
@@ -694,9 +694,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {form.channel === 'HORECA' && (
                                 <div className="space-y-4">
                                     <div className="relative" ref={parentContainerRef}>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã cha (Tính công nợ)</label>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã cha (Tính công nợ)</label>
                                         <div className="relative flex items-center">
-                                            <Search size={14} className="absolute left-3 text-[#4A6A7A] pointer-events-none" />
+                                            <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
                                             <input
                                                 type="text"
                                                 className={`${inputCls} pl-9 pr-8`}
@@ -726,21 +726,21 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                             handleAutoGenerateCode(form.channel ?? undefined, null)
                                                         }
                                                     }}
-                                                    className="absolute right-2.5 p-1 rounded-full text-[#4A6A7A] hover:text-[#E8F1F2] hover:bg-[#2A4355] transition-all"
+                                                    className="absolute right-2.5 p-1 rounded-full text-slate-500 hover:text-slate-900 hover:bg-[#E2E8F0] transition-all"
                                                 >
                                                     <X size={14} />
                                                 </button>
                                             ) : (
-                                                <ChevronDown size={14} className="absolute right-3 text-[#4A6A7A] pointer-events-none" />
+                                                <ChevronDown size={14} className="absolute right-3 text-slate-500 pointer-events-none" />
                                             )}
                                         </div>
 
                                         {parentDropdownOpen && (
-                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl border border-[#2A4355]" style={{ background: '#0D1E2B' }}>
-                                                <div className="overflow-y-auto max-h-[210px] divide-y divide-[#1B2E3D]">
+                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl border border-slate-200" style={{ background: '#F8FAFC' }}>
+                                                <div className="overflow-y-auto max-h-[210px] divide-y divide-[#FFFFFF]">
                                                     <button
                                                         type="button"
-                                                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#8AAEBB] hover:bg-[#1B2E3D] transition-all"
+                                                        className="w-full text-left px-3.5 py-2.5 text-xs text-slate-600 hover:bg-white transition-all"
                                                         onClick={() => {
                                                             set('parentId', null)
                                                             setParentSearch('')
@@ -765,7 +765,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     key={c.id}
                                                                     type="button"
                                                                     className={`w-full text-left px-3.5 py-2.5 text-xs transition-all flex items-center justify-between ${
-                                                                        isSelected ? 'bg-[#1B2E3D] text-[#87CBB9] font-bold' : 'text-[#E8F1F2] hover:bg-[#1B2E3D]'
+                                                                        isSelected ? 'bg-white text-[#0891B2] font-bold' : 'text-slate-900 hover:bg-white'
                                                                     }`}
                                                                     onClick={() => {
                                                                         set('parentId', c.id)
@@ -777,13 +777,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     }}
                                                                 >
                                                                     <div className="flex items-center gap-2 truncate">
-                                                                        <span className="font-mono text-[#87CBB9] bg-[#142433] px-1.5 py-0.5 rounded text-[11px] font-semibold border border-[#2A4355]">
+                                                                        <span className="font-mono text-[#0891B2] bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200">
                                                                             {c.code}
                                                                         </span>
                                                                         <span className="truncate">{c.name}</span>
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
-                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#87CBB9]/10 text-[#87CBB9] border border-[#87CBB9]/20 font-semibold shrink-0">
+                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#87CBB9]/10 text-[#0891B2] border border-[#87CBB9]/20 font-semibold shrink-0">
                                                                             🏢 Cty Cha
                                                                         </span>
                                                                     )}
@@ -795,7 +795,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         const q = parentSearch.toLowerCase()
                                                         return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
                                                     }).length === 0 && (
-                                                        <div className="px-3.5 py-3.5 text-center text-xs text-[#4A6A7A]">
+                                                        <div className="px-3.5 py-3.5 text-center text-xs text-slate-500">
                                                             Không tìm thấy công ty phù hợp
                                                         </div>
                                                     )}
@@ -806,7 +806,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Loại thực thể</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại thực thể</label>
                                             <select className={inputCls} style={inputStyle} value={form.entityType ?? 'RESTAURANT'}
                                                 onChange={e => {
                                                     const val = e.target.value as 'COMPANY' | 'RESTAURANT'
@@ -816,26 +816,26 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         ...(val === 'COMPANY' ? { parentId: null } : { allowDirectSO: false })
                                                     }))
                                                 }}
-                                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                                 <option value="RESTAURANT">🍽️ Nhà hàng / Chi nhánh con</option>
                                                 <option value="COMPANY">🏢 Công ty cha tính công nợ</option>
                                             </select>
                                         </div>
                                         {form.entityType === 'COMPANY' ? (
                                             <div className="flex items-center pt-6">
-                                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#E8F1F2' }}>
+                                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#0F172A' }}>
                                                     <input type="checkbox" checked={form.allowDirectSO ?? false}
                                                         onChange={e => set('allowDirectSO', e.target.checked)}
-                                                        className="rounded bg-[#1B2E3D] border-[#2A4355] text-[#87CBB9] focus:ring-0" />
+                                                        className="rounded bg-white border-slate-200 text-[#0891B2] focus:ring-0" />
                                                     Cho phép đặt SO trực tiếp
                                                 </label>
                                             </div>
                                         ) : (
                                             <div>
-                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên Brand</label>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Brand</label>
                                                 <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder="Ví dụ: Manwah, Gogi"
                                                     onChange={e => set('brandGroup', e.target.value || null)}
-                                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                             </div>
                                         )}
                                     </div>
@@ -843,10 +843,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             )}
 
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên Khách Hàng <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng <span style={{ color: '#8B1A2E' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.name ?? ''} placeholder="Park Hyatt Saigon"
                                     onChange={e => set('name', e.target.value)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 {errors.name && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.name}</p>}
                                 {duplicateWarnings.find(w => w.type === 'NAME') && (
                                     <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
@@ -857,16 +857,16 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên viết tắt</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên viết tắt</label>
                                     <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="PH Saigon"
                                         onChange={e => set('shortName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Sales phụ trách</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
                                     <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
                                         onChange={e => set('salesRepId', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                         <option value="">— Chọn Sales —</option>
                                         {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                     </select>
@@ -890,19 +890,19 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                         Tên Công Ty Xuất Hóa Đơn VAT
                                     </label>
                                     <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
                                         placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `Tên Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : "Tự động lấy theo Tên Công ty Cha nếu để trống...") : "CÔNG TY TNHH ABC..."}
                                         onChange={e => set('vatCompanyName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <div className="flex items-center justify-between mb-1.5">
-                                            <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#8AAEBB' }}>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
                                                 Mã Số Thuế VAT
                                             </label>
                                             <button
@@ -919,7 +919,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
                                             placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? `Kế thừa MST Cha: ${parentCandidates.find(p => p.id === form.parentId)?.taxId}` : "Tự động dùng MST Công ty Cha") : "0302012345"}
                                             onChange={e => set('taxId', e.target.value || null)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         {(() => {
                                             const parent = parentCandidates.find(p => p.id === form.parentId)
                                             if (parent?.taxId && !form.taxId) {
@@ -950,40 +950,40 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         )}
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                             Email Nhận Hóa Đơn VAT
                                         </label>
                                         <input className={inputCls} style={inputStyle} value={form.vatEmail ?? ''} 
                                             placeholder={form.parentId ? "Tự động dùng Email Công ty Cha" : "ketoan@company.com"}
                                             onChange={e => set('vatEmail', e.target.value || null)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                         Địa Chỉ Đăng Ký Thuế VAT
                                     </label>
                                     <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
                                         placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `Địa chỉ Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : "Tự động dùng Địa chỉ Công ty Cha nếu để trống...") : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
                                         onChange={e => set('vatAddress', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                             </div>
 
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ & Địa Chỉ</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Người liên hệ</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
                                     <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="Nguyễn Văn A"
                                         onChange={e => set('contactName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số điện thoại</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại</label>
                                     <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
                                         onChange={e => set('phone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     {duplicateWarnings.find(w => w.type === 'PHONE') && (
                                         <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
                                             <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'PHONE')?.message}
@@ -992,60 +992,60 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Email</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
                                 <input type="email" className={inputCls} style={inputStyle} value={form.email ?? ''} placeholder="contact@hotel.com"
                                     onChange={e => set('email', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Địa chỉ</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ</label>
                                 <input className={inputCls} style={inputStyle} value={form.address ?? ''} placeholder="123 Đường Lê Lai, Quận 1"
                                     onChange={e => set('address', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Phường/Xã</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phường/Xã</label>
                                     <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder="Phường Bến Nghé"
                                         onChange={e => set('ward', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Quận/Huyện</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quận/Huyện</label>
                                     <input className={inputCls} style={inputStyle} value={form.district ?? ''} placeholder="Quận 1"
                                         onChange={e => set('district', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thành phố</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
                                     <select className={inputCls} style={inputStyle} value={form.city ?? ''}
                                         onChange={e => set('city', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                         <option value="">— Chọn —</option>
                                         {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên người thu mua</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên người thu mua</label>
                                     <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
                                         onChange={e => set('purchasingName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>SĐT thu mua</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT thu mua</label>
                                     <input className={inputCls} style={inputStyle} value={form.purchasingPhone ?? ''} placeholder="0912345678"
                                         onChange={e => set('purchasingPhone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh nhận order</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh nhận order</label>
                                     <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
                                         onChange={e => set('orderChannel', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                         <option value="ZALO">💬 Zalo</option>
                                         <option value="EMAIL">📧 Email</option>
                                         <option value="WHATSAPP">📱 WhatsApp</option>
@@ -1056,43 +1056,43 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             </div>
 
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Người nhận hàng</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người nhận hàng</label>
                                     <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
                                         onChange={e => set('receiverName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>SĐT người nhận</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT người nhận</label>
                                     <input className={inputCls} style={inputStyle} value={form.receiverPhone ?? ''} placeholder="0987654321"
                                         onChange={e => set('receiverPhone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Lưu ý về giao hàng</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lưu ý về giao hàng</label>
                                 <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
                                     onChange={e => set('deliveryNotes', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
 
                             {/* CƠ CHẾ GIÁ & CHIẾT KHẤU MẶC ĐỊNH */}
                             <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.25)' }}>
                                 <div className="flex items-center justify-between flex-wrap gap-1">
-                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                         <Tag size={14} /> Cơ Chế Giá & Chiết Khấu Mặc Định (Toàn Kho)
                                     </p>
                                     {isEdit && (
-                                        <Link href="/dashboard/price-list" className="text-[11px] text-[#87CBB9] hover:underline flex items-center gap-1 font-semibold">
+                                        <Link href="/dashboard/price-list" className="text-[11px] text-[#0891B2] hover:underline flex items-center gap-1 font-semibold">
                                             Trung tâm giá <ArrowUpRight size={12} />
                                         </Link>
                                     )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                             Bảng giá gốc áp dụng
                                         </label>
                                         <select
@@ -1100,8 +1100,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             style={inputStyle}
                                             value={form.basePriceType ?? 'BY_CHANNEL'}
                                             onChange={e => set('basePriceType', e.target.value)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                         >
                                             <option value="BY_CHANNEL">Theo kênh bán hàng ({form.channel || 'HORECA'})</option>
                                             <option value="WHOLESALE">Bảng giá Buôn (Wholesale)</option>
@@ -1110,7 +1110,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                             Chiết khấu mặc định toàn kho (%)
                                         </label>
                                         <input
@@ -1123,8 +1123,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             value={form.defaultDiscountPct ?? 0}
                                             placeholder="Ví dụ: 10 (nghĩa là -10%)"
                                             onChange={e => set('defaultDiscountPct', Number(e.target.value))}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                         />
                                     </div>
                                 </div>
@@ -1133,13 +1133,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </p>
                             </div>
 
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Tín Dụng & Thanh Toán</p>
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Tín Dụng & Thanh Toán</p>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Điều khoản</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Điều khoản</label>
                                     <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET30'}
                                         onChange={e => set('paymentTerm', e.target.value)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                         <option value="COD">COD</option>
                                         <option value="NET15">NET 15</option>
                                         <option value="NET30">NET 30</option>
@@ -1150,22 +1150,22 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Hạn mức (VND)</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hạn mức (VND)</label>
                                     <input type="number" className={inputCls} style={inputStyle} value={form.creditLimit ?? 0}
                                         onChange={e => set('creditLimit', Number(e.target.value))} step={50000000}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Trạng thái</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Trạng thái</label>
                                     {isSalesRep || form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED' ? (
-                                        <div className="py-2.5 px-3 rounded-lg text-sm font-semibold text-[#E8F1F2] border border-[#2A4355] bg-[#142433] flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#E05252', ACTIVE: '#5BA88A', INACTIVE: '#4A6A7A', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
+                                        <div className="py-2.5 px-3 rounded-lg text-sm font-semibold text-slate-900 border border-slate-200 bg-white flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#E05252', ACTIVE: '#5BA88A', INACTIVE: '#64748B', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
                                             {{ PENDING_APPROVAL: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm dừng', CREDIT_HOLD: 'Giữ tín dụng' }[form.status ?? 'ACTIVE']}
                                         </div>
                                     ) : (
                                         <select className={inputCls} style={inputStyle} value={form.status ?? 'ACTIVE'}
                                             onChange={e => set('status', e.target.value as any)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                             <option value="ACTIVE">Hoạt động</option>
                                             <option value="CREDIT_HOLD">Giữ tín dụng</option>
                                             <option value="INACTIVE">Tạm dừng</option>
@@ -1177,27 +1177,27 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0' }}>
                     {isEdit && (
                         <div className="mr-auto flex gap-2">
                             <button onClick={handlePrintCustomer} type="button"
-                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#D4A853] hover:bg-[#D4A853]/10">
+                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-slate-200 text-[#D4A853] hover:bg-[#D4A853]/10">
                                 <Printer size={14} /> In Hồ Sơ
                             </button>
                             <button onClick={handleExportExcelForm} disabled={exportingExcel} type="button"
-                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50">
+                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-slate-200 text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50">
                                 {exportingExcel ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                                 Xuất Excel
                             </button>
                         </div>
                     )}
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>Hủy</button>
                     <button onClick={handleSave} disabled={saving || loading}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                         onMouseEnter={e => !saving && (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -1364,31 +1364,31 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Khách Hàng (CRM)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         B2B: Khách sạn, nhà hàng, phân phối, VIP retail — {stats.total} khách hàng
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     <button onClick={handleExport} disabled={exporting}
                         className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#5BA88A' } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
+                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}
+                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#5BA88A' } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}>
                         <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
                     </button>
                     <button onClick={() => setImportOpen(true)}
                         className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
+                        style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}>
                         <Upload size={16} /> Import Excel
                     </button>
                     <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
                         className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                         <Plus size={16} /> Thêm Khách Hàng
@@ -1399,27 +1399,27 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             {/* Collapsible Stats Section */}
             {!showStats ? (
                 <div className="flex flex-wrap items-center justify-between px-4 py-2.5 rounded-lg text-xs"
-                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-                        <span style={{ color: '#4A6A7A' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
-                        <span style={{ color: '#8AAEBB' }}>Tổng KH: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Hoạt động: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.active}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E0A96D' }}>{stats.pendingApproval ?? 0}</strong></span>
+                        <span style={{ color: '#64748B' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
+                        <span style={{ color: '#475569' }}>Tổng KH: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong></span>
+                        <span style={{ color: '#475569' }}>Hoạt động: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.active}</strong></span>
+                        <span style={{ color: '#475569' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E0A96D' }}>{stats.pendingApproval ?? 0}</strong></span>
                         {isSalesRep ? (
-                            <span style={{ color: '#8AAEBB' }}>Từ chối: <strong className="font-mono text-sm ml-1" style={{ color: '#E05252' }}>{stats.rejected ?? 0}</strong></span>
+                            <span style={{ color: '#475569' }}>Từ chối: <strong className="font-mono text-sm ml-1" style={{ color: '#E05252' }}>{stats.rejected ?? 0}</strong></span>
                         ) : (
-                            <span style={{ color: '#8AAEBB' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
+                            <span style={{ color: '#475569' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
                         )}
                     </div>
-                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#87CBB9' }}>
+                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#0891B2' }}>
                         Xem chi tiết chỉ số ➔
                     </button>
                 </div>
             ) : (
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết</span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
                             Thu gọn chỉ số ✕
                         </button>
                     </div>
@@ -1439,20 +1439,20 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             {/* Filters */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                 <div className="relative w-full sm:flex-1 sm:min-w-[240px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input type="text" placeholder="Tìm theo tên, mã, MST, email, SĐT..."
                         value={search}
                         onChange={e => handleSearchChange(e.target.value)}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                 </div>
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 w-full sm:w-auto">
                     <select value={typeFilter}
                         onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
                         className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả loại</option>
                         <option value="HORECA">🏨 HORECA</option>
                         <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối</option>
@@ -1462,7 +1462,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     <select value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
                         className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Trạng thái</option>
                         <option value="ACTIVE">Hoạt động</option>
                         <option value="PENDING_APPROVAL">Chờ duyệt</option>
@@ -1475,7 +1475,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     <select value={channelFilter}
                         onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
                         className="flex-1 sm:flex-initial px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: channelFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: channelFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả kênh</option>
                         {channels.map(c => (
                             <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
@@ -1495,14 +1495,14 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 {sortableHeaders.map((h, i) => (
                                     <th key={i} className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
-                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#87CBB9' : '#8AAEBB' }}
+                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#87CBB9' : '#475569' }}
                                         onClick={() => h.sortable && h.key && handleSort(h.key)}>
                                         <span className="inline-flex items-center gap-1.5">
                                             {h.label}
@@ -1518,7 +1518,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     <tr key={i} style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}>
                                         {sortableHeaders.map((_, j) => (
                                             <td key={j} className="px-4 py-4">
-                                                <div className="h-4 rounded animate-pulse" style={{ background: '#1B2E3D', width: j === 0 ? '80%' : '55%' }} />
+                                                <div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} />
                                             </td>
                                         ))}
                                     </tr>
@@ -1527,7 +1527,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                 <tr><td colSpan={11}>
                                     <div className="flex flex-col items-center py-16 gap-3">
                                         <span className="text-3xl">👥</span>
-                                        <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có khách hàng nào</p>
+                                        <p style={{ color: '#64748B' }} className="text-sm">Chưa có khách hàng nào</p>
                                     </div>
                                 </td></tr>
                             ) : rows.map(row => (
@@ -1536,21 +1536,21 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.channel} /></td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-[#E8F1F2] font-semibold">{row.code}</td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-slate-900 font-semibold">{row.code}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
+                                            <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#0F172A' }} title={row.name}>{row.name}</p>
                                             {row.entityType === 'COMPANY' ? (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#8AAEBB' }}>
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0F172A', background: '#475569' }}>
                                                     🏢 Công ty {row.allowDirectSO && '(Bán trực tiếp)'} {row.childrenCount > 0 && `• ${row.childrenCount} chi nhánh`}
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#5BA88A' }}>
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0F172A', background: '#5BA88A' }}>
                                                     🍽️ Nhà hàng
                                                 </span>
                                             )}
                                             {row.brandGroup && (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap" style={{ color: '#E8F1F2', background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap" style={{ color: '#0F172A', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                     ✨ {row.brandGroup}
                                                 </span>
                                             )}
@@ -1558,14 +1558,14 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     </td>
                                     <td className="px-3 py-1.5 text-xs">
                                         {row.parentCode ? (
-                                            <span style={{ color: '#8AAEBB' }} className="font-mono text-[11px] whitespace-nowrap">
+                                            <span style={{ color: '#475569' }} className="font-mono text-[11px] whitespace-nowrap">
                                                 {row.parentCode}
                                             </span>
                                         ) : (
-                                            <span style={{ color: '#4A6A7A' }} className="text-xs">—</span>
+                                            <span style={{ color: '#64748B' }} className="text-xs">—</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>
+                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#64748B' }}>
                                         <div className="flex items-center gap-1">
                                             {row.taxId ? (
                                                 <span>{row.taxId}</span>
@@ -1599,15 +1599,15 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#475569' : '#E2E8F0' }}>
                                         {row.salesRepName ?? '—'}
                                     </td>
-                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap font-mono" style={{ color: '#8AAEBB' }}>{row.paymentTerm}</td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355' }}>
+                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap font-mono" style={{ color: '#475569' }}>{row.paymentTerm}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#E2E8F0' }}>
                                         {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355' }}>
+                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#E2E8F0' }}>
                                             {row.orderCount}
                                         </span>
                                     </td>
@@ -1615,14 +1615,14 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     <td className="px-3 py-1.5">
                                         <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all whitespace-nowrap">
                                             <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                className="p-1 rounded transition-all" style={{ color: '#8AAEBB' }}
-                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
-                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
+                                                className="p-1 rounded transition-all" style={{ color: '#475569' }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)'; e.currentTarget.style.color = '#0891B2' }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#475569' }}
                                                 title="Chỉnh sửa"><Edit2 size={13} /></button>
                                             <button onClick={() => handleDelete(row.id, row.name)}
-                                                className="p-1 rounded transition-all" style={{ color: '#4A6A7A' }}
+                                                className="p-1 rounded transition-all" style={{ color: '#64748B' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
-                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#64748B' }}
                                                 title="Xóa"><Trash2 size={13} /></button>
                                         </div>
                                     </td>
@@ -1633,15 +1633,15 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 </div>
 
                 {total > 0 && (
-                    <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                            Hiển thị <span style={{ color: '#8AAEBB' }}>{((filters.page ?? 1) - 1) * 25 + 1}–{Math.min((filters.page ?? 1) * 25, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
+                    <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+                        <p className="text-xs" style={{ color: '#64748B' }}>
+                            Hiển thị <span style={{ color: '#475569' }}>{((filters.page ?? 1) - 1) * 25 + 1}–{Math.min((filters.page ?? 1) * 25, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
                         </p>
                         <div className="flex items-center gap-1">
                             {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
                                 <button key={i} onClick={() => applyFilter({ page: i + 1 })}
                                     className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                    style={{ background: (filters.page ?? 1) === i + 1 ? '#87CBB9' : 'transparent', color: (filters.page ?? 1) === i + 1 ? '#0A1926' : '#8AAEBB' }}>
+                                    style={{ background: (filters.page ?? 1) === i + 1 ? '#87CBB9' : 'transparent', color: (filters.page ?? 1) === i + 1 ? '#F8FAFC' : '#475569' }}>
                                     {i + 1}
                                 </button>
                             ))}

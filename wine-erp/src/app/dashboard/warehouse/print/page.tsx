@@ -66,19 +66,19 @@ export default function DOPrintPage({ searchParams }: Props) {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A1926] text-white">
-                <Loader2 className="animate-spin text-[#87CBB9] mb-4" size={36} />
-                <p className="text-sm text-[#8AAEBB]">Đang tải phiếu xuất kho...</p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white">
+                <Loader2 className="animate-spin text-[#0891B2] mb-4" size={36} />
+                <p className="text-sm text-slate-600">Đang tải phiếu xuất kho...</p>
             </div>
         )
     }
 
     if (error || !data) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A1926] text-white px-4">
-                <div className="p-6 rounded-lg max-w-md w-full bg-[#1B2E3D] border border-[#EF4444]/30 text-center">
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white px-4">
+                <div className="p-6 rounded-lg max-w-md w-full bg-white border border-[#EF4444]/30 text-center">
                     <p className="text-sm font-bold text-[#EF4444] mb-4">⚠ Lỗi hệ thống</p>
-                    <p className="text-sm text-[#E8F1F2] mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
+                    <p className="text-sm text-slate-900 mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
                     <button onClick={() => window.close()} className="px-4 py-2 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-500 transition-colors">
                         Đóng cửa sổ
                     </button>
@@ -100,7 +100,7 @@ export default function DOPrintPage({ searchParams }: Props) {
     const le = data.legalEntity
 
     return (
-        <div className="min-h-screen bg-[#0A1926] text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
+        <div className="min-h-screen bg-slate-50 text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
             {/* Print CSS */}
             <style>{`
                 @media print {
@@ -120,17 +120,17 @@ export default function DOPrintPage({ searchParams }: Props) {
             `}</style>
 
             {/* Top Toolbar (Hidden on print) */}
-            <div className="max-w-[850px] mx-auto mb-3 px-4 py-2 bg-[#1B2E3D] border border-[#2A4355] rounded-md flex items-center justify-between no-print">
+            <div className="max-w-[850px] mx-auto mb-3 px-4 py-2 bg-white border border-slate-200 rounded-md flex items-center justify-between no-print">
                 <button 
                     onClick={() => window.close()} 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-[#8AAEBB] hover:text-[#E8F1F2] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-slate-600 hover:text-slate-900 transition-colors"
                 >
                     <ArrowLeft size={14} /> Trở về
                 </button>
                 <div className="flex gap-2">
                     <button 
                         onClick={() => window.print()} 
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0] transition-colors shadow-sm"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white hover:bg-[#A5DED0] transition-colors shadow-sm"
                     >
                         <Printer size={14} /> In phiếu xuất kho
                     </button>

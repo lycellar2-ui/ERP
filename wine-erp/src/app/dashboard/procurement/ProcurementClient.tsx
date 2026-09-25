@@ -42,16 +42,16 @@ const INCOTERMS_CFG: Record<string, { label: string; bg: string; color: string; 
     EXW: { label: 'EXW', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' },
     FOB: { label: 'FOB', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' },
     CIF: { label: 'CIF', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' },
-    DDP: { label: 'DDP', bg: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: 'rgba(135,203,185,0.3)' },
+    DDP: { label: 'DDP', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' },
 }
 
 // ── Status config ─────────────────────────────────
 const PO_STATUS: Record<string, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: FileText },
     PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
     APPROVED: { label: 'Đã duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
     IN_TRANSIT: { label: 'Đang trên tàu', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Ship },
-    PARTIALLY_RECEIVED: { label: 'Nhận 1 phần', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Package },
+    PARTIALLY_RECEIVED: { label: 'Nhận 1 phần', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', icon: Package },
     RECEIVED: { label: 'Đã nhận đủ', color: '#5BA88A', bg: 'rgba(91,168,138,0.25)', icon: CheckCircle2 },
     CANCELLED: { label: 'Đã huỷ', color: '#E85D5D', bg: 'rgba(232,93,93,0.12)', icon: X },
 }
@@ -161,15 +161,15 @@ export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; d
 function POStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
     return (
         <div className="p-4 rounded-md flex items-center gap-4"
-            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{ background: `${accent}20` }}>
                 <div className="w-3 h-3 rounded-sm" style={{ background: accent }} />
             </div>
             <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
-                {sub && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{sub}</p>}
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
+                {sub && <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{sub}</p>}
             </div>
         </div>
     )
@@ -199,15 +199,15 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                     <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0"
                         style={{
-                            background: isActive ? 'rgba(135,203,185,0.15)' : 'transparent',
-                            color: isActive ? '#87CBB9' : '#4A6A7A',
-                            border: `1px solid ${isActive ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
+                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                            color: isActive ? '#87CBB9' : '#64748B',
+                            border: `1px solid ${isActive ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
                         }}
                         onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(135,203,185,0.06)')}
                         onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
                         {TAB_LABELS[tab]}
                         <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
-                            style={{ background: isActive ? 'rgba(135,203,185,0.2)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#4A6A7A' }}>
+                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#64748B' }}>
                             {count}
                         </span>
                     </button>
@@ -221,7 +221,7 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
     const isActive = current === field
     return (
         <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#8AAEBB', ...style }}
+            style={{ color: isActive ? '#87CBB9' : '#475569', ...style }}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
@@ -232,7 +232,7 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
 }
 
 function POStatusBadge({ status }: { status: string }) {
-    const cfg = PO_STATUS[status] ?? { label: status, color: '#8AAEBB', bg: 'rgba(168,152,128,0.15)', icon: FileText }
+    const cfg = PO_STATUS[status] ?? { label: status, color: '#475569', bg: 'rgba(168,152,128,0.15)', icon: FileText }
     const Icon = cfg.icon
     return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
@@ -353,7 +353,7 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
                 )}
                 <button onClick={handleSubmit} disabled={updating}
                     className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/20"
-                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
+                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
                     title="Gửi duyệt PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><Send size={11} /> Gửi Duyệt</>}
                 </button>
@@ -391,18 +391,18 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
 
                 {rejectDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" onClick={() => setRejectDialogOpen(false)}>
-                        <div className="w-full max-w-sm p-4 rounded-2xl bg-[#142433] border border-[#2A4355] space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
-                            <h4 className="text-sm font-bold text-[#E8F1F2]">Từ Chối Phê Duyệt PO</h4>
-                            <p className="text-xs text-[#8AAEBB]">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
+                        <div className="w-full max-w-sm p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <h4 className="text-sm font-bold text-slate-900">Từ Chối Phê Duyệt PO</h4>
+                            <p className="text-xs text-slate-600">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
                             <textarea
                                 value={reason}
                                 onChange={e => setReason(e.target.value)}
                                 placeholder="Nhập lý do từ chối (bắt buộc)..."
                                 rows={3}
-                                className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-[#1B2E3D] border border-[#2A4355] text-[#E8F1F2]"
+                                className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-slate-200 text-slate-900"
                             />
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setRejectDialogOpen(false)} className="px-3 py-1.5 text-xs text-[#8AAEBB] hover:bg-[#1B2E3D] rounded-lg">
+                                <button onClick={() => setRejectDialogOpen(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-white rounded-lg">
                                     Đóng
                                 </button>
                                 <button onClick={handleReject} disabled={updating || !reason.trim()}
@@ -502,10 +502,10 @@ function PODiscountSection({
         : 0
 
     return (
-        <div className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+        <div className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#E8F1F2]">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
+                    <span className="text-xs font-bold text-slate-900">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
                     {computedDiscount > 0 && (
                         <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
@@ -514,14 +514,14 @@ function PODiscountSection({
                 </div>
 
                 {/* 3-way toggle button group */}
-                <div className="flex items-center rounded-lg p-0.5 bg-[#0D1E2B] border border-[#2A4355] self-start sm:self-auto">
+                <div className="flex items-center rounded-lg p-0.5 bg-slate-50 border border-slate-200 self-start sm:self-auto">
                     <button
                         type="button"
                         onClick={() => onChangeType('NONE')}
                         className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
                         style={{
-                            background: discountType === 'NONE' ? '#2A4355' : 'transparent',
-                            color: discountType === 'NONE' ? '#E8F1F2' : '#8AAEBB',
+                            background: discountType === 'NONE' ? '#E2E8F0' : 'transparent',
+                            color: discountType === 'NONE' ? '#0F172A' : '#475569',
                         }}
                     >
                         Không giảm
@@ -532,7 +532,7 @@ function PODiscountSection({
                         className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
                         style={{
                             background: discountType === 'PERCENT' ? 'rgba(212,168,83,0.25)' : 'transparent',
-                            color: discountType === 'PERCENT' ? '#D4A853' : '#8AAEBB',
+                            color: discountType === 'PERCENT' ? '#D4A853' : '#475569',
                         }}
                     >
                         % Chiết khấu
@@ -543,7 +543,7 @@ function PODiscountSection({
                         className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
                         style={{
                             background: discountType === 'AMOUNT' ? 'rgba(212,168,83,0.25)' : 'transparent',
-                            color: discountType === 'AMOUNT' ? '#D4A853' : '#8AAEBB',
+                            color: discountType === 'AMOUNT' ? '#D4A853' : '#475569',
                         }}
                     >
                         Số tiền cố định
@@ -552,9 +552,9 @@ function PODiscountSection({
             </div>
 
             {discountType === 'PERCENT' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A4355]/40">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/40">
                     <div>
-                        <label className="text-[10px] font-semibold text-[#8AAEBB] block mb-1">
+                        <label className="text-[10px] font-semibold text-slate-600 block mb-1">
                             Tỷ lệ chiết khấu (%) trên tổng tiền hàng
                         </label>
                         <div className="relative">
@@ -567,16 +567,16 @@ function PODiscountSection({
                                 onChange={e => onChangePct(Math.min(100, Math.max(0, Number(e.target.value))))}
                                 placeholder="Vd: 5.5"
                                 className="w-full px-3 py-2 rounded-lg text-xs outline-none font-mono"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             />
-                            <span className="absolute right-3 top-2 text-xs font-bold text-[#8AAEBB]">%</span>
+                            <span className="absolute right-3 top-2 text-xs font-bold text-slate-600">%</span>
                         </div>
                     </div>
                     <div className="flex flex-col justify-end text-xs">
-                        <span className="text-[#4A6A7A] text-[11px]">Trị giá chiết khấu được trừ:</span>
+                        <span className="text-slate-500 text-[11px]">Trị giá chiết khấu được trừ:</span>
                         <p className="font-mono font-bold text-amber-300 text-sm">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                            <span className="text-[11px] text-[#87CBB9] ml-1 font-normal">
+                            <span className="text-[11px] text-[#0891B2] ml-1 font-normal">
                                 (≈ {formatVND(computedDiscount * exchangeRate)})
                             </span>
                         </p>
@@ -585,9 +585,9 @@ function PODiscountSection({
             )}
 
             {discountType === 'AMOUNT' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A4355]/40">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/40">
                     <div>
-                        <label className="text-[10px] font-semibold text-[#8AAEBB] block mb-1">
+                        <label className="text-[10px] font-semibold text-slate-600 block mb-1">
                             Số tiền giảm trực tiếp ({currency})
                         </label>
                         <input
@@ -598,15 +598,15 @@ function PODiscountSection({
                             onChange={e => onChangeAmount(Math.max(0, Number(e.target.value)))}
                             placeholder="Vd: 500"
                             className="w-full px-3 py-2 rounded-lg text-xs outline-none font-mono"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
                     </div>
                     <div className="flex flex-col justify-end text-xs">
-                        <span className="text-[#4A6A7A] text-[11px]">Quy đổi & Tỷ lệ giảm:</span>
+                        <span className="text-slate-500 text-[11px]">Quy đổi & Tỷ lệ giảm:</span>
                         <p className="font-mono font-bold text-amber-300 text-sm">
                             ≈ {formatVND(discountAmount * exchangeRate)}
                             {subtotal > 0 && (
-                                <span className="text-[11px] text-[#8AAEBB] ml-1 font-normal">
+                                <span className="text-[11px] text-slate-600 ml-1 font-normal">
                                     ({((discountAmount / subtotal) * 100).toFixed(1)}% đơn hàng)
                                 </span>
                             )}
@@ -794,42 +794,42 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     }
 
     const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     if (!open) return null
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
             <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
-                style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
+                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-[#2A4355]">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <ShoppingCart size={18} style={{ color: '#87CBB9' }} />
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <ShoppingCart size={18} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>Tạo Đơn Mua Hàng (PO)</h3>
+                                <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>Tạo Đơn Mua Hàng (PO)</h3>
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
                                     Bản Nháp (Draft)
                                 </span>
                             </div>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]"><X size={18} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-600 hover:bg-white"><X size={18} /></button>
                 </div>
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">── Thông Tin Chung</p>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Thông Tin Chung</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[11px] font-bold uppercase block mb-1 text-[#8AAEBB]">Nhà Cung Cấp *</label>
+                            <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Nhà Cung Cấp *</label>
                             <select className={inputCls} style={inputStyle} value={supplierId} onChange={e => handleSupplierChange(e.target.value)}>
                                 <option value="">— Chọn Nhà Cung Cấp —</option>
                                 {suppliers.map(s => (
@@ -840,7 +840,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             </select>
                         </div>
                         <div>
-                            <label className="text-[11px] font-bold uppercase block mb-1 text-[#8AAEBB]">Pháp Nhân Nhập Khẩu</label>
+                            <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Pháp Nhân Nhập Khẩu</label>
                             <select className={inputCls} style={inputStyle} value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}>
                                 {legalEntities.map(e => (
                                     <option key={e.id} value={e.id}>{e.code} — {e.name}</option>
@@ -851,7 +851,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className="text-[11px] font-bold uppercase block mb-1 text-[#8AAEBB]">Incoterms</label>
+                            <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Incoterms</label>
                             <select className={inputCls} style={inputStyle} value={incoterms} onChange={e => setIncoterms(e.target.value)}>
                                 <option value="EXW">EXW (Tại xưởng)</option>
                                 <option value="FOB">FOB (Giao lên tàu)</option>
@@ -860,7 +860,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             </select>
                         </div>
                         <div>
-                            <label className="text-[11px] font-bold uppercase block mb-1 text-[#8AAEBB]">Tiền Tệ</label>
+                            <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Tiền Tệ</label>
                             <select 
                                 className={inputCls} 
                                 style={{ ...inputStyle, opacity: supplierId ? 0.7 : 1 }} 
@@ -876,7 +876,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             </select>
                         </div>
                         <div>
-                            <label className="text-[11px] font-bold uppercase block mb-1 text-[#8AAEBB]">Tỷ Giá (VND/{currency})</label>
+                            <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Tỷ Giá (VND/{currency})</label>
                             <input type="number" className={inputCls} style={inputStyle} value={exchangeRate}
                                 onChange={e => setExchangeRate(Number(e.target.value))} step={100} />
                         </div>
@@ -884,9 +884,9 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                     {/* Product Lines */}
                     <div className="flex items-center justify-between pt-2">
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">── Danh Sách Sản Phẩm</p>
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Danh Sách Sản Phẩm</p>
                         <button onClick={addLine} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold"
-                            style={{ color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', background: 'rgba(135,203,185,0.1)' }}>
+                            style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', background: 'rgba(135,203,185,0.1)' }}>
                             <Plus size={12} /> Thêm Sản Phẩm
                         </button>
                     </div>
@@ -896,12 +896,12 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             const calc = getLineCalculations(line)
 
                             return (
-                                <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #2A4355' }}>
+                                <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-[#8AAEBB]">Dòng #{i + 1}</span>
+                                            <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
                                             {line.productId && (
-                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#87CBB9] border border-emerald-500/30">
+                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#0891B2] border border-emerald-500/30">
                                                     {calc.totalBottles} chai
                                                 </span>
                                             )}
@@ -909,8 +909,8 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
                                                 style={{
                                                     background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
-                                                    borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355',
-                                                    color: line.isFoc ? '#D4A853' : '#8AAEBB'
+                                                    borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0',
+                                                    color: line.isFoc ? '#D4A853' : '#475569'
                                                 }}>
                                                 <input
                                                     type="checkbox"
@@ -922,13 +922,13 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                             setLine(i, 'focNote', 'Hàng tặng kèm / Thử nếm')
                                                         }
                                                     }}
-                                                    className="rounded border-[#2A4355] text-amber-500 focus:ring-0 cursor-pointer"
+                                                    className="rounded border-slate-200 text-amber-500 focus:ring-0 cursor-pointer"
                                                 />
                                                 <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
                                             </label>
                                         </div>
                                         {lines.length > 1 && (
-                                            <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-[#1B2E3D]">
+                                            <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-white">
                                                 <Trash2 size={13} />
                                             </button>
                                         )}
@@ -982,9 +982,9 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         />
 
                                         {activeDropdownIndex === i && (
-                                            <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-[#142433] border border-[#2A4355] w-full shadow-2xl p-1">
+                                            <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-white border border-slate-200 w-full shadow-2xl p-1">
                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
-                                                    <div className="px-3 py-2 text-xs text-[#4A6A7A] italic text-center">
+                                                    <div className="px-3 py-2 text-xs text-slate-500 italic text-center">
                                                         Không tìm thấy sản phẩm nào
                                                     </div>
                                                 ) : (
@@ -999,11 +999,11 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                                 }))
                                                                 setActiveDropdownIndex(null)
                                                             }}
-                                                            className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-[#1B2E3D] transition-colors flex items-center justify-between gap-2 border-b border-[#2A4355]/20 last:border-b-0"
+                                                            className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-white transition-colors flex items-center justify-between gap-2 border-b border-slate-200/20 last:border-b-0"
                                                         >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                <span className="font-mono font-bold text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
-                                                                <span className="font-semibold text-[#E8F1F2] truncate">{p.productName}</span>
+                                                                <span className="font-mono font-bold text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                             </div>
                                                             {p.country && (
                                                                 <span className="text-[11px] shrink-0">{COUNTRY_FLAGS[p.country] || '🌐'}</span>
@@ -1019,7 +1019,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                                         {/* Pack Type / UOM */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Quy cách đóng gói</label>
+                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
                                             <select
                                                 className={inputCls}
                                                 style={inputStyle}
@@ -1042,7 +1042,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Pricing Mode */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Hình thức nhập giá</label>
+                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
                                             <select
                                                 className={inputCls}
                                                 style={{ ...inputStyle, opacity: line.packType === 'BOTTLE' ? 0.6 : 1 }}
@@ -1057,7 +1057,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Quantity */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
                                                 Số lượng ({line.packType === 'BOTTLE' ? 'chai' : 'thùng'})
                                             </label>
                                             <input
@@ -1069,7 +1069,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                 onChange={e => setLine(i, 'qtyInput', Math.max(1, Number(e.target.value)))}
                                             />
                                             {calc.isCase && (
-                                                <span className="text-[10px] font-mono text-[#87CBB9] block mt-0.5">
+                                                <span className="text-[10px] font-mono text-[#0891B2] block mt-0.5">
                                                     = {calc.totalBottles} chai
                                                 </span>
                                             )}
@@ -1077,7 +1077,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Unit Price */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
                                                 {line.isFoc
                                                     ? (line.pricingMode === 'PER_CASE' && calc.isCase
                                                         ? `Giá danh nghĩa HQ/thùng (${currency})`
@@ -1091,7 +1091,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                 min={0}
                                                 step={0.01}
                                                 className={inputCls}
-                                                style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355' }}
+                                                style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0' }}
                                                 value={line.priceInput}
                                                 onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                             />
@@ -1100,7 +1100,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                     (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                 </span>
                                             ) : calc.isCase && (
-                                                <span className="text-[10px] font-mono text-[#8AAEBB] block mt-0.5">
+                                                <span className="text-[10px] font-mono text-slate-600 block mt-0.5">
                                                     {line.pricingMode === 'PER_CASE'
                                                         ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
                                                         : `(≈ ${calc.unitPricePerCase.toFixed(2)} ${currency}/thùng)`}
@@ -1110,8 +1110,8 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     </div>
 
                                     {/* Line Total preview */}
-                                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A4355]/40">
-                                        <span className="text-[#4A6A7A]">
+                                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/40">
+                                        <span className="text-slate-500">
                                             {line.isFoc ? (
                                                 <span className="text-amber-300 font-bold">
                                                     🎁 Hàng FOC (Miễn phí thanh toán NCC):
@@ -1119,24 +1119,24 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             ) : (
                                                 <>
                                                     Thành tiền dòng:
-                                                    <span className="ml-1 text-[11px] text-[#8AAEBB]">
+                                                    <span className="ml-1 text-[11px] text-slate-600">
                                                         ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
                                                     </span>
                                                 </>
                                             )}
                                         </span>
-                                        <span className="font-mono font-bold text-[#E8F1F2]">
+                                        <span className="font-mono font-bold text-slate-900">
                                             {line.isFoc ? (
                                                 <>
                                                     <span className="text-amber-400 mr-2">0.00 {currency}</span>
-                                                    <span className="text-[10px] text-[#8AAEBB] font-normal">
+                                                    <span className="text-[10px] text-slate-600 font-normal">
                                                         (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                     </span>
                                                 </>
                                             ) : (
                                                 <>
                                                     {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                                    <span className="text-[10px] ml-1.5 text-[#87CBB9]">
+                                                    <span className="text-[10px] ml-1.5 text-[#0891B2]">
                                                         (≈ {formatVND(calc.lineTotal * exchangeRate)})
                                                     </span>
                                                 </>
@@ -1165,11 +1165,11 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-[#2A4355] flex-shrink-0 space-y-3" style={{ background: '#142433' }}>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-[#2A4355]/40 pb-2.5">
+                <div className="p-4 border-t border-slate-200 flex-shrink-0 space-y-3" style={{ background: '#FFFFFF' }}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-slate-200/40 pb-2.5">
                         <div>
-                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tổng SL Chai</p>
-                            <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                            <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
+                            <p className="font-mono font-bold text-slate-900 text-sm">
                                 {totalAllBottles.toLocaleString()} chai
                             </p>
                             {totalFocBottles > 0 && (
@@ -1179,30 +1179,30 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             )}
                         </div>
                         <div>
-                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tiền Hàng (Subtotal)</p>
-                            <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                            <p className="text-[10px] text-slate-500 uppercase font-bold">Tiền Hàng (Subtotal)</p>
+                            <p className="font-mono font-bold text-slate-900 text-sm">
                                 {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                             </p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Giảm Giá / CK</p>
+                            <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
                             <p className="font-mono font-bold text-amber-400 text-sm">
                                 {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Phải Thanh Toán</p>
-                            <p className="font-mono font-bold text-[#87CBB9] text-base">
+                            <p className="text-[10px] text-slate-500 uppercase font-bold">Phải Thanh Toán</p>
+                            <p className="font-mono font-bold text-[#0891B2] text-base">
                                 {formatVND(totalVND)}
                             </p>
-                            <p className="text-[10px] font-mono text-[#8AAEBB]">
+                            <p className="text-[10px] font-mono text-slate-600">
                                 {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2.5">
                         <button type="button" onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                            className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
                             Huỷ
                         </button>
                         <button type="button" onClick={() => handleSave(false)} disabled={saving}
@@ -1214,7 +1214,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </button>
                         <button type="button" onClick={() => handleSave(true)} disabled={saving}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}
                             title="Tạo đơn và gửi trình duyệt ngay">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Tạo & Gửi Trình Duyệt
@@ -1430,50 +1430,50 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
     }
 
     const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     if (!open) return null
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
             <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
-                style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
+                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-[#2A4355]">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
                             <Pencil size={18} style={{ color: '#D4A853' }} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>
-                                    Chỉnh Sửa Đơn Nháp: <span className="font-mono text-[#87CBB9]">{poNo}</span>
+                                <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>
+                                    Chỉnh Sửa Đơn Nháp: <span className="font-mono text-[#0891B2]">{poNo}</span>
                                 </h3>
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
                                     Bản Nháp
                                 </span>
                             </div>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]"><X size={18} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-600 hover:bg-white"><X size={18} /></button>
                 </div>
 
                 {loadingDetail ? (
-                    <div className="flex-1 flex items-center justify-center py-16 text-[#87CBB9]">
+                    <div className="flex-1 flex items-center justify-center py-16 text-[#0891B2]">
                         <Loader2 size={24} className="animate-spin mr-2" /> Đang tải thông tin PO...
                     </div>
                 ) : (
                     <>
                         {/* Body */}
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                            <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">── Thông Tin Chung</p>
+                            <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Thông Tin Chung</p>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Nhà Cung Cấp / Winery *</label>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Nhà Cung Cấp / Winery *</label>
                                     <select
                                         className={inputCls}
                                         style={inputStyle}
@@ -1490,7 +1490,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Pháp Nhân Nhập Khẩu</label>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Pháp Nhân Nhập Khẩu</label>
                                     <select
                                         className={inputCls}
                                         style={inputStyle}
@@ -1508,7 +1508,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Incoterms</label>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Incoterms</label>
                                     <select
                                         className={inputCls}
                                         style={inputStyle}
@@ -1523,7 +1523,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Tiền Tệ</label>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Tiền Tệ</label>
                                     <select
                                         className={inputCls}
                                         style={inputStyle}
@@ -1539,7 +1539,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Tỷ Giá Quy Đổi VNĐ</label>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Tỷ Giá Quy Đổi VNĐ</label>
                                     <input
                                         type="number"
                                         className={inputCls}
@@ -1552,12 +1552,12 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
 
                             {/* Line Items */}
                             <div className="flex items-center justify-between pt-2">
-                                <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">
+                                <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">
                                     ── Danh Sách Sản Phẩm ({lines.length})
                                 </p>
                                 <button onClick={addLine}
                                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold"
-                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                     <Plus size={12} /> Thêm Sản Phẩm
                                 </button>
                             </div>
@@ -1567,12 +1567,12 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     const calc = getLineCalculations(line)
 
                                     return (
-                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #2A4355' }}>
+                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-[#8AAEBB]">Dòng #{i + 1}</span>
+                                                    <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
                                                     {line.productId && (
-                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#87CBB9] border border-emerald-500/30">
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#0891B2] border border-emerald-500/30">
                                                             {calc.totalBottles} chai
                                                         </span>
                                                     )}
@@ -1580,8 +1580,8 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
                                                         style={{
                                                             background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
-                                                            borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355',
-                                                            color: line.isFoc ? '#D4A853' : '#8AAEBB'
+                                                            borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0',
+                                                            color: line.isFoc ? '#D4A853' : '#475569'
                                                         }}>
                                                         <input
                                                             type="checkbox"
@@ -1593,13 +1593,13 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                                     setLine(i, 'focNote', 'Hàng tặng kèm / Thử nếm')
                                                                 }
                                                             }}
-                                                            className="rounded border-[#2A4355] text-amber-500 focus:ring-0 cursor-pointer"
+                                                            className="rounded border-slate-200 text-amber-500 focus:ring-0 cursor-pointer"
                                                         />
                                                         <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
                                                     </label>
                                                 </div>
                                                 {lines.length > 1 && (
-                                                    <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-[#1B2E3D]">
+                                                    <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-white">
                                                         <Trash2 size={13} />
                                                     </button>
                                                 )}
@@ -1653,9 +1653,9 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 />
 
                                                 {activeDropdownIndex === i && (
-                                                    <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-[#142433] border border-[#2A4355] w-full shadow-2xl p-1">
+                                                    <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-white border border-slate-200 w-full shadow-2xl p-1">
                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
-                                                            <div className="px-3 py-2 text-xs text-[#4A6A7A] italic text-center">
+                                                            <div className="px-3 py-2 text-xs text-slate-500 italic text-center">
                                                                 Không tìm thấy sản phẩm nào
                                                             </div>
                                                         ) : (
@@ -1670,11 +1670,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                                         }))
                                                                         setActiveDropdownIndex(null)
                                                                     }}
-                                                                    className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-[#1B2E3D] transition-colors flex items-center justify-between gap-2 border-b border-[#2A4355]/20 last:border-b-0"
+                                                                    className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-white transition-colors flex items-center justify-between gap-2 border-b border-slate-200/20 last:border-b-0"
                                                                 >
                                                                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                        <span className="font-mono font-bold text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
-                                                                        <span className="font-semibold text-[#E8F1F2] truncate">{p.productName}</span>
+                                                                        <span className="font-mono font-bold text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                        <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                                     </div>
                                                                     {p.country && (
                                                                         <span className="text-[11px] shrink-0">{COUNTRY_FLAGS[p.country] || '🌐'}</span>
@@ -1689,7 +1689,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             {/* Row Controls: Quy cách đóng gói, Chế độ giá, Số lượng, Đơn giá */}
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Quy cách đóng gói</label>
+                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
                                                     <select
                                                         className={inputCls}
                                                         style={inputStyle}
@@ -1711,7 +1711,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Hình thức nhập giá</label>
+                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
                                                     <select
                                                         className={inputCls}
                                                         style={{ ...inputStyle, opacity: line.packType === 'BOTTLE' ? 0.6 : 1 }}
@@ -1725,7 +1725,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
                                                         Số lượng ({line.packType === 'BOTTLE' ? 'chai' : 'thùng'})
                                                     </label>
                                                     <input
@@ -1737,14 +1737,14 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                         onChange={e => setLine(i, 'qtyInput', Math.max(1, Number(e.target.value)))}
                                                     />
                                                     {calc.isCase && (
-                                                        <span className="text-[10px] font-mono text-[#87CBB9] block mt-0.5">
+                                                        <span className="text-[10px] font-mono text-[#0891B2] block mt-0.5">
                                                             = {calc.totalBottles} chai
                                                         </span>
                                                     )}
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
                                                         {line.isFoc
                                                             ? (line.pricingMode === 'PER_CASE' && calc.isCase
                                                                 ? `Giá danh nghĩa HQ/thùng (${currency})`
@@ -1758,7 +1758,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                         min={0}
                                                         step={0.01}
                                                         className={inputCls}
-                                                        style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#2A4355' }}
+                                                        style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0' }}
                                                         value={line.priceInput}
                                                         onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                                     />
@@ -1767,7 +1767,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                             (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                         </span>
                                                     ) : calc.isCase && (
-                                                        <span className="text-[10px] font-mono text-[#8AAEBB] block mt-0.5">
+                                                        <span className="text-[10px] font-mono text-slate-600 block mt-0.5">
                                                             {line.pricingMode === 'PER_CASE'
                                                                 ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
                                                                 : `(≈ ${calc.unitPricePerCase.toFixed(2)} ${currency}/thùng)`}
@@ -1777,8 +1777,8 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             </div>
 
                                             {/* Line Total preview */}
-                                            <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A4355]/40">
-                                                <span className="text-[#4A6A7A]">
+                                            <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/40">
+                                                <span className="text-slate-500">
                                                     {line.isFoc ? (
                                                         <span className="text-amber-300 font-bold">
                                                             🎁 Hàng FOC (Miễn phí thanh toán NCC):
@@ -1786,24 +1786,24 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     ) : (
                                                         <>
                                                             Thành tiền dòng:
-                                                            <span className="ml-1 text-[11px] text-[#8AAEBB]">
+                                                            <span className="ml-1 text-[11px] text-slate-600">
                                                                 ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
                                                             </span>
                                                         </>
                                                     )}
                                                 </span>
-                                                <span className="font-mono font-bold text-[#E8F1F2]">
+                                                <span className="font-mono font-bold text-slate-900">
                                                     {line.isFoc ? (
                                                         <>
                                                             <span className="text-amber-400 mr-2">0.00 {currency}</span>
-                                                            <span className="text-[10px] text-[#8AAEBB] font-normal">
+                                                            <span className="text-[10px] text-slate-600 font-normal">
                                                                 (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                             </span>
                                                         </>
                                                     ) : (
                                                         <>
                                                             {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                                            <span className="text-[10px] ml-1.5 text-[#87CBB9]">
+                                                            <span className="text-[10px] ml-1.5 text-[#0891B2]">
                                                                 (≈ {formatVND(calc.lineTotal * exchangeRate)})
                                                             </span>
                                                         </>
@@ -1832,11 +1832,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-4 border-t border-[#2A4355] flex-shrink-0 space-y-3" style={{ background: '#142433' }}>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-[#2A4355]/40 pb-2.5">
+                        <div className="p-4 border-t border-slate-200 flex-shrink-0 space-y-3" style={{ background: '#FFFFFF' }}>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-slate-200/40 pb-2.5">
                                 <div>
-                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tổng SL Chai</p>
-                                    <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
+                                    <p className="font-mono font-bold text-slate-900 text-sm">
                                         {totalAllBottles.toLocaleString()} chai
                                     </p>
                                     {totalFocBottles > 0 && (
@@ -1846,30 +1846,30 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Tiền Hàng (Subtotal)</p>
-                                    <p className="font-mono font-bold text-[#E8F1F2] text-sm">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Tiền Hàng (Subtotal)</p>
+                                    <p className="font-mono font-bold text-slate-900 text-sm">
                                         {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Giảm Giá / CK</p>
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
                                     <p className="font-mono font-bold text-amber-400 text-sm">
                                         {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-[#4A6A7A] uppercase font-bold">Phải Thanh Toán</p>
-                                    <p className="font-mono font-bold text-[#87CBB9] text-base">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Phải Thanh Toán</p>
+                                    <p className="font-mono font-bold text-[#0891B2] text-base">
                                         {formatVND(totalVND)}
                                     </p>
-                                    <p className="text-[10px] font-mono text-[#8AAEBB]">
+                                    <p className="text-[10px] font-mono text-slate-600">
                                         {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex gap-2.5">
                                 <button type="button" onClick={onClose}
-                                    className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                                    className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
                                     Đóng
                                 </button>
                                 <button type="button" onClick={() => handleSave(false)} disabled={saving}
@@ -1881,7 +1881,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </button>
                                 <button type="button" onClick={() => handleSave(true)} disabled={saving}
                                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                                     title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                     Lưu & Gửi Duyệt
@@ -2208,23 +2208,23 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 <div className="flex items-center gap-3">
                     {/* Inline Quick Stats matching SalesClient */}
                     <div className="hidden lg:flex items-center gap-x-4 text-xs">
-                        <span style={{ color: '#8AAEBB' }}>
-                            Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong>
+                        <span style={{ color: '#475569' }}>
+                            Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong>
                         </span>
-                        <span style={{ color: '#8AAEBB' }}>
+                        <span style={{ color: '#475569' }}>
                             Bản nháp: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
                         </span>
-                        <span style={{ color: '#8AAEBB' }}>
+                        <span style={{ color: '#475569' }}>
                             Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
                         </span>
-                        <span style={{ color: '#8AAEBB' }}>
+                        <span style={{ color: '#475569' }}>
                             Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.approved}</strong>
                         </span>
-                        <span style={{ color: '#8AAEBB' }}>
+                        <span style={{ color: '#475569' }}>
                             Đang trên tàu: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.inTransit}</strong>
                         </span>
-                        <span style={{ color: '#8AAEBB' }}>
-                            Đã nhập đủ: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{statusCounts.RECEIVED ?? 0}</strong>
+                        <span style={{ color: '#475569' }}>
+                            Đã nhập đủ: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{statusCounts.RECEIVED ?? 0}</strong>
                         </span>
                     </div>
                 </div>
@@ -2233,9 +2233,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <button onClick={() => setShowStats(!showStats)}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
                         style={{ 
-                            background: showStats ? 'rgba(135,203,185,0.15)' : 'rgba(138,174,187,0.1)', 
-                            color: showStats ? '#87CBB9' : '#8AAEBB', 
-                            border: `1px solid ${showStats ? 'rgba(135,203,185,0.3)' : 'rgba(138,174,187,0.25)'}` 
+                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(138,174,187,0.1)', 
+                            color: showStats ? '#87CBB9' : '#475569', 
+                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(138,174,187,0.25)'}` 
                         }}
                         onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)' }}
                         onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)' }}>
@@ -2260,7 +2260,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                     <button onClick={handleExportExcel}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
+                        style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.2)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
                         <Download size={14} /> Excel
@@ -2268,7 +2268,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                     <button onClick={() => setDrawerOpen(true)}
                         className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
-                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                         <Plus size={16} /> Tạo PO Mới
@@ -2280,8 +2280,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {showStats && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết Đơn Mua Hàng</span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết Đơn Mua Hàng</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
                             Thu gọn chỉ số ✕
                         </button>
                     </div>
@@ -2295,7 +2295,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             )}
 
             {/* Toolbar: Tabs & Main Filters */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
                 {/* Left side: Quick Filter Tabs */}
                 <div className="flex-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                     <FilterTabs active={statusFilter} counts={statusCounts} onChange={handleStatusTab} />
@@ -2305,7 +2305,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                     {/* Search input */}
                     <div className="relative w-full sm:w-48 xl:w-64">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                         <input type="text" placeholder="Tìm số PO, nhà cung cấp, B/L..."
                             value={search}
                             onChange={e => {
@@ -2314,43 +2314,43 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 refresh({ search: val })
                             }}
                             className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </div>
 
                     {/* MISA-style Date Period Preset Dropdown */}
-                    <div className="flex items-center gap-1.5 bg-[#1B2E3D] px-2.5 py-1 border border-[#2A4355] rounded-[4px]">
-                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#4A6A7A' }} />
+                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 border border-slate-200 rounded-[4px]">
+                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#64748B' }} />
                         <select
                             value={datePreset}
                             onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
                             className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
-                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#E8F1F2' }}
+                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#0F172A' }}
                         >
                             {DATE_PRESET_OPTIONS.map(opt => (
-                                <option key={opt.key} value={opt.key} className="bg-[#0D1E2B] text-[#E8F1F2]">
+                                <option key={opt.key} value={opt.key} className="bg-slate-50 text-slate-900">
                                     {opt.label}
                                 </option>
                             ))}
                         </select>
 
-                        <div className="flex items-center gap-1 border-l border-[#2A4355] pl-1.5 ml-0.5">
+                        <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-0.5">
                             <input type="date" value={dateFrom}
                                 onChange={e => {
                                     setDatePreset('CUSTOM')
                                     setDateFrom(e.target.value)
                                     refresh({ dateFrom: e.target.value, dateTo })
                                 }}
-                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
-                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
+                                className="bg-transparent border-none text-[11px] text-slate-600 outline-none w-[95px] p-0" />
+                            <span className="text-[10px]" style={{ color: '#64748B' }}>→</span>
                             <input type="date" value={dateTo}
                                 onChange={e => {
                                     setDatePreset('CUSTOM')
                                     setDateTo(e.target.value)
                                     refresh({ dateFrom, dateTo: e.target.value })
                                 }}
-                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                                className="bg-transparent border-none text-[11px] text-slate-600 outline-none w-[95px] p-0" />
                         </div>
                     </div>
 
@@ -2358,9 +2358,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <button onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
                         style={{
-                            background: (showFilters || hasActiveFilters) ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                            color: (showFilters || hasActiveFilters) ? '#87CBB9' : '#8AAEBB',
-                            border: `1px solid ${(showFilters || hasActiveFilters) ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                            background: (showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                            color: (showFilters || hasActiveFilters) ? '#87CBB9' : '#475569',
+                            border: `1px solid ${(showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
                         }}
                     >
                         <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
@@ -2375,13 +2375,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {/* Collapsible Advanced Filters */}
             {showFilters && (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
-                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp Nhân Nhập Khẩu</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Pháp Nhân Nhập Khẩu</label>
                         <select value={legalEntityFilter}
                             onChange={e => { setLegalEntityFilter(e.target.value); refresh({ legalEntityId: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             <option value="">Tất cả pháp nhân</option>
                             {legalEntities.map(e => (
                                 <option key={e.id} value={e.id}>{e.code} — {e.name}</option>
@@ -2390,11 +2390,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Incoterms</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Incoterms</label>
                         <select value={incotermsFilter}
                             onChange={e => { setIncotermsFilter(e.target.value); refresh({ incoterms: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             <option value="">Tất cả Incoterms</option>
                             <option value="EXW">EXW (Tại xưởng)</option>
                             <option value="FOB">FOB (Giao lên tàu)</option>
@@ -2404,11 +2404,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Tiền Tệ</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Tiền Tệ</label>
                         <select value={currencyFilter}
                             onChange={e => { setCurrencyFilter(e.target.value); refresh({ currency: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             <option value="">Tất cả tiền tệ</option>
                             <option value="USD">USD ($)</option>
                             <option value="EUR">EUR (€)</option>
@@ -2432,45 +2432,45 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* Desktop Table — Multi-Line Compact ERP Layout */}
             <div className="hidden md:block rounded-2xl overflow-hidden shadow-sm"
-                style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
                         <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
                                 <SortHeader label="Nhà Cung Cấp & Pháp Nhân" field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
                                 <SortHeader label="Quy Mô & Nhập Kho" field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
                                 <SortHeader label="Giá Trị & Quy Đổi" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
-                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB]" style={{ width: '14%' }}>
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600" style={{ width: '14%' }}>
                                     Trạng Thái & Hồ Sơ
                                 </th>
-                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB] text-right" style={{ width: '16%', minWidth: '175px' }}>
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600 text-right" style={{ width: '16%', minWidth: '175px' }}>
                                     Thao Tác
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#2A4355]/40">
+                        <tbody className="divide-y divide-slate-200/40">
                             {loading ? (
                                 Array.from({ length: 4 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         {Array.from({ length: 6 }).map((_, j) => (
                                             <td key={j} className="px-4 py-3.5">
-                                                <div className="h-4 rounded bg-[#1B2E3D] w-3/4 mb-1.5" />
-                                                <div className="h-3 rounded bg-[#1B2E3D]/60 w-1/2" />
+                                                <div className="h-4 rounded bg-white w-3/4 mb-1.5" />
+                                                <div className="h-3 rounded bg-white/60 w-1/2" />
                                             </td>
                                         ))}
                                     </tr>
                                 ))
                             ) : sortedRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="text-center py-16 text-[#4A6A7A]">
-                                        <FileText size={32} className="mx-auto mb-2 opacity-40 text-[#8AAEBB]" />
+                                    <td colSpan={6} className="text-center py-16 text-slate-500">
+                                        <FileText size={32} className="mx-auto mb-2 opacity-40 text-slate-600" />
                                         <p className="text-sm font-semibold">
                                             {hasActiveFilters ? 'Không tìm thấy đơn mua hàng phù hợp bộ lọc' : 'Hệ thống chưa có đơn mua hàng nào'}
                                         </p>
                                         {hasActiveFilters && (
                                             <button onClick={handleClearFilters}
-                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-[#0A1926] bg-[#87CBB9]">
+                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-slate-900 bg-[#87CBB9]">
                                                 Xoá Bộ Lọc
                                             </button>
                                         )}
@@ -2493,7 +2493,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Col 1: PO No & Shipping info */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-extrabold font-mono text-[#87CBB9]">
+                                                <span className="text-xs font-extrabold font-mono text-[#0891B2]">
                                                     {row.poNo}
                                                 </span>
                                                 {row.incoterms && (
@@ -2505,32 +2505,32 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
                                             {row.latestShipment ? (
                                                 <div className="mt-1 space-y-0.5">
-                                                    <div className="flex items-center gap-1.5 text-xs text-[#E8F1F2]">
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-900">
                                                         <Ship size={11} className="text-[#4A8FAB] shrink-0" />
                                                         <span className="font-mono font-bold text-[#4A8FAB] text-[11px] truncate max-w-[170px]"
                                                             title={`Vận đơn B/L: ${row.latestShipment.billOfLading}`}>
                                                             {row.latestShipment.billOfLading}
                                                         </span>
                                                         {row.latestShipment.vesselName && (
-                                                            <span className="text-[10px] text-[#8AAEBB] truncate max-w-[100px]" title={row.latestShipment.vesselName}>
+                                                            <span className="text-[10px] text-slate-600 truncate max-w-[100px]" title={row.latestShipment.vesselName}>
                                                                 · {row.latestShipment.vesselName}
                                                             </span>
                                                         )}
                                                     </div>
                                                     {row.latestShipment.containerNo && (
-                                                        <p className="text-[10px] text-[#4A6A7A] font-mono">
+                                                        <p className="text-[10px] text-slate-500 font-mono">
                                                             Cont: {row.latestShipment.containerNo} {row.latestShipment.containerType ? `(${row.latestShipment.containerType})` : ''}
                                                         </p>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <p className="text-[10px] mt-1 text-[#4A6A7A] italic">Chưa có lô vận chuyển B/L</p>
+                                                <p className="text-[10px] mt-1 text-slate-500 italic">Chưa có lô vận chuyển B/L</p>
                                             )}
                                         </td>
 
                                         {/* Col 2: Supplier & Legal Entity */}
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-extrabold text-[#E8F1F2] truncate max-w-[230px]" title={row.supplierName}>
+                                            <p className="text-xs font-extrabold text-slate-900 truncate max-w-[230px]" title={row.supplierName}>
                                                 <span className="mr-1">{flag}</span>
                                                 {row.supplierName}
                                             </p>
@@ -2538,14 +2538,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {row.legalEntityCode && (
                                                     <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded"
                                                         style={{ 
-                                                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.15)' : 'rgba(135,203,185,0.15)', 
+                                                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.15)' : 'rgba(8, 145, 178, 0.08)', 
                                                             color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' 
                                                         }}>
                                                         {row.legalEntityCode}
                                                     </span>
                                                 )}
                                                 {row.paymentTerm && (
-                                                    <span className="text-[10px] text-[#8AAEBB] font-mono">
+                                                    <span className="text-[10px] text-slate-600 font-mono">
                                                         {row.paymentTerm}
                                                     </span>
                                                 )}
@@ -2554,8 +2554,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                                         {/* Col 3: Quantity & Goods Receipt */}
                                         <td className="px-4 py-3">
-                                            <div className="text-xs font-bold text-[#E8F1F2]">
-                                                <span className="text-[#8AAEBB] font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-[#E8F1F2]">{row.totalQty.toLocaleString()}</span> chai
+                                            <div className="text-xs font-bold text-slate-900">
+                                                <span className="text-slate-600 font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-slate-900">{row.totalQty.toLocaleString()}</span> chai
                                             </div>
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
@@ -2566,16 +2566,16 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             )}
                                             <div className="mt-1 space-y-0.5">
                                                 <div className="flex justify-between items-center text-[10px]">
-                                                    <span className="text-[#4A6A7A]">Đã nhập kho:</span>
-                                                    <span className="font-mono font-bold text-[#87CBB9]">
+                                                    <span className="text-slate-500">Đã nhập kho:</span>
+                                                    <span className="font-mono font-bold text-[#0891B2]">
                                                         {row.totalQtyReceived.toLocaleString()}/{row.totalQty.toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <div className="w-full h-1.5 bg-[#1B2E3D] rounded-full overflow-hidden">
+                                                <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
                                                     <div className="h-full rounded-full transition-all"
                                                         style={{ 
                                                             width: `${row.receivedPercentage}%`, 
-                                                            background: row.receivedPercentage >= 100 ? '#5BA88A' : (row.receivedPercentage > 0 ? '#87CBB9' : '#2A4355') 
+                                                            background: row.receivedPercentage >= 100 ? '#5BA88A' : (row.receivedPercentage > 0 ? '#87CBB9' : '#E2E8F0') 
                                                         }} />
                                                 </div>
                                             </div>
@@ -2583,7 +2583,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                                         {/* Col 4: Foreign Value & VND Conversion */}
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-bold font-mono text-[#E8F1F2]">
+                                            <p className="text-xs font-bold font-mono text-slate-900">
                                                 {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
                                             </p>
                                             {row.discountAmount && row.discountAmount > 0 ? (
@@ -2591,10 +2591,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     🏷️ -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
                                                 </p>
                                             ) : null}
-                                            <p className="text-[11px] font-bold font-mono text-[#87CBB9] mt-0.5">
+                                            <p className="text-[11px] font-bold font-mono text-[#0891B2] mt-0.5">
                                                 ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                             </p>
-                                            <p className="text-[10px] text-[#4A6A7A] font-mono">
+                                            <p className="text-[10px] text-slate-500 font-mono">
                                                 Tỷ giá: {row.exchangeRate.toLocaleString()}
                                             </p>
                                         </td>
@@ -2606,17 +2606,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-1 text-[10px] flex-wrap">
                                                 {row.creatorName && (
-                                                    <span className="text-[#8AAEBB] font-medium">
+                                                    <span className="text-slate-600 font-medium">
                                                         👤 {row.creatorName}
                                                     </span>
                                                 )}
                                                 {row.docCount && row.docCount > 0 ? (
-                                                    <span className="text-[#87CBB9] flex items-center gap-0.5 font-mono">
+                                                    <span className="text-[#0891B2] flex items-center gap-0.5 font-mono">
                                                         📎 {row.docCount} file
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <p className="text-[10px] text-[#4A6A7A] mt-0.5">
+                                            <p className="text-[10px] text-slate-500 mt-0.5">
                                                 {formatDate(row.createdAt)}
                                                 {row.estimatedDelivery && ` · ETA: ${formatDate(row.estimatedDelivery)}`}
                                             </p>
@@ -2626,7 +2626,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <td className="px-4 py-3 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                                                 <button onClick={() => showDetail(row.id)}
-                                                    className="p-1.5 rounded-lg text-[#87CBB9] hover:bg-[#1B2E3D] border border-emerald-500/20 flex-shrink-0"
+                                                    className="p-1.5 rounded-lg text-[#0891B2] hover:bg-white border border-emerald-500/20 flex-shrink-0"
                                                     title="Xem chi tiết PO">
                                                     <Eye size={13} />
                                                 </button>
@@ -2637,7 +2637,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Direct Warehouse Receipt shortcut */}
                                                 {isReadyForGR && (
                                                     <Link href="/dashboard/warehouse"
-                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#87CBB9] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
+                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#0891B2] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
                                                         title="Nhập kho hàng cho PO này">
                                                         <Box size={11} /> Nhập Kho
                                                     </Link>
@@ -2655,11 +2655,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {/* Mobile View — Multi-Line Cards */}
             <div className="block md:hidden space-y-3">
                 {loading ? (
-                    <div className="text-center py-12 text-xs text-[#8AAEBB]">
-                        <Loader2 size={20} className="animate-spin inline text-[#87CBB9] mr-2" /> Đang tải PO...
+                    <div className="text-center py-12 text-xs text-slate-600">
+                        <Loader2 size={20} className="animate-spin inline text-[#0891B2] mr-2" /> Đang tải PO...
                     </div>
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-12 text-xs text-[#4A6A7A] rounded-2xl border border-[#2A4355] bg-[#0D1E2B]">
+                    <div className="text-center py-12 text-xs text-slate-500 rounded-2xl border border-slate-200 bg-slate-50">
                         Chưa có đơn mua hàng nào
                     </div>
                 ) : rows.map(row => {
@@ -2669,11 +2669,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     return (
                         <div key={row.id} onClick={() => showDetail(row.id)}
                             className="p-3.5 rounded-2xl space-y-2.5 cursor-pointer transition-all active:scale-[0.99]"
-                            style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold font-mono text-[#87CBB9]">{row.poNo}</span>
+                                    <span className="text-xs font-bold font-mono text-[#0891B2]">{row.poNo}</span>
                                     {row.incoterms && (
                                         <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded"
                                             style={{ background: incoCfg.bg, color: incoCfg.color, border: `1px solid ${incoCfg.border}` }}>
@@ -2685,7 +2685,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             </div>
 
                             <div className="text-xs">
-                                <p className="font-extrabold text-[#E8F1F2]">
+                                <p className="font-extrabold text-slate-900">
                                     <span className="mr-1">{flag}</span>{row.supplierName}
                                 </p>
                                 {row.latestShipment && (
@@ -2695,18 +2695,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#2A4355]/40 text-xs">
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/40 text-xs">
                                 <div>
-                                    <span className="text-[10px] text-[#4A6A7A] block">Số lượng & Tiến độ:</span>
-                                    <span className="font-mono text-[#E8F1F2] font-bold">{row.totalQty.toLocaleString()} chai</span>
+                                    <span className="text-[10px] text-slate-500 block">Số lượng & Tiến độ:</span>
+                                    <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString()} chai</span>
                                     {row.hasFoc && (
                                         <span className="text-[10px] text-amber-300 ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
                                     )}
-                                    <span className="text-[10px] text-[#87CBB9] ml-1">({row.receivedPercentage}% kho)</span>
+                                    <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}% kho)</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[10px] text-[#4A6A7A] block">Giá trị:</span>
-                                    <span className="font-mono text-[#87CBB9] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
+                                    <span className="text-[10px] text-slate-500 block">Giá trị:</span>
+                                    <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
                                         <span className="text-[10px] text-amber-400 block font-mono">
                                             🏷️ Giảm {row.discountAmount.toLocaleString()} {row.currency}
@@ -2715,12 +2715,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-[#2A4355]/40 text-xs" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-200/40 text-xs" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
                                 </div>
                                 <button onClick={() => showDetail(row.id)}
-                                    className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#87CBB9] bg-[#1B2E3D] border border-emerald-500/20">
+                                    className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#0891B2] bg-white border border-emerald-500/20">
                                     Chi Tiết
                                 </button>
                             </div>
@@ -2733,20 +2733,20 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {selectedId && (
                 <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={() => setSelectedId(null)}>
                     <div className="w-full sm:w-[620px] max-w-full h-full overflow-y-auto flex flex-col"
-                        style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
+                        style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
                         onClick={e => e.stopPropagation()}>
 
                         {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-[#2A4355] flex-shrink-0">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-extrabold text-[#E8F1F2]">
+                                    <h3 className="text-base font-extrabold text-slate-900">
                                         {poDetail?.poNo ?? 'Chi Tiết Đơn Mua Hàng'}
                                     </h3>
                                     {poDetail && <POStatusBadge status={poDetail.status} />}
                                 </div>
                                 {poDetail && (
-                                    <p className="text-xs text-[#8AAEBB] mt-0.5">
+                                    <p className="text-xs text-slate-600 mt-0.5">
                                         {poDetail.supplierName} · {poDetail.currency} (Tỷ giá: {poDetail.exchangeRate.toLocaleString()})
                                     </p>
                                 )}
@@ -2768,31 +2768,31 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <RotateCcw size={12} /> Thu Hồi Về Nháp
                                     </button>
                                 )}
-                                <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                                <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-slate-600 hover:bg-white">
                                     <X size={18} />
                                 </button>
                             </div>
                         </div>
 
                         {detailLoading ? (
-                            <div className="flex-1 flex items-center justify-center py-16 text-[#87CBB9]">
+                            <div className="flex-1 flex items-center justify-center py-16 text-[#0891B2]">
                                 <Loader2 size={24} className="animate-spin mr-2" /> Đang tải chi tiết PO...
                             </div>
                         ) : poDetail ? (
                             <>
                                 {/* Quick Meta Bar */}
-                                <div className="grid grid-cols-3 gap-2 p-4 bg-[#142433] border-b border-[#2A4355] text-xs">
+                                <div className="grid grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
                                     <div>
-                                        <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Tổng Số Lượng</span>
-                                        <span className="font-mono font-bold text-[#E8F1F2]">{poDetail.totalQty.toLocaleString()} chai</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Tổng Số Lượng</span>
+                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} chai</span>
                                         {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
                                             <span className="text-[10px] text-amber-300 ml-1">({poDetail.totalFocQty} FOC)</span>
                                         )}
-                                        <span className="text-[10px] text-[#87CBB9] ml-1">({poDetail.totalQtyReceived} đã nhận)</span>
+                                        <span className="text-[10px] text-[#0891B2] ml-1">({poDetail.totalQtyReceived} đã nhận)</span>
                                     </div>
                                     <div>
-                                        <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Giá Ngoại Tệ</span>
-                                        <span className="font-mono font-bold text-[#E8F1F2]">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Giá Ngoại Tệ</span>
+                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
                                         {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
                                             <span className="text-[10px] text-amber-400 block font-mono">
                                                 (Đã giảm {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
@@ -2800,13 +2800,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         )}
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] text-[#4A6A7A] block font-bold uppercase">Quy Đổi VNĐ</span>
-                                        <span className="font-mono font-bold text-[#87CBB9]">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Quy Đổi VNĐ</span>
+                                        <span className="font-mono font-bold text-[#0891B2]">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
                                     </div>
                                 </div>
 
                                 {/* Drawer Tabs */}
-                                <div className="flex border-b border-[#2A4355] bg-[#142433] px-4 gap-1">
+                                <div className="flex border-b border-slate-200 bg-white px-4 gap-1">
                                     {[
                                         { key: 'LINES', label: `Sản Phẩm (${poDetail.lines.length})` },
                                         { key: 'SHIPMENTS', label: `Lô Vận Tải (${poDetail.shipments.length})` },
@@ -2817,7 +2817,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             className="px-3 py-2.5 text-xs font-bold border-b-2 transition-all"
                                             style={{
                                                 borderColor: detailTab === t.key ? '#87CBB9' : 'transparent',
-                                                color: detailTab === t.key ? '#87CBB9' : '#4A6A7A',
+                                                color: detailTab === t.key ? '#87CBB9' : '#64748B',
                                             }}>
                                             {t.label}
                                         </button>
@@ -2841,18 +2841,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         : `${line.qtyOrdered} chai`
 
                                                     return (
-                                                        <div key={line.id} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] flex justify-between items-start text-xs gap-3"
-                                                            style={{ borderColor: line.isFoc ? 'rgba(212,168,83,0.35)' : '#2A4355' }}>
+                                                        <div key={line.id} className="p-3 rounded-xl bg-white border border-slate-200 flex justify-between items-start text-xs gap-3"
+                                                            style={{ borderColor: line.isFoc ? 'rgba(212,168,83,0.35)' : '#E2E8F0' }}>
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                                                    <p className="font-extrabold text-[#E8F1F2]">{line.productName}</p>
+                                                                    <p className="font-extrabold text-slate-900">{line.productName}</p>
                                                                     {line.isFoc && (
                                                                         <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
                                                                             🎁 FOC
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-[10px] text-[#4A6A7A] font-mono mt-0.5">{line.skuCode}</p>
+                                                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{line.skuCode}</p>
                                                                 {line.isFoc && line.focNote && (
                                                                     <p className="text-[10px] text-amber-400/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block">
                                                                         Lý do FOC: {line.focNote}
@@ -2860,24 +2860,24 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 )}
                                                             </div>
                                                             <div className="text-right shrink-0">
-                                                                <p className="font-mono font-bold text-[#87CBB9]">{uomLabel}</p>
+                                                                <p className="font-mono font-bold text-[#0891B2]">{uomLabel}</p>
                                                                 {line.isFoc ? (
                                                                     <>
                                                                         <p className="text-[11px] font-bold text-amber-400 font-mono">
                                                                             0.00 {poDetail.currency} (Miễn phí)
                                                                         </p>
                                                                         {line.declaredPrice ? (
-                                                                            <p className="text-[10px] text-[#8AAEBB] font-mono" title="Đơn giá khai báo hải quan">
+                                                                            <p className="text-[10px] text-slate-600 font-mono" title="Đơn giá khai báo hải quan">
                                                                                 Giá HQ: {line.declaredPrice.toFixed(2)} {poDetail.currency}/chai
                                                                             </p>
                                                                         ) : null}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        <p className="text-[10px] text-[#8AAEBB] font-mono">
+                                                                        <p className="text-[10px] text-slate-600 font-mono">
                                                                             {line.unitPrice.toFixed(2)} {poDetail.currency} / chai
                                                                         </p>
-                                                                        <p className="text-[10px] text-[#4A6A7A] font-mono">
+                                                                        <p className="text-[10px] text-slate-500 font-mono">
                                                                             ≈ {formatVND(line.lineTotal * poDetail.exchangeRate)}
                                                                         </p>
                                                                     </>
@@ -2889,10 +2889,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
 
                                             {/* Financial Summary Card */}
-                                            <div className="p-3.5 rounded-xl bg-[#0D1E2B] border border-[#2A4355] space-y-2 text-xs">
-                                                <div className="flex justify-between items-center text-[#8AAEBB]">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                                                <div className="flex justify-between items-center text-slate-600">
                                                     <span>Tổng tiền hàng (Subtotal):</span>
-                                                    <span className="font-mono font-bold text-[#E8F1F2]">
+                                                    <span className="font-mono font-bold text-slate-900">
                                                         {(poDetail.subtotal ?? poDetail.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
                                                     </span>
                                                 </div>
@@ -2906,19 +2906,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         </span>
                                                     </div>
                                                 )}
-                                                <div className="flex justify-between items-center pt-2 border-t border-[#2A4355] font-bold">
-                                                    <span className="text-[#E8F1F2]">Tổng phải thanh toán:</span>
+                                                <div className="flex justify-between items-center pt-2 border-t border-slate-200 font-bold">
+                                                    <span className="text-slate-900">Tổng phải thanh toán:</span>
                                                     <div className="text-right">
-                                                        <span className="font-mono text-[#87CBB9] text-sm">
+                                                        <span className="font-mono text-[#0891B2] text-sm">
                                                             {poDetail.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
                                                         </span>
-                                                        <span className="text-[10px] text-[#8AAEBB] block font-mono">
+                                                        <span className="text-[10px] text-slate-600 block font-mono">
                                                             ≈ {formatVND(poDetail.totalAmount * poDetail.exchangeRate)}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
-                                                    <p className="text-[11px] text-amber-300 pt-1 border-t border-[#2A4355]/40 italic">
+                                                    <p className="text-[11px] text-amber-300 pt-1 border-t border-slate-200/40 italic">
                                                         🎁 Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
                                                     </p>
                                                 )}
@@ -2929,18 +2929,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     {detailTab === 'SHIPMENTS' && (
                                         <div className="space-y-2.5">
                                             {poDetail.shipments.length === 0 ? (
-                                                <p className="text-xs text-[#4A6A7A] italic py-8 text-center">Chưa có lô hàng vận chuyển nào được tạo cho PO này.</p>
+                                                <p className="text-xs text-slate-500 italic py-8 text-center">Chưa có lô hàng vận chuyển nào được tạo cho PO này.</p>
                                             ) : (
                                                 poDetail.shipments.map(s => (
                                                     <div key={s.id} onClick={() => { setSelectedShipmentId(s.id); setShipmentDrawerOpen(true) }}
-                                                        className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] cursor-pointer hover:border-emerald-500/40 transition-all space-y-2">
+                                                        className="p-3.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-emerald-500/40 transition-all space-y-2">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-bold font-mono text-[#87CBB9]">B/L: {s.billOfLading}</span>
+                                                            <span className="text-xs font-bold font-mono text-[#0891B2]">B/L: {s.billOfLading}</span>
                                                             <span className="text-[10px] font-extrabold text-[#5BA88A]">{s.milestoneProgress}%</span>
                                                         </div>
-                                                        <div className="text-xs text-[#8AAEBB]">
+                                                        <div className="text-xs text-slate-600">
                                                             <p>Tàu: {s.vesselName || 'TBC'} {s.voyageNo ? `(${s.voyageNo})` : ''}</p>
-                                                            <p className="text-[10px] text-[#4A6A7A]">Cont: {s.containerNo || '—'} · ETA: {s.eta ? formatDate(s.eta) : '—'}</p>
+                                                            <p className="text-[10px] text-slate-500">Cont: {s.containerNo || '—'} · ETA: {s.eta ? formatDate(s.eta) : '—'}</p>
                                                         </div>
                                                     </div>
                                                 ))
@@ -2951,8 +2951,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     {detailTab === 'DOCS' && (
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-xs font-bold text-[#8AAEBB] uppercase">Tài liệu đính kèm (Invoice / Packing List / C/O)</p>
-                                                <label className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold cursor-pointer text-[#87CBB9] bg-emerald-500/10 border border-emerald-500/30">
+                                                <p className="text-xs font-bold text-slate-600 uppercase">Tài liệu đính kèm (Invoice / Packing List / C/O)</p>
+                                                <label className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold cursor-pointer text-[#0891B2] bg-emerald-500/10 border border-emerald-500/30">
                                                     {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                     Upload
                                                     <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.xlsx" onChange={e => handleUpload(poDetail.id, e)} disabled={uploadingDoc} />
@@ -2962,15 +2962,15 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="space-y-1.5">
                                                     {poDetail.documents.map(d => (
                                                         <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
-                                                            className="flex items-center gap-2 p-2.5 rounded-lg bg-[#142433] border border-[#2A4355] text-xs hover:bg-[#1B2E3D] text-[#E8F1F2]">
-                                                            <FileText size={14} className="text-[#87CBB9]" />
+                                                            className="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 text-xs hover:bg-white text-slate-900">
+                                                            <FileText size={14} className="text-[#0891B2]" />
                                                             <span className="truncate flex-1 font-medium">{d.name}</span>
-                                                            <span className="text-[10px] text-[#4A6A7A]">{formatDate(d.uploadedAt)}</span>
+                                                            <span className="text-[10px] text-slate-500">{formatDate(d.uploadedAt)}</span>
                                                         </a>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-[#4A6A7A] italic py-4">Chưa có chứng từ đính kèm.</p>
+                                                <p className="text-xs text-slate-500 italic py-4">Chưa có chứng từ đính kèm.</p>
                                             )}
                                         </div>
                                     )}
@@ -2978,14 +2978,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     {detailTab === 'APPROVAL' && (
                                         <div className="space-y-4">
                                             {/* Step-by-step Visual Workflow Banner */}
-                                            <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] space-y-3">
+                                            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold uppercase tracking-wider text-[#8AAEBB] flex items-center gap-1.5">
-                                                        <ShieldCheck size={14} className="text-[#87CBB9]" /> Quy Trình Phê Duyệt PO
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                                        <ShieldCheck size={14} className="text-[#0891B2]" /> Quy Trình Phê Duyệt PO
                                                     </span>
                                                     <div className="flex items-center gap-2">
                                                         <a href="/dashboard/settings/approval-matrix" target="_blank" rel="noreferrer"
-                                                            className="text-[10px] text-[#87CBB9] hover:underline flex items-center gap-1 font-mono">
+                                                            className="text-[10px] text-[#0891B2] hover:underline flex items-center gap-1 font-mono">
                                                             ⚙️ Ma trận duyệt
                                                         </a>
                                                         <POStatusBadge status={poDetail.status} />
@@ -2996,9 +2996,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="grid gap-2 text-center text-[11px] pt-1"
                                                     style={{ gridTemplateColumns: `repeat(${1 + (poDetail.approvalSteps?.length || 3)}, minmax(0, 1fr))` }}>
                                                     {/* Step 0: Khởi Tạo */}
-                                                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[#87CBB9] font-bold">
+                                                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[#0891B2] font-bold">
                                                         <div className="flex items-center justify-center gap-1 mb-0.5"><CheckCircle2 size={12} /> Khởi Tạo</div>
-                                                        <span className="text-[9px] text-[#8AAEBB] font-normal block truncate">{poDetail.creatorName || 'Purchaser'}</span>
+                                                        <span className="text-[9px] text-slate-600 font-normal block truncate">{poDetail.creatorName || 'Purchaser'}</span>
                                                     </div>
 
                                                     {/* Configured Multi-level Approval Steps */}
@@ -3014,7 +3014,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         const isCompletedStep = isApprovedPO || (isPendingPO && (poDetail.currentApprovalStep || 1) > st.level)
                                                         const isActiveStep = isPendingPO && (poDetail.currentApprovalStep || 1) === st.level
                                                         
-                                                        let bgClass = 'bg-[#1B2E3D] border-[#2A4355] text-[#4A6A7A]'
+                                                        let bgClass = 'bg-white border-slate-200 text-slate-500'
                                                         if (isCompletedStep) {
                                                             bgClass = 'bg-emerald-500/10 border-emerald-500/30 text-[#5BA88A]'
                                                         } else if (isActiveStep) {
@@ -3044,14 +3044,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="flex items-start gap-2">
                                                         <AlertCircle size={16} className="text-[#D4A853] flex-shrink-0 mt-0.5" />
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-[#E8F1F2]">Đơn hàng đang ở trạng thái Nháp (DRAFT)</h4>
-                                                            <p className="text-[11px] text-[#8AAEBB] mt-0.5">
+                                                            <h4 className="text-xs font-bold text-slate-900">Đơn hàng đang ở trạng thái Nháp (DRAFT)</h4>
+                                                            <p className="text-[11px] text-slate-600 mt-0.5">
                                                                 Sau khi kiểm tra đầy đủ danh mục sản phẩm, quy cách đóng gói và đơn giá, hãy gửi trình duyệt để chuyển tới Cấp 1 ({(poDetail.approvalSteps?.[0]?.label) || 'Trưởng Phòng Mua Hàng'}).
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <button onClick={() => handleDrawerSubmit(poDetail.id)} disabled={approving}
-                                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#72b6a5] transition-all disabled:opacity-50">
+                                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-slate-900 bg-[#87CBB9] hover:bg-[#72b6a5] transition-all disabled:opacity-50">
                                                         {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                                                         Gửi Trình Phê Duyệt PO (Bắt đầu Cấp 1)
                                                     </button>
@@ -3059,12 +3059,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             )}
 
                                             {poDetail.status === 'PENDING_APPROVAL' && (
-                                                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] space-y-3">
+                                                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
                                                     <div className="flex items-center justify-between text-xs font-bold text-[#D4A853]">
                                                         <span className="flex items-center gap-2">
                                                             <Clock size={15} /> Đang Chờ Duyệt Cấp {poDetail.currentApprovalStep || 1} / {poDetail.totalApprovalSteps || 3}
                                                         </span>
-                                                        <span className="text-[11px] text-[#87CBB9] font-normal">
+                                                        <span className="text-[11px] text-[#0891B2] font-normal">
                                                             {(poDetail.approvalSteps?.find(s => s.level === (poDetail.currentApprovalStep || 1))?.label) || 'Cấp Thẩm Quyền'}
                                                         </span>
                                                     </div>
@@ -3072,13 +3072,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     {!showRejectForm ? (
                                                         <div className="space-y-3">
                                                             <div>
-                                                                <label className="text-[11px] text-[#8AAEBB] block mb-1">Ghi chú phê duyệt (tuỳ chọn):</label>
+                                                                <label className="text-[11px] text-slate-600 block mb-1">Ghi chú phê duyệt (tuỳ chọn):</label>
                                                                 <input
                                                                     type="text"
                                                                     value={approvalComment}
                                                                     onChange={e => setApprovalComment(e.target.value)}
                                                                     placeholder="VD: Đồng ý duyệt giá và số lượng theo hợp đồng..."
-                                                                    className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-[#1B2E3D] border border-[#2A4355] text-[#E8F1F2] placeholder-[#4A6A7A]"
+                                                                    className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-slate-200 text-slate-900 placeholder-slate-400"
                                                                 />
                                                             </div>
                                                             <div className="flex gap-2">
@@ -3087,7 +3087,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                     <XCircle size={13} /> Từ Chối PO
                                                                 </button>
                                                                 <button onClick={() => handleDrawerApprove(poDetail.id)} disabled={approving}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-[#0A1926] bg-[#5BA88A] hover:bg-[#4d977b] transition-all disabled:opacity-50">
+                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-slate-900 bg-[#5BA88A] hover:bg-[#4d977b] transition-all disabled:opacity-50">
                                                                     {approving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Phê Duyệt PO
                                                                 </button>
                                                             </div>
@@ -3100,10 +3100,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 onChange={e => setRejectReason(e.target.value)}
                                                                 placeholder="Lý do từ chối để nhân viên tạo đơn điều chỉnh..."
                                                                 rows={3}
-                                                                className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-[#142433] border border-red-500/40 text-[#E8F1F2] placeholder-[#4A6A7A]"
+                                                                className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-red-500/40 text-slate-900 placeholder-slate-400"
                                                             />
                                                             <div className="flex justify-end gap-2">
-                                                                <button onClick={() => setShowRejectForm(false)} className="px-3 py-1.5 text-xs text-[#8AAEBB] hover:bg-[#1B2E3D] rounded-lg">
+                                                                <button onClick={() => setShowRejectForm(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-white rounded-lg">
                                                                     Huỷ
                                                                 </button>
                                                                 <button onClick={() => handleDrawerReject(poDetail.id)} disabled={approving || !rejectReason.trim()}
@@ -3121,7 +3121,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <CheckCircle2 size={24} className="text-[#5BA88A] flex-shrink-0" />
                                                     <div className="text-xs">
                                                         <p className="font-bold text-[#5BA88A]">Đơn mua hàng đã được Phê Duyệt chính thức</p>
-                                                        <p className="text-[#8AAEBB] text-[11px] mt-0.5">
+                                                        <p className="text-slate-600 text-[11px] mt-0.5">
                                                             PO đã sẵn sàng để tạo lô vận tải quốc tế (Shipment / B/L) hoặc thực hiện nhận hàng vào kho.
                                                         </p>
                                                     </div>
@@ -3130,8 +3130,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                                             {/* Approval History Timeline */}
                                             <div className="space-y-2.5">
-                                                <h4 className="text-xs font-bold text-[#8AAEBB] uppercase tracking-wider flex items-center gap-1">
-                                                    <Clock size={13} className="text-[#87CBB9]" /> Lịch Sử Phê Duyệt & Audit Logs
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                                    <Clock size={13} className="text-[#0891B2]" /> Lịch Sử Phê Duyệt & Audit Logs
                                                 </h4>
                                                 {poDetail.approvalHistory && poDetail.approvalHistory.length > 0 ? (
                                                     <div className="space-y-2">
@@ -3141,7 +3141,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                             const isSubmit = item.action === 'SUBMIT_APPROVAL' || item.action === 'CREATE'
                                                             
                                                             return (
-                                                                <div key={item.id || idx} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] text-xs space-y-1">
+                                                                <div key={item.id || idx} className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
                                                                     <div className="flex justify-between items-center">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -3149,12 +3149,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                             }`}>
                                                                                 {isApprove ? '✅ Đã Phê Duyệt' : (isReject ? '❌ Đã Từ Chối' : (isSubmit ? '🚀 Gửi Duyệt' : item.action))}
                                                                             </span>
-                                                                            <span className="font-bold text-[#E8F1F2]">{item.actorName}</span>
+                                                                            <span className="font-bold text-slate-900">{item.actorName}</span>
                                                                         </div>
-                                                                        <span className="text-[10px] text-[#4A6A7A] font-mono">{formatDateTime(item.createdAt)}</span>
+                                                                        <span className="text-[10px] text-slate-500 font-mono">{formatDateTime(item.createdAt)}</span>
                                                                     </div>
                                                                     {item.comment && (
-                                                                        <p className="text-[11px] text-[#8AAEBB] pl-1 border-l-2 border-[#2A4355] mt-1 italic">
+                                                                        <p className="text-[11px] text-slate-600 pl-1 border-l-2 border-slate-200 mt-1 italic">
                                                                             "{item.comment}"
                                                                         </p>
                                                                     )}
@@ -3163,7 +3163,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         })}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] text-center text-xs text-[#4A6A7A] italic">
+                                                    <div className="p-4 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 italic">
                                                         Chưa có nhật ký phê duyệt được ghi nhận cho đơn hàng này.
                                                     </div>
                                                 )}
@@ -3176,12 +3176,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                         {/* Sticky Action Footer for DRAFT PO in Detail Drawer */}
                         {poDetail && poDetail.status === 'DRAFT' && (
-                            <div className="p-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
+                            <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
                                 <div className="flex items-center gap-2">
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
                                     <div>
                                         <p className="text-xs font-bold text-amber-300">Đơn hàng ở trạng thái Bản Nháp</p>
-                                        <p className="text-[10px] text-[#8AAEBB]">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
+                                        <p className="text-[10px] text-slate-600">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -3201,7 +3201,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <button 
                                         onClick={() => handleDrawerSubmit(poDetail.id)}
                                         disabled={approving}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-[#0A1926] transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-slate-900 transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
                                         style={{ background: '#87CBB9' }}>
                                         {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                                         Gửi Trình Duyệt
@@ -3212,12 +3212,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                         {/* Sticky Action Footer for PENDING_APPROVAL PO in Detail Drawer */}
                         {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
-                            <div className="p-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
+                            <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
                                 <div className="flex items-center gap-2">
                                     <Clock size={16} className="text-[#D4A853]" />
                                     <div>
                                         <p className="text-xs font-bold text-amber-300">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
-                                        <p className="text-[10px] text-[#8AAEBB]">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
+                                        <p className="text-[10px] text-slate-600">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
                                     </div>
                                 </div>
                                 <div>
@@ -3265,27 +3265,27 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* FX Summary Panel */}
             {showFxPanel && (
-                <div className="rounded-2xl p-5 space-y-4" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="rounded-2xl p-5 space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Globe size={18} style={{ color: '#D4A853' }} />
-                            <h3 className="font-bold text-sm" style={{ color: '#E8F1F2' }}>Tổng Quan Tỷ Giá Ngoại Tệ & Quy Đổi VNĐ</h3>
+                            <h3 className="font-bold text-sm" style={{ color: '#0F172A' }}>Tổng Quan Tỷ Giá Ngoại Tệ & Quy Đổi VNĐ</h3>
                         </div>
-                        <button onClick={() => setShowFxPanel(false)} className="text-[#8AAEBB] hover:text-white"><X size={16} /></button>
+                        <button onClick={() => setShowFxPanel(false)} className="text-slate-600 hover:text-white"><X size={16} /></button>
                     </div>
                     {fxLoading ? (
-                        <div className="flex items-center gap-2 py-4 text-xs text-[#87CBB9]"><Loader2 size={14} className="animate-spin" /> Đang tải tỷ giá...</div>
+                        <div className="flex items-center gap-2 py-4 text-xs text-[#0891B2]"><Loader2 size={14} className="animate-spin" /> Đang tải tỷ giá...</div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {fxSummary.map(fx => (
-                                <div key={fx.currency} className="p-3.5 rounded-xl bg-[#1B2E3D] border border-[#2A4355] text-xs space-y-1.5">
+                                <div key={fx.currency} className="p-3.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5">
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="font-bold text-[#E8F1F2]">{fx.currency}</span>
+                                        <span className="font-bold text-slate-900">{fx.currency}</span>
                                         <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#D4A853]">{fx.poCount} PO</span>
                                     </div>
-                                    <div className="flex justify-between text-[#4A6A7A]"><span>Trung bình:</span><strong className="text-[#87CBB9] font-mono">{fx.avgRate.toLocaleString()}</strong></div>
-                                    <div className="flex justify-between text-[#4A6A7A]"><span>Tổng ngoại tệ:</span><strong className="text-[#E8F1F2] font-mono">{fx.totalForeignValue.toLocaleString()} {fx.currency}</strong></div>
-                                    <div className="flex justify-between text-[#4A6A7A] pt-1 border-t border-[#2A4355]"><span>Quy VNĐ:</span><strong className="text-[#87CBB9] font-mono">{formatVND(fx.totalVNDValue)}</strong></div>
+                                    <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-[#0891B2] font-mono">{fx.avgRate.toLocaleString()}</strong></div>
+                                    <div className="flex justify-between text-slate-500"><span>Tổng ngoại tệ:</span><strong className="text-slate-900 font-mono">{fx.totalForeignValue.toLocaleString()} {fx.currency}</strong></div>
+                                    <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200"><span>Quy VNĐ:</span><strong className="text-[#0891B2] font-mono">{formatVND(fx.totalVNDValue)}</strong></div>
                                 </div>
                             ))}
                         </div>

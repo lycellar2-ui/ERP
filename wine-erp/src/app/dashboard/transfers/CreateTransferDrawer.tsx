@@ -59,16 +59,16 @@ const TRANSFER_REASONS = [
 ]
 
 const inputStyle = {
-    background: '#142433',
-    border: '1px solid #2A4355',
-    color: '#E8F1F2',
+    background: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    color: '#0F172A',
     borderRadius: '4px',
     outline: 'none',
 }
 
 const focusHandler = {
-    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => (e.currentTarget.style.borderColor = '#87CBB9'),
-    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => (e.currentTarget.style.borderColor = '#2A4355'),
+    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => (e.currentTarget.style.borderColor = '#0891B2'),
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => (e.currentTarget.style.borderColor = '#E2E8F0'),
 }
 
 // ── Searchable Product Combobox Component ──────────
@@ -151,19 +151,19 @@ function ProductCombobox({
                     className="w-full px-2.5 py-1.5 pr-8 text-xs rounded outline-none font-medium transition-colors"
                     style={{
                         ...inputStyle,
-                        borderColor: open ? '#87CBB9' : '#2A4355',
+                        borderColor: open ? '#87CBB9' : '#E2E8F0',
                     }}
                 />
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8AAEBB] pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
             </div>
 
             {open && (
                 <div
-                    className="absolute left-0 top-full mt-1 w-full min-w-[420px] max-h-72 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-[#2A4355]/40"
-                    style={{ background: '#1B2E3D', borderColor: '#87CBB9' }}
+                    className="absolute left-0 top-full mt-1 w-full min-w-[420px] max-h-72 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-slate-200/40"
+                    style={{ background: '#FFFFFF', borderColor: '#0891B2' }}
                 >
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-center text-xs text-[#8AAEBB]">Không tìm thấy rượu phù hợp</div>
+                        <div className="p-3 text-center text-xs text-slate-600">Không tìm thấy rượu phù hợp</div>
                     ) : (
                         filtered.map(p => {
                             const isSelected = p.id === selectedProductId
@@ -178,7 +178,7 @@ function ProductCombobox({
                                         setOpen(false)
                                         setQuery(`[${p.skuCode}] ${p.productName}`)
                                     }}
-                                    className={`p-2.5 text-xs cursor-pointer transition-colors flex items-center justify-between gap-3 ${isSelected ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'hover:bg-[#142433] text-[#E8F1F2]'}`}
+                                    className={`p-2.5 text-xs cursor-pointer transition-colors flex items-center justify-between gap-3 ${isSelected ? 'bg-[#87CBB9]/20 text-[#0891B2]' : 'hover:bg-white text-slate-900'}`}
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div className="truncate font-medium">
@@ -402,10 +402,10 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645]">
+            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
                 
                 {/* Header (Matching CreateSODrawer) */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
                             <ArrowRightLeft size={20} />
@@ -430,7 +430,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                 {/* Body Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {/* Warehouse Route Card */}
-                    <div className="p-4 rounded-lg space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#D4A853' }}>
                             <Building2 size={15} style={{ color: '#D4A853' }} /> Tuyến Đường Chuyển Kho
                         </h4>
@@ -438,7 +438,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Source WH */}
                             <div>
-                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>
+                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
                                     🔴 Kho Xuất (Kho Đi) *
                                 </label>
                                 <select
@@ -459,7 +459,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
                             {/* Destination WH */}
                             <div>
-                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>
+                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
                                     🟢 Kho Nhận (Kho Đến) *
                                 </label>
                                 <select
@@ -483,8 +483,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     {/* Metadata Card */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
-                                <Calendar size={13} style={{ color: '#4A6A7A' }} /> Ngày Chuyển Dự Kiến
+                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                                <Calendar size={13} style={{ color: '#64748B' }} /> Ngày Chuyển Dự Kiến
                             </label>
                             <input
                                 type="date"
@@ -497,8 +497,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
-                                <FileText size={13} style={{ color: '#4A6A7A' }} /> Lý Do Chuyển Kho
+                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                                <FileText size={13} style={{ color: '#64748B' }} /> Lý Do Chuyển Kho
                             </label>
                             <select
                                 value={reasonSelect}
@@ -515,7 +515,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>
+                        <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
                             Ghi Chú Bổ Sung
                         </label>
                         <input
@@ -532,33 +532,33 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     {/* Line Items Section */}
                     <div className="space-y-3 pt-2 pb-28">
                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                            <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                 🍷 Danh Mục Rượu Chuyển ({lines.length} dòng)
                             </label>
                             <button
                                 type="button"
                                 onClick={handleAddLine}
                                 className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer"
-                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', borderRadius: '4px' }}
+                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}
                             >
                                 <Plus size={13} /> Thêm Rượu
                             </button>
                         </div>
 
                         {lines.length === 0 ? (
-                            <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #2A4355', background: '#142433' }}>
-                                <p className="text-sm font-semibold" style={{ color: '#4A6A7A' }}>Chưa có sản phẩm — Click "+ Thêm Rượu"</p>
+                            <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #E2E8F0', background: '#FFFFFF' }}>
+                                <p className="text-sm font-semibold" style={{ color: '#64748B' }}>Chưa có sản phẩm — Click "+ Thêm Rượu"</p>
                             </div>
                         ) : (
                             <>
                                 {/* 💻 DESKTOP VIEW (>= sm) - Matching SODrawer Table */}
                                 <div
-                                    className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full"
+                                    className="hidden sm:block overflow-x-auto border border-slate-200 rounded-md bg-white max-w-full"
                                     style={{ minHeight: lines.length > 0 ? '360px' : 'auto' }}
                                 >
                                     <table className="w-full text-xs text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
+                                            <tr className="bg-white text-slate-500 border-b border-slate-200 font-semibold">
                                                 <th className="px-3 py-2.5 w-12 text-center">STT</th>
                                                 <th className="px-3 py-2.5">Gõ Tìm SKU / Tên Rượu Vang</th>
                                                 <th className="px-3 py-2.5 text-center w-28">VTG (Niên Vụ)</th>
@@ -566,7 +566,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 <th className="px-3 py-2.5 text-center w-10"></th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-[#2A4355]/40 overflow-visible">
+                                        <tbody className="divide-y divide-slate-200/40 overflow-visible">
                                             {lines.map((line, idx) => {
                                                 const p = products.find(prod => prod.id === line.productId)
                                                 const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
@@ -584,8 +584,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 const isOverStock = Boolean(fromWarehouseId && line.productId && line.qtyTransferred > selectedVintageQty && selectedVintageQty > 0)
 
                                                 return (
-                                                    <tr key={idx} className={`hover:bg-[#1B2E3D]/30 transition-colors ${isZeroStock ? 'bg-red-950/20' : ''}`}>
-                                                        <td className="px-3 py-2.5 text-center font-bold align-top" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
+                                                    <tr key={idx} className={`hover:bg-white/30 transition-colors ${isZeroStock ? 'bg-red-950/20' : ''}`}>
+                                                        <td className="px-3 py-2.5 text-center font-bold align-top" style={{ color: '#475569' }}>{idx + 1}</td>
                                                         <td className="px-3 py-2.5 align-top">
                                                             <ProductCombobox
                                                                 products={products}
@@ -608,7 +608,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
                                                                 {...focusHandler}
                                                                 className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer ${isZeroStock ? 'text-red-400' : ''}`}
-                                                                style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#2A4355' }}
+                                                                style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#E2E8F0' }}
                                                             >
                                                                 <option value="">
                                                                     NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
@@ -650,7 +650,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
                                                                 {...focusHandler}
                                                                 className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none ${isOverStock ? 'text-amber-300' : ''}`}
-                                                                style={{ ...inputStyle, borderColor: isOverStock ? '#F59E0B' : '#2A4355' }}
+                                                                style={{ ...inputStyle, borderColor: isOverStock ? '#F59E0B' : '#E2E8F0' }}
                                                             />
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center justify-center">
@@ -687,11 +687,11 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                 </div>
 
                 {/* Footer Bar */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
                         Hủy Bỏ
                     </button>
@@ -701,7 +701,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(false)}
-                            className="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
                             <Save size={14} className="text-amber-500" /> Lưu Nháp
                         </button>

@@ -8,10 +8,10 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
     PENDING_SIGN: { label: 'Chờ Ký', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     ACTIVE: { label: 'Đang Hiệu Lực', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#4A6A7A', bg: 'rgba(74,106,122,0.12)' },
+    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(74,106,122,0.12)' },
     TERMINATED: { label: 'Đã Chấm Dứt', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)' },
 }
 
@@ -60,7 +60,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
     if (!open) return null
 
     const inputCls = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none'
-    const baseStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const baseStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
         if (!form.value || Number(form.value) <= 0) return setError('Nhập giá trị hợp đồng')
@@ -92,7 +92,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
 
     const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
         <div>
-            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>{label}</label>
+            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{label}</label>
             {children}
         </div>
     )
@@ -100,18 +100,18 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
     return (
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(500px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(500px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <FileSignature size={16} style={{ color: '#87CBB9' }} />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <FileSignature size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>Tạo Hợp Đồng Mới</h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Nhập thông tin hợp đồng</p>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>Tạo Hợp Đồng Mới</h3>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Nhập thông tin hợp đồng</p>
                         </div>
                     </div>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -126,14 +126,14 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                         <Row label="Số Hợp Đồng *">
                             <input className={inputCls} style={baseStyle} value={form.contractNo}
                                 onChange={e => setForm(f => ({ ...f, contractNo: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                         </Row>
                         <Row label="Loại Hợp Đồng">
                             <select className={inputCls} style={baseStyle} value={form.type}
                                 onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                 {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                             </select>
                         </Row>
@@ -145,9 +145,9 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                                 <button key={t} onClick={() => setForm(f => ({ ...f, counterpartyType: t, supplierId: '', customerId: '' }))}
                                     className="flex-1 py-2 text-sm font-semibold rounded-lg"
                                     style={{
-                                        background: form.counterpartyType === t ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                                        border: `1px solid ${form.counterpartyType === t ? '#87CBB9' : '#2A4355'}`,
-                                        color: form.counterpartyType === t ? '#87CBB9' : '#4A6A7A',
+                                        background: form.counterpartyType === t ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                        border: `1px solid ${form.counterpartyType === t ? '#87CBB9' : '#E2E8F0'}`,
+                                        color: form.counterpartyType === t ? '#87CBB9' : '#64748B',
                                     }}>
                                     {t === 'supplier' ? '🏭 Nhà Cung Cấp' : '🏨 Khách Hàng'}
                                 </button>
@@ -156,7 +156,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                     </Row>
 
                     {!counterparties ? (
-                        <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
                             <Loader2 size={12} className="animate-spin" /> Đang tải...
                         </div>
                     ) : form.counterpartyType === 'supplier' ? (
@@ -181,8 +181,8 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                         <Row label="Giá Trị *">
                             <input type="number" className={inputCls} style={baseStyle} value={form.value}
                                 onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} placeholder="0" />
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} placeholder="0" />
                         </Row>
                         <Row label="Tiền Tệ">
                             <select className={inputCls} style={baseStyle} value={form.currency}
@@ -209,57 +209,57 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                         <input className={inputCls} style={baseStyle} value={form.paymentTerm}
                             onChange={e => setForm(f => ({ ...f, paymentTerm: e.target.value }))}
                             placeholder="VD: Net 30, 50% TT sau 60 ngày..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     <Row label="Điều Khoản Giá Cả (Price Term)">
                         <input className={inputCls} style={baseStyle} value={form.priceTerm}
                             onChange={e => setForm(f => ({ ...f, priceTerm: e.target.value }))}
                             placeholder="VD: Giá CIF Hồ Chí Minh cố định..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     <Row label="Quy Định Giảm Giá (Discount)">
                         <input className={inputCls} style={baseStyle} value={form.discountTerms}
                             onChange={e => setForm(f => ({ ...f, discountTerms: e.target.value }))}
                             placeholder="VD: Giảm 5% khi mua trên 500 chai..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     <Row label="Ngân Sách Marketing">
                         <input className={inputCls} style={baseStyle} value={form.marketingBudget}
                             onChange={e => setForm(f => ({ ...f, marketingBudget: e.target.value }))}
                             placeholder="VD: NCC hỗ trợ $2,000 ngân sách chạy thử..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     <Row label="Kiểm Tra Khớp Dấu & Tên Hợp Đồng">
                         <input className={inputCls} style={baseStyle} value={form.stampVerification}
                             onChange={e => setForm(f => ({ ...f, stampVerification: e.target.value }))}
                             placeholder="VD: Đã kiểm tra khớp 100%..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
 
                     <Row label="Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm">
                         <input className={inputCls} style={baseStyle} value={form.archiveStatus}
                             onChange={e => setForm(f => ({ ...f, archiveStatus: e.target.value }))}
                             placeholder="VD: Bản mềm đã upload, bản cứng lưu tại Tủ 2..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </Row>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Hủy</button>
+                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Đang tạo...' : 'Tạo Hợp Đồng'}
                     </button>
@@ -347,7 +347,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
             <div className="flex items-center justify-end">
                 <button onClick={() => setDrawerOpen(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                     onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                     <Plus size={16} /> Tạo Hợp Đồng
@@ -360,16 +360,16 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                     { label: 'Tổng Hợp Đồng', value: stats.total, icon: FileSignature, accent: '#87CBB9' },
                     { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#5BA88A' },
                     { label: 'Sắp Hết Hạn (30d)', value: stats.expiringSoon, icon: AlertCircle, accent: '#D4A853' },
-                    { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#4A6A7A' },
+                    { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#64748B' },
                 ].map(s => {
                     const Icon = s.icon
                     return (
                         <div key={s.label} className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
+                                <p className="text-xl font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -379,20 +379,20 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
             {/* Filters */}
             <div className="flex gap-3">
                 <div className="relative flex-1 max-w-xs">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input type="text" placeholder="Tìm số hợp đồng..."
                         value={search}
                         onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
                         className="w-full pl-9 pr-3 py-2 text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
+                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                     />
                 </div>
                 <select value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); reload(undefined, e.target.value) }}
                     className="px-3 py-2 text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(STATUS_CFG).map(([k, v]) => (
                         <option key={k} value={k}>{v.label}</option>
@@ -401,26 +401,26 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {['Số Hợp Đồng', 'Loại', 'Đối Tác', 'Giá Trị', 'Sử Dụng', 'Hiệu Lực', 'Hết Hạn', 'Trạng Thái'].map(h => (
                                 <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                    style={{ color: '#4A6A7A' }}>{h}</th>
+                                    style={{ color: '#64748B' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={8} className="text-center py-10 text-sm" style={{ color: '#4A6A7A' }}>Đang tải...</td></tr>
+                            <tr><td colSpan={8} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>Đang tải...</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#4A6A7A' }}>
-                                <FileSignature size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#64748B' }}>
+                                <FileSignature size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
                                 <p>Chưa có hợp đồng nào</p>
                             </td></tr>
                         ) : rows.map(row => {
-                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#8AAEBB', bg: 'transparent' }
+                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#475569', bg: 'transparent' }
                             return (
                                 <React.Fragment key={row.id}>
                                     <tr key={row.id}
@@ -430,30 +430,30 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 {row.isExpiringSoon && <AlertCircle size={12} style={{ color: '#D4A853' }} />}
-                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.contractNo}</span>
+                                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.contractNo}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs px-2 py-0.5 rounded-full"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
                                                 {TYPE_LABEL[row.type] ?? row.type}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.counterpartyName}</p>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.counterpartyName}</p>
+                                            <p className="text-xs" style={{ color: '#64748B' }}>
                                                 {row.counterpartyType === 'supplier' ? '🏭 NCC' : '🏨 KH'}
                                             </p>
                                         </td>
-                                        <td className="px-4 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                        <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>
                                             {row.currency === 'VND' ? formatVND(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
                                         </td>
                                         <td className="px-4 py-3">
                                             <button onClick={() => showUtilization(row.id)} className="text-xs px-2 py-1 rounded"
                                                 style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>Xem</button>
                                         </td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(row.startDate)}</td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: row.isExpiringSoon ? '#D4A853' : '#8AAEBB' }}>
+                                        <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{formatDate(row.startDate)}</td>
+                                        <td className="px-4 py-3 text-xs" style={{ color: row.isExpiringSoon ? '#D4A853' : '#475569' }}>
                                             {formatDate(row.endDate)}
                                             {row.isExpiringSoon && <p className="text-xs font-bold" style={{ color: '#D4A853' }}>Sắp hết hạn!</p>}
                                         </td>
@@ -465,10 +465,10 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                     {/* Utilization detail row */}
                                     {
                                         selectedId === row.id && (
-                                            <tr style={{ background: '#142433' }}>
+                                            <tr style={{ background: '#FFFFFF' }}>
                                                 <td colSpan={8} className="px-6 py-4">
                                                     {utilLoading ? (
-                                                        <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                                                        <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
                                                             <Loader2 size={12} className="animate-spin" /> Đang tải...
                                                         </div>
                                                     ) : utilization ? (
@@ -482,45 +482,45 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                     { l: '% Sử Dụng', v: `${utilization.utilizationPct.toFixed(1)}%` },
                                                                 ].map(x => (
                                                                     <div key={x.l}>
-                                                                        <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{x.l}</p>
-                                                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{x.v}</p>
+                                                                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{x.l}</p>
+                                                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{x.v}</p>
                                                                     </div>
                                                                 ))}
                                                             </div>
-                                                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#1B2E3D' }}>
+                                                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                                 <div className="h-full rounded-full" style={{
                                                                     width: `${utilization.utilizationPct}%`,
                                                                     background: utilization.utilizationPct > 90 ? '#8B1A2E' : utilization.utilizationPct > 60 ? '#D4A853' : '#87CBB9',
                                                                 }} />
                                                             </div>
-                                                            <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
+                                                            <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
                                                                 <span>PO: {utilization.poCount} ({formatVND(utilization.poTotal)})</span>
                                                                 <span>SO: {utilization.soCount} ({formatVND(utilization.soTotal)})</span>
                                                             </div>
 
                                                             {/* Custom Fields Section */}
                                                             <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
-                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#87CBB9' }}>Thông Tin Điều Khoản & Lưu Trữ</p>
+                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>Thông Tin Điều Khoản & Lưu Trữ</p>
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Quy Định Giảm Giá (Discount)</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.discountTerms || 'Chưa quy định chi tiết'}</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Quy Định Giảm Giá (Discount)</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.discountTerms || 'Chưa quy định chi tiết'}</p>
                                                                     </div>
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Ngân Sách Marketing</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Ngân Sách Marketing</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
                                                                     </div>
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Điều Khoản Giá Cả (Price Term)</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.priceTerm || 'Chưa quy định chi tiết'}</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Điều Khoản Giá Cả (Price Term)</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.priceTerm || 'Chưa quy định chi tiết'}</p>
                                                                     </div>
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.stampVerification || 'Chưa có ghi chú kiểm tra'}</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.stampVerification || 'Chưa có ghi chú kiểm tra'}</p>
                                                                     </div>
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.archiveStatus || 'Chưa có ghi chú lưu trữ'}</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.archiveStatus || 'Chưa có ghi chú lưu trữ'}</p>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -528,9 +528,9 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             {/* Documents Section */}
                                                             <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
                                                                 <div className="flex items-center justify-between mb-3">
-                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#87CBB9' }}>Tài liệu đính kèm ({utilization.documents?.length || 0})</p>
+                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>Tài liệu đính kèm ({utilization.documents?.length || 0})</p>
                                                                     <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
-                                                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                                                         {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                                         {uploadingDoc ? 'Đang tải...' : 'Upload PDF'}
                                                                         <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
@@ -542,28 +542,28 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                                                         {utilization.documents.map((doc: any) => (
                                                                             <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
-                                                                                className="flex items-center gap-3 p-3 rounded bg-[#1B2E3D] hover:bg-[#2A4355] transition-colors"
-                                                                                style={{ border: '1px solid #2A4355' }}>
-                                                                                <FileText size={20} style={{ color: '#8AAEBB' }} />
+                                                                                className="flex items-center gap-3 p-3 rounded bg-white hover:bg-[#E2E8F0] transition-colors"
+                                                                                style={{ border: '1px solid #E2E8F0' }}>
+                                                                                <FileText size={20} style={{ color: '#475569' }} />
                                                                                 <div className="overflow-hidden">
-                                                                                    <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{doc.name}</p>
-                                                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{formatDate(doc.uploadedAt)}</p>
+                                                                                    <p className="text-sm font-medium truncate" style={{ color: '#0F172A' }}>{doc.name}</p>
+                                                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>{formatDate(doc.uploadedAt)}</p>
                                                                                 </div>
                                                                             </a>
                                                                         ))}
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có file đính kèm nào.</p>
+                                                                    <p className="text-xs italic" style={{ color: '#64748B' }}>Chưa có file đính kèm nào.</p>
                                                                 )}
                                                             </div>
 
                                                             {/* Signature Section */}
                                                             <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
-                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#87CBB9' }}>
+                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>
                                                                     Ký Điện Tử Khê Duyệt Nhanh
                                                                 </p>
                                                                 {utilization.signatureUrl ? (
-                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
                                                                         <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
                                                                         <img src={utilization.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
                                                                     </div>
@@ -575,14 +575,14 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                                 <div className="flex justify-end">
                                                                                     <button onClick={() => handleSign(row.id)} disabled={!currentSignatureUrl || savingSignature}
                                                                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50 transition-colors"
-                                                                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                                                                         {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                                                                                         Lưu Chữ Ký & Hiệu Lực Hoá Hợp Đồng
                                                                                     </button>
                                                                                 </div>
                                                                             </>
                                                                         ) : (
-                                                                            <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chỉ hợp đồng nháp mới cần ký.</p>
+                                                                            <p className="text-xs italic" style={{ color: '#64748B' }}>Chỉ hợp đồng nháp mới cần ký.</p>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -590,7 +590,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
 
                                                         </div>
                                                     ) : (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Không tìm thấy dữ liệu</p>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>Không tìm thấy dữ liệu</p>
                                                     )}
                                                 </td>
                                             </tr>

@@ -154,18 +154,18 @@ export function ReplenishmentTab() {
         <div className="w-full space-y-4">
             {/* Top Info Banner */}
             <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
-                style={{ background: '#0D1E2B', borderColor: '#2A4355' }}>
+                style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20 text-indigo-400">
                             <ArrowRightLeft size={18} />
                         </div>
                         <div>
-                            <h2 className="text-base font-bold text-[#E8F1F2] flex items-center gap-2">
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                 Gợi Ý Điều Chuyển Kho & Cân Bằng Tồn
-                                {loading && <RefreshCw size={14} className="animate-spin text-[#87CBB9]" />}
+                                {loading && <RefreshCw size={14} className="animate-spin text-[#0891B2]" />}
                             </h2>
-                            <p className="text-xs text-[#8AAEBB]">
+                            <p className="text-xs text-slate-600">
                                 Tự động rà soát kho bán/showroom sắp hết để đề xuất chuyển hàng từ kho tổng/kho cùng pháp nhân
                             </p>
                         </div>
@@ -177,7 +177,7 @@ export function ReplenishmentTab() {
                         onClick={() => loadData()}
                         disabled={loading}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-bold border transition-colors cursor-pointer"
-                        style={{ background: '#142433', borderColor: '#2A4355', color: '#E8F1F2' }}
+                        style={{ background: '#FFFFFF', borderColor: '#E2E8F0', color: '#0F172A' }}
                     >
                         <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
                         Làm mới
@@ -250,10 +250,10 @@ export function ReplenishmentTab() {
 
             {/* Filter & Threshold Selector Bar */}
             <div className="p-4 rounded-xl border space-y-3 shadow-xs"
-                style={{ background: '#0D1E2B', borderColor: '#2A4355' }}>
+                style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     {/* Category Navigation Pills */}
-                    <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#142433] border border-[#2A4355] overflow-x-auto">
+                    <div className="flex items-center gap-1.5 p-1 rounded-lg bg-white border border-slate-200 overflow-x-auto">
                         {[
                             { key: 'ALL', label: 'Tất Cả Cảnh Báo', count: stats.totalAlerts },
                             { key: 'INTRA_TA', label: 'Nội Bộ Thắng Ân (TT ➔ GVM)', count: stats.intraTaCount },
@@ -264,13 +264,13 @@ export function ReplenishmentTab() {
                                 onClick={() => setCategory(tab.key as ReplenishmentCategory)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                                     category === tab.key
-                                        ? 'bg-[#87CBB9] text-[#0A1926] shadow-sm'
-                                        : 'text-[#8AAEBB] hover:text-[#E8F1F2] hover:bg-[#1B2E3D]'
+                                        ? 'bg-[#0891B2] text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                 }`}
                             >
                                 <span>{tab.label}</span>
                                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                                    category === tab.key ? 'bg-[#0A1926]/20 text-[#0A1926]' : 'bg-[#1B2E3D] text-[#87CBB9]'
+                                    category === tab.key ? 'bg-slate-50/20 text-slate-900' : 'bg-white text-[#0891B2]'
                                 }`}>
                                     {tab.count}
                                 </span>
@@ -280,23 +280,23 @@ export function ReplenishmentTab() {
 
                     {/* Search Input */}
                     <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8AAEBB]" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
                         <input
                             type="text"
                             placeholder="Tìm theo SKU, tên rượu..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg outline-none font-medium text-[#E8F1F2] bg-[#142433] border border-[#2A4355] focus:border-[#87CBB9]"
+                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg outline-none font-medium text-slate-900 bg-white border border-slate-200 focus:border-[#87CBB9]"
                         />
                     </form>
                 </div>
 
                 {/* Threshold Configuration Row */}
-                <div className="pt-3 border-t border-[#2A4355]/40 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div className="pt-3 border-t border-slate-200/40 flex flex-wrap items-center justify-between gap-4 text-xs">
                     <div className="flex flex-wrap items-center gap-4">
                         {/* Target WH Max Threshold */}
                         <div className="flex items-center gap-2">
-                            <span className="text-[#8AAEBB] font-medium">Kho đích sắp hết khi tồn:</span>
+                            <span className="text-slate-600 font-medium">Kho đích sắp hết khi tồn:</span>
                             <div className="flex items-center gap-1">
                                 {[
                                     { label: '≤ 3 chai', val: 3 },
@@ -311,7 +311,7 @@ export function ReplenishmentTab() {
                                         className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-colors cursor-pointer border ${
                                             targetThreshold === btn.val
                                                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                                                : 'bg-[#142433] text-[#8AAEBB] border-[#2A4355] hover:text-[#E8F1F2]'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
                                         }`}
                                     >
                                         {btn.label}
@@ -322,7 +322,7 @@ export function ReplenishmentTab() {
 
                         {/* Source WH Min Stock */}
                         <div className="flex items-center gap-2">
-                            <span className="text-[#8AAEBB] font-medium">Kho nguồn còn ít nhất:</span>
+                            <span className="text-slate-600 font-medium">Kho nguồn còn ít nhất:</span>
                             <div className="flex items-center gap-1">
                                 {[
                                     { label: '≥ 6 chai', val: 6 },
@@ -336,7 +336,7 @@ export function ReplenishmentTab() {
                                         className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-colors cursor-pointer border ${
                                             sourceMinStock === btn.val
                                                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                                                : 'bg-[#142433] text-[#8AAEBB] border-[#2A4355] hover:text-[#E8F1F2]'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
                                         }`}
                                     >
                                         {btn.label}
@@ -348,11 +348,11 @@ export function ReplenishmentTab() {
 
                     {/* Wine Type Filter */}
                     <div className="flex items-center gap-2">
-                        <span className="text-[#8AAEBB]">Loại vang:</span>
+                        <span className="text-slate-600">Loại vang:</span>
                         <select
                             value={wineType}
                             onChange={e => setWineType(e.target.value)}
-                            className="px-2.5 py-1 rounded text-xs outline-none bg-[#142433] border border-[#2A4355] text-[#E8F1F2] cursor-pointer"
+                            className="px-2.5 py-1 rounded text-xs outline-none bg-white border border-slate-200 text-slate-900 cursor-pointer"
                         >
                             <option value="">Tất cả loại vang</option>
                             {Object.entries(WINE_TYPE_LABELS).map(([k, v]) => (

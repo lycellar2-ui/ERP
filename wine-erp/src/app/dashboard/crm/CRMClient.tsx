@@ -19,7 +19,7 @@ import { PipelinePanel } from './PipelinePanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    HORECA: { label: 'HORECA', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
+    HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     WHOLESALE: { label: 'Đại Lý', color: '#4A8FAB', bg: 'rgba(74,143,171,0.12)' },
     VIP_RETAIL: { label: 'VIP', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
     DISTRIBUTOR: { label: 'NPP', color: '#A5DED0', bg: 'rgba(165,222,208,0.1)' },
@@ -36,9 +36,9 @@ const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
 }
 
 const TIER_CFG: Record<string, { label: string; color: string; icon: string }> = {
-    PLATINUM: { label: 'Platinum', color: '#E8F1F2', icon: '💎' },
+    PLATINUM: { label: 'Platinum', color: '#0F172A', icon: '💎' },
     GOLD: { label: 'Gold', color: '#D4A853', icon: '🥇' },
-    SILVER: { label: 'Silver', color: '#8AAEBB', icon: '🥈' },
+    SILVER: { label: 'Silver', color: '#475569', icon: '🥈' },
     BRONZE: { label: 'Bronze', color: '#87685A', icon: '🥉' },
 }
 
@@ -50,19 +50,19 @@ function getTierFromRevenue(revenue: number): string {
 }
 
 function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSelect: () => void; isSelected: boolean }) {
-    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#8AAEBB', bg: 'rgba(138,174,187,0.1)' }
+    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#475569', bg: 'rgba(138,174,187,0.1)' }
     const tier = getTierFromRevenue(row.totalRevenue)
     const tierCfg = TIER_CFG[tier]
 
     return (
         <button onClick={onSelect} className="w-full text-left p-4 rounded-md transition-all duration-150"
             style={{
-                background: isSelected ? 'rgba(135,203,185,0.08)' : '#1B2E3D',
-                border: `1px solid ${isSelected ? '#87CBB9' : '#2A4355'}`,
+                background: isSelected ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
+                border: `1px solid ${isSelected ? '#87CBB9' : '#E2E8F0'}`,
                 borderLeft: `3px solid ${isSelected ? '#87CBB9' : 'transparent'}`,
             }}
-            onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#87CBB9' } }}
-            onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#2A4355' } }}
+            onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#0891B2' } }}
+            onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' } }}
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
@@ -82,27 +82,27 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                             </span>
                         )}
                     </div>
-                    <p className="font-semibold text-sm truncate" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                    <p className="text-xs font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
+                    <p className="font-semibold text-sm truncate" style={{ color: '#0F172A' }}>{row.name}</p>
+                    <p className="text-xs font-mono" style={{ color: '#64748B' }}>{row.code}</p>
                 </div>
-                <ChevronRight size={14} style={{ color: '#87CBB9', flexShrink: 0, marginTop: 4 }} />
+                <ChevronRight size={14} style={{ color: '#0891B2', flexShrink: 0, marginTop: 4 }} />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-                <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                    <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>
+                <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                    <p className="text-xs font-bold" style={{ color: '#0891B2' }}>
                         {row.totalRevenue >= 1e9 ? `${(row.totalRevenue / 1e9).toFixed(2)} tỷ` : row.totalRevenue >= 1e6 ? `${(row.totalRevenue / 1e6).toFixed(0)} tr` : formatVND(row.totalRevenue)}
                     </p>
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Doanh số</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>Doanh số</p>
                 </div>
-                <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                     <p className="text-xs font-bold" style={{ color: '#5BA88A' }}>{row.totalOrders}</p>
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Đơn hàng</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>Đơn hàng</p>
                 </div>
             </div>
 
             {row.salesRepName && (
-                <p className="text-xs mt-2" style={{ color: '#4A6A7A' }}>
+                <p className="text-xs mt-2" style={{ color: '#64748B' }}>
                     👤 {row.salesRepName} · {row.paymentTerm}
                 </p>
             )}
@@ -135,8 +135,8 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
     }
 
     return (
-        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>
+        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>
                 Ghi Chép Tương Tác
             </p>
             <div className="flex flex-wrap gap-1.5 mb-3">
@@ -146,9 +146,9 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                         <button key={t} onClick={() => setType(t)}
                             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium transition-all"
                             style={{
-                                background: type === t ? 'rgba(135,203,185,0.2)' : '#142433',
-                                color: type === t ? '#87CBB9' : '#8AAEBB',
-                                border: `1px solid ${type === t ? '#87CBB9' : '#2A4355'}`,
+                                background: type === t ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
+                                color: type === t ? '#87CBB9' : '#475569',
+                                border: `1px solid ${type === t ? '#87CBB9' : '#E2E8F0'}`,
                                 borderRadius: '4px',
                             }}>
                             <Icon size={11} /> {t}
@@ -162,15 +162,15 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                 rows={2}
                 placeholder="Nội dung tương tác..."
                 className="w-full px-3 py-2 text-sm outline-none resize-none"
-                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
             />
             <button onClick={handleLog} disabled={saving || !desc.trim()}
                 className="mt-2 px-4 py-1.5 text-xs font-semibold transition-all"
                 style={{
-                    background: desc.trim() ? '#87CBB9' : '#2A4355',
-                    color: desc.trim() ? '#0A1926' : '#4A6A7A',
+                    background: desc.trim() ? '#87CBB9' : '#E2E8F0',
+                    color: desc.trim() ? '#F8FAFC' : '#64748B',
                     borderRadius: '4px',
                     opacity: saving ? 0.7 : 1,
                 }}>
@@ -257,10 +257,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         CRM – Quan Hệ Khách Hàng
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         360° Customer View – Lịch sử, tương tác, cơ hội bán hàng
                     </p>
                 </div>
@@ -297,14 +297,14 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     const Icon = s.icon
                     return (
                         <div key={s.label} className="p-4 rounded-md flex items-center gap-4"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                                 style={{ background: `${s.accent}18` }}>
                                 <Icon size={20} style={{ color: s.accent }} />
                             </div>
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
+                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -312,7 +312,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* CRM Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
                 {([
                     { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
                     { key: 'pipeline' as const, label: 'Cơ hội bán hàng (Pipeline)', icon: Target },
@@ -323,9 +323,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     <button key={tab.key} onClick={() => setCrmTab(tab.key)}
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                         style={{
-                            background: crmTab === tab.key ? '#1B2E3D' : 'transparent',
-                            color: crmTab === tab.key ? '#87CBB9' : '#4A6A7A',
-                            border: crmTab === tab.key ? '1px solid #2A4355' : '1px solid transparent',
+                            background: crmTab === tab.key ? '#FFFFFF' : 'transparent',
+                            color: crmTab === tab.key ? '#87CBB9' : '#64748B',
+                            border: crmTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
                         }}>
                         <tab.icon size={13} /> {tab.label}
                     </button>
@@ -352,22 +352,22 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         {/* Filters */}
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                                 <input
                                     type="text"
                                     placeholder="Tìm khách hàng..."
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
                                     className="w-full pl-9 pr-3 py-2 text-sm outline-none"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                 />
                             </div>
                             <select value={typeFilter}
                                 onChange={e => { setTypeFilter(e.target.value); reload(undefined, e.target.value) }}
                                 className="px-3 py-2 text-sm outline-none"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                                 <option value="">Tất cả</option>
                                 <option value="HORECA">HORECA</option>
                                 <option value="WHOLESALE">Đại Lý</option>
@@ -376,7 +376,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         </div>
 
                         <div className="flex items-center justify-between">
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>
                                 {total} Khách Hàng
                             </p>
                             <div className="flex gap-1">
@@ -384,9 +384,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     <button key={key} onClick={() => toggleSort(key)}
                                         className="flex items-center gap-0.5 px-2 py-1 text-[10px] font-semibold rounded transition-all"
                                         style={{
-                                            background: sortBy === key ? 'rgba(135,203,185,0.15)' : 'transparent',
-                                            color: sortBy === key ? '#87CBB9' : '#4A6A7A',
-                                            border: `1px solid ${sortBy === key ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
+                                            background: sortBy === key ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                            color: sortBy === key ? '#87CBB9' : '#64748B',
+                                            border: `1px solid ${sortBy === key ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
                                         }}>
                                         {label}
                                         {sortBy === key && (sortDir === 'desc' ? <ArrowDown size={9} /> : <ArrowUp size={9} />)}
@@ -398,7 +398,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         {/* Customer cards */}
                         <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                             {loading ? (
-                                <div className="text-center py-8" style={{ color: '#4A6A7A' }}>Đang tải...</div>
+                                <div className="text-center py-8" style={{ color: '#64748B' }}>Đang tải...</div>
                             ) : sortedRows.map(row => (
                                 <CustomerCard key={row.id} row={row} isSelected={selectedId === row.id} onSelect={() => setSelectedId(row.id)} />
                             ))}
@@ -410,29 +410,29 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         {!selectedCustomer ? (
                             <div className="space-y-4">
                                 {/* CRM Summary Dashboard */}
-                                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                                        <TrendingUp size={15} style={{ color: '#87CBB9' }} />
+                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#0F172A' }}>
+                                        <TrendingUp size={15} style={{ color: '#0891B2' }} />
                                         Tổng Quan CRM
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3 mb-4">
-                                        <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                                            <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>
+                                        <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                                            <p className="text-lg font-bold" style={{ color: '#0891B2' }}>
                                                 {totalRevAll >= 1e9 ? `${(totalRevAll / 1e9).toFixed(1)}T` : formatVND(totalRevAll)}
                                             </p>
-                                            <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Doanh Số</p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Doanh Số</p>
                                         </div>
-                                        <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
+                                        <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
                                             <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
                                                 {rows.reduce((s, r) => s + r.totalOrders, 0)}
                                             </p>
-                                            <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Đơn Hàng</p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Đơn Hàng</p>
                                         </div>
                                     </div>
 
                                     {/* Tier Distribution */}
                                     <div className="mb-4">
-                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Phân Bổ Tier</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Phân Bổ Tier</p>
                                         <div className="flex gap-2">
                                             {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => {
                                                 const cfg = TIER_CFG[tier]
@@ -441,7 +441,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div key={tier} className="flex-1 text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
                                                         <p className="text-xs">{cfg.icon}</p>
                                                         <p className="text-sm font-bold" style={{ color: cfg.color }}>{count}</p>
-                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
+                                                        <p className="text-xs" style={{ color: '#64748B' }}>{cfg.label}</p>
                                                     </div>
                                                 )
                                             })}
@@ -450,7 +450,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                     {/* Top 5 Customers */}
                                     <div>
-                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>🏆 Top 5 Khách Hàng</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>🏆 Top 5 Khách Hàng</p>
                                         <div className="space-y-1">
                                             {topCustomers.map((c, i) => {
                                                 const tier = getTierFromRevenue(c.totalRevenue)
@@ -458,15 +458,15 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 return (
                                                     <button key={c.id} onClick={() => setSelectedId(c.id)}
                                                         className="w-full flex items-center justify-between py-2 px-3 rounded transition-all hover:bg-opacity-80"
-                                                        style={{ background: '#142433' }}>
+                                                        style={{ background: '#FFFFFF' }}>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#4A6A7A' }}>#{i + 1}</span>
+                                                            <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#64748B' }}>#{i + 1}</span>
                                                             <div className="text-left">
-                                                                <p className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</p>
-                                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
+                                                                <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.name}</p>
+                                                                <p className="text-[10px]" style={{ color: '#64748B' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
                                                             </div>
                                                         </div>
-                                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
+                                                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
                                                             {c.totalRevenue >= 1e9 ? `${(c.totalRevenue / 1e9).toFixed(2)} tỷ` : formatVND(c.totalRevenue)}
                                                         </span>
                                                     </button>
@@ -476,20 +476,20 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     </div>
                                 </div>
 
-                                <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs text-center" style={{ color: '#64748B' }}>
                                     ← Chọn một khách hàng để xem hồ sơ 360°
                                 </p>
                             </div>
                         ) : (
                             <>
                                 {/* Customer header */}
-                                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
+                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h3 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
+                                            <h3 className="text-xl font-bold" style={{ color: '#0F172A' }}>
                                                 {selectedCustomer.name}
                                             </h3>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            <p className="text-xs" style={{ color: '#64748B' }}>
                                                 {selectedCustomer.code} · {selectedCustomer.paymentTerm}
                                             </p>
                                         </div>
@@ -502,13 +502,13 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     {/* KPIs */}
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#87CBB9' },
+                                            { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#0891B2' },
                                             { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#5BA88A' },
                                             { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#D4A853' },
                                         ].map(kpi => (
-                                            <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#142433' }}>
+                                            <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                                                 <p className="text-lg font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
-                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{kpi.label}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{kpi.label}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -519,10 +519,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                 {/* Contacts + Tags */}
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                    <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <ContactsPanel customerId={selectedCustomer.id} />
                                     </div>
-                                    <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <TagsPanel customerId={selectedCustomer.id} />
                                     </div>
                                 </div>
@@ -532,7 +532,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                 {/* 360 data from profile */}
                                 {profileLoading ? (
-                                    <div className="p-4 text-center text-xs" style={{ color: '#4A6A7A' }}>Loading...</div>
+                                    <div className="p-4 text-center text-xs" style={{ color: '#64748B' }}>Loading...</div>
                                 ) : profile && (
                                     <>
                                         {profile.arBalance > 0 && (
@@ -542,17 +542,17 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 <span className="text-sm font-bold" style={{ color: '#D4A853' }}>{formatVND(profile.arBalance)}</span>
                                             </div>
                                         )}
-                                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Đơn Hàng Gần Đây</p>
+                                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>Đơn Hàng Gần Đây</p>
                                             {profile.recentOrders.length === 0 ? (
-                                                <p className="text-xs py-3 text-center" style={{ color: '#4A6A7A' }}>Chưa có đơn hàng</p>
+                                                <p className="text-xs py-3 text-center" style={{ color: '#64748B' }}>Chưa có đơn hàng</p>
                                             ) : (
                                                 <div className="space-y-1.5">
                                                     {profile.recentOrders.slice(0, 5).map(o => (
-                                                        <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{o.soNo}</span>
-                                                            <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(o.createdAt)}</span>
-                                                            <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(Number(o.totalAmount))}</span>
+                                                        <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
+                                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
+                                                            <span className="text-xs" style={{ color: '#475569' }}>{formatDate(o.createdAt)}</span>
+                                                            <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(Number(o.totalAmount))}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -561,7 +561,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Transaction History Button */}
                                         {!txOpen && (
                                             <button onClick={loadTxHistory} className="w-full py-2 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                                 📊 Xem Toàn Bộ Lịch Sử Giao Dịch
                                             </button>
                                         )}
@@ -572,36 +572,36 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Summary Stats */}
                                                 <div className="grid grid-cols-4 gap-2">
                                                     {[
-                                                        { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#87CBB9' },
+                                                        { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#0891B2' },
                                                         { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#4A8FAB' },
                                                         { label: 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#5BA88A' },
                                                         { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#D4A853' },
                                                     ].map(s => (
-                                                        <div key={s.label} className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                                                        <div key={s.label} className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                                             <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
-                                                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                                                            <p className="text-[10px]" style={{ color: '#64748B' }}>{s.label}</p>
                                                         </div>
                                                     ))}
                                                 </div>
 
                                                 {/* Top SKUs */}
                                                 {txHistory.topSkus.length > 0 && (
-                                                    <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                    <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#D4A853' }}>
                                                             🏆 Top SKU Hay Mua
                                                         </p>
                                                         <div className="space-y-1">
                                                             {txHistory.topSkus.slice(0, 5).map((sku, i) => (
-                                                                <div key={sku.skuCode} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
+                                                                <div key={sku.skuCode} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#4A6A7A' }}>#{i + 1}</span>
+                                                                        <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#64748B' }}>#{i + 1}</span>
                                                                         <div>
-                                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{sku.skuCode}</span>
-                                                                            <span className="text-xs ml-1" style={{ color: '#8AAEBB' }}>{sku.productName}</span>
+                                                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{sku.skuCode}</span>
+                                                                            <span className="text-xs ml-1" style={{ color: '#475569' }}>{sku.productName}</span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="text-right">
-                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{sku.totalQty} chai</span>
+                                                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{sku.totalQty} chai</span>
                                                                         <span className="text-xs ml-2" style={{ color: '#5BA88A' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
                                                                     </div>
                                                                 </div>
@@ -611,20 +611,20 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 )}
 
                                                 {/* All Orders */}
-                                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>
+                                                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
                                                         Toàn Bộ Đơn Hàng ({txHistory.orders.length})
                                                     </p>
                                                     <div className="space-y-1 max-h-[250px] overflow-y-auto">
                                                         {txHistory.orders.map(o => (
-                                                            <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{o.soNo}</span>
-                                                                <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(o.date)}</span>
+                                                            <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
+                                                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
+                                                                <span className="text-xs" style={{ color: '#475569' }}>{formatDate(o.date)}</span>
                                                                 <span className="text-xs px-1.5 py-0.5 rounded" style={{
                                                                     background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)',
-                                                                    color: o.status === 'PAID' ? '#5BA88A' : '#8AAEBB',
+                                                                    color: o.status === 'PAID' ? '#5BA88A' : '#475569',
                                                                 }}>{o.status}</span>
-                                                                <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(o.amount)}</span>
+                                                                <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(o.amount)}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -632,15 +632,15 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                                 {/* AR Invoices */}
                                                 {txHistory.invoices.length > 0 && (
-                                                    <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>
+                                                    <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
                                                             Công Nợ / Hóa Đơn ({txHistory.invoices.length})
                                                         </p>
                                                         <div className="space-y-1 max-h-[200px] overflow-y-auto">
                                                             {txHistory.invoices.map(inv => (
-                                                                <div key={inv.invoiceNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
+                                                                <div key={inv.invoiceNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
                                                                     <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{inv.invoiceNo}</span>
-                                                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(inv.date)}</span>
+                                                                    <span className="text-xs" style={{ color: '#475569' }}>{formatDate(inv.date)}</span>
                                                                     <span className="text-xs px-1.5 py-0.5 rounded" style={{
                                                                         background: inv.status === 'PAID' ? 'rgba(91,168,138,0.15)' :
                                                                             inv.status === 'OVERDUE' ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.15)',
@@ -648,7 +648,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                             inv.status === 'OVERDUE' ? '#8B1A2E' : '#D4A853',
                                                                     }}>{inv.status}</span>
                                                                     <div className="text-right">
-                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(inv.amount)}</span>
+                                                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(inv.amount)}</span>
                                                                         <span className="text-[10px] block" style={{ color: '#5BA88A' }}>Đã thu: {formatVND(inv.paidAmount)}</span>
                                                                     </div>
                                                                 </div>
@@ -658,23 +658,23 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 )}
 
                                                 <button onClick={() => setTxOpen(false)} className="w-full py-1.5 text-xs rounded"
-                                                    style={{ background: '#2A4355', color: '#8AAEBB' }}>Thu Gọn</button>
+                                                    style={{ background: '#E2E8F0', color: '#475569' }}>Thu Gọn</button>
                                             </div>
                                         )}
                                         {profile.recentActivities.length > 0 && (
-                                            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Lịch Sử Tương Tác</p>
+                                            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>Lịch Sử Tương Tác</p>
                                                 <div className="space-y-2">
                                                     {profile.recentActivities.slice(0, 5).map(a => {
                                                         const Icon = ACTIVITY_ICONS[a.type as ActivityType] ?? MessageSquarePlus
                                                         return (
                                                             <div key={a.id} className="flex gap-2 items-start">
-                                                                <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(135,203,185,0.12)' }}>
-                                                                    <Icon size={11} style={{ color: '#87CBB9' }} />
+                                                                <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                                                                    <Icon size={11} style={{ color: '#0891B2' }} />
                                                                 </div>
                                                                 <div>
-                                                                    <p className="text-xs" style={{ color: '#E8F1F2' }}>{a.description}</p>
-                                                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{a.performer?.name} {formatDate(a.occurredAt)}</p>
+                                                                    <p className="text-xs" style={{ color: '#0F172A' }}>{a.description}</p>
+                                                                    <p className="text-xs" style={{ color: '#64748B' }}>{a.performer?.name} {formatDate(a.occurredAt)}</p>
                                                                 </div>
                                                             </div>
                                                         )

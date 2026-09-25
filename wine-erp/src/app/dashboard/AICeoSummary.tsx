@@ -27,17 +27,17 @@ export function AICeoSummary() {
     }
 
     return (
-        <div className="rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+        <div className="rounded-md overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #2A4355' }}>
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(135,203,185,0.2), rgba(212,168,83,0.2))' }}>
+                        style={{ background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(212,168,83,0.2))' }}>
                         <Sparkles size={14} style={{ color: '#D4A853' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>AI Briefing cho CEO</h3>
-                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Phân tích tự động bằng Gemini 3.1 Pro</p>
+                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Briefing cho CEO</h3>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>Phân tích tự động bằng Gemini 3.1 Pro</p>
                     </div>
                 </div>
                 <button
@@ -45,9 +45,9 @@ export function AICeoSummary() {
                     disabled={loading}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
                     style={{
-                        background: loading ? 'rgba(135,203,185,0.08)' : 'linear-gradient(135deg, rgba(135,203,185,0.2), rgba(212,168,83,0.15))',
-                        color: loading ? '#4A6A7A' : '#D4A853',
-                        border: `1px solid ${loading ? '#2A4355' : 'rgba(212,168,83,0.3)'}`,
+                        background: loading ? 'rgba(135,203,185,0.08)' : 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(212,168,83,0.15))',
+                        color: loading ? '#64748B' : '#D4A853',
+                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(212,168,83,0.3)'}`,
                     }}
                 >
                     {loading ? (
@@ -65,9 +65,9 @@ export function AICeoSummary() {
                 <div className="px-5 py-8 flex flex-col items-center gap-3">
                     <div className="relative">
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                            style={{ borderColor: '#2A4355', borderTopColor: '#D4A853' }} />
+                            style={{ borderColor: '#E2E8F0', borderTopColor: '#D4A853' }} />
                     </div>
-                    <p className="text-xs animate-pulse" style={{ color: '#4A6A7A' }}>
+                    <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
                         AI đang phân tích doanh thu, công nợ, tồn kho...
                     </p>
                 </div>
@@ -87,14 +87,14 @@ export function AICeoSummary() {
                         {summary.split('\n').filter(Boolean).map((line, i) => (
                             <p key={i} className="text-[13px] leading-relaxed" style={{
                                 color: line.startsWith('##') || line.startsWith('**')
-                                    ? '#E8F1F2'
+                                    ? '#0F172A'
                                     : line.startsWith('- 🔴') || line.startsWith('- ⚠')
                                         ? '#E05252'
                                         : line.startsWith('- 🟢') || line.startsWith('- ✅')
                                             ? '#5BA88A'
                                             : line.startsWith('- 🟡')
                                                 ? '#D4A853'
-                                                : '#8AAEBB',
+                                                : '#475569',
                                 fontWeight: line.startsWith('##') || line.startsWith('**') ? 700 : 400,
                                 fontSize: line.startsWith('##') ? '14px' : '13px',
                                 marginLeft: line.startsWith('- ') ? '8px' : '0',
@@ -103,7 +103,7 @@ export function AICeoSummary() {
                             </p>
                         ))}
                     </div>
-                    <p className="text-[10px] mt-3 text-right" style={{ color: '#4A6A7A' }}>
+                    <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
                         🕐 Tạo lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro
                     </p>
                 </div>
@@ -111,8 +111,8 @@ export function AICeoSummary() {
 
             {!summary && !loading && !error && (
                 <div className="px-5 py-6 flex flex-col items-center gap-2">
-                    <Sparkles size={20} style={{ color: '#2A4355' }} />
-                    <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                    <Sparkles size={20} style={{ color: '#E2E8F0' }} />
+                    <p className="text-xs text-center" style={{ color: '#64748B' }}>
                         Nhấn <strong>&quot;✨ Tạo Báo Cáo AI&quot;</strong> để nhận bản tóm tắt<br />
                         doanh thu, rủi ro và đề xuất hành động từ AI
                     </p>

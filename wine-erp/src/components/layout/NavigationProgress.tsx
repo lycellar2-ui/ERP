@@ -77,7 +77,7 @@ export function NavigationProgress() {
                     width: `${progress}%`,
                     transition: progress === 100 ? 'width 200ms ease-out, opacity 300ms' : 'width 200ms ease-out',
                     opacity: progress === 100 ? 0 : 1,
-                    boxShadow: '0 0 10px rgba(135,203,185,0.5), 0 0 5px rgba(135,203,185,0.3)',
+                    boxShadow: '0 0 10px rgba(135,203,185,0.5), 0 0 5px rgba(8, 145, 178, 0.25)',
                 }}
             />
         </div>

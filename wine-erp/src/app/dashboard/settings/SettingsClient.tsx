@@ -18,10 +18,10 @@ import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
 
 // ── Shared Style Tokens ──────────────────────────
-const card = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px' }
+const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
 const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: '6px',
-    border: '1px solid #2A4355', background: '#142433', color: '#E8F1F2',
+    border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#0F172A',
     fontSize: '14px', outline: 'none',
 }
 
@@ -56,13 +56,13 @@ const ACTION_LABELS: Record<string, string> = {
     ADMIN: 'Toàn quyền (Admin)',
 }
 const focusHandler = {
-    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#87CBB9',
-    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#2A4355',
+    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#0891B2',
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#E2E8F0',
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     ACTIVE: { label: 'Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    INACTIVE: { label: 'Ngưng', color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' },
+    INACTIVE: { label: 'Ngưng', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
     SUSPENDED: { label: 'Khoá', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
 }
 
@@ -115,10 +115,10 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Người Dùng</h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Người Dùng</h3>
+                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                 </div>
 
                 {error && (
@@ -130,30 +130,30 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
                         <input style={inputStyle} {...focusHandler} type="email" placeholder="ten@lyscellars.com"
                             value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Họ Tên</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên</label>
                         <input style={inputStyle} {...focusHandler} placeholder="Nguyễn Văn A"
                             value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Mật Khẩu</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Mật Khẩu</label>
                         <input style={inputStyle} {...focusHandler} type="password" placeholder="Tối thiểu 6 ký tự"
                             value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Vai Trò</label>
                         <div className="grid grid-cols-2 gap-2">
                             {roles.map(r => (
                                 <button key={r.id} onClick={() => toggleRole(r.id)}
                                     className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
                                     style={{
-                                        background: form.roleIds.includes(r.id) ? 'rgba(135,203,185,0.15)' : '#142433',
-                                        border: form.roleIds.includes(r.id) ? '1px solid #87CBB9' : '1px solid #2A4355',
-                                        color: form.roleIds.includes(r.id) ? '#87CBB9' : '#8AAEBB',
+                                        background: form.roleIds.includes(r.id) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                        border: form.roleIds.includes(r.id) ? '1px solid #87CBB9' : '1px solid #E2E8F0',
+                                        color: form.roleIds.includes(r.id) ? '#87CBB9' : '#475569',
                                     }}>
                                     {form.roleIds.includes(r.id) && <CheckCircle2 size={12} className="inline mr-1" />}
                                     {r.name}
@@ -165,7 +165,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
                 <button onClick={handleSave} disabled={saving}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : 'Tạo Người Dùng'}
                 </button>
@@ -209,33 +209,33 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl">
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Vai Trò</h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Vai Trò</h3>
+                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Tên Vai Trò</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Vai Trò</label>
                         <input style={inputStyle} {...focusHandler} placeholder="VD: IT Admin"
                             value={name} onChange={e => setName(e.target.value)} />
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold mb-2 block" style={{ color: '#8AAEBB' }}>Quyền Hạn</label>
+                        <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Quyền Hạn</label>
                         <div className="space-y-2">
                             {modules.map(mod => {
                                 const modPerms = permissions.filter(p => p.module === mod)
                                 const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
                                 return (
-                                    <div key={mod} className="rounded-md p-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <button onClick={() => toggleModule(mod)}
                                             className="flex items-center justify-between w-full text-left">
-                                            <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#E8F1F2' }}>
+                                            <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#0F172A' }}>
                                                 {MODULE_NAMES[mod] ?? mod}
                                             </span>
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>
                                                 {count}/{modPerms.length}
                                             </span>
                                         </button>
@@ -247,8 +247,8 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                                                     )}
                                                     className="text-xs px-2 py-0.5 rounded transition-all"
                                                     style={{
-                                                        background: selectedPerms.includes(p.id) ? 'rgba(135,203,185,0.2)' : 'rgba(42,67,85,0.5)',
-                                                        color: selectedPerms.includes(p.id) ? '#87CBB9' : '#4A6A7A',
+                                                        background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : 'rgba(42,67,85,0.5)',
+                                                        color: selectedPerms.includes(p.id) ? '#87CBB9' : '#64748B',
                                                         border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
                                                     }}>
                                                     {ACTION_LABELS[p.action] ?? p.action}
@@ -264,7 +264,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
 
                 <button onClick={handleSave} disabled={saving || !name}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md"
-                    style={{ background: name ? '#87CBB9' : '#2A4355', color: name ? '#0A1926' : '#4A6A7A' }}>
+                    style={{ background: name ? '#87CBB9' : '#E2E8F0', color: name ? '#F8FAFC' : '#64748B' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : `Tạo Vai Trò (${selectedPerms.length} quyền)`}
                 </button>
@@ -331,39 +331,39 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl">
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                             Phân Quyền Vai Trò
                         </h3>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                            Cấu hình quyền hạn cho: <strong style={{ color: '#87CBB9' }}>{role.name}</strong>
+                        <p className="text-xs" style={{ color: '#64748B' }}>
+                            Cấu hình quyền hạn cho: <strong style={{ color: '#0891B2' }}>{role.name}</strong>
                         </p>
                     </div>
-                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                 </div>
 
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                        <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
                     </div>
                 ) : (
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#8AAEBB' }}>Quyền Hạn Hệ Thống</label>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Quyền Hạn Hệ Thống</label>
                             <div className="space-y-2">
                                 {modules.map(mod => {
                                     const modPerms = permissions.filter(p => p.module === mod)
                                     const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
                                     return (
-                                        <div key={mod} className="rounded-md p-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             <button onClick={() => toggleModule(mod)}
                                                 className="flex items-center justify-between w-full text-left">
-                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#E8F1F2' }}>
+                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#0F172A' }}>
                                                     {MODULE_NAMES[mod] ?? mod}
                                                 </span>
-                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                <span className="text-xs" style={{ color: '#64748B' }}>
                                                     {count}/{modPerms.length}
                                                 </span>
                                             </button>
@@ -375,8 +375,8 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                                                         )}
                                                         className="text-xs px-2 py-0.5 rounded transition-all"
                                                         style={{
-                                                            background: selectedPerms.includes(p.id) ? 'rgba(135,203,185,0.2)' : 'rgba(42,67,85,0.5)',
-                                                            color: selectedPerms.includes(p.id) ? '#87CBB9' : '#4A6A7A',
+                                                            background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : 'rgba(42,67,85,0.5)',
+                                                            color: selectedPerms.includes(p.id) ? '#87CBB9' : '#64748B',
                                                             border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
                                                         }}>
                                                         {ACTION_LABELS[p.action] ?? p.action}
@@ -391,7 +391,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
                         <button onClick={handleSave} disabled={saving}
                             className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                             {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
                         </button>
@@ -486,13 +486,13 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645]">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
                 <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                             {isAdmin ? 'Chỉnh Sửa Người Dùng' : 'Thông Tin Chi Tiết'}
                         </h3>
-                        <button onClick={onClose} className="hover:opacity-80 transition-opacity"><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                        <button onClick={onClose} className="hover:opacity-80 transition-opacity"><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
 
                     {error && (
@@ -504,26 +504,26 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
-                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
+                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                 {user.email}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Họ Tên</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên</label>
                             {isAdmin ? (
                                 <input style={inputStyle} {...focusHandler} placeholder="Họ và tên"
                                     value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                             ) : (
-                                <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                     {user.name || '—'}
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Trạng Thái</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Trạng Thái</label>
                             {isAdmin ? (
                                 <select style={inputStyle} {...focusHandler}
                                     value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}>
@@ -532,7 +532,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                     <option value="SUSPENDED">Khoá</option>
                                 </select>
                             ) : (
-                                <div className="p-3 rounded-md flex items-center" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div className="p-3 rounded-md flex items-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <span className="text-xs px-2 py-0.5 rounded font-bold"
                                         style={{ background: statusCfg.bg, color: statusCfg.color }}>
                                         {statusCfg.label}
@@ -542,7 +542,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Vai Trò</label>
                             {isAdmin ? (
                                 <div className="grid grid-cols-2 gap-2">
                                     {roles.map(r => {
@@ -551,9 +551,9 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                             <button key={r.id} onClick={() => toggleRole(r.id)}
                                                 className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
                                                 style={{
-                                                    background: selected ? 'rgba(135,203,185,0.15)' : '#142433',
-                                                    border: selected ? '1px solid #87CBB9' : '1px solid #2A4355',
-                                                    color: selected ? '#87CBB9' : '#8AAEBB',
+                                                    background: selected ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                                    border: selected ? '1px solid #87CBB9' : '1px solid #E2E8F0',
+                                                    color: selected ? '#87CBB9' : '#475569',
                                                 }}>
                                                 {selected && <CheckCircle2 size={12} className="inline mr-1" />}
                                                 {r.name}
@@ -562,10 +562,10 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                     })}
                                 </div>
                             ) : (
-                                <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     {user.roles.map(r => (
                                         <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
                                             {r}
                                         </span>
                                     ))}
@@ -575,15 +575,15 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
                         {isAdmin && (
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Đặt Lại Mật Khẩu</label>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Đặt Lại Mật Khẩu</label>
                                 <input style={inputStyle} {...focusHandler} type="password" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                                     value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
                             </div>
                         )}
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Ngày Tạo</label>
-                            <div className="text-sm p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Ngày Tạo</label>
+                            <div className="text-sm p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
                                 {new Date(user.createdAt).toLocaleString('vi-VN')}
                             </div>
                         </div>
@@ -593,7 +593,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                 {isAdmin && (
                     <button onClick={handleSave} disabled={saving}
                         className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                     </button>
@@ -736,10 +736,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Cài Đặt & Phân Quyền (SYS/RBAC)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý tài khoản, vai trò, quyền hạn — Dữ liệu thực từ DB
                     </p>
                 </div>
@@ -775,7 +775,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         <div key={c.label} className="p-4 rounded-md" style={card}>
                             <div className="flex items-center gap-2 mb-2">
                                 <Icon size={16} style={{ color: c.accent }} />
-                                <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</span>
+                                <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{c.label}</span>
                             </div>
                             <p className="text-2xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
                         </div>
@@ -784,7 +784,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-md" style={{ background: '#142433' }}>
+            <div className="flex gap-1 p-1 rounded-md" style={{ background: '#FFFFFF' }}>
                 {tabs.map(t => {
                     const Icon = t.icon
                     const active = tab === t.key
@@ -793,9 +793,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals(); if (t.key === 'entities' && !entitiesLoaded) loadEntities() }}
                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded transition-all"
                             style={{
-                                background: active ? '#1B2E3D' : 'transparent',
-                                color: active ? '#87CBB9' : '#4A6A7A',
-                                border: active ? '1px solid #2A4355' : '1px solid transparent',
+                                background: active ? '#FFFFFF' : 'transparent',
+                                color: active ? '#87CBB9' : '#64748B',
+                                border: active ? '1px solid #E2E8F0' : '1px solid transparent',
                             }}>
                             <Icon size={14} /> {t.label}
                         </button>
@@ -808,7 +808,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="relative flex-1">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                             <input className="w-full pl-9 pr-3 py-2 text-sm rounded-md"
                                 style={{ ...inputStyle, width: '100%' }}
                                 placeholder="Tìm theo tên hoặc email..."
@@ -816,24 +816,24 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         </div>
                         <button onClick={() => setShowCreateUser(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             <Plus size={16} /> Thêm Người Dùng
                         </button>
                     </div>
 
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Họ Tên', 'Email', 'Vai Trò', 'Trạng Thái', 'Ngày Tạo', ''].map(h => (
                                         <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#4A6A7A' }}>{h}</th>
+                                            style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
                                         Chưa có người dùng. Chạy seed-rbac.ts trước.
                                     </td></tr>
                                 ) : filteredUsers.map(u => {
@@ -842,19 +842,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         <tr key={u.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                            <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#87CBB9] transition-all"
-                                                style={{ color: '#E8F1F2' }}
+                                            <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#0891B2] transition-all"
+                                                style={{ color: '#0F172A' }}
                                                 onClick={() => setSelectedUser(u)}>
                                                 {u.name || '—'}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
                                                 {u.email}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <div className="flex flex-wrap gap-1">
                                                     {u.roles.map(r => (
                                                         <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
-                                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
                                                             {r}
                                                         </span>
                                                     ))}
@@ -866,7 +866,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     {st.label}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
                                                 {new Date(u.createdAt).toLocaleDateString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -875,7 +875,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     disabled={!currentUser?.permissions.includes('SYS:ADMIN')}
                                                     onChange={e => handleStatusChange(u.id, e.target.value as any)}
                                                     className="text-xs px-2 py-1 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB', outline: 'none' }}>
+                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', outline: 'none' }}>
                                                     <option value="ACTIVE">Hoạt Động</option>
                                                     <option value="INACTIVE">Ngưng</option>
                                                     <option value="SUSPENDED">Khoá</option>
@@ -894,12 +894,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             {tab === 'roles' && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm" style={{ color: '#8AAEBB' }}>
+                        <p className="text-sm" style={{ color: '#475569' }}>
                             {permissions.length} quyền hạn trên {Array.from(new Set(permissions.map(p => p.module))).length} module
                         </p>
                         <button onClick={() => setShowCreateRole(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             <Plus size={16} /> Tạo Vai Trò
                         </button>
                     </div>
@@ -913,10 +913,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     setShowEditRole(true)
                                 }}>
                                 <div className="flex items-center justify-between mb-3">
-                                    <h4 className="font-bold" style={{ color: '#E8F1F2' }}>{r.name}</h4>
+                                    <h4 className="font-bold" style={{ color: '#0F172A' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs px-2 py-0.5 rounded"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
                                             {r.permissionCount} quyền
                                         </span>
                                         <span className="text-xs px-2 py-0.5 rounded"
@@ -926,19 +926,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mb-3">
-                                    <Users size={12} style={{ color: '#4A6A7A' }} />
-                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                    <Users size={12} style={{ color: '#64748B' }} />
+                                    <span className="text-xs" style={{ color: '#64748B' }}>
                                         {r.userCount === 0 ? 'Chưa có người dùng' : `${r.userCount} người dùng`}
                                     </span>
                                 </div>
-                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                     <div className="h-full rounded-full transition-all"
                                         style={{
                                             width: `${Math.min((r.permissionCount / permissions.length) * 100, 100)}%`,
                                             background: r.permissionCount === permissions.length ? '#87CBB9' : '#D4A853',
                                         }} />
                                 </div>
-                                <p className="text-xs mt-1.5" style={{ color: '#4A6A7A' }}>
+                                <p className="text-xs mt-1.5" style={{ color: '#64748B' }}>
                                     {r.permissionCount}/{permissions.length} quyền ({Math.round((r.permissionCount / permissions.length) * 100)}%)
                                 </p>
                             </div>
@@ -952,13 +952,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 <div className="space-y-6">
                     {/* Pending Approvals */}
                     <div>
-                        <h3 className="text-sm font-bold mb-3" style={{ color: '#E8F1F2' }}>Yêu Cầu Đang Chờ Duyệt</h3>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>Yêu Cầu Đang Chờ Duyệt</h3>
                         {!approvalsLoaded ? (
-                            <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                            <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                         ) : pendingApprovals.length === 0 ? (
-                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #2A4355' }}>
+                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                                 <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
-                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có yêu cầu nào chờ duyệt</p>
+                                <p className="text-sm" style={{ color: '#64748B' }}>Không có yêu cầu nào chờ duyệt</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -967,8 +967,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         <div className="flex items-center gap-3">
                                             <ClipboardCheck size={16} style={{ color: '#D4A853' }} />
                                             <div>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{req.templateName || req.docType}</p>
-                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Bước {req.currentStep} • Bởi {req.requestedByName || req.requestedBy}</p>
+                                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{req.templateName || req.docType}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Bước {req.currentStep} • Bởi {req.requestedByName || req.requestedBy}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -992,28 +992,28 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
                     {/* Approval Templates */}
                     <div>
-                        <h3 className="text-sm font-bold mb-3" style={{ color: '#E8F1F2' }}>Mẫu Quy Trình Duyệt</h3>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>Mẫu Quy Trình Duyệt</h3>
                         {approvalTemplates.length === 0 ? (
-                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #2A4355' }}>
-                                <ClipboardCheck size={24} style={{ color: '#2A4355' }} />
-                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có mẫu quy trình. Chạy seed để tạo templates.</p>
+                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
+                                <ClipboardCheck size={24} style={{ color: '#E2E8F0' }} />
+                                <p className="text-sm" style={{ color: '#64748B' }}>Chưa có mẫu quy trình. Chạy seed để tạo templates.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {approvalTemplates.map((tpl: any) => (
                                     <div key={tpl.id} className="p-4 rounded-md" style={card}>
                                         <div className="flex items-center justify-between mb-2">
-                                            <h4 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{tpl.name}</h4>
+                                            <h4 className="text-sm font-bold" style={{ color: '#0F172A' }}>{tpl.name}</h4>
                                             <span className="text-xs px-2 py-0.5 rounded font-bold"
                                                 style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>{tpl.docType}</span>
                                         </div>
                                         <div className="space-y-1">
                                             {(tpl.steps || []).map((step: any, i: number) => (
-                                                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: '#8AAEBB' }}>
+                                                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: '#475569' }}>
                                                     <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                                                        style={{ background: '#142433', color: '#87CBB9' }}>{i + 1}</span>
+                                                        style={{ background: '#FFFFFF', color: '#0891B2' }}>{i + 1}</span>
                                                     {step.approverRole}
-                                                    {step.threshold && <span style={{ color: '#4A6A7A' }}>(≥{(step.threshold / 1e6).toFixed(0)}M)</span>}
+                                                    {step.threshold && <span style={{ color: '#64748B' }}>(≥{(step.threshold / 1e6).toFixed(0)}M)</span>}
                                                 </div>
                                             ))}
                                         </div>
@@ -1028,19 +1028,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             {/* ── Audit Log Tab ────────────────────── */}
             {tab === 'audit' && (
                 <div className="space-y-4">
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Thời Gian', 'Người Dùng', 'Hành Động', 'Đối Tượng', 'ID', 'Chi Tiết'].map(h => (
                                         <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#4A6A7A' }}>{h}</th>
+                                            style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {auditLogs.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
                                         {auditLoaded ? 'Chưa có nhật ký nào' : 'Đang tải...'}
                                     </td></tr>
                                 ) : auditLogs.map((log: any) => (
@@ -1058,10 +1058,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     setFieldChanges([])
                                                 }
                                             }}>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
                                                 {new Date(log.createdAt).toLocaleString('vi-VN')}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
                                                 {log.userName || log.userId || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -1072,37 +1072,37 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#87CBB9' }}>
+                                            <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#0891B2' }}>
                                                 {log.entityType}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
                                                 {log.entityId?.slice(-8) || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="text-xs" style={{ color: expandedLogId === log.id ? '#87CBB9' : '#4A6A7A' }}>
+                                                <span className="text-xs" style={{ color: expandedLogId === log.id ? '#87CBB9' : '#64748B' }}>
                                                     {expandedLogId === log.id ? '▼' : '▶'}
                                                 </span>
                                             </td>
                                         </tr>
                                         {expandedLogId === log.id && (
-                                            <tr><td colSpan={6} style={{ background: '#142433', padding: '12px 16px' }}>
+                                            <tr><td colSpan={6} style={{ background: '#FFFFFF', padding: '12px 16px' }}>
                                                 {loadingChanges ? (
                                                     <div className="flex items-center gap-2 py-2">
-                                                        <Loader2 size={14} className="animate-spin" style={{ color: '#87CBB9' }} />
-                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải chi tiết...</span>
+                                                        <Loader2 size={14} className="animate-spin" style={{ color: '#0891B2' }} />
+                                                        <span className="text-xs" style={{ color: '#64748B' }}>Đang tải chi tiết...</span>
                                                     </div>
                                                 ) : fieldChanges.length === 0 ? (
-                                                    <p className="text-xs py-2" style={{ color: '#4A6A7A' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
+                                                    <p className="text-xs py-2" style={{ color: '#64748B' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
                                                 ) : (
                                                     <div className="space-y-1">
                                                         <p className="text-xs font-semibold mb-2" style={{ color: '#D4A853' }}>📋 Lịch Sử Thay Đổi Theo Trường</p>
                                                         {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
                                                             <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
-                                                                <span className="text-xs font-bold shrink-0" style={{ color: '#87CBB9', minWidth: '100px' }}>{fc.field}</span>
+                                                                <span className="text-xs font-bold shrink-0" style={{ color: '#0891B2', minWidth: '100px' }}>{fc.field}</span>
                                                                 <span className="text-xs" style={{ color: '#E85D5D' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
-                                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>→</span>
+                                                                <span className="text-xs" style={{ color: '#64748B' }}>→</span>
                                                                 <span className="text-xs" style={{ color: '#5BA88A' }}>{String(fc.newValue ?? '(trống)').slice(0, 40)}</span>
-                                                                <span className="text-xs ml-auto shrink-0" style={{ color: '#4A6A7A' }}>
+                                                                <span className="text-xs ml-auto shrink-0" style={{ color: '#64748B' }}>
                                                                     {new Date(fc.changedAt).toLocaleString('vi-VN')}
                                                                 </span>
                                                             </div>
@@ -1127,43 +1127,43 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Danh Sách Pháp Nhân</h3>
                             <div className="space-y-4">
                                 {entities.map(ent => (
-                                    <div key={ent.id} className="p-5 rounded-lg flex flex-col justify-between" style={{ ...card, background: '#1B2E3D' }}>
+                                    <div key={ent.id} className="p-5 rounded-lg flex flex-col justify-between" style={{ ...card, background: '#FFFFFF' }}>
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <h4 className="font-bold text-base" style={{ color: '#E8F1F2' }}>{ent.name}</h4>
-                                                <p className="text-xs font-mono mt-0.5" style={{ color: '#8AAEBB' }}>Mã: {ent.code} · MST: {ent.taxId || '(chưa nhập)'}</p>
+                                                <h4 className="font-bold text-base" style={{ color: '#0F172A' }}>{ent.name}</h4>
+                                                <p className="text-xs font-mono mt-0.5" style={{ color: '#475569' }}>Mã: {ent.code} · MST: {ent.taxId || '(chưa nhập)'}</p>
                                             </div>
                                             <button onClick={() => setEditingEntity(ent)}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all"
-                                                style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                                                style={{ border: '1px solid #E2E8F0', color: '#0891B2' }}>
                                                 Chỉnh sửa
                                             </button>
                                         </div>
                                         
-                                        <div className="space-y-2 border-t border-[#2A4355] pt-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                        <div className="space-y-2 border-t border-slate-200 pt-3 text-xs" style={{ color: '#475569' }}>
                                             <div className="flex justify-between items-start gap-4">
                                                 <span className="shrink-0">Địa chỉ:</span>
-                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.address || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.address || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span>Số điện thoại:</span>
-                                                <span className="font-medium text-right font-mono" style={{ color: '#E8F1F2' }}>{ent.phone || '—'}</span>
+                                                <span className="font-medium text-right font-mono" style={{ color: '#0F172A' }}>{ent.phone || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span>Email:</span>
-                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.email || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.email || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-start gap-4">
                                                 <span className="shrink-0">Ngân hàng:</span>
-                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.bankName || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.bankName || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span>Chủ tài khoản:</span>
-                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.bankAccountName || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.bankAccountName || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span>Số tài khoản:</span>
-                                                <span className="text-[#87CBB9] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
+                                                <span className="text-[#0891B2] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1177,33 +1177,33 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 <Shield size={16} /> Cấu Hình & Phân Quyền Kho Hàng (RBAC System Admin)
                             </h3>
                             <div className="p-5 rounded-lg space-y-4" style={card}>
-                                <p className="text-xs leading-relaxed" style={{ color: '#8AAEBB' }}>
+                                <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
                                     Quản trị viên (Admin/CEO) thiết lập vai trò xuất bán, điều chuyển và pháp nhân cho từng kho. Thủ kho chỉ được thao tác trong phạm vi kho được cấu hình tại đây, tránh chọn nhầm kho xuất bán.
                                 </p>
                                 <div className="space-y-4">
                                     {warehouses.map(w => (
-                                        <div key={w.id} className="flex flex-col gap-3 p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2A4355] pb-2.5">
+                                        <div key={w.id} className="flex flex-col gap-3 p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
                                                 <div>
-                                                    <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#E8F1F2' }}>
+                                                    <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
                                                         🏢 {w.name}
                                                         {w.isDefault && <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⭐ Kho Mặc Định</span>}
                                                         {w.allowSales === false && <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⛔ Chỉ Xuất Điều Chuyển</span>}
                                                     </p>
-                                                    <p className="text-[11px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
+                                                    <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
                                                 </div>
                                             </div>
 
                                             {/* Legal Entity Select */}
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                <label className="text-xs font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                                <label className="text-xs font-semibold whitespace-nowrap" style={{ color: '#475569' }}>
                                                     Pháp nhân quản lý:
                                                 </label>
                                                 <select
                                                     value={w.legalEntityId || ''}
                                                     onChange={e => handleUpdateWarehouseConfigState(w.id, { legalEntityId: e.target.value || null })}
                                                     className="flex-1 px-3 py-1.5 text-xs outline-none rounded-md"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                 >
                                                     <option value="">— Chưa gán / Không thuộc pháp nhân nào —</option>
                                                     {entities.map(ent => (
@@ -1213,8 +1213,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </div>
 
                                             {/* Capability Checkboxes */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-[#2A4355]/40">
-                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-slate-200/40">
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={w.allowSales !== false}
@@ -1224,7 +1224,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     <span>🛒 <strong>Cho phép Bán Hàng</strong> (SO/DO)</span>
                                                 </label>
 
-                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={w.allowTransfer !== false}
@@ -1234,7 +1234,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     <span>🔄 <strong>Cho phép Điều Chuyển</strong></span>
                                                 </label>
 
-                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={w.isDefault === true}
@@ -1318,51 +1318,51 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
     if (!open || !entity) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Pháp Nhân</h3>
-                        <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Cấu Hình Pháp Nhân</h3>
+                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Tên Pháp Nhân *</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Pháp Nhân *</label>
                             <input style={inputStyle} {...focusHandler} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Mã Số Thuế</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Mã Số Thuế</label>
                             <input style={inputStyle} {...focusHandler} value={form.taxId} onChange={e => setForm(f => ({ ...f, taxId: e.target.value }))} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Địa Chỉ</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Địa Chỉ</label>
                             <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Số Điện Thoại</label>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Số Điện Thoại</label>
                                 <input style={inputStyle} {...focusHandler} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
                                 <input style={inputStyle} {...focusHandler} placeholder="e.g. orders@lyscellars.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                             </div>
                         </div>
-                        <div className="pt-4 border-t border-[#2A4355]">
+                        <div className="pt-4 border-t border-slate-200">
                             <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#D4A853' }}>
                                 <CreditCard size={12} /> Tài khoản thanh toán
                             </p>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Tên Ngân Hàng (kèm chi nhánh)</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Ngân Hàng (kèm chi nhánh)</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. Vietcombank - Chi nhánh HCM" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Chủ Tài Khoản</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Chủ Tài Khoản</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. CONG TY TNHH LY'S CELLARS" value={form.bankAccountName} onChange={e => setForm(f => ({ ...f, bankAccountName: e.target.value }))} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Số Tài Khoản</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Số Tài Khoản</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. 1023456789" value={form.bankAccountNumber} onChange={e => setForm(f => ({ ...f, bankAccountNumber: e.target.value }))} />
                                 </div>
                             </div>
@@ -1372,7 +1372,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
 
                 <button onClick={() => onSave(entity.id, form)} disabled={saving}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>

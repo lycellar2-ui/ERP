@@ -17,8 +17,8 @@ function EmptyState() {
             <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
                 style={{ background: 'rgba(135,203,185,0.1)' }}>🍷</div>
             <div className="text-center">
-                <p className="font-semibold" style={{ color: '#E8F1F2' }}>Chưa có sản phẩm nào</p>
-                <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>Bấm "Thêm Sản Phẩm" để bắt đầu danh mục</p>
+                <p className="font-semibold" style={{ color: '#0F172A' }}>Chưa có sản phẩm nào</p>
+                <p className="text-sm mt-1" style={{ color: '#64748B' }}>Bấm "Thêm Sản Phẩm" để bắt đầu danh mục</p>
             </div>
         </div>
     )
@@ -65,7 +65,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
             <td className="px-4 py-1.5 whitespace-nowrap">
                 <div className="flex items-center gap-3">
                     <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         onClick={e => e.stopPropagation()}>
                         {row.primaryImageUrl ? (
                             <>
@@ -99,26 +99,26 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                                 />
                                 
                                 {/* Gorgeous hover preview card */}
-                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-[#0D1E2B]/95 backdrop-blur-md rounded-2xl p-4 border border-[#2A4355] shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-3">
-                                    <div className="w-full h-64 bg-[#142433] rounded-xl p-3 flex items-center justify-center border border-[#2A4355]/40 overflow-hidden">
+                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-slate-50/95 backdrop-blur-md rounded-2xl p-4 border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-3">
+                                    <div className="w-full h-64 bg-white rounded-xl p-3 flex items-center justify-center border border-slate-200/40 overflow-hidden">
                                         <img src={row.primaryImageUrl} alt={row.productName} loading="lazy" decoding="async" className="h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.4)]" />
                                     </div>
                                     <div className="text-center w-full min-w-0">
-                                        <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#E8F1F2' }}>{row.productName}</p>
-                                        <p className="text-[10px] mt-1 font-mono" style={{ color: '#8AAEBB' }}>{row.skuCode}</p>
+                                        <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#0F172A' }}>{row.productName}</p>
+                                        <p className="text-[10px] mt-1 font-mono" style={{ color: '#475569' }}>{row.skuCode}</p>
 
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <ImageOff size={16} style={{ color: '#2A4355' }} />
+                            <ImageOff size={16} style={{ color: '#E2E8F0' }} />
                         )}
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.productName}>
+                        <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#0F172A' }} title={row.productName}>
                             {row.productName}
                         </p>
-                        <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>
+                        <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#64748B' }}>
                             {row.skuCode}
                         </p>
                     </div>
@@ -132,15 +132,15 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
 
             {/* Producer + Region */}
             <td className="px-3 py-1.5">
-                <p className="text-[13px] truncate max-w-[200px]" style={{ color: '#8AAEBB' }} title={row.producerName}>{row.producerName}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                <p className="text-[13px] truncate max-w-[200px]" style={{ color: '#475569' }} title={row.producerName}>{row.producerName}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
                     {flag} {row.appellationName ?? row.country}
                 </p>
             </td>
 
             {/* ABV */}
             <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                <span className="text-xs font-mono" style={{ color: '#8AAEBB' }}>
+                <span className="text-xs font-mono" style={{ color: '#475569' }}>
                     {row.abvPercent != null ? `${row.abvPercent}°` : '—'}
                 </span>
             </td>
@@ -150,7 +150,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                 <span className="text-sm font-bold font-mono" style={{ color: stockColor }}>
                     {row.totalStock}
                 </span>
-                <span className="text-[10px] ml-1" style={{ color: '#4A6A7A' }}>chai</span>
+                <span className="text-[10px] ml-1" style={{ color: '#64748B' }}>chai</span>
             </td>
 
             {/* Status */}
@@ -162,17 +162,17 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all whitespace-nowrap">
                         <button onClick={e => { e.stopPropagation(); onEdit() }}
                             className="p-1 rounded transition-all"
-                            style={{ color: '#8AAEBB' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
+                            style={{ color: '#475569' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)'; e.currentTarget.style.color = '#0891B2' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#475569' }}
                             title="Chỉnh sửa">
                             <Edit2 size={13} />
                         </button>
                         <button onClick={e => { e.stopPropagation(); onDelete() }}
                             className="p-1 rounded transition-all"
-                            style={{ color: '#4A6A7A' }}
+                            style={{ color: '#64748B' }}
                             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#64748B' }}
                             title="Xóa">
                             <Trash2 size={13} />
                         </button>
@@ -202,13 +202,13 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
 
     return (
         <div className="p-2.5 flex gap-3 transition-colors duration-100 animate-none cursor-pointer items-center"
-            style={{ borderBottom: '1px solid rgba(42,67,85,0.15)', background: '#0D1E2B' }}
+            style={{ borderBottom: '1px solid rgba(42,67,85,0.15)', background: '#F8FAFC' }}
             onClick={onView}
             onTouchStart={onPrefetchDetails}>
             
             {/* 1. Bottle Thumbnail (Compact) */}
             <div className="relative w-10 h-16 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border"
-                style={{ background: '#142433', borderColor: '#2A4355' }}>
+                style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 {row.primaryImageUrl ? (
                     <img 
                         src={row.primaryImageUrl} 
@@ -218,36 +218,36 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                         className="h-full object-contain p-0.5 transition-transform duration-200"
                     />
                 ) : (
-                    <ImageOff size={12} style={{ color: '#2A4355' }} />
+                    <ImageOff size={12} style={{ color: '#E2E8F0' }} />
                 )}
             </div>
 
             {/* 2. Central Details: Title, SKU, ABV, Producer & Region */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <h4 className="text-xs font-bold leading-tight truncate max-w-[190px]" style={{ color: '#E8F1F2' }}>
+                    <h4 className="text-xs font-bold leading-tight truncate max-w-[190px]" style={{ color: '#0F172A' }}>
                         {row.productName}
                     </h4>
 
                 </div>
                 
-                <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono" style={{ color: '#4A6A7A' }}>
-                    <span className="font-medium text-[#8AAEBB]">{row.skuCode}</span>
+                <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono" style={{ color: '#64748B' }}>
+                    <span className="font-medium text-slate-600">{row.skuCode}</span>
                     {row.abvPercent != null && (
-                        <span className="px-1 py-0.2 rounded bg-[#1B2E3D]" style={{ color: '#8AAEBB' }}>
+                        <span className="px-1 py-0.2 rounded bg-white" style={{ color: '#475569' }}>
                             {row.abvPercent}°
                         </span>
                     )}
                 </div>
 
-                <p className="text-[10px] mt-0.5 truncate" style={{ color: '#8AAEBB' }}>
+                <p className="text-[10px] mt-0.5 truncate" style={{ color: '#475569' }}>
                     <span className="mr-1">{flag}</span>
                     {row.producerName}
                     {row.appellationName ? ` • ${row.appellationName}` : ''}
                 </p>
 
-                <div className="flex items-center gap-1.5 flex-wrap text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
-                    <span className="text-[#8AAEBB]">{fmtLabel}</span>
+                <div className="flex items-center gap-1.5 flex-wrap text-xs mt-0.5" style={{ color: '#64748B' }}>
+                    <span className="text-slate-600">{fmtLabel}</span>
                     <span>•</span>
                     <span>{row.unitsPerCase} chai/{pkgLabel}</span>
                     {row.classification && (
@@ -262,7 +262,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
             {/* 3. Right Side: Stock Level, Status Badge & Action buttons */}
             <div className="flex flex-col items-end justify-center gap-1 flex-shrink-0 min-w-[85px]">
                 {/* Stock info */}
-                <div className="text-[11px] font-medium" style={{ color: '#8AAEBB' }}>
+                <div className="text-[11px] font-medium" style={{ color: '#475569' }}>
                     Tồn: <span className="font-bold text-xs font-mono" style={{ color: stockColor }}>{row.totalStock}</span>
                 </div>
 
@@ -281,13 +281,13 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                     <div className="flex items-center gap-1 scale-90 origin-right mt-0.5">
                         <button onClick={e => { e.stopPropagation(); onEdit() }}
                             className="flex items-center justify-center p-1 rounded transition-colors border"
-                            style={{ background: '#1B2E3D', color: '#87CBB9', borderColor: '#2A4355' }}
+                            style={{ background: '#FFFFFF', color: '#0891B2', borderColor: '#E2E8F0' }}
                             title="Sửa">
                             <Edit2 size={11} />
                         </button>
                         <button onClick={e => { e.stopPropagation(); onDelete() }}
                             className="flex items-center justify-center p-1 rounded transition-colors border"
-                            style={{ background: '#1B2E3D', color: '#E05252', borderColor: '#2A4355' }}
+                            style={{ background: '#FFFFFF', color: '#E05252', borderColor: '#E2E8F0' }}
                             title="Xóa">
                             <Trash2 size={11} />
                         </button>
@@ -299,10 +299,10 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
 }
 
 function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string; sortDir?: string }) {
-    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#2A4355' }} />
+    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#E2E8F0' }} />
     return sortDir === 'asc'
-        ? <ArrowUp size={11} style={{ color: '#87CBB9' }} />
-        : <ArrowDown size={11} style={{ color: '#87CBB9' }} />
+        ? <ArrowUp size={11} style={{ color: '#0891B2' }} />
+        : <ArrowDown size={11} style={{ color: '#0891B2' }} />
 }
 
 interface ProductTableProps {
@@ -369,20 +369,20 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
         return (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 animate-none"
                 style={{ 
-                    borderTop: position === 'bottom' ? '1px solid #2A4355' : 'none', 
-                    borderBottom: position === 'top' ? '1px solid #2A4355' : 'none', 
-                    background: '#142433' 
+                    borderTop: position === 'bottom' ? '1px solid #E2E8F0' : 'none', 
+                    borderBottom: position === 'top' ? '1px solid #E2E8F0' : 'none', 
+                    background: '#FFFFFF' 
                 }}>
-                <p className="text-xs text-center sm:text-left" style={{ color: '#4A6A7A' }}>
-                    Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
+                <p className="text-xs text-center sm:text-left" style={{ color: '#64748B' }}>
+                    Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
                 </p>
                 <div className="flex items-center justify-center flex-wrap gap-1">
                     <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
                         className="p-1.5 rounded-lg disabled:opacity-30"
-                        style={{ color: '#8AAEBB' }}
+                        style={{ color: '#475569' }}
                         onMouseEnter={e => {
                             if (!e.currentTarget.disabled) {
-                                e.currentTarget.style.background = '#1B2E3D';
+                                e.currentTarget.style.background = '#FFFFFF';
                                 onPrefetch?.(page - 1);
                             }
                         }}
@@ -391,22 +391,22 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                     </button>
                     {getPageNumbers().map((p, i) =>
                         p === '...' ? (
-                            <span key={`dots-${position}-${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
+                            <span key={`dots-${position}-${i}`} className="px-1 text-xs" style={{ color: '#64748B' }}>…</span>
                         ) : (
                             <button key={`${position}-${p}`} onClick={() => onPageChange(p as number)}
                                 onMouseEnter={() => p !== page && onPrefetch?.(p as number)}
                                 className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
+                                style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#F8FAFC' : '#475569' }}>
                                 {p}
                             </button>
                         )
                     )}
                     <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
                         className="p-1.5 rounded-lg disabled:opacity-30"
-                        style={{ color: '#8AAEBB' }}
+                        style={{ color: '#475569' }}
                         onMouseEnter={e => {
                             if (!e.currentTarget.disabled) {
-                                e.currentTarget.style.background = '#1B2E3D';
+                                e.currentTarget.style.background = '#FFFFFF';
                                 onPrefetch?.(page + 1);
                             }
                         }}
@@ -419,7 +419,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden relative border border-[#2A4355] bg-[#0D1E2B] animate-none">
+        <div className="rounded-2xl overflow-hidden relative border border-slate-200 bg-slate-50 animate-none">
             <style>{`
                 @keyframes barProgress {
                     0% { left: -30%; }
@@ -428,7 +428,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
             `}</style>
 
             {loading && rows.length > 0 && (
-                <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden bg-[#142433] z-10 animate-none">
+                <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden bg-white z-10 animate-none">
                     <div className="absolute h-full bg-[#87CBB9]" style={{
                         width: '30%',
                         animation: 'barProgress 1.2s infinite ease-in-out'
@@ -440,17 +440,17 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
 
             {/* Mobile Card List View: visible on small screens, hidden on md (768px) and up */}
             {showMobile && (
-                <div className={`block md:hidden divide-y divide-[#2A4355]/30 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+                <div className={`block md:hidden divide-y divide-slate-200/30 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                 {rows.length === 0 && loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="p-4 space-y-3" style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#0D1E2B' }}>
+                        <div key={i} className="p-4 space-y-3" style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#F8FAFC' }}>
                             <div className="flex gap-4">
-                                <div className="w-16 h-24 rounded-xl bg-[#1B2E3D] animate-pulse flex-shrink-0" />
+                                <div className="w-16 h-24 rounded-xl bg-white animate-pulse flex-shrink-0" />
                                 <div className="flex-1 space-y-2 py-1">
-                                    <div className="h-4 rounded bg-[#1B2E3D] animate-pulse w-3/4" />
-                                    <div className="h-3 rounded bg-[#1B2E3D] animate-pulse w-1/2" />
-                                    <div className="h-3 rounded bg-[#1B2E3D] animate-pulse w-1/4" />
-                                    <div className="h-8 rounded bg-[#1B2E3D] animate-pulse w-full mt-2" />
+                                    <div className="h-4 rounded bg-white animate-pulse w-3/4" />
+                                    <div className="h-3 rounded bg-white animate-pulse w-1/2" />
+                                    <div className="h-3 rounded bg-white animate-pulse w-1/4" />
+                                    <div className="h-8 rounded bg-white animate-pulse w-full mt-2" />
                                 </div>
                             </div>
                         </div>
@@ -478,11 +478,11 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                 <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {sortableHeaders.map((h, i) => (
                                 <th key={i}
                                     className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
-                                    style={{ color: h.sortable && sortBy === h.key ? '#87CBB9' : '#4A6A7A' }}
+                                    style={{ color: h.sortable && sortBy === h.key ? '#87CBB9' : '#64748B' }}
                                     onClick={() => h.sortable && h.key && onSort(h.key)}>
                                     <span className="inline-flex items-center gap-1.5">
                                         {h.label}
@@ -499,7 +499,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                                     {sortableHeaders.map((_, j) => (
                                         <td key={j} className="px-4 py-4">
                                             <div className="h-4 rounded animate-pulse"
-                                                style={{ background: '#1B2E3D', width: j === 0 ? '80%' : '55%' }} />
+                                                style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} />
                                         </td>
                                     ))}
                                 </tr>

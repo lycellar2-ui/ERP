@@ -29,10 +29,10 @@ export function QRCodeClient({ initialData, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         QR Code Truy Xuất
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý mã QR truy xuất nguồn gốc — Auto-sinh khi Confirm GR
                     </p>
                 </div>
@@ -48,7 +48,7 @@ export function QRCodeClient({ initialData, stats }: {
                         if (w) { w.document.write(html); w.document.close() }
                     }}
                         className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         <Printer size={14} /> In {selectedIds.size} Nhãn
                     </button>
                 )}
@@ -57,15 +57,15 @@ export function QRCodeClient({ initialData, stats }: {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
                 {[
-                    { label: 'Tổng QR', value: stats.total, color: '#87CBB9', icon: QrCode },
+                    { label: 'Tổng QR', value: stats.total, color: '#0891B2', icon: QrCode },
                     { label: 'Đã Quét', value: stats.scanned, color: '#5BA88A', icon: ShieldCheck },
                     { label: 'Chưa Quét', value: stats.unscanned, color: '#D4A853', icon: ShieldAlert },
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md flex items-center gap-3"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <s.icon size={20} style={{ color: s.color }} />
                         <div>
-                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
                             <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
                         </div>
                     </div>
@@ -75,22 +75,22 @@ export function QRCodeClient({ initialData, stats }: {
             {/* Search */}
             <div className="flex gap-2">
                 <div className="relative flex-1">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
                         placeholder="Tìm theo Lot No hoặc QR Code..."
                         className="w-full pl-9 pr-3 py-2 rounded-md text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                 </div>
                 <button onClick={handleSearch} className="px-4 py-2 text-xs font-semibold rounded-md"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>Tìm</button>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>Tìm</button>
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             <th className="px-3 py-3 w-8">
                                 <input type="checkbox"
                                     checked={selectedIds.size === data.rows.length && data.rows.length > 0}
@@ -102,13 +102,13 @@ export function QRCodeClient({ initialData, stats }: {
                             </th>
                             {['QR Code', 'Lot No', 'SKU', 'Sản Phẩm', 'Lần Quét', 'Trạng Thái', 'Link'].map(h => (
                                 <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                    style={{ color: '#4A6A7A' }}>{h}</th>
+                                    style={{ color: '#64748B' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {data.rows.length === 0 ? (
-                            <tr><td colSpan={8} className="text-center py-16 text-sm" style={{ color: '#4A6A7A' }}>
+                            <tr><td colSpan={8} className="text-center py-16 text-sm" style={{ color: '#64748B' }}>
                                 Chưa có QR Code — Confirm GR để auto-sinh
                             </td></tr>
                         ) : data.rows.map(qr => (
@@ -124,25 +124,25 @@ export function QRCodeClient({ initialData, stats }: {
                                         }}
                                         className="w-3.5 h-3.5 accent-emerald-500" />
                                 </td>
-                                <td className="px-3 py-2.5 text-xs" style={{ color: '#87CBB9' }}>
+                                <td className="px-3 py-2.5 text-xs" style={{ color: '#0891B2' }}>
                                     {qr.code.split('-')[0]}...
                                 </td>
                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                     {qr.lotNo}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
+                                <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
                                     {qr.skuCode}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
+                                <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
                                     {qr.productName}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: qr.scanCount === 0 ? '#4A6A7A' : qr.scanCount === 1 ? '#5BA88A' : '#D4A853' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: qr.scanCount === 0 ? '#64748B' : qr.scanCount === 1 ? '#5BA88A' : '#D4A853' }}>
                                     {qr.scanCount}
                                 </td>
                                 <td className="px-3 py-2.5">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{
                                         ...(qr.scanCount === 0
-                                            ? { color: '#4A6A7A', background: 'rgba(74,106,122,0.15)' }
+                                            ? { color: '#64748B', background: 'rgba(74,106,122,0.15)' }
                                             : qr.scanCount === 1
                                                 ? { color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }
                                                 : { color: '#D4A853', background: 'rgba(212,168,83,0.15)' }),
@@ -153,7 +153,7 @@ export function QRCodeClient({ initialData, stats }: {
                                 <td className="px-3 py-2.5">
                                     <a href={`${baseUrl}/verify/${qr.code}`} target="_blank" rel="noopener noreferrer"
                                         className="flex items-center gap-1 text-xs transition-colors"
-                                        style={{ color: '#87CBB9' }}>
+                                        style={{ color: '#0891B2' }}>
                                         <ExternalLink size={11} /> Mở
                                     </a>
                                 </td>
@@ -163,7 +163,7 @@ export function QRCodeClient({ initialData, stats }: {
                 </table>
             </div>
 
-            <p className="text-xs" style={{ color: '#2A4355' }}>
+            <p className="text-xs" style={{ color: '#E2E8F0' }}>
                 Hiển thị {data.rows.length}/{data.total} — QR Code tự động sinh khi Confirm Goods Receipt
             </p>
         </div>

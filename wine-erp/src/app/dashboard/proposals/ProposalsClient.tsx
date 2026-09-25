@@ -110,7 +110,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'PRICE_ADJUSTMENT':
                 return { label: '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
             case 'BUDGET_REQUEST':
-                return { label: '💰 Xin Ngân Sách', bg: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: 'rgba(135,203,185,0.3)' }
+                return { label: '💰 Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
             case 'CAPITAL_EXPENDITURE':
                 return { label: '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'NEW_SUPPLIER':
@@ -124,7 +124,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'PROMOTION_CAMPAIGN':
                 return { label: '🎁 Khuyến Mãi', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
             default:
-                return { label: CATEGORY_LABELS[cat] || cat, bg: 'rgba(74,106,122,0.15)', color: '#8AAEBB', border: 'rgba(74,106,122,0.3)' }
+                return { label: CATEGORY_LABELS[cat] || cat, bg: 'rgba(74,106,122,0.15)', color: '#475569', border: 'rgba(74,106,122,0.3)' }
         }
     }, [])
 
@@ -879,10 +879,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Tờ Trình & Đề Xuất
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý tờ trình phê duyệt — Proposals & Submissions
                     </p>
                 </div>
@@ -898,31 +898,31 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {[
-                    { label: 'Tổng', value: currentStats.total, accent: '#8AAEBB' },
+                    { label: 'Tổng', value: currentStats.total, accent: '#475569' },
                     { label: 'Chờ Duyệt', value: currentStats.pending, accent: '#D4A853' },
-                    { label: 'Bản Nháp', value: currentStats.draft, accent: '#4A6A7A' },
+                    { label: 'Bản Nháp', value: currentStats.draft, accent: '#64748B' },
                     { label: 'Đã Duyệt', value: currentStats.approved, accent: '#5BA88A' },
                     { label: 'Từ Chối', value: currentStats.rejected, accent: '#8B1A2E' },
                 ].map(s => (
-                    <div key={s.label} className="rounded-md p-4" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-2xl font-bold mt-1" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                    <div key={s.label} className="rounded-md p-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>{s.label}</p>
+                        <p className="text-2xl font-bold mt-1" style={{ color: '#0F172A' }}>{s.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Filter + Search Bar */}
             <div className="flex items-center gap-3 flex-wrap w-full">
-                <div className="max-w-full overflow-x-auto scrollbar-none flex rounded-md flex-shrink-0" style={{ border: '1px solid #2A4355' }}>
+                <div className="max-w-full overflow-x-auto scrollbar-none flex rounded-md flex-shrink-0" style={{ border: '1px solid #E2E8F0' }}>
                     {(['ALL', 'PENDING', 'DRAFT', 'APPROVED', 'REJECTED'] as const).map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
                             className="px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap"
                             style={{
-                                background: filter === f ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                                color: filter === f ? '#87CBB9' : '#4A6A7A',
-                                borderRight: '1px solid #2A4355',
+                                background: filter === f ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
+                                color: filter === f ? '#87CBB9' : '#64748B',
+                                borderRight: '1px solid #E2E8F0',
                             }}
                         >
                             {f === 'ALL' ? 'Tất cả' : f === 'PENDING' ? 'Chờ duyệt' : f === 'DRAFT' ? 'Nháp' : f === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
@@ -937,9 +937,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         onChange={e => setCategoryFilter(e.target.value)}
                         className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
                         style={{
-                            background: categoryFilter === 'ALL' ? '#1B2E3D' : 'rgba(135,203,185,0.15)',
-                            border: '1px solid #2A4355',
-                            color: categoryFilter === 'ALL' ? '#8AAEBB' : '#87CBB9',
+                            background: categoryFilter === 'ALL' ? '#FFFFFF' : 'rgba(8, 145, 178, 0.08)',
+                            border: '1px solid #E2E8F0',
+                            color: categoryFilter === 'ALL' ? '#475569' : '#87CBB9',
                         }}
                     >
                         <option value="ALL">All Categories (Tất cả loại)</option>
@@ -964,9 +964,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         onChange={e => setPriorityFilter(e.target.value)}
                         className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
                         style={{
-                            background: priorityFilter === 'ALL' ? '#1B2E3D' : 'rgba(212,168,83,0.15)',
-                            border: '1px solid #2A4355',
-                            color: priorityFilter === 'ALL' ? '#8AAEBB' : '#D4A853',
+                            background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(212,168,83,0.15)',
+                            border: '1px solid #E2E8F0',
+                            color: priorityFilter === 'ALL' ? '#475569' : '#D4A853',
                         }}
                     >
                         <option value="ALL">Mức độ ưu tiên (Tất cả)</option>
@@ -978,14 +978,14 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </div>
 
                 <div className="flex-1 relative min-w-[240px]">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Tìm theo mã, tiêu đề, người trình..."
                         className="w-full pl-9 pr-3 py-2 text-xs rounded-md"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', outline: 'none' }}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
                     />
                 </div>
             </div>
@@ -993,9 +993,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Mobile View - Cards for small screens */}
             <div className="block md:hidden space-y-3">
                 {filtered.length === 0 ? (
-                    <div className="flex flex-col items-center py-12 gap-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '6px' }}>
-                        <FileText size={32} style={{ color: '#2A4355' }} />
-                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào</p>
+                    <div className="flex flex-col items-center py-12 gap-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                        <FileText size={32} style={{ color: '#E2E8F0' }} />
+                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có tờ trình nào</p>
                     </div>
                 ) : (
                     filtered.map(p => {
@@ -1009,13 +1009,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 key={p.id}
                                 className="p-4 rounded-lg space-y-3 transition-all cursor-pointer"
                                 style={{
-                                    background: '#1B2E3D',
-                                    border: canApproveThis ? '1px solid #D4A853' : '1px solid #2A4355',
+                                    background: '#FFFFFF',
+                                    border: canApproveThis ? '1px solid #D4A853' : '1px solid #E2E8F0',
                                 }}
                                 onClick={() => openDetail(p.id)}
                             >
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
+                                    <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
                                         {p.proposalNo}
                                     </span>
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
@@ -1025,7 +1025,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </div>
 
                                 <div>
-                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                                         {p.title}
                                     </p>
                                 </div>
@@ -1041,21 +1041,21 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.2)', color: '#8AAEBB' }}>
+                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.2)', color: '#475569' }}>
                                     <div>
-                                        <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Người trình</p>
+                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Người trình</p>
                                         <p className="font-medium mt-0.5">{p.creatorName}</p>
                                     </div>
                                     <div>
-                                        <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Ngày trình</p>
+                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Ngày trình</p>
                                         <p className="font-medium mt-0.5">
                                             {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
                                         </p>
                                     </div>
                                     {p.estimatedAmount !== null && (
                                         <div className="col-span-2">
-                                            <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Giá trị dự kiến</p>
-                                            <p className="font-bold text-sm mt-0.5" style={{ color: '#E8F1F2' }}>
+                                            <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Giá trị dự kiến</p>
+                                            <p className="font-bold text-sm mt-0.5" style={{ color: '#0F172A' }}>
                                                 {formatCompactVND(p.estimatedAmount)}
                                             </p>
                                         </div>
@@ -1065,7 +1065,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <div className="flex justify-end gap-2 pt-2" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => openDetail(p.id)}
                                         className="px-3 py-1.5 text-xs font-medium rounded transition-all"
-                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                         <Eye size={12} className="inline mr-1" />Chi tiết
                                     </button>
                                     {canApproveThis && (
@@ -1107,7 +1107,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="w-full min-w-[1100px]">
                     <table className="w-full min-w-[1100px]" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                         <colgroup>
@@ -1123,7 +1123,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             <col style={{ width: '160px' }} />
                         </colgroup>
                         <thead>
-                            <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
                                 {[
                                     { label: 'Mã Tờ Trình', align: 'left' as const },
                                     { label: 'Tiêu Đề', align: 'left' as const },
@@ -1138,7 +1138,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 ].map(col => (
                                     <th key={col.label}
                                         className="px-3 py-3 text-xs font-bold uppercase tracking-wider"
-                                        style={{ color: '#4A6A7A', textAlign: col.align, whiteSpace: 'nowrap' }}>
+                                        style={{ color: '#64748B', textAlign: col.align, whiteSpace: 'nowrap' }}>
                                         {col.label}
                                     </th>
                                 ))}
@@ -1149,8 +1149,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <tr>
                                     <td colSpan={10}>
                                         <div className="flex flex-col items-center py-12 gap-2">
-                                            <FileText size={32} style={{ color: '#2A4355' }} />
-                                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào khớp với bộ lọc</p>
+                                            <FileText size={32} style={{ color: '#E2E8F0' }} />
+                                            <p className="text-sm" style={{ color: '#64748B' }}>Chưa có tờ trình nào khớp với bộ lọc</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -1167,21 +1167,21 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             onClick={() => openDetail(p.id)}
                                             className="transition-all cursor-pointer hover:brightness-110"
                                             style={{
-                                                borderBottom: '1px solid #2A4355',
+                                                borderBottom: '1px solid #E2E8F0',
                                                 background: canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent',
                                             }}
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.06)'}
                                             onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold font-mono text-[#87CBB9] whitespace-nowrap block truncate" title={p.proposalNo}>
+                                                <span className="text-xs font-bold font-mono text-[#0891B2] whitespace-nowrap block truncate" title={p.proposalNo}>
                                                     {p.proposalNo}
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <p className="text-sm font-medium text-[#E8F1F2] line-clamp-2" title={p.title}>{p.title}</p>
+                                                <p className="text-sm font-medium text-slate-900 line-clamp-2" title={p.title}>{p.title}</p>
                                                 {p.attachmentCount > 0 && (
-                                                    <span className="text-[11px] text-[#4A6A7A]">
+                                                    <span className="text-[11px] text-slate-500">
                                                         <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
                                                     </span>
                                                 )}
@@ -1200,12 +1200,12 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3 text-right" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold block truncate text-[#E8F1F2]">
+                                                <span className="text-xs font-bold block truncate text-slate-900">
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs truncate block text-[#8AAEBB]" title={p.creatorName}>{p.creatorName}</span>
+                                                <span className="text-xs truncate block text-slate-600" title={p.creatorName}>{p.creatorName}</span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold inline-block whitespace-nowrap"
@@ -1214,7 +1214,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] whitespace-nowrap text-[#8AAEBB]">
+                                                <span className="text-[11px] whitespace-nowrap text-slate-600">
                                                     {formatDateTime(p.submittedAt || p.createdAt)}
                                                 </span>
                                             </td>
@@ -1228,7 +1228,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-xs whitespace-nowrap text-[#4A6A7A]" title="Đang chờ duyệt">
+                                                    <span className="text-xs whitespace-nowrap text-slate-500" title="Đang chờ duyệt">
                                                         —
                                                     </span>
                                                 )}
@@ -1237,7 +1237,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 <div className="flex justify-end gap-1.5 flex-nowrap">
                                                     <button onClick={() => openDetail(p.id)}
                                                         className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap"
-                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                                         <Eye size={12} className="inline mr-1" />Chi tiết
                                                     </button>
                                                     {canApproveThis && (
@@ -1246,7 +1246,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                 onClick={(e) => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
                                                                 disabled={actionLoading === p.id}
                                                                 className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:scale-105"
-                                                                style={{ background: '#5BA88A', color: '#0A1926' }}>
+                                                                style={{ background: '#5BA88A', color: '#0F172A' }}>
                                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
                                                                 Duyệt
                                                             </button>
@@ -1495,7 +1495,7 @@ function SearchableProductCombobox({
 
     return (
         <div ref={containerRef} className={`relative flex-1 min-w-0 ${open ? 'z-50' : 'z-10'}`}>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#8AAEBB' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
             <div className="relative">
                 <input
                     type="text"
@@ -1532,7 +1532,7 @@ function SearchableProductCombobox({
 
             {open && (
                 <div
-                    className={`absolute left-0 right-0 ${dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-[#1A2C3D] border border-slate-200 dark:border-[#2A4355]`}
+                    className={`absolute left-0 right-0 ${dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-[#1A2C3D] border border-slate-200 dark:border-slate-200`}
                     style={{ minWidth: '320px' }}
                 >
                     {filtered.length === 0 ? (
@@ -1553,7 +1553,7 @@ function SearchableProductCombobox({
                                     <span className="font-mono font-bold text-teal-600 dark:text-teal-400 mr-2 text-xs">[{p.skuCode}]</span>
                                     <span className="text-slate-900 dark:text-slate-100 font-medium group-hover:text-amber-500 transition-colors">{p.productName}</span>
                                 </div>
-                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#142433] px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 font-semibold whitespace-nowrap bg-slate-100 dark:bg-white px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
                                     {formatVND(p.wholesalePrice)}
                                 </span>
                             </div>
@@ -1624,10 +1624,10 @@ function BatchProductPickerModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] animate-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-[#223645]">
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 animate-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-200">
                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Product Picker)</h4>
-                    <button onClick={onClose} className="p-1 rounded hover:bg-[#1B2E3D]"><X size={20} className="text-gray-400" /></button>
+                    <button onClick={onClose} className="p-1 rounded hover:bg-white"><X size={20} className="text-gray-400" /></button>
                 </div>
 
                 <div className="p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
@@ -1638,28 +1638,28 @@ function BatchProductPickerModal({
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Tìm SKU hoặc tên sản phẩm..."
                             className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-md"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>Đã chọn: <strong className="text-[#87CBB9]">{selectedCount}</strong> chai</span>
+                        <span>Đã chọn: <strong className="text-[#0891B2]">{selectedCount}</strong> chai</span>
                         <div className="flex items-center gap-2">
                             <span>Áp dụng giảm nhanh:</span>
-                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-5%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-10%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-15%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-5%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-10%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-15%</button>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 border border-[#2A4355]/40 rounded p-2">
+                    <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 border border-slate-200/40 rounded p-2">
                         {filtered.map(p => {
                             const isChecked = !!selected[p.id]
                             const currentPrice = selected[p.id]?.proposedPrice ?? p.wholesalePrice
                             const diffPct = p.wholesalePrice > 0 ? ((currentPrice - p.wholesalePrice) / p.wholesalePrice) * 100 : 0
 
                             return (
-                                <div key={p.id} className="flex items-center justify-between p-2 rounded hover:bg-[#1B2E3D] transition border-b border-[#2A4355]/30 text-xs">
+                                <div key={p.id} className="flex items-center justify-between p-2 rounded hover:bg-white transition border-b border-slate-200/30 text-xs">
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <input
                                             type="checkbox"
@@ -1668,8 +1668,8 @@ function BatchProductPickerModal({
                                             className="w-4 h-4 accent-[#87CBB9] cursor-pointer"
                                         />
                                         <div className="min-w-0 flex-1">
-                                            <span className="font-mono font-bold text-[#87CBB9] mr-2">{p.skuCode}</span>
-                                            <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
+                                            <span className="font-mono font-bold text-[#0891B2] mr-2">{p.skuCode}</span>
+                                            <span className="text-slate-900 font-medium">{p.productName}</span>
                                             <span className="text-[10px] text-gray-500 block">Giá niêm yết: {formatVND(p.wholesalePrice)}</span>
                                         </div>
                                     </div>
@@ -1690,7 +1690,7 @@ function BatchProductPickerModal({
                                                         }))
                                                     }}
                                                     className="w-16 px-2 py-1 text-xs font-bold font-mono outline-none rounded text-center"
-                                                    style={{ background: '#142433', border: '1px solid #D4A853', color: '#D4A853' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #D4A853', color: '#D4A853' }}
                                                 />
                                             </div>
 
@@ -1707,7 +1707,7 @@ function BatchProductPickerModal({
                                                         }))
                                                     }}
                                                     className="w-24 px-2 py-1 text-xs font-bold font-mono outline-none rounded"
-                                                    style={{ background: '#142433', border: '1px solid #87CBB9', color: '#87CBB9' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #87CBB9', color: '#0891B2' }}
                                                 />
                                             </div>
                                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diffPct < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
@@ -1721,14 +1721,14 @@ function BatchProductPickerModal({
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3">
-                    <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-medium rounded text-gray-400 hover:bg-[#1B2E3D]">Huỷ</button>
+                <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+                    <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-medium rounded text-gray-400 hover:bg-white">Huỷ</button>
                     <button
                         type="button"
                         onClick={handleConfirm}
                         disabled={selectedCount === 0}
                         className="px-5 py-2 text-xs font-semibold rounded disabled:opacity-40"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                     >
                         Thêm {selectedCount} Sản Phẩm Vào Tờ Trình
                     </button>
@@ -1842,20 +1842,20 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645]">
+            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FileText size={22} className="text-amber-500" />
                         Tạo Tờ Trình Đề Xuất Mới
                     </h3>
-                    <button onClick={onClose} className="p-1.5 rounded hover:bg-[#1B2E3D]"><X size={20} style={{ color: '#4A6A7A' }} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white"><X size={20} style={{ color: '#64748B' }} /></button>
                 </div>
 
                 <div className="p-5 space-y-4">
                     {/* Category */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Loại tờ trình *</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Loại tờ trình *</label>
                         <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
                             {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
@@ -1901,7 +1901,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             type="button" 
                                             onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
                                             className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer hover:opacity-90"
-                                            style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.6)' }}
+                                            style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.6)' }}
                                         >
                                             <Plus size={13} /> Thêm dòng
                                         </button>
@@ -1909,8 +1909,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 </div>
                                 {priceLines.length === 0 ? (
                                     <div className="p-4 text-center rounded-lg border-2 border-dashed border-[#D4A853]/40 bg-[#142230]">
-                                        <p className="text-xs font-medium text-[#E8F1F2]">
-                                            Chưa chọn mã hàng tasting nào. Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#FCD34D]">"Chọn nhanh hàng loạt"</strong> ở trên để thêm sản phẩm.
+                                        <p className="text-xs font-medium text-slate-900">
+                                            Chưa chọn mã hàng tasting nào. Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#FCD34D]">"Chọn nhanh hàng loạt"</strong> ở trên để thêm sản phẩm.
                                         </p>
                                     </div>
                                 ) : (
@@ -1922,7 +1922,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             return (
                                                 <div 
                                                     key={idx} 
-                                                    className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-[#2A4355] shadow-sm relative"
+                                                    className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-slate-200 shadow-sm relative"
                                                     style={{ zIndex: priceLines.length - idx + 10 }}
                                                 >
                                                     <div className="flex-1 min-w-0">
@@ -1953,7 +1953,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 width: '100%',
                                                                 padding: '6px 8px',
                                                                 fontSize: '13px',
-                                                                background: '#1B2E3D',
+                                                                background: '#FFFFFF',
                                                                 border: '1px solid #D4A853',
                                                                 fontWeight: 'bold',
                                                                 color: '#FCD34D',
@@ -1965,8 +1965,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     </div>
 
                                                     <div className="text-right flex flex-col justify-center px-2 min-w-[95px] flex-shrink-0">
-                                                        <span className="text-[10px] block text-[#4A6A7A] font-medium">Giá niêm yết</span>
-                                                        <span className="text-xs block font-mono font-bold text-[#E8F1F2]">{formatVND(wholesale)}</span>
+                                                        <span className="text-[10px] block text-slate-500 font-medium">Giá niêm yết</span>
+                                                        <span className="text-xs block font-mono font-bold text-slate-900">{formatVND(wholesale)}</span>
                                                     </div>
 
                                                     <button 
@@ -1988,9 +1988,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Price adjustment custom fields */}
                     {form.category === 'PRICE_ADJUSTMENT' && (
-                        <div className="space-y-4 p-4 rounded-md border border-[#2A4355] bg-[#1B2E3D]">
+                        <div className="space-y-4 p-4 rounded-md border border-slate-200 bg-white">
                             <div>
-                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng chính áp dụng *</label>
+                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Khách hàng chính áp dụng *</label>
                                 <SearchableCustomerCombobox
                                     customers={customers}
                                     selectedCustomerId={form.customerId}
@@ -2007,9 +2007,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             {/* Additional branches selection */}
                             {form.customerId && (
-                                <div className="p-3 rounded-lg border border-[#2A4355] bg-[#142433] space-y-2">
+                                <div className="p-3 rounded-lg border border-slate-200 bg-white space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-[#87CBB9] flex items-center gap-1.5">
+                                        <label className="text-xs font-bold text-[#0891B2] flex items-center gap-1.5">
                                             🏢 Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)
                                         </label>
                                     </div>
@@ -2042,7 +2042,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 )
                                                             }}
                                                             className={`px-2 py-1 rounded text-[11px] font-medium flex items-center gap-1 transition ${
-                                                                isSelected ? 'bg-[#87CBB9] text-[#0A1926] font-bold' : 'bg-[#1B2E3D] text-[#E8F1F2] border border-[#2A4355] hover:border-[#87CBB9]'
+                                                                isSelected ? 'bg-[#0891B2] text-white font-bold' : 'bg-white text-slate-900 border border-slate-200 hover:border-[#87CBB9]'
                                                             }`}
                                                         >
                                                             {isSelected ? <Check size={11} /> : <Plus size={11} />}
@@ -2057,16 +2057,16 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             )}
 
                             {/* Effective Validity Period (Start & End Date) */}
-                            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#2A4355] bg-[#142433]">
+                            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200 bg-white">
                                 <div>
-                                    <label className="text-xs font-bold uppercase mb-1 block text-[#87CBB9]">
+                                    <label className="text-xs font-bold uppercase mb-1 block text-[#0891B2]">
                                         📅 Ngày bắt đầu hiệu lực
                                     </label>
                                     <input 
                                         type="date"
                                         value={form.startDate}
                                         onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-                                        style={{ ...inputStyle, background: '#1B2E3D', borderColor: '#2A4355' }}
+                                        style={{ ...inputStyle, background: '#FFFFFF', borderColor: '#E2E8F0' }}
                                     />
                                 </div>
                                 <div>
@@ -2077,17 +2077,17 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         type="date"
                                         value={form.endDate}
                                         onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                                        style={{ ...inputStyle, background: '#1B2E3D', borderColor: '#2A4355' }}
+                                        style={{ ...inputStyle, background: '#FFFFFF', borderColor: '#E2E8F0' }}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Phạm vi áp dụng *</label>
+                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Phạm vi áp dụng *</label>
                                 <select 
                                     value={form.scope} 
                                     onChange={e => setForm(f => ({ ...f, scope: e.target.value }))} 
-                                    style={{ ...inputStyle, background: '#142433' }}
+                                    style={{ ...inputStyle, background: '#FFFFFF' }}
                                 >
                                     <option value="ENTIRE_PORTFOLIO">Toàn bộ danh mục (% chiết khấu)</option>
                                     <option value="SPECIFIC_PRODUCTS">Một số sản phẩm cụ thể (gõ giá riêng)</option>
@@ -2097,13 +2097,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             {(form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && (
                                 <div>
-                                    <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>% Chiết khấu toàn danh mục *</label>
+                                    <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>% Chiết khấu toàn danh mục *</label>
                                     <input 
                                         type="number" 
                                         placeholder="VD: 15" 
                                         value={form.discountPct} 
                                         onChange={e => setForm(f => ({ ...f, discountPct: e.target.value }))} 
-                                        style={{ ...inputStyle, background: '#142433' }} 
+                                        style={{ ...inputStyle, background: '#FFFFFF' }} 
                                     />
                                 </div>
                             )}
@@ -2111,7 +2111,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             {(form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-semibold uppercase block" style={{ color: '#8AAEBB' }}>Đề xuất giá theo chai *</label>
+                                        <label className="text-xs font-semibold uppercase block" style={{ color: '#475569' }}>Đề xuất giá theo chai *</label>
                                         <div className="flex items-center gap-3">
                                             <button 
                                                 type="button" 
@@ -2123,7 +2123,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             <button 
                                                 type="button" 
                                                 onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
-                                                className="text-xs flex items-center gap-1 text-[#87CBB9] font-semibold hover:underline"
+                                                className="text-xs flex items-center gap-1 text-[#0891B2] font-semibold hover:underline"
                                             >
                                                 <Plus size={12} /> Thêm dòng
                                             </button>
@@ -2141,8 +2141,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     key={idx} 
                                                     className="flex gap-2 items-end p-2.5 rounded-md relative" 
                                                     style={{ 
-                                                        background: '#142433', 
-                                                        border: '1px solid #2A4355',
+                                                        background: '#FFFFFF', 
+                                                        border: '1px solid #E2E8F0',
                                                         zIndex: priceLines.length - idx + 10
                                                     }}
                                                 >
@@ -2158,7 +2158,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     />
                                                     
                                                     <div className="w-20">
-                                                        <label className="text-[9px] block text-[#8AAEBB]">Số lượng</label>
+                                                        <label className="text-[9px] block text-slate-600">Số lượng</label>
                                                         <input 
                                                             type="number"
                                                             min={1}
@@ -2168,13 +2168,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
                                                                 setPriceLines(copy)
                                                             }}
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
                                                         />
                                                     </div>
 
                                                     <div className="w-28">
                                                         <div className="flex items-center justify-between mb-0.5">
-                                                            <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Giá đề xuất</label>
+                                                            <label className="text-[9px]" style={{ color: '#64748B' }}>Giá đề xuất</label>
                                                             {line.proposedPrice > 0 && wholesale > 0 && (
                                                                 <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-400' : 'text-green-400'}`}>
                                                                     {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
@@ -2190,13 +2190,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 setPriceLines(copy)
                                                             }}
                                                             placeholder="0"
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#87CBB9' }}
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#0891B2' }}
                                                         />
                                                     </div>
                                                     
                                                     <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[75px]">
                                                         <span className="text-[9px] block text-gray-500">Gốc (WS)</span>
-                                                        <span className="text-[11px] block font-mono font-semibold" style={{ color: '#E8F1F2' }}>{formatVND(wholesale)}</span>
+                                                        <span className="text-[11px] block font-mono font-semibold" style={{ color: '#0F172A' }}>{formatVND(wholesale)}</span>
                                                     </div>
 
                                                     <button 
@@ -2211,8 +2211,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             )
                                         })}
                                         {priceLines.length === 0 && (
-                                            <p className="text-center text-xs py-4 text-gray-400 border border-dashed border-[#2A4355] rounded-md">
-                                                Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
+                                            <p className="text-center text-xs py-4 text-gray-400 border border-dashed border-slate-200 rounded-md">
+                                                Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
                                             </p>
                                         )}
                                     </div>
@@ -2237,7 +2237,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Priority */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Mức ưu tiên</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Mức ưu tiên</label>
                         <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
                             {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
                                 <option key={k} value={k}>{v.label}</option>
@@ -2247,66 +2247,66 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Title */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Tiêu đề *</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Tiêu đề *</label>
                         <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                             placeholder="VD: Đề xuất nhập NCC mới — Château Latour"
                             style={inputStyle}
-                            onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                            onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                            onFocus={e => e.target.style.borderColor = '#0891B2'}
+                            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
 
                     {/* Content */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Nội dung chi tiết *</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Nội dung chi tiết *</label>
                         <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                             rows={5} placeholder="Mô tả chi tiết đề xuất..."
                             style={{ ...inputStyle, resize: 'vertical' }}
-                            onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                            onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                            onFocus={e => e.target.style.borderColor = '#0891B2'}
+                            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
 
                     {/* Justification */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Lý do & phân tích</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Lý do & phân tích</label>
                         <textarea value={form.justification} onChange={e => setForm(f => ({ ...f, justification: e.target.value }))}
                             rows={3} placeholder="Căn cứ và phân tích chi phí/lợi ích..."
                             style={{ ...inputStyle, resize: 'vertical' }}
-                            onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                            onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                            onFocus={e => e.target.style.borderColor = '#0891B2'}
+                            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
 
                     {/* Expected Outcome */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Kết quả kỳ vọng</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Kết quả kỳ vọng</label>
                         <input value={form.expectedOutcome} onChange={e => setForm(f => ({ ...f, expectedOutcome: e.target.value }))}
                             placeholder="VD: Mở rộng danh mục 15 SKU mới, tăng doanh thu 20%"
                             style={inputStyle}
-                            onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                            onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                            onFocus={e => e.target.style.borderColor = '#0891B2'}
+                            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
 
                     {/* Amount + Deadline row */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Giá trị ước tính (VND)</label>
+                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Giá trị ước tính (VND)</label>
                             <input type="number" value={form.estimatedAmount}
                                 onChange={e => setForm(f => ({ ...f, estimatedAmount: e.target.value }))}
                                 placeholder="0" style={inputStyle}
-                                onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                                onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                                onFocus={e => e.target.style.borderColor = '#0891B2'}
+                                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#4A6A7A' }}>Hạn xử lý</label>
+                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Hạn xử lý</label>
                             <input type="date" value={form.deadline}
                                 onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
                                 style={inputStyle}
-                                onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                                onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                                onFocus={e => e.target.style.borderColor = '#0891B2'}
+                                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
                     </div>
 
                     {/* Submit buttons */}
-                    <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid #2A4355' }}>
+                    <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                         <button
                             onClick={handleSave}
                             disabled={saving}
@@ -2319,7 +2319,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <button
                             onClick={onClose}
                             className="px-5 py-3 text-sm font-medium rounded-md"
-                            style={{ background: '#1B2E3D', color: '#4A6A7A', border: '1px solid #2A4355' }}
+                            style={{ background: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0' }}
                         >
                             Huỷ
                         </button>
@@ -2364,11 +2364,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#142433', borderLeft: '1px solid #2A4355' }}>
+            <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
-                        <ClipboardCheck size={18} className="inline mr-2" style={{ color: '#87CBB9' }} />
+                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
+                        <ClipboardCheck size={18} className="inline mr-2" style={{ color: '#0891B2' }} />
                         Chi Tiết Tờ Trình
                     </h3>
                     <div className="flex items-center gap-3">
@@ -2381,20 +2381,20 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 <Printer size={13} /> In Tờ Trình
                             </button>
                         )}
-                        <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
                 </div>
 
                 {loading || !detail ? (
                     <div className="flex items-center justify-center py-20">
-                        <Loader2 size={32} className="animate-spin" style={{ color: '#87CBB9' }} />
+                        <Loader2 size={32} className="animate-spin" style={{ color: '#0891B2' }} />
                     </div>
                 ) : (
                     <div className="p-5 space-y-5">
                         {/* Title + Meta */}
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="text-sm font-bold" style={{ color: '#87CBB9' }}>
+                                <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
                                     {detail.proposalNo}
                                 </span>
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold"
@@ -2406,8 +2406,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     {STATUS_LABELS[detail.status]?.label}
                                 </span>
                             </div>
-                            <h4 className="text-xl font-bold mb-1" style={{ color: '#E8F1F2' }}>{detail.title}</h4>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                            <h4 className="text-xl font-bold mb-1" style={{ color: '#0F172A' }}>{detail.title}</h4>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
                                 {detail.creator.name} · {CATEGORY_LABELS[detail.category]} ·
                                 {detail.estimatedAmount ? ` ${formatVND(detail.estimatedAmount)}` : ' Không có giá trị'} ·
                                 {detail.submittedAt ? ` Trình ${new Date(detail.submittedAt).toLocaleDateString('vi-VN')}` : ' Chưa trình'}
@@ -2415,8 +2415,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         </div>
 
                         {/* Approval Progress */}
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#4A6A7A' }}>Tiến Trình Phê Duyệt</p>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#64748B' }}>Tiến Trình Phê Duyệt</p>
                             <div className="flex items-center gap-2">
                                 {detail.requiredLevels.map((level, i) => {
                                     const log = detail.approvalLogs.find(l => l.level === level)
@@ -2427,21 +2427,21 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                                     return (
                                         <React.Fragment key={level}>
-                                            {i > 0 && <div className="flex-1 h-0.5 rounded" style={{ background: isDone ? '#5BA88A' : '#2A4355' }} />}
+                                            {i > 0 && <div className="flex-1 h-0.5 rounded" style={{ background: isDone ? '#5BA88A' : '#E2E8F0' }} />}
                                             <div className="flex flex-col items-center gap-1">
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                                                     style={{
-                                                        background: isDone ? 'rgba(91,168,138,0.2)' : isRejected ? 'rgba(139,26,46,0.2)' : isCurrent ? 'rgba(212,168,83,0.2)' : '#1B2E3D',
-                                                        border: `2px solid ${isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#2A4355'}`,
-                                                        color: isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#4A6A7A',
+                                                        background: isDone ? 'rgba(91,168,138,0.2)' : isRejected ? 'rgba(139,26,46,0.2)' : isCurrent ? 'rgba(212,168,83,0.2)' : '#FFFFFF',
+                                                        border: `2px solid ${isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#E2E8F0'}`,
+                                                        color: isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#64748B',
                                                     }}>
                                                     {isDone ? '✓' : isRejected ? '✗' : level}
                                                 </div>
-                                                <span className="text-xs font-medium" style={{ color: isCurrent ? '#D4A853' : '#4A6A7A' }}>
+                                                <span className="text-xs font-medium" style={{ color: isCurrent ? '#D4A853' : '#64748B' }}>
                                                     {levelLabel}
                                                 </span>
                                                 {log && (
-                                                    <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                                    <span className="text-[10px]" style={{ color: '#64748B' }}>
                                                         {log.approver.name}
                                                     </span>
                                                 )}
@@ -2454,16 +2454,16 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                         {/* Special pricing details */}
                         {detail.category === 'PRICE_ADJUSTMENT' && (
-                            <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt</p>
+                            <div className="p-4 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <p className="text-xs font-semibold uppercase" style={{ color: '#0891B2' }}>Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt</p>
                                 <div className="grid grid-cols-2 gap-3 text-xs">
-                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
-                                        <p style={{ color: '#4A6A7A' }}>Khách hàng áp dụng</p>
-                                        <p className="font-bold mt-0.5" style={{ color: '#E8F1F2' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
+                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p style={{ color: '#64748B' }}>Khách hàng áp dụng</p>
+                                        <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
                                     </div>
-                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
-                                        <p style={{ color: '#4A6A7A' }}>Phạm vi áp dụng</p>
-                                        <p className="font-bold mt-0.5" style={{ color: '#E8F1F2' }}>
+                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p style={{ color: '#64748B' }}>Phạm vi áp dụng</p>
+                                        <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>
                                             {detail.scope === 'ENTIRE_PORTFOLIO' ? 'Toàn danh mục' : 
                                              detail.scope === 'SPECIFIC_PRODUCTS' ? 'Một số sản phẩm' : 
                                              detail.scope === 'MIXED' ? 'Kết hợp' : 'N/A'}
@@ -2471,9 +2471,9 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     </div>
                                 </div>
 
-                                <div className="p-2.5 rounded text-xs" style={{ background: '#142433' }}>
-                                    <p style={{ color: '#4A6A7A' }}>Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)</p>
-                                    <p className="font-bold mt-0.5" style={{ color: '#87CBB9' }}>
+                                <div className="p-2.5 rounded text-xs" style={{ background: '#FFFFFF' }}>
+                                    <p style={{ color: '#64748B' }}>Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)</p>
+                                    <p className="font-bold mt-0.5" style={{ color: '#0891B2' }}>
                                         📅 {detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : 'Từ ngày phê duyệt'} 
                                         {' ➔ '} 
                                         {detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : 'Khi có thông báo mới (không thời hạn)'}
@@ -2481,15 +2481,15 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 </div>
                                 
                                 {detail.discountPct !== null && detail.discountPct !== undefined && (
-                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chiết khấu toàn danh mục</p>
+                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Chiết khấu toàn danh mục</p>
                                         <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{detail.discountPct}%</p>
                                     </div>
                                 )}
 
                                 {detail.priceItems && detail.priceItems.length > 0 && (
                                     <div className="space-y-1.5">
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Danh sách sản phẩm đề xuất giá:</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>Danh sách sản phẩm đề xuất giá:</p>
                                         <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                                             {detail.priceItems.map((item: any) => {
                                                 const originalPrice = item.product?.wholesalePrice || 0
@@ -2497,15 +2497,15 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
                                                     : 0
                                                 return (
-                                                    <div key={item.id} className="flex justify-between items-center p-2 rounded text-xs" style={{ background: '#142433' }}>
+                                                    <div key={item.id} className="flex justify-between items-center p-2 rounded text-xs" style={{ background: '#FFFFFF' }}>
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="font-medium truncate" style={{ color: '#E8F1F2' }}>{item.product?.productName}</p>
-                                                            <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{item.product?.skuCode}</p>
+                                                            <p className="font-medium truncate" style={{ color: '#0F172A' }}>{item.product?.productName}</p>
+                                                            <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{item.product?.skuCode}</p>
                                                         </div>
                                                         <div className="text-right pl-3 flex items-center gap-2">
                                                             <div>
-                                                                <p className="font-bold" style={{ color: '#87CBB9' }}>{formatVND(item.proposedPrice)}</p>
-                                                                <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>Gốc: {formatVND(originalPrice)}</p>
+                                                                <p className="font-bold" style={{ color: '#0891B2' }}>{formatVND(item.proposedPrice)}</p>
+                                                                <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>Gốc: {formatVND(originalPrice)}</p>
                                                             </div>
                                                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diff < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
                                                                 {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
@@ -2551,15 +2551,15 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                             {/* Linked Sales Orders List */}
                             {(detail as any).salesOrders && (detail as any).salesOrders.length > 0 && (
-                                <div className="p-4 rounded-md space-y-2.5 bg-[#1B2E3D] border border-[#2A4355]">
-                                    <p className="text-xs font-bold uppercase text-[#87CBB9] flex items-center justify-between">
+                                <div className="p-4 rounded-md space-y-2.5 bg-white border border-slate-200">
+                                    <p className="text-xs font-bold uppercase text-[#0891B2] flex items-center justify-between">
                                         <span>📦 Các Đơn Hàng Đã Lên Theo Tờ Trình Này ({(detail as any).salesOrders.length})</span>
                                     </p>
                                     <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                                         {(detail as any).salesOrders.map((so: any) => (
-                                            <div key={so.id} className="flex justify-between items-center p-2 rounded bg-[#142433] text-xs border border-[#2A4355]/40">
+                                            <div key={so.id} className="flex justify-between items-center p-2 rounded bg-white text-xs border border-slate-200/40">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold text-[#87CBB9]">{so.soNo}</span>
+                                                    <span className="font-mono font-bold text-[#0891B2]">{so.soNo}</span>
                                                     {so.orderType === 'TASTING' && (
                                                         <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-300 border border-amber-500/40">🍷 Tasting</span>
                                                     )}
@@ -2567,7 +2567,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <span className="font-semibold text-slate-200">{formatVND(Number(so.totalAmount))}</span>
-                                                    <a href={`/dashboard/sales?search=${so.soNo}`} className="text-[11px] text-[#87CBB9] hover:underline font-semibold">
+                                                    <a href={`/dashboard/sales?search=${so.soNo}`} className="text-[11px] text-[#0891B2] hover:underline font-semibold">
                                                         Xem SO →
                                                     </a>
                                                 </div>
@@ -2577,34 +2577,34 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 </div>
                             )}
 
-                            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#87CBB9' }}>Nội dung</p>
-                                <p className="text-sm whitespace-pre-wrap" style={{ color: '#E8F1F2', lineHeight: 1.6 }}>{detail.content}</p>
+                            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#0891B2' }}>Nội dung</p>
+                                <p className="text-sm whitespace-pre-wrap" style={{ color: '#0F172A', lineHeight: 1.6 }}>{detail.content}</p>
                             </div>
                             {detail.justification && (
-                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#D4A853' }}>Lý do & Phân tích</p>
-                                    <p className="text-sm whitespace-pre-wrap" style={{ color: '#E8F1F2', lineHeight: 1.6 }}>{detail.justification}</p>
+                                    <p className="text-sm whitespace-pre-wrap" style={{ color: '#0F172A', lineHeight: 1.6 }}>{detail.justification}</p>
                                 </div>
                             )}
                             {detail.expectedOutcome && (
-                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#5BA88A' }}>Kết quả kỳ vọng</p>
-                                    <p className="text-sm" style={{ color: '#E8F1F2' }}>{detail.expectedOutcome}</p>
+                                    <p className="text-sm" style={{ color: '#0F172A' }}>{detail.expectedOutcome}</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Approval Audit Trail Table */}
-                        <div className="p-4 rounded-xl border border-[#2A4355] bg-[#1B2E3D] space-y-3">
-                            <p className="text-xs font-bold uppercase tracking-wider text-[#87CBB9] flex items-center justify-between">
+                        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2] flex items-center justify-between">
                                 <span>📋 Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)</span>
-                                <span className="text-[10px] font-mono text-[#8AAEBB] bg-[#142433] px-2 py-0.5 rounded border border-[#2A4355]">3 Cấp Phê Duyệt</span>
+                                <span className="text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">3 Cấp Phê Duyệt</span>
                             </p>
                             
-                            <div className="overflow-x-auto rounded-lg border border-[#2A4355]">
+                            <div className="overflow-x-auto rounded-lg border border-slate-200">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-[#142433] text-[#8AAEBB] uppercase text-[10px] font-bold border-b border-[#2A4355]">
+                                    <thead className="bg-white text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                                         <tr>
                                             <th className="p-2.5 text-center w-10">STT</th>
                                             <th className="p-2.5">Cấp Duyệt / Vai Trò</th>
@@ -2614,12 +2614,12 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             <th className="p-2.5">Ghi Chú / Ý Kiến</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-[#2A4355]/60 text-[#E8F1F2]">
+                                    <tbody className="divide-y divide-slate-200/60 text-slate-900">
                                         {/* Step 0: Creator */}
-                                        <tr className="hover:bg-[#142433]/50">
+                                        <tr className="hover:bg-white/50">
                                             <td className="p-2.5 text-center font-mono text-gray-400">1</td>
-                                            <td className="p-2.5 font-medium text-[#8AAEBB] whitespace-nowrap">Người Lập Tờ Trình</td>
-                                            <td className="p-2.5 font-bold text-[#E8F1F2] whitespace-nowrap">{detail.creator?.name || '—'}</td>
+                                            <td className="p-2.5 font-medium text-slate-600 whitespace-nowrap">Người Lập Tờ Trình</td>
+                                            <td className="p-2.5 font-bold text-slate-900 whitespace-nowrap">{detail.creator?.name || '—'}</td>
                                             <td className="p-2.5 text-center whitespace-nowrap">
                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                                                     ✓ Đã lập & trình
@@ -2639,10 +2639,10 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         ].map((step, idx) => {
                                             const log = detail.approvalLogs.find(l => l.level === step.level)
                                             return (
-                                                <tr key={step.level} className="hover:bg-[#142433]/50">
+                                                <tr key={step.level} className="hover:bg-white/50">
                                                     <td className="p-2.5 text-center font-mono text-gray-400">{idx + 2}</td>
-                                                    <td className="p-2.5 font-medium text-[#8AAEBB] whitespace-nowrap">{step.label}</td>
-                                                    <td className="p-2.5 font-bold text-[#E8F1F2] whitespace-nowrap">{log?.approver?.name || '—'}</td>
+                                                    <td className="p-2.5 font-medium text-slate-600 whitespace-nowrap">{step.label}</td>
+                                                    <td className="p-2.5 font-bold text-slate-900 whitespace-nowrap">{log?.approver?.name || '—'}</td>
                                                     <td className="p-2.5 text-center whitespace-nowrap">
                                                         {log ? (
                                                             log.action === 'APPROVE' ? (
@@ -2675,36 +2675,36 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         </div>
 
                         {/* Comments */}
-                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#4A6A7A' }}>
+                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#64748B' }}>
                                 <MessageSquare size={12} className="inline mr-1" />
                                 Thảo Luận ({detail.comments.length})
                             </p>
                             <div className="space-y-2 mb-3 max-h-[200px] overflow-y-auto">
                                 {detail.comments.map(c => (
-                                    <div key={c.id} className="p-2.5 rounded" style={{ background: '#142433' }}>
+                                    <div key={c.id} className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                         <div className="flex items-center justify-between mb-1">
-                                            <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>{c.author.name}</span>
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>{new Date(c.createdAt).toLocaleString('vi-VN')}</span>
+                                            <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>{c.author.name}</span>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>{new Date(c.createdAt).toLocaleString('vi-VN')}</span>
                                         </div>
-                                        <p className="text-sm" style={{ color: '#E8F1F2' }}>{c.content}</p>
+                                        <p className="text-sm" style={{ color: '#0F172A' }}>{c.content}</p>
                                     </div>
                                 ))}
                                 {detail.comments.length === 0 && (
-                                    <p className="text-xs text-center py-4" style={{ color: '#4A6A7A' }}>Chưa có thảo luận</p>
+                                    <p className="text-xs text-center py-4" style={{ color: '#64748B' }}>Chưa có thảo luận</p>
                                 )}
                             </div>
                             <div className="flex gap-2">
                                 <input value={comment} onChange={e => setComment(e.target.value)}
                                     placeholder="Nhập bình luận..."
                                     className="flex-1 px-3 py-2 text-sm rounded-md"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', outline: 'none' }}
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
                                     onKeyDown={e => e.key === 'Enter' && handleComment()}
-                                    onFocus={e => e.target.style.borderColor = '#87CBB9'}
-                                    onBlur={e => e.target.style.borderColor = '#2A4355'} />
+                                    onFocus={e => e.target.style.borderColor = '#0891B2'}
+                                    onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                                 <button onClick={handleComment} disabled={sendingComment}
                                     className="px-3 py-2 rounded-md transition-all"
-                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                     {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                 </button>
                             </div>
@@ -2748,7 +2748,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             <div className="flex gap-3">
                                 <button onClick={async () => { await updateProposalStatus(detail.id, 'IN_PROGRESS', userId); onRefresh() }}
                                     className="flex-1 py-2.5 text-sm font-semibold rounded-md"
-                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                     <ArrowRight size={14} className="inline mr-1" /> Chuyển &quot;Đang thực hiện&quot;
                                 </button>
                             </div>
@@ -2756,7 +2756,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {detail.status === 'IN_PROGRESS' && isCEO && (
                             <button onClick={async () => { await updateProposalStatus(detail.id, 'CLOSED', userId); onRefresh() }}
                                 className="w-full py-2.5 text-sm font-semibold rounded-md"
-                                style={{ background: 'rgba(74,106,122,0.15)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.3)' }}>
+                                style={{ background: 'rgba(74,106,122,0.15)', color: '#64748B', border: '1px solid rgba(74,106,122,0.3)' }}>
                                 <CheckCircle2 size={14} className="inline mr-1" /> Đánh dấu Hoàn tất
                             </button>
                         )}

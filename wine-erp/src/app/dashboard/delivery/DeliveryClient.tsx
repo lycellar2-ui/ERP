@@ -12,7 +12,7 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    PLANNED: { label: 'Đã Lập Kế Hoạch', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
+    PLANNED: { label: 'Đã Lập Kế Hoạch', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
     IN_PROGRESS: { label: 'Đang Giao', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     COMPLETED: { label: 'Hoàn Thành', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
     CANCELLED: { label: 'Huỷ', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)' },
@@ -95,7 +95,7 @@ function EPODDrawer({ open, routeId, onClose }: {
         setConfirmingId(null)
     }
 
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }
 
     const STOP_STATUS: Record<string, { label: string; color: string; bg: string }> = {
         PENDING: { label: 'Chờ Giao', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
@@ -107,34 +107,34 @@ function EPODDrawer({ open, routeId, onClose }: {
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col"
-                style={{ width: 'min(520px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                style={{ width: 'min(520px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                             style={{ background: 'rgba(91,168,138,0.15)' }}>
                             <CheckCircle2 size={16} style={{ color: '#5BA88A' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                                 E-POD — Xác Nhận Giao Hàng
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
                                 Xác nhận từng điểm dừng — Tên người nhận, ghi chú
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
                     {loading ? (
                         <div className="flex justify-center py-16">
-                            <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                            <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
                         </div>
                     ) : stops.length === 0 ? (
                         <div className="text-center py-16">
-                            <MapPin size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Lộ trình chưa có điểm dừng nào</p>
+                            <MapPin size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
+                            <p className="text-sm" style={{ color: '#64748B' }}>Lộ trình chưa có điểm dừng nào</p>
                         </div>
                     ) : stops.map(stop => {
                         const cfg = STOP_STATUS[stop.status] ?? STOP_STATUS.PENDING
@@ -145,8 +145,8 @@ function EPODDrawer({ open, routeId, onClose }: {
                         return (
                             <div key={stop.id} className="p-4 rounded-md transition-all"
                                 style={{
-                                    background: isSuccess ? 'rgba(91,168,138,0.06)' : '#1B2E3D',
-                                    border: `1px solid ${isSuccess ? 'rgba(91,168,138,0.3)' : '#2A4355'}`,
+                                    background: isSuccess ? 'rgba(91,168,138,0.06)' : '#FFFFFF',
+                                    border: `1px solid ${isSuccess ? 'rgba(91,168,138,0.3)' : '#E2E8F0'}`,
                                 }}>
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
@@ -159,19 +159,19 @@ function EPODDrawer({ open, routeId, onClose }: {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{stop.customerName}</p>
                                                 {stop.customerPhone && (
-                                                    <span className="text-xs font-mono font-bold flex items-center gap-1 text-[#87CBB9]">
+                                                    <span className="text-xs font-mono font-bold flex items-center gap-1 text-[#0891B2]">
                                                         <Phone size={10} /> {stop.customerPhone}
                                                     </span>
                                                 )}
                                                 {stop.receiverName && stop.receiverName !== stop.customerName && (
-                                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>
+                                                    <span className="text-[11px]" style={{ color: '#475569' }}>
                                                         ({stop.receiverName})
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{stop.customerAddress || 'Không có địa chỉ'}</p>
+                                            <p className="text-xs" style={{ color: '#64748B' }}>{stop.customerAddress || 'Không có địa chỉ'}</p>
                                         </div>
                                     </div>
                                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
@@ -179,10 +179,10 @@ function EPODDrawer({ open, routeId, onClose }: {
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-2">
-                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>
+                                    <span className="text-xs" style={{ color: '#475569' }}>
                                         SO: {stop.soNo}
                                     </span>
-                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                    <span className="text-xs" style={{ color: '#64748B' }}>
                                         {stop.itemCount} dòng SP
                                     </span>
                                     {stop.codAmount > 0 && (
@@ -205,16 +205,16 @@ function EPODDrawer({ open, routeId, onClose }: {
                                         {((stop as any).photoUrl || stop.signatureUrl) && (
                                             <div className="flex gap-2 flex-wrap">
                                                 {(stop as any).photoUrl && (
-                                                    <div className="relative rounded overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                    <div className="relative rounded overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                                         <img src={(stop as any).photoUrl} alt="POD" className="w-20 h-20 object-cover" />
-                                                        <div className="absolute bottom-0 left-0 right-0 text-center py-0.5 text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: '#87CBB9' }}>
+                                                        <div className="absolute bottom-0 left-0 right-0 text-center py-0.5 text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: '#0891B2' }}>
                                                             <Camera size={8} className="inline mr-0.5" /> Ảnh GH
                                                         </div>
                                                     </div>
                                                 )}
                                                 {stop.signatureUrl && (
-                                                    <div className="rounded overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                                                        <img src={stop.signatureUrl} alt="Chữ ký" className="w-24 h-20 object-contain" style={{ background: '#0D1E2B' }} />
+                                                    <div className="rounded overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                                                        <img src={stop.signatureUrl} alt="Chữ ký" className="w-24 h-20 object-contain" style={{ background: '#F8FAFC' }} />
                                                     </div>
                                                 )}
                                             </div>
@@ -225,17 +225,17 @@ function EPODDrawer({ open, routeId, onClose }: {
                                 {!isDelivered && !isActive && (
                                     <button onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes(''); setSignatureUrl(''); setPhotoFile(null); setPhotoPreview(null) }}
                                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded mt-1 transition-all"
-                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.2)'}
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}
+                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.15)'}
                                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(135,203,185,0.1)'}>
                                         <CheckCircle2 size={12} /> Xác Nhận Giao
                                     </button>
                                 )}
 
                                 {isActive && (
-                                    <div className="mt-3 p-3 rounded-md space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="mt-3 p-3 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div>
-                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                                                 Người Nhận <span style={{ color: '#8B1A2E' }}>*</span>
                                             </label>
                                             <input type="text" value={confirmName}
@@ -243,11 +243,11 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 placeholder="Tên người nhận hàng"
                                                 className="w-full px-3 py-2 text-sm outline-none"
                                                 style={inputStyle}
-                                                onFocus={e => e.currentTarget.style.borderColor = '#87CBB9'}
-                                                onBlur={e => e.currentTarget.style.borderColor = '#2A4355'} />
+                                                onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
+                                                onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                                                 Ghi Chú (Tùy chọn)
                                             </label>
                                             <textarea value={confirmNotes}
@@ -256,18 +256,18 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 rows={2}
                                                 className="w-full px-3 py-2 text-sm outline-none resize-none"
                                                 style={inputStyle}
-                                                onFocus={e => e.currentTarget.style.borderColor = '#87CBB9'}
-                                                onBlur={e => e.currentTarget.style.borderColor = '#2A4355'} />
+                                                onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
+                                                onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                                                 Chữ Ký Điện Tử <span style={{ color: '#8B1A2E' }}>*</span>
                                             </label>
                                             <SignaturePad onEnd={url => setSignatureUrl(url)} />
                                         </div>
                                         {/* Photo upload */}
                                         <div>
-                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                                                 Ảnh Bằng Chứng Giao Hàng
                                             </label>
                                             <input
@@ -287,13 +287,13 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 }}
                                             />
                                             {photoPreview ? (
-                                                <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                                     <img src={photoPreview} alt="Preview" className="w-full h-32 object-cover" />
                                                     <button
                                                         onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
                                                         className="absolute top-1 right-1 p-1 rounded-full"
                                                         style={{ background: 'rgba(0,0,0,0.6)' }}>
-                                                        <X size={12} style={{ color: '#E8F1F2' }} />
+                                                        <X size={12} style={{ color: '#0F172A' }} />
                                                     </button>
                                                 </div>
                                             ) : (
@@ -301,7 +301,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                     type="button"
                                                     onClick={() => fileInputRef.current?.click()}
                                                     className="flex items-center gap-2 w-full px-3 py-3 rounded-md text-sm"
-                                                    style={{ background: '#1B2E3D', border: '1px dashed #2A4355', color: '#4A6A7A' }}>
+                                                    style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0', color: '#64748B' }}>
                                                     <Camera size={16} /> Chụp ảnh / Chọn từ thư viện
                                                 </button>
                                             )}
@@ -309,7 +309,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setActiveStopId(null)}
                                                 className="px-3 py-1.5 text-xs rounded"
-                                                style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Huỷ</button>
+                                                style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                             <button onClick={() => handleConfirm(stop.id)}
                                                 disabled={!confirmName.trim() || !signatureUrl || !!confirmingId || uploadingPhoto}
                                                 className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
@@ -328,11 +328,11 @@ function EPODDrawer({ open, routeId, onClose }: {
 
                 {/* Summary footer */}
                 {stops.length > 0 && (
-                    <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
-                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                    <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+                        <span className="text-xs" style={{ color: '#64748B' }}>
                             {stops.filter(s => s.status === 'DELIVERED').length}/{stops.length} điểm đã giao
                         </span>
-                        <div className="flex-1 mx-4 h-1.5 rounded-full" style={{ background: '#0D1E2B' }}>
+                        <div className="flex-1 mx-4 h-1.5 rounded-full" style={{ background: '#F8FAFC' }}>
                             <div className="h-full rounded-full transition-all duration-500" style={{
                                 width: `${stops.length > 0 ? (stops.filter(s => s.status === 'DELIVERED').length / stops.length) * 100 : 0}%`,
                                 background: '#5BA88A',
@@ -368,7 +368,7 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
     if (!options) { handleOpen(); }
 
     const inputCls = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none'
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
         if (!form.driverId || !form.vehicleId) return setError('Chọn tài xế và phương tiện')
@@ -383,21 +383,21 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
-                style={{ width: 'min(460px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                style={{ width: 'min(460px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                            style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <Truck size={16} style={{ color: '#87CBB9' }} />
+                            style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                            <Truck size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
                                 Tạo Lộ Trình Mới
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉ định tài xế và phương tiện</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>Chỉ định tài xế và phương tiện</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
@@ -409,29 +409,29 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                     )}
 
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>
                             Ngày Giao <span style={{ color: '#8B1A2E' }}>*</span>
                         </label>
                         <input type="date" className={inputCls} style={inputStyle}
                             value={form.routeDate}
                             onChange={e => setForm(f => ({ ...f, routeDate: e.target.value }))}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>
                             Tài Xế <span style={{ color: '#8B1A2E' }}>*</span>
                         </label>
                         {!options ? (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
                                 <Loader2 size={12} className="animate-spin" /> Đang tải...
                             </div>
                         ) : (
                             <select className={inputCls} style={inputStyle} value={form.driverId}
                                 onChange={e => setForm(f => ({ ...f, driverId: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                 <option value="">— Chọn tài xế —</option>
                                 {options.drivers.map(d => (
                                     <option key={d.id} value={d.id}>{d.name} ({d.phone})</option>
@@ -441,14 +441,14 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>
                             Phương Tiện <span style={{ color: '#8B1A2E' }}>*</span>
                         </label>
                         {!options ? null : (
                             <select className={inputCls} style={inputStyle} value={form.vehicleId}
                                 onChange={e => setForm(f => ({ ...f, vehicleId: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                 <option value="">— Chọn phương tiện —</option>
                                 {options.vehicles.map(v => (
                                     <option key={v.id} value={v.id}>{VEHICLE_LABEL[v.type] ?? v.type} • {v.plateNo}</option>
@@ -458,12 +458,12 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Hủy</button>
+                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Đang tạo...' : 'Tạo Lộ Trình'}
                     </button>
@@ -515,16 +515,16 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Vận Chuyển & Giao Hàng (TRS)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Lộ trình giao hàng, E-POD, COD collection
                     </p>
                 </div>
                 <button onClick={() => setDrawerOpen(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                     onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
                     <Plus size={16} /> Tạo Lộ Trình
@@ -542,11 +542,11 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                     const Icon = s.icon
                     return (
                         <div key={s.label} className="p-4 rounded-md flex items-center gap-4"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
+                                <p className="text-xl font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -558,7 +558,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 <select value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); reload(e.target.value) }}
                     className="px-3 py-2 text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(STATUS_CFG).map(([k, v]) => (
                         <option key={k} value={k}>{v.label}</option>
@@ -567,26 +567,26 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {['Ngày', 'Tài Xế', 'Phương Tiện', 'Điểm Dừng', 'Tiến Độ', 'COD', 'Trạng Thái', 'Action'].map(h => (
-                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={8} className="text-center py-10 text-sm" style={{ color: '#4A6A7A' }}>Đang tải...</td></tr>
+                            <tr><td colSpan={8} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>Đang tải...</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#4A6A7A' }}>
-                                <Truck size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#64748B' }}>
+                                <Truck size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
                                 <p>Chưa có lộ trình giao hàng nào</p>
                             </td></tr>
                         ) : rows.map(row => {
                             const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
-                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#8AAEBB', bg: 'transparent' }
+                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#475569', bg: 'transparent' }
                             const nextStatus = NEXT_STATUS[row.status]
                             const isUpdating = updatingId === row.id
                             return (
@@ -595,24 +595,24 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                     onClick={() => setEpodRouteId(row.id)}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                                    <td className="px-4 py-3 text-sm" style={{ color: '#E8F1F2' }}>{formatDate(row.routeDate)}</td>
-                                    <td className="px-4 py-3 text-sm" style={{ color: '#E8F1F2' }}>{row.driverName}</td>
-                                    <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                    <td className="px-4 py-3 text-sm" style={{ color: '#0F172A' }}>{formatDate(row.routeDate)}</td>
+                                    <td className="px-4 py-3 text-sm" style={{ color: '#0F172A' }}>{row.driverName}</td>
+                                    <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>
                                         {VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}<br />
                                         <span>{row.vehiclePlate}</span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>
                                         {row.stopCount} điểm
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#142433', minWidth: 60 }}>
+                                            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF', minWidth: 60 }}>
                                                 <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct === 100 ? '#5BA88A' : '#D4A853' }} />
                                             </div>
-                                            <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{row.deliveredCount}/{row.stopCount}</span>
+                                            <span className="text-xs font-bold" style={{ color: '#475569' }}>{row.deliveredCount}/{row.stopCount}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#87CBB9' }}>
+                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0891B2' }}>
                                         {row.totalCod > 0 ? formatVND(row.totalCod) : '—'}
                                     </td>
                                     <td className="px-4 py-3">
@@ -627,9 +627,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                                 onClick={() => handleStatusAdvance(row.id, nextStatus)}
                                                 disabled={isUpdating}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                                                style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
+                                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.22)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.12)')}>
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)')}>
                                                 {isUpdating
                                                     ? <Loader2 size={11} className="animate-spin" />
                                                     : <ChevronDown size={11} />}
@@ -657,39 +657,39 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
             />
 
             {/* Failed Deliveries Section */}
-            <div className="rounded-md p-5" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <AlertTriangle size={16} style={{ color: '#D4A853' }} />
-                        <h3 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>Giao Hàng Thất Bại</h3>
+                        <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>Giao Hàng Thất Bại</h3>
                         {failedLoaded && <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                             style={{ background: failedDeliveries.length > 0 ? 'rgba(224,82,82,0.12)' : 'rgba(91,168,138,0.12)', color: failedDeliveries.length > 0 ? '#E05252' : '#5BA88A' }}>
                             {failedDeliveries.length}
                         </span>}
                     </div>
                     <button onClick={loadFailed} className="text-xs px-3 py-1.5 rounded font-semibold"
-                        style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                        style={{ border: '1px solid #E2E8F0', color: '#0891B2' }}>
                         {failedLoading ? 'Đang tải...' : failedLoaded ? 'Làm Mới' : 'Tải Danh Sách'}
                     </button>
                 </div>
 
                 {!failedLoaded ? (
-                    <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Nhấn "Tải Danh Sách" để xem các đơn giao thất bại</p>
+                    <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Nhấn "Tải Danh Sách" để xem các đơn giao thất bại</p>
                 ) : failedDeliveries.length === 0 ? (
                     <div className="flex flex-col items-center py-8 gap-2">
                         <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
-                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có đơn giao thất bại nào</p>
+                        <p className="text-sm" style={{ color: '#64748B' }}>Không có đơn giao thất bại nào</p>
                     </div>
                 ) : (
                     <div className="space-y-2">
                         {failedDeliveries.map(fd => (
                             <div key={fd.stopId} className="flex items-center justify-between p-3 rounded-md"
-                                style={{ background: '#142433', border: '1px solid rgba(224,82,82,0.15)' }}>
+                                style={{ background: '#FFFFFF', border: '1px solid rgba(224,82,82,0.15)' }}>
                                 <div className="flex items-center gap-3">
                                     <AlertTriangle size={14} style={{ color: '#E05252' }} />
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{fd.customerName}</p>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{fd.customerName}</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>
                                             SO: {fd.soNo} • Tài xế: {fd.driverName} • {new Date(fd.failedAt).toLocaleDateString('vi-VN')}
                                         </p>
                                     </div>
@@ -707,7 +707,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                         </span>
                                     )}
                                     <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded"
-                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                         <RotateCcw size={10} /> Giao Lại
                                     </button>
                                 </div>

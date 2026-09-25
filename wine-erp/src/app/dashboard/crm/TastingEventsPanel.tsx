@@ -9,7 +9,7 @@ import { formatDate, formatVND } from '@/lib/utils'
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     PLANNED: { label: 'Lên kế hoạch', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
     ACTIVE: { label: 'Đang diễn ra', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    COMPLETED: { label: 'Hoàn thành', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    COMPLETED: { label: 'Hoàn thành', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     CANCELLED: { label: 'Đã hủy', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
 }
 
@@ -51,14 +51,14 @@ export function TastingEventsPanel() {
     if (loading || !events) {
         return (
             <div className="flex items-center justify-center py-16 gap-2">
-                <Loader2 size={16} className="animate-spin" style={{ color: '#87CBB9' }} />
-                <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tải sự kiện...</span>
+                <Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} />
+                <span className="text-sm" style={{ color: '#64748B' }}>Đang tải sự kiện...</span>
             </div>
         )
     }
 
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     return (
         <div className="space-y-4">
@@ -66,25 +66,25 @@ export function TastingEventsPanel() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Wine size={18} style={{ color: '#D4A853' }} />
-                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Sự Kiện Thử Rượu
                     </h3>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                        style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.12)' }}>{events.length}</span>
+                        style={{ color: '#0891B2', background: 'rgba(8, 145, 178, 0.08)' }}>{events.length}</span>
                 </div>
                 <button onClick={() => setShowCreate(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     <Plus size={14} /> Tạo Sự Kiện
                 </button>
             </div>
 
             {/* Create Form */}
             {showCreate && (
-                <div className="p-5 rounded-lg space-y-4" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#87CBB9' }}>Tạo Sự Kiện Mới</p>
-                        <button onClick={() => setShowCreate(false)} className="p-1" style={{ color: '#4A6A7A' }}><X size={14} /></button>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#0891B2' }}>Tạo Sự Kiện Mới</p>
+                        <button onClick={() => setShowCreate(false)} className="p-1" style={{ color: '#64748B' }}><X size={14} /></button>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <input className={inputCls} style={inputStyle} placeholder="Tên sự kiện"
@@ -101,7 +101,7 @@ export function TastingEventsPanel() {
                         value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                     <button onClick={handleCreate} disabled={saving || !form.name || !form.date || !form.venue}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                         {saving ? 'Đang tạo...' : 'Tạo Sự Kiện'}
                     </button>
@@ -110,24 +110,24 @@ export function TastingEventsPanel() {
 
             {/* Event Cards */}
             {events.length === 0 ? (
-                <div className="text-center py-16 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                    <Wine size={28} style={{ color: '#2A4355', margin: '0 auto' }} />
-                    <p className="text-sm mt-3" style={{ color: '#4A6A7A' }}>Chưa có sự kiện thử rượu</p>
+                <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <Wine size={28} style={{ color: '#E2E8F0', margin: '0 auto' }} />
+                    <p className="text-sm mt-3" style={{ color: '#64748B' }}>Chưa có sự kiện thử rượu</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {events.map(ev => {
                         const cfg = STATUS_CFG[ev.status] ?? STATUS_CFG.PLANNED
                         return (
-                            <div key={ev.id} className="p-4 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div key={ev.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{ev.name}</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{ev.name}</p>
                                         <div className="flex items-center gap-3 mt-1">
-                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#4A6A7A' }}>
+                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
                                                 <Calendar size={11} /> {ev.date ? formatDate(ev.date) : '—'}
                                             </span>
-                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#4A6A7A' }}>
+                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
                                                 <MapPin size={11} /> {ev.venue ?? '—'}
                                             </span>
                                         </div>
@@ -136,18 +136,18 @@ export function TastingEventsPanel() {
                                         style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                                 </div>
                                 {ev.description && (
-                                    <p className="text-xs mb-3" style={{ color: '#4A6A7A' }}>{ev.description}</p>
+                                    <p className="text-xs mb-3" style={{ color: '#64748B' }}>{ev.description}</p>
                                 )}
                                 <div className="grid grid-cols-4 gap-2">
                                     {[
                                         { label: 'Max', value: ev.maxGuests, color: '#4A8FAB' },
-                                        { label: 'RSVP', value: ev.rsvpCount, color: '#87CBB9' },
+                                        { label: 'RSVP', value: ev.rsvpCount, color: '#0891B2' },
                                         { label: 'Check-in', value: ev.checkinCount, color: '#5BA88A' },
                                         { label: 'Chuyển đổi', value: ev.conversionCount, color: '#D4A853' },
                                     ].map(m => (
-                                        <div key={m.label} className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                                        <div key={m.label} className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                             <p className="text-sm font-bold" style={{ color: m.color }}>{m.value}</p>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{m.label}</p>
+                                            <p className="text-xs" style={{ color: '#64748B' }}>{m.label}</p>
                                         </div>
                                     ))}
                                 </div>

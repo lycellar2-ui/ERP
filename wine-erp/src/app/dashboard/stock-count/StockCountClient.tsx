@@ -277,7 +277,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         onClick={() => setShowStats(!showStats)}
                         className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
                             showStats
-                                ? 'bg-[#87CBB9]/15 text-[#0A1926] border-[#87CBB9]/40'
+                                ? 'bg-[#87CBB9]/15 text-slate-900 border-[#87CBB9]/40'
                                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                     >
@@ -291,7 +291,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     </button>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#76BAA8] rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-900 bg-[#87CBB9] hover:bg-[#76BAA8] rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                     >
                         <Plus size={15} /> Tạo Phiếu Kiểm Kê
                     </button>
@@ -345,12 +345,12 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 onClick={() => setActiveTab(tab.key as any)}
                                 className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                                     isActive
-                                        ? 'bg-[#87CBB9]/25 text-[#0A1926] font-extrabold border border-[#87CBB9]/50 shadow-2xs'
+                                        ? 'bg-[#87CBB9]/25 text-slate-900 font-extrabold border border-[#87CBB9]/50 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold'
                                 }`}
                             >
                                 <span>{tab.label}</span>
-                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isActive ? 'bg-[#87CBB9] text-[#0A1926]' : 'bg-slate-200 text-slate-700'}`}>
+                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isActive ? 'bg-[#0891B2] text-white' : 'bg-slate-200 text-slate-700'}`}>
                                     {tab.count}
                                 </span>
                             </button>
@@ -566,7 +566,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
                                     onClick={() => setTableModalSessionId(row.id)}
-                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <FileText className="w-3.5 h-3.5" /> Bảng Điền
                                 </button>
@@ -755,7 +755,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl shadow-xs cursor-pointer"
+                                    className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold rounded-xl shadow-xs cursor-pointer"
                                 >
                                     {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu Kiểm Kê'}
                                 </button>
@@ -852,7 +852,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={handleSaveZoneAssignments}
                                 disabled={isSavingAssignments}
-                                className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl shadow-xs cursor-pointer"
+                                className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold rounded-xl shadow-xs cursor-pointer"
                             >
                                 {isSavingAssignments ? 'Đang lưu...' : 'Lưu Phân Công Vị Trí'}
                             </button>

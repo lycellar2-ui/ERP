@@ -201,7 +201,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     </h3>
                     <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
                         className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 shrink-0"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
+                        style={{ background: '#D97706', color: '#FFFFFF' }}>
                         <Plus size={12} /> Tạo DO
                     </button>
                 </div>
@@ -325,7 +325,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                         <div key={line.productId} className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg"
                                                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                             <div className="truncate pr-2 flex items-center gap-1.5 min-w-0">
-                                                                {pCode && <span className="font-mono font-extrabold text-[#4A6A7A] shrink-0">{pCode}</span>}
+                                                                {pCode && <span className="font-mono font-extrabold text-slate-500 shrink-0">{pCode}</span>}
                                                                 {pCode && pName && <span className="text-[#CBD5E1] shrink-0">•</span>}
                                                                 <span className="font-semibold text-[#0F172A] truncate">{pName || pCode || 'Sản phẩm'}</span>
                                                             </div>
@@ -346,7 +346,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <button
                                                 onClick={() => handleStartPicking(so.id)}
                                                 className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 active:scale-95"
-                                                style={{ background: '#D4A853', color: '#0A1926', minHeight: '36px' }}
+                                                style={{ background: '#D97706', color: '#FFFFFF', minHeight: '36px' }}
                                             >
                                                 Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
                                             </button>
@@ -553,7 +553,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                     <button
                                         onClick={() => window.open(`/dashboard/warehouse/print?id=${detailData.id}`, '_blank')}
                                         className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105 shadow-sm"
-                                        style={{ background: '#D4A853', color: '#0A1926' }}
+                                        style={{ background: '#D97706', color: '#FFFFFF' }}
                                     >
                                         <Printer size={14} /> In Phiếu Xuất Kho
                                     </button>
@@ -1086,7 +1086,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 onClick={() => handleSave(true)}
                 disabled={saving}
                 className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
-                style={{ background: '#D4A853', color: '#0A1926', minHeight: '46px' }}
+                style={{ background: '#D97706', color: '#FFFFFF', minHeight: '46px' }}
             >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Tạo & Xác Nhận Xuất Kho</span>
@@ -1139,12 +1139,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
                                 style={{
                                     background: mobileStep === s.step ? '#D4A853' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
-                                    color: mobileStep === s.step ? '#0A1926' : mobileStep > s.step ? '#15803D' : '#64748B',
+                                    color: mobileStep === s.step ? '#F8FAFC' : mobileStep > s.step ? '#15803D' : '#64748B',
                                 }}
                             >
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
                                     style={{
-                                        background: mobileStep === s.step ? '#0A1926' : 'transparent',
+                                        background: mobileStep === s.step ? '#F8FAFC' : 'transparent',
                                         color: mobileStep === s.step ? '#D4A853' : 'inherit',
                                         border: mobileStep === s.step ? 'none' : '1px solid currentColor',
                                     }}>
@@ -1229,7 +1229,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-xl transition-all disabled:opacity-50"
                                     style={{
                                         background: canGoStep2 ? '#D4A853' : '#F1F5F9',
-                                        color: canGoStep2 ? '#0A1926' : '#94A3B8',
+                                        color: canGoStep2 ? '#F8FAFC' : '#94A3B8',
                                         minHeight: '46px',
                                     }}>
                                     Tiếp Theo: Nhặt Hàng <ArrowRight size={16} />
@@ -1254,7 +1254,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl disabled:opacity-50"
                                         style={{
                                             background: validLinesCount > 0 ? '#D4A853' : '#F1F5F9',
-                                            color: validLinesCount > 0 ? '#0A1926' : '#94A3B8',
+                                            color: validLinesCount > 0 ? '#F8FAFC' : '#94A3B8',
                                             minHeight: '46px',
                                         }}>
                                         Xác Nhận ({validLinesCount}/{lines.length}) →

@@ -111,7 +111,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                         style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
+                        style={{ background: '#D97706', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? '...' : 'Lưu Kho'}
                     </button>

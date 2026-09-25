@@ -157,7 +157,7 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
         return (
             <div
                 className="flex items-center justify-center w-full"
-                style={{ borderBottom: '1px solid #2A4355', height: '42px' }}
+                style={{ borderBottom: '1px solid #E2E8F0', height: '42px' }}
             >
                 <Image
                     src="/logo/Ly's Cellars - Logo_icon blue green.png"
@@ -174,7 +174,7 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
     return (
         <div
             className="flex items-center px-4 w-full"
-            style={{ borderBottom: '1px solid #2A4355', height: '42px' }}
+            style={{ borderBottom: '1px solid #E2E8F0', height: '42px' }}
         >
             <Image
                 src="/logo/Ly's Cellars - Logo_tagline blue green.png"
@@ -323,8 +323,8 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
             className="flex flex-col h-screen sticky top-0 transition-all duration-200"
             style={{
                 width: collapsed ? '64px' : '240px',
-                background: '#142433',
-                borderRight: '1px solid #2A4355',
+                background: '#FFFFFF',
+                borderRight: '1px solid #E2E8F0',
             }}
         >
             {/* Logo */}
@@ -337,7 +337,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                         {!collapsed && (
                             <p
                                 className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
-                                style={{ color: '#4A6A7A' }}
+                                style={{ color: '#64748B' }}
                             >
                                 {group.label}
                             </p>
@@ -355,21 +355,21 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                                     className="flex items-center gap-3 mx-2 px-3 py-2.5 mb-0.5 transition-all duration-150"
                                     style={{
                                         borderRadius: '6px',
-                                        background: isActive ? 'rgba(135,203,185,0.12)' : 'transparent',
-                                        color: isActive ? '#87CBB9' : '#8AAEBB',
+                                        background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                        color: isActive ? '#87CBB9' : '#475569',
                                         borderLeft: isActive ? '2px solid #87CBB9' : '2px solid transparent',
                                     }}
                                     onMouseEnter={e => {
                                         handlePrefetch(item.href)
                                         if (!isActive) {
                                             e.currentTarget.style.background = 'rgba(135,203,185,0.06)'
-                                            e.currentTarget.style.color = '#E8F1F2'
+                                            e.currentTarget.style.color = '#0F172A'
                                         }
                                     }}
                                     onMouseLeave={e => {
                                         if (!isActive) {
                                             e.currentTarget.style.background = 'transparent'
-                                            e.currentTarget.style.color = '#8AAEBB'
+                                            e.currentTarget.style.color = '#475569'
                                         }
                                     }}
                                 >
@@ -385,17 +385,17 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
             </nav>
 
             {/* Bottom: Logout + Toggle */}
-            <div style={{ borderTop: '1px solid #2A4355' }}>
+            <div style={{ borderTop: '1px solid #E2E8F0' }}>
                 <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
                     className="flex items-center gap-3 w-full px-5 py-3.5 transition-colors duration-150 disabled:opacity-50"
-                    style={{ color: '#4A6A7A' }}
+                    style={{ color: '#64748B' }}
                     onMouseEnter={e => {
                         if (!isLoggingOut) e.currentTarget.style.color = '#8B1A2E'
                     }}
                     onMouseLeave={e => {
-                        if (!isLoggingOut) e.currentTarget.style.color = '#4A6A7A'
+                        if (!isLoggingOut) e.currentTarget.style.color = '#64748B'
                     }}
                 >
                     <LogOut size={16} className={`flex-shrink-0 ${isLoggingOut ? 'animate-spin' : ''}`} />
@@ -405,9 +405,9 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                 <button
                     onClick={onToggle}
                     className="flex items-center justify-center w-full py-2 transition-colors duration-150"
-                    style={{ color: '#4A6A7A', borderTop: '1px solid #2A4355' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#87CBB9')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#4A6A7A')}
+                    style={{ color: '#64748B', borderTop: '1px solid #E2E8F0' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#0891B2')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
                 >
                     {collapsed
                         ? <ChevronRight size={16} />

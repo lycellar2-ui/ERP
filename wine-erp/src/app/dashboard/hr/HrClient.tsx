@@ -143,11 +143,11 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-[#E8F1F2] flex items-center gap-2.5">
-                        <Users className="w-6 h-6 text-[#87CBB9]" />
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+                        <Users className="w-6 h-6 text-[#0891B2]" />
                         Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên
                     </h1>
-                    <p className="text-xs text-[#8AAEBB] mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                         Số hóa hồ sơ nhân sự, lưu trữ hợp đồng, giấy tờ pháp lý và cảnh báo thời hạn tự động cho Wine ERP
                     </p>
                 </div>
@@ -156,7 +156,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     <button
                         onClick={handleSendBellNotifications}
                         disabled={isSendingAlerts}
-                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg bg-[#1B2E3D] hover:bg-[#2A4355] text-amber-300 border border-amber-500/30 transition-all cursor-pointer shadow-xs"
+                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg bg-white hover:bg-[#E2E8F0] text-amber-300 border border-amber-500/30 transition-all cursor-pointer shadow-xs"
                         title="Bắn cảnh báo tới quả chuông Header của Ban Giám Đốc và Trợ Lý"
                     >
                         <BellRing className={`w-4 h-4 text-amber-400 ${isSendingAlerts ? 'animate-bounce' : ''}`} />
@@ -164,7 +164,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     </button>
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-[#87CBB9] text-[#0A1926] hover:bg-[#68B9A5] transition-all cursor-pointer shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-[#0891B2] text-white hover:bg-[#68B9A5] transition-all cursor-pointer shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Thêm Nhân Viên</span>
@@ -175,33 +175,33 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             {/* KPI Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* 1. Total */}
-                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] shadow-xs">
-                    <div className="flex items-center justify-between text-[#8AAEBB] mb-1.5">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Tổng Nhân Sự</span>
-                        <Users className="w-4 h-4 text-[#87CBB9]" />
+                        <Users className="w-4 h-4 text-[#0891B2]" />
                     </div>
                     <p className="text-2xl font-black text-white">{stats.totalEmployees}</p>
-                    <p className="text-[10px] text-[#8AAEBB] mt-0.5">Toàn bộ hồ sơ</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">Toàn bộ hồ sơ</p>
                 </div>
 
                 {/* 2. Active */}
-                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] shadow-xs">
-                    <div className="flex items-center justify-between text-[#8AAEBB] mb-1.5">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Chính Thức</span>
                         <UserCheck className="w-4 h-4 text-emerald-400" />
                     </div>
                     <p className="text-2xl font-black text-emerald-400">{stats.activeEmployees}</p>
-                    <p className="text-[10px] text-[#8AAEBB] mt-0.5">Đang làm việc</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">Đang làm việc</p>
                 </div>
 
                 {/* 3. Probation */}
-                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] shadow-xs">
-                    <div className="flex items-center justify-between text-[#8AAEBB] mb-1.5">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Thử Việc</span>
                         <Clock className="w-4 h-4 text-blue-400" />
                     </div>
                     <p className="text-2xl font-black text-blue-400">{stats.probationEmployees}</p>
-                    <p className="text-[10px] text-[#8AAEBB] mt-0.5">Chờ tiếp nhận</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">Chờ tiếp nhận</p>
                 </div>
 
                 {/* 4. Expiring Soon */}
@@ -214,7 +214,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
                         contractExpiringOnly
                             ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/40'
-                            : 'bg-[#142433] border-amber-500/30 hover:border-amber-400'
+                            : 'bg-white border-amber-500/30 hover:border-amber-400'
                     }`}
                 >
                     <div className="flex items-center justify-between text-amber-300 mb-1.5">
@@ -226,7 +226,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </div>
 
                 {/* 5. Expired */}
-                <div className="p-4 rounded-xl bg-[#142433] border border-rose-500/30 shadow-xs">
+                <div className="p-4 rounded-xl bg-white border border-rose-500/30 shadow-xs">
                     <div className="flex items-center justify-between text-rose-300 mb-1.5">
                         <span className="text-[11px] font-semibold">HĐ Đã Hết Hạn</span>
                         <AlertCircle className="w-4 h-4 text-rose-400" />
@@ -236,13 +236,13 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </div>
 
                 {/* 6. Documents Vault */}
-                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] shadow-xs">
-                    <div className="flex items-center justify-between text-[#8AAEBB] mb-1.5">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Giấy Tờ Số Hóa</span>
-                        <FileText className="w-4 h-4 text-[#87CBB9]" />
+                        <FileText className="w-4 h-4 text-[#0891B2]" />
                     </div>
-                    <p className="text-2xl font-black text-[#87CBB9]">{stats.totalDocs}</p>
-                    <p className="text-[10px] text-[#8AAEBB] mt-0.5">File PDF/ảnh đã lưu</p>
+                    <p className="text-2xl font-black text-[#0891B2]">{stats.totalDocs}</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">File PDF/ảnh đã lưu</p>
                 </div>
             </div>
 
@@ -277,17 +277,17 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             )}
 
             {/* Filter Bar */}
-            <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] space-y-3">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
                 <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Search Input */}
                     <div className="relative">
-                        <Search className="w-4 h-4 text-[#8AAEBB] absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
                             placeholder="Tìm theo tên, mã NV, SĐT, CCCD..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                         />
                     </div>
 
@@ -299,7 +299,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 setDeptId(e.target.value)
                                 fetchFilteredEmployees(search, e.target.value, status, contractExpiringOnly)
                             }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                         >
                             <option value="ALL">-- Tất cả phòng ban --</option>
                             {departments.map(d => (
@@ -316,7 +316,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 setStatus(e.target.value)
                                 fetchFilteredEmployees(search, deptId, e.target.value, contractExpiringOnly)
                             }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
                         >
                             <option value="ALL">-- Tất cả trạng thái --</option>
                             <option value="ACTIVE">Chính thức (Active)</option>
@@ -331,7 +331,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#87CBB9] text-[#0A1926] font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0891B2] text-white font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
                         >
                             <Filter className="w-3.5 h-3.5" />
                             <span>Lọc Dữ Liệu</span>
@@ -346,7 +346,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                     setContractExpiringOnly(false)
                                     fetchFilteredEmployees('', 'ALL', 'ALL', false)
                                 }}
-                                className="p-2 rounded-lg bg-[#1B2E3D] text-[#8AAEBB] hover:text-white border border-[#2A4355] transition-colors cursor-pointer"
+                                className="p-2 rounded-lg bg-white text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
                                 title="Xóa bộ lọc"
                             >
                                 <RefreshCw className="w-3.5 h-3.5" />
@@ -357,10 +357,10 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             </div>
 
             {/* Employee Data Table */}
-            <div className="rounded-xl border border-[#2A4355] bg-[#142433] overflow-hidden shadow-md">
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                        <thead className="bg-[#1B2E3D] text-[#8AAEBB] uppercase text-[10px] tracking-wider border-b border-[#2A4355]">
+                        <thead className="bg-white text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
                             <tr>
                                 <th className="px-4 py-3.5 font-bold">Nhân Viên</th>
                                 <th className="px-3 py-3.5 font-bold">Mã NV</th>
@@ -372,11 +372,11 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 <th className="px-4 py-3.5 font-bold text-right">Thao Tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#2A4355]/40 text-[#E8F1F2]">
+                        <tbody className="divide-y divide-slate-200/40 text-slate-900">
                             {employees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-[#8AAEBB]">
-                                        <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#87CBB9]" />
+                                    <td colSpan={8} className="p-8 text-center text-slate-600">
+                                        <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#0891B2]" />
                                         <p className="font-semibold text-white">Không tìm thấy nhân viên phù hợp</p>
                                         <p className="text-[11px] mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bấm "Thêm Nhân Viên" để tạo mới</p>
                                     </td>
@@ -385,22 +385,22 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 employees.map(emp => (
                                     <tr
                                         key={emp.id}
-                                        className="hover:bg-[#1B2E3D]/40 transition-colors group"
+                                        className="hover:bg-white/40 transition-colors group"
                                     >
                                         {/* Employee Name + Phone */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-[#87CBB9]/20 border border-[#87CBB9]/50 flex items-center justify-center font-bold text-[#87CBB9] shrink-0">
+                                                <div className="w-9 h-9 rounded-full bg-[#87CBB9]/20 border border-[#87CBB9]/50 flex items-center justify-center font-bold text-[#0891B2] shrink-0">
                                                     {emp.fullName.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p
                                                         onClick={() => handleOpenDetail(emp)}
-                                                        className="font-bold text-white hover:text-[#87CBB9] transition-colors cursor-pointer truncate max-w-[180px]"
+                                                        className="font-bold text-white hover:text-[#0891B2] transition-colors cursor-pointer truncate max-w-[180px]"
                                                     >
                                                         {emp.fullName}
                                                     </p>
-                                                    <p className="text-[11px] text-[#8AAEBB] truncate">
+                                                    <p className="text-[11px] text-slate-600 truncate">
                                                         {emp.phone || emp.email || '—'}
                                                     </p>
                                                 </div>
@@ -409,7 +409,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
 
                                         {/* Code */}
                                         <td className="px-3 py-3">
-                                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-[#1B2E3D] text-[#87CBB9] border border-[#2A4355]">
+                                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-[#0891B2] border border-slate-200">
                                                 {emp.code}
                                             </span>
                                         </td>
@@ -417,7 +417,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                         {/* Position & Dept */}
                                         <td className="px-3 py-3">
                                             <p className="font-semibold text-white truncate max-w-[160px]">{emp.position || '—'}</p>
-                                            <p className="text-[11px] text-[#8AAEBB] truncate max-w-[160px]">
+                                            <p className="text-[11px] text-slate-600 truncate max-w-[160px]">
                                                 {emp.dept?.name || 'Chưa phân phòng'}
                                             </p>
                                         </td>
@@ -434,7 +434,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                 </p>
                                                 {emp.contractEndDate ? (
                                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <span className="text-[11px] text-[#8AAEBB]">
+                                                        <span className="text-[11px] text-slate-600">
                                                             Hạn: {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
                                                         </span>
                                                         {emp.contractWarning === 'EXPIRING_SOON' && (
@@ -449,7 +449,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-[11px] text-[#8AAEBB]">Vô thời hạn</span>
+                                                    <span className="text-[11px] text-slate-600">Vô thời hạn</span>
                                                 )}
                                             </div>
                                         </td>
@@ -459,7 +459,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                             <div className="flex items-center justify-center gap-1.5">
                                                 <button
                                                     onClick={() => handleOpenDetail(emp)}
-                                                    className="flex items-center gap-1 px-2 py-1 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-xs font-semibold text-[#87CBB9] border border-[#2A4355] transition-colors cursor-pointer"
+                                                    className="flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-[#E2E8F0] text-xs font-semibold text-[#0891B2] border border-slate-200 transition-colors cursor-pointer"
                                                     title="Xem kho giấy tờ"
                                                 >
                                                     <FileText className="w-3.5 h-3.5" />
@@ -467,7 +467,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                 </button>
                                                 <button
                                                     onClick={() => setQuickUploadEmp({ id: emp.id, name: emp.fullName })}
-                                                    className="p-1 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[#8AAEBB] hover:text-white border border-[#2A4355] transition-colors cursor-pointer"
+                                                    className="p-1 rounded bg-white hover:bg-[#E2E8F0] text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
                                                     title="Tải thêm giấy tờ"
                                                 >
                                                     <Upload className="w-3.5 h-3.5" />
@@ -479,13 +479,13 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                         <td className="px-3 py-3">
                                             {emp.user ? (
                                                 <div className="flex items-center gap-1.5">
-                                                    <Shield className="w-3.5 h-3.5 text-[#87CBB9] shrink-0" />
+                                                    <Shield className="w-3.5 h-3.5 text-[#0891B2] shrink-0" />
                                                     <span className="font-semibold text-white truncate max-w-[130px]" title={emp.user.email}>
                                                         {emp.user.name}
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-[#8AAEBB] italic text-[11px]">Chưa liên kết</span>
+                                                <span className="text-slate-600 italic text-[11px]">Chưa liên kết</span>
                                             )}
                                         </td>
 
@@ -511,14 +511,14 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => handleOpenDetail(emp)}
-                                                    className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-[#87CBB9] hover:bg-[#1B2E3D] transition-colors cursor-pointer"
+                                                    className="p-1.5 rounded-lg text-slate-600 hover:text-[#0891B2] hover:bg-white transition-colors cursor-pointer"
                                                     title="Xem chi tiết hồ sơ"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleOpenEdit(emp)}
-                                                    className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-white hover:bg-[#1B2E3D] transition-colors cursor-pointer"
+                                                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors cursor-pointer"
                                                     title="Sửa thông tin"
                                                 >
                                                     <Edit className="w-4 h-4" />

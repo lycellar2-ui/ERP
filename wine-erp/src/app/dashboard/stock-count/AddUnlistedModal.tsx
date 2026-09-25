@@ -257,7 +257,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         <button
                             type="submit"
                             disabled={isSubmitting || !selectedProduct}
-                            className="px-5 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-5 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <RefreshCw className="w-4 h-4 animate-spin" />

@@ -986,7 +986,7 @@ export async function exportARAgingHTML(): Promise<{ success: boolean; html?: st
   .bucket .label { font-size: 10px; color: #888; text-transform: uppercase; }
   .bucket .value { font-size: 16px; font-weight: bold; margin-top: 4px; }
   table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-  th { background: #2A4355; color: #fff; padding: 8px 6px; text-align: left; font-size: 10px; text-transform: uppercase; }
+  th { background: #E2E8F0; color: #fff; padding: 8px 6px; text-align: left; font-size: 10px; text-transform: uppercase; }
   td { padding: 6px; border-bottom: 1px solid #e5e5e5; }
   tr:nth-child(even) { background: #f8f8f8; }
   .right { text-align: right; }

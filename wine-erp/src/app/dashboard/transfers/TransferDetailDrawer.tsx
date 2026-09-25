@@ -287,8 +287,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between shrink-0" style={{ background: '#FFFFFF' }}>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(135, 203, 185, 0.15)', color: '#0A1926', border: '1px solid rgba(135, 203, 185, 0.3)' }}>
-                                <ArrowRightLeft size={18} style={{ color: '#0A1926' }} />
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0F172A', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
+                                <ArrowRightLeft size={18} style={{ color: '#0F172A' }} />
                             </div>
                             <div>
                                 <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>
@@ -361,7 +361,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             disabled={actionLoading}
                                             onClick={handleSubmitDraft}
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs"
-                                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                                            style={{ background: '#0891B2', color: '#FFFFFF' }}
                                         >
                                             Gửi Kế Toán Duyệt
                                         </button>
@@ -391,7 +391,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         disabled={actionLoading}
                                                         onClick={handleApprove}
                                                         className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                                                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                                                        style={{ background: '#0891B2', color: '#FFFFFF' }}
                                                     >
                                                         <Check size={15} /> Duyệt Phiếu Chuyển Kho
                                                     </button>
@@ -451,7 +451,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             disabled={actionLoading || loadingLocations}
                                             onClick={openReceiveModal}
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                                            style={{ background: '#0891B2', color: '#FFFFFF' }}
                                         >
                                             {loadingLocations ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
                                             Kiểm Đếm &amp; Nhận Hàng
@@ -917,20 +917,20 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING & PICKING */}
             {printModalOpen && detail && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-[#0D1821] border border-[#2A4355] rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                    <div className="bg-[#0D1821] border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar (Non-printable) */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433] print:hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-3">
-                                <div className="flex p-0.5 rounded-lg bg-[#0D1821] border border-[#2A4355]">
+                                <div className="flex p-0.5 rounded-lg bg-[#0D1821] border border-slate-200">
                                     <button
                                         onClick={() => setPrintDocType('VOUCHER')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#87CBB9] text-[#0A1926]' : 'text-slate-300 hover:text-white'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0891B2] text-white' : 'text-slate-300 hover:text-white'}`}
                                     >
                                         📄 Phiếu Chuyển Kho A4
                                     </button>
                                     <button
                                         onClick={() => setPrintDocType('PICK_LIST')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'PICK_LIST' ? 'bg-[#38BDF8] text-[#0A1926]' : 'text-slate-300 hover:text-white'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'PICK_LIST' ? 'bg-[#38BDF8] text-slate-900' : 'text-slate-300 hover:text-white'}`}
                                     >
                                         📋 Danh Sách Nhặt Hàng (Pick List)
                                     </button>
@@ -945,7 +945,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 </button>
                                 <button
                                     onClick={() => setPrintModalOpen(false)}
-                                    className="p-1 text-slate-400 hover:text-white rounded bg-[#1F3547] cursor-pointer"
+                                    className="p-1 text-slate-400 hover:text-slate-900 rounded bg-slate-50 cursor-pointer"
                                 >
                                     <X size={18} />
                                 </button>
