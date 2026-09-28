@@ -6,7 +6,7 @@ import {
     Users, Search, Phone, Mail, Handshake, Wine,
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
     ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle,
-    ArrowUpDown, ArrowDown, ArrowUp, Gem, Target
+    ArrowUpDown, ArrowDown, ArrowUp, Gem, Target, PhoneCall
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
@@ -16,6 +16,7 @@ import { ComplaintTicketsPanel } from './ComplaintTicketsPanel'
 import { WinePreferencePanel } from './WinePreferencePanel'
 import { WeeklyVisitPlannerPanel } from './WeeklyVisitPlannerPanel'
 import { PipelinePanel } from './PipelinePanel'
+import { TelesalesProspectingPanel } from './TelesalesProspectingPanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -200,7 +201,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [tierRecalcing, setTierRecalcing] = useState(false)
     const searchParams = useSearchParams()
     const initialTab = (searchParams.get('tab') as any) || 'customers'
-    const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints' | 'visits' | 'pipeline'>(initialTab)
+    const [crmTab, setCrmTab] = useState<'customers' | 'calls' | 'events' | 'complaints' | 'visits' | 'pipeline'>(initialTab)
     const [sortBy, setSortBy] = useState<'revenue' | 'orders' | 'name'>('revenue')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -315,6 +316,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
                 {([
                     { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
+                    { key: 'calls' as const, label: 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
                     { key: 'pipeline' as const, label: 'Cơ hội bán hàng (Pipeline)', icon: Target },
                     { key: 'visits' as const, label: 'Kế hoạch tuần', icon: Calendar },
                     { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Wine },
@@ -331,6 +333,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     </button>
                 ))}
             </div>
+
+            {/* Tab: Telesales & Prospecting (Corporate & Retail Calls & Targets) */}
+            {crmTab === 'calls' && <TelesalesProspectingPanel />}
 
             {/* Tab: Weekly Visit Planner */}
             {crmTab === 'visits' && <WeeklyVisitPlannerPanel />}

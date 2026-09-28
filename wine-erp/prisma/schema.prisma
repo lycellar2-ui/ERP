@@ -110,6 +110,9 @@ model User {
   createdStockCounts     StockCountSession[] @relation("CreatedStockCounts")
   assignedCountLines     StockCountLine[]   @relation("AssignedCountLines")
   employee               Employee?          @relation("EmployeeUser")
+  callLogs               SalesCallLog[]     @relation("SalesCallLogUser")
+  callPlansAsRep         SalesCallPlan[]    @relation("SalesCallPlanRep")
+  callPlansAssigned      SalesCallPlan[]    @relation("SalesCallPlanAssigner")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -566,6 +569,8 @@ model Customer {
   customerProductCodes CustomerProductCode[]
   visitSchedules SalesVisitSchedule[]
   salesVisits    SalesVisit[]           @relation("CustomerSalesVisits")
+  callLogs       SalesCallLog[]
+  callPlans      SalesCallPlan[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -827,6 +832,63 @@ model WinePreference {
   updatedAt       DateTime @updatedAt
 
   @@map("wine_preferences")
+}
+
+// =============================================================
+// CRM Telesales & Prospecting: Sales Call Logs
+// =============================================================
+model SalesCallLog {
+  id              String        @id @default(cuid())
+  salespersonId   String
+  salesperson     User          @relation("SalesCallLogUser", fields: [salespersonId], references: [id])
+  channel         SalesChannel  @default(CORPORATE)
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  prospectName    String
+  prospectCompany String?
+  phone           String
+  callType        String
+  outcome         String
+  notes           String?
+  followUpDate    DateTime?
+  durationMinutes Int           @default(3)
+  calledAt        DateTime      @default(now())
+  callPlan        SalesCallPlan? @relation("PlanCallLog")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([salespersonId, calledAt])
+  @@index([channel, calledAt])
+  @@map("sales_call_logs")
+}
+
+model SalesCallPlan {
+  id              String        @id @default(cuid())
+  salespersonId   String
+  salesperson     User          @relation("SalesCallPlanRep", fields: [salespersonId], references: [id], onDelete: Cascade)
+  assignedById    String?
+  assignedBy      User?         @relation("SalesCallPlanAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  planDate        DateTime
+  channel         SalesChannel  @default(CORPORATE)
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  prospectName    String
+  prospectCompany String?
+  phone           String
+  callType        String        @default("Giới thiệu chào hàng mới")
+  priority        String        @default("NORMAL")
+  status          String        @default("PENDING")
+  notes           String?
+  scheduledTime   String?
+  callLogId       String?       @unique
+  callLog         SalesCallLog? @relation("PlanCallLog", fields: [callLogId], references: [id], onDelete: SetNull)
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([salespersonId, planDate])
+  @@index([status, planDate])
+  @@map("sales_call_plans")
 }
 
 // =============================================================

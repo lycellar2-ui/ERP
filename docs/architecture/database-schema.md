@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (126 models, 79 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (130 models, 82 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -241,6 +241,38 @@ erDiagram
         severity    enum
         status      enum
         resolution  text
+    }
+    SalesCallLog {
+        id              uuid PK
+        salesperson_id  uuid FK
+        channel         enum
+        customer_id     uuid FK_nullable
+        prospect_name   string
+        prospect_company string
+        phone           string
+        call_type       string
+        outcome         string
+        notes           text
+        follow_up_date  datetime
+        called_at       datetime
+    }
+    SalesCallPlan {
+        id              uuid PK
+        salesperson_id  uuid FK
+        assigned_by_id  uuid FK_nullable
+        plan_date       date
+        channel         enum
+        customer_id     uuid FK_nullable
+        prospect_name   string
+        prospect_company string
+        phone           string
+        call_type       string
+        priority        string
+        status          string
+        notes           text
+        scheduled_time  string
+        call_log_id     uuid FK_nullable
+        completed_at    datetime
     }
 
     %% ── CNT DOMAIN ──────────────────────────────────────────
@@ -593,7 +625,9 @@ erDiagram
     Customer ||--o{ CustomerActivity : "có hoạt động"
     Customer ||--o{ SalesOpportunity : "có cơ hội"
     Customer ||--o{ ComplaintTicket : "có khiếu nại"
+    Customer ||--o{ SalesCallLog : "có cuộc gọi"
     CustomerActivity }o--|| User : "thực hiện bởi"
+    SalesCallLog }o--|| User : "thực hiện bởi"
 
     %% CNT
     Contract }o--o| Supplier : "với NCC"
