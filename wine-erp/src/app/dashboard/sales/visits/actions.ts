@@ -4,10 +4,16 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { requireAuth, SessionUser } from '@/lib/session'
 
-const MANAGER_ROLES = ['Admin', 'ADMIN', 'Sales Manager', 'SALES_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC', 'Trợ Lý', 'TRO_LY', 'Trợ lý', 'trợ lý', 'assistant', 'ASSISTANT']
+const MANAGER_ROLES = ['Admin', 'ADMIN', 'Sales Manager', 'SALES_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC', 'Trợ Lý', 'TRO_LY', 'Trợ lý', 'trợ lý', 'assistant', 'ASSISTANT', 'CBO']
 
 function checkIsManager(user: SessionUser): boolean {
     return user.roles?.some(r => MANAGER_ROLES.includes(r)) || false
+}
+
+function checkIsCEO(user: SessionUser): boolean {
+    const isRoleCEO = user.roles?.some(r => ['CEO', 'Admin', 'ADMIN', 'Ban Giám Đốc', 'BAN_GIAM_DOC'].includes(r)) || false
+    const isEmailCEO = user.email === 'admin@lyscellars.com' || user.email === 'lyptc@lyscellars.com'
+    return isRoleCEO || isEmailCEO
 }
 
 export interface CheckInPayload {
@@ -759,9 +765,34 @@ export async function saveManagerFeedbackAction(input: {
         }
 
         const plan = await prisma.weeklyVisitPlan.findUnique({
-            where: { id: input.planId }
+            where: { id: input.planId },
+            include: {
+                salesRep: {
+                    include: {
+                        roles: { include: { role: true } }
+                    }
+                }
+            }
         })
         if (!plan) return { success: false, error: 'Không tìm thấy kế hoạch tuần' }
+
+        // Rule 1: Không được tự thẩm định/phê duyệt kế hoạch của chính mình
+        if (plan.salesRepId === user.id) {
+            return { success: false, error: 'Bạn không thể tự thẩm định và phê duyệt kế hoạch tuần của chính mình.' }
+        }
+
+        // Rule 2: CEO là cấp thẩm định và phê duyệt duy nhất đối với Jeremie (CBO)
+        const isTargetJeremieOrCBO =
+            plan.salesRepId === '8f7e6d5c-4b3a-2f1e-0d9c-8b7a6f5e4d3c' ||
+            plan.salesRep?.email === 'jeremie.courivault@lyscellars.com' ||
+            plan.salesRep?.roles?.some(r => r.role?.name === 'CBO')
+
+        if (isTargetJeremieOrCBO && !checkIsCEO(user)) {
+            return {
+                success: false,
+                error: 'Kế hoạch tuần và báo cáo của Jeremie (CBO) chịu sự kiểm soát trực tiếp từ CEO. Chỉ CEO (Ban Giám Đốc) mới có quyền thẩm định và phê duyệt.'
+            }
+        }
 
         const updated = await prisma.weeklyVisitPlan.update({
             where: { id: input.planId },
@@ -806,21 +837,34 @@ export async function getTeamWeeklySalesOverview(weekNumber: number, year: numbe
         end.setDate(start.getDate() + 6)
         end.setHours(23, 59, 59, 999)
 
-        // 1. Get all active users with Sales Rep role
+        // 1. Get all active users with Sales Rep role, CBO role, or Jeremie
         const users = await prisma.user.findMany({
             where: {
                 status: 'ACTIVE',
-                roles: {
-                    some: {
-                        role: {
-                            name: {
-                                in: ['Sales Rep', 'SALES_REP']
+                OR: [
+                    {
+                        roles: {
+                            some: {
+                                role: {
+                                    name: {
+                                        in: ['Sales Rep', 'SALES_REP', 'CBO']
+                                    }
+                                }
                             }
                         }
+                    },
+                    {
+                        email: 'jeremie.courivault@lyscellars.com'
+                    }
+                ]
+            },
+            include: {
+                roles: {
+                    include: {
+                        role: true
                     }
                 }
             },
-            select: { id: true, name: true, email: true },
             orderBy: { name: 'asc' }
         })
 
@@ -859,10 +903,14 @@ export async function getTeamWeeklySalesOverview(weekNumber: number, year: numbe
             const unplannedCount = uVisits.filter(v => v.isUnplanned).length
             const completionRate = plannedCount > 0 ? Math.min(100, Math.round((completedCount / plannedCount) * 100)) : 0
 
+            const isCboUser = u.roles?.some(r => r.role?.name === 'CBO') || u.email === 'jeremie.courivault@lyscellars.com'
+
             return {
                 salespersonId: u.id,
                 salespersonName: u.name,
                 salespersonEmail: u.email,
+                isCbo: isCboUser,
+                roles: (u.roles || []).map(r => r.role?.name).filter(Boolean),
                 planId: plan?.id || null,
                 planStatus: plan?.status || 'NOT_CREATED', // NOT_CREATED, DRAFT, SUBMITTED, APPROVED
                 plannedCount,

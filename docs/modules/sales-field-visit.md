@@ -3,7 +3,7 @@
 > **Route:** `/dashboard/sales/visits`
 > **Tiêu đề trang & Menu:** Quản Lý Check-in Thị Trường
 > **Mã module:** SFV
-> **Cập nhật ngày:** 2026-09-23 (Chuẩn hóa copy doanh nghiệp, loại bỏ AI slop, tối ưu SSR pre-fetching và tốc độ tải trang tức thì <1s)
+> **Cập nhật ngày:** 2026-09-29 (Bổ sung cơ chế check-in thị trường cho CBO Jeremie Courivault với quyền kiểm soát và phê duyệt trực tiếp duy nhất từ CEO)
 
 ---
 
@@ -160,8 +160,17 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
     - Khi kế hoạch tuần đã được bấm chốt nộp (`SUBMITTED`) hoặc Quản lý đã phê duyệt (`APPROVED`), toàn bộ báo cáo tuần đó được đóng băng để phục vụ đối soát và tính KPI.
   - **Giao diện Client (`QuickReportModal.tsx`):**
     - Khi ở trạng thái khóa chỉ đọc, hiển thị banner cảnh báo: `🔒 Báo cáo đã khóa: Báo cáo của tuần trước hoặc kế hoạch đã chốt duyệt không thể chỉnh sửa bởi nhân viên sales.` và vô hiệu hóa các nút lưu/thẻ gợi ý.
-- **Quyền Quản Trị Của Quản Lý (Manager Override):**
-  - Quản lý / Ban Giám Đốc (`isManager === true`) giữ toàn quyền điều chỉnh, bổ sung nhận xét hoặc thẩm định lại bất kỳ kế hoạch và báo cáo nào trong quá khứ khi cần thiết.
+### 13. Cơ Chế Check-in Thực Địa Cho CBO Jeremie & Thẩm Quyền Kiểm Soát Độc Quyền Của CEO (CBO Field Check-in & CEO Direct Oversight)
+- **Bối cảnh & Yêu cầu:** CBO Jeremie Courivault (`jeremie.courivault@lyscellars.com`) giữ vai trò Giám đốc Kinh doanh (CBO) nhưng có nhiệm vụ trực tiếp viếng thăm khách hàng VIP/Key Accounts nên bắt buộc phải thực hiện quy trình Check-in thực địa (ảnh chụp camera + toạ độ GPS + lập kế hoạch tuần) như các nhân sự Sales Rep.
+- **Thẩm Quyền Thẩm Định & Phê Duyệt (Exclusive Oversight):**
+  - **Chỉ CEO mới có quyền kiểm soát & duyệt:** Chỉ tài khoản CEO (`admin@lyscellars.com`, `lyptc@lyscellars.com` hoặc có role `CEO`, `Admin`, `Ban Giám Đốc`) mới có thẩm quyền thẩm định, nhận xét và bấm nút **"Lưu đánh giá & Duyệt"** kế hoạch tuần của Jeremie.
+  - **Chặn tự phê duyệt (Anti Self-Approval):** Server Action `saveManagerFeedbackAction` chặn tuyệt đối không cho phép tự duyệt kế hoạch của chính mình (`plan.salesRepId === user.id`).
+  - **Chặn quản lý cấp trung duyệt CBO:** Các quản lý khác không phải CEO khi mở modal thẩm định của Jeremie sẽ bị vô hiệu hóa khung nhập nhận xét, nút duyệt bị khóa kèm banner cảnh báo bảo mật: `🔒 Giới hạn quyền hạn: Chỉ CEO mới có quyền thẩm định và phê duyệt kế hoạch của CBO Jeremie Courivault.`
+  - **Banner dành riêng cho CEO:** Khi CEO vào thẩm định Jeremie, hệ thống hiển thị banner xác nhận thẩm quyền: `👑 Thẩm quyền riêng của CEO: Bạn đang kiểm soát và phê duyệt kế hoạch của CBO Jeremie Courivault.`
+- **Giao diện Song Hành (Hybrid Mode UI):**
+  - Khi Jeremie đăng nhập vào `/dashboard/sales/visits`: Mặc định ưu tiên hiển thị giao diện tác nghiệp thực địa (Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Thư viện ảnh).
+  - Tích hợp thêm nút tab **`[🛡️ Giám Sát Đội Ngũ]` (Executive Board)** trên cả thanh tab Desktop và thanh Bottom Bar Mobile để Jeremie có thể chuyển sang chế độ quản lý giám sát số liệu toàn đội ngũ Sales Rep.
+  - Trên Bảng Giám Sát, dòng của Jeremie được gắn huy hiệu nổi bật: `[CBO • CEO TRỰC TIẾP KIỂM SOÁT]`.
 
 ## Files
 

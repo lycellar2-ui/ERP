@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-26 17:30 | Wine ERP v10.41 - Bổ sung Kế Hoạch Cuộc Gọi & Báo Cáo Cuộc Gọi Telesales (SalesCallPlan)*
+*Last updated: 2026-09-29 08:35 | Wine ERP v10.42 - Bổ sung Phân Quyền Check-in CBO Jeremie Courivault & CEO Trực Tiếp Kiểm Soát*
 

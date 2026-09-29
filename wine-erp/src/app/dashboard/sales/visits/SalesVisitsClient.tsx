@@ -26,6 +26,8 @@ interface Props {
     currentUserId: string
     currentUserName: string
     isManager: boolean
+    isCboOrExecutiveRep?: boolean
+    isCeoController?: boolean
     initialTeamData?: any
     initialPlan?: any
 }
@@ -453,9 +455,19 @@ function PhotoViewerModal({
     )
 }
 
-export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager, initialTeamData, initialPlan }: Props) {
+export function SalesVisitsClient({
+    initialVisits,
+    customers,
+    currentUserId,
+    currentUserName,
+    isManager,
+    isCboOrExecutiveRep = false,
+    isCeoController = false,
+    initialTeamData,
+    initialPlan
+}: Props) {
     const { locale, setLocale, toggleLocale, t } = useVisitLocale()
-    const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
+    const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY' | 'TEAM_OVERVIEW'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
     const selectedSalespersonId = currentUserId
 
@@ -844,13 +856,13 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
     const isFirstTeamRef = useRef(true)
     useEffect(() => {
-        if (!isManager) return
+        if (!isManager && !isCboOrExecutiveRep) return
         if (isFirstTeamRef.current && initialTeamData) {
             isFirstTeamRef.current = false
             return
         }
         loadTeamData()
-    }, [isManager, currentWeek, loadTeamData, initialTeamData])
+    }, [isManager, isCboOrExecutiveRep, currentWeek, loadTeamData, initialTeamData])
 
     const teamMetrics = useMemo(() => {
         if (!teamData || !teamData.items) return null
@@ -1393,7 +1405,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
     // DEDICATED MANAGER VIEW (EXECUTIVE FIELD OPERATIONS REPORT)
     // Managers do NOT check in, no tabs, direct team report matrix & photos
     // -----------------------------------------------------------------
-    if (isManager) {
+    if (isManager || (isCboOrExecutiveRep && activeTab === 'TEAM_OVERVIEW')) {
         return (
             <div className="space-y-3 sm:space-y-4 max-w-screen-xl mx-auto pb-16">
                 {/* 1. TOP COMPACT HEADER & CONTROLS */}
@@ -1406,9 +1418,19 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                                 {t.header.title}
                             </h2>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                                {t.header.managerBadge}
-                            </span>
+                            {isCeoController ? (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 uppercase tracking-wider flex items-center gap-1">
+                                    <ShieldCheck size={11} /> {locale === 'en' ? 'CEO Oversight Board' : 'Ban Giám Đốc • Kiểm Soát'}
+                                </span>
+                            ) : isCboOrExecutiveRep ? (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 uppercase tracking-wider flex items-center gap-1">
+                                    <ShieldCheck size={11} /> {locale === 'en' ? 'CBO View' : 'CBO • Giám Sát'}
+                                </span>
+                            ) : (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                    {t.header.managerBadge}
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -1478,6 +1500,18 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <RefreshCw size={12} className={loadingTeam ? "animate-spin" : ""} />
                             <span>{loadingTeam ? t.header.refreshing : t.header.refresh}</span>
                         </button>
+
+                        {/* Return to personal check-in view if CBO Jeremie */}
+                        {isCboOrExecutiveRep && (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('CHECKIN')}
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                            >
+                                <MapPin size={12} />
+                                <span>{locale === 'en' ? 'My Check-in & Planning' : 'Tác Nghiệp Check-in Cá Nhân'}</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -1586,9 +1620,14 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     {filteredTeamItems.map((item: any) => (
                                         <tr key={item.salespersonId} className="hover:bg-slate-50/80 dark:hover:bg-white transition">
                                             <td className="p-3.5">
-                                                <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                                                     <User size={13} className="text-teal-600 dark:text-[#0891B2]" />
-                                                    {item.salespersonName}
+                                                    <span>{item.salespersonName}</span>
+                                                    {item.isCbo && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 tracking-wider">
+                                                            {locale === 'en' ? 'CBO • CEO DIRECT OVERSIGHT' : 'CBO • CEO TRỰC TIẾP KIỂM SOÁT'}
+                                                        </span>
+                                                    )}
                                                     {item.salespersonId === currentUserId && (
                                                         <span className="text-[10px] text-slate-400 font-normal">
                                                             {locale === 'en' ? '(Me)' : '(Tôi)'}
@@ -1915,12 +1954,37 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                             <label className="block font-bold text-slate-700 dark:text-slate-200">
                                                 {locale === 'en' ? 'Manager Feedback:' : 'Nhận xét của Quản lý:'}
                                             </label>
+
+                                            {/* CEO Exclusive Authority Notice for Jeremie (CBO) */}
+                                            {inspectingSale.isCbo && (
+                                                isCeoController ? (
+                                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
+                                                        <ShieldCheck size={16} className="text-amber-600 shrink-0" />
+                                                        <span className="font-semibold">
+                                                            {locale === 'en'
+                                                                ? '👑 CEO Exclusive Authority: You are evaluating and approving CBO Jeremie Courivault.'
+                                                                : '👑 Thẩm quyền riêng của CEO: Bạn đang kiểm soát và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-200 text-xs flex items-center gap-2">
+                                                        <Lock size={16} className="text-rose-600 shrink-0" />
+                                                        <span className="font-semibold">
+                                                            {locale === 'en'
+                                                                ? '🔒 Restricted: Only CEO has the authority to evaluate and approve CBO Jeremie Courivault.'
+                                                                : '🔒 Giới hạn quyền hạn: Chỉ CEO mới có quyền thẩm định và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            )}
+
                                             <textarea
                                                 rows={4}
                                                 value={inspectFeedbackText}
                                                 onChange={e => setInspectFeedbackText(e.target.value)}
+                                                disabled={inspectingSale.isCbo && !isCeoController}
                                                 placeholder={locale === 'en' ? 'Enter feedback or notes for this sales rep...' : 'Nhập nhận xét hoặc lưu ý cho nhân viên...'}
-                                                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200 text-slate-900 dark:text-slate-900 outline-none focus:border-teal-500 text-xs"
+                                                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200 text-slate-900 dark:text-slate-900 outline-none focus:border-teal-500 text-xs disabled:opacity-50"
                                             />
                                             <div className="flex items-center justify-between pt-2">
                                                 <span className="text-[11px] text-slate-400">
@@ -1929,8 +1993,8 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                                 <button
                                                     type="button"
                                                     onClick={handleSaveInspectFeedback}
-                                                    disabled={savingInspectFeedback || !inspectingSale.planId}
-                                                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                                    disabled={savingInspectFeedback || !inspectingSale.planId || (inspectingSale.isCbo && !isCeoController)}
+                                                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     <CheckCircle2 size={15} />
                                                     {savingInspectFeedback ? (locale === 'en' ? 'Saving...' : 'Đang lưu...') : (locale === 'en' ? 'Save Review & Approve' : 'Lưu đánh giá & Duyệt')}
@@ -2082,6 +2146,21 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                             <FileText size={13} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#0891B2]' : ''} />
                             <span>{t.tabs.photos}</span>
                         </button>
+
+                        {isCboOrExecutiveRep && (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('TEAM_OVERVIEW')}
+                                className={`py-1.5 px-3 rounded-md font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    activeTab === 'TEAM_OVERVIEW'
+                                        ? 'bg-amber-600 text-white shadow-xs'
+                                        : 'text-amber-700 dark:text-amber-400 hover:text-amber-800 bg-amber-500/10'
+                                }`}
+                            >
+                                <ShieldCheck size={13} className={activeTab === 'TEAM_OVERVIEW' ? 'text-white' : 'text-amber-600 dark:text-amber-400'} />
+                                <span>{locale === 'en' ? 'Executive Board' : 'Giám Sát Đội Ngũ'}</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Desktop Language Switcher */}
@@ -4130,6 +4209,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 </div>
             )}
 
+
             {/* ============================================================== */}
             {/* LIVE CAMERA MODAL */}
             {/* ============================================================== */}
@@ -4180,6 +4260,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                 locale={locale}
                 readOnly={isQuickReportReadOnly}
             />
+
 
             {/* ============================================================== */}
             {/* MOBILE FIXED BOTTOM NAVIGATION BAR (TOUCH-OPTIMIZED APP SHELL) */}
@@ -4257,6 +4338,23 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Photos' : 'Hình ảnh'}</span>
                 </button>
+
+                {isCboOrExecutiveRep && (
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('TEAM_OVERVIEW')}
+                        className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                            activeTab === 'TEAM_OVERVIEW'
+                                ? 'text-amber-600 font-bold'
+                                : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-white'
+                        }`}
+                    >
+                        <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'TEAM_OVERVIEW' ? 'bg-amber-500/15 ring-1 ring-amber-500/30' : ''}`}>
+                            <ShieldCheck size={18} />
+                        </div>
+                        <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Board' : 'Giám sát'}</span>
+                    </button>
+                )}
             </div>
         </div>
     )

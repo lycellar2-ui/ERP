@@ -29,13 +29,21 @@ export default async function SalesVisitsPage() {
         }) as any
     }
 
-    const managerRoleKeywords = ['admin', 'sales manager', 'ceo', 'manager', 'ban giám đốc', 'system admin', 'trợ lý', 'tro ly', 'assistant']
-    const isManager = Boolean(
-        user?.roles?.some((r: any) => {
-            const roleName = typeof r === 'string' ? r : r.role?.name || r.name
-            return typeof roleName === 'string' && managerRoleKeywords.includes(roleName.trim().toLowerCase())
-        })
-    )
+    const userEmail = (user?.email || '').toLowerCase()
+    const userRoleNames = (user?.roles || []).map((r: any) => {
+        const name = typeof r === 'string' ? r : r.role?.name || r.name || ''
+        return name.trim().toLowerCase()
+    })
+
+    const isCEO = userRoleNames.some(r => ['ceo', 'admin', 'ban giám đốc', 'system admin'].includes(r)) ||
+        userEmail === 'admin@lyscellars.com' ||
+        userEmail === 'lyptc@lyscellars.com'
+
+    const isJeremie = userEmail === 'jeremie.courivault@lyscellars.com' || userRoleNames.includes('cbo')
+
+    // Chỉ có CEO / Ban Giám Đốc thuần quản lý mới ở chế độ xem Giám Sát chuyên biệt
+    // Jeremie (CBO) cần check-in thực địa nên sẽ ưu tiên giao diện Check-in & Kế hoạch
+    const isManagerOnly = isCEO && !isJeremie
 
     const now = new Date()
     const weekInfo = getWeekNumber(now)
@@ -46,8 +54,30 @@ export default async function SalesVisitsPage() {
     let initialPlan: any = null
     let customers: any[] = []
 
-    if (isManager) {
-        // Manager priority: Team overview data pre-loaded for instant first paint
+    if (isJeremie) {
+        // Jeremie (CBO): Nạp song song dữ liệu Check-in cá nhân + Khách hàng + Bảng giám sát cấp CBO
+        const [repVisits, planRes, customersList, teamRes] = await Promise.all([
+            getSalesVisits({ limit: 20, salespersonId: user?.id }),
+            getWeeklyPlanWithVisits(user?.id || '', weekInfo.week, weekInfo.year),
+            prisma.customer.findMany({
+                where: { deletedAt: null },
+                select: {
+                    id: true,
+                    code: true,
+                    name: true,
+                    channel: true,
+                },
+                orderBy: { name: 'asc' },
+                take: 300,
+            }),
+            getTeamWeeklySalesOverview(weekInfo.week, weekInfo.year),
+        ])
+        visits = repVisits || []
+        if (planRes.success) initialPlan = planRes
+        customers = customersList || []
+        if (teamRes.success) initialTeamData = teamRes
+    } else if (isManagerOnly) {
+        // Quản lý / CEO: Ưu tiên tải tức thì Bảng Giám Sát Đội Ngũ
         const [teamRes, recentVisits] = await Promise.all([
             getTeamWeeklySalesOverview(weekInfo.week, weekInfo.year),
             getSalesVisits({ limit: 20 }),
@@ -57,7 +87,7 @@ export default async function SalesVisitsPage() {
         }
         visits = recentVisits || []
     } else {
-        // Sales Rep priority: Today's visits, weekly plan, and customer list
+        // Sales Rep thực địa: Tải lịch trình tuần, lượt viếng thăm và danh sách khách hàng
         const [repVisits, planRes, customersList] = await Promise.all([
             getSalesVisits({ limit: 20, salespersonId: user?.id }),
             getWeeklyPlanWithVisits(user?.id || '', weekInfo.week, weekInfo.year),
@@ -86,8 +116,10 @@ export default async function SalesVisitsPage() {
                 initialVisits={visits}
                 customers={customers}
                 currentUserId={user?.id || 'sys-user'}
-                currentUserName={user?.name || 'Sales Rep'}
-                isManager={isManager}
+                currentUserName={user?.name || (isJeremie ? 'Jeremy (CBO)' : 'Sales Rep')}
+                isManager={isManagerOnly}
+                isCboOrExecutiveRep={isJeremie}
+                isCeoController={isCEO}
                 initialTeamData={initialTeamData}
                 initialPlan={initialPlan}
             />
