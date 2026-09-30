@@ -83,6 +83,12 @@ export async function middleware(request: NextRequest) {
         if (hasSessionCookie) {
             const { createServerClient } = await import('@supabase/ssr')
             const supabase = createServerClient(supabaseUrl, supabaseKey, {
+                cookieOptions: {
+                    maxAge: 60 * 60 * 24 * 365, // 365 days persistent session
+                    sameSite: 'lax',
+                    secure: process.env.NODE_ENV === 'production',
+                    path: '/',
+                },
                 cookies: {
                     getAll() {
                         return request.cookies.getAll()
@@ -95,17 +101,23 @@ export async function middleware(request: NextRequest) {
                             },
                         })
                         cookiesToSet.forEach(({ name, value, options }) =>
-                            supabaseResponse.cookies.set(name, value, options)
+                            supabaseResponse.cookies.set(name, value, {
+                                ...options,
+                                maxAge: 60 * 60 * 24 * 365, // Enforce 365 days persistence
+                                sameSite: 'lax',
+                                secure: process.env.NODE_ENV === 'production',
+                                path: '/',
+                            })
                         )
                     },
                 },
             })
 
             try {
-                // Set a strict timeout to prevent 504 Gateway Timeout if Supabase is cold-starting
+                // Generous timeout (4000ms) to ensure mobile 4G latency never aborts token refresh
                 const authPromise = supabase.auth.getUser()
                 const timeoutPromise = new Promise<{ data: { user: null } }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Auth check timeout')), 800)
+                    setTimeout(() => reject(new Error('Auth check timeout')), 4000)
                 )
 
                 const { data: { user: authUser } } = await Promise.race([authPromise, timeoutPromise])

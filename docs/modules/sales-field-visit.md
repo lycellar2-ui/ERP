@@ -172,6 +172,19 @@ Module **Quản Lý Check-in Thị Trường** (Sales Field Operations) được
   - Tích hợp thêm nút tab **`[🛡️ Giám Sát Đội Ngũ]` (Executive Board)** trên cả thanh tab Desktop và thanh Bottom Bar Mobile để Jeremie có thể chuyển sang chế độ quản lý giám sát số liệu toàn đội ngũ Sales Rep.
   - Trên Bảng Giám Sát, dòng của Jeremie được gắn huy hiệu nổi bật: `[CBO • CEO TRỰC TIẾP KIỂM SOÁT]`.
 
+### 14. Duy Trì Phiên Đăng Nhập Lâu Dài & Luồng GPS Thời Gian Thực (Persistent Session & Live GPS Stream)
+- **Duy Trì Đăng Nhập 365 Ngày (No More Session Expiry):**
+  - Cấu hình cookie xác thực Supabase (`@supabase/ssr`) với `maxAge: 31,536,000` giây (1 năm) cùng `sameSite: 'lax'`, `path: '/'`.
+  - Nâng timeout xác thực trong `middleware.ts` từ `800ms` lên `4000ms`, loại bỏ hoàn toàn lỗi mạng 4G chập chờn làm gián đoạn quá trình refresh token gây văng ra màn hình đăng nhập.
+  - Người dùng đăng nhập 1 lần duy nhất, tắt trình duyệt Safari/Chrome hoặc đóng đa nhiệm vẫn giữ nguyên phiên làm việc.
+- **Luồng Định Vị GPS Liên Tục (Continuous GPS Stream via `watchPosition`):**
+  - **Không hỏi lại quyền ở mỗi địa điểm:** Sử dụng `navigator.geolocation.watchPosition` duy trì luồng GPS nền trong suốt phiên làm việc. Trình duyệt chỉ yêu cầu cấp quyền 1 lần đầu tiên.
+  - **Toạ độ luôn sẵn sàng tức thời (0ms Latency):** Khi di chuyển từ điểm A sang điểm B, chip GPS trên điện thoại luôn ở trạng thái nóng (warm active), toạ độ thực tế mới nhất luôn được cập nhật trong bộ nhớ.
+  - **Nghiêm cấm Fallback Toạ Độ Gần Nhất (Zero Stale Fallback):** Tuyệt đối không sử dụng toạ độ cũ hoặc toạ độ gần nhất. Hệ thống chỉ chấp nhận toạ độ thực tế mới nhất tại điểm bán. Nếu máy tắt GPS hoặc chưa có tín hiệu, hệ thống sẽ cảnh báo yêu cầu bật GPS chứ không bao giờ tự ý gắn toạ độ sai lệch.
+- **Khử Lag Triệt Để Khi Bấm Check-in:**
+  - **Non-blocking Geocoding:** Việc giải mã địa chỉ đường phố (`reverseGeocodeAction`) được tách sang chạy ngầm không đồng bộ, không bắt người dùng phải chờ đợi 2-3s lúc bấm lưu ảnh check-in.
+  - **Giải Phóng Camera Tức Thì:** Ngay khi bấm chụp ảnh, toàn bộ MediaStream của camera được tắt (`stopActiveStream()`), giải phóng bộ nhớ GPU và phần cứng camera trên điện thoại, ngăn hiện tượng nóng máy và lag giật.
+
 ## Files
 
 | File | Vai trò |

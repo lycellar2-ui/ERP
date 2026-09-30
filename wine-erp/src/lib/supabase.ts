@@ -5,7 +5,15 @@ import { createBrowserClient } from '@supabase/ssr'
 export function createClient() {
     return createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookieOptions: {
+                maxAge: 60 * 60 * 24 * 365, // 365 days persistent session
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+                path: '/',
+            },
+        }
     )
 }
 
@@ -18,6 +26,12 @@ export async function createServerSupabaseClient() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
+            cookieOptions: {
+                maxAge: 60 * 60 * 24 * 365, // 365 days persistent session
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+                path: '/',
+            },
             cookies: {
                 getAll() {
                     return cookieStore.getAll()
@@ -25,7 +39,13 @@ export async function createServerSupabaseClient() {
                 setAll(cookiesToSet) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
+                            cookieStore.set(name, value, {
+                                ...options,
+                                maxAge: 60 * 60 * 24 * 365, // Enforce 365 days
+                                sameSite: 'lax',
+                                secure: process.env.NODE_ENV === 'production',
+                                path: '/',
+                            })
                         )
                     } catch {
                         // Server Component — cookies set by middleware

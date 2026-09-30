@@ -299,7 +299,9 @@ function GpsPermissionGuideModal({
                                         {isEn ? 'Select "Website Settings"' : 'Chọn "Cài đặt trang web" (Website Settings)'}
                                     </p>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        {isEn ? <>Find <strong>Location</strong> ➔ Change to <strong>Allow</strong>.</> : <>Tìm mục <strong>Vị trí (Location)</strong> ➔ Chuyển thành <strong>Cho phép (Allow)</strong>.</>}
+                                        {isEn
+                                            ? <>Find <strong>Location</strong> ➔ Select <strong>Allow</strong> (avoid &quot;Ask&quot; or &quot;Allow Once&quot; so Safari never prompts at each visit).</>
+                                            : <>Tìm mục <strong>Vị trí (Location)</strong> ➔ Chọn <strong>Cho phép (Allow)</strong> (tránh chọn &quot;Hỏi&quot; hoặc &quot;Cho phép một lần&quot; để Safari tự nhận toạ độ ở mọi điểm mà không hiện hỏi lại).</>}
                                     </p>
                                 </div>
                             </div>
@@ -738,6 +740,10 @@ export function SalesVisitsClient({
     // -----------------------------------------------------------------
     // GPS & LOCATION RETRIEVAL
     // -----------------------------------------------------------------
+    // REAL-TIME GPS WATCHER & ACCURATE FIELD COORDINATES (NO FAKE/NEAREST FALLBACK)
+    // -----------------------------------------------------------------
+    const liveCoordsRef = useRef<{ lat?: number; lng?: number; address?: string; timestamp?: number }>({})
+
     const requestGPS = useCallback(async (): Promise<{ lat?: number; lng?: number; address?: string }> => {
         if (typeof window === 'undefined' || !navigator.geolocation) {
             setGpsError(locale === 'en' ? 'Browser does not support Geolocation.' : 'Trình duyệt không hỗ trợ Geolocation.')
@@ -752,18 +758,21 @@ export function SalesVisitsClient({
                 async (pos) => {
                     const lat = pos.coords.latitude
                     const lng = pos.coords.longitude
-                    let address = locale === 'en' ? `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-                    try {
-                        const geoRes = await reverseGeocodeAction(lat, lng)
-                        if (geoRes.address) address = geoRes.address
-                    } catch (e) {
-                        console.warn('Geocode warning', e)
-                    }
-                    const loc = { lat, lng, address }
+                    const rawAddress = `Toạ độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`
+                    const loc = { lat, lng, address: rawAddress }
+                    liveCoordsRef.current = { lat, lng, address: rawAddress, timestamp: Date.now() }
                     setCoords(loc)
                     setGettingLocation(false)
                     setGpsError(null)
                     resolve(loc)
+
+                    // Non-blocking background geocode to resolve street address
+                    reverseGeocodeAction(lat, lng).then(geoRes => {
+                        if (geoRes?.address) {
+                            liveCoordsRef.current.address = geoRes.address
+                            setCoords({ lat, lng, address: geoRes.address })
+                        }
+                    }).catch(() => {})
                 },
                 (err) => {
                     console.warn('GPS error', err)
@@ -775,25 +784,75 @@ export function SalesVisitsClient({
                     setGettingLocation(false)
                     resolve({})
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
             )
         })
-    }, [])
+    }, [locale])
 
+    // Continuous Real-Time GPS Stream (Active watchPosition)
+    // Keeps GPS active and warm throughout the field session so iOS/Android does NOT prompt repeatedly at each stop!
     useEffect(() => {
-        // Fast, non-blocking GPS pre-warm only for Sales Reps (Managers do not check in)
-        if (!isManager && typeof window !== 'undefined' && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude
-                    const lng = pos.coords.longitude
-                    setCoords({ lat, lng, address: `Toạ độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}` })
-                },
-                () => {},
-                { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
-            )
+        if (typeof window === 'undefined' || !navigator.geolocation) return
+        if (isManager && !isCboOrExecutiveRep) return
+
+        let watchId: number | null = null
+
+        const handleSuccess = (pos: GeolocationPosition) => {
+            const lat = pos.coords.latitude
+            const lng = pos.coords.longitude
+            const timestamp = pos.timestamp || Date.now()
+
+            const prev = liveCoordsRef.current
+            const hasMoved = !prev.lat || !prev.lng ||
+                (Math.abs(prev.lat - lat) > 0.0001 || Math.abs(prev.lng - lng) > 0.0001)
+
+            const rawCoordAddress = `Toạ độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`
+            liveCoordsRef.current = {
+                lat,
+                lng,
+                timestamp,
+                address: prev.address && !hasMoved ? prev.address : rawCoordAddress,
+            }
+
+            if (hasMoved) {
+                setCoords({ lat, lng, address: rawCoordAddress })
+                setGpsError(null)
+
+                // Non-blocking reverse geocode in background
+                reverseGeocodeAction(lat, lng).then(geoRes => {
+                    if (geoRes?.address) {
+                        liveCoordsRef.current.address = geoRes.address
+                        setCoords({ lat, lng, address: geoRes.address })
+                    }
+                }).catch(() => {})
+            }
         }
-    }, [isManager])
+
+        const handleError = (err: GeolocationPositionError) => {
+            console.warn('GPS continuous watch warning', err)
+            let msg = locale === 'en' ? 'Unable to acquire GPS.' : 'Không thể lấy GPS.'
+            if (err.code === 1) msg = locale === 'en' ? 'GPS permission was denied.' : 'Quyền GPS đã bị từ chối trong Cài đặt!'
+            if (err.code === 2) msg = locale === 'en' ? 'Device GPS is off. Please turn on location!' : 'Thiết bị đang tắt GPS. Vui lòng bật định vị trên máy!'
+            if (err.code === 3) msg = locale === 'en' ? 'GPS signal search timed out.' : 'Hết thời gian chờ toạ độ GPS.'
+            setGpsError(msg)
+        }
+
+        try {
+            watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+                enableHighAccuracy: true,
+                maximumAge: 10000,
+                timeout: 20000,
+            })
+        } catch (e) {
+            console.warn('Could not start GPS watchPosition', e)
+        }
+
+        return () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId)
+            }
+        }
+    }, [isManager, isCboOrExecutiveRep, locale])
 
     // -----------------------------------------------------------------
     // LOAD WEEKLY PLAN & REVIEWS
@@ -1244,8 +1303,28 @@ export function SalesVisitsClient({
         setCameraTarget(null)
         setSubmittingAction(true)
 
-        // Capture fresh GPS
-        const loc = await requestGPS()
+        // Capture real-time GPS coordinates for this visit location
+        // Priority 1: Instant 0ms from active real-time GPS watcher stream (no lag, no repeated prompts)
+        let finalLat = liveCoordsRef.current?.lat || coords.lat
+        let finalLng = liveCoordsRef.current?.lng || coords.lng
+        let finalAddress = liveCoordsRef.current?.address || coords.address
+
+        // Priority 2: If active stream has not received first fix yet, request directly
+        if (!finalLat || !finalLng) {
+            const loc = await requestGPS()
+            finalLat = loc.lat
+            finalLng = loc.lng
+            finalAddress = loc.address
+        }
+
+        // Strict verification: Must have valid real-time GPS coordinates (no fake/nearest fallback)
+        if (!finalLat || !finalLng) {
+            setSubmittingAction(false)
+            toast.error(locale === 'en'
+                ? 'Could not acquire actual GPS coordinates for this location. Please turn on Location/GPS on your device!'
+                : 'Chưa nhận diện được toạ độ GPS thực tế của điểm bán. Vui lòng bật định vị GPS trên điện thoại!')
+            return
+        }
 
         const payload = {
             customerId,
@@ -1254,9 +1333,9 @@ export function SalesVisitsClient({
             activityType,
             scheduleId,
             isUnplanned,
-            lat: loc.lat || coords.lat,
-            lng: loc.lng || coords.lng,
-            address: loc.address || coords.address,
+            lat: finalLat,
+            lng: finalLng,
+            address: finalAddress || `Toạ độ: ${finalLat.toFixed(5)}, ${finalLng.toFixed(5)}`,
             photoBase64,
             thumbnailBase64,
         }
