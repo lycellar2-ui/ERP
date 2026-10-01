@@ -443,7 +443,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
                         ) : (
                             <><Upload size={28} style={{ color: '#64748B' }} />
                                 <span className="text-xs" style={{ color: '#64748B' }}>Click hoặc kéo thả ảnh vào đây</span>
-                                <span className="text-[10px]" style={{ color: '#E2E8F0' }}>Hỗ trợ nhiều file · JPG, PNG, WebP · Max 10MB</span></>
+                                <span className="text-[10px]" style={{ color: '#94A3B8' }}>Hỗ trợ nhiều file · JPG, PNG, WebP · Max 10MB</span></>
                         )}
                         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp"
                             multiple className="hidden" onChange={handleUpload} disabled={!selectedProduct || uploading} />

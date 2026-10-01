@@ -507,7 +507,7 @@ function PODiscountSection({
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-slate-900">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
                     {computedDiscount > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 font-mono">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                         </span>
                     )}
@@ -574,7 +574,7 @@ function PODiscountSection({
                     </div>
                     <div className="flex flex-col justify-end text-xs">
                         <span className="text-slate-500 text-[11px]">Trị giá chiết khấu được trừ:</span>
-                        <p className="font-mono font-bold text-amber-300 text-sm">
+                        <p className="font-mono font-bold text-amber-700 text-sm">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                             <span className="text-[11px] text-[#0891B2] ml-1 font-normal">
                                 (≈ {formatVND(computedDiscount * exchangeRate)})
@@ -603,7 +603,7 @@ function PODiscountSection({
                     </div>
                     <div className="flex flex-col justify-end text-xs">
                         <span className="text-slate-500 text-[11px]">Quy đổi & Tỷ lệ giảm:</span>
-                        <p className="font-mono font-bold text-amber-300 text-sm">
+                        <p className="font-mono font-bold text-amber-700 text-sm">
                             ≈ {formatVND(discountAmount * exchangeRate)}
                             {subtotal > 0 && (
                                 <span className="text-[11px] text-slate-600 ml-1 font-normal">
@@ -1113,7 +1113,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/40">
                                         <span className="text-slate-500">
                                             {line.isFoc ? (
-                                                <span className="text-amber-300 font-bold">
+                                                <span className="text-amber-800 font-bold">
                                                     🎁 Hàng FOC (Miễn phí thanh toán NCC):
                                                 </span>
                                             ) : (
@@ -1173,7 +1173,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                 {totalAllBottles.toLocaleString()} chai
                             </p>
                             {totalFocBottles > 0 && (
-                                <p className="text-[10px] text-amber-300">
+                                <p className="text-[10px] text-amber-700 font-medium">
                                     ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
                                 </p>
                             )}
@@ -1780,7 +1780,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/40">
                                                 <span className="text-slate-500">
                                                     {line.isFoc ? (
-                                                        <span className="text-amber-300 font-bold">
+                                                        <span className="text-amber-800 font-bold">
                                                             🎁 Hàng FOC (Miễn phí thanh toán NCC):
                                                         </span>
                                                     ) : (
@@ -1840,7 +1840,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                         {totalAllBottles.toLocaleString()} chai
                                     </p>
                                     {totalFocBottles > 0 && (
-                                        <p className="text-[10px] text-amber-300">
+                                        <p className="text-[10px] text-amber-700 font-medium">
                                             ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
                                         </p>
                                     )}
@@ -2559,7 +2559,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
-                                                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
                                                         🎁 FOC: {(row.totalFocQty ?? 0).toLocaleString()} chai
                                                     </span>
                                                 </div>
@@ -2700,7 +2700,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <span className="text-[10px] text-slate-500 block">Số lượng & Tiến độ:</span>
                                     <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString()} chai</span>
                                     {row.hasFoc && (
-                                        <span className="text-[10px] text-amber-300 ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
+                                        <span className="text-[10px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
                                     )}
                                     <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}% kho)</span>
                                 </div>
@@ -2786,7 +2786,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">Tổng Số Lượng</span>
                                         <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} chai</span>
                                         {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
-                                            <span className="text-[10px] text-amber-300 ml-1">({poDetail.totalFocQty} FOC)</span>
+                                            <span className="text-[10px] text-amber-700 font-bold ml-1">({poDetail.totalFocQty} FOC)</span>
                                         )}
                                         <span className="text-[10px] text-[#0891B2] ml-1">({poDetail.totalQtyReceived} đã nhận)</span>
                                     </div>
@@ -2847,7 +2847,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <p className="font-extrabold text-slate-900">{line.productName}</p>
                                                                     {line.isFoc && (
-                                                                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
                                                                             🎁 FOC
                                                                         </span>
                                                                     )}
@@ -2918,7 +2918,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     </div>
                                                 </div>
                                                 {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
-                                                    <p className="text-[11px] text-amber-300 pt-1 border-t border-slate-200/40 italic">
+                                                    <p className="text-[11px] text-amber-800 font-medium pt-1 border-t border-slate-200/40 italic">
                                                         🎁 Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
                                                     </p>
                                                 )}
@@ -3180,7 +3180,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="flex items-center gap-2">
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
                                     <div>
-                                        <p className="text-xs font-bold text-amber-300">Đơn hàng ở trạng thái Bản Nháp</p>
+                                        <p className="text-xs font-bold text-amber-800">Đơn hàng ở trạng thái Bản Nháp</p>
                                         <p className="text-[10px] text-slate-600">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
                                     </div>
                                 </div>
@@ -3216,7 +3216,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="flex items-center gap-2">
                                     <Clock size={16} className="text-[#D4A853]" />
                                     <div>
-                                        <p className="text-xs font-bold text-amber-300">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
+                                        <p className="text-xs font-bold text-amber-800">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
                                         <p className="text-[10px] text-slate-600">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
                                     </div>
                                 </div>

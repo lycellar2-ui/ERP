@@ -846,7 +846,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             Khách Hàng *
                                         </label>
                                         {selectedCustomer && (
-                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-teal-400 hover:text-teal-300 hover:underline flex items-center gap-1 transition-colors" title="Mở tab CRM để xem lịch sử mua hàng chi tiết">
+                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-[#0891B2] hover:text-[#06748E] font-semibold hover:underline flex items-center gap-1 transition-colors" title="Mở tab CRM để xem lịch sử mua hàng chi tiết">
                                                 <History size={10} />
                                                 Lịch sử mua hàng
                                             </a>

@@ -318,7 +318,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
                 <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#FFFFFF', width: 'max-content', minWidth: '100%' }}>
                     {/* Group: Operational */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#E2E8F0' }}>Vận hành</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>Vận hành</span>
                     {tabs.filter(t => t.group === 'ops').map(t => {
                         const Icon = t.icon
                         return (
@@ -336,7 +336,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     {/* Divider */}
                     <div className="w-px h-6 mx-1" style={{ background: '#E2E8F0' }} />
                     {/* Group: Accounting */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#E2E8F0' }}>Kế toán</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>Kế toán</span>
                     {tabs.filter(t => t.group === 'acct').map(t => {
                         const Icon = t.icon
                         return (

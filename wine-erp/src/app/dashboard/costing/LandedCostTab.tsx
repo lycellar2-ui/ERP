@@ -600,11 +600,11 @@ export function LandedCostTab() {
                 </div>
             ) : campaigns.length === 0 ? (
                 <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                    <Ship size={36} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
+                    <Ship size={36} className="mx-auto mb-3" style={{ color: '#94A3B8' }} />
                     <p className="text-sm" style={{ color: '#64748B' }}>
                         Chưa có Landed Cost Campaign nào
                     </p>
-                    <p className="text-xs mt-1" style={{ color: '#E2E8F0' }}>
+                    <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>
                         Tạo campaign cho mỗi container nhập khẩu để tính giá vốn thực tế
                     </p>
                 </div>

@@ -391,7 +391,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 {/* Emergency Contact */}
-                                <div className="p-3 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-2.5">
+                                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
@@ -492,10 +492,10 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 {/* Contract Section */}
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
+                                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Thông Tin Hợp Đồng Lao Động</p>
-                                        <span className="text-[11px] text-amber-300">Tự động cảnh báo trước 30 ngày hết hạn</span>
+                                        <span className="text-[11px] text-amber-700 font-medium">Tự động cảnh báo trước 30 ngày hết hạn</span>
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -552,7 +552,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         {/* TAB 3: FINANCE & HEALTH */}
                         {activeTab === 'FINANCE' && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
+                                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Tài Khoản Ngân Hàng & Chi Trả Lương</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
@@ -611,13 +611,13 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     </div>
                                 </div>
 
-                                <div className="p-3.5 rounded-lg bg-[#0D1822] border border-slate-200/60 space-y-3">
+                                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                                            <HeartPulse className="w-4 h-4 text-rose-400" />
+                                            <HeartPulse className="w-4 h-4 text-rose-500" />
                                             Khám Sức Khỏe Định Kỳ
                                         </p>
-                                        <span className="text-[11px] text-amber-300">Cảnh báo tái khám định kỳ</span>
+                                        <span className="text-[11px] text-amber-700 font-medium">Cảnh báo tái khám định kỳ</span>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
@@ -692,9 +692,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 {formData.userId && (
-                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-[#0D1822] border border-slate-200">
+                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
                                         <Shield className="w-4 h-4 text-[#0891B2]" />
-                                        <span className="text-slate-900">
+                                        <span className="text-slate-800">
                                             Tài khoản đã chọn: <strong>{availableUsers.find(u => u.id === formData.userId)?.name}</strong> ({availableUsers.find(u => u.id === formData.userId)?.email})
                                         </span>
                                     </div>

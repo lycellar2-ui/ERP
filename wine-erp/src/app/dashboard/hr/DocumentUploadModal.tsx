@@ -243,8 +243,8 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
 
                     {/* Expiry Warning Note */}
                     {!hasNoExpiry && expiryDate && (
-                        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-                            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
+                            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
                             <span>Hệ thống sẽ tự động bật cảnh báo trước khi giấy tờ này hết hạn 30 ngày.</span>
                         </div>
                     )}

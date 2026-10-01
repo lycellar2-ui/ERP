@@ -966,15 +966,15 @@ function SODetailDrawer({
                                         <span className="font-semibold text-right" style={{ color: '#0F172A' }}>{detail.customer.name}</span>
                                     </div>
                                     {detail.orderType === 'TASTING' && (
-                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-500/50 bg-amber-950/40 text-xs">
-                                            <span className="font-bold text-amber-400">Loại Đơn Hàng:</span>
-                                            <span className="font-extrabold text-amber-300">🍷 Đơn Hàng Tasting</span>
+                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs">
+                                            <span className="font-bold text-amber-800">Loại Đơn Hàng:</span>
+                                            <span className="font-extrabold text-amber-900">🍷 Đơn Hàng Tasting</span>
                                         </div>
                                     )}
                                     {detail.proposal && (
-                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs mt-1">
-                                            <span className="font-bold text-amber-400">Số Tờ Trình:</span>
-                                            <span className="font-extrabold text-amber-300 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
+                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs mt-1">
+                                            <span className="font-bold text-amber-800">Số Tờ Trình:</span>
+                                            <span className="font-extrabold text-amber-900 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
                                         </div>
                                     )}
                                     {detail.customer.parent && (
@@ -1069,10 +1069,10 @@ function SODetailDrawer({
                                             <span className="font-bold font-mono text-sm text-[#0891B2]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>
                                         </div>
                                         {detail.isInvoiceExempt && (
-                                            <div className="p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 mt-2 flex items-start gap-2">
-                                                <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-400" />
+                                            <div className="p-2.5 rounded bg-amber-50 border border-amber-300 text-[11px] text-amber-800 mt-2 flex items-start gap-2">
+                                                <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-600" />
                                                 <div className="leading-snug">
-                                                    <span className="font-bold block text-amber-400 mb-0.5">Đơn hàng không xuất HĐ VAT</span>
+                                                    <span className="font-bold block text-amber-900 mb-0.5">Đơn hàng không xuất HĐ VAT</span>
                                                     Giá bán và tổng thanh toán vẫn giữ nguyên và tính đủ 100% thuế VAT theo đúng yêu cầu.
                                                 </div>
                                             </div>
@@ -1172,7 +1172,7 @@ function SODetailDrawer({
                                                     <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatVND(ml.revenue)}</td>
                                                     {canSeeMargin && (
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853' }}>
-                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#E2E8F0' }}>—</span>}
+                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#94A3B8' }}>—</span>}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
@@ -1190,7 +1190,7 @@ function SODetailDrawer({
                                                                     {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                                                                     {ml.marginPct.toFixed(1)}%
                                                                 </span>
-                                                            ) : <span style={{ color: '#E2E8F0' }}>—</span>}
+                                                            ) : <span style={{ color: '#94A3B8' }}>—</span>}
                                                         </td>
                                                     )}
                                                 </tr>
@@ -1337,8 +1337,8 @@ function SODetailDrawer({
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-amber-400">Đơn Hàng Không Xuất Hóa Đơn VAT</span>
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                    <span className="text-xs font-bold text-amber-900">Đơn Hàng Không Xuất Hóa Đơn VAT</span>
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
                                                         Đã duyệt miễn HĐ
                                                     </span>
                                                 </div>
@@ -1356,7 +1356,7 @@ function SODetailDrawer({
                                                 </div>
                                                 {detail.status === 'DELIVERED' && canToggleInvoiceExempt && (
                                                     <div className="mt-3 pt-3 border-t border-amber-500/20 flex items-center justify-between">
-                                                        <span className="text-[11px] text-amber-300/90">Đơn hàng đã giao thành công. Kế toán/Admin có thể xác nhận thu tiền.</span>
+                                                        <span className="text-[11px] text-amber-800 font-medium">Đơn hàng đã giao thành công. Kế toán/Admin có thể xác nhận thu tiền.</span>
                                                         <button
                                                             onClick={handleMarkPaid}
                                                             disabled={markingPaid}
@@ -1438,16 +1438,16 @@ function SODetailDrawer({
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-400' : isVnptPublished ? 'text-emerald-300' : 'text-[#0891B2]'}`}>
+                                                                <span className={`text-xs font-bold font-mono truncate ${isDraftVnpt ? 'text-blue-700' : isVnptPublished ? 'text-emerald-700' : 'text-[#0891B2]'}`}>
                                                                     {inv.invoiceNo}
                                                                 </span>
                                                                 {isDraftVnpt ? (
-                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-100 text-blue-800 border border-blue-300 flex items-center gap-1">
                                                                         <CloudUpload size={10} />
                                                                         Nháp VNPT
                                                                     </span>
                                                                 ) : isVnptPublished ? (
-                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                                                                         <ShieldCheck size={10} />
                                                                         VNPT Đã Ký Số
                                                                     </span>
@@ -1456,7 +1456,7 @@ function SODetailDrawer({
                                                                         <button
                                                                             onClick={() => handleEditInvoice(inv.id, inv.invoiceNo)}
                                                                             disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
-                                                                            className="p-1 rounded text-slate-600 hover:text-[#0891B2] hover:bg-[#E2E8F0]/40 transition-colors"
+                                                                            className="p-1 rounded text-slate-600 hover:text-[#0891B2] hover:bg-slate-100 transition-colors"
                                                                             title="Chỉnh sửa mã số hóa đơn"
                                                                         >
                                                                             {editingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
@@ -1467,11 +1467,11 @@ function SODetailDrawer({
                                                                     <button
                                                                         onClick={() => isDraftVnpt ? handleDeleteVnptDraft() : handleDeleteInvoice(inv.id, inv.invoiceNo)}
                                                                         disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id || deletingVnpt}
-                                                                        className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                                                        className="p-1 rounded text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                                                                         title={isDraftVnpt ? "Xóa bản nháp trên cổng VNPT" : "Gỡ bỏ hóa đơn"}
                                                                     >
                                                                         {(deletingInvoiceId === inv.id || (isDraftVnpt && deletingVnpt)) ? (
-                                                                            <Loader2 size={11} className="animate-spin text-red-400" />
+                                                                            <Loader2 size={11} className="animate-spin text-red-600" />
                                                                         ) : (
                                                                             <X size={11} />
                                                                         )}
@@ -1492,7 +1492,7 @@ function SODetailDrawer({
                                                             </span>
                                                             <span
                                                                 className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5"
-                                                                style={isDraftVnpt ? { background: 'rgba(59,130,246,0.15)', color: '#60A5FA' } : isVnptPublished ? { background: 'rgba(16,185,129,0.2)', color: '#34D399' } : getInvoiceStatusStyle(inv.status)}
+                                                                style={isDraftVnpt ? { background: '#DBEAFE', color: '#1E40AF' } : isVnptPublished ? { background: '#D1FAE5', color: '#065F46' } : getInvoiceStatusStyle(inv.status)}
                                                             >
                                                                 {isDraftVnpt ? 'CHỜ KÝ SỐ' : isVnptPublished ? 'ĐÃ PHÁT HÀNH' : (INVOICE_STATUS_LABELS[inv.status] ?? inv.status)}
                                                             </span>
@@ -1500,9 +1500,9 @@ function SODetailDrawer({
                                                     </div>
 
                                                     {isDraftVnpt && (
-                                                        <div className="mt-2.5 pt-2 border-t border-blue-500/20 flex flex-wrap items-center justify-between gap-2">
-                                                            <span className="text-[10px] text-blue-300/80">
-                                                                FKey: <code className="font-mono text-blue-200">SO_{detail.soNo.replace(/[^A-Za-z0-9_-]/g, '_')}</code>
+                                                        <div className="mt-2.5 pt-2 border-t border-blue-200 flex flex-wrap items-center justify-between gap-2">
+                                                            <span className="text-[10px] text-slate-600">
+                                                                FKey: <code className="font-mono text-blue-700 font-bold">SO_{detail.soNo.replace(/[^A-Za-z0-9_-]/g, '_')}</code>
                                                             </span>
                                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                                 {canCreateInvoice && (
@@ -1520,7 +1520,7 @@ function SODetailDrawer({
                                                                     <button
                                                                         onClick={triggerUploadVnptDraft}
                                                                         disabled={uploadingVnpt}
-                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-300 hover:bg-blue-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-700 hover:bg-blue-50 border border-blue-200 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Cập nhật lại thông tin mới nhất lên bản nháp VNPT"
                                                                     >
                                                                         {uploadingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
@@ -1532,9 +1532,9 @@ function SODetailDrawer({
                                                     )}
 
                                                     {isVnptPublished && vnptMeta && (
-                                                        <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="mt-2.5 pt-2 border-t border-emerald-200 flex flex-wrap items-center justify-between gap-2">
                                                             <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                                                                <span>Ký hiệu: <code className="font-mono text-emerald-200">{vnptMeta.pattern} / {vnptMeta.serial}</code></span>
+                                                                <span>Ký hiệu: <code className="font-mono text-emerald-800 font-bold">{vnptMeta.pattern} / {vnptMeta.serial}</code></span>
                                                                 {vnptMeta.syncedAt && <span>• {formatDateTime(vnptMeta.syncedAt)}</span>}
                                                             </div>
                                                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -1543,7 +1543,7 @@ function SODetailDrawer({
                                                                         href={vnptMeta.pdfUrl}
                                                                         target="_blank"
                                                                         rel="noreferrer"
-                                                                        className="text-[10px] px-2 py-1 rounded font-bold bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="text-[10px] px-2 py-1 rounded font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Tải / Xem file PDF hóa đơn điện tử có chữ ký số từ VNPT"
                                                                     >
                                                                         <Download size={10} />
@@ -1555,7 +1555,7 @@ function SODetailDrawer({
                                                                         href={vnptMeta.viewUrl}
                                                                         target="_blank"
                                                                         rel="noreferrer"
-                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="text-[10px] px-2 py-1 rounded font-semibold text-blue-700 hover:bg-blue-50 border border-blue-300 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Xem hóa đơn trực tuyến trên portal VNPT"
                                                                     >
                                                                         <ExternalLink size={10} />
@@ -1566,7 +1566,7 @@ function SODetailDrawer({
                                                                     <button
                                                                         onClick={handleSyncVnptInvoice}
                                                                         disabled={syncingVnpt}
-                                                                        className="text-[10px] px-1.5 py-1 rounded text-slate-600 hover:text-white hover:bg-[#E2E8F0]/40 transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="text-[10px] px-1.5 py-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="Kiểm tra lại trạng thái CQT từ VNPT"
                                                                     >
                                                                         {syncingVnpt ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />}
@@ -2961,7 +2961,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                 {row.legalEntityCode}
                                             </span>
                                         ) : (
-                                            <span className="text-[11px]" style={{ color: '#E2E8F0' }}>—</span>
+                                            <span className="text-[11px]" style={{ color: '#94A3B8' }}>—</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-1.5 whitespace-nowrap">

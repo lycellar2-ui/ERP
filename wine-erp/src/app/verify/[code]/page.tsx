@@ -79,7 +79,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                     <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '0.5px' }}>
                         LYS CELLARS — Hệ Thống Truy Xuất Nguồn Gốc
                     </p>
-                    <p style={{ color: '#E2E8F0', fontSize: 12, marginTop: '4px' }}>
+                    <p style={{ color: '#64748B', fontSize: 12, marginTop: '4px', fontFamily: 'monospace' }}>
                         QR: {code}
                     </p>
                 </div>

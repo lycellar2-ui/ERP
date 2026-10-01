@@ -256,7 +256,7 @@ export default function PartnerLoginPage() {
                     </button>
                 </div>
 
-                <p className="text-center text-xs" style={{ color: '#E2E8F0' }}>
+                <p className="text-center text-xs" style={{ color: '#64748B' }}>
                     Wine ERP — Agency Partner Portal v1.0
                 </p>
             </div>

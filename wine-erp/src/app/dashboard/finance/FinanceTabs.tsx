@@ -255,9 +255,9 @@ export function JournalEntryTab() {
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
             ) : entries.length === 0 ? (
                 <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                    <BookOpen size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
+                    <BookOpen size={32} className="mx-auto mb-3" style={{ color: '#94A3B8' }} />
                     <p className="text-sm" style={{ color: '#64748B' }}>Chưa có bút toán nào</p>
-                    <p className="text-xs mt-1" style={{ color: '#E2E8F0' }}>Bút toán sẽ tự động sinh khi confirm GR, DO, AR/AP Payment</p>
+                    <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>Bút toán sẽ tự động sinh khi confirm GR, DO, AR/AP Payment</p>
                 </div>
             ) : (
                 <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
@@ -1465,9 +1465,9 @@ export function CashFlowTab() {
                             </div>
                         ) : (
                             <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                                <AlertTriangle size={28} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
+                                <AlertTriangle size={28} className="mx-auto mb-2" style={{ color: '#94A3B8' }} />
                                 <p className="text-sm" style={{ color: '#64748B' }}>Nhấn "Chạy Credit Check" để kiểm tra hạn mức tín dụng</p>
-                                <p className="text-xs mt-1" style={{ color: '#E2E8F0' }}>Sẽ auto lock KH có AR vượt credit limit</p>
+                                <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>Sẽ auto lock KH có AR vượt credit limit</p>
                             </div>
                         )}
                     </div>

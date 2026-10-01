@@ -649,13 +649,13 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 value={line.qtyTransferred}
                                                                 onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
                                                                 {...focusHandler}
-                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none ${isOverStock ? 'text-amber-300' : ''}`}
+                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none ${isOverStock ? 'text-amber-700' : ''}`}
                                                                 style={{ ...inputStyle, borderColor: isOverStock ? '#F59E0B' : '#E2E8F0' }}
                                                             />
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isOverStock ? (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/50">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300">
                                                                             ⚠️ Vượt tồn ({selectedVintageQty}c)
                                                                         </span>
                                                                     ) : (

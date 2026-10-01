@@ -666,7 +666,7 @@ export function QuotationClient({ initialData }: Props) {
                                 {detail.customer.code === 'KH-TEMP' && (
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#0891B2' }}>Thông Tin Khách Hàng Ngoài Hệ Thống</p>
-                                        <div className="space-y-1.5 text-xs text-slate-300">
+                                        <div className="space-y-1.5 text-xs text-slate-700">
                                             {detail.companyName && <p><strong>Doanh nghiệp:</strong> {detail.companyName}</p>}
                                             {detail.contactPerson && <p><strong>Người liên hệ:</strong> {detail.contactPerson}</p>}
                                             {detail.customerEmail && <p><strong>Email:</strong> {detail.customerEmail}</p>}

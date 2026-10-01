@@ -1352,7 +1352,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                             {pol.productName || 'Sản phẩm ' + pol.skuCode}
                                                         </p>
                                                         {pol.isFoc && (
-                                                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
                                                                 🎁 FOC {pol.focNote ? `(${pol.focNote})` : ''}
                                                             </span>
                                                         )}

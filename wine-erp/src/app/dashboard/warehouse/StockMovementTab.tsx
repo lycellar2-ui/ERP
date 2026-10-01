@@ -620,39 +620,39 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                             <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
                                                 {item.skuCode}
                                             </span>
-                                            <h4 className="text-xs font-black text-white mt-1">{item.productName}</h4>
+                                            <h4 className="text-xs font-black text-slate-900 mt-1">{item.productName}</h4>
                                         </div>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDrillDown(item) }}
-                                            className="px-2.5 py-1 bg-emerald-500 text-slate-950 font-bold text-[11px] rounded-lg shrink-0 shadow"
+                                            className="px-2.5 py-1 bg-[#0891B2] text-white hover:bg-[#06748E] font-bold text-[11px] rounded-lg shrink-0 shadow-xs transition-colors cursor-pointer"
                                         >
                                             Sổ Chi Tiết ➔
                                         </button>
                                     </div>
 
                                     {/* 4 Metric Pills Grid */}
-                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center font-mono">
+                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center font-mono">
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Đầu kỳ</span>
-                                            <span className="text-xs font-bold text-amber-400">{item.openingQty}</span>
+                                            <span className="text-xs font-bold text-amber-700">{item.openingQty}</span>
                                         </div>
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Nhập</span>
-                                            <span className="text-xs font-bold text-emerald-400">{item.inQty > 0 ? `+${item.inQty}` : '0'}</span>
+                                            <span className="text-xs font-bold text-emerald-700">{item.inQty > 0 ? `+${item.inQty}` : '0'}</span>
                                         </div>
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Xuất</span>
-                                            <span className="text-xs font-bold text-rose-400">{item.outQty > 0 ? `-${item.outQty}` : '0'}</span>
+                                            <span className="text-xs font-bold text-rose-700">{item.outQty > 0 ? `-${item.outQty}` : '0'}</span>
                                         </div>
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Cuối kỳ</span>
-                                            <span className="text-xs font-black text-teal-400">{item.closingQty}</span>
+                                            <span className="text-xs font-black text-[#0891B2]">{item.closingQty}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center text-[11px] pt-1 border-t border-slate-800/80">
-                                        <span className="text-slate-400 font-semibold">Giá trị tồn cuối:</span>
-                                        <span className="font-mono font-black text-teal-400">{formatVND(item.closingValue)}</span>
+                                    <div className="flex justify-between items-center text-[11px] pt-1 border-t border-slate-200">
+                                        <span className="text-slate-600 font-semibold">Giá trị tồn cuối:</span>
+                                        <span className="font-mono font-black text-[#0891B2]">{formatVND(item.closingValue)}</span>
                                     </div>
                                 </div>
                             ))
@@ -789,12 +789,12 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                             <td className="px-3.5 py-2.5 text-center">
                                                                 {m.qtyIn > 0 ? (
                                                                     <span className="text-xs font-bold font-mono text-emerald-600">+{m.qtyIn.toLocaleString()}</span>
-                                                                ) : <span className="text-slate-300">—</span>}
+                                                                ) : <span className="text-slate-400">—</span>}
                                                             </td>
                                                             <td className="px-3.5 py-2.5 text-center">
                                                                 {m.qtyOut > 0 ? (
                                                                     <span className="text-xs font-bold font-mono text-rose-600">-{m.qtyOut.toLocaleString()}</span>
-                                                                ) : <span className="text-slate-300">—</span>}
+                                                                ) : <span className="text-slate-400">—</span>}
                                                             </td>
                                                             <td className="px-3.5 py-2.5 text-center">
                                                                 <span className="text-xs font-bold font-mono text-teal-600">

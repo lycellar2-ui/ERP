@@ -310,7 +310,7 @@ export function ReplenishmentTab() {
                                         onClick={() => setTargetThreshold(btn.val)}
                                         className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-colors cursor-pointer border ${
                                             targetThreshold === btn.val
-                                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                                                ? 'bg-amber-100 text-amber-800 border-amber-400'
                                                 : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
                                         }`}
                                     >
@@ -335,7 +335,7 @@ export function ReplenishmentTab() {
                                         onClick={() => setSourceMinStock(btn.val)}
                                         className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-colors cursor-pointer border ${
                                             sourceMinStock === btn.val
-                                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-400'
                                                 : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
                                         }`}
                                     >

@@ -909,7 +909,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 type="button"
                                                 disabled={taxLookupLoading}
                                                 onClick={handleLookupTax}
-                                                className="px-2 py-0.5 rounded text-[11px] font-extrabold bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 transition-all flex items-center gap-1 cursor-pointer border border-teal-500/30 active:scale-95"
+                                                className="px-2 py-0.5 rounded text-[11px] font-extrabold bg-teal-50 text-[#0891B2] hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95"
                                                 title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
                                             >
                                                 {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
@@ -924,7 +924,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             const parent = parentCandidates.find(p => p.id === form.parentId)
                                             if (parent?.taxId && !form.taxId) {
                                                 return (
-                                                    <div className="mt-1 flex items-center justify-between text-[11px] text-amber-300 bg-amber-950/50 px-2 py-1 rounded border border-amber-800/40">
+                                                    <div className="mt-1 flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200">
                                                         <span>🏢 MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
                                                         <button
                                                             type="button"
@@ -934,7 +934,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                 if (parent.vatAddress && !form.vatAddress) set('vatAddress', parent.vatAddress)
                                                                 if (parent.vatEmail && !form.vatEmail) set('vatEmail', parent.vatEmail)
                                                             }}
-                                                            className="text-[10px] font-semibold text-teal-300 hover:text-teal-200 underline cursor-pointer ml-2"
+                                                            className="text-[10px] font-bold text-[#0891B2] hover:text-[#06748E] underline cursor-pointer ml-2"
                                                         >
                                                             Áp dụng
                                                         </button>

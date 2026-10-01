@@ -673,7 +673,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             step="0.1"
                                             value={simIncentivePercent === 0 ? '' : simIncentivePercent}
                                             onChange={e => handleSimIncentivePercentChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-300 focus:outline-none focus:border-[#87CBB9]"
+                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#87CBB9]"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
@@ -685,7 +685,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         type="text"
                                         value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
                                         onChange={e => handleSimIncentiveChange(parseNumberString(e.target.value))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-300 focus:outline-none focus:border-[#87CBB9]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#87CBB9]"
                                         placeholder="Value"
                                     />
                                 </div>
@@ -1149,7 +1149,7 @@ function SimulatedTableRow({
                         step="0.1"
                         value={row.incentivePercent === 0 ? '' : row.incentivePercent}
                         onChange={e => onUpdate(p.id, 'incentivePercent', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-sky-300 outline-none focus:border-[#475569]"
+                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-sky-700 font-bold outline-none focus:border-[#475569]"
                         placeholder="0"
                     />
                     <span className="text-xs text-slate-500 ml-0.5">%</span>
@@ -1162,7 +1162,7 @@ function SimulatedTableRow({
                     type="text"
                     value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                     onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                    className="w-[70px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-sky-300 outline-none focus:border-[#475569]"
+                    className="w-[70px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-sky-700 font-bold outline-none focus:border-[#475569]"
                     placeholder="0đ"
                 />
             </td>
@@ -1392,7 +1392,7 @@ function MobileSimulatedCard({
                             step="0.1"
                             value={row.incentivePercent === 0 ? '' : row.incentivePercent}
                             onChange={e => onUpdate(p.id, 'incentivePercent', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-sky-300 focus:outline-none focus:border-[#475569]"
+                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-sky-700 font-bold focus:outline-none focus:border-[#475569]"
                             placeholder="0"
                         />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-bold">%</span>
@@ -1406,7 +1406,7 @@ function MobileSimulatedCard({
                         type="text"
                         value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                         onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-sky-300 focus:outline-none focus:border-[#475569]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-sky-700 font-bold focus:outline-none focus:border-[#475569]"
                         placeholder="0đ"
                     />
                 </div>

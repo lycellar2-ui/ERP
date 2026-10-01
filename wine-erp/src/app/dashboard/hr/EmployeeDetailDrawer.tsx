@@ -97,12 +97,12 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
                                         employee.status === 'ACTIVE'
-                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                             : employee.status === 'PROBATION'
-                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
                                             : employee.status === 'ON_LEAVE'
-                                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                            ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                            : 'bg-rose-100 text-rose-800 border border-rose-300'
                                     }`}>
                                         {employee.status === 'ACTIVE' ? 'Chính thức' :
                                          employee.status === 'PROBATION' ? 'Thử việc' :
@@ -334,12 +334,12 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Hợp Đồng Lao Động Hiện Tại</p>
                                         {contractStatus === 'EXPIRING_SOON' && (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                                                 Hết hạn sau {contractDaysLeft} ngày
                                             </span>
                                         )}
                                         {contractStatus === 'EXPIRED' && (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
                                                 Đã hết hạn
                                             </span>
                                         )}
@@ -517,12 +517,12 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                                     {DOC_TYPE_LABELS[doc.docType] || doc.docType}
                                                                 </span>
                                                                 {isDocExpired && (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300">
+                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
                                                                         Đã hết hạn
                                                                     </span>
                                                                 )}
                                                                 {isDocExpiring && (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">
+                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                                                                         Sắp hết hạn
                                                                     </span>
                                                                 )}
@@ -552,7 +552,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                         <button
                                                             onClick={() => handleDeleteDoc(doc.id, doc.title)}
                                                             disabled={deletingDocId === doc.id}
-                                                            className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                                                            className="p-1.5 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                                                             title="Xóa giấy tờ"
                                                         >
                                                             <Trash2 className="w-4 h-4" />

@@ -347,7 +347,7 @@ export function LiveCameraModal({
                     {cameraError && !capturedImage && (
                         <div className="absolute inset-0 bg-slate-50 p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
                             <VideoOff size={36} className="text-[#D4A853]" />
-                            <h4 className="text-sm font-bold text-white">
+                            <h4 className="text-sm font-bold text-slate-900">
                                 {locale === 'en' ? 'Open Device Camera' : 'Chụp Ảnh Qua Camera Thiết Bị'}
                             </h4>
                             <p className="text-xs text-slate-600 max-w-xs">{cameraError}</p>

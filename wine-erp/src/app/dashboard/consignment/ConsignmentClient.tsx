@@ -398,14 +398,14 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                 {trf.transferNo}
                                             </td>
                                             <td className="px-3.5 py-3 text-xs font-bold">
-                                                <span className={`text-[11px] px-2 py-0.5 rounded ${trf.type === 'XUẤT_KÝ_GỬI' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}`}>
+                                                <span className={`text-[11px] px-2 py-0.5 rounded font-bold ${trf.type === 'XUẤT_KÝ_GỬI' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-300'}`}>
                                                     {trf.type === 'XUẤT_KÝ_GỬI' ? 'Xuất Ký Gửi' : 'Thu Hồi'}
                                                 </span>
                                             </td>
                                             <td className="px-3.5 py-3 text-xs" style={{ color: '#0F172A' }}>{trf.fromWarehouseName}</td>
                                             <td className="px-3.5 py-3 text-xs font-semibold" style={{ color: '#0F172A' }}>{trf.toWarehouseName}</td>
                                             <td className="px-3.5 py-3 text-xs" style={{ color: '#475569' }}>{trf.customerName}</td>
-                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#D4A853' }}>
+                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#B45309' }}>
                                                 {trf.totalQty.toLocaleString('vi-VN')} chai ({trf.itemCount} SKU)
                                             </td>
                                             <td className="px-3.5 py-3 text-xs text-slate-400">

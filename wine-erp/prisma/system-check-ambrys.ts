@@ -80,7 +80,7 @@ async function main() {
     })
     console.log(`Số báo giá tìm thấy: ${quotations.length}`)
     for (const q of quotations) {
-        console.log(`Quotation: ${q.quotationNo} | Khách: ${q.customer.code} | Ngày: ${q.quotationDate} | Status: ${q.status}`)
+        console.log(`Quotation: ${q.quotationNo} | Khách: ${q.customer.code} | Ngày: ${(q as any).quotationDate || q.createdAt} | Status: ${q.status}`)
         for (const l of q.lines) {
             console.log(`   - SKU: ${l.product.skuCode} | Tên: ${l.product.productName} | Đơn giá: ${l.unitPrice} | CK: ${l.discountPercent}% | Giá sau CK: ${l.finalPrice}`)
         }

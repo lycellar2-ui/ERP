@@ -917,20 +917,20 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING & PICKING */}
             {printModalOpen && detail && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-[#0D1821] border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                    <div className="bg-white border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar (Non-printable) */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-3">
-                                <div className="flex p-0.5 rounded-lg bg-[#0D1821] border border-slate-200">
+                                <div className="flex p-0.5 rounded-lg bg-slate-100 border border-slate-200">
                                     <button
                                         onClick={() => setPrintDocType('VOUCHER')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0891B2] text-white' : 'text-slate-300 hover:text-white'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0891B2] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
                                         📄 Phiếu Chuyển Kho A4
                                     </button>
                                     <button
                                         onClick={() => setPrintDocType('PICK_LIST')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'PICK_LIST' ? 'bg-[#38BDF8] text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'PICK_LIST' ? 'bg-[#38BDF8] text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
                                         📋 Danh Sách Nhặt Hàng (Pick List)
                                     </button>

@@ -1187,8 +1187,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <div>
                                                     <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
                                                         🏢 {w.name}
-                                                        {w.isDefault && <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⭐ Kho Mặc Định</span>}
-                                                        {w.allowSales === false && <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⛔ Chỉ Xuất Điều Chuyển</span>}
+                                                        {w.isDefault && <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">⭐ Kho Mặc Định</span>}
+                                                        {w.allowSales === false && <span className="text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold">⛔ Chỉ Xuất Điều Chuyển</span>}
                                                     </p>
                                                     <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
                                                 </div>

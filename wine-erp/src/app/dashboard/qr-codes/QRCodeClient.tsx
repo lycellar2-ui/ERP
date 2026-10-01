@@ -163,7 +163,7 @@ export function QRCodeClient({ initialData, stats }: {
                 </table>
             </div>
 
-            <p className="text-xs" style={{ color: '#E2E8F0' }}>
+            <p className="text-xs" style={{ color: '#64748B' }}>
                 Hiển thị {data.rows.length}/{data.total} — QR Code tự động sinh khi Confirm Goods Receipt
             </p>
         </div>

@@ -511,7 +511,7 @@ export function InvoiceReconciliationTab() {
                     <Building2 size={14} />
                     <span>Danh Sách Hóa Đơn VNPT (VNPT → ERP)</span>
                     {vnptKpis.unassignedCount > 0 ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
                             {vnptKpis.unassignedCount} chưa gán
                         </span>
                     ) : (
@@ -674,7 +674,7 @@ export function InvoiceReconciliationTab() {
                     <p className="text-2xl font-bold font-mono" style={{ color: '#94A3B8' }}>
                         {kpis.exemptOrders} <span className="text-xs font-normal">đơn</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#CBD5E1' }}>
+                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#64748B' }}>
                         {formatVND(kpis.exemptAmount)}
                     </p>
                 </div>
@@ -866,7 +866,7 @@ export function InvoiceReconciliationTab() {
                                                     <span className="font-bold font-mono text-[#0891B2]">{r.soNo}</span>
                                                     {r.dateWarning?.isDifferentMonth && (
                                                         <span 
-                                                            className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 cursor-help" 
+                                                            className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0 cursor-help" 
                                                             title={r.dateWarning.message}
                                                         >
                                                             ⚠️ Lệch kỳ thuế
@@ -988,7 +988,7 @@ export function InvoiceReconciliationTab() {
                                                         <button
                                                             onClick={() => handleDeleteDraft(r.soId, r.soNo)}
                                                             disabled={deletingSoId === r.soId}
-                                                            className="text-[10px] px-2 py-1 rounded font-bold border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                            className="text-[10px] px-2 py-1 rounded font-bold border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 shadow-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                                             title="Hủy bản nháp hóa đơn này để đưa đơn hàng về trạng thái chưa xuất HĐ"
                                                         >
                                                             {deletingSoId === r.soId ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
@@ -1017,7 +1017,7 @@ export function InvoiceReconciliationTab() {
                                                             href={r.pdfUrl}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-[10px] px-1.5 py-1 rounded font-bold bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 border border-emerald-500/30 transition-all flex items-center gap-0.5 cursor-pointer"
+                                                            className="text-[10px] px-1.5 py-1 rounded font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300 transition-all flex items-center gap-0.5 cursor-pointer"
                                                             title="Tải file PDF gốc từ VNPT"
                                                         >
                                                             <Download size={10} />
@@ -1031,7 +1031,7 @@ export function InvoiceReconciliationTab() {
                                                             href={r.viewUrl}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-[10px] px-1.5 py-1 rounded font-medium text-blue-300 hover:bg-blue-500/20 border border-blue-500/30 transition-all flex items-center gap-0.5 cursor-pointer"
+                                                            className="text-[10px] px-1.5 py-1 rounded font-semibold text-blue-700 hover:bg-blue-50 border border-blue-300 transition-all flex items-center gap-0.5 cursor-pointer"
                                                             title="Mở xem trên Portal VNPT"
                                                         >
                                                             <ExternalLink size={10} />
@@ -1170,7 +1170,7 @@ export function InvoiceReconciliationTab() {
                     <p className="text-2xl font-bold font-mono" style={{ color: '#EF4444' }}>
                         {vnptKpis.unassignedCount} <span className="text-xs font-normal">hóa đơn</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono text-rose-300">
+                    <p className="text-[11px] mt-1 font-mono text-rose-700">
                         {formatVND(vnptKpis.unassignedAmount)}
                     </p>
                 </div>
@@ -1432,7 +1432,7 @@ export function InvoiceReconciliationTab() {
                                                             <span>{item.linkedSoNo}</span>
                                                             {item.variance !== undefined && Math.abs(item.variance) > 1000 && (
                                                                 <span
-                                                                    className="text-[10px] px-1 py-0.2 rounded font-mono font-bold bg-amber-500/20 text-amber-300"
+                                                                    className="text-[10px] px-1 py-0.2 rounded font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300"
                                                                     title={`Lệch ${formatVND(item.variance)}`}
                                                                 >
                                                                     Lệch {formatVND(Math.abs(item.variance))}
@@ -1633,7 +1633,7 @@ export function InvoiceReconciliationTab() {
                         </div>
                         <div>
                             <span style={{ color: '#475569' }}>Pháp Nhân Bán: </span>
-                            <span className="font-bold text-amber-300">{selectedVnptItem.entityCode === 'TA' ? 'Thắng Ân (TA)' : "Ly's Cellar (LC)"}</span>
+                            <span className="font-bold text-amber-800">{selectedVnptItem.entityCode === 'TA' ? 'Thắng Ân (TA)' : "Ly's Cellar (LC)"}</span>
                         </div>
                     </div>
                 </div>
@@ -1687,7 +1687,7 @@ export function InvoiceReconciliationTab() {
                                                     {new Date(order.orderDate).toLocaleDateString('vi-VN')}
                                                 </span>
                                                 {order.currentInvoiceNo && (
-                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
+                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
                                                         HĐ hiện tại: #{order.currentInvoiceNo}
                                                     </span>
                                                 )}
@@ -1700,7 +1700,7 @@ export function InvoiceReconciliationTab() {
                                                 <span className="text-slate-900">Tiền đơn: {formatVND(order.grossAmount)}</span>
                                                 <span
                                                     className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                                        isExact ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                                                        isExact ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
                                                     }`}
                                                 >
                                                     {isExact ? 'Khớp 100%' : `Lệch ${formatVND(Math.abs(variance))}`}

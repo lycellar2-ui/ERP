@@ -462,7 +462,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                         setShowProfile(false)
                                         setShowMyAccount(true)
                                     }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-300 hover:bg-white"
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                                 >
                                     <User size={14} style={{ color: '#0891B2' }} />
                                     Tài khoản của tôi
@@ -624,7 +624,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                             />
                         </div>
 
-                        <div className="pt-4 border-t" style={{ borderColor: '#FFFFFF' }}>
+                        <div className="pt-4 border-t" style={{ borderColor: '#E2E8F0' }}>
                             <div className="flex items-center gap-1.5 mb-3">
                                 <Key size={14} style={{ color: '#0891B2' }} />
                                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Đổi Mật Khẩu</span>
