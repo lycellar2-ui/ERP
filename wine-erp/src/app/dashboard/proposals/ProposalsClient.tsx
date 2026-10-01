@@ -2566,7 +2566,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString('vi-VN')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="font-semibold text-slate-200">{formatVND(Number(so.totalAmount))}</span>
+                                                    <span className="font-bold text-slate-900">{formatVND(Number(so.totalAmount))}</span>
                                                     <a href={`/dashboard/sales?search=${so.soNo}`} className="text-[11px] text-[#0891B2] hover:underline font-semibold">
                                                         Xem SO →
                                                     </a>

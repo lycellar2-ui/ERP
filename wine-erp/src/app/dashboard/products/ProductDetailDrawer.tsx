@@ -246,8 +246,8 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     <div className="pt-2 space-y-1.5">
                                         <div className="grid grid-cols-3 gap-1.5 text-center">
                                             <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
-                                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Tồn Sổ</span>
-                                                <span className="text-xs font-bold font-mono text-slate-200">{totalBookQty.toLocaleString()}</span>
+                                                <span className="text-[10px] uppercase font-bold text-slate-500 block">Tồn Sổ</span>
+                                                <span className="text-xs font-bold font-mono text-slate-900">{totalBookQty.toLocaleString()}</span>
                                             </div>
                                             <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
                                                 <span className="text-[10px] uppercase font-bold text-[#0891B2] block">On-hand</span>

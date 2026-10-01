@@ -209,7 +209,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                     <button
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -223,7 +223,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'BASIC'
                                 ? 'border-[#87CBB9] text-[#0891B2] bg-white'
-                                : 'border-transparent text-slate-600 hover:text-white'
+                                : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
                         <FileText className="w-4 h-4" />
@@ -235,7 +235,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'WORK'
                                 ? 'border-[#87CBB9] text-[#0891B2] bg-white'
-                                : 'border-transparent text-slate-600 hover:text-white'
+                                : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
                         <Building className="w-4 h-4" />
@@ -247,7 +247,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'FINANCE'
                                 ? 'border-[#87CBB9] text-[#0891B2] bg-white'
-                                : 'border-transparent text-slate-600 hover:text-white'
+                                : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
                         <CreditCard className="w-4 h-4" />
@@ -259,7 +259,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'ACCOUNT'
                                 ? 'border-[#87CBB9] text-[#0891B2] bg-white'
-                                : 'border-transparent text-slate-600 hover:text-white'
+                                : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
                         <Link2 className="w-4 h-4" />
@@ -661,7 +661,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     <div className="flex items-start gap-3">
                                         <Link2 className="w-5 h-5 text-[#0891B2] mt-0.5 shrink-0" />
                                         <div>
-                                            <h4 className="text-sm font-bold text-white mb-1">Liên Kết Tài Khoản Đăng Nhập ERP</h4>
+                                            <h4 className="text-sm font-bold text-slate-900 mb-1">Liên Kết Tài Khoản Đăng Nhập ERP</h4>
                                             <p className="leading-relaxed">
                                                 Khi liên kết hồ sơ nhân viên với tài khoản ERP, nhân viên có thể đăng nhập để xem hồ sơ của chính mình, và các module nghiệp vụ (Bán hàng, Kho, Check-in) sẽ liên kết chính xác với thông tin cá nhân.
                                             </p>

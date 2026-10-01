@@ -113,12 +113,12 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             <Upload className="w-5 h-5 text-[#0891B2]" />
                             Tải Lên Giấy Tờ & Hồ Sơ Số Hóa
                         </h3>
-                        <p className="text-xs text-slate-600 mt-0.5">Nhân viên: <span className="font-semibold text-white">{employeeName}</span></p>
+                        <p className="text-xs text-slate-600 mt-0.5">Nhân viên: <span className="font-semibold text-slate-900">{employeeName}</span></p>
                     </div>
                     <button
                         onClick={onClose}
                         disabled={isUploading}
-                        className="p-1 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors"
+                        className="p-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -131,7 +131,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                         <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                             Chọn tệp giấy tờ (PDF, JPG, PNG - Tối đa 10MB) <span className="text-rose-400">*</span>
                         </label>
-                        <div className="relative flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-200 hover:border-[#87CBB9] rounded-xl bg-[#0D1822]/60 transition-colors">
+                        <div className="relative flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-200 hover:border-[#87CBB9] rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors">
                             <input
                                 type="file"
                                 accept=".pdf,image/jpeg,image/png,image/webp"
@@ -145,8 +145,8 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                                         <FileText className="w-6 h-6" />
                                     </div>
                                     <div className="overflow-hidden">
-                                        <p className="text-sm font-semibold text-white truncate max-w-[280px]">{file.name}</p>
-                                        <p className="text-xs text-slate-600">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                        <p className="text-sm font-semibold text-slate-900 truncate max-w-[280px]">{file.name}</p>
+                                        <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                                     </div>
                                 </div>
                             ) : (

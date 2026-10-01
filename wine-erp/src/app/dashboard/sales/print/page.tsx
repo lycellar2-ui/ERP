@@ -309,7 +309,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         : (order.customer.channel || '—')
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
+        <div className="min-h-screen bg-slate-50 text-slate-900 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
             {/* Embedded Print CSS to force pure white background and hide browser header/footer */}
             <style>{`
                 @media print {
@@ -338,7 +338,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 </button>
 
                 {/* Language Switcher Bar */}
-                <div className="flex items-center gap-1 bg-[#0F1E2A] p-1 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
                     <span className="flex items-center gap-1 text-[11px] font-bold text-slate-600 px-2">
                         <Globe size={13} className="text-[#0891B2]" /> {t.langLabel}
                     </span>
@@ -348,7 +348,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'vi' 
                                 ? 'bg-[#0891B2] text-white shadow-xs' 
-                                : 'text-slate-300 hover:text-slate-900 hover:bg-white'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         🇻🇳 {t.viBtn}
@@ -359,7 +359,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'en' 
                                 ? 'bg-[#0891B2] text-white shadow-xs' 
-                                : 'text-slate-300 hover:text-slate-900 hover:bg-white'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         🇬🇧 {t.enBtn}

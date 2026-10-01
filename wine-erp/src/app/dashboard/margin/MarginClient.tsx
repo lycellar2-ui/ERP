@@ -424,7 +424,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl text-slate-100">
+        <div className="space-y-4 max-w-screen-2xl text-slate-900">
             {/* Select & Workbench Section */}
             <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-4 relative overflow-hidden space-y-4">
                 {/* Selector Row (NCC Filter, Autocomplete, Admin tools, and Help tooltip inline) */}
@@ -457,7 +457,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <label className="block text-[10px] font-bold text-slate-400 uppercase leading-none">Chọn mã sản phẩm</label>
                             <div className="relative group leading-none flex items-center">
                                 <HelpCircle size={13} className="text-slate-600 hover:text-[#D4A853] cursor-pointer transition-colors" />
-                                <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
+                                <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-700 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
                                     <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
                                     <p>• Chọn NCC để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
                                     <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
@@ -512,7 +512,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                 </div>
                                                 <div className="min-w-0 flex-1 leading-tight">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <div className="font-semibold text-slate-200 truncate">{p.productName}</div>
+                                                        <div className="font-semibold text-slate-900 truncate">{p.productName}</div>
                                                         {p.hasCustomPrice ? (
                                                             <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Đã import</span>
                                                         ) : (
@@ -578,7 +578,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 ) }
                             </div>
                             <div className="text-center leading-tight">
-                                <h4 className="text-sm font-bold text-slate-100 line-clamp-2 px-1">{activeProduct.productName}</h4>
+                                <h4 className="text-sm font-bold text-slate-900 line-clamp-2 px-1">{activeProduct.productName}</h4>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-[10px] text-slate-600 font-sans font-medium">{activeProduct.skuCode}</span>
                                     {activeProduct.hasCustomPrice ? (
@@ -609,7 +609,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 </div>
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Retail</div>
-                                    <div className="text-lg sm:text-xl font-black text-slate-200 mt-1">{formatNumberOnly(activeProduct.retailPrice)}</div>
+                                    <div className="text-lg sm:text-xl font-black text-slate-900 mt-1">{formatNumberOnly(activeProduct.retailPrice)}</div>
                                 </div>
                             </div>
 
@@ -621,7 +621,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
                                         onChange={e => handleSimSellingPriceChange(parseNumberString(e.target.value))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
                                         placeholder="Special Price"
                                     />
                                 </div>
@@ -635,7 +635,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             step="0.5"
                                             value={simDiscount === 0 ? '' : simDiscount}
                                             onChange={e => handleSimDiscountChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
@@ -740,10 +740,10 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             {/* Bảng check margin Section Title & Action Button */}
             <div className="border-b border-slate-200/40 pb-2 mt-6 space-y-2">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-100">
+                    <h3 className="text-base font-bold text-slate-900">
                         Danh sách check margin
                     </h3>
-                    <span className="text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-300 rounded-full font-normal font-sans" style={{ fontFamily: 'var(--font-sans)' }}>
+                    <span className="text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-700 rounded-full font-normal font-sans" style={{ fontFamily: 'var(--font-sans)' }}>
                         {addedProducts.length} sản phẩm
                     </span>
                 </div>
@@ -781,7 +781,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             {addedProducts.length === 0 ? (
                 <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-12 text-center">
                     <span className="text-3xl mb-2 block">📋</span>
-                    <p className="font-semibold text-slate-300 text-xs">Chưa có sản phẩm nào trong bảng check margin</p>
+                    <p className="font-semibold text-slate-700 text-xs">Chưa có sản phẩm nào trong bảng check margin</p>
                     <p className="text-[10px] text-slate-500 max-w-sm mt-1">
                         Hãy chọn sản phẩm phía trên, nhập mức chiết khấu ưu đãi cho khách và click "+ Thêm vào bảng check margin".
                     </p>
@@ -809,7 +809,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         return (
                                             <tr key={p.id} className="group border-b border-slate-200/30 hover:bg-white/10 transition-colors">
                                                 <td className="px-3 py-2.5 text-xs text-slate-600 font-sans font-medium whitespace-nowrap">{p.skuCode}</td>
-                                                <td className="px-3 py-2.5 text-xs text-slate-100 font-medium leading-snug">{p.productName}</td>
+                                                <td className="px-3 py-2.5 text-xs text-slate-900 font-medium leading-snug">{p.productName}</td>
                                                 <td className="px-3 py-2.5 text-xs text-right font-sans text-[#D4A853] font-semibold whitespace-nowrap">{formatNumberOnly(p.wholesalePrice)}</td>
                                                 <td className="px-3 py-2.5 text-xs text-right font-sans text-[#0891B2] font-bold whitespace-nowrap">{formatVND(row.netSellingPrice)}</td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
@@ -858,7 +858,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div key={p.id} className="bg-slate-50 border border-slate-200/40 rounded-xl p-3.5 space-y-2 relative">
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="min-w-0 flex-1">
-                                            <h4 className="text-xs font-bold text-slate-100 leading-snug">{p.productName}</h4>
+                                            <h4 className="text-xs font-bold text-slate-900 leading-snug">{p.productName}</h4>
                                             <p className="text-[10px] text-slate-600 font-sans font-medium mt-0.5">{p.skuCode}</p>
                                         </div>
                                         <button
@@ -1049,7 +1049,7 @@ function SimulatedTableRow({
                                 }`}
                             />
                         ) : (
-                            <span className="text-[10px]" style={{ color: '#E2E8F0' }}>🍷</span>
+                            <span className="text-[10px]" style={{ color: '#64748B' }}>🍷</span>
                         )}
                     </div>
                     <div className="min-w-0 leading-tight">
@@ -1073,12 +1073,12 @@ function SimulatedTableRow({
             </td>
 
             {/* Giá Vốn trước thuế */}
-            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-300 font-semibold whitespace-nowrap leading-tight">
+            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-700 font-semibold whitespace-nowrap leading-tight">
                 <div>{formatNumberOnly(p.costPrice)}</div>
             </td>
 
             {/* Giá Lẻ trước thuế */}
-            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-300 font-semibold whitespace-nowrap leading-tight">
+            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-700 font-semibold whitespace-nowrap leading-tight">
                 <div>{formatNumberOnly(p.retailPrice)}</div>
             </td>
 
@@ -1093,7 +1093,7 @@ function SimulatedTableRow({
                     type="text"
                     value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                     onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                    className="w-[85px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-emerald-300 font-bold outline-none focus:border-[#87CBB9]"
+                    className="w-[85px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
             </td>
@@ -1108,7 +1108,7 @@ function SimulatedTableRow({
                         step="0.5"
                         value={row.discountPercent === 0 ? '' : row.discountPercent}
                         onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-emerald-300 outline-none focus:border-[#87CBB9]"
+                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#87CBB9]"
                         placeholder="0"
                     />
                     <span className="text-xs text-slate-500 ml-0.5">%</span>
@@ -1283,7 +1283,7 @@ function MobileSimulatedCard({
                 </div>
                 <div className="min-w-0 flex-1 leading-tight pr-6">
                     <div className="flex items-start gap-1.5">
-                        <h4 className="text-xs font-bold text-slate-100 leading-snug" style={{ wordBreak: 'break-word' }}>{p.productName}</h4>
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug" style={{ wordBreak: 'break-word' }}>{p.productName}</h4>
                         {p.hasCustomPrice ? (
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0 mt-1" />
                         ) : (
@@ -1311,7 +1311,7 @@ function MobileSimulatedCard({
             <div className="grid grid-cols-3 gap-1 bg-white/40 p-2 rounded-lg border border-slate-200/20 text-center font-sans text-[10px]">
                 <div>
                     <span className="text-slate-400 block text-xs uppercase">Cost</span>
-                    <span className="font-bold text-slate-300 block">{formatNumberOnly(p.costPrice)}</span>
+                    <span className="font-bold text-slate-700 block">{formatNumberOnly(p.costPrice)}</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-xs uppercase">Wholesale</span>
@@ -1319,7 +1319,7 @@ function MobileSimulatedCard({
                 </div>
                 <div>
                     <span className="text-slate-400 block text-xs uppercase">Retail</span>
-                    <span className="font-bold text-slate-200 block">{formatNumberOnly(p.retailPrice)}</span>
+                    <span className="font-bold text-slate-900 block">{formatNumberOnly(p.retailPrice)}</span>
                 </div>
             </div>
 
@@ -1332,7 +1332,7 @@ function MobileSimulatedCard({
                         type="text"
                         value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                         onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
                         placeholder="0đ"
                     />
                 </div>
@@ -1348,7 +1348,7 @@ function MobileSimulatedCard({
                             step="0.5"
                             value={row.discountPercent === 0 ? '' : row.discountPercent}
                             onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-emerald-700 font-bold focus:outline-none focus:border-[#87CBB9]"
                             placeholder="0"
                         />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-bold">%</span>

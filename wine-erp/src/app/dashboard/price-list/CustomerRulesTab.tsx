@@ -30,23 +30,23 @@ import { getProductsForPriceList } from './actions'
 import { formatVND } from '@/lib/utils'
 
 const RULE_TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    FIXED_DISCOUNT: { label: 'Chiết Khấu %', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+    FIXED_DISCOUNT: { label: 'Chiết Khấu %', color: '#B45309', bg: 'rgba(217,119,6,0.12)' },
     FIXED_PRICE: { label: 'Giá Cố Định', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    SPECIAL_PRICE: { label: 'Giá Đặc Biệt', color: '#0891B2', bg: 'rgba(8,145,178,0.15)' },
+    SPECIAL_PRICE: { label: 'Giá Đặc Biệt', color: '#0D9488', bg: 'rgba(13,148,136,0.12)' },
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
-    PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    REJECTED: { label: 'Từ Chối', color: '#E11D48', bg: 'rgba(225,29,72,0.15)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
+    PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#B45309', bg: 'rgba(217,119,6,0.12)' },
+    APPROVED: { label: 'Đã Duyệt', color: '#059669', bg: 'rgba(16,185,129,0.12)' },
+    REJECTED: { label: 'Từ Chối', color: '#E11D48', bg: 'rgba(225,29,72,0.12)' },
 }
 
 const CHANNEL_BADGES: Record<string, { label: string; color: string; bg: string }> = {
-    HORECA: { label: 'HORECA', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+    HORECA: { label: 'HORECA', color: '#B45309', bg: 'rgba(217,119,6,0.12)' },
     WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    VIP_RETAIL: { label: 'VIP Retail', color: '#0891B2', bg: 'rgba(8,145,178,0.15)' },
-    DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
+    VIP_RETAIL: { label: 'VIP Retail', color: '#0D9488', bg: 'rgba(13,148,136,0.12)' },
+    DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
 }
 
 interface CustomerOption {
@@ -366,17 +366,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
         if (defaultDiscountPct > 0) {
             return (
                 <div className="flex flex-col">
-                    <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                        {label} <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-mono">-{defaultDiscountPct}%</span>
+                    <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
+                        {label} <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">-{defaultDiscountPct}%</span>
                     </span>
-                    <span className="text-[10px] text-slate-400">Tự động áp dụng cho mọi sản phẩm</span>
+                    <span className="text-[10px] text-slate-500">Tự động áp dụng cho mọi sản phẩm</span>
                 </div>
             )
         }
 
         return (
             <div className="flex flex-col">
-                <span className="font-medium text-slate-300">{label}</span>
+                <span className="font-medium text-slate-800">{label}</span>
                 <span className="text-[10px] text-slate-500">Nguyên giá niêm yết</span>
             </div>
         )
@@ -385,16 +385,16 @@ export function CustomerRulesTab({ currentUser }: Props) {
     return (
         <div className="w-full space-y-4">
             {/* Top Switcher & Action Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-lg bg-white border border-slate-200 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                 {/* Dual-View Switcher */}
-                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#182F40] border border-[#2E4E67]">
+                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200">
                     <button
                         type="button"
                         onClick={() => setViewMode('CUSTOMERS')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
                             viewMode === 'CUSTOMERS'
-                                ? 'bg-[#0891B2] text-white shadow-sm font-bold'
-                                : 'text-slate-200 hover:text-white hover:bg-white/15'
+                                ? 'bg-[#0891B2] text-white shadow-xs font-bold'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         <Building2 size={15} />
@@ -405,8 +405,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         onClick={() => setViewMode('RULES')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
                             viewMode === 'RULES'
-                                ? 'bg-[#0891B2] text-white shadow-sm font-bold'
-                                : 'text-slate-200 hover:text-white hover:bg-white/15'
+                                ? 'bg-[#0891B2] text-white shadow-xs font-bold'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
                         <Sparkles size={15} />
@@ -420,8 +420,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         <button
                             type="button"
                             onClick={() => openCloneModal()}
-                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-sm hover:opacity-90"
-                            style={{ background: 'rgba(212,168,83,0.18)', border: '1px solid rgba(212,168,83,0.4)', color: '#D4A853' }}
+                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-xs hover:opacity-90"
+                            style={{ background: 'rgba(217,119,6,0.12)', border: '1px solid rgba(217,119,6,0.3)', color: '#B45309' }}
                         >
                             <Copy size={14} /> Áp Dụng Cho Cơ Sở Khác
                         </button>
@@ -429,7 +429,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                     {canCreate && (
                         <Link
                             href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
-                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-sm hover:opacity-90"
+                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-xs hover:opacity-90"
                             style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid #87CBB9', color: '#0891B2' }}
                         >
                             <FileText size={14} /> + Đề Xuất Giá (Tờ Trình)
@@ -442,7 +442,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 setFormCustomer(customers[0]?.id || '')
                                 setCreateOpen(true)
                             }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md transition shadow-md hover:opacity-90"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md transition shadow-xs hover:opacity-90"
                             style={{ background: '#0891B2', color: '#FFFFFF' }}
                         >
                             <Plus size={15} /> + Thêm Giá Đặc Biệt
@@ -453,7 +453,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
             {/* 4 Metric KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 text-xs">
                         <span>Tổng Khách Hàng</span>
                         <Building2 size={16} className="text-[#0891B2]" />
@@ -464,34 +464,34 @@ export function CustomerRulesTab({ currentUser }: Props) {
                     <p className="text-[11px] text-slate-500 mt-0.5">Tác nghiệp toàn hệ thống</p>
                 </div>
 
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 text-xs">
                         <span>Cơ Chế Chiết Khấu Riêng</span>
-                        <Percent size={16} className="text-[#D4A853]" />
+                        <Percent size={16} className="text-[#B45309]" />
                     </div>
-                    <div className="text-2xl font-bold text-[#D4A853] mt-1.5">
+                    <div className="text-2xl font-bold text-[#B45309] mt-1.5">
                         {masterOverview?.kpis.customPolicyCount ?? 0}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">Wholesale -X% / Retail -Y% tự động</p>
                 </div>
 
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 text-xs">
                         <span>Khách Có Giá Đặc Biệt</span>
-                        <Zap size={16} className="text-[#38BDF8]" />
+                        <Zap size={16} className="text-[#0891B2]" />
                     </div>
-                    <div className="text-2xl font-bold text-[#38BDF8] mt-1.5">
+                    <div className="text-2xl font-bold text-[#0891B2] mt-1.5">
                         {masterOverview?.kpis.hasSpecialPriceCount ?? 0}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">Có thỏa thuận giá riêng theo chai</p>
                 </div>
 
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 text-xs">
                         <span>Đề Xuất Chờ Duyệt</span>
-                        <AlertCircle size={16} className="text-[#F59E0B]" />
+                        <AlertCircle size={16} className="text-[#D97706]" />
                     </div>
-                    <div className="text-2xl font-bold text-[#F59E0B] mt-1.5">
+                    <div className="text-2xl font-bold text-[#D97706] mt-1.5">
                         {masterOverview?.kpis.pendingRulesCount ?? 0}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">Chờ Ban Giám Đốc / QL duyệt</p>
@@ -504,24 +504,22 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {viewMode === 'CUSTOMERS' && (
                 <div className="space-y-3">
                     {/* Filter Bar */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
                         <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
                             <div className="relative flex-1 md:w-72">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     placeholder="Tìm tên, mã khách hàng..."
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
+                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-slate-300 focus:border-[#0891B2] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
                                 />
                             </div>
 
                             <select
                                 value={filterChannel}
                                 onChange={e => setFilterChannel(e.target.value)}
-                                style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 rounded-md transition shadow-xs"
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Kênh</option>
                                 <option value="HORECA">Kênh HORECA</option>
@@ -533,8 +531,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <select
                                 value={filterMasterType}
                                 onChange={e => setFilterMasterType(e.target.value as any)}
-                                style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 rounded-md transition shadow-xs"
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Cơ Chế</option>
                                 <option value="HAS_SPECIAL">Có Giá Đặc Biệt (⚡)</option>
@@ -543,17 +540,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </select>
                         </div>
 
-                        <div className="text-xs text-slate-300">
-                            Hiển thị <strong className="text-white">{masterOverview?.customers.length ?? 0}</strong> khách hàng
+                        <div className="text-xs text-slate-600">
+                            Hiển thị <strong className="text-slate-900">{masterOverview?.customers.length ?? 0}</strong> khách hàng
                         </div>
                     </div>
 
                     {/* Master Customers Table */}
-                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white">
+                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-white text-slate-600 border-b border-slate-200">
+                                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
                                         <th className="p-3.5 font-semibold">Khách Hàng & Kênh</th>
                                         <th className="p-3.5 font-semibold">Cơ Chế Giá Mặc Định (Toàn Kho)</th>
                                         <th className="p-3.5 font-semibold">Tình Trạng Giá Đặc Biệt (Theo Chai)</th>
@@ -576,12 +573,12 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         </tr>
                                     ) : (
                                         masterOverview?.customers.map(c => {
-                                            const chBadge = CHANNEL_BADGES[c.channel] ?? { label: c.channel, color: '#475569', bg: 'rgba(138,174,187,0.12)' }
+                                            const chBadge = CHANNEL_BADGES[c.channel ?? ''] ?? { label: c.channel ?? 'Chưa gắn', color: '#475569', bg: 'rgba(100,116,139,0.12)' }
                                             const hasSpecial = c.specialRuleCount > 0
                                             const hasPending = c.pendingRuleCount > 0
 
                                             return (
-                                                <tr key={c.id} className="hover:bg-[#1f3445] transition-colors">
+                                                <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                                                     {/* Khách hàng */}
                                                     <td className="p-3.5">
                                                         <div className="flex items-start gap-2.5">
@@ -591,7 +588,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="font-mono font-semibold text-[#0891B2]">[{c.code}]</span>
-                                                                    <span className="font-semibold text-white hover:text-[#0891B2] cursor-pointer" onClick={() => handleOpenDrawer(c)}>
+                                                                    <span className="font-semibold text-slate-900 hover:text-[#0891B2] cursor-pointer" onClick={() => handleOpenDrawer(c)}>
                                                                         {c.name}
                                                                     </span>
                                                                 </div>
@@ -600,7 +597,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         {chBadge.label}
                                                                     </span>
                                                                     {c.brandGroup && (
-                                                                        <span className="text-[10px] text-slate-200 bg-slate-700/60 px-2 py-0.5 rounded border border-slate-600 font-medium">
+                                                                        <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium">
                                                                             {c.brandGroup}
                                                                         </span>
                                                                     )}
@@ -630,15 +627,15 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         <div className="space-y-1.5">
                                                             <div className="flex items-center gap-2 flex-wrap">
                                                                 {hasSpecial ? (
-                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                                                                         <Zap size={12} /> Có {c.specialRuleCount} chai giá riêng
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-slate-400 text-xs">— Theo giá chuẩn</span>
+                                                                    <span className="text-slate-500 text-xs">— Theo giá chuẩn</span>
                                                                 )}
 
                                                                 {hasPending && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                                                                         <Clock size={11} /> {c.pendingRuleCount} chờ duyệt
                                                                     </span>
                                                                 )}
@@ -648,7 +645,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             {c.activeRulesSummary && c.activeRulesSummary.length > 0 && (
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     {c.activeRulesSummary.slice(0, 2).map((r, idx) => (
-                                                                        <span key={idx} className="text-[10px] bg-white text-slate-300 px-2 py-0.5 rounded border border-slate-200">
+                                                                        <span key={idx} className="text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
                                                                             {r.productName}: {r.ruleType === 'FIXED_DISCOUNT' ? `-${r.value}%` : formatVND(r.value)}
                                                                         </span>
                                                                     ))}
@@ -702,24 +699,22 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {viewMode === 'RULES' && (
                 <div className="space-y-3">
                     {/* Filters Header */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
                         <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
                             <div className="relative flex-1 md:w-64">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     placeholder="Tìm khách hàng hoặc sản phẩm..."
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
+                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-slate-300 focus:border-[#0891B2] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
                                 />
                             </div>
 
                             <select
                                 value={filterCustomer}
                                 onChange={e => setFilterCustomer(e.target.value)}
-                                style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer max-w-[180px] truncate bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 rounded-md transition shadow-xs"
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer max-w-[180px] truncate bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Khách Hàng ({customers.length})</option>
                                 {customers.map(c => (
@@ -730,8 +725,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 rounded-md transition shadow-xs"
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Trạng Thái</option>
                                 <option value="DRAFT">Nháp</option>
@@ -743,8 +737,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <select
                                 value={filterType}
                                 onChange={e => setFilterType(e.target.value)}
-                                style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-[#3A5D77] focus:border-[#87CBB9] text-slate-900 rounded-md transition shadow-xs"
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Loại Giá</option>
                                 <option value="FIXED_DISCOUNT">Chiết Khấu %</option>
@@ -754,16 +747,16 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         </div>
 
                         <div className="text-xs text-slate-600">
-                            Tìm thấy <strong>{filteredRules.length}</strong> quy tắc
+                            Tìm thấy <strong className="text-slate-900">{filteredRules.length}</strong> quy tắc
                         </div>
                     </div>
 
                     {/* Table of rules */}
-                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white">
+                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-white text-slate-600 border-b border-slate-200">
+                                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
                                         <th className="p-3 font-semibold">Khách Hàng</th>
                                         <th className="p-3 font-semibold">Sản Phẩm Vang</th>
                                         <th className="p-3 font-semibold">Loại Giá</th>
@@ -779,7 +772,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         <tr>
                                             <td colSpan={8} className="text-center py-12">
                                                 <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={24} />
-                                                <p className="mt-2 text-slate-400">Đang tải dữ liệu...</p>
+                                                <p className="mt-2 text-slate-500">Đang tải dữ liệu...</p>
                                             </td>
                                         </tr>
                                     ) : filteredRules.length === 0 ? (
@@ -790,27 +783,27 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         </tr>
                                     ) : (
                                         filteredRules.map(rule => {
-                                            const typeCfg = RULE_TYPE_CFG[rule.ruleType] ?? { label: rule.ruleType, color: '#0F172A', bg: 'rgba(255,255,255,0.1)' }
-                                            const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(255,255,255,0.1)' }
+                                            const typeCfg = RULE_TYPE_CFG[rule.ruleType] ?? { label: rule.ruleType, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
+                                            const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
                                             return (
-                                                <tr key={rule.id} className="hover:bg-[#1f3445] transition">
+                                                <tr key={rule.id} className="hover:bg-slate-50/80 transition">
                                                     <td className="p-3">
-                                                        <div className="font-semibold text-slate-100">{rule.customerName}</div>
-                                                        <div className="font-mono text-[11px] text-slate-600">{rule.customerCode}</div>
+                                                        <div className="font-semibold text-slate-900">{rule.customerName}</div>
+                                                        <div className="font-mono text-[11px] text-slate-500">{rule.customerCode}</div>
                                                     </td>
                                                     <td className="p-3">
-                                                        <div className="font-medium text-slate-100">{rule.productName}</div>
-                                                        <div className="font-mono text-[11px] text-slate-600">{rule.skuCode}</div>
+                                                        <div className="font-medium text-slate-900">{rule.productName}</div>
+                                                        <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
                                                     </td>
                                                     <td className="p-3">
                                                         <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ color: typeCfg.color, background: typeCfg.bg }}>
                                                             {typeCfg.label}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 font-semibold text-emerald-400">
+                                                    <td className="p-3 font-semibold text-emerald-600">
                                                         {rule.ruleType === 'FIXED_DISCOUNT' ? `${rule.value}%` : formatVND(rule.value)}
                                                     </td>
-                                                    <td className="p-3 text-slate-300 text-[11px]">
+                                                    <td className="p-3 text-slate-600 text-[11px]">
                                                         {new Date(rule.startDate).toLocaleDateString('vi-VN')}
                                                         {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : ' (Vô thời hạn)'}
                                                     </td>
@@ -819,9 +812,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             {statusCfg.label}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 text-[11px] text-slate-400">
+                                                    <td className="p-3 text-[11px] text-slate-600">
                                                         <div>Đề xuất: {rule.requesterName}</div>
-                                                        {rule.approverName && <div className="text-emerald-400">Duyệt: {rule.approverName}</div>}
+                                                        {rule.approverName && <div className="text-emerald-700 font-medium">Duyệt: {rule.approverName}</div>}
                                                     </td>
                                                     <td className="p-3 text-right">
                                                         <div className="flex items-center justify-end gap-1.5">
@@ -830,7 +823,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleApprove(rule.id)}
-                                                                        className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition"
+                                                                        className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
                                                                         title="Phê duyệt quy tắc này"
                                                                     >
                                                                         <Check size={14} />
@@ -838,7 +831,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleReject(rule.id)}
-                                                                        className="p-1 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition"
+                                                                        className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
                                                                         title="Từ chối quy tắc này"
                                                                     >
                                                                         <Ban size={14} />
@@ -849,7 +842,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleDelete(rule.id)}
-                                                                    className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                                                    className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                                                                     title="Xóa quy tắc này"
                                                                 >
                                                                     <Trash2 size={14} />
@@ -872,7 +865,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* DRAWER / MODAL: CHI TIẾT CƠ CHẾ & GIÁ ĐẶC BIỆT CỦA 1 KHÁCH HÀNG       */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {drawerCustomer && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
                     <div className="w-full max-w-4xl h-full bg-white border-l border-slate-200 shadow-2xl flex flex-col overflow-hidden">
                         {/* Drawer Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
@@ -885,9 +878,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#87CBB9]/20 text-[#0891B2] border border-[#87CBB9]/40 font-semibold">
                                             {drawerCustomer.code}
                                         </span>
-                                        <h3 className="text-base font-bold text-slate-100">{drawerCustomer.name}</h3>
+                                        <h3 className="text-base font-bold text-slate-900">{drawerCustomer.name}</h3>
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-0.5">
+                                    <p className="text-xs text-slate-500 mt-0.5">
                                         Chi tiết danh mục giá đặc biệt & chính sách chiết khấu toàn kho
                                     </p>
                                 </div>
@@ -897,7 +890,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 <button
                                     type="button"
                                     onClick={refreshDrawer}
-                                    className="p-2 rounded text-slate-300 hover:text-white hover:bg-white/10 transition"
+                                    className="p-2 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
                                     title="Tải lại dữ liệu"
                                 >
                                     <RefreshCw size={16} className={drawerLoading ? 'animate-spin' : ''} />
@@ -908,7 +901,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         setDrawerCustomer(null)
                                         setDrawerDetails(null)
                                     }}
-                                    className="p-2 rounded text-slate-300 hover:text-rose-400 hover:bg-rose-500/15 transition"
+                                    className="p-2 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
                                 >
                                     <X size={20} />
                                 </button>
@@ -917,15 +910,15 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
                         {/* Customer Mechanism Summary Box */}
                         {drawerDetails?.customer && (
-                            <div className="p-4 bg-white border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                                <div className="p-3 rounded-lg bg-white border border-[#2E4E67] shadow-xs">
+                            <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
                                     <span className="text-slate-600 font-medium">Kênh Khách Hàng:</span>
-                                    <div className="font-semibold text-slate-100 mt-1 flex items-center gap-2">
+                                    <div className="font-bold text-slate-900 mt-1 flex items-center gap-2">
                                         <span className="text-sm">{drawerDetails.customer.channel}</span>
                                     </div>
                                 </div>
 
-                                <div className="p-3 rounded-lg bg-white border border-[#2E4E67] shadow-xs">
+                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
                                     <div className="flex items-center justify-between">
                                         <span className="text-slate-600 font-medium">Cơ Chế Giá Mặc Định:</span>
                                         <button
@@ -944,9 +937,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     </div>
                                 </div>
 
-                                <div className="p-3 rounded-lg bg-white border border-[#2E4E67] shadow-xs">
+                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
                                     <span className="text-slate-600 font-medium">Tổng Số Chai Giá Riêng:</span>
-                                    <div className="font-bold text-sky-400 mt-1 flex items-center gap-1.5 text-sm">
+                                    <div className="font-bold text-[#0891B2] mt-1 flex items-center gap-1.5 text-sm">
                                         <Zap size={14} /> {drawerDetails.rules.length} chai đã cấu hình
                                     </div>
                                 </div>
@@ -955,7 +948,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
                         {/* Drawer Actions Toolbar */}
                         <div className="p-3 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <span className="text-xs font-semibold text-slate-300">
+                            <span className="text-xs font-semibold text-slate-700">
                                 Danh Mục Giá Đặc Biệt ({drawerDetails?.rules.length ?? 0} chai)
                             </span>
 
@@ -963,7 +956,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => handleOpenCreateWithCustomer(drawerCustomer.id)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white shadow-sm hover:opacity-90 transition"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white shadow-xs hover:opacity-90 transition"
                                 >
                                     <Plus size={14} /> Thêm Chai Mới
                                 </button>
@@ -971,17 +964,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         </div>
 
                         {/* Rules List Table */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40">
                             {drawerLoading ? (
                                 <div className="text-center py-16">
                                     <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={28} />
                                     <p className="mt-2 text-xs text-slate-600">Đang tải chi tiết giá khách hàng...</p>
                                 </div>
                             ) : !drawerDetails || drawerDetails.rules.length === 0 ? (
-                                <div className="text-center py-16 border border-dashed border-slate-200 rounded-lg">
-                                    <Zap size={32} className="mx-auto text-slate-500 mb-2" />
-                                    <h4 className="text-sm font-semibold text-slate-300">Khách hàng chưa có chai giá đặc biệt nào</h4>
-                                    <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                                <div className="text-center py-16 border border-dashed border-slate-300 rounded-lg bg-white">
+                                    <Zap size={32} className="mx-auto text-slate-400 mb-2" />
+                                    <h4 className="text-sm font-semibold text-slate-800">Khách hàng chưa có chai giá đặc biệt nào</h4>
+                                    <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
                                         Hiện tại khách hàng này đang áp dụng 100% theo <strong>Cơ Chế Giá Mặc Định</strong> ở trên. Mọi sản phẩm mới về kho sẽ tự động áp dụng công thức này.
                                     </p>
                                     {canCreate && (
@@ -995,10 +988,10 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     )}
                                 </div>
                             ) : (
-                                <div className="rounded-lg border border-slate-200 overflow-hidden bg-white">
+                                <div className="rounded-lg border border-slate-200 overflow-hidden bg-white shadow-xs">
                                     <table className="w-full text-xs text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-[#182F40] text-slate-200 border-b border-[#2E4E67]">
+                                            <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
                                                 <th className="p-3 font-semibold">Tên Rượu Vang & SKU</th>
                                                 <th className="p-3 font-semibold text-right">Giá Niêm Yết</th>
                                                 <th className="p-3 font-semibold text-right">Giá Thỏa Thuận</th>
@@ -1010,36 +1003,36 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         </thead>
                                         <tbody className="divide-y divide-slate-200">
                                             {drawerDetails.rules.map(rule => {
-                                                const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(255,255,255,0.1)' }
+                                                const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
                                                 return (
-                                                    <tr key={rule.id} className="hover:bg-white transition">
+                                                    <tr key={rule.id} className="hover:bg-slate-50 transition">
                                                         <td className="p-3">
-                                                            <div className="font-semibold text-slate-100">{rule.productName}</div>
-                                                            <div className="font-mono text-[11px] text-slate-600">{rule.skuCode}</div>
+                                                            <div className="font-semibold text-slate-900">{rule.productName}</div>
+                                                            <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
                                                         </td>
-                                                        <td className="p-3 text-right font-mono text-slate-400">
+                                                        <td className="p-3 text-right font-mono text-slate-500">
                                                             {rule.basePrice ? formatVND(rule.basePrice) : '—'}
                                                         </td>
-                                                        <td className="p-3 text-right font-mono font-bold text-emerald-400">
+                                                        <td className="p-3 text-right font-mono font-bold text-emerald-600">
                                                             {formatVND(rule.effectivePrice)}
                                                         </td>
                                                         <td className="p-3 text-center">
                                                             {rule.savingsPct > 0 ? (
-                                                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300">
+                                                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                                     -{rule.savingsPct}%
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-slate-500">—</span>
+                                                                <span className="text-slate-400">—</span>
                                                             )}
                                                         </td>
-                                                        <td className="p-3 text-[11px] text-slate-300">
-                                                            <div>{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
+                                                        <td className="p-3 text-[11px] text-slate-600">
+                                                            <div className="font-medium text-slate-800">{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
                                                             <div className="text-slate-500">
                                                                 {rule.endDate ? `Đến: ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Không thời hạn'}
                                                             </div>
                                                         </td>
                                                         <td className="p-3 text-center">
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ color: statusCfg.color, background: statusCfg.bg }}>
+                                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                 {statusCfg.label}
                                                             </span>
                                                         </td>
@@ -1050,7 +1043,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleApprove(rule.id)}
-                                                                            className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition"
+                                                                            className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
                                                                             title="Duyệt giá"
                                                                         >
                                                                             <Check size={14} />
@@ -1058,7 +1051,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleReject(rule.id)}
-                                                                            className="p-1 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition"
+                                                                            className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
                                                                             title="Từ chối"
                                                                         >
                                                                             <Ban size={14} />
@@ -1069,7 +1062,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleDelete(rule.id)}
-                                                                        className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                                                        className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                                                                         title="Xóa deal này"
                                                                     >
                                                                         <Trash2 size={14} />
@@ -1088,7 +1081,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
                         {/* Drawer Footer */}
                         <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between">
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-slate-500">
                                 Cập nhật tự động trên POS & Báo Giá Sales
                             </span>
                             <button
@@ -1110,7 +1103,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* MODAL: ĐỔI CƠ CHẾ GIÁ MẶC ĐỊNH CHO KHÁCH HÀNG                          */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {policyModalCustomer && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
                     <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
@@ -1119,10 +1112,10 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     <SlidersHorizontal size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-100">
+                                    <h3 className="text-sm font-bold text-slate-900">
                                         Cấu Hình Cơ Chế Giá Mặc Định
                                     </h3>
-                                    <p className="text-xs text-slate-400 mt-0.5">
+                                    <p className="text-xs text-slate-500 mt-0.5">
                                         [{policyModalCustomer.code}] {policyModalCustomer.name}
                                     </p>
                                 </div>
@@ -1130,7 +1123,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <button
                                 type="button"
                                 onClick={() => setPolicyModalCustomer(null)}
-                                className="text-slate-400 hover:text-slate-200 p-1"
+                                className="text-slate-400 hover:text-slate-600 p-1"
                             >
                                 <X size={18} />
                             </button>
@@ -1139,14 +1132,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         {/* Form */}
                         <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                     Bảng Giá Gốc Làm Chuẩn:
                                 </label>
                                 <select
                                     value={policyBasePriceType}
                                     onChange={e => setPolicyBasePriceType(e.target.value)}
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none cursor-pointer focus:border-[#87CBB9] transition shadow-xs"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none cursor-pointer focus:border-[#0891B2] transition shadow-xs"
                                 >
                                     <option value="BY_CHANNEL">Theo Kênh Bán Hàng Mặc Định ({policyModalCustomer.channel})</option>
                                     <option value="WHOLESALE">Bảng Giá Buôn (Wholesale Price List)</option>
@@ -1156,7 +1148,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                     Mức Chiết Khấu Mặc Định Toàn Kho (%):
                                 </label>
                                 <div className="relative">
@@ -1168,30 +1160,29 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         value={policyDiscountPct}
                                         onChange={e => setPolicyDiscountPct(Number(e.target.value))}
                                         placeholder="Ví dụ: 10 (nghĩa là -10%)"
-                                        style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                        className="w-full p-2.5 pr-8 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9] transition shadow-xs"
+                                        className="w-full p-2.5 pr-8 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2] transition shadow-xs"
                                     />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
                                         %
                                     </span>
                                 </div>
-                                <p className="text-[11px] text-slate-400 mt-1">
+                                <p className="text-[11px] text-slate-500 mt-1">
                                     Nhập <code>10</code> để khách luôn được chiết khấu 10% trên bảng giá gốc.
                                 </p>
                             </div>
 
                             {/* Dynamic Explanation Box */}
-                            <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1.5">
-                                <div className="flex items-center gap-1.5 font-bold text-emerald-300">
+                            <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5">
+                                <div className="flex items-center gap-1.5 font-bold text-emerald-800">
                                     <CheckCircle2 size={14} /> Tự Động Định Giá Động Khi Có Hàng Mới
                                 </div>
-                                <p className="text-slate-300 text-[11px] leading-relaxed">
+                                <p className="text-slate-700 text-[11px] leading-relaxed">
                                     Khi công ty nhập thêm bất kỳ chai vang mới nào về kho, hệ thống sẽ <strong>tự động tính giá bán</strong> cho khách hàng này theo công thức:
                                 </p>
-                                <div className="p-2.5 rounded-lg bg-white text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30 shadow-xs">
+                                <div className="p-2.5 rounded-lg bg-white text-emerald-800 font-mono text-xs font-bold border border-emerald-300 shadow-xs">
                                     Giá Khách Mua = [Bảng Giá {policyBasePriceType === 'WHOLESALE' ? 'Buôn' : policyBasePriceType === 'RETAIL' ? 'Lẻ' : 'Gốc'}] × (1 - {policyDiscountPct}%)
                                 </div>
-                                <p className="text-slate-400 text-[10px]">
+                                <p className="text-slate-500 text-[10px]">
                                     * Ngoại trừ những chai rượu được cấu hình riêng trong mục "Giá Đặc Biệt" thì sẽ ưu tiên áp dụng giá thỏa thuận riêng.
                                 </p>
                             </div>
@@ -1230,25 +1221,24 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* MODAL: TẠO QUY TẮC GIÁ ĐẶC BIỆT ĐƠN LẺ                                 */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {createOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
                     <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <Plus size={16} className="text-[#0891B2]" /> Thêm Giá Đặc Biệt Cho Khách Hàng
                             </h3>
-                            <button type="button" onClick={() => setCreateOpen(false)} className="text-slate-400 hover:text-slate-200">
+                            <button type="button" onClick={() => setCreateOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={18} />
                             </button>
                         </div>
 
                         <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1">Khách Hàng:</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Khách Hàng:</label>
                                 <select
                                     value={formCustomer}
                                     onChange={e => setFormCustomer(e.target.value)}
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                 >
                                     <option value="">-- Chọn khách hàng --</option>
                                     {customers.map(c => (
@@ -1258,25 +1248,23 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1">Sản Phẩm Vang:</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Sản Phẩm Vang:</label>
                                 <input
                                     value={formProductSearch}
                                     onChange={e => setFormProductSearch(e.target.value)}
                                     placeholder="Gõ để lọc sản phẩm..."
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2 text-xs bg-white border border-[#3A5D77] text-slate-900 placeholder:text-slate-400 rounded-lg mb-1.5 focus:border-[#87CBB9]"
+                                    className="w-full p-2 text-xs bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-lg mb-1.5 focus:border-[#0891B2]"
                                 />
                                 <select
                                     value={formProduct}
                                     onChange={e => setFormProduct(e.target.value)}
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                     size={4}
                                 >
                                     {products
                                         .filter(p => !formProductSearch || p.productName.toLowerCase().includes(formProductSearch.toLowerCase()) || p.skuCode.toLowerCase().includes(formProductSearch.toLowerCase()))
                                         .map(p => (
-                                            <option key={p.id} value={p.id} className="p-1.5 cursor-pointer">
+                                             <option key={p.id} value={p.id} className="p-1.5 cursor-pointer text-slate-800">
                                                 [{p.skuCode}] {p.productName}
                                             </option>
                                         ))}
@@ -1285,12 +1273,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Loại Quy Tắc:</label>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Loại Quy Tắc:</label>
                                     <select
                                         value={formType}
                                         onChange={e => setFormType(e.target.value as any)}
-                                        style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                        className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                     >
                                         <option value="SPECIAL_PRICE">Giá Đặc Biệt (VND)</option>
                                         <option value="FIXED_PRICE">Giá Cố Định (VND)</option>
@@ -1299,7 +1286,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
                                         {formType === 'FIXED_DISCOUNT' ? 'Tỷ Lệ Chiết Khấu (%)' : 'Mức Giá (VND)'}:
                                     </label>
                                     <input
@@ -1307,44 +1294,40 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         value={formValue}
                                         onChange={e => setFormValue(e.target.value)}
                                         placeholder={formType === 'FIXED_DISCOUNT' ? 'Ví dụ: 15' : 'Ví dụ: 850000'}
-                                        style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                        className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Ngày Bắt Đầu:</label>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Bắt Đầu:</label>
                                     <input
                                         type="date"
                                         value={formStart}
                                         onChange={e => setFormStart(e.target.value)}
-                                        style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                        className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg focus:border-[#87CBB9]"
+                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg focus:border-[#0891B2]"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Ngày Hết Hạn (Tùy chọn):</label>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Hết Hạn (Tùy chọn):</label>
                                     <input
                                         type="date"
                                         value={formEnd}
                                         onChange={e => setFormEnd(e.target.value)}
-                                        style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                        className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg focus:border-[#87CBB9]"
+                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg focus:border-[#0891B2]"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1">Ghi Chú / Số Hợp Đồng:</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi Chú / Số Hợp Đồng:</label>
                                 <textarea
                                     value={formNotes}
                                     onChange={e => setFormNotes(e.target.value)}
                                     placeholder="Thỏa thuận theo Hợp đồng số... hoặc tờ trình số..."
                                     rows={2}
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                 />
                             </div>
                         </div>
@@ -1375,20 +1358,20 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* MODAL: SAO CHÉP CHÍNH SÁCH GIÁ CHO CƠ SỞ / CHI NHÁNH KHÁC             */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {cloneModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
                     <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                                <Copy size={16} className="text-[#D4A853]" /> Sao Chép Cơ Chế Giá Cho Các Cơ Sở Khác
+                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <Copy size={16} className="text-[#B45309]" /> Sao Chép Cơ Chế Giá Cho Các Cơ Sở Khác
                             </h3>
-                            <button type="button" onClick={() => setCloneModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+                            <button type="button" onClick={() => setCloneModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={18} />
                             </button>
                         </div>
 
                         <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1">Khách Hàng Nguồn (Đã có giá):</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Khách Hàng Nguồn (Đã có giá):</label>
                                 <select
                                     value={cloneSourceCustomer}
                                     onChange={e => {
@@ -1397,8 +1380,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         const sRules = rules.filter(r => r.customerId === sId && r.status === 'APPROVED')
                                         setCloneSelectedRuleIds(sRules.map(r => r.id))
                                     }}
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2.5 text-xs bg-white border border-[#3A5D77] text-slate-900 rounded-lg outline-none focus:border-[#87CBB9]"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
                                 >
                                     {customers.map(c => (
                                         <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
@@ -1407,46 +1389,45 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
                                     Chọn Các Cơ Sở / Khách Hàng Đích Cần Áp Dụng:
                                 </label>
                                 <input
                                     value={cloneSearchTarget}
                                     onChange={e => setCloneSearchTarget(e.target.value)}
                                     placeholder="Tìm tên cơ sở đích..."
-                                    style={{ color: '#FFFFFF', backgroundColor: '#FFFFFF' }}
-                                    className="w-full p-2 text-xs bg-white border border-[#3A5D77] text-slate-900 placeholder:text-slate-400 rounded-lg mb-2 focus:border-[#87CBB9]"
+                                    className="w-full p-2 text-xs bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-lg mb-2 focus:border-[#0891B2]"
                                 />
-                                <div className="max-h-48 overflow-y-auto border border-[#3A5D77] rounded-lg p-2 space-y-1 bg-white">
+                                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1 bg-white">
                                     {customers
                                         .filter(c => c.id !== cloneSourceCustomer)
                                         .filter(c => !cloneSearchTarget || c.name.toLowerCase().includes(cloneSearchTarget.toLowerCase()) || c.code.toLowerCase().includes(cloneSearchTarget.toLowerCase()))
                                         .map(c => {
-                                            const isSelected = cloneTargetCustomers.includes(c.id)
-                                            return (
-                                                <div
-                                                    key={c.id}
-                                                    onClick={() => {
-                                                        setCloneTargetCustomers(prev =>
-                                                            prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id]
-                                                        )
-                                                    }}
-                                                    className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition ${
-                                                        isSelected ? 'bg-[#87CBB9]/20 border border-[#87CBB9]/50' : 'hover:bg-white/10 border border-transparent'
-                                                    }`}
-                                                >
-                                                    <span className="text-slate-100 font-medium">
-                                                        <span className="font-mono text-[#0891B2] mr-1">[{c.code}]</span> {c.name}
-                                                    </span>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => {}}
-                                                        className="rounded accent-[#87CBB9]"
-                                                    />
-                                                </div>
-                                            )
-                                        })}
+                                             const isSelected = cloneTargetCustomers.includes(c.id)
+                                             return (
+                                                 <div
+                                                     key={c.id}
+                                                     onClick={() => {
+                                                         setCloneTargetCustomers(prev =>
+                                                             prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id]
+                                                         )
+                                                     }}
+                                                     className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition ${
+                                                         isSelected ? 'bg-[#87CBB9]/20 border border-[#87CBB9]/50' : 'hover:bg-slate-50 border border-transparent'
+                                                     }`}
+                                                 >
+                                                     <span className="text-slate-800 font-medium">
+                                                         <span className="font-mono text-[#0891B2] mr-1">[{c.code}]</span> {c.name}
+                                                     </span>
+                                                     <input
+                                                         type="checkbox"
+                                                         checked={isSelected}
+                                                         onChange={() => {}}
+                                                         className="rounded accent-[#0891B2]"
+                                                     />
+                                                 </div>
+                                             )
+                                         })}
                                 </div>
                             </div>
 
@@ -1456,9 +1437,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     id="overrideExisting"
                                     checked={cloneOverrideExisting}
                                     onChange={e => setCloneOverrideExisting(e.target.checked)}
-                                    className="rounded accent-[#87CBB9]"
+                                    className="rounded accent-[#0891B2]"
                                 />
-                                <label htmlFor="overrideExisting" className="text-xs text-slate-300 cursor-pointer">
+                                <label htmlFor="overrideExisting" className="text-xs text-slate-700 cursor-pointer">
                                     Ghi đè giá nếu sản phẩm đã tồn tại ở cơ sở đích
                                 </label>
                             </div>

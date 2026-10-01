@@ -511,7 +511,7 @@ export function WeeklyVisitPlannerPanel() {
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 <div className="space-y-0.5">
                                                     <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="text-xs font-bold text-slate-100">
+                                                        <span className="text-xs font-bold text-slate-900">
                                                             {v.customer?.name || 'Khách hàng'}
                                                         </span>
                                                         <span className="text-[10px] font-mono" style={{ color: '#64748B' }}>
@@ -531,8 +531,8 @@ export function WeeklyVisitPlannerPanel() {
                                                         <>
                                                             <button
                                                                 onClick={() => { setCheckInVisitId(v.id!); setResultNotes('') }}
-                                                                className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold text-slate-100"
-                                                                style={{ background: '#5BA88A' }}
+                                                                className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold text-white shadow-xs"
+                                                                style={{ background: '#0891B2' }}
                                                             >
                                                                 <CheckCircle2 size={10} /> Check-in/Báo cáo
                                                             </button>
@@ -625,9 +625,9 @@ export function WeeklyVisitPlannerPanel() {
                                 <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
                                     {completedVisits.map(v => (
                                         <div key={v.id} className="p-2.5 rounded border border-slate-200" style={{ background: '#FFFFFF' }}>
-                                            <p className="text-xs font-bold text-slate-100">{v.customer?.name}</p>
+                                            <p className="text-xs font-bold text-slate-900">{v.customer?.name}</p>
                                             <p className="text-[10px]" style={{ color: '#475569' }}>⏱ {new Date(v.visitDate).toLocaleDateString('vi-VN')}</p>
-                                            <p className="text-[10px] mt-1 text-slate-300 truncate">📝 {v.resultNotes || 'Đã viếng thăm'}</p>
+                                            <p className="text-[10px] mt-1 text-slate-600 truncate">📝 {v.resultNotes || 'Đã viếng thăm'}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -635,8 +635,8 @@ export function WeeklyVisitPlannerPanel() {
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t" style={{ borderColor: '#E2E8F0' }}>
                                     <button
                                         onClick={handleExportCSV}
-                                        className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-slate-100 hover:opacity-90 transition border border-slate-200"
-                                        style={{ background: 'rgba(138,174,187,0.06)' }}
+                                        className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-300"
+                                        style={{ background: '#FFFFFF' }}
                                     >
                                         <Download size={12} /> Xuất CSV
                                     </button>

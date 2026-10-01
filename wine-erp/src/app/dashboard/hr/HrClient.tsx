@@ -180,7 +180,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         <span className="text-[11px] font-semibold">Tổng Nhân Sự</span>
                         <Users className="w-4 h-4 text-[#0891B2]" />
                     </div>
-                    <p className="text-2xl font-black text-white">{stats.totalEmployees}</p>
+                    <p className="text-2xl font-black text-slate-900">{stats.totalEmployees}</p>
                     <p className="text-[10px] text-slate-600 mt-0.5">Toàn bộ hồ sơ</p>
                 </div>
 
@@ -377,7 +377,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 <tr>
                                     <td colSpan={8} className="p-8 text-center text-slate-600">
                                         <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#0891B2]" />
-                                        <p className="font-semibold text-white">Không tìm thấy nhân viên phù hợp</p>
+                                        <p className="font-semibold text-slate-700">Không tìm thấy nhân viên phù hợp</p>
                                         <p className="text-[11px] mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bấm "Thêm Nhân Viên" để tạo mới</p>
                                     </td>
                                 </tr>
@@ -389,90 +389,90 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                     >
                                         {/* Employee Name + Phone */}
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-[#87CBB9]/20 border border-[#87CBB9]/50 flex items-center justify-center font-bold text-[#0891B2] shrink-0">
-                                                    {emp.fullName.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p
-                                                        onClick={() => handleOpenDetail(emp)}
-                                                        className="font-bold text-white hover:text-[#0891B2] transition-colors cursor-pointer truncate max-w-[180px]"
-                                                    >
-                                                        {emp.fullName}
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-600 truncate">
-                                                        {emp.phone || emp.email || '—'}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                             <div className="flex items-center gap-3">
+                                                 <div className="w-9 h-9 rounded-full bg-[#87CBB9]/20 border border-[#87CBB9]/50 flex items-center justify-center font-bold text-[#0891B2] shrink-0">
+                                                     {emp.fullName.charAt(0).toUpperCase()}
+                                                 </div>
+                                                 <div className="min-w-0">
+                                                     <p
+                                                         onClick={() => handleOpenDetail(emp)}
+                                                         className="font-bold text-slate-900 hover:text-[#0891B2] transition-colors cursor-pointer truncate max-w-[180px]"
+                                                     >
+                                                         {emp.fullName}
+                                                     </p>
+                                                     <p className="text-[11px] text-slate-600 truncate">
+                                                         {emp.phone || emp.email || '—'}
+                                                     </p>
+                                                 </div>
+                                             </div>
                                         </td>
 
                                         {/* Code */}
                                         <td className="px-3 py-3">
-                                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-[#0891B2] border border-slate-200">
-                                                {emp.code}
-                                            </span>
+                                             <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-[#0891B2] border border-slate-200">
+                                                 {emp.code}
+                                             </span>
                                         </td>
 
                                         {/* Position & Dept */}
                                         <td className="px-3 py-3">
-                                            <p className="font-semibold text-white truncate max-w-[160px]">{emp.position || '—'}</p>
-                                            <p className="text-[11px] text-slate-600 truncate max-w-[160px]">
-                                                {emp.dept?.name || 'Chưa phân phòng'}
-                                            </p>
+                                             <p className="font-semibold text-slate-900 truncate max-w-[160px]">{emp.position || '—'}</p>
+                                             <p className="text-[11px] text-slate-600 truncate max-w-[160px]">
+                                                 {emp.dept?.name || 'Chưa phân phòng'}
+                                             </p>
                                         </td>
 
                                         {/* Contract & Warnings */}
                                         <td className="px-3 py-3">
-                                            <div>
-                                                <p className="font-semibold text-white">
-                                                    {emp.contractType === 'PROBATION' ? 'Thử việc' :
-                                                     emp.contractType === 'DEFINITE_1Y' ? 'Xác định 1 năm' :
-                                                     emp.contractType === 'DEFINITE_3Y' ? 'Xác định 3 năm' :
-                                                     emp.contractType === 'INDEFINITE' ? 'Không xác định' :
-                                                     emp.contractType || '—'}
-                                                </p>
-                                                {emp.contractEndDate ? (
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <span className="text-[11px] text-slate-600">
-                                                            Hạn: {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
-                                                        </span>
-                                                        {emp.contractWarning === 'EXPIRING_SOON' && (
-                                                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">
-                                                                Còn {emp.contractDaysLeft}d
-                                                            </span>
-                                                        )}
-                                                        {emp.contractWarning === 'EXPIRED' && (
-                                                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300">
-                                                                Hết hạn
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-[11px] text-slate-600">Vô thời hạn</span>
-                                                )}
-                                            </div>
+                                             <div>
+                                                 <p className="font-semibold text-slate-900">
+                                                     {emp.contractType === 'PROBATION' ? 'Thử việc' :
+                                                      emp.contractType === 'DEFINITE_1Y' ? 'Xác định 1 năm' :
+                                                      emp.contractType === 'DEFINITE_3Y' ? 'Xác định 3 năm' :
+                                                      emp.contractType === 'INDEFINITE' ? 'Không xác định' :
+                                                      emp.contractType || '—'}
+                                                 </p>
+                                                 {emp.contractEndDate ? (
+                                                     <div className="flex items-center gap-1.5 mt-0.5">
+                                                         <span className="text-[11px] text-slate-600">
+                                                             Hạn: {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
+                                                         </span>
+                                                         {emp.contractWarning === 'EXPIRING_SOON' && (
+                                                             <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                                 Còn {emp.contractDaysLeft}d
+                                                             </span>
+                                                         )}
+                                                         {emp.contractWarning === 'EXPIRED' && (
+                                                             <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                                                 Hết hạn
+                                                             </span>
+                                                         )}
+                                                     </div>
+                                                 ) : (
+                                                     <span className="text-[11px] text-slate-600">Vô thời hạn</span>
+                                                 )}
+                                             </div>
                                         </td>
 
                                         {/* Documents Count & Quick Upload */}
                                         <td className="px-3 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => handleOpenDetail(emp)}
-                                                    className="flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-[#E2E8F0] text-xs font-semibold text-[#0891B2] border border-slate-200 transition-colors cursor-pointer"
-                                                    title="Xem kho giấy tờ"
-                                                >
-                                                    <FileText className="w-3.5 h-3.5" />
-                                                    <span>{emp.documentsCount}</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => setQuickUploadEmp({ id: emp.id, name: emp.fullName })}
-                                                    className="p-1 rounded bg-white hover:bg-[#E2E8F0] text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
-                                                    title="Tải thêm giấy tờ"
-                                                >
-                                                    <Upload className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                             <div className="flex items-center justify-center gap-1.5">
+                                                 <button
+                                                     onClick={() => handleOpenDetail(emp)}
+                                                     className="flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-[#E2E8F0] text-xs font-semibold text-[#0891B2] border border-slate-200 transition-colors cursor-pointer"
+                                                     title="Xem kho giấy tờ"
+                                                 >
+                                                     <FileText className="w-3.5 h-3.5" />
+                                                     <span>{emp.documentsCount}</span>
+                                                 </button>
+                                                 <button
+                                                     onClick={() => setQuickUploadEmp({ id: emp.id, name: emp.fullName })}
+                                                     className="p-1 rounded bg-white hover:bg-[#E2E8F0] text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
+                                                     title="Tải thêm giấy tờ"
+                                                 >
+                                                     <Upload className="w-3.5 h-3.5" />
+                                                 </button>
+                                             </div>
                                         </td>
 
                                         {/* Linked User ERP */}
@@ -480,7 +480,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                             {emp.user ? (
                                                 <div className="flex items-center gap-1.5">
                                                     <Shield className="w-3.5 h-3.5 text-[#0891B2] shrink-0" />
-                                                    <span className="font-semibold text-white truncate max-w-[130px]" title={emp.user.email}>
+                                                    <span className="font-semibold text-slate-900 truncate max-w-[130px]" title={emp.user.email}>
                                                         {emp.user.name}
                                                     </span>
                                                 </div>

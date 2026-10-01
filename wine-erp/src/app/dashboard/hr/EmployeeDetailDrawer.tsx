@@ -128,7 +128,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             </button>
                             <button
                                 onClick={onClose}
-                                className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -139,20 +139,20 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                     {(contractStatus !== 'NORMAL' || healthStatus !== 'NORMAL') && (
                         <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 space-y-1.5">
                             {contractStatus === 'EXPIRED' && (
-                                <div className="flex items-center gap-2 text-xs font-semibold text-rose-300">
-                                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                                <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
+                                    <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                                     <span>Hợp đồng lao động đã hết hạn từ {new Date(employee.contractEndDate).toLocaleDateString('vi-VN')}! Vui lòng làm thủ tục gia hạn hoặc ký HĐ mới.</span>
                                 </div>
                             )}
                             {contractStatus === 'EXPIRING_SOON' && (
-                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
-                                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-800">
+                                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
                                     <span>Hợp đồng lao động sắp hết hạn trong <strong>{contractDaysLeft} ngày</strong> ({new Date(employee.contractEndDate).toLocaleDateString('vi-VN')}).</span>
                                 </div>
                             )}
                             {healthStatus === 'EXPIRING_SOON' && (
-                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
-                                    <HeartPulse className="w-4 h-4 text-amber-400 shrink-0" />
+                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-800">
+                                    <HeartPulse className="w-4 h-4 text-amber-600 shrink-0" />
                                     <span>Giấy khám sức khỏe sắp hết hạn sau {healthDaysLeft} ngày. Nhắc nhân viên khám định kỳ.</span>
                                 </div>
                             )}
@@ -166,7 +166,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'OVERVIEW'
                                     ? 'border-[#87CBB9] text-[#0891B2]'
-                                    : 'border-transparent text-slate-600 hover:text-white'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
                             Hồ Sơ Cá Nhân
@@ -176,7 +176,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'WORK'
                                     ? 'border-[#87CBB9] text-[#0891B2]'
-                                    : 'border-transparent text-slate-600 hover:text-white'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
                             Công Tác & HĐLĐ
@@ -186,7 +186,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'FINANCE'
                                     ? 'border-[#87CBB9] text-[#0891B2]'
-                                    : 'border-transparent text-slate-600 hover:text-white'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
                             Tài Chính & Thuế
@@ -196,7 +196,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'DOCUMENTS'
                                     ? 'border-[#87CBB9] text-[#0891B2]'
-                                    : 'border-transparent text-slate-600 hover:text-white'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
                             Kho Giấy Tờ ({employee.documents?.length || 0})
@@ -214,24 +214,24 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Giới tính</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.gender === 'NAM' ? 'Nam' : employee.gender === 'NU' ? 'Nữ' : 'Khác'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.gender === 'NAM' ? 'Nam' : employee.gender === 'NU' ? 'Nữ' : 'Khác'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày sinh</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.dateOfBirth ? new Date(employee.dateOfBirth).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số điện thoại</p>
-                                            <p className="font-semibold text-white mt-0.5 flex items-center gap-1.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1.5">
                                                 <Phone className="w-3.5 h-3.5 text-[#0891B2]" />
                                                 {employee.phone || '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Email liên hệ</p>
-                                            <p className="font-semibold text-white mt-0.5 flex items-center gap-1.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1.5">
                                                 <Mail className="w-3.5 h-3.5 text-[#0891B2]" />
                                                 {employee.email || '—'}
                                             </p>
@@ -245,30 +245,30 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số CCCD</p>
-                                            <p className="font-mono font-bold text-white mt-0.5">{employee.nationalId || '—'}</p>
+                                            <p className="font-mono font-bold text-slate-900 mt-0.5">{employee.nationalId || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày cấp</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.nationalIdDate ? new Date(employee.nationalIdDate).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Nơi cấp</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.nationalIdPlace || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.nationalIdPlace || '—'}</p>
                                         </div>
                                     </div>
                                     <div className="pt-2 border-t border-slate-200/40 space-y-2">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Địa chỉ thường trú</p>
-                                            <p className="text-white mt-0.5 flex items-start gap-1.5">
+                                            <p className="text-slate-900 mt-0.5 flex items-start gap-1.5">
                                                 <MapPin className="w-3.5 h-3.5 text-[#0891B2] mt-0.5 shrink-0" />
                                                 {employee.address || '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Chỗ ở hiện nay</p>
-                                            <p className="text-white mt-0.5 flex items-start gap-1.5">
+                                            <p className="text-slate-900 mt-0.5 flex items-start gap-1.5">
                                                 <MapPin className="w-3.5 h-3.5 text-[#0891B2] mt-0.5 shrink-0" />
                                                 {employee.currentAddress || '—'}
                                             </p>
@@ -282,15 +282,15 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Họ tên người liên hệ</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.emergencyContact || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.emergencyContact || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số điện thoại</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.emergencyPhone || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.emergencyPhone || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Mối quan hệ</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.emergencyRelation || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.emergencyRelation || '—'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -305,24 +305,24 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Phòng ban</p>
-                                            <p className="font-bold text-white mt-0.5 flex items-center gap-1.5">
+                                            <p className="font-bold text-slate-900 mt-0.5 flex items-center gap-1.5">
                                                 <Building className="w-3.5 h-3.5 text-[#0891B2]" />
                                                 {employee.dept?.name || 'Chưa phân phòng'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Chức danh / Vị trí</p>
-                                            <p className="font-bold text-white mt-0.5">{employee.position || '—'}</p>
+                                            <p className="font-bold text-slate-900 mt-0.5">{employee.position || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày vào làm việc</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.startDate ? new Date(employee.startDate).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày chính thức</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.officialDate ? new Date(employee.officialDate).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
@@ -347,11 +347,11 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số hiệu hợp đồng</p>
-                                            <p className="font-mono font-bold text-white mt-0.5">{employee.contractNumber || '—'}</p>
+                                            <p className="font-mono font-bold text-slate-900 mt-0.5">{employee.contractNumber || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Loại hợp đồng</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.contractType === 'PROBATION' ? 'Thử việc' :
                                                  employee.contractType === 'DEFINITE_1Y' ? 'Xác định thời hạn 1 năm' :
                                                  employee.contractType === 'DEFINITE_3Y' ? 'Xác định thời hạn 3 năm' :
@@ -361,13 +361,13 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày bắt đầu</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.contractStartDate ? new Date(employee.contractStartDate).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày hết hạn</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.contractEndDate ? new Date(employee.contractEndDate).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
                                             </p>
                                         </div>
@@ -381,14 +381,14 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                         Tài Khoản Đăng Nhập ERP
                                     </p>
                                     {employee.user ? (
-                                        <div className="p-3 rounded-lg bg-[#0D1822] border border-slate-200 space-y-2">
+                                        <div className="p-3 rounded-lg bg-white border border-slate-200 space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <p className="font-bold text-white">{employee.user.name}</p>
-                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                                                <p className="font-bold text-slate-900">{employee.user.name}</p>
+                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
                                                     {employee.user.status}
                                                 </span>
                                             </div>
-                                            <p className="text-slate-600 text-xs">{employee.user.email}</p>
+                                            <p className="text-slate-500 text-xs">{employee.user.email}</p>
                                             <div className="flex flex-wrap gap-1 pt-1">
                                                 {employee.user.roles?.map((r: any) => (
                                                     <span key={r.role?.id || r} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#87CBB9]/15 text-[#0891B2]">
@@ -414,15 +414,15 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số tài khoản</p>
-                                            <p className="font-mono font-bold text-white text-sm mt-0.5">{employee.bankAccountNo || '—'}</p>
+                                            <p className="font-mono font-bold text-slate-900 text-sm mt-0.5">{employee.bankAccountNo || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Chủ tài khoản</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.bankAccountHolder || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.bankAccountHolder || '—'}</p>
                                         </div>
                                         <div className="col-span-2">
                                             <p className="text-slate-600 text-[11px]">Ngân hàng & Chi nhánh</p>
-                                            <p className="font-semibold text-white mt-0.5">{employee.bankName || '—'}</p>
+                                            <p className="font-semibold text-slate-900 mt-0.5">{employee.bankName || '—'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -432,11 +432,11 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Mã số thuế cá nhân (MST)</p>
-                                            <p className="font-mono font-bold text-white mt-0.5">{employee.taxCode || '—'}</p>
+                                            <p className="font-mono font-bold text-slate-900 mt-0.5">{employee.taxCode || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số sổ BHXH</p>
-                                            <p className="font-mono font-bold text-white mt-0.5">{employee.socialInsuranceNo || '—'}</p>
+                                            <p className="font-mono font-bold text-slate-900 mt-0.5">{employee.socialInsuranceNo || '—'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -449,13 +449,13 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Ngày khám gần nhất</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.healthCheckDate ? new Date(employee.healthCheckDate).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Hạn giấy khám sức khỏe</p>
-                                            <p className="font-semibold text-white mt-0.5">
+                                            <p className="font-semibold text-slate-900 mt-0.5">
                                                 {employee.healthCheckExpiry ? new Date(employee.healthCheckExpiry).toLocaleDateString('vi-VN') : '—'}
                                             </p>
                                         </div>
@@ -469,7 +469,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h4 className="font-bold text-white text-sm">Kho Giấy Tờ & Hồ Sơ Số Hóa</h4>
+                                        <h4 className="font-bold text-slate-900 text-sm">Kho Giấy Tờ & Hồ Sơ Số Hóa</h4>
                                         <p className="text-xs text-slate-600">Tài liệu được bảo mật và lưu trữ an toàn trên Supabase Storage</p>
                                     </div>
                                     <button
@@ -484,7 +484,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 {employee.documents?.length === 0 ? (
                                     <div className="p-8 text-center rounded-xl bg-white/30 border border-slate-200 border-dashed">
                                         <FileText className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
-                                        <p className="font-semibold text-white">Chưa có giấy tờ nào được tải lên</p>
+                                        <p className="font-semibold text-slate-700">Chưa có giấy tờ nào được tải lên</p>
                                         <p className="text-xs text-slate-600 mt-1">Bấm "Tải Lên Giấy Tờ" để lưu trữ HĐLĐ scan, CCCD, bằng cấp hoặc KSK</p>
                                     </div>
                                 ) : (
@@ -510,7 +510,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <h5 className="font-bold text-white text-xs truncate max-w-[260px]">
+                                                                <h5 className="font-bold text-slate-900 text-xs truncate max-w-[260px]">
                                                                     {doc.title}
                                                                 </h5>
                                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#87CBB9]/10 text-[#0891B2]">
@@ -544,7 +544,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                             href={doc.fileUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-[#E2E8F0] transition-colors"
+                                                            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                                                             title="Mở xem tệp"
                                                         >
                                                             <ExternalLink className="w-4 h-4" />

@@ -100,7 +100,7 @@ export default function DOPrintPage({ searchParams }: Props) {
     const le = data.legalEntity
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
+        <div className="min-h-screen bg-slate-50 text-slate-900 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
             {/* Print CSS */}
             <style>{`
                 @media print {

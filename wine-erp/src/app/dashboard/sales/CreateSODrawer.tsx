@@ -1036,9 +1036,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <span className="font-bold" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
                                                 {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
                                             </span>
-                                            <span style={{ color: '#64748B' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Hạn mức: <strong className="font-mono text-slate-800">{formatVND(effectiveCreditLimit)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Dư nợ: <strong className="font-mono text-amber-700">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#0D9488' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
                                         </div>
                                         {canOverride && (
                                             <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}>
