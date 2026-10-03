@@ -290,17 +290,48 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         }
     }, [userId, isCEO, proposals, detail, detailId, refreshList, openDetail])
 
-    const handlePrint = useCallback(() => {
+    const handlePrint = useCallback((lang: 'BILINGUAL' | 'VI' | 'EN' = 'BILINGUAL') => {
         if (!detail) return
         const printWindow = window.open('', '_blank')
         if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
 
         const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT'
+        const isPriceAdjustment = detail.category === 'PRICE_ADJUSTMENT'
 
-        const scopeText = 
-            detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
-            detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
-            detail.scope === 'MIXED' ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
+        let titleVi = detail.title || ''
+        let titleEn = ''
+        if (detail.title && detail.title.includes(' / ')) {
+            const parts = detail.title.split(' / ')
+            titleVi = parts[0].trim()
+            titleEn = parts.slice(1).join(' / ').trim()
+        }
+
+        const catRaw = CATEGORY_LABELS[detail.category] || detail.category
+        const catClean = catRaw.replace(/^[^\w\s\u00C0-\u1EF9]+/, '').trim().toUpperCase()
+        const docTitleVi = isPriceAdjustment ? 'TỜ TRÌNH CƠ CHẾ GIÁ & GIÁ ĐẶC BIỆT' : `TỜ TRÌNH ${catClean}`
+        const docTitleEn = isPriceAdjustment ? 'PROPOSAL FOR SPECIAL PRICING MECHANISM & COMMERCIAL POLICY'
+            : detail.category === 'BUDGET_REQUEST' ? 'BUDGET ALLOCATION PROPOSAL'
+            : detail.category === 'CAPITAL_EXPENDITURE' ? 'CAPITAL EXPENDITURE PROPOSAL'
+            : detail.category === 'NEW_SUPPLIER' ? 'NEW SUPPLIER PROPOSAL'
+            : detail.category === 'NEW_PRODUCT' ? 'NEW PRODUCT PROPOSAL'
+            : detail.category === 'POLICY_CHANGE' ? 'POLICY CHANGE PROPOSAL'
+            : detail.category === 'STAFF_REQUISITION' ? 'STAFF REQUISITION PROPOSAL'
+            : detail.category === 'PAYMENT_SCHEDULE' ? 'PAYMENT SCHEDULE PROPOSAL'
+            : detail.category === 'PROMOTION_CAMPAIGN' ? 'MARKETING & PROMOTION PROPOSAL'
+            : detail.category === 'CONTRACT_SIGNING' ? 'CONTRACT EXECUTION PROPOSAL'
+            : `OFFICIAL SUBMISSION PROPOSAL — ${detail.category.replace(/_/g, ' ')}`
+
+        const scopeTextVi = 
+            detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
+            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Áp dụng cho một số sản phẩm cụ thể' :
+            detail.scope?.startsWith('MIXED') ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
+
+        const scopeTextEn = 
+            detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? 'Overall discount across entire portfolio' :
+            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Special pricing on specific SKUs' :
+            detail.scope?.startsWith('MIXED') ? 'Mixed (Portfolio discount + Specific SKU pricing)' : 'N/A'
+
+        const scopeText = lang === 'VI' ? scopeTextVi : lang === 'EN' ? scopeTextEn : `${scopeTextVi} / ${scopeTextEn}`
 
         const formatPrintDateTime = (d: Date | string | null | undefined) => {
             if (!d) return ''
@@ -323,7 +354,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const l3SignedAt = l3Log ? formatPrintDateTime(l3Log.createdAt) : null
 
         const dateObj = new Date(detail.submittedAt || detail.createdAt || Date.now())
-        const dateStr = `Hà Nội, ngày ${dateObj.getDate()} tháng ${dateObj.getMonth() + 1} năm ${dateObj.getFullYear()}`
+        const dateVi = `Hà Nội, ngày ${dateObj.getDate()} tháng ${dateObj.getMonth() + 1} năm ${dateObj.getFullYear()}`
+        const dateEn = `Hanoi, ${dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        const dateStr = lang === 'VI' ? dateVi : lang === 'EN' ? dateEn : `${dateVi} | ${dateEn}`
         const exportDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
 
         let tableRows = ''
@@ -344,9 +377,18 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     const customerAndDateTd = i === 0 ? `
                         <td rowspan="${detail.priceItems.length}" style="border: 1px solid #000; padding: 6px 8px; text-align: center; vertical-align: middle; background-color: #ffffff;">
                             <div style="font-weight: bold; font-size: 10pt; color: #000;">${detail.customer?.name || 'Khách hàng'}</div>
-                            <div style="font-size: 9pt; color: #333; margin-top: 4px; white-space: nowrap;">Ngày xuất: ${exportDateStr}</div>
+                            <div style="font-size: 9pt; color: #333; margin-top: 4px; white-space: nowrap;">
+                                ${lang === 'VI' ? `Ngày xuất: ${exportDateStr}` : lang === 'EN' ? `Issue Date: ${exportDateStr}` : `Ngày xuất / Date: ${exportDateStr}`}
+                            </div>
                         </td>
                     ` : ''
+
+                    const unitText = lang === 'VI' ? 'Chai' : lang === 'EN' ? 'Bottle' : 'Chai/Btl'
+                    const purposeText = lang === 'VI' 
+                        ? 'Xuất hàng dùng thử cho khách hàng' 
+                        : lang === 'EN' 
+                        ? 'Free tasting sample for customer' 
+                        : 'Xuất hàng dùng thử cho KH / Free tasting sample'
 
                     return `
                         <tr>
@@ -354,11 +396,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             ${customerAndDateTd}
                             <td style="border: 1px solid #000; padding: 5px 3px; font-family: monospace; font-weight: bold; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
                             <td style="border: 1px solid #000; padding: 5px 4px; font-weight: bold; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
-                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">Chai</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${unitText}</td>
                             <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
                             <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; white-space: nowrap;">${formatVNDPrint(wholesale)}</td>
                             <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVNDPrint(lineTotal)}</td>
-                            <td style="border: 1px solid #000; padding: 5px 4px; font-size: 9.5pt; word-break: normal; overflow-wrap: break-word;">Xuất hàng dùng thử cho khách hàng</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; font-size: 9pt; word-break: normal; overflow-wrap: break-word;">${purposeText}</td>
                         </tr>
                     `
                 }
@@ -370,11 +412,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <tr>
                         <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; white-space: nowrap;">${i + 1}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; font-family: monospace; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px 4px; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; word-break: normal; overflow-wrap: break-word; font-weight: 500;">${item.product?.productName || ''}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; white-space: nowrap;">${formatVNDPrint(wholesale)}</td>
-                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVNDPrint(item.proposedPrice)}</td>
-                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; white-space: nowrap; color: #0891B2;">${formatVNDPrint(item.proposedPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap; color: ${diff < 0 ? '#b91c1c' : '#15803d'};">
                             ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
                         </td>
                     </tr>
@@ -392,12 +434,12 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
                     .header-table td { vertical-align: top; border: none; padding: 0; }
                     .doc-title { font-size: 17pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 15px; margin-bottom: 2px; }
-                    .doc-subtitle { font-size: 11pt; font-weight: normal; text-align: center; margin-bottom: 18px; line-height: 1.3; }
+                    .doc-subtitle { font-size: 10.5pt; font-weight: normal; text-align: center; margin-bottom: 18px; line-height: 1.3; }
                     .kinh-gui { font-size: 11pt; margin-bottom: 6px; }
-                    .can-cu { font-size: 11pt; margin-bottom: 10px; line-height: 1.4; }
+                    .can-cu { font-size: 10.5pt; margin-bottom: 10px; line-height: 1.4; }
                     .can-cu p { margin: 2px 0; }
-                    .trinh-bay { font-size: 11pt; margin-bottom: 8px; line-height: 1.4; }
-                    .ghi-chu { font-size: 11pt; font-style: italic; margin-bottom: 12px; line-height: 1.4; }
+                    .trinh-bay { font-size: 10.5pt; margin-bottom: 8px; line-height: 1.4; }
+                    .ghi-chu { font-size: 10pt; font-style: italic; margin-bottom: 12px; line-height: 1.4; color: #333; }
                     
                     /* Exact Excel Table Layout */
                     .excel-table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px; font-size: 9.5pt; table-layout: fixed; }
@@ -407,7 +449,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .summary-section { font-size: 10pt; margin-top: 8px; margin-bottom: 12px; line-height: 1.5; }
                     .summary-row-bold { font-weight: bold; }
                     
-                    .legal-box { font-size: 9pt; font-style: italic; margin-top: 10px; margin-bottom: 15px; line-height: 1.35; text-align: justify; }
+                    .legal-box { font-size: 8.5pt; font-style: italic; margin-top: 10px; margin-bottom: 15px; line-height: 1.35; text-align: justify; }
                     .legal-box p { margin: 4px 0; }
                     
                     .date-line { text-align: right; font-size: 10pt; margin-bottom: 15px; }
@@ -415,7 +457,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .signatures-table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; table-layout: fixed; }
                     .signatures-table td { text-align: center; vertical-align: top; border: none; padding: 2px; }
                     .sign-title { font-weight: bold; font-size: 10pt; }
-                    .sign-sub { font-size: 9pt; font-style: italic; color: #333; margin-bottom: 45px; }
+                    .sign-sub { font-size: 8.5pt; font-style: italic; color: #333; margin-bottom: 45px; }
                     .sign-name { font-size: 9pt; font-style: italic; }
                     .sign-status { font-size: 8.5pt; color: #1b5e20; font-weight: bold; margin-top: 2px; }
 
@@ -430,58 +472,87 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <table class="header-table">
                     <tr>
                         <td style="width: 55%;">
-                            <p style="margin: 0; font-weight: bold; font-size: 10pt;">Công ty Cổ phần Thương mại Thắng Ân</p>
-                            <p style="margin: 2px 0 0 0; font-size: 10pt;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
-                            <p style="margin: 2px 0 0 0; font-size: 10pt;">Tel: 0813239933</p>
+                            <p style="margin: 0; font-weight: bold; font-size: 10.5pt; text-transform: uppercase;">CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN</p>
+                            ${lang !== 'VI' ? '<p style="margin: 1px 0 0 0; font-size: 9pt; font-weight: 600; color: #334155;">THANG AN TRADING JOINT STOCK COMPANY</p>' : ''}
+                            <p style="margin: 2px 0 0 0; font-size: 9pt; color: #475569;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
+                            <p style="margin: 1px 0 0 0; font-size: 9pt; color: #475569;">Tel: 0813239933</p>
                         </td>
                         <td style="width: 45%; text-align: right; vertical-align: top;">
-                            <p style="margin: 0; font-size: 10pt; font-style: italic;">Số/No.: ${detail.proposalNo} /TT-KD-TA</p>
+                            <p style="margin: 0; font-size: 10pt; font-style: italic;">
+                                ${lang === 'VI' ? `Số: ${detail.proposalNo}/TT-KD-TA` : lang === 'EN' ? `Ref. No.: ${detail.proposalNo}/TT-KD-TA` : `Số / Ref. No.: ${detail.proposalNo}/TT-KD-TA`}
+                            </p>
+                            <p style="margin: 3px 0 0 0; font-size: 9pt; color: #475569;">${dateStr}</p>
                         </td>
                     </tr>
                 </table>
 
                 <!-- Main Title -->
-                <div class="doc-title">TỜ TRÌNH</div>
+                <div class="doc-title">${lang === 'EN' ? 'SUBMISSION FOR FREE WINE-TASTING SAMPLES' : 'TỜ TRÌNH XUẤT HÀNG MẪU RƯỢU'}</div>
+                ${lang === 'BILINGUAL' ? '<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 3px;">SUBMISSION FOR FREE WINE-TASTING SAMPLES</div>' : ''}
                 <div class="doc-subtitle">
-                    (V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa /<br/>
-                    Approval for issuing free wine-tasting samples to HoReCa customer)
+                    ${lang === 'VI' ? `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''})` :
+                      lang === 'EN' ? `(Re: Approval for issuing free wine-tasting samples to HoReCa customer${titleEn || titleVi ? ` — ${titleEn || titleVi}` : ''})` :
+                      `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''} /<br/>Approval for issuing free wine-tasting samples to HoReCa customer${titleEn ? ` — ${titleEn}` : ''})`}
                 </div>
 
                 <!-- Recipient & Basis -->
                 <div class="kinh-gui">
-                    <strong>Kính gửi: </strong><strong>Ban Lãnh Đạo / Board of Directors</strong>
+                    <strong>${lang === 'VI' ? 'Kính gửi:' : lang === 'EN' ? 'To:' : 'Kính gửi / To:'} </strong>
+                    <strong>${lang === 'VI' ? 'Ban Lãnh Đạo' : lang === 'EN' ? 'The Board of Directors' : 'Ban Lãnh Đạo / The Board of Directors'}</strong>
                 </div>
 
                 <div class="can-cu">
-                    <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh/ Based on: the authority and responsibility of the Sales Department</p>
-                    <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm /Based on the need to introduce products</p>
-                    <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có)/ Based on the Company's approved sample budget for the period (if any)</p>
+                    ${lang === 'VI' ? `
+                        <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh</p>
+                        <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm</p>
+                        <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có)</p>
+                    ` : lang === 'EN' ? `
+                        <p>- Based on: Authority and responsibilities of the Sales Department</p>
+                        <p>- Based on: Customer wine-tasting demand and product presentation requirements</p>
+                        <p>- Based on: Approved corporate tasting sample budget for the period (if any)</p>
+                    ` : `
+                        <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh / Based on: Authority and responsibilities of the Sales Department</p>
+                        <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm / Based on: Customer wine-tasting demand and product presentation</p>
+                        <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có) / Based on: Approved company sample budget for the period (if any)</p>
+                    `}
                 </div>
 
                 <!-- Statement -->
                 <div class="trinh-bay">
-                    <p style="margin: 0;">Phòng Kinh doanh kính trình Ban Lãnh đạo phê duyệt xuất hàng mẫu không thu tiền cho khách hàng, cụ thể như sau:</p>
-                    <p style="margin: 2px 0 0 0;">The Sales Department respectfully submits to the Board of Directors for approval of free wine-tasting samples for the customer, as follows:</p>
+                    ${lang === 'VI' ? `
+                        <p style="margin: 0;">Phòng Kinh doanh kính trình Ban Lãnh đạo phê duyệt xuất hàng mẫu không thu tiền cho khách hàng, cụ thể như sau:</p>
+                    ` : lang === 'EN' ? `
+                        <p style="margin: 0;">The Sales Department respectfully submits to the Board of Directors for approval of issuing free wine-tasting samples to the customer, as follows:</p>
+                    ` : `
+                        <p style="margin: 0;">Phòng Kinh doanh kính trình Ban Lãnh đạo phê duyệt xuất hàng mẫu không thu tiền cho khách hàng, cụ thể như sau:</p>
+                        <p style="margin: 2px 0 0 0; color: #334155;">The Sales Department respectfully submits to the Board of Directors for approval of free wine-tasting samples for the customer, as follows:</p>
+                    `}
                 </div>
 
                 <!-- Note -->
                 <div class="ghi-chu">
-                    Ghi chú: Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền). "Đơn giá tham khảo" dưới đây chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách hàng mẫu), không phải giá tính thuế GTGT.
+                    ${lang === 'VI' ? `
+                        Ghi chú: Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền). "Đơn giá tham khảo" dưới đây chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách hàng mẫu), không phải giá tính thuế GTGT.
+                    ` : lang === 'EN' ? `
+                        Note: Selling price to customer = 0 VND (free tasting samples). "Ref. unit cost" below is for internal management only (tracking COGS/budget), not VAT taxable value.
+                    ` : `
+                        Ghi chú / Note: Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền) / Selling price to customer = 0 VND. "Đơn giá tham khảo" dưới đây chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách), không phải giá tính thuế GTGT / "Ref. unit cost" is for internal tracking only, not VAT taxable price.
+                    `}
                 </div>
 
                 <!-- Product Table with Exact Excel Widths -->
                 <table class="excel-table">
                     <thead>
                         <tr>
-                            <th style="width: 4%; white-space: nowrap;">STT<br/>No.</th>
-                            <th style="width: 22%;">Khách hàng & Ngày xuất<br/>Customer & Date</th>
-                            <th style="width: 9%; white-space: nowrap;">Mã hàng<br/>Item Code</th>
-                            <th style="width: 23%;">Tên hàng<br/>Product Name</th>
-                            <th style="width: 5%; white-space: nowrap;">ĐVT<br/>Unit</th>
-                            <th style="width: 4%; white-space: nowrap;">SL<br/>Qty</th>
-                            <th style="width: 11%;">Đơn giá<br/>tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. unit cost</span></th>
-                            <th style="width: 11%;">Thành tiền<br/>tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. total value</span></th>
-                            <th style="width: 11%;">Mục đích / Lý do<br/>Purpose / Reason</th>
+                            <th style="width: 4%; white-space: nowrap;">${lang === 'VI' ? 'STT' : lang === 'EN' ? 'No.' : 'STT<br/>No.'}</th>
+                            <th style="width: 22%;">${lang === 'VI' ? 'Khách hàng & Ngày xuất' : lang === 'EN' ? 'Customer & Date' : 'Khách hàng & Ngày xuất<br/>Customer & Date'}</th>
+                            <th style="width: 9%; white-space: nowrap;">${lang === 'VI' ? 'Mã hàng' : lang === 'EN' ? 'Item Code' : 'Mã hàng<br/>Item Code'}</th>
+                            <th style="width: 23%;">${lang === 'VI' ? 'Tên hàng' : lang === 'EN' ? 'Product Name' : 'Tên hàng<br/>Product Name'}</th>
+                            <th style="width: 5%; white-space: nowrap;">${lang === 'VI' ? 'ĐVT' : lang === 'EN' ? 'Unit' : 'ĐVT<br/>Unit'}</th>
+                            <th style="width: 4%; white-space: nowrap;">${lang === 'VI' ? 'SL' : lang === 'EN' ? 'Qty' : 'SL<br/>Qty'}</th>
+                            <th style="width: 11%;">${lang === 'VI' ? 'Đơn giá<br/>tham khảo' : lang === 'EN' ? 'Ref. unit<br/>cost' : 'Đơn giá tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. unit cost</span>'}</th>
+                            <th style="width: 11%;">${lang === 'VI' ? 'Thành tiền<br/>tham khảo' : lang === 'EN' ? 'Ref. total<br/>value' : 'Thành tiền tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. total value</span>'}</th>
+                            <th style="width: 11%;">${lang === 'VI' ? 'Mục đích / Lý do' : lang === 'EN' ? 'Purpose / Reason' : 'Mục đích / Lý do<br/>Purpose / Reason'}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -492,52 +563,60 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <!-- Summary Section -->
                 <div class="summary-section">
                     <p class="summary-row-bold" style="margin: 3px 0;">
-                        Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period): 
+                        ${lang === 'VI' ? 'Tổng giá trị tham khảo hàng mẫu (kỳ này):' : lang === 'EN' ? 'Total reference sample value (this period):' : 'Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period):'}
                         <span style="float: right; margin-right: 2%; white-space: nowrap;">${formatVNDPrint(totalRefValue)}</span>
                     </p>
-                    <p style="margin: 3px 0;">Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period:</p>
-                    <p class="summary-row-bold" style="margin: 3px 0;">Ngân sách còn lại sau đề nghị này / Remaining budget after this request:</p>
+                    <p style="margin: 3px 0;">
+                        ${lang === 'VI' ? 'Ngân sách hàng mẫu đã duyệt cho kỳ này:' : lang === 'EN' ? 'Approved sample budget for this period:' : 'Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period:'}
+                    </p>
+                    <p class="summary-row-bold" style="margin: 3px 0;">
+                        ${lang === 'VI' ? 'Ngân sách còn lại sau đề nghị này:' : lang === 'EN' ? 'Remaining budget after this request:' : 'Ngân sách còn lại sau đề nghị này / Remaining budget after this request:'}
+                    </p>
                 </div>
 
                 <!-- Legal Box -->
                 <div class="legal-box">
-                    <p><strong>Thẩm quyền phê duyệt / Approval authority</strong> (đề nghị điền theo Quy chế phân cấp phê duyệt nội bộ hiện hành):<br/>
-                    - Giá trị tham khảo ≤ ____ VNĐ/lần hoặc ≤ ____ VNĐ/tháng cho một khách hàng: Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt.<br/>
-                    - Vượt mức trên, hoặc vượt ngân sách hàng mẫu đã duyệt: trình Ban Lãnh đạo phê duyệt.</p>
+                    <p><strong>${lang === 'VI' ? 'Thẩm quyền phê duyệt' : lang === 'EN' ? 'Approval Authority' : 'Thẩm quyền phê duyệt / Approval authority'}:</strong><br/>
+                    ${lang === 'VI' ? 
+                        '- Giá trị tham khảo ≤ hạn mức quy định: Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt.<br/>- Vượt hạn mức hoặc vượt ngân sách: Trình Ban Lãnh đạo phê duyệt.' :
+                        lang === 'EN' ?
+                        '- Reference value within threshold: Approved by CBO - Sales Manager.<br/>- Exceeding threshold or budget: Submitted to Board of Directors for approval.' :
+                        '- Giá trị tham khảo ≤ hạn mức / Within threshold: Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt.<br/>- Vượt hạn mức hoặc ngân sách / Beyond threshold or budget: Trình Ban Lãnh đạo phê duyệt / Board of Directors.'}
+                    </p>
                     
-                    <p><strong>Lưu ý pháp lý / Legal note:</strong> (1) Hàng mẫu để khách hàng dùng thử không thu tiền có giá tính thuế GTGT = 0 theo Khoản 2 Điều 6 Nghị định 181/2025/NĐ-CP, nhưng vẫn bắt buộc phải lập hóa đơn điện tử ghi rõ dòng chữ "Hàng mẫu không thu tiền" theo Khoản 1 Điều 4 (được sửa đổi bởi Nghị định 70/2025/NĐ-CP) và Điều 10 Nghị định 123/2020/NĐ-CP; không xuất hóa đơn có thể bị xử phạt theo Nghị định 125/2020/NĐ-CP. (2) "Đơn giá tham khảo" trong bảng trên chỉ phục vụ quản lý nội bộ (giá vốn/ngân sách), không phải giá tính thuế. (3) Để chi phí hàng mẫu được ghi nhận là chi phí hợp lý, hợp lệ khi xác định thu nhập chịu thuế TNDN, cần lưu đầy đủ: tờ trình đã duyệt, hóa đơn xuất hàng mẫu, và xác nhận đã giao hàng cho khách hàng (mục ký nhận bên dưới).</p>
-                </div>
-
-                <!-- Date Line -->
-                <div class="date-line">
-                    Hà Nội, ngày ${dateObj.getDate()} tháng ${dateObj.getMonth() + 1} năm ${dateObj.getFullYear()}
+                    <p><strong>${lang === 'VI' ? 'Lưu ý pháp lý' : lang === 'EN' ? 'Legal Notes' : 'Lưu ý pháp lý / Legal note'}:</strong> (1) Hàng mẫu để khách hàng dùng thử không thu tiền có giá tính thuế GTGT = 0 theo Khoản 2 Điều 6 Nghị định 181/2025/NĐ-CP, nhưng vẫn bắt buộc phải lập hóa đơn điện tử ghi rõ dòng chữ "Hàng mẫu không thu tiền" theo Khoản 1 Điều 4 (được sửa đổi bởi Nghị định 70/2025/NĐ-CP) và Điều 10 Nghị định 123/2020/NĐ-CP; không xuất hóa đơn có thể bị xử phạt theo Nghị định 125/2020/NĐ-CP. (2) "Đơn giá tham khảo" trong bảng trên chỉ phục vụ quản lý nội bộ (giá vốn/ngân sách), không phải giá tính thuế. (3) Để chi phí hàng mẫu được ghi nhận là chi phí hợp lý, hợp lệ khi xác định thu nhập chịu thuế TNDN, cần lưu đầy đủ: tờ trình đã duyệt, hóa đơn xuất hàng mẫu, và xác nhận đã giao hàng cho khách hàng (mục ký nhận bên dưới).<br/>
+                    ${lang !== 'VI' ? '<span style="font-size: 8pt; color: #475569;"><em>(English summary: Free tasting samples carry zero VAT output tax under Art. 6.2 Decree 181/2025/ND-CP, but e-invoice stating "Free samples" is mandatory per Decree 70/2025/ND-CP & Decree 123/2020/ND-CP. Keep approved proposal, e-invoice, and handover confirmation for corporate income tax deductibility).</em></span>' : ''}
+                    </p>
                 </div>
 
                 <!-- Signatures Grid -->
                 <table class="signatures-table">
                     <tr>
                         <td style="width: 30%;">
-                            <div class="sign-title">Vận hành</div>
-                            <div style="font-size: 9.5pt;">Operation</div>
-                            <div style="margin-bottom: 50px;"></div>
+                            <div class="sign-title">${lang === 'VI' ? 'Vận hành' : lang === 'EN' ? 'Operations' : 'Vận hành / Operations'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Ký, ghi rõ họ tên)' : lang === 'EN' ? '(Signature & full name)' : '(Ký & họ tên / Full name)'}</div>
+                            <div style="margin-bottom: 45px;"></div>
                         </td>
                         <td style="width: 35%;">
-                            <div class="sign-title">Quản lý Kinh doanh</div>
-                            <div style="font-size: 9.5pt;">CBO - Sales Manager</div>
-                            <div style="margin-bottom: 50px;"></div>
+                            <div class="sign-title">${lang === 'VI' ? 'Quản lý Kinh doanh' : lang === 'EN' ? 'CBO - Sales Manager' : 'Quản lý Kinh doanh / CBO - Sales Manager'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Xác nhận & Ký tên)' : lang === 'EN' ? '(Reviewed & signed)' : '(Xác nhận & ký tên / Reviewed & signed)'}</div>
+                            <div style="margin-bottom: 45px;"></div>
                         </td>
                         <td style="width: 35%;">
-                            <div class="sign-title">Nhân Viên Kinh doanh</div>
-                            <div style="font-size: 9.5pt;">Sales Executive</div>
-                            <div class="sign-sub">(Họ và tên / Full name)</div>
-                            <div style="margin-bottom: 40px;"></div>
+                            <div class="sign-title">${lang === 'VI' ? 'Nhân Viên Kinh doanh' : lang === 'EN' ? 'Sales Executive' : 'Nhân Viên Kinh doanh / Sales Executive'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Người lập tờ trình)' : lang === 'EN' ? '(Submitter)' : '(Người lập / Submitter)'}</div>
+                            <div style="margin-bottom: 45px;"></div>
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="padding-top: 25px;">
-                            <div class="sign-title">Ban Lãnh đạo / Board of Directors</div>
-                            <div style="font-size: 9pt; font-style: italic;">(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách / In case beyond the Sales Manager's authority or budget)</div>
-                            <div style="margin-bottom: 45px;"></div>
+                        <td colspan="3" style="padding-top: 20px;">
+                            <div class="sign-title">${lang === 'VI' ? 'Ban Lãnh đạo' : lang === 'EN' ? 'Board of Directors' : 'Ban Lãnh đạo / Board of Directors'}</div>
+                            <div style="font-size: 8.5pt; font-style: italic; color: #475569;">
+                                ${lang === 'VI' ? '(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách)' :
+                                  lang === 'EN' ? '(In case beyond the Sales Manager authority or budget)' :
+                                  '(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách / In case beyond Sales Manager authority or budget)'}
+                            </div>
+                            <div style="margin-bottom: 40px;"></div>
                         </td>
                     </tr>
                 </table>
@@ -545,84 +624,62 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <!-- Digital Approval Audit Trail Table Below -->
                 <div style="margin-top: 25px; page-break-inside: avoid;">
                     <div style="font-size: 11pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span style="text-transform: uppercase;">V. Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)</span>
+                        <span style="text-transform: uppercase;">
+                            ${lang === 'VI' ? 'V. Tiến Trình Phê Duyệt Hệ Thống' : lang === 'EN' ? 'V. Digital Approval Audit Trail' : 'V. Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)'}
+                        </span>
                         <span style="font-size: 9pt; font-weight: normal; color: #222;">
-                            <strong>Số Tờ Trình:</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
+                            <strong>${lang === 'VI' ? 'Số Tờ Trình:' : lang === 'EN' ? 'Ref. No.:' : 'Số Tờ Trình / No.:'}</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
                             &nbsp;|&nbsp;
-                            <strong>Loại:</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
+                            <strong>${lang === 'VI' ? 'Loại:' : lang === 'EN' ? 'Category:' : 'Loại / Category:'}</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
                         </span>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
                         <thead>
                             <tr style="background-color: #f8f9fa;">
-                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 40px;">STT</th>
-                                <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 140px;">Cấp Duyệt / Vai Trò</th>
-                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">Người Thực Hiện</th>
-                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 120px;">Trạng Thái</th>
-                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 140px;">Thời Gian</th>
-                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">Ghi Chú / Ý Kiến</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 40px;">${lang === 'VI' ? 'STT' : lang === 'EN' ? 'No.' : 'STT<br/>No.'}</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 150px;">${lang === 'VI' ? 'Cấp Duyệt / Vai Trò' : lang === 'EN' ? 'Level / Role' : 'Cấp Duyệt / Vai Trò<br/>Level & Role'}</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">${lang === 'VI' ? 'Người Thực Hiện' : lang === 'EN' ? 'Performed By' : 'Người Thực Hiện / Performed By'}</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 120px;">${lang === 'VI' ? 'Trạng Thái' : lang === 'EN' ? 'Status' : 'Trạng Thái / Status'}</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 140px;">${lang === 'VI' ? 'Thời Gian' : lang === 'EN' ? 'Timestamp' : 'Thời Gian / Timestamp'}</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">${lang === 'VI' ? 'Ghi Chú / Ý Kiến' : lang === 'EN' ? 'Comments' : 'Ghi Chú / Comments'}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">1</td>
-                                <td style="border: 1px solid #000; padding: 5px;">Người lập tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Người lập tờ trình' : lang === 'EN' ? 'Proposal Submitter' : 'Người lập tờ trình / Submitter'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${detail.creator?.name || '—'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã lập & trình</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã lập & trình' : lang === 'EN' ? '✓ Submitted' : '✓ Đã lập & trình / Submitted'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
-                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">Khởi tạo tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${lang === 'VI' ? 'Khởi tạo tờ trình' : lang === 'EN' ? 'Initial submission' : 'Khởi tạo tờ trình / Initial submission'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">2</td>
-                                <td style="border: 1px solid #000; padding: 5px;">Quản lý Kinh doanh</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Quản lý Kinh doanh' : lang === 'EN' ? 'Sales Manager (CBO)' : 'Quản lý Kinh doanh / Sales Manager'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l1Log?.approver?.name || 'Jeremie Courivault'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l1Log ? (l1Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l1SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l1Log?.comment || '—'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">3</td>
-                                <td style="border: 1px solid #000; padding: 5px;">Vận hành</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Vận hành' : lang === 'EN' ? 'Operations' : 'Vận hành / Operations'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">Trần Hữu Chiến</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã xác nhận</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã xác nhận' : lang === 'EN' ? '✓ Confirmed' : '✓ Đã xác nhận / Confirmed'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
-                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">Xác nhận vận hành</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${lang === 'VI' ? 'Xác nhận vận hành' : lang === 'EN' ? 'Operation verification' : 'Xác nhận vận hành / Operation verification'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">4</td>
-                                <td style="border: 1px solid #000; padding: 5px;">Ban Lãnh đạo</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Ban Lãnh đạo' : lang === 'EN' ? 'Board of Directors' : 'Ban Lãnh đạo / Board of Directors'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l3Log ? (l3Log.action === 'APPROVE' ? '✓ Đã phê duyệt' : '✗ Từ chối') : '⏳ Chưa phê duyệt'}
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã phê duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã phê duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa phê duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa phê duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l3SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l3Log?.comment || '—'}</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">5</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 1</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">6</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 2</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">7</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 3</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -640,81 +697,97 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             <head>
                 <title>To_trinh_${detail.proposalNo || 'Co_che_gia'}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; color: #000; margin: 40px; font-size: 14px; line-height: 1.6; }
-                    .header-table { width: 100%; border: none; margin-bottom: 20px; }
+                    @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
+                    body { font-family: Calibri, Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 11pt; line-height: 1.4; }
+                    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
                     .header-table td { border: none; padding: 0; vertical-align: top; }
-                    .title { font-size: 18px; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 20px; margin-bottom: 5px; }
-                    .subtitle { text-align: center; font-size: 14px; margin-bottom: 30px; font-style: italic; }
-                    .info-section { margin-bottom: 20px; }
-                    .info-section p { margin: 4px 0; }
-                    .content-section { margin-top: 25px; margin-bottom: 25px; }
-                    .content-title { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 10px; }
-                    .content-body { padding-left: 15px; white-space: pre-wrap; word-break: break-word; }
-                    .price-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-size: 13px; }
-                    .signatures-table { width: 100%; margin-top: 40px; border-collapse: collapse; page-break-inside: avoid; }
-                    .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 5px; }
-                    .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-size: 12px; }
+                    .title { font-size: 16pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 15px; margin-bottom: 2px; }
+                    .subtitle { text-align: center; font-size: 10.5pt; margin-bottom: 18px; font-style: italic; }
+                    .info-section { margin-bottom: 12px; }
+                    .info-section p { margin: 3px 0; }
+                    .content-section { margin-top: 15px; margin-bottom: 15px; }
+                    .content-title { font-weight: bold; font-size: 11.5pt; text-transform: uppercase; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 8px; }
+                    .content-body { padding-left: 12px; white-space: pre-wrap; word-break: break-word; line-height: 1.45; }
+                    .price-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 9.5pt; table-layout: fixed; }
+                    .price-table th { border: 1px solid #000; padding: 6px 3px; background-color: #f8fafc; text-align: center; font-weight: bold; vertical-align: middle; }
+                    .price-table td { border: 1px solid #000; padding: 5px 4px; vertical-align: middle; word-break: normal; overflow-wrap: break-word; }
+                    .signatures-table { width: 100%; margin-top: 25px; border-collapse: collapse; page-break-inside: avoid; table-layout: fixed; }
+                    .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 2px; }
+                    .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-size: 10pt; }
+                    .sign-sub { font-size: 8.5pt; font-style: italic; color: #475569; margin-bottom: 45px; }
                     @media print {
-                        body { margin: 20px; }
+                        body { margin: 0; }
+                        .no-print { display: none; }
                     }
                 </style>
             </head>
             <body>
                 <table class="header-table">
                     <tr>
-                        <td style="text-align: center; font-weight: bold; width: 35%;">
-                            <p style="margin: 0; font-size: 13px; text-transform: uppercase; tracking-wide;">LY'S CELLARS</p>
-                            <p style="margin: 5px 0 0 0; font-size: 11px; font-family: Arial, sans-serif; font-weight: normal;">Số: ${detail.proposalNo}</p>
+                        <td style="width: 55%;">
+                            <p style="margin: 0; font-weight: bold; font-size: 10.5pt; text-transform: uppercase;">CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN</p>
+                            ${lang !== 'VI' ? '<p style="margin: 1px 0 0 0; font-size: 9pt; font-weight: 600; color: #334155;">THANG AN TRADING JOINT STOCK COMPANY</p>' : ''}
+                            <p style="margin: 2px 0 0 0; font-size: 9pt; color: #475569;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
+                            <p style="margin: 1px 0 0 0; font-size: 9pt; color: #475569;">Tel: 0813239933</p>
                         </td>
-                        <td style="text-align: center; width: 65%;">
-                            <p style="margin: 0; font-weight: bold; font-size: 13px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                            <p style="margin: 5px 0 0 0; font-weight: bold; font-size: 11px;">Độc lập - Tự do - Hạnh phúc</p>
-                            <div style="width: 120px; height: 1px; background: #000; margin: 5px auto 0 auto;"></div>
+                        <td style="width: 45%; text-align: right; vertical-align: top;">
+                            <p style="margin: 0; font-size: 10pt; font-style: italic;">
+                                ${lang === 'VI' ? `Số: ${detail.proposalNo}/TT-KD-TA` : lang === 'EN' ? `Ref. No.: ${detail.proposalNo}/TT-KD-TA` : `Số / Ref. No.: ${detail.proposalNo}/TT-KD-TA`}
+                            </p>
+                            <p style="margin: 3px 0 0 0; font-size: 9pt; color: #475569;">${dateStr}</p>
                         </td>
                     </tr>
                 </table>
 
-                <div style="text-align: right; font-size: 12px; font-style: italic; margin-bottom: 20px;">
-                    ${dateStr}
+                <div class="title">
+                    ${lang === 'EN' ? docTitleEn : docTitleVi}
                 </div>
-
-                <div class="title">TỜ TRÌNH CƠ CHẾ GIÁ & GIÁ ĐẶC BIỆT</div>
-                <div class="subtitle">(V/v: ${detail.title})</div>
+                ${lang === 'BILINGUAL' ? `<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 4px;">${docTitleEn}</div>` : ''}
+                <div class="subtitle">
+                    ${lang === 'VI' ? `(V/v: ${titleVi || detail.title})` :
+                      lang === 'EN' ? `(Re: ${titleEn || titleVi || detail.title})` :
+                      `(V/v: ${titleVi}${titleEn ? ` / Re: ${titleEn}` : ''})`}
+                </div>
 
                 <div class="info-section">
-                    <p><strong>Kính gửi:</strong></p>
-                    <p style="padding-left: 20px;">- Trưởng bộ phận Bán hàng</p>
-                    <p style="padding-left: 20px;">- Kế toán trưởng</p>
-                    <p style="padding-left: 20px;">- Tổng Giám đốc (CEO)</p>
+                    <p><strong>${lang === 'VI' ? 'Kính gửi:' : lang === 'EN' ? 'To:' : 'Kính gửi / To:'}</strong></p>
+                    <p style="padding-left: 15px;">- ${lang === 'VI' ? 'Trưởng bộ phận Bán hàng' : lang === 'EN' ? 'Head of Sales' : 'Trưởng bộ phận Bán hàng / Head of Sales'}</p>
+                    <p style="padding-left: 15px;">- ${lang === 'VI' ? 'Kế toán trưởng' : lang === 'EN' ? 'Chief Accountant' : 'Kế toán trưởng / Chief Accountant'}</p>
+                    <p style="padding-left: 15px;">- ${lang === 'VI' ? 'Tổng Giám đốc (CEO)' : lang === 'EN' ? 'Chief Executive Officer (CEO)' : 'Tổng Giám đốc (CEO) / Chief Executive Officer'}</p>
                 </div>
 
-                <div class="info-section" style="margin-top: 15px;">
-                    <p><strong>Người trình:</strong> ${detail.creator?.name || ''} (${detail.creator?.email || ''})</p>
-                    <p><strong>Bộ phận:</strong> ${detail.department?.name || 'Kinh doanh'}</p>
+                <div class="info-section" style="margin-top: 10px;">
+                    <p><strong>${lang === 'VI' ? 'Người trình:' : lang === 'EN' ? 'Submitted by:' : 'Người trình / Submitted by:'}</strong> ${detail.creator?.name || ''} (${detail.creator?.email || ''})</p>
+                    <p><strong>${lang === 'VI' ? 'Bộ phận:' : lang === 'EN' ? 'Department:' : 'Bộ phận / Department:'}</strong> ${detail.department?.name || (lang === 'EN' ? 'Sales Department' : 'Phòng Kinh doanh / Sales Dept')}</p>
                 </div>
 
+                ${isPriceAdjustment ? `
                 <div class="content-section">
-                    <div class="content-title">I. Chi tiết đề xuất giá</div>
-                    <div style="padding-left: 15px;">
-                        <p style="margin: 4px 0;"><strong>Khách hàng áp dụng:</strong> ${detail.customer?.name || ''} (${detail.customer?.code || 'N/A'})</p>
-                        <p style="margin: 4px 0;"><strong>Phạm vi áp dụng:</strong> ${scopeText}</p>
-                        <p style="margin: 4px 0;"><strong>Thời hạn hiệu lực:</strong> ${detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : 'Từ ngày phê duyệt'} đến ${detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : 'khi có thông báo mới'}</p>
-                        ${detail.discountPct !== null && detail.discountPct !== undefined ? `<p style="margin: 4px 0;"><strong>Mức chiết khấu toàn danh mục:</strong> <span style="font-weight: bold; font-size: 16px;">${detail.discountPct}%</span></p>` : ''}
+                    <div class="content-title">
+                        ${lang === 'VI' ? 'I. Chi tiết đề xuất giá' : lang === 'EN' ? 'I. Pricing Proposal Details' : 'I. Chi tiết đề xuất giá / Pricing Proposal Details'}
+                    </div>
+                    <div style="padding-left: 12px;">
+                        <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Khách hàng áp dụng:' : lang === 'EN' ? 'Applicable Customer:' : 'Khách hàng áp dụng / Applicable Customer:'}</strong> ${detail.customer?.name || ''} (${detail.customer?.code || 'N/A'})</p>
+                        <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Phạm vi áp dụng:' : lang === 'EN' ? 'Scope of Application:' : 'Phạm vi áp dụng / Scope:'}</strong> ${scopeText}</p>
+                        <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Thời hạn hiệu lực:' : lang === 'EN' ? 'Validity Period:' : 'Thời hạn hiệu lực / Validity Period:'}</strong> ${detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : (lang === 'EN' ? 'From approval date' : 'Từ ngày phê duyệt')} ${lang === 'EN' ? 'to' : 'đến'} ${detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : (lang === 'EN' ? 'further notice' : 'khi có thông báo mới')}</p>
+                        ${detail.discountPct !== null && detail.discountPct !== undefined ? `<p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Mức chiết khấu toàn danh mục:' : lang === 'EN' ? 'Overall Portfolio Discount Rate:' : 'Mức chiết khấu toàn danh mục / Overall Portfolio Discount:'}</strong> <span style="font-weight: bold; font-size: 15px; color: #0891B2;">${detail.discountPct}%</span></p>` : ''}
                     </div>
 
                     ${tableRows ? `
-                        <div style="margin-top: 15px; padding-left: 15px;">
-                            <p style="font-weight: bold; margin-bottom: 10px;">Danh sách sản phẩm áp dụng giá riêng:</p>
+                        <div style="margin-top: 12px; padding-left: 12px;">
+                            <p style="font-weight: bold; margin-bottom: 6px;">
+                                ${lang === 'VI' ? 'Danh sách sản phẩm áp dụng giá riêng:' : lang === 'EN' ? 'List of SKUs with Special Pricing:' : 'Danh sách sản phẩm áp dụng giá riêng / List of SKUs with Special Pricing:'}
+                            </p>
                             <table class="price-table">
                                 <thead>
-                                    <tr style="background-color: #f2f2f2;">
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 40px;">STT</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: left;">Mã sản phẩm</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: left;">Tên sản phẩm</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 60px;">Số lượng</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá gốc (Wholesale)</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá đề xuất đặc biệt</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Chênh lệch (%)</th>
+                                    <tr>
+                                        <th style="width: 5%;">${lang === 'VI' ? 'STT' : lang === 'EN' ? 'No.' : 'STT<br/>No.'}</th>
+                                        <th style="width: 14%;">${lang === 'VI' ? 'Mã SP' : lang === 'EN' ? 'Item Code' : 'Mã SP<br/>Item Code'}</th>
+                                        <th style="width: 32%; text-align: left;">${lang === 'VI' ? 'Tên sản phẩm' : lang === 'EN' ? 'Product Name' : 'Tên sản phẩm<br/>Product Name'}</th>
+                                        <th style="width: 7%;">${lang === 'VI' ? 'SL' : lang === 'EN' ? 'Qty' : 'SL<br/>Qty'}</th>
+                                        <th style="width: 14%; text-align: right;">${lang === 'VI' ? 'Giá gốc (Wholesale)' : lang === 'EN' ? 'Wholesale Price' : 'Giá gốc (Wholesale)<br/><span style="font-size: 8pt; font-weight: normal;">Wholesale Price</span>'}</th>
+                                        <th style="width: 14%; text-align: right;">${lang === 'VI' ? 'Giá đề xuất đặc biệt' : lang === 'EN' ? 'Proposed Price' : 'Giá đề xuất đặc biệt<br/><span style="font-size: 8pt; font-weight: normal;">Proposed Price</span>'}</th>
+                                        <th style="width: 14%;">${lang === 'VI' ? 'Chênh lệch' : lang === 'EN' ? 'Variance' : 'Chênh lệch<br/>Variance'}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -724,22 +797,64 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         </div>
                     ` : ''}
                 </div>
+                ` : (detail.estimatedAmount || detail.customer || tableRows) ? `
+                <div class="content-section">
+                    <div class="content-title">
+                        ${lang === 'VI' ? 'I. Thông tin kinh phí & quy mô' : lang === 'EN' ? 'I. Budget & Scope Details' : 'I. Thông tin kinh phí & quy mô / Budget & Scope'}
+                    </div>
+                    <div style="padding-left: 12px;">
+                        ${detail.customer ? `<p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Đối tác / Khách hàng liên quan:' : lang === 'EN' ? 'Related Customer / Partner:' : 'Đối tác / Khách hàng / Related Customer:'}</strong> ${detail.customer?.name} (${detail.customer?.code || 'N/A'})</p>` : ''}
+                        ${detail.estimatedAmount ? `<p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Kinh phí / Giá trị dự toán đề xuất:' : lang === 'EN' ? 'Estimated Budget / Amount:' : 'Kinh phí dự toán / Estimated Budget:'}</strong> <span style="font-weight: bold; font-size: 15px; color: #0891B2;">${formatVNDPrint(detail.estimatedAmount)}</span></p>` : ''}
+                        ${detail.deadline ? `<p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Thời hạn thực hiện / hoàn thành:' : lang === 'EN' ? 'Target Completion Deadline:' : 'Thời hạn hoàn thành / Target Deadline:'}</strong> ${new Date(detail.deadline).toLocaleDateString('vi-VN')}</p>` : ''}
+                    </div>
+                    ${tableRows ? `
+                        <div style="margin-top: 12px; padding-left: 12px;">
+                            <table class="price-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;">${lang === 'VI' ? 'STT' : lang === 'EN' ? 'No.' : 'STT<br/>No.'}</th>
+                                        <th style="width: 14%;">${lang === 'VI' ? 'Mã SP' : lang === 'EN' ? 'Item Code' : 'Mã SP<br/>Item Code'}</th>
+                                        <th style="width: 32%; text-align: left;">${lang === 'VI' ? 'Tên sản phẩm' : lang === 'EN' ? 'Product Name' : 'Tên sản phẩm<br/>Product Name'}</th>
+                                        <th style="width: 7%;">${lang === 'VI' ? 'SL' : lang === 'EN' ? 'Qty' : 'SL<br/>Qty'}</th>
+                                        <th style="width: 14%; text-align: right;">${lang === 'VI' ? 'Giá gốc' : lang === 'EN' ? 'Wholesale Price' : 'Giá gốc / Wholesale'}</th>
+                                        <th style="width: 14%; text-align: right;">${lang === 'VI' ? 'Giá đề xuất' : lang === 'EN' ? 'Proposed Price' : 'Giá đề xuất / Proposed'}</th>
+                                        <th style="width: 14%;">${lang === 'VI' ? 'Chênh lệch' : lang === 'EN' ? 'Variance' : 'Chênh lệch<br/>Variance'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                </div>
+                ` : ''}
 
                 <div class="content-section">
-                    <div class="content-title">II. Nội dung tờ trình</div>
+                    <div class="content-title">
+                        ${isPriceAdjustment ? (
+                            lang === 'VI' ? 'II. Nội dung tờ trình' : lang === 'EN' ? 'II. Detailed Proposal & Commercial Terms' : 'II. Nội dung tờ trình / Detailed Proposal'
+                        ) : (
+                            lang === 'VI' ? 'Nội dung tờ trình & phương án thực hiện' : lang === 'EN' ? 'Proposal Details & Execution Plan' : 'Nội dung tờ trình & phương án / Proposal Details & Execution Plan'
+                        )}
+                    </div>
                     <div class="content-body">${detail.content}</div>
                 </div>
 
                 ${detail.justification ? `
                     <div class="content-section">
-                        <div class="content-title">III. Lý do & căn cứ đề xuất</div>
+                        <div class="content-title">
+                            ${lang === 'VI' ? 'III. Căn cứ & lý do đề xuất' : lang === 'EN' ? 'III. Commercial Rationale & Basis' : 'III. Căn cứ & lý do đề xuất / Commercial Rationale'}
+                        </div>
                         <div class="content-body">${detail.justification}</div>
                     </div>
                 ` : ''}
 
                 ${detail.expectedOutcome ? `
                     <div class="content-section">
-                        <div class="content-title">IV. Kết quả kỳ vọng</div>
+                        <div class="content-title">
+                            ${lang === 'VI' ? 'IV. Kết quả kinh doanh kỳ vọng' : lang === 'EN' ? 'IV. Expected Business Outcomes' : 'IV. Kết quả kinh doanh kỳ vọng / Expected Outcomes'}
+                        </div>
                         <div class="content-body">${detail.expectedOutcome}</div>
                     </div>
                 ` : ''}
@@ -747,107 +862,85 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <table class="signatures-table">
                     <tr>
                         <td>
-                            <div class="sign-title">NGƯỜI LẬP TỜ TRÌNH</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Ký, ghi rõ họ tên)</div>
+                            <div class="sign-title">${lang === 'VI' ? 'NGƯỜI LẬP TỜ TRÌNH' : lang === 'EN' ? 'PREPARED BY' : 'NGƯỜI LẬP TỜ TRÌNH<br/><span style="font-size: 8pt; font-weight: normal;">PREPARED BY</span>'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Ký, ghi rõ họ tên)' : lang === 'EN' ? '(Signature & full name)' : '(Ký & họ tên / Full name)'}</div>
                         </td>
                         <td>
-                            <div class="sign-title">TRƯỞNG BỘ PHẬN</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Xác nhận & Ký tên)</div>
+                            <div class="sign-title">${lang === 'VI' ? 'TRƯỞNG BỘ PHẬN' : lang === 'EN' ? 'DEPARTMENT HEAD' : 'TRƯỞNG BỘ PHẬN<br/><span style="font-size: 8pt; font-weight: normal;">DEPARTMENT HEAD</span>'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Xác nhận & Ký tên)' : lang === 'EN' ? '(Reviewed & signed)' : '(Xác nhận & ký / Reviewed)'}</div>
                         </td>
                         <td>
-                            <div class="sign-title">KẾ TOÁN TRƯỞNG</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Kểm tra & Ký tên)</div>
+                            <div class="sign-title">${lang === 'VI' ? 'KẾ TOÁN TRƯỞNG' : lang === 'EN' ? 'CHIEF ACCOUNTANT' : 'KẾ TOÁN TRƯỞNG<br/><span style="font-size: 8pt; font-weight: normal;">CHIEF ACCOUNTANT</span>'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Kiểm tra & Ký tên)' : lang === 'EN' ? '(Verified & signed)' : '(Kiểm tra & ký / Verified)'}</div>
                         </td>
                         <td>
-                            <div class="sign-title">TỔNG GIÁM ĐỐC</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Phê duyệt & Đóng dấu)</div>
+                            <div class="sign-title">${lang === 'VI' ? 'TỔNG GIÁM ĐỐC' : lang === 'EN' ? 'CHIEF EXECUTIVE OFFICER' : 'TỔNG GIÁM ĐỐC<br/><span style="font-size: 8pt; font-weight: normal;">CHIEF EXECUTIVE OFFICER</span>'}</div>
+                            <div class="sign-sub">${lang === 'VI' ? '(Phê duyệt & Đóng dấu)' : lang === 'EN' ? '(Approved & sealed)' : '(Phê duyệt & đóng dấu / Approved)'}</div>
                         </td>
                     </tr>
                 </table>
 
                 <!-- Digital Approval Audit Trail Table Below -->
-                <div style="margin-top: 30px; page-break-inside: avoid;">
-                    <div style="font-size: 11pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span style="text-transform: uppercase;">V. Bảng Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)</span>
+                <div style="margin-top: 25px; page-break-inside: avoid;">
+                    <div style="font-size: 11pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <span style="text-transform: uppercase;">
+                            ${lang === 'VI' ? 'V. Tiến Trình Phê Duyệt Hệ Thống' : lang === 'EN' ? 'V. Digital Approval Audit Trail' : 'V. Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)'}
+                        </span>
                         <span style="font-size: 9pt; font-weight: normal; color: #222;">
-                            <strong>Số Tờ Trình:</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
+                            <strong>${lang === 'VI' ? 'Số Tờ Trình:' : lang === 'EN' ? 'Ref. No.:' : 'Số Tờ Trình / No.:'}</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
                             &nbsp;|&nbsp;
-                            <strong>Loại:</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
+                            <strong>${lang === 'VI' ? 'Loại:' : lang === 'EN' ? 'Category:' : 'Loại / Category:'}</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
                         </span>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
                         <thead>
-                            <tr style="background-color: #f2f2f2;">
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 40px;">STT</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 140px;">Cấp Duyệt / Vai Trò</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Người Thực Hiện</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 110px;">Trạng Thái</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 140px;">Thời Gian</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Ghi Chú / Ý Kiến</th>
+                            <tr style="background-color: #f8fafc;">
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 40px;">${lang === 'VI' ? 'STT' : lang === 'EN' ? 'No.' : 'STT<br/>No.'}</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 150px;">${lang === 'VI' ? 'Cấp Duyệt / Vai Trò' : lang === 'EN' ? 'Level / Role' : 'Cấp Duyệt / Vai Trò<br/>Level & Role'}</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">${lang === 'VI' ? 'Người Thực Hiện' : lang === 'EN' ? 'Performed By' : 'Người Thực Hiện / Performed By'}</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 120px;">${lang === 'VI' ? 'Trạng Thái' : lang === 'EN' ? 'Status' : 'Trạng Thái / Status'}</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 140px;">${lang === 'VI' ? 'Thời Gian' : lang === 'EN' ? 'Timestamp' : 'Thời Gian / Timestamp'}</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">${lang === 'VI' ? 'Ghi Chú / Ý Kiến' : lang === 'EN' ? 'Comments' : 'Ghi Chú / Comments'}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">1</td>
-                                <td style="border: 1px solid #000; padding: 6px;">Người lập tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Người lập tờ trình' : lang === 'EN' ? 'Proposal Submitter' : 'Người lập tờ trình / Submitter'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${detail.creator?.name || '—'}</td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã lập & trình</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã lập & trình' : lang === 'EN' ? '✓ Submitted' : '✓ Đã lập & trình / Submitted'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${creatorSignedAt}</td>
-                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">Khởi tạo tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${lang === 'VI' ? 'Khởi tạo tờ trình' : lang === 'EN' ? 'Initial submission' : 'Khởi tạo tờ trình / Initial submission'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">2</td>
-                                <td style="border: 1px solid #000; padding: 6px;">Cấp 1: Trưởng Bộ Phận</td>
+                                <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 1: Trưởng Bộ Phận' : lang === 'EN' ? 'Level 1: Dept Head' : 'Cấp 1: Trưởng Bộ Phận / Level 1: Dept Head'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l1Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l1Log ? (l1Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
                                 </td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l1SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l1SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l1Log?.comment || '—'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">3</td>
-                                <td style="border: 1px solid #000; padding: 6px;">Cấp 2: Kế Toán Trưởng</td>
+                                <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 2: Kế Toán Trưởng' : lang === 'EN' ? 'Level 2: Chief Accountant' : 'Cấp 2: Kế Toán Trưởng / Level 2: Chief Accountant'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l2Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l2Log ? (l2Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l2Log ? (l2Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                    ${l2Log ? (l2Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
                                 </td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l2SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l2SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l2Log?.comment || '—'}</td>
                             </tr>
                             <tr>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">4</td>
-                                <td style="border: 1px solid #000; padding: 6px;">Cấp 3: Tổng Giám Đốc (CEO)</td>
+                                <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 3: Tổng Giám Đốc (CEO)' : lang === 'EN' ? 'Level 3: CEO' : 'Cấp 3: Tổng Giám Đốc / Level 3: CEO'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l3Log ? (l3Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
                                 </td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l3SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l3SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l3Log?.comment || '—'}</td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">5</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 1</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">6</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 2</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">7</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 3</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
-                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -877,36 +970,40 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     return (
         <div className="space-y-6 w-full max-w-none px-2 sm:px-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
+                    <h2 className="text-xl sm:text-2xl font-bold" style={{ color: '#0F172A' }}>
                         Tờ Trình & Đề Xuất
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
+                    <p className="text-xs sm:text-sm mt-0.5" style={{ color: '#64748B' }}>
                         Quản lý tờ trình phê duyệt — Proposals & Submissions
                     </p>
                 </div>
                 <button
                     onClick={() => setShowCreate(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer hover:opacity-90 shadow-xs"
+                    style={{ background: 'rgba(91,168,138,0.18)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.4)' }}
                 >
                     <Plus size={16} /> Tạo Tờ Trình
                 </button>
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 {[
                     { label: 'Tổng', value: currentStats.total, accent: '#475569' },
                     { label: 'Chờ Duyệt', value: currentStats.pending, accent: '#D4A853' },
                     { label: 'Bản Nháp', value: currentStats.draft, accent: '#64748B' },
                     { label: 'Đã Duyệt', value: currentStats.approved, accent: '#5BA88A' },
                     { label: 'Từ Chối', value: currentStats.rejected, accent: '#8B1A2E' },
-                ].map(s => (
-                    <div key={s.label} className="rounded-md p-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>{s.label}</p>
-                        <p className="text-2xl font-bold mt-1" style={{ color: '#0F172A' }}>{s.value}</p>
+                ].map((s, idx) => (
+                    <div 
+                        key={s.label} 
+                        className={`rounded-md p-3 sm:p-4 shadow-2xs ${idx === 4 ? 'col-span-2 sm:col-span-1' : ''}`}
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}
+                    >
+                        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>{s.label}</p>
+                        <p className="text-xl sm:text-2xl font-bold mt-1" style={{ color: '#0F172A' }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -1025,9 +1122,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </div>
 
                                 <div>
-                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                                        {p.title}
-                                    </p>
+                                    {p.title.includes(' / ') ? (
+                                        <div>
+                                            <p className="text-sm font-bold leading-snug" style={{ color: '#0F172A' }}>
+                                                {p.title.split(' / ')[0]}
+                                            </p>
+                                            <p className="text-xs font-medium italic mt-0.5 text-slate-500">
+                                                {p.title.split(' / ').slice(1).join(' / ')}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
+                                            {p.title}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -1179,9 +1287,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <p className="text-sm font-medium text-slate-900 line-clamp-2" title={p.title}>{p.title}</p>
+                                                {p.title.includes(' / ') ? (
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900 leading-tight" title={p.title.split(' / ')[0]}>
+                                                            {p.title.split(' / ')[0]}
+                                                        </p>
+                                                        <p className="text-[11px] font-normal text-slate-500 italic mt-0.5 line-clamp-1" title={p.title.split(' / ').slice(1).join(' / ')}>
+                                                            {p.title.split(' / ').slice(1).join(' / ')}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm font-medium text-slate-900 line-clamp-2" title={p.title}>{p.title}</p>
+                                                )}
                                                 {p.attachmentCount > 0 && (
-                                                    <span className="text-[11px] text-slate-500">
+                                                    <span className="text-[11px] text-slate-500 block mt-0.5">
                                                         <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
                                                     </span>
                                                 )}
@@ -1625,14 +1744,14 @@ function BatchProductPickerModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 animate-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-200">
-                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Product Picker)</h4>
-                    <button onClick={onClose} className="p-1 rounded hover:bg-white"><X size={20} className="text-gray-400" /></button>
+                <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
+                    <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer"><X size={20} className="text-slate-400" /></button>
                 </div>
 
-                <div className="p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
+                <div className="p-3 sm:p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
                     <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -1642,13 +1761,13 @@ function BatchProductPickerModal({
                         />
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
                         <span>Đã chọn: <strong className="text-[#0891B2]">{selectedCount}</strong> chai</span>
-                        <div className="flex items-center gap-2">
-                            <span>Áp dụng giảm nhanh:</span>
-                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-5%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-10%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-white hover:bg-[#E2E8F0] text-[10px] text-[#D4A853]">-15%</button>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[11px]">Giảm nhanh:</span>
+                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-5%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-10%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-15%</button>
                         </div>
                     </div>
 
@@ -1659,13 +1778,13 @@ function BatchProductPickerModal({
                             const diffPct = p.wholesalePrice > 0 ? ((currentPrice - p.wholesalePrice) / p.wholesalePrice) * 100 : 0
 
                             return (
-                                <div key={p.id} className="flex items-center justify-between p-2 rounded hover:bg-white transition border-b border-slate-200/30 text-xs">
+                                <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 rounded hover:bg-white transition border-b border-slate-200/30 text-xs">
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <input
                                             type="checkbox"
                                             checked={isChecked}
                                             onChange={() => toggleSelect(p)}
-                                            className="w-4 h-4 accent-[#87CBB9] cursor-pointer"
+                                            className="w-4 h-4 accent-[#87CBB9] cursor-pointer flex-shrink-0"
                                         />
                                         <div className="min-w-0 flex-1">
                                             <span className="font-mono font-bold text-[#0891B2] mr-2">{p.skuCode}</span>
@@ -1675,9 +1794,9 @@ function BatchProductPickerModal({
                                     </div>
 
                                     {isChecked && (
-                                        <div className="flex items-center gap-2 pl-3">
+                                        <div className="flex items-center justify-end gap-2 w-full sm:w-auto pl-7 sm:pl-3 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/40">
                                             <div className="text-right">
-                                                <label className="text-[9px] block text-amber-400 font-bold">Số lượng (chai)</label>
+                                                <label className="text-[9px] block text-amber-600 font-bold">Số lượng (chai)</label>
                                                 <input
                                                     type="number"
                                                     min={1}
@@ -1763,6 +1882,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         category: initialCategory,
         priority: 'NORMAL',
         title: '',
+        titleEn: '',
         content: '',
         justification: '',
         expectedOutcome: '',
@@ -1823,8 +1943,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             ? `${form.scope} | BRANCHES:${additionalBranches.join(',')}`
             : form.scope
 
+        const finalTitle = form.titleEn?.trim()
+            ? `${form.title.trim()} / ${form.titleEn.trim()}`
+            : form.title.trim()
+
         const result = await createProposal({
             ...form,
+            title: finalTitle,
             scope: finalScope,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
@@ -1865,9 +1990,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Tasting Custom Fields */}
                     {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT') && (
-                        <div className="space-y-4 p-4 rounded-xl border-2 border-[#D4A853]/60 bg-[#1B2B3A] shadow-lg">
+                        <div className="space-y-4 p-4 rounded-xl border border-amber-200/90 bg-amber-50/30 shadow-xs">
                             <div>
-                                <label className="text-xs font-extrabold uppercase mb-1.5 block tracking-wider text-[#D4A853]">
+                                <label className="text-xs font-bold uppercase mb-1.5 block tracking-wider text-amber-900">
                                     👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)
                                 </label>
                                 <SearchableCustomerCombobox
@@ -1877,7 +2002,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         setForm(f => ({
                                             ...f,
                                             customerId: cust.id,
-                                            title: !f.title && cust.name ? `Tờ trình Tasting thử rượu cho khách hàng ${cust.name}` : f.title
+                                            title: !f.title && cust.name ? `Tờ trình Tasting thử rượu cho khách hàng ${cust.name}` : f.title,
+                                            titleEn: !f.titleEn && cust.name ? `Tasting wine sample proposal for ${cust.name}` : f.titleEn,
                                         }))
                                     }}
                                 />
@@ -1885,32 +2011,32 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <label className="text-xs font-extrabold uppercase tracking-wider text-[#D4A853]">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-amber-900">
                                         🍷 Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <button 
                                             type="button" 
                                             onClick={() => setBatchPickerOpen(true)}
-                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer hover:opacity-90"
-                                            style={{ background: 'rgba(212,168,83,0.2)', color: '#FCD34D', border: '1px solid rgba(212,168,83,0.6)' }}
+                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer hover:opacity-90"
+                                            style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.45)' }}
                                         >
                                             <Search size={13} /> Chọn nhanh hàng loạt
                                         </button>
                                         <button 
                                             type="button" 
                                             onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
-                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer hover:opacity-90"
-                                            style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.6)' }}
+                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer hover:opacity-90"
+                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
                                         >
                                             <Plus size={13} /> Thêm dòng
                                         </button>
                                     </div>
                                 </div>
                                 {priceLines.length === 0 ? (
-                                    <div className="p-4 text-center rounded-lg border-2 border-dashed border-[#D4A853]/40 bg-[#142230]">
-                                        <p className="text-xs font-medium text-slate-900">
-                                            Chưa chọn mã hàng tasting nào. Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#FCD34D]">"Chọn nhanh hàng loạt"</strong> ở trên để thêm sản phẩm.
+                                    <div className="p-4 text-center rounded-lg border-2 border-dashed border-amber-300/80 bg-white">
+                                        <p className="text-xs font-medium text-slate-600">
+                                            Chưa chọn mã hàng tasting nào. Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-amber-700">"Chọn nhanh hàng loạt"</strong> ở trên để thêm sản phẩm.
                                         </p>
                                     </div>
                                 ) : (
@@ -1922,10 +2048,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             return (
                                                 <div 
                                                     key={idx} 
-                                                    className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-slate-200 shadow-sm relative"
+                                                    className="flex flex-col sm:flex-row gap-2.5 sm:items-center p-3 rounded-lg bg-white border border-slate-200 shadow-2xs relative"
                                                     style={{ zIndex: priceLines.length - idx + 10 }}
                                                 >
-                                                    <div className="flex-1 min-w-0">
+                                                    <div className="flex-1 min-w-0 w-full">
                                                         <SearchableProductCombobox
                                                             products={products}
                                                             selectedProductId={line.productId}
@@ -1938,45 +2064,47 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         />
                                                     </div>
                                                     
-                                                    <div className="w-28 text-center flex-shrink-0">
-                                                        <label className="text-[10px] block text-[#D4A853] font-bold mb-1">Số lượng (chai)</label>
-                                                        <input 
-                                                            type="number"
-                                                            min={1}
-                                                            value={line.quantity || 1}
-                                                            onChange={e => {
-                                                                const copy = [...priceLines]
-                                                                copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
-                                                                setPriceLines(copy)
-                                                            }}
-                                                            style={{
-                                                                width: '100%',
-                                                                padding: '6px 8px',
-                                                                fontSize: '13px',
-                                                                background: '#FFFFFF',
-                                                                border: '1px solid #D4A853',
-                                                                fontWeight: 'bold',
-                                                                color: '#FCD34D',
-                                                                textAlign: 'center',
-                                                                borderRadius: '6px',
-                                                                outline: 'none',
-                                                            }}
-                                                        />
-                                                    </div>
+                                                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        <div className="w-24 sm:w-28 text-center flex-shrink-0">
+                                                            <label className="text-[10px] block text-amber-800 font-bold mb-1">Số lượng (chai)</label>
+                                                            <input 
+                                                                type="number"
+                                                                min={1}
+                                                                value={line.quantity || 1}
+                                                                onChange={e => {
+                                                                    const copy = [...priceLines]
+                                                                    copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                                    setPriceLines(copy)
+                                                                }}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '6px 8px',
+                                                                    fontSize: '13px',
+                                                                    background: '#FFFFFF',
+                                                                    border: '1px solid #D4A853',
+                                                                    fontWeight: 'bold',
+                                                                    color: '#B45309',
+                                                                    textAlign: 'center',
+                                                                    borderRadius: '6px',
+                                                                    outline: 'none',
+                                                                }}
+                                                            />
+                                                        </div>
 
-                                                    <div className="text-right flex flex-col justify-center px-2 min-w-[95px] flex-shrink-0">
-                                                        <span className="text-[10px] block text-slate-500 font-medium">Giá niêm yết</span>
-                                                        <span className="text-xs block font-mono font-bold text-slate-900">{formatVND(wholesale)}</span>
-                                                    </div>
+                                                        <div className="text-right flex flex-col justify-center px-2 min-w-[85px] sm:min-w-[95px] flex-shrink-0">
+                                                            <span className="text-[10px] block text-slate-500 font-medium">Giá niêm yết</span>
+                                                            <span className="text-xs block font-mono font-bold text-slate-900">{formatVND(wholesale)}</span>
+                                                        </div>
 
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
-                                                        className="p-1.5 rounded text-rose-400 hover:bg-rose-500/20 transition-all flex-shrink-0"
-                                                        title="Xóa dòng"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
+                                                            className="p-1.5 rounded text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0 cursor-pointer"
+                                                            title="Xóa dòng"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
@@ -1998,7 +2126,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         setForm(f => ({
                                             ...f,
                                             customerId: cust.id,
-                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá & giá đặc biệt cho khách hàng ${cust.name}` : f.title
+                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá & giá đặc biệt cho khách hàng ${cust.name}` : f.title,
+                                            titleEn: !f.titleEn && cust.name ? `Special pricing & commercial policy proposal for ${cust.name}` : f.titleEn,
                                         }))
                                         setAdditionalBranches([])
                                     }}
@@ -2139,74 +2268,78 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             return (
                                                 <div 
                                                     key={idx} 
-                                                    className="flex gap-2 items-end p-2.5 rounded-md relative" 
+                                                    className="flex flex-col sm:flex-row gap-2.5 sm:items-end p-2.5 rounded-md relative shadow-2xs" 
                                                     style={{ 
                                                         background: '#FFFFFF', 
                                                         border: '1px solid #E2E8F0',
                                                         zIndex: priceLines.length - idx + 10
                                                     }}
                                                 >
-                                                    <SearchableProductCombobox
-                                                        products={products}
-                                                        selectedProductId={line.productId}
-                                                        onSelect={p => {
-                                                            const copy = [...priceLines]
-                                                            copy[idx].productId = p.id
-                                                            copy[idx].proposedPrice = p.wholesalePrice
-                                                            setPriceLines(copy)
-                                                        }}
-                                                    />
-                                                    
-                                                    <div className="w-20">
-                                                        <label className="text-[9px] block text-slate-600">Số lượng</label>
-                                                        <input 
-                                                            type="number"
-                                                            min={1}
-                                                            value={line.quantity || 1}
-                                                            onChange={e => {
+                                                    <div className="flex-1 min-w-0 w-full">
+                                                        <SearchableProductCombobox
+                                                            products={products}
+                                                            selectedProductId={line.productId}
+                                                            onSelect={p => {
                                                                 const copy = [...priceLines]
-                                                                copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                                copy[idx].productId = p.id
+                                                                copy[idx].proposedPrice = p.wholesalePrice
                                                                 setPriceLines(copy)
                                                             }}
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
                                                         />
                                                     </div>
-
-                                                    <div className="w-28">
-                                                        <div className="flex items-center justify-between mb-0.5">
-                                                            <label className="text-[9px]" style={{ color: '#64748B' }}>Giá đề xuất</label>
-                                                            {line.proposedPrice > 0 && wholesale > 0 && (
-                                                                <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                                                    {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
-                                                                </span>
-                                                            )}
+                                                    
+                                                    <div className="flex items-end justify-between sm:justify-end gap-2.5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        <div className="w-20 flex-shrink-0">
+                                                            <label className="text-[9px] block text-slate-600">Số lượng</label>
+                                                            <input 
+                                                                type="number"
+                                                                min={1}
+                                                                value={line.quantity || 1}
+                                                                onChange={e => {
+                                                                    const copy = [...priceLines]
+                                                                    copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                                    setPriceLines(copy)
+                                                                }}
+                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
+                                                            />
                                                         </div>
-                                                        <input 
-                                                            type="number"
-                                                            value={line.proposedPrice || ''}
-                                                            onChange={e => {
-                                                                const copy = [...priceLines]
-                                                                copy[idx].proposedPrice = parseFloat(e.target.value) || 0
-                                                                setPriceLines(copy)
-                                                            }}
-                                                            placeholder="0"
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#0891B2' }}
-                                                        />
-                                                    </div>
-                                                    
-                                                    <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[75px]">
-                                                        <span className="text-[9px] block text-gray-500">Gốc (WS)</span>
-                                                        <span className="text-[11px] block font-mono font-semibold" style={{ color: '#0F172A' }}>{formatVND(wholesale)}</span>
-                                                    </div>
 
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
-                                                        className="p-1 rounded text-red-400 hover:bg-red-500/10 mb-0.5"
-                                                        title="Xóa dòng"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
+                                                        <div className="w-28 flex-shrink-0">
+                                                            <div className="flex items-center justify-between mb-0.5">
+                                                                <label className="text-[9px]" style={{ color: '#64748B' }}>Giá đề xuất</label>
+                                                                {line.proposedPrice > 0 && wholesale > 0 && (
+                                                                    <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                                        {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <input 
+                                                                type="number"
+                                                                value={line.proposedPrice || ''}
+                                                                onChange={e => {
+                                                                    const copy = [...priceLines]
+                                                                    copy[idx].proposedPrice = parseFloat(e.target.value) || 0
+                                                                    setPriceLines(copy)
+                                                                }}
+                                                                placeholder="0"
+                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#0891B2' }}
+                                                            />
+                                                        </div>
+                                                        
+                                                        <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[70px] sm:min-w-[75px] flex-shrink-0">
+                                                            <span className="text-[9px] block text-gray-500">Gốc (WS)</span>
+                                                            <span className="text-[11px] block font-mono font-semibold" style={{ color: '#0F172A' }}>{formatVND(wholesale)}</span>
+                                                        </div>
+
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
+                                                            className="p-1.5 rounded text-red-400 hover:bg-red-500/10 mb-0.5 cursor-pointer flex-shrink-0"
+                                                            title="Xóa dòng"
+                                                        >
+                                                            <X size={15} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
@@ -2245,14 +2378,29 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         </select>
                     </div>
 
-                    {/* Title */}
-                    <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Tiêu đề *</label>
-                        <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                            placeholder="VD: Đề xuất nhập NCC mới — Château Latour"
-                            style={inputStyle}
-                            onFocus={e => e.target.style.borderColor = '#0891B2'}
-                            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+                    {/* Title & English Title */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>
+                                Tiêu đề (Tiếng Việt) / Title *
+                            </label>
+                            <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                                placeholder="VD: Đề xuất giá đặc biệt cho Khách sạn Daewoo"
+                                style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = '#0891B2'}
+                                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold uppercase mb-1.5 flex items-center justify-between" style={{ color: '#64748B' }}>
+                                <span>Tiêu đề tiếng Anh / English Title</span>
+                                <span className="text-[10px] lowercase font-normal text-slate-400">(Tùy chọn song ngữ)</span>
+                            </label>
+                            <input value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))}
+                                placeholder="e.g. Special pricing proposal for Daewoo Hotel"
+                                style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = '#0891B2'}
+                                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+                        </div>
                     </div>
 
                     {/* Content */}
@@ -2341,10 +2489,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     userRoles: string[]
     onApproval: (action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => void
     onRefresh: () => void
-    onPrint: () => void
+    onPrint: (lang?: 'BILINGUAL' | 'VI' | 'EN') => void
 }) {
     const [comment, setComment] = useState('')
     const [sendingComment, setSendingComment] = useState(false)
+    const [printMenuOpen, setPrintMenuOpen] = useState(false)
 
     const handleComment = async () => {
         if (!comment.trim() || !detail) return
@@ -2366,22 +2515,82 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                        <ClipboardCheck size={18} className="inline mr-2" style={{ color: '#0891B2' }} />
-                        Chi Tiết Tờ Trình
+                <div className="flex items-center justify-between p-4 sm:p-5 gap-2" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <h3 className="text-base sm:text-lg font-bold truncate max-w-[150px] sm:max-w-none flex items-center gap-1.5" style={{ color: '#0F172A' }}>
+                        <ClipboardCheck size={18} className="flex-shrink-0" style={{ color: '#0891B2' }} />
+                        <span className="truncate">Chi Tiết Tờ Trình</span>
                     </h3>
-                    <div className="flex items-center gap-3">
-                        {detail && (detail.category === 'PRICE_ADJUSTMENT' || detail.category === 'TASTING' || (detail.priceItems && detail.priceItems.length > 0)) && (
-                            <button 
-                                onClick={onPrint}
-                                className="px-2.5 py-1.5 text-xs font-semibold rounded flex items-center gap-1 transition-all"
-                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
-                            >
-                                <Printer size={13} /> In Tờ Trình
-                            </button>
+                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        {detail && (
+                            <div className="relative flex items-center">
+                                <button 
+                                    type="button"
+                                    onClick={() => {
+                                        setPrintMenuOpen(false)
+                                        onPrint('BILINGUAL')
+                                    }}
+                                    className="px-2 sm:px-2.5 py-1.5 text-xs font-semibold rounded-l flex items-center gap-1 transition-all cursor-pointer hover:opacity-90 whitespace-nowrap"
+                                    style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)', borderRight: 'none' }}
+                                    title="In bản Song Ngữ (Mặc định)"
+                                >
+                                    <Printer size={13} />
+                                    <span className="hidden sm:inline">In Song Ngữ (VI - EN)</span>
+                                    <span className="inline sm:hidden">In Song Ngữ</span>
+                                </button>
+                                <div className="relative">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setPrintMenuOpen(prev => !prev)}
+                                        className="px-1.5 py-1.5 text-xs font-semibold rounded-r flex items-center transition-all cursor-pointer hover:opacity-90"
+                                        style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)' }}
+                                        title="Tùy chọn ngôn ngữ in"
+                                    >
+                                        <ChevronDown size={13} />
+                                    </button>
+                                    {printMenuOpen && (
+                                        <>
+                                            <div 
+                                                className="fixed inset-0 z-40" 
+                                                onClick={() => setPrintMenuOpen(false)} 
+                                            />
+                                            <div className="absolute right-0 top-full mt-1 w-52 rounded-lg shadow-xl border border-slate-200 bg-white py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPrintMenuOpen(false)
+                                                        onPrint('BILINGUAL')
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50 flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <span className="text-sm">🌐</span> In Song Ngữ (Mặc định)
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPrintMenuOpen(false)
+                                                        onPrint('VI')
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <span className="text-sm">🇻🇳</span> In Tiếng Việt
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPrintMenuOpen(false)
+                                                        onPrint('EN')
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <span className="text-sm">🇬🇧</span> Print in English
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         )}
-                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
+                        <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer"><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
                 </div>
 
@@ -2390,23 +2599,36 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         <Loader2 size={32} className="animate-spin" style={{ color: '#0891B2' }} />
                     </div>
                 ) : (
-                    <div className="p-5 space-y-5">
+                    <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
                         {/* Title + Meta */}
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
+                            <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                                <span className="text-xs sm:text-sm font-bold" style={{ color: '#0891B2' }}>
                                     {detail.proposalNo}
                                 </span>
-                                <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold"
                                     style={{ ...PRIORITY_LABELS[detail.priority] ? { background: PRIORITY_LABELS[detail.priority].bg, color: PRIORITY_LABELS[detail.priority].color } : {} }}>
                                     {PRIORITY_LABELS[detail.priority]?.label}
                                 </span>
-                                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium"
                                     style={{ background: STATUS_LABELS[detail.status]?.bg, color: STATUS_LABELS[detail.status]?.color }}>
                                     {STATUS_LABELS[detail.status]?.label}
                                 </span>
                             </div>
-                            <h4 className="text-xl font-bold mb-1" style={{ color: '#0F172A' }}>{detail.title}</h4>
+                            {detail.title.includes(' / ') ? (
+                                <div className="mb-1.5">
+                                    <h4 className="text-lg sm:text-xl font-bold leading-snug" style={{ color: '#0F172A' }}>
+                                        {detail.title.split(' / ')[0]}
+                                    </h4>
+                                    <p className="text-xs sm:text-sm font-medium italic mt-0.5 text-slate-500">
+                                        {detail.title.split(' / ').slice(1).join(' / ')}
+                                    </p>
+                                </div>
+                            ) : (
+                                <h4 className="text-lg sm:text-xl font-bold mb-1 leading-snug" style={{ color: '#0F172A' }}>
+                                    {detail.title}
+                                </h4>
+                            )}
                             <p className="text-xs" style={{ color: '#64748B' }}>
                                 {detail.creator.name} · {CATEGORY_LABELS[detail.category]} ·
                                 {detail.estimatedAmount ? ` ${formatVND(detail.estimatedAmount)}` : ' Không có giá trị'} ·
@@ -2456,7 +2678,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {detail.category === 'PRICE_ADJUSTMENT' && (
                             <div className="p-4 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <p className="text-xs font-semibold uppercase" style={{ color: '#0891B2' }}>Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt</p>
-                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                         <p style={{ color: '#64748B' }}>Khách hàng áp dụng</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
@@ -2712,34 +2934,36 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                         {/* Action Bar */}
                         {canApproveDetail && (
-                            <div className="flex gap-3 p-4 rounded-md" style={{ background: 'rgba(212,168,83,0.05)', border: '2px solid rgba(212,168,83,0.2)' }}>
+                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-md shadow-2xs" style={{ background: 'rgba(212,168,83,0.05)', border: '2px solid rgba(212,168,83,0.2)' }}>
                                 <button
                                     onClick={() => onApproval('APPROVE')}
                                     disabled={Boolean(actionLoading)}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}>
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs hover:opacity-95"
+                                    style={{ background: 'rgba(91,168,138,0.25)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.5)' }}>
                                     {actionLoading === detail.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Duyệt Tờ Trình
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        const reason = prompt('Ghi chú khi trả lại:')
-                                        if (reason) onApproval('RETURN', reason)
-                                    }}
-                                    disabled={Boolean(actionLoading)}
-                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{ background: 'rgba(196,90,42,0.1)', color: '#C45A2A', border: '1px solid rgba(196,90,42,0.2)' }}>
-                                    <RotateCcw size={14} className="inline mr-1" /> Trả Lại
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const reason = prompt('Lý do từ chối:')
-                                        if (reason) onApproval('REJECT', reason)
-                                    }}
-                                    disabled={Boolean(actionLoading)}
-                                    className="px-5 py-3 text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
-                                    <XCircle size={14} className="inline mr-1" /> Từ Chối
-                                </button>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <button
+                                        onClick={() => {
+                                            const reason = prompt('Ghi chú khi trả lại:')
+                                            if (reason) onApproval('RETURN', reason)
+                                        }}
+                                        disabled={Boolean(actionLoading)}
+                                        className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
+                                        style={{ background: 'rgba(196,90,42,0.1)', color: '#C45A2A', border: '1px solid rgba(196,90,42,0.2)' }}>
+                                        <RotateCcw size={14} className="inline mr-1" /> Trả Lại
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const reason = prompt('Lý do từ chối:')
+                                            if (reason) onApproval('REJECT', reason)
+                                        }}
+                                        disabled={Boolean(actionLoading)}
+                                        className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
+                                        style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                        <XCircle size={14} className="inline mr-1" /> Từ Chối
+                                    </button>
+                                </div>
                             </div>
                         )}
 

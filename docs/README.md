@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-29 17:25 | Wine ERP v10.43 - Tối ưu Đăng Nhập 365 Ngày, GPS Watcher Thời Gian Thực & Khử Lag Check-in*
+*Last updated: 2026-10-03 10:35 | Wine ERP v10.44 - Song Ngữ Tờ Trình (Bilingual Proposals - Tasting & Price Adjustment)*
 

@@ -128,6 +128,11 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 - **Hành động**: Duyệt / Từ chối / Trả lại (tuỳ vai trò + cấp hiện tại)
 - **Bình luận**: Thêm comment, phân loại Internal/Public
 - **File đính kèm**: Upload multiple files
+- **Bản in & Xuất Song Ngữ (Bilingual Print Engine)**:
+  - Hỗ trợ in văn bản song ngữ A4 chuẩn hành chính - thương mại quốc tế (Việt - Anh)
+  - Bộ chọn chế độ in linh hoạt: **Bản Song Ngữ (Mặc định)**, **Bản Tiếng Việt**, **Bản Tiếng Anh**
+  - Mẫu in **Tờ trình Tasting** (`TASTING`): Song ngữ toàn bộ bảng sản phẩm (SKU, Tên SP, ĐVT, SL, Giá tham khảo, Thành tiền, Mục đích), căn cứ pháp lý, quy chế ngân sách, lưu ý thuế GTGT & TNDN theo NĐ 181/2025/NĐ-CP & NĐ 70/2025/NĐ-CP, chữ ký 4 bên và Digital Audit Trail.
+  - Mẫu in **Tờ trình Cơ chế giá** (`PRICE_ADJUSTMENT`): Song ngữ thông tin khách hàng, phạm vi, thời hạn, % chiết khấu, bảng giá đề xuất theo SKU, căn cứ đề xuất, kết quả kỳ vọng và bảng tiến trình ký duyệt điện tử.
 
 ### 5.3 Tích hợp CEO Dashboard
 - **KPI Card "Chờ CEO Duyệt"**: Gộp PO + SO + Tờ Trình
@@ -171,7 +176,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Ma trận phân quyền (cấu hình) | ✅ Hoàn thành |
 | Áp dụng cơ chế giá đa chi nhánh | ✅ Hoàn thành (Session 14 - 20/08/2026) |
 | Sắp xếp theo thời gian & lọc theo mức độ ưu tiên | ✅ Hoàn thành (04/09/2026) |
+| Tờ trình song ngữ (Form + Mẫu in Tasting & Cơ chế giá + Bộ chọn ngôn ngữ) | ✅ Hoàn thành (03/10/2026) |
 
 ---
 
-*Last updated: 2026-09-04 15:41 | Wine ERP v10.9*
+*Last updated: 2026-10-03 10:33 | Wine ERP v10.9*
