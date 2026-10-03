@@ -67,6 +67,7 @@
 58. [BUG-111: Bảng Ma Trận & Giám Sát Check-in Thị Trường Hiển Thị Toàn Bộ Tài Khoản Thay Vì Chỉ Tài Khoản Sale](#bug-111-bảng-ma-trận--giám-sát-check-in-thị-trường-hiển-thị-toàn-bộ-tài-khoản-thay-vì-chỉ-tài-khoản-sale)
 59. [BUG-112: Tải Màn Hình Check-in Thị Trường Chậm (5-8s) — SSR Over-fetching, Duplicate Client Waterfall & GPS Blocking](#bug-112-tải-màn-hình-check-in-thị-trường-chậm-5-8s--ssr-over-fetching-duplicate-client-waterfall--gps-blocking)
 60. [BUG-113: Sai Lệch Giá Bán Buôn, Bán Lẻ & Cơ Chế Giá Đặc Biệt Vang Ý (Anselmi L10039 & Nhóm Vang Ý)](#bug-113-sai-lệch-giá-bán-buôn-bán-lẻ--cơ-chế-giá-đặc-biệt-vang-ý-anselmi-l10039--nhóm-vang-ý)
+61. [BUG-114: Dropdown Chọn Sản Phẩm Bị Xổ Lên Trên Và Bị Che Khuất Bởi Hàng Phía Trên (Smart Auto-Flip vs Stacking Context Z-Index Inversion)](#bug-114-dropdown-chọn-sản-phẩm-bị-xổ-lên-trên-và-bị-che-khuất-bởi-hàng-phía-trên-smart-auto-flip-vs-stacking-context-z-index-inversion)
 
 ---
 
@@ -3088,5 +3089,26 @@ Server Actions must be async functions.
 ### Bài học
 > ⚠️ **RULE 113: Khi import sản phẩm hoặc tạo cơ chế giá đặc biệt từ các file bảng tính bên ngoài, BẮT BUỘC đối soát chéo với Master Data Bảng giá chuẩn hóa của công ty (Bảng giá 25.07 - Chuẩn hóa) và kiểm tra biên độ lãi gộp so với giá vốn (Gross Margin vs Cost) để ngăn chặn rủi ro copy nhầm số liệu hoặc bán dưới giá vốn.**
 
+---
 
+## BUG-114: Dropdown Chọn Sản Phẩm Bị Xổ Lên Trên Và Bị Che Khuất Bởi Hàng Phía Trên (Smart Auto-Flip vs Stacking Context Z-Index Inversion)
 
+**Ngày:** 2026-10-03  
+**Người sửa:** AI Assistant  
+**Module:** PRO — Proposals / Submissions (`ProposalsClient.tsx`, `SearchableProductCombobox`)  
+**Mức độ:** 🟡 Medium (Ảnh hưởng trải nghiệm người dùng trên Mobile & Desktop khi chọn rượu trong tờ trình)
+
+### Mô tả lỗi
+- **Triệu chứng:** Khi người dùng bấm vào ô chọn sản phẩm (`SearchableProductCombobox`) trong form tạo Tờ trình Tasting hoặc Đề xuất giá đặc biệt, menu dropdown danh sách sản phẩm bị xổ ngược lên trên (`bottom-full mb-1.5`) và bị che khuất hoặc cắt cụt một phần, đặc biệt nghiêm trọng trên điện thoại khi bàn phím ảo hiển thị.
+- **Nguyên nhân gốc rễ:**
+  1. Trong `SearchableProductCombobox`, cơ chế Smart Auto-Flip tự động đo khoảng cách tới đáy viewport (`window.innerHeight - rect.bottom < 280`). Khi ở trong Drawer cuộn hoặc trên màn hình điện thoại có bàn phím ảo, điều kiện này gần như luôn đúng, buộc dropdown bật ngược lên trên.
+  2. Khi xổ lên trên, dropdown xung đột với phân lớp `z-index` của các hàng sản phẩm: Mỗi hàng có `zIndex: priceLines.length - idx + 10`. Hàng `idx - 1` (hàng phía trên) có `z-index` lớn hơn hàng `idx`, khiến hàng phía trên vẽ đè lên dropdown của hàng bên dưới.
+  3. Drawer cha có thuộc tính `overflow-y-auto`. Khi hàng đầu tiên xổ ngược lên trên, dropdown vượt ra khỏi mép trên của vùng nội dung cuộn và bị trình duyệt cắt bỏ (`clipping boundary`).
+
+### Cách khắc phục
+1. **Loại bỏ cơ chế `dropUp`:** Chuẩn hóa dropdown luôn xổ xuống dưới (`top-full mt-1.5`). Trong các form dài có thanh cuộn (`overflow-y-auto`), xổ xuống dưới là hướng mở tự nhiên nhất vì người dùng có thể cuộn tiếp để xem toàn bộ danh sách mà không bị giam kẹp.
+2. **Tận dụng quy tắc Z-Index phân cấp giảm dần:** Khi luôn xổ xuống dưới, hàng hiện tại `idx` luôn có `z-index` cao hơn các hàng `idx + 1, idx + 2...` bên dưới, đảm bảo menu dropdown luôn nổi đè lên trên tất cả các thành phần tiếp theo mà không bao giờ bị che phủ.
+3. **Làm sạch giao diện dropdown:** Đồng bộ màu nền `bg-white`, border `border-slate-200` và đổ bóng `shadow-2xl` sắc nét, loại bỏ các class dark mode thừa.
+
+### Bài học
+> ⚠️ **RULE 114: Trong các danh sách lặp (repeating rows) sử dụng z-index phân cấp giảm dần (`length - idx`), KHÔNG sử dụng logic tự động đảo hướng xổ lên trên (`dropUp`) trừ khi nâng động z-index của hàng đang active lên cao nhất (z-60+). Trong modal/drawer có thanh cuộn dọc `overflow-y-auto`, dropdown nên luôn xổ xuống dưới (`top-full`) để không bị cắt bởi clipping context phía trên.**
