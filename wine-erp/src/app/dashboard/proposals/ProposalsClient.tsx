@@ -1588,19 +1588,6 @@ function SearchableProductCombobox({
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [open, selectedProd, selectedProdTitle])
 
-    // Check space above vs below for smart auto-flip
-    useEffect(() => {
-        if (open && containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect()
-            const spaceBelow = window.innerHeight - rect.bottom
-            if (spaceBelow < 280 && rect.top > spaceBelow) {
-                setDropUp(true)
-            } else {
-                setDropUp(false)
-            }
-        }
-    }, [open])
-
     const filtered = React.useMemo(() => {
         const q = inputValue.trim().toLowerCase()
         if (!q || (selectedProd && inputValue === selectedProdTitle)) {
@@ -1651,7 +1638,7 @@ function SearchableProductCombobox({
 
             {open && (
                 <div
-                    className={`absolute left-0 right-0 ${dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-[#1A2C3D] border border-slate-200 dark:border-slate-200`}
+                    className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
                     style={{ minWidth: '320px' }}
                 >
                     {filtered.length === 0 ? (
@@ -1666,13 +1653,13 @@ function SearchableProductCombobox({
                                     setInputValue(`[${p.skuCode}] ${p.productName}`)
                                     setOpen(false)
                                 }}
-                                className="w-full text-left p-2.5 hover:bg-slate-100 dark:hover:bg-[#22384D] transition flex items-center justify-between text-xs cursor-pointer group"
+                                className="w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer group"
                             >
                                 <div className="min-w-0 flex-1 pr-3">
-                                    <span className="font-mono font-bold text-teal-600 dark:text-teal-400 mr-2 text-xs">[{p.skuCode}]</span>
-                                    <span className="text-slate-900 dark:text-slate-100 font-medium group-hover:text-amber-500 transition-colors">{p.productName}</span>
+                                    <span className="font-mono font-bold text-[#0891B2] mr-2 text-xs">[{p.skuCode}]</span>
+                                    <span className="text-slate-900 font-medium group-hover:text-amber-600 transition-colors">{p.productName}</span>
                                 </div>
-                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 font-semibold whitespace-nowrap bg-slate-100 dark:bg-white px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                <span className="font-mono text-xs text-slate-700 font-semibold whitespace-nowrap bg-slate-50 px-2 py-1 rounded border border-slate-200">
                                     {formatVND(p.wholesalePrice)}
                                 </span>
                             </div>
