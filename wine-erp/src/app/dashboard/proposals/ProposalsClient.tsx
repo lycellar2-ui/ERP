@@ -1424,16 +1424,27 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     )
 }
 
-// ─── Searchable Customer Combobox ───────────────────────────
+// Helper check if customer is a parent/holding entity ("Mã cha")
+function isParentCustomer(c: any): boolean {
+    if (!c) return false
+    return (
+        c.entityType === 'COMPANY' ||
+        (c.code && (c.code.endsWith('-M') || c.code.endsWith('-CHA') || c.code.endsWith('-ME'))) ||
+        (c.name && (c.name.includes('(Mẹ)') || c.name.includes('(Cha)') || c.name.includes('(Chung)')))
+    )
+}
+
 // ─── Searchable Customer Combobox ───────────────────────────
 function SearchableCustomerCombobox({
     customers,
     selectedCustomerId,
     onSelect,
+    filterParent = true,
 }: {
     customers: any[]
     selectedCustomerId: string
     onSelect: (customer: any) => void
+    filterParent?: boolean
 }) {
     const [open, setOpen] = useState(false)
     const containerRef = React.useRef<HTMLDivElement>(null)
@@ -1454,12 +1465,13 @@ function SearchableCustomerCombobox({
 
     const filtered = React.useMemo(() => {
         const q = inputValue.trim().toLowerCase()
-        if (!q) return customers.slice(0, 40)
-        return customers.filter((c: any) => 
+        const baseList = filterParent ? customers.filter(c => !isParentCustomer(c)) : customers
+        if (!q) return baseList.slice(0, 40)
+        return baseList.filter((c: any) => 
             (c.name && c.name.toLowerCase().includes(q)) || 
             (c.code && c.code.toLowerCase().includes(q))
         ).slice(0, 40)
-    }, [customers, inputValue])
+    }, [customers, inputValue, filterParent])
 
     return (
         <div ref={containerRef} className="relative w-full">
@@ -1886,21 +1898,26 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     const [saving, setSaving] = useState(false)
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
 
+    const usableCustomers = useMemo(() => {
+        return customers.filter(c => !isParentCustomer(c))
+    }, [customers])
+
     const selectedCustForProposal = useMemo(() => {
-        return customers.find((c: any) => c.id === form.customerId)
-    }, [customers, form.customerId])
+        return usableCustomers.find((c: any) => c.id === form.customerId)
+    }, [usableCustomers, form.customerId])
 
     const relatedBranchesForProposal = useMemo(() => {
         if (!selectedCustForProposal) return []
-        const parentId = (selectedCustForProposal as any).parentId ?? selectedCustForProposal.id
+        const parentId = (selectedCustForProposal as any).parentId
         const brandGroup = (selectedCustForProposal as any).brandGroup
-        return customers.filter((c: any) => {
+        return usableCustomers.filter((c: any) => {
             if (c.id === selectedCustForProposal.id) return false
-            const sameParent = c.parentId === parentId || c.id === parentId
+            if (parentId && c.id === parentId) return false
+            const sameParent = parentId && c.parentId === parentId
             const sameBrand = brandGroup && c.brandGroup && c.brandGroup.toLowerCase() === brandGroup.toLowerCase()
             return sameParent || sameBrand
         })
-    }, [customers, selectedCustForProposal])
+    }, [usableCustomers, selectedCustForProposal])
 
     const handleSave = async () => {
         if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
@@ -1983,7 +2000,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)
                                 </label>
                                 <SearchableCustomerCombobox
-                                    customers={customers}
+                                    customers={usableCustomers}
                                     selectedCustomerId={form.customerId}
                                     onSelect={(cust: any) => {
                                         setForm(f => ({
@@ -2107,7 +2124,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             <div>
                                 <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Khách hàng chính áp dụng *</label>
                                 <SearchableCustomerCombobox
-                                    customers={customers}
+                                    customers={usableCustomers}
                                     selectedCustomerId={form.customerId}
                                     onSelect={(cust: any) => {
                                         setForm(f => ({
