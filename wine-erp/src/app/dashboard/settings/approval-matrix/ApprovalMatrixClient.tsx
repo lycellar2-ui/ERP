@@ -154,8 +154,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: 'rgba(224,82,82,0.12)', border: '1px solid rgba(224,82,82,0.3)' }}>
-                        <Shield size={24} style={{ color: '#E05252' }} />
+                        style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
+                        <Shield size={24} style={{ color: '#0891B2' }} />
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
@@ -169,7 +169,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 1: Proposal Routing Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 {/* Section header */}
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -183,10 +183,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     <button
                         onClick={handleSaveRoutes}
                         disabled={!dirty.routes || savingRoutes}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer shadow-xs hover:opacity-90"
                         style={{
-                            background: dirty.routes ? '#87CBB9' : 'rgba(8, 145, 178, 0.08)',
-                            color: dirty.routes ? '#F8FAFC' : '#64748B',
+                            background: dirty.routes ? '#0891B2' : 'rgba(8, 145, 178, 0.08)',
+                            color: dirty.routes ? '#FFFFFF' : '#64748B',
                         }}
                     >
                         {savingRoutes ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -198,16 +198,16 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
                         <thead>
-                            <tr style={{ background: '#F8FAFC' }}>
-                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                                <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '25%' }}>Loại Tờ Trình</th>
-                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-center text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '10%' }}>Số Cấp</th>
-                                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '25%' }}>Quyền Tạo</th>
-                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
-                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-center text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '10%' }}>Tùy Chỉnh</th>
                             </tr>
                         </thead>
@@ -220,22 +220,22 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                 return (
                                     <tr key={route.category}
                                         style={{
-                                            borderBottom: '1px solid rgba(42,67,85,0.5)',
-                                            background: idx % 2 === 0 ? 'transparent' : 'rgba(20,36,51,0.4)',
+                                            borderBottom: '1px solid #E2E8F0',
+                                            background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC',
                                         }}
-                                        className="hover:bg-white/50 transition"
+                                        className="hover:bg-slate-100/70 transition"
                                     >
                                         <td className="px-5 py-3.5">
                                             <span className="text-sm font-bold block" style={{ color: '#0F172A' }}>
                                                 {catLabel}
                                             </span>
-                                            <span className="text-[10px] font-mono text-[#6A8A9A]">{route.category}</span>
+                                            <span className="text-[10px] font-mono text-slate-400">{route.category}</span>
                                         </td>
 
                                         {/* Number of steps */}
                                         <td className="px-4 py-3.5 text-center">
                                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
-                                                style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                                style={{ background: 'rgba(212,168,83,0.12)', color: '#B45309', border: '1px solid rgba(212,168,83,0.35)' }}>
                                                 <Layers size={12} /> {steps.length} cấp
                                             </span>
                                         </td>
@@ -243,12 +243,11 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         {/* Creator Roles */}
                                         <td className="px-4 py-3.5">
                                             {creatorRoles.length === 0 ? (
-                                                <span className="text-xs text-gray-400 font-medium italic">Tất cả các Role</span>
+                                                <span className="text-xs text-slate-400 font-medium italic">Tất cả các Role</span>
                                             ) : (
-                                                <div className="flex gap-1 flex-wrap">
+                                                <div className="flex gap-1.5 flex-wrap">
                                                     {creatorRoles.map(rCode => (
-                                                        <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
-                                                            style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}>
+                                                        <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                                                             {getRoleName(rCode)}
                                                         </span>
                                                     ))}
@@ -259,22 +258,30 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         {/* Approval steps visual sequence */}
                                         <td className="px-5 py-3.5">
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                {steps.map((st, i) => (
-                                                    <span key={i} className="flex items-center gap-1">
-                                                        <span className="text-xs font-bold px-2 py-1 rounded flex items-center gap-1"
-                                                            style={{
-                                                                background: i === steps.length - 1 ? 'rgba(224,82,82,0.15)' : 'rgba(74,143,171,0.15)',
-                                                                color: i === steps.length - 1 ? '#E05252' : '#4A8FAB',
-                                                                border: `1px solid ${i === steps.length - 1 ? '#E05252' : '#4A8FAB'}40`
-                                                            }}>
-                                                            <span className="text-[9px] opacity-75 font-mono">Cấp {st.level}:</span>
-                                                            {getRoleName(st.role)}
+                                                {steps.map((st, i) => {
+                                                    const isLast = i === steps.length - 1
+                                                    const badge = isLast
+                                                        ? { bg: 'rgba(225,29,72,0.08)', color: '#BE123C', border: 'rgba(225,29,72,0.25)' }
+                                                        : i === 0
+                                                        ? { bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.25)' }
+                                                        : { bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.3)' }
+                                                    return (
+                                                        <span key={i} className="flex items-center gap-1">
+                                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
+                                                                style={{
+                                                                    background: badge.bg,
+                                                                    color: badge.color,
+                                                                    border: `1px solid ${badge.border}`,
+                                                                }}>
+                                                                <span className="text-[9px] font-bold opacity-75 font-mono uppercase">Cấp {st.level}:</span>
+                                                                {getRoleName(st.role)}
+                                                            </span>
+                                                            {i < steps.length - 1 && (
+                                                                <ChevronRight size={14} style={{ color: '#94A3B8' }} />
+                                                            )}
                                                         </span>
-                                                        {i < steps.length - 1 && (
-                                                            <ChevronRight size={14} style={{ color: '#64748B' }} />
-                                                        )}
-                                                    </span>
-                                                ))}
+                                                    )
+                                                })}
                                             </div>
                                         </td>
 
@@ -282,8 +289,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         <td className="px-4 py-3.5 text-center">
                                             <button
                                                 onClick={() => openEditModal(route)}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
-                                                style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all cursor-pointer hover:bg-slate-100 hover:text-cyan-700 shadow-2xs"
+                                                style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #CBD5E1' }}
                                                 title="Sửa số cấp và phân quyền Role"
                                             >
                                                 <Edit3 size={13} /> Sửa
@@ -298,11 +305,11 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 2: PO Approval Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <ShoppingBag size={18} style={{ color: '#D4A853' }} />
+                        <ShoppingBag size={18} style={{ color: '#B45309' }} />
                         <div>
                             <h3 className="text-sm font-bold" style={{ color: '#0F172A' }}>Cấu Hình Luồng Duyệt Đơn Mua Hàng (PO - Procurement)</h3>
                             <p className="text-[11px]" style={{ color: '#64748B' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước đơn mua hàng</p>
@@ -311,10 +318,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     <button
                         onClick={handleSavePoRoute}
                         disabled={!dirty.po || savingPoRoute}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer shadow-xs hover:opacity-90"
                         style={{
-                            background: dirty.po ? '#D4A853' : 'rgba(212,168,83,0.15)',
-                            color: dirty.po ? '#F8FAFC' : '#64748B',
+                            background: dirty.po ? '#B45309' : 'rgba(212,168,83,0.15)',
+                            color: dirty.po ? '#FFFFFF' : '#64748B',
                         }}
                     >
                         {savingPoRoute ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -325,43 +332,42 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
                         <thead>
-                            <tr style={{ background: '#F8FAFC' }}>
-                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                                <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '25%' }}>Nghiệp Vụ</th>
-                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-center text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '10%' }}>Số Cấp</th>
-                                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '25%' }}>Quyền Tạo PO</th>
-                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
-                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                <th className="px-4 py-3.5 text-center text-xs uppercase tracking-wider font-bold"
                                     style={{ color: '#64748B', width: '10%' }}>Tùy Chỉnh</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr style={{ background: 'transparent' }} className="hover:bg-white/50 transition">
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }} className="hover:bg-slate-50 transition">
                                 <td className="px-5 py-3.5">
                                     <span className="text-sm font-bold block" style={{ color: '#0F172A' }}>
                                         📦 Đơn Mua Hàng Quốc Tế & Nội Địa
                                     </span>
-                                    <span className="text-[10px] font-mono text-[#6A8A9A]">procurement.purchase_order</span>
+                                    <span className="text-[10px] font-mono text-slate-400">procurement.purchase_order</span>
                                 </td>
 
                                 <td className="px-4 py-3.5 text-center">
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
-                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#B45309', border: '1px solid rgba(212,168,83,0.35)' }}>
                                         <Layers size={12} /> {poRoute.steps.length} cấp
                                     </span>
                                 </td>
 
                                 <td className="px-4 py-3.5">
                                     {poRoute.creatorRoles.length === 0 ? (
-                                        <span className="text-xs text-gray-400 font-medium italic">Tất cả các Role</span>
+                                        <span className="text-xs text-slate-400 font-medium italic">Tất cả các Role</span>
                                     ) : (
-                                        <div className="flex gap-1 flex-wrap">
+                                        <div className="flex gap-1.5 flex-wrap">
                                             {poRoute.creatorRoles.map(rCode => (
-                                                <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
-                                                    style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}>
+                                                <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                                                     {getRoleName(rCode)}
                                                 </span>
                                             ))}
@@ -371,30 +377,38 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <td className="px-5 py-3.5">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                        {poRoute.steps.map((st, i) => (
-                                            <span key={i} className="flex items-center gap-1">
-                                                <span className="text-xs font-bold px-2 py-1 rounded flex items-center gap-1"
-                                                    style={{
-                                                        background: i === poRoute.steps.length - 1 ? 'rgba(224,82,82,0.15)' : 'rgba(74,143,171,0.15)',
-                                                        color: i === poRoute.steps.length - 1 ? '#E05252' : '#4A8FAB',
-                                                        border: `1px solid ${i === poRoute.steps.length - 1 ? '#E05252' : '#4A8FAB'}40`
-                                                    }}>
-                                                    <span className="text-[9px] opacity-75 font-mono">Cấp {st.level}:</span>
-                                                    {st.label || getRoleName(st.role)}
+                                        {poRoute.steps.map((st, i) => {
+                                            const isLast = i === poRoute.steps.length - 1
+                                            const badge = isLast
+                                                ? { bg: 'rgba(225,29,72,0.08)', color: '#BE123C', border: 'rgba(225,29,72,0.25)' }
+                                                : i === 0
+                                                ? { bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.25)' }
+                                                : { bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.3)' }
+                                            return (
+                                                <span key={i} className="flex items-center gap-1">
+                                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
+                                                        style={{
+                                                            background: badge.bg,
+                                                            color: badge.color,
+                                                            border: `1px solid ${badge.border}`,
+                                                        }}>
+                                                        <span className="text-[9px] font-bold opacity-75 font-mono uppercase">Cấp {st.level}:</span>
+                                                        {st.label || getRoleName(st.role)}
+                                                    </span>
+                                                    {i < poRoute.steps.length - 1 && (
+                                                        <ChevronRight size={14} style={{ color: '#94A3B8' }} />
+                                                    )}
                                                 </span>
-                                                {i < poRoute.steps.length - 1 && (
-                                                    <ChevronRight size={14} style={{ color: '#64748B' }} />
-                                                )}
-                                            </span>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 </td>
 
                                 <td className="px-4 py-3.5 text-center">
                                     <button
                                         onClick={openPoEditModal}
-                                        className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
-                                        style={{ background: '#FFFFFF', color: '#D4A853', border: '1px solid #E2E8F0' }}
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all cursor-pointer hover:bg-slate-100 hover:text-amber-700 shadow-2xs"
+                                        style={{ background: '#FFFFFF', color: '#B45309', border: '1px solid #CBD5E1' }}
                                         title="Sửa số cấp và phân quyền Role duyệt PO"
                                     >
                                         <Edit3 size={13} /> Sửa
@@ -407,11 +421,11 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 3: Threshold Configuration ═══ */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <Settings2 size={18} style={{ color: '#D4A853' }} />
+                        <Settings2 size={18} style={{ color: '#B45309' }} />
                         <div>
                             <h3 className="text-sm font-bold" style={{ color: '#0F172A' }}>Ngưỡng Phê Duyệt Tự Động</h3>
                             <p className="text-[11px]" style={{ color: '#64748B' }}>Khi vượt ngưỡng → tự động yêu cầu CEO phê duyệt</p>
@@ -420,10 +434,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     <button
                         onClick={handleSaveThresholds}
                         disabled={!dirty.thresholds || savingThresholds}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer shadow-xs hover:opacity-90"
                         style={{
-                            background: dirty.thresholds ? '#D4A853' : 'rgba(212,168,83,0.15)',
-                            color: dirty.thresholds ? '#F8FAFC' : '#64748B',
+                            background: dirty.thresholds ? '#B45309' : 'rgba(212,168,83,0.15)',
+                            color: dirty.thresholds ? '#FFFFFF' : '#64748B',
                         }}
                     >
                         {savingThresholds ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -431,20 +445,20 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0" style={{ background: '#F8FAFC' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white">
                     {thresholds.map((t, idx) => {
                         const isPercent = t.key.includes('discount') || t.key.includes('percent')
                         const Icon = isPercent ? Percent : DollarSign
                         return (
                             <div key={t.key}
-                                className="flex items-center gap-4 px-5 py-5"
+                                className="flex items-center gap-4 px-5 py-4 bg-white hover:bg-slate-50/80 transition"
                                 style={{
-                                    borderBottom: idx < thresholds.length - 1 ? '1px solid rgba(42,67,85,0.5)' : 'none',
-                                    borderRight: idx % 2 === 0 ? '1px solid rgba(42,67,85,0.5)' : 'none',
+                                    borderBottom: '1px solid #E2E8F0',
+                                    borderRight: idx % 2 === 0 ? '1px solid #E2E8F0' : 'none',
                                 }}>
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                    style={{ background: isPercent ? 'rgba(74,143,171,0.12)' : 'rgba(212,168,83,0.12)' }}>
-                                    <Icon size={18} style={{ color: isPercent ? '#4A8FAB' : '#D4A853' }} />
+                                    style={{ background: isPercent ? 'rgba(8, 145, 178, 0.08)' : 'rgba(212, 168, 83, 0.12)', border: `1px solid ${isPercent ? 'rgba(8, 145, 178, 0.25)' : 'rgba(212, 168, 83, 0.3)'}` }}>
+                                    <Icon size={18} style={{ color: isPercent ? '#0891B2' : '#B45309' }} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.label}</p>
@@ -455,14 +469,14 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         type="number"
                                         value={t.value}
                                         onChange={e => updateThreshold(idx, Number(e.target.value))}
-                                        className="w-40 px-3 py-2.5 rounded-lg text-sm text-right outline-none font-bold"
+                                        className="w-40 px-3 py-2 rounded-lg text-sm text-right outline-none font-bold"
                                         style={{
                                             background: '#FFFFFF',
-                                            border: '1px solid #E2E8F0',
-                                            color: '#0891B2',
+                                            border: '1px solid #CBD5E1',
+                                            color: '#0F172A',
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                                        onBlur={e => (e.currentTarget.style.borderColor = '#CBD5E1')}
                                         step={isPercent ? 1 : 1_000_000}
                                     />
                                     <span className="text-xs font-bold" style={{ color: '#64748B' }}>
@@ -477,19 +491,18 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
             {/* ═══ Edit Route Modal ═══ */}
             {editDraft && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-                    <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+                    <div className="w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                        <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
+                                <h3 className="text-base font-bold text-slate-900">
                                     Cấu Hình Luồng Phê Duyệt: {CATEGORY_LABELS[editDraft.category] ?? editDraft.category}
                                 </h3>
-                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mã danh mục: {editDraft.category}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Mã danh mục: {editDraft.category}</p>
                             </div>
-                            <button onClick={() => { setEditingCategory(null); setEditDraft(null); }} className="p-1 rounded hover:bg-white">
-                                <X size={20} className="text-gray-400" />
+                            <button onClick={() => { setEditingCategory(null); setEditDraft(null); }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
+                                <X size={20} />
                             </button>
                         </div>
 
@@ -497,10 +510,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <div className="p-6 space-y-6 overflow-y-auto flex-1">
                             {/* 1. Creator Roles Selection */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#0891B2' }}>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-1 text-cyan-800">
                                     1. Quyền Tạo Tờ Trình (Các Role được mở form tạo)
                                 </label>
-                                <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo loại tờ trình này.</p>
+                                <p className="text-xs text-slate-500 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo loại tờ trình này.</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     {availableRoles.map(r => {
                                         const isChecked = editDraft.creatorRoles.includes(r.code)
@@ -517,10 +530,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         return { ...prev, creatorRoles: nextRoles }
                                                     })
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#0891B2]' : 'bg-white border-slate-200 text-gray-300'}`}
+                                                className={`flex items-center gap-2.5 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-cyan-50/80 border-cyan-500 text-cyan-900 shadow-2xs' : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-700'}`}
                                             >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
-                                                    {isChecked && <Check size={12} className="text-slate-900" />}
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-cyan-600 border-cyan-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                                    {isChecked && <Check size={12} />}
                                                 </div>
                                                 <span>{r.name}</span>
                                             </button>
@@ -532,7 +545,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             {/* 2. Number of Approval Steps & Roles */}
                             <div className="pt-4 border-t border-slate-200">
                                 <div className="flex items-center justify-between mb-3">
-                                    <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
+                                    <label className="text-xs font-bold uppercase tracking-wider block text-amber-800">
                                         2. Số Cấp & Role Phê Duyệt Theo Thứ Tự
                                     </label>
                                     <button
@@ -549,7 +562,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 }
                                             })
                                         }}
-                                        className="text-xs flex items-center gap-1 font-bold text-[#0891B2] hover:underline disabled:opacity-40"
+                                        className="text-xs flex items-center gap-1 font-bold text-cyan-700 hover:text-cyan-800 hover:underline disabled:opacity-40"
                                     >
                                         <Plus size={14} /> Thêm cấp duyệt
                                     </button>
@@ -557,14 +570,13 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {editDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200" style={{ background: '#FFFFFF' }}>
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
-                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 bg-amber-100/80 text-amber-800 border border-amber-300/60">
                                                 {idx + 1}
                                             </div>
                                             
                                             <div className="flex-1">
-                                                <label className="text-[10px] text-gray-400 block mb-1">Role chịu trách nhiệm duyệt Cấp {idx + 1}</label>
+                                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Role chịu trách nhiệm duyệt Cấp {idx + 1}</label>
                                                 <select
                                                     value={step.role}
                                                     onChange={e => {
@@ -576,8 +588,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             return { ...prev, steps: copy }
                                                         })
                                                     }}
-                                                    className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                                                    className="w-full p-2.5 text-xs font-semibold rounded-lg bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600 shadow-2xs"
                                                 >
                                                     {availableRoles.map(r => (
                                                         <option key={r.code} value={r.code}>{r.name}</option>
@@ -597,7 +608,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             return { ...prev, steps: reindexed }
                                                         })
                                                     }}
-                                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md shrink-0 mt-3"
+                                                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0 mt-3 transition hover:text-rose-700"
                                                     title="Xóa cấp này"
                                                 >
                                                     <Trash2 size={16} />
@@ -610,19 +621,18 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3" style={{ background: '#102230' }}>
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
                             <button
                                 type="button"
                                 onClick={() => { setEditingCategory(null); setEditDraft(null); }}
-                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-white"
+                                className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-200/80 border border-slate-300 bg-white transition"
                             >
                                 Huỷ
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSaveEditDraft}
-                                className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                className="px-5 py-2 text-xs font-bold rounded-lg shadow-sm transition hover:opacity-90 bg-cyan-700 text-white"
                             >
                                 Áp Dụng Thay Đổi
                             </button>
@@ -633,19 +643,18 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
             {/* ═══ Edit PO Route Modal ═══ */}
             {editingPoModal && poDraft && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-                    <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+                    <div className="w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                        <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
+                                <h3 className="text-base font-bold text-slate-900">
                                     Cấu Hình Luồng Phê Duyệt: Đơn Mua Hàng (PO)
                                 </h3>
-                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mã cấu hình: procurement.purchase_order</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Mã cấu hình: procurement.purchase_order</p>
                             </div>
-                            <button onClick={() => { setEditingPoModal(false); setPoDraft(null); }} className="p-1 rounded hover:bg-white">
-                                <X size={20} className="text-gray-400" />
+                            <button onClick={() => { setEditingPoModal(false); setPoDraft(null); }} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
+                                <X size={20} />
                             </button>
                         </div>
 
@@ -653,10 +662,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <div className="p-6 space-y-6 overflow-y-auto flex-1">
                             {/* 1. Creator Roles Selection */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#0891B2' }}>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-1 text-cyan-800">
                                     1. Quyền Tạo Đơn Mua Hàng (Role được mở form tạo PO)
                                 </label>
-                                <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo PO.</p>
+                                <p className="text-xs text-slate-500 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo PO.</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     {availableRoles.map(r => {
                                         const isChecked = poDraft.creatorRoles.includes(r.code)
@@ -673,10 +682,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         return { ...prev, creatorRoles: nextRoles }
                                                     })
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#0891B2]' : 'bg-white border-slate-200 text-gray-300'}`}
+                                                className={`flex items-center gap-2.5 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-cyan-50/80 border-cyan-500 text-cyan-900 shadow-2xs' : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-700'}`}
                                             >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
-                                                    {isChecked && <Check size={12} className="text-slate-900" />}
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-cyan-600 border-cyan-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                                    {isChecked && <Check size={12} />}
                                                 </div>
                                                 <span>{r.name}</span>
                                             </button>
@@ -688,7 +697,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             {/* 2. Number of Approval Steps & Roles */}
                             <div className="pt-4 border-t border-slate-200">
                                 <div className="flex items-center justify-between mb-3">
-                                    <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
+                                    <label className="text-xs font-bold uppercase tracking-wider block text-amber-800">
                                         2. Số Cấp & Role Phê Duyệt PO Theo Thứ Tự
                                     </label>
                                     <button
@@ -706,7 +715,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 }
                                             })
                                         }}
-                                        className="text-xs flex items-center gap-1 font-bold text-[#0891B2] hover:underline disabled:opacity-40"
+                                        className="text-xs flex items-center gap-1 font-bold text-cyan-700 hover:text-cyan-800 hover:underline disabled:opacity-40"
                                     >
                                         <Plus size={14} /> Thêm cấp duyệt
                                     </button>
@@ -714,15 +723,14 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {poDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200" style={{ background: '#FFFFFF' }}>
-                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
-                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 bg-amber-100/80 text-amber-800 border border-amber-300/60">
                                                 {idx + 1}
                                             </div>
                                             
                                             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
                                                 <div>
-                                                    <label className="text-[10px] text-gray-400 block mb-1">Role duyệt Cấp {idx + 1}</label>
+                                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">Role duyệt Cấp {idx + 1}</label>
                                                     <select
                                                         value={step.role}
                                                         onChange={e => {
@@ -734,8 +742,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                                 return { ...prev, steps: copy }
                                                             })
                                                         }}
-                                                        className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                                                        className="w-full p-2.5 text-xs font-semibold rounded-lg bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600 shadow-2xs"
                                                     >
                                                         {availableRoles.map(r => (
                                                             <option key={r.code} value={r.code}>{r.name}</option>
@@ -743,7 +750,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] text-gray-400 block mb-1">Tên bước (Hiển thị UI)</label>
+                                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">Tên bước (Hiển thị UI)</label>
                                                     <input
                                                         type="text"
                                                         value={step.label || ''}
@@ -757,8 +764,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                                 return { ...prev, steps: copy }
                                                             })
                                                         }}
-                                                        className="w-full p-2 text-xs font-semibold rounded outline-none"
-                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                                                        className="w-full p-2.5 text-xs font-semibold rounded-lg bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600 shadow-2xs"
                                                     />
                                                 </div>
                                             </div>
@@ -774,7 +780,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                             return { ...prev, steps: reindexed }
                                                         })
                                                     }}
-                                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md shrink-0 mt-3"
+                                                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0 mt-3 transition hover:text-rose-700"
                                                     title="Xóa cấp này"
                                                 >
                                                     <Trash2 size={16} />
@@ -787,19 +793,18 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3" style={{ background: '#102230' }}>
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
                             <button
                                 type="button"
                                 onClick={() => { setEditingPoModal(false); setPoDraft(null); }}
-                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-white"
+                                className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-200/80 border border-slate-300 bg-white transition"
                             >
                                 Huỷ
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSavePoDraft}
-                                className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
-                                style={{ background: '#D97706', color: '#FFFFFF' }}
+                                className="px-5 py-2 text-xs font-bold rounded-lg shadow-sm transition hover:opacity-90 bg-amber-700 text-white"
                             >
                                 Áp Dụng Thay Đổi
                             </button>
