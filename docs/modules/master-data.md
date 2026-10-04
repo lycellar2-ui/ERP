@@ -217,7 +217,10 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
   * **Tự động duyệt công ty mẹ**: Nếu Nhà hàng được duyệt có Công ty mẹ tự sinh (đuôi `-M`) đang ở dạng chờ duyệt, Công ty mẹ cũng sẽ tự động được duyệt và đổi mã tương ứng.
   * **Thống kê & Bộ lọc cho Sale**: Thẻ hiển thị số lượng khách hàng chờ duyệt và bị từ chối trực quan ngay trên đầu trang.
 - ✅ **Tìm kiếm mở rộng**: Tên, mã, MST, email, SĐT, tên viết tắt
-- ✅ **3 filter**: Loại KH + Trạng thái + Kênh bán hàng (dynamic từ DB)
+- ✅ **3 filter**: Loại KH + Trạng thái + Kênh bán hàng (dynamic từ DB, font size thích ứng chống iOS auto-zoom)
+- ✅ **Giao diện Điện thoại Chuyên Biệt (Mobile Card View)**: Tự động chuyển đổi dạng Thẻ thông tin khách hàng trên màn hình nhỏ (< 768px), hiển thị trực quan Mã KH, MST, Sales Rep, Hạn mức, Trạng thái và nút Sửa/Xóa chạm ngón tay tiện lợi mà không cần cuộn ngang 11 cột.
+- ✅ **Phân Trang Đáp Ứng (Responsive Pagination)**: Chế độ rút gọn điều hướng "Trước / Sau" kèm chỉ số trang `Trang X / Y` trên điện thoại; chế độ đầy đủ đánh số trang trên máy tính.
+- ✅ **Công Thái Học Biểu Mẫu (Customer Drawer Ergonomics)**: Lưới 1 cột trên điện thoại, 2-3 cột trên máy tính; Touch target tối thiểu 44px; bảo vệ dữ liệu chưa lưu (Dirty State Guard) khi chạm viền hoặc nút Hủy.
 - ✅ **Sort**: Theo Tên, Hạn Mức, Đơn Hàng (asc/desc)
 - ✅ **Export CSV**: Xuất toàn bộ danh sách KH ra CSV (UTF-8 BOM)
 - ✅ **Import Excel**: Upload Excel hàng loạt, validate per row
