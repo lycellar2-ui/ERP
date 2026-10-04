@@ -5,7 +5,7 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import Link from 'next/link'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
-    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown, FileText, Tag, ArrowUpRight
+    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown, ChevronLeft, ChevronRight, FileText, Tag, ArrowUpRight
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -92,6 +92,141 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
     )
 }
 
+function CustomerMobileCard({
+    row,
+    onEdit,
+    onDelete,
+    onSyncTax,
+}: {
+    row: CustomerRow
+    onEdit: () => void
+    onDelete: () => void
+    onSyncTax?: () => void
+}) {
+    const taxToDisplay = row.taxId || row.resolvedVatInfo?.taxId
+    const isVatInherited = !row.taxId && Boolean(row.resolvedVatInfo?.taxId)
+
+    return (
+        <div 
+            className="p-3.5 sm:p-4 rounded-xl transition-all duration-150 border space-y-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
+            style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}
+            onClick={onEdit}
+        >
+            {/* Row 1: Code, Badges, Status */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-[#0891B2]">
+                        {row.code}
+                    </span>
+                    <TypeBadge type={row.channel} />
+                    {row.entityType === 'COMPANY' ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-800 bg-slate-100 border border-slate-200">
+                            🏢 Cty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                            🍽️ Nhà hàng
+                        </span>
+                    )}
+                </div>
+                <StatusDot status={row.status} />
+            </div>
+
+            {/* Row 2: Customer Name & Brand */}
+            <div>
+                <h4 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2" title={row.name}>
+                    {row.name}
+                </h4>
+                {row.shortName && (
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Tên viết tắt: {row.shortName}
+                    </p>
+                )}
+                {row.brandGroup && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold mt-1 text-slate-700 bg-slate-50 border border-slate-200">
+                        ✨ Chuỗi: {row.brandGroup}
+                    </span>
+                )}
+            </div>
+
+            {/* Row 3: Meta details (Parent, MST, Sales Rep, Credit) */}
+            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 text-slate-600">
+                {row.parentCode && (
+                    <div className="col-span-2 flex items-center gap-1 text-[11px] bg-slate-50 p-1.5 rounded border border-slate-200/60">
+                        <span className="text-slate-400">Công ty Cha:</span>
+                        <strong className="font-mono text-cyan-800 font-semibold">{row.parentCode}</strong>
+                        <span className="truncate text-slate-600">— {row.parentName}</span>
+                    </div>
+                )}
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Mã Số Thuế</span>
+                    <div className="flex items-center gap-1 font-mono font-medium text-slate-700 mt-0.5">
+                        {taxToDisplay ? (
+                            <>
+                                <span className={isVatInherited ? "text-amber-700 font-bold" : ""}>
+                                    {taxToDisplay} {isVatInherited && '(Cha)'}
+                                </span>
+                                {onSyncTax && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onSyncTax()
+                                        }}
+                                        className="p-1 hover:bg-teal-50 text-teal-600 rounded transition-colors"
+                                        title="Tra cứu Cục Thuế"
+                                    >
+                                        <Search size={11} />
+                                    </button>
+                                )}
+                            </>
+                        ) : '—'}
+                    </div>
+                </div>
+
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Sales Phụ Trách</span>
+                    <span className="font-medium text-slate-700 truncate block mt-0.5">
+                        {row.salesRepName || '—'}
+                    </span>
+                </div>
+
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tín Dụng & Hạn Mức</span>
+                    <span className="font-mono font-medium text-slate-700 mt-0.5 block">
+                        {row.creditLimit > 0 ? formatVND(row.creditLimit) : '0 ₫'} <span className="text-[10px] text-slate-400 font-sans">({row.paymentTerm})</span>
+                    </span>
+                </div>
+
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Đơn Hàng</span>
+                    <span className="font-mono font-bold text-emerald-700 mt-0.5 block">
+                        {row.orderCount} <span className="text-[10px] text-slate-400 font-sans">đơn</span>
+                    </span>
+                </div>
+            </div>
+
+            {/* Row 4: Mobile Action Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                <button
+                    type="button"
+                    onClick={onDelete}
+                    className="flex-1 min-h-[38px] flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 border border-slate-200 hover:bg-rose-50 transition-colors"
+                >
+                    <Trash2 size={13} /> Xóa
+                </button>
+                <button
+                    type="button"
+                    onClick={onEdit}
+                    className="flex-[2] min-h-[38px] flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-[#0891B2] border border-cyan-300 hover:bg-cyan-100 transition-colors"
+                >
+                    <Edit2 size={13} /> Chỉnh sửa hồ sơ
+                </button>
+            </div>
+        </div>
+    )
+}
+
 // ════════════════════════════════════════════════════════
 // CUSTOMER DRAWER (Create + Edit)
 // ════════════════════════════════════════════════════════
@@ -149,7 +284,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         }
     }
 
-    const initialFormRef = useRef<CustomerInput | null>(null)
+    const initialFormRef = useRef<Partial<CustomerInput> | null>(null)
 
     useEffect(() => {
         if (!open) return
@@ -162,7 +297,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             setLoading(true)
             getCustomerById(editingId).then(data => {
                 if (data) {
-                    const loadedForm: CustomerInput = {
+                    const loadedForm: Partial<CustomerInput> = {
                         code: data.code,
                         name: data.name,
                         shortName: data.shortName,
@@ -202,7 +337,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 }
             }).finally(() => setLoading(false))
         } else {
-            const newForm: CustomerInput = { paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 }
+            const newForm: Partial<CustomerInput> = { paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 }
             setForm(newForm)
             initialFormRef.current = null
             setOfficialCodeInput('')
@@ -1495,7 +1630,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     <input type="text" placeholder="Tìm theo tên, mã, MST, email, SĐT..."
                         value={search}
                         onChange={e => handleSearchChange(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-base sm:text-sm outline-none"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
                         onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
@@ -1503,7 +1638,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 w-full sm:w-auto">
                     <select value={typeFilter}
                         onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
-                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả loại</option>
                         <option value="HORECA">🏨 HORECA</option>
@@ -1513,7 +1648,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     </select>
                     <select value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Trạng thái</option>
                         <option value="ACTIVE">Hoạt động</option>
@@ -1526,7 +1661,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 <div className="flex gap-3 w-full sm:w-auto">
                     <select value={channelFilter}
                         onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
-                        className="flex-1 sm:flex-initial px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        className="flex-1 sm:flex-initial px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: channelFilter ? '#0F172A' : '#64748B' }}>
                         <option value="">Tất cả kênh</option>
                         {channels.map(c => (
@@ -1538,23 +1673,69 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             if (debounceRef.current) clearTimeout(debounceRef.current)
                             setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
                             applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
-                        }} className="px-3 py-2.5 rounded-lg text-sm border"
-                            style={{ color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.3)', background: 'transparent' }}>
-                            Xóa
+                        }} className="px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold border transition-colors shrink-0"
+                            style={{ color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.3)', background: 'rgba(139,26,46,0.04)' }}>
+                            Xóa lọc
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Table & Mobile Cards */}
             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                <div className="overflow-x-auto">
+                
+                {/* 1. Mobile Cards View (Visible on < 768px, hidden on md+) */}
+                <div className="block md:hidden p-3 space-y-3">
+                    {loading && rows.length === 0 ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 animate-pulse">
+                                <div className="flex justify-between items-center">
+                                    <div className="h-4 rounded bg-slate-200 w-1/3" />
+                                    <div className="h-4 rounded bg-slate-200 w-1/4" />
+                                </div>
+                                <div className="h-5 rounded bg-slate-200 w-3/4" />
+                                <div className="grid grid-cols-2 gap-2 pt-2">
+                                    <div className="h-4 rounded bg-slate-200 w-full" />
+                                    <div className="h-4 rounded bg-slate-200 w-full" />
+                                </div>
+                            </div>
+                        ))
+                    ) : rows.length === 0 ? (
+                        <div className="flex flex-col items-center py-16 gap-3 bg-white rounded-xl border border-slate-200">
+                            <span className="text-3xl">👥</span>
+                            <p style={{ color: '#64748B' }} className="text-sm font-medium">Chưa có khách hàng nào</p>
+                        </div>
+                    ) : (
+                        rows.map(row => (
+                            <CustomerMobileCard
+                                key={row.id}
+                                row={row}
+                                onEdit={() => { setEditingId(row.id); setDrawerOpen(true) }}
+                                onDelete={() => handleDelete(row.id, row.name)}
+                                onSyncTax={() => {
+                                    toast.promise(syncCustomerTaxInfoFromGDT(row.id), {
+                                        loading: 'Đang tra cứu Cục Thuế...',
+                                        success: (res) => {
+                                            if (!res.success) throw new Error(res.error)
+                                            queryClient.invalidateQueries({ queryKey: ['customers'] })
+                                            return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
+                                        },
+                                        error: (err) => `Lỗi tra cứu: ${err.message}`
+                                    })
+                                }}
+                            />
+                        ))
+                    )}
+                </div>
+
+                {/* 2. Desktop Table View (Hidden on mobile, visible on md+) */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 {sortableHeaders.map((h, i) => (
                                     <th key={i} className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
-                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#87CBB9' : '#475569' }}
+                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#0891B2' : '#475569' }}
                                         onClick={() => h.sortable && h.key && handleSort(h.key)}>
                                         <span className="inline-flex items-center gap-1.5">
                                             {h.label}
@@ -1622,7 +1803,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             {row.taxId ? (
                                                 <span>{row.taxId}</span>
                                             ) : row.resolvedVatInfo?.taxId ? (
-                                                <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-400 font-semibold bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px]">
+                                                <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px]">
                                                     {row.resolvedVatInfo.taxId} (Cha)
                                                 </span>
                                             ) : (
@@ -1643,7 +1824,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                             error: (err) => `Lỗi tra cứu: ${err.message}`
                                                         })
                                                     }}
-                                                    className="p-1 hover:bg-teal-500/20 text-teal-400 rounded transition-colors cursor-pointer"
+                                                    className="p-1 hover:bg-teal-50 text-teal-600 rounded transition-colors cursor-pointer"
                                                     title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
                                                 >
                                                     <Search size={11} />
@@ -1651,15 +1832,15 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#475569' : '#E2E8F0' }}>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#475569' : '#94A3B8' }}>
                                         {row.salesRepName ?? '—'}
                                     </td>
                                     <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap font-mono" style={{ color: '#475569' }}>{row.paymentTerm}</td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#E2E8F0' }}>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#0891B2' : '#94A3B8' }}>
                                         {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#E2E8F0' }}>
+                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#94A3B8' }}>
                                             {row.orderCount}
                                         </span>
                                     </td>
@@ -1667,15 +1848,15 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     <td className="px-3 py-1.5">
                                         <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all whitespace-nowrap">
                                             <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                className="p-1 rounded transition-all" style={{ color: '#475569' }}
+                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#475569' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)'; e.currentTarget.style.color = '#0891B2' }}
                                                 onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#475569' }}
-                                                title="Chỉnh sửa"><Edit2 size={13} /></button>
+                                                title="Chỉnh sửa"><Edit2 size={14} /></button>
                                             <button onClick={() => handleDelete(row.id, row.name)}
-                                                className="p-1 rounded transition-all" style={{ color: '#64748B' }}
+                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#64748B' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
                                                 onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#64748B' }}
-                                                title="Xóa"><Trash2 size={13} /></button>
+                                                title="Xóa"><Trash2 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1684,19 +1865,51 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     </table>
                 </div>
 
+                {/* 3. Responsive Pagination */}
                 {total > 0 && (
-                    <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                        <p className="text-xs" style={{ color: '#64748B' }}>
-                            Hiển thị <span style={{ color: '#475569' }}>{((filters.page ?? 1) - 1) * 25 + 1}–{Math.min((filters.page ?? 1) * 25, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+                        <p className="text-xs text-slate-500 order-2 sm:order-1 text-center sm:text-left">
+                            Hiển thị <span className="font-semibold text-slate-800">{((filters.page ?? 1) - 1) * 25 + 1}–{Math.min((filters.page ?? 1) * 25, total)}</span> trong <span className="font-semibold text-slate-800">{total}</span> khách hàng
                         </p>
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
-                                <button key={i} onClick={() => applyFilter({ page: i + 1 })}
-                                    className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                    style={{ background: (filters.page ?? 1) === i + 1 ? '#87CBB9' : 'transparent', color: (filters.page ?? 1) === i + 1 ? '#F8FAFC' : '#475569' }}>
-                                    {i + 1}
-                                </button>
-                            ))}
+                        
+                        <div className="flex items-center gap-1.5 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
+                            <button
+                                type="button"
+                                disabled={(filters.page ?? 1) <= 1}
+                                onClick={() => applyFilter({ page: (filters.page ?? 1) - 1 })}
+                                className="min-h-[36px] px-3 rounded-lg text-xs font-medium border border-slate-200 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1 cursor-pointer"
+                            >
+                                <ChevronLeft size={14} /> Trước
+                            </button>
+                            
+                            {/* Page numbers (desktop & tablet) */}
+                            <div className="hidden sm:flex items-center gap-1">
+                                {Array.from({ length: Math.ceil(total / 25) }).slice(0, 8).map((_, i) => (
+                                    <button key={i} onClick={() => applyFilter({ page: i + 1 })}
+                                        className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                                        style={{ 
+                                            background: (filters.page ?? 1) === i + 1 ? '#0891B2' : 'transparent', 
+                                            color: (filters.page ?? 1) === i + 1 ? '#FFFFFF' : '#475569',
+                                            border: (filters.page ?? 1) === i + 1 ? '1px solid #0891B2' : '1px solid transparent'
+                                        }}>
+                                        {i + 1}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Mobile compact page indicator */}
+                            <span className="sm:hidden text-xs font-semibold text-slate-700 px-2 font-mono">
+                                Trang {filters.page ?? 1} / {Math.ceil(total / 25)}
+                            </span>
+
+                            <button
+                                type="button"
+                                disabled={(filters.page ?? 1) >= Math.ceil(total / 25)}
+                                onClick={() => applyFilter({ page: (filters.page ?? 1) + 1 })}
+                                className="min-h-[36px] px-3 rounded-lg text-xs font-medium border border-slate-200 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1 cursor-pointer"
+                            >
+                                Sau <ChevronRight size={14} />
+                            </button>
                         </div>
                     </div>
                 )}
