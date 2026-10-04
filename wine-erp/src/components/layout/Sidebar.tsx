@@ -17,87 +17,98 @@ import {
     FileCheck2
 } from 'lucide-react'
 
+import { useAppLocale } from '@/lib/i18n'
+
 interface NavItem {
     href: string
     icon: React.FC<any>
     label: string
+    labelEn?: string
     permission?: string
 }
 
 interface NavGroup {
     label: string
+    labelEn?: string
     items: NavItem[]
 }
 
 const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Tổng Quan',
+        labelEn: 'Overview',
         items: [
-            { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard CEO' },
-            { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất' },
+            { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard CEO', labelEn: 'Executive Dashboard' },
+            { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất', labelEn: 'Proposals & Submissions' },
         ]
     },
     {
         label: 'Danh Mục',
+        labelEn: 'Master Data',
         items: [
-            { href: '/dashboard/products', icon: Package, label: 'Sản Phẩm', permission: 'MDM:READ' },
-            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp', permission: 'PRC:READ' },
-            { href: '/dashboard/customers', icon: Users, label: 'Khách Hàng', permission: 'MDM:READ' },
-            { href: '/dashboard/contracts', icon: FileSignature, label: 'Hợp Đồng', permission: 'CNT:READ' },
+            { href: '/dashboard/products', icon: Package, label: 'Sản Phẩm', labelEn: 'Products', permission: 'MDM:READ' },
+            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp', labelEn: 'Suppliers', permission: 'PRC:READ' },
+            { href: '/dashboard/customers', icon: Users, label: 'Khách Hàng', labelEn: 'Customers', permission: 'MDM:READ' },
+            { href: '/dashboard/contracts', icon: FileSignature, label: 'Hợp Đồng', labelEn: 'Contracts', permission: 'CNT:READ' },
         ]
     },
     {
         label: 'Mua Hàng',
+        labelEn: 'Procurement',
         items: [
-            { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng', permission: 'PRC:READ' },
-            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', permission: 'PRC:READ' },
+            { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng', labelEn: 'Purchase Orders', permission: 'PRC:READ' },
+            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', labelEn: 'Shipments', permission: 'PRC:READ' },
             // { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal', permission: 'AGN:READ' },
-            { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)', permission: 'CST:READ' },
+            { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)', labelEn: 'Costing (CST)', permission: 'CST:READ' },
         ]
     },
     {
         label: 'Kho & Bán Hàng',
+        labelEn: 'Sales & Inventory',
         items: [
-            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', permission: 'WMS:READ' },
-            { href: '/dashboard/sales/visits', icon: MapPin, label: 'Quản Lý Check-in Thị Trường', permission: 'SLS:READ' },
-            { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', permission: 'SLS:READ' },
-            { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', permission: 'SLS:READ' },
-            { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', permission: 'SLS:READ' },
-            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', permission: 'SLS:READ' },
-            { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', permission: 'CRM:READ' },
-            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', permission: 'CSG:READ' },
+            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', labelEn: 'Warehouses & Stock', permission: 'WMS:READ' },
+            { href: '/dashboard/sales/visits', icon: MapPin, label: 'Quản Lý Check-in Thị Trường', labelEn: 'Field Check-in', permission: 'SLS:READ' },
+            { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', labelEn: 'Sales Orders', permission: 'SLS:READ' },
+            { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', labelEn: 'Quotations', permission: 'SLS:READ' },
+            { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', labelEn: 'Price Lists', permission: 'SLS:READ' },
+            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', labelEn: 'Check Margin', permission: 'SLS:READ' },
+            { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', labelEn: 'CRM — Customers', permission: 'CRM:READ' },
+            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', labelEn: 'Consignments (CSG)', permission: 'CSG:READ' },
             // { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
             // { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
-            { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', permission: 'SLS:READ' },
-            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', permission: 'POS:READ' },
+            { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', labelEn: 'Returns & CN', permission: 'SLS:READ' },
+            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', labelEn: 'POS Showroom', permission: 'POS:READ' },
             // { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
         ]
     },
     {
         label: 'Tài Chính',
+        labelEn: 'Finance',
         items: [
-            { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', permission: 'FIN:READ' },
-            { href: '/dashboard/reconciliation', icon: FileCheck2, label: 'Đối Chiếu Hóa Đơn', permission: 'FIN:READ' },
+            { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', labelEn: 'Finance & Accounting', permission: 'FIN:READ' },
+            { href: '/dashboard/reconciliation', icon: FileCheck2, label: 'Đối Chiếu Hóa Đơn', labelEn: 'Reconciliation', permission: 'FIN:READ' },
             // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
             // { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
-            { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', permission: 'RPT:READ' },
+            { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', labelEn: 'Reports', permission: 'RPT:READ' },
             // { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường', permission: 'RPT:READ' },
-            { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu', permission: 'KPI:READ' },
+            { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu', labelEn: 'KPI Targets', permission: 'KPI:READ' },
         ]
     },
     {
         label: 'Marketing',
+        labelEn: 'Marketing',
         items: [
             // { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh', permission: 'MDM:READ' },
         ]
     },
     {
         label: 'Hệ Thống',
+        labelEn: 'System',
         items: [
-            { href: '/dashboard/hr', icon: Briefcase, label: 'Nhân Sự & Giấy Tờ', permission: 'HRM:READ' },
-            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', permission: 'SYS:READ' },
-            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', permission: 'SYS:ADMIN' },
-            { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', permission: 'SYS:ADMIN' },
+            { href: '/dashboard/hr', icon: Briefcase, label: 'Nhân Sự & Giấy Tờ', labelEn: 'HR & Documents', permission: 'HRM:READ' },
+            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', labelEn: 'Audit Log', permission: 'SYS:READ' },
+            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', labelEn: 'AI & Prompt', permission: 'SYS:ADMIN' },
+            { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', labelEn: 'Settings & RBAC', permission: 'SYS:ADMIN' },
         ]
     }
 ]
@@ -202,6 +213,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
     const prefetchedRef = useRef(new Set<string>())
     const dataPrefetchedRef = useRef(new Set<string>())
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const { locale, setLocale } = useAppLocale()
 
     const filteredGroups = useMemo(() => {
         return NAV_GROUPS.map(group => {
@@ -332,64 +344,109 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-3">
-                {filteredGroups.map((group) => (
-                    <div key={group.label} className="mb-1">
-                        {!collapsed && (
-                            <p
-                                className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
-                                style={{ color: '#64748B' }}
-                            >
-                                {group.label}
-                            </p>
-                        )}
-                        {group.items.map((item) => {
-                            const isActive = item.href === bestMatchHref
-                            const Icon = item.icon
-
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    title={collapsed ? item.label : undefined}
-                                    onClick={onNavigate}
-                                    className="flex items-center gap-3 mx-2 px-3 py-2.5 mb-0.5 transition-all duration-150"
-                                    style={{
-                                        borderRadius: '6px',
-                                        background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                        color: isActive ? '#87CBB9' : '#475569',
-                                        borderLeft: isActive ? '2px solid #87CBB9' : '2px solid transparent',
-                                    }}
-                                    onMouseEnter={e => {
-                                        handlePrefetch(item.href)
-                                        if (!isActive) {
-                                            e.currentTarget.style.background = 'rgba(135,203,185,0.06)'
-                                            e.currentTarget.style.color = '#0F172A'
-                                        }
-                                    }}
-                                    onMouseLeave={e => {
-                                        if (!isActive) {
-                                            e.currentTarget.style.background = 'transparent'
-                                            e.currentTarget.style.color = '#475569'
-                                        }
-                                    }}
+                {filteredGroups.map((group) => {
+                    const groupLabel = (locale === 'en' && group.labelEn) ? group.labelEn : group.label
+                    return (
+                        <div key={group.label} className="mb-1">
+                            {!collapsed && (
+                                <p
+                                    className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                                    style={{ color: '#64748B' }}
                                 >
-                                    <Icon size={18} className="flex-shrink-0" />
-                                    {!collapsed && (
-                                        <span className="text-sm font-medium truncate">{item.label}</span>
-                                    )}
-                                </Link>
-                            )
-                        })}
-                    </div>
-                ))}
+                                    {groupLabel}
+                                </p>
+                            )}
+                            {group.items.map((item) => {
+                                const isActive = item.href === bestMatchHref
+                                const Icon = item.icon
+                                const itemLabel = (locale === 'en' && item.labelEn) ? item.labelEn : item.label
+
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        title={collapsed ? itemLabel : undefined}
+                                        onClick={onNavigate}
+                                        className="flex items-center gap-3 mx-2 px-3 py-2.5 mb-0.5 transition-all duration-150"
+                                        style={{
+                                            borderRadius: '6px',
+                                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                            color: isActive ? '#87CBB9' : '#475569',
+                                            borderLeft: isActive ? '2px solid #87CBB9' : '2px solid transparent',
+                                        }}
+                                        onMouseEnter={e => {
+                                            handlePrefetch(item.href)
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'rgba(135,203,185,0.06)'
+                                                e.currentTarget.style.color = '#0F172A'
+                                            }
+                                        }}
+                                        onMouseLeave={e => {
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'transparent'
+                                                e.currentTarget.style.color = '#475569'
+                                            }
+                                        }}
+                                    >
+                                        <Icon size={18} className="flex-shrink-0" />
+                                        {!collapsed && (
+                                            <span className="text-sm font-medium truncate">{itemLabel}</span>
+                                        )}
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    )
+                })}
             </nav>
 
-            {/* Bottom: Logout + Toggle */}
+            {/* Bottom: Language Switcher + Logout + Toggle */}
             <div style={{ borderTop: '1px solid #E2E8F0' }}>
+                {/* Language Switcher */}
+                <div
+                    className={`flex items-center transition-all ${
+                        collapsed ? 'justify-center py-2 px-1' : 'justify-between px-4 py-2.5'
+                    }`}
+                    style={{ borderBottom: '1px solid #E2E8F0', background: 'rgba(248, 250, 252, 0.6)' }}
+                >
+                    {!collapsed && (
+                        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: '#64748B' }}>
+                            <Globe size={14} style={{ color: '#0891B2' }} />
+                            <span>{locale === 'en' ? 'Language' : 'Ngôn ngữ'}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center p-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] font-bold shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setLocale('vi')}
+                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                locale === 'vi'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                            }`}
+                            title="Tiếng Việt (VI)"
+                        >
+                            VI
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLocale('en')}
+                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                locale === 'en'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                            }`}
+                            title="English (EN)"
+                        >
+                            EN
+                        </button>
+                    </div>
+                </div>
+
                 <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-3 w-full px-5 py-3.5 transition-colors duration-150 disabled:opacity-50"
+                    className="flex items-center gap-3 w-full px-5 py-3.5 transition-colors duration-150 disabled:opacity-50 cursor-pointer"
                     style={{ color: '#64748B' }}
                     onMouseEnter={e => {
                         if (!isLoggingOut) e.currentTarget.style.color = '#8B1A2E'
@@ -397,17 +454,26 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                     onMouseLeave={e => {
                         if (!isLoggingOut) e.currentTarget.style.color = '#64748B'
                     }}
+                    title={collapsed ? (locale === 'en' ? 'Log Out' : 'Đăng Xuất') : undefined}
                 >
                     <LogOut size={16} className={`flex-shrink-0 ${isLoggingOut ? 'animate-spin' : ''}`} />
-                    {!collapsed && <span className="text-sm">{isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất'}</span>}
+                    {!collapsed && (
+                        <span className="text-sm">
+                            {locale === 'en'
+                                ? (isLoggingOut ? 'Logging Out...' : 'Log Out')
+                                : (isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất')
+                            }
+                        </span>
+                    )}
                 </button>
 
                 <button
                     onClick={onToggle}
-                    className="flex items-center justify-center w-full py-2 transition-colors duration-150"
+                    className="flex items-center justify-center w-full py-2 transition-colors duration-150 cursor-pointer"
                     style={{ color: '#64748B', borderTop: '1px solid #E2E8F0' }}
                     onMouseEnter={e => (e.currentTarget.style.color = '#0891B2')}
                     onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
+                    title={collapsed ? (locale === 'en' ? 'Expand sidebar' : 'Mở rộng menu') : (locale === 'en' ? 'Collapse sidebar' : 'Thu gọn menu')}
                 >
                     {collapsed
                         ? <ChevronRight size={16} />

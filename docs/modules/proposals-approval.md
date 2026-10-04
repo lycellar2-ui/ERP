@@ -139,6 +139,26 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 - **Widget "Tờ Trình Chờ Duyệt"**: Danh sách tờ trình currentLevel = 3
 - **Nút "Xem & Duyệt"**: Mở drawer chi tiết ngay từ dashboard
 
+### 5.4 Giao Diện Song Ngữ Toàn Diện (Bilingual UI Support — VI / EN)
+- **Hệ thống từ điển tập trung (`i18n.ts`)**: Cung cấp cấu trúc đa ngữ `PROPOSALS_I18N` (`vi` và `en`) đồng nhất cho toàn module Tờ Trình.
+- **Tích hợp `useAppLocale()`**: Đồng bộ tức thời theo nút chuyển ngữ toàn hệ thống `VI | EN` trên Header (lưu trữ tại `localStorage.erp_locale`), kích hoạt custom event thông báo giữa các components.
+- **Tự động tách & định dạng tiêu đề song ngữ (`formatBilingualTitle`)**:
+  - Đối với các tờ trình có tiêu đề song ngữ định dạng chuẩn `Tiêu đề Tiếng Việt / English Title`, hệ thống tự động nhận diện dấu gạch chéo cách khoảng (` / `).
+  - Khi người dùng chọn **VI**: Tiêu đề Tiếng Việt hiển thị chính (in đậm), tiêu đề Tiếng Anh hiển thị phụ (in nghiêng xám bên dưới).
+  - Khi người dùng chọn **EN**: Tiêu đề Tiếng Anh tự động hiển thị chính (in đậm), tiêu đề Tiếng Việt hiển thị phụ (in nghiêng xám bên dưới).
+- **Trang danh sách & Bảng điều khiển**:
+  - 5 thẻ thống kê KPI (Tổng, Chờ duyệt, Bản nháp, Đã duyệt, Từ chối).
+  - 5 tab lọc trạng thái và các dropdown lọc (Loại tờ trình, Mức độ ưu tiên, Ô tìm kiếm).
+  - Bảng dữ liệu 10 cột trên desktop và giao diện thẻ trên mobile, nhãn trạng thái và mức độ ưu tiên theo ngôn ngữ đang chọn.
+- **Drawer Tạo mới (`CreateDrawer`)**:
+  - Toàn bộ nhãn form, placeholder hướng dẫn, nút lưu nháp, trình duyệt và thông báo xác thực được chuyển ngữ đầy đủ.
+- **Drawer Chi tiết (`DetailDrawer`)**:
+  - Tiêu đề drawer, bộ chọn ngôn ngữ in (Song ngữ, Tiếng Việt, Tiếng Anh).
+  - Nhãn tiến trình phê duyệt 3 cấp, bảng chi tiết cơ chế giá/thử rượu/đơn hàng SO liên kết.
+  - Bảng dấu vết kiểm toán điện tử (Digital Audit Trail), khu vực thảo luận, các nút Duyệt, Trả lại, Từ chối, Chuyển thực hiện và Đánh dấu hoàn tất.
+- **Menu điều hướng Sidebar (`Sidebar.tsx`)**:
+  - Bổ sung cấu trúc `labelEn` cho tất cả các nhóm menu (`NavGroup`) và từng mục chức năng (`NavItem`), tự động hiển thị Tiếng Anh hoặc Tiếng Việt theo ngôn ngữ người dùng lựa chọn.
+
 ---
 
 ## 6. Server Actions
@@ -177,7 +197,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Áp dụng cơ chế giá đa chi nhánh | ✅ Hoàn thành (Session 14 - 20/08/2026) |
 | Sắp xếp theo thời gian & lọc theo mức độ ưu tiên | ✅ Hoàn thành (04/09/2026) |
 | Tờ trình song ngữ (Form + Mẫu in Tasting & Cơ chế giá + Bộ chọn ngôn ngữ) | ✅ Hoàn thành (03/10/2026) |
+| Chuyển đổi ngôn ngữ giao diện VI / EN (Sidebar + Proposals List + Form + Detail + Title Splitting) | ✅ Hoàn thành (04/10/2026) |
 
 ---
 
-*Last updated: 2026-10-03 10:33 | Wine ERP v10.9*
+*Last updated: 2026-10-04 22:15 | Wine ERP v10.9*

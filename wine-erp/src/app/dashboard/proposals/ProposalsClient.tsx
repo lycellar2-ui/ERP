@@ -10,7 +10,9 @@ import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
     getProposalDetail, updateProposalStatus, getProposals,
 } from './actions'
-import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './constants'
+import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS, getCategoryLabel, getPriorityLabel, getStatusLabel } from './constants'
+import { PROPOSALS_I18N, formatBilingualTitle } from './i18n'
+import { useAppLocale, type AppLocale } from '@/lib/i18n'
 import { formatVND } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
@@ -18,10 +20,14 @@ import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
 
-function formatCompactVND(amount: number): string {
+function formatCompactVND(amount: number, locale: AppLocale = 'vi'): string {
     if (amount >= 1_000_000_000) {
         const val = amount / 1_000_000_000
-        return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} tỷ`
+        return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} ${locale === 'en' ? 'B' : 'tỷ'}`
+    }
+    if (locale === 'en' && amount >= 1_000_000) {
+        const val = amount / 1_000_000
+        return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} M`
     }
     return formatVND(amount)
 }
@@ -64,6 +70,9 @@ function canApproveAtLevel(level: number, roles: string[] = []): boolean {
 }
 
 export default function ProposalsClient({ initialProposals, stats, userId, userName, userRoles }: Props) {
+    const { locale } = useAppLocale()
+    const t = PROPOSALS_I18N[locale] || PROPOSALS_I18N.vi
+
     const [proposals, setProposals] = useState(initialProposals)
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'DRAFT' | 'APPROVED' | 'REJECTED'>('ALL')
     const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
@@ -102,31 +111,32 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     }, [])
 
     const getCategoryBadge = useCallback((cat: string) => {
+        const isEn = locale === 'en'
         switch (cat) {
             case 'TASTING':
-                return { label: '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+                return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
             case 'SPECIAL_EVENT':
-                return { label: '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? '🎪 Special Event' : '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
-                return { label: '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+                return { label: isEn ? '🏷️ Special Pricing' : '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
             case 'BUDGET_REQUEST':
-                return { label: '💰 Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
+                return { label: isEn ? '💰 Budget Request' : '💰 Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
             case 'CAPITAL_EXPENDITURE':
-                return { label: '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? '🏢 CAPEX' : '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'NEW_SUPPLIER':
-                return { label: '🤝 NCC Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+                return { label: isEn ? '🤝 New Supplier' : '🤝 NCC Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
             case 'NEW_PRODUCT':
-                return { label: '📦 Sản Phẩm Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+                return { label: isEn ? '📦 New Product' : '📦 Sản Phẩm Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
             case 'POLICY_CHANGE':
-                return { label: '📋 Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
+                return { label: isEn ? '📋 Policy Change' : '📋 Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
             case 'PAYMENT_SCHEDULE':
-                return { label: '📅 Lịch Thanh Toán', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+                return { label: isEn ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
             case 'PROMOTION_CAMPAIGN':
-                return { label: '🎁 Khuyến Mãi', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+                return { label: isEn ? '🎁 Promotion' : '🎁 Khuyến Mãi', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
             default:
-                return { label: CATEGORY_LABELS[cat] || cat, bg: 'rgba(74,106,122,0.15)', color: '#475569', border: 'rgba(74,106,122,0.3)' }
+                return { label: getCategoryLabel(cat, locale), bg: 'rgba(74,106,122,0.15)', color: '#475569', border: 'rgba(74,106,122,0.3)' }
         }
-    }, [])
+    }, [locale])
 
     const filtered = proposals.filter(p => {
         if (filter === 'PENDING' && !['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)) return false
@@ -973,10 +983,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Tờ Trình & Đề Xuất
+                        {t.header.title}
                     </h2>
                     <p className="text-xs sm:text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý tờ trình phê duyệt — Proposals & Submissions
+                        {t.header.subtitle}
                     </p>
                 </div>
                 <button
@@ -984,18 +994,18 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer hover:opacity-90 shadow-xs"
                     style={{ background: 'rgba(91,168,138,0.18)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.4)' }}
                 >
-                    <Plus size={16} /> Tạo Tờ Trình
+                    <Plus size={16} /> {t.header.createBtn}
                 </button>
             </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 {[
-                    { label: 'Tổng', value: currentStats.total, accent: '#475569' },
-                    { label: 'Chờ Duyệt', value: currentStats.pending, accent: '#D4A853' },
-                    { label: 'Bản Nháp', value: currentStats.draft, accent: '#64748B' },
-                    { label: 'Đã Duyệt', value: currentStats.approved, accent: '#5BA88A' },
-                    { label: 'Từ Chối', value: currentStats.rejected, accent: '#8B1A2E' },
+                    { label: t.stats.total, value: currentStats.total, accent: '#475569' },
+                    { label: t.stats.pending, value: currentStats.pending, accent: '#D4A853' },
+                    { label: t.stats.draft, value: currentStats.draft, accent: '#64748B' },
+                    { label: t.stats.approved, value: currentStats.approved, accent: '#5BA88A' },
+                    { label: t.stats.rejected, value: currentStats.rejected, accent: '#8B1A2E' },
                 ].map((s, idx) => (
                     <div 
                         key={s.label} 
@@ -1022,7 +1032,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 borderRight: '1px solid #E2E8F0',
                             }}
                         >
-                            {f === 'ALL' ? 'Tất cả' : f === 'PENDING' ? 'Chờ duyệt' : f === 'DRAFT' ? 'Nháp' : f === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
+                            {f === 'ALL' ? t.tabs.all : f === 'PENDING' ? t.tabs.pending : f === 'DRAFT' ? t.tabs.draft : f === 'APPROVED' ? t.tabs.approved : t.tabs.rejected}
                         </button>
                     ))}
                 </div>
@@ -1039,18 +1049,18 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             color: categoryFilter === 'ALL' ? '#475569' : '#87CBB9',
                         }}
                     >
-                        <option value="ALL">All Categories (Tất cả loại)</option>
-                        <option value="TASTING">🍷 Tờ Trình Tasting (Thử Rượu)</option>
-                        <option value="SPECIAL_EVENT">🎪 Sự Kiện / Event</option>
-                        <option value="PRICE_ADJUSTMENT">🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt</option>
-                        <option value="BUDGET_REQUEST">💰 Xin Ngân Sách</option>
-                        <option value="CAPITAL_EXPENDITURE">🏢 Mua Sắm TSCĐ</option>
-                        <option value="NEW_SUPPLIER">🤝 Nhà Cung Cấp Mới</option>
-                        <option value="NEW_PRODUCT">📦 Sản Phẩm Mới</option>
-                        <option value="POLICY_CHANGE">📋 Thay Đổi Quy Trình</option>
-                        <option value="PAYMENT_SCHEDULE">📅 Lịch Thanh Toán</option>
-                        <option value="PROMOTION_CAMPAIGN">🎁 Chương Trình KM</option>
-                        <option value="OTHER"> Khác</option>
+                        <option value="ALL">{t.filters.allCategories}</option>
+                        <option value="TASTING">{locale === 'en' ? '🍷 Wine Tasting & Sample' : '🍷 Tờ Trình Tasting (Thử Rượu)'}</option>
+                        <option value="SPECIAL_EVENT">{locale === 'en' ? '🎪 Special Event' : '🎪 Sự Kiện / Event'}</option>
+                        <option value="PRICE_ADJUSTMENT">{locale === 'en' ? '🏷️ Special Pricing Mechanism' : '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
+                        <option value="BUDGET_REQUEST">{locale === 'en' ? '💰 Budget Request' : '💰 Xin Ngân Sách'}</option>
+                        <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? '🏢 CAPEX' : '🏢 Mua Sắm TSCĐ'}</option>
+                        <option value="NEW_SUPPLIER">{locale === 'en' ? '🤝 New Supplier' : '🤝 Nhà Cung Cấp Mới'}</option>
+                        <option value="NEW_PRODUCT">{locale === 'en' ? '📦 New Product' : '📦 Sản Phẩm Mới'}</option>
+                        <option value="POLICY_CHANGE">{locale === 'en' ? '📋 Policy Change' : '📋 Thay Đổi Quy Trình'}</option>
+                        <option value="PAYMENT_SCHEDULE">{locale === 'en' ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán'}</option>
+                        <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? '🎁 Promotion' : '🎁 Chương Trình KM'}</option>
+                        <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
                     </select>
                 </div>
 
@@ -1066,11 +1076,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             color: priorityFilter === 'ALL' ? '#475569' : '#D4A853',
                         }}
                     >
-                        <option value="ALL">Mức độ ưu tiên (Tất cả)</option>
-                        <option value="URGENT">🔥 Khẩn cấp (Urgent)</option>
-                        <option value="HIGH">⚡ Cao (High)</option>
-                        <option value="NORMAL">🔹 Bình thường (Normal)</option>
-                        <option value="LOW">◽ Thấp (Low)</option>
+                        <option value="ALL">{t.filters.allPriorities}</option>
+                        <option value="URGENT">🔥 {locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
+                        <option value="HIGH">⚡ {locale === 'en' ? 'High' : 'Cao (High)'}</option>
+                        <option value="NORMAL">🔹 {locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
+                        <option value="LOW">◽ {locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
                     </select>
                 </div>
 
@@ -1080,7 +1090,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        placeholder="Tìm theo mã, tiêu đề, người trình..."
+                        placeholder={t.filters.searchPlaceholder}
                         className="w-full pl-9 pr-3 py-2 text-xs rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
                     />
@@ -1092,14 +1102,15 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 {filtered.length === 0 ? (
                     <div className="flex flex-col items-center py-12 gap-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
                         <FileText size={32} style={{ color: '#E2E8F0' }} />
-                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có tờ trình nào</p>
+                        <p className="text-sm" style={{ color: '#64748B' }}>{t.table.empty}</p>
                     </div>
                 ) : (
                     filtered.map(p => {
-                        const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
-                        const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                        const statusCfg = getStatusLabel(p.status, locale)
+                        const prioCfg = getPriorityLabel(p.priority, locale)
                         const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
                         const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
+                        const { main, sub } = formatBilingualTitle(p.title, locale)
 
                         return (
                             <div
@@ -1122,18 +1133,12 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </div>
 
                                 <div>
-                                    {p.title.includes(' / ') ? (
-                                        <div>
-                                            <p className="text-sm font-bold leading-snug" style={{ color: '#0F172A' }}>
-                                                {p.title.split(' / ')[0]}
-                                            </p>
-                                            <p className="text-xs font-medium italic mt-0.5 text-slate-500">
-                                                {p.title.split(' / ').slice(1).join(' / ')}
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                                            {p.title}
+                                    <p className="text-sm font-bold leading-snug" style={{ color: '#0F172A' }}>
+                                        {main}
+                                    </p>
+                                    {sub && (
+                                        <p className="text-xs font-medium italic mt-0.5 text-slate-500">
+                                            {sub}
                                         </p>
                                     )}
                                 </div>
@@ -1141,7 +1146,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full"
                                         style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
-                                        {CATEGORY_LABELS[p.category] ?? p.category}
+                                        {getCategoryBadge(p.category).label}
                                     </span>
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                                         style={{ background: prioCfg.bg, color: prioCfg.color }}>
@@ -1151,20 +1156,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
                                 <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.2)', color: '#475569' }}>
                                     <div>
-                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Người trình</p>
+                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Submitter' : 'Người trình'}</p>
                                         <p className="font-medium mt-0.5">{p.creatorName}</p>
                                     </div>
                                     <div>
-                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Ngày trình</p>
+                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Submitted' : 'Ngày trình'}</p>
                                         <p className="font-medium mt-0.5">
-                                            {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
+                                            {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
                                         </p>
                                     </div>
                                     {p.estimatedAmount !== null && (
                                         <div className="col-span-2">
-                                            <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">Giá trị dự kiến</p>
+                                            <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Estimated Amount' : 'Giá trị dự kiến'}</p>
                                             <p className="font-bold text-sm mt-0.5" style={{ color: '#0F172A' }}>
-                                                {formatCompactVND(p.estimatedAmount)}
+                                                {formatCompactVND(p.estimatedAmount, locale)}
                                             </p>
                                         </div>
                                     )}
@@ -1174,7 +1179,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     <button onClick={() => openDetail(p.id)}
                                         className="px-3 py-1.5 text-xs font-medium rounded transition-all"
                                         style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
-                                        <Eye size={12} className="inline mr-1" />Chi tiết
+                                        <Eye size={12} className="inline mr-1" />{t.actions.detail}
                                     </button>
                                     {canApproveThis && (
                                         <>
@@ -1184,16 +1189,16 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                                 style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
-                                                Duyệt
+                                                {t.actions.approve}
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    const reason = prompt('Lý do từ chối:')
+                                                    const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                 }}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                                 style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
-                                                <XCircle size={12} className="inline mr-1" />Từ chối
+                                                <XCircle size={12} className="inline mr-1" />{t.actions.reject}
                                             </button>
                                         </>
                                     )}
@@ -1204,7 +1209,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                             style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
                                             {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
-                                            Trình
+                                            {t.actions.submit}
                                         </button>
                                     )}
                                 </div>
@@ -1233,16 +1238,16 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <thead>
                             <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
                                 {[
-                                    { label: 'Mã Tờ Trình', align: 'left' as const },
-                                    { label: 'Tiêu Đề', align: 'left' as const },
-                                    { label: 'Loại Tờ Trình', align: 'left' as const },
-                                    { label: 'Ưu Tiên', align: 'left' as const },
-                                    { label: 'Giá Trị', align: 'right' as const },
-                                    { label: 'Người Trình', align: 'left' as const },
-                                    { label: 'Trạng Thái', align: 'left' as const },
-                                    { label: 'Ngày Giờ Trình', align: 'left' as const },
-                                    { label: 'Duyệt Final', align: 'left' as const },
-                                    { label: 'Thao Tác', align: 'right' as const },
+                                    { label: t.table.proposalNo, align: 'left' as const },
+                                    { label: t.table.title, align: 'left' as const },
+                                    { label: t.table.category, align: 'left' as const },
+                                    { label: t.table.priority, align: 'left' as const },
+                                    { label: t.table.value, align: 'right' as const },
+                                    { label: t.table.submitter, align: 'left' as const },
+                                    { label: t.table.status, align: 'left' as const },
+                                    { label: t.table.submissionTime, align: 'left' as const },
+                                    { label: t.table.finalApproval, align: 'left' as const },
+                                    { label: t.table.actions, align: 'right' as const },
                                 ].map(col => (
                                     <th key={col.label}
                                         className="px-3 py-3 text-xs font-bold uppercase tracking-wider"
@@ -1258,17 +1263,18 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     <td colSpan={10}>
                                         <div className="flex flex-col items-center py-12 gap-2">
                                             <FileText size={32} style={{ color: '#E2E8F0' }} />
-                                            <p className="text-sm" style={{ color: '#64748B' }}>Chưa có tờ trình nào khớp với bộ lọc</p>
+                                            <p className="text-sm" style={{ color: '#64748B' }}>{t.table.empty}</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
                                 filtered.map(p => {
-                                    const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
-                                    const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                                    const statusCfg = getStatusLabel(p.status, locale)
+                                    const prioCfg = getPriorityLabel(p.priority, locale)
                                     const catBadge = getCategoryBadge(p.category)
                                     const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
                                     const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
+                                    const { main, sub } = formatBilingualTitle(p.title, locale)
 
                                     return (
                                         <tr key={p.id}
@@ -1287,28 +1293,26 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                {p.title.includes(' / ') ? (
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-slate-900 leading-tight" title={p.title.split(' / ')[0]}>
-                                                            {p.title.split(' / ')[0]}
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-900 leading-tight" title={main}>
+                                                        {main}
+                                                    </p>
+                                                    {sub && (
+                                                        <p className="text-[11px] font-normal text-slate-500 italic mt-0.5 line-clamp-1" title={sub}>
+                                                            {sub}
                                                         </p>
-                                                        <p className="text-[11px] font-normal text-slate-500 italic mt-0.5 line-clamp-1" title={p.title.split(' / ').slice(1).join(' / ')}>
-                                                            {p.title.split(' / ').slice(1).join(' / ')}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm font-medium text-slate-900 line-clamp-2" title={p.title}>{p.title}</p>
-                                                )}
+                                                    )}
+                                                </div>
                                                 {p.attachmentCount > 0 && (
                                                     <span className="text-[11px] text-slate-500 block mt-0.5">
-                                                        <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
+                                                        <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file{p.attachmentCount > 1 ? 's' : ''}
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full"
                                                     style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
-                                                    title={CATEGORY_LABELS[p.category] || p.category}>
+                                                    title={getCategoryLabel(p.category, locale)}>
                                                     {catBadge.label}
                                                 </span>
                                             </td>
@@ -1320,7 +1324,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             </td>
                                             <td className="px-2.5 py-3 text-right" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold block truncate text-slate-900">
-                                                    {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
+                                                    {p.estimatedAmount ? formatCompactVND(p.estimatedAmount, locale) : '—'}
                                                 </span>
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
@@ -1339,15 +1343,15 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
-                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#5BA88A]" title="Thời gian CEO phê duyệt hoàn tất">
+                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#5BA88A]" title={locale === 'en' ? 'Final CEO Approval Time' : 'Thời gian CEO phê duyệt hoàn tất'}>
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : p.status === 'REJECTED' ? (
-                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#8B1A2E]" title="Thời gian từ chối">
+                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#8B1A2E]" title={locale === 'en' ? 'Rejection Time' : 'Thời gian từ chối'}>
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-xs whitespace-nowrap text-slate-500" title="Đang chờ duyệt">
+                                                    <span className="text-xs whitespace-nowrap text-slate-500" title={locale === 'en' ? 'Pending Approval' : 'Đang chờ duyệt'}>
                                                         —
                                                     </span>
                                                 )}
@@ -1357,7 +1361,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     <button onClick={() => openDetail(p.id)}
                                                         className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap"
                                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                                                        <Eye size={12} className="inline mr-1" />Chi tiết
+                                                        <Eye size={12} className="inline mr-1" />{t.actions.detail}
                                                     </button>
                                                     {canApproveThis && (
                                                         <>
@@ -1367,17 +1371,17 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                 className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:scale-105"
                                                                 style={{ background: '#5BA88A', color: '#0F172A' }}>
                                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
-                                                                Duyệt
+                                                                {t.actions.approve}
                                                             </button>
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
-                                                                    const reason = prompt('Lý do từ chối:')
+                                                                    const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
                                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                                 }}
                                                                 className="px-2 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:bg-rose-900/30"
                                                                 style={{ background: 'rgba(139,26,46,0.15)', color: '#FF6B6B', border: '1px solid rgba(139,26,46,0.4)' }}>
-                                                                <XCircle size={12} className="inline mr-1" />Từ chối
+                                                                <XCircle size={12} className="inline mr-1" />{t.actions.reject}
                                                             </button>
                                                         </>
                                                     )}
@@ -1388,7 +1392,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                             className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
                                                             style={{ background: 'rgba(74,143,171,0.2)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.4)' }}>
                                                             {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
-                                                            Trình
+                                                            {t.actions.submit}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1862,6 +1866,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     userId: string
     onCreated: () => void
 }) {
+    const { locale } = useAppLocale()
+    const t = PROPOSALS_I18N[locale] || PROPOSALS_I18N.vi
+
     const { data: refData } = useQuery({
         queryKey: ['proposal_reference_data'],
         queryFn: async () => {
@@ -1920,26 +1927,26 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }, [usableCustomers, selectedCustForProposal])
 
     const handleSave = async () => {
-        if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
+        if (!form.title || !form.content) return alert(locale === 'en' ? 'Please enter title and content' : 'Vui lòng nhập tiêu đề và nội dung')
         if (form.category === 'PRICE_ADJUSTMENT') {
-            if (!form.customerId) return alert('Vui lòng chọn khách hàng áp dụng')
+            if (!form.customerId) return alert(locale === 'en' ? 'Please select applicable customer' : 'Vui lòng chọn khách hàng áp dụng')
             if ((form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && !form.discountPct) {
-                return alert('Vui lòng nhập % chiết khấu toàn danh mục')
+                return alert(locale === 'en' ? 'Please enter portfolio discount percentage' : 'Vui lòng nhập % chiết khấu toàn danh mục')
             }
             if ((form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && priceLines.length === 0) {
-                return alert('Vui lòng thêm sản phẩm đề xuất giá')
+                return alert(locale === 'en' ? 'Please add proposed pricing products' : 'Vui lòng thêm sản phẩm đề xuất giá')
             }
             if (priceLines.some(line => !line.productId)) {
-                return alert('Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
+                return alert(locale === 'en' ? 'Please select products for all lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
             }
         }
         const isTastingCategory = form.category === 'TASTING' || form.category === 'SPECIAL_EVENT'
         if (isTastingCategory) {
             if (priceLines.length === 0) {
-                return alert('Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
+                return alert(locale === 'en' ? 'Please select at least 1 tasting product' : 'Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
             }
             if (priceLines.some(line => !line.productId)) {
-                return alert('Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
+                return alert(locale === 'en' ? 'Please select products for all tasting lines' : 'Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
             }
         }
         setSaving(true)
@@ -1976,7 +1983,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FileText size={22} className="text-amber-500" />
-                        Tạo Tờ Trình Đề Xuất Mới
+                        {t.createDrawer.title}
                     </h3>
                     <button onClick={onClose} className="p-1.5 rounded hover:bg-white"><X size={20} style={{ color: '#64748B' }} /></button>
                 </div>
@@ -1984,10 +1991,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 <div className="p-5 space-y-4">
                     {/* Category */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Loại tờ trình *</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.categoryLabel}</label>
                         <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
-                            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                                <option key={k} value={k}>{v}</option>
+                            {Object.entries(CATEGORY_LABELS).map(([k]) => (
+                                <option key={k} value={k}>{getCategoryLabel(k, locale)}</option>
                             ))}
                         </select>
                     </div>
@@ -2374,10 +2381,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Priority */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Mức ưu tiên</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.priorityLabel}</label>
                         <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
-                            {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
-                                <option key={k} value={k}>{v.label}</option>
+                            {Object.entries(PRIORITY_LABELS).map(([k]) => (
+                                <option key={k} value={k}>{getPriorityLabel(k, locale).label}</option>
                             ))}
                         </select>
                     </div>
@@ -2386,18 +2393,18 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>
-                                Tiêu đề (Tiếng Việt) / Title *
+                                {locale === 'en' ? 'Title (Vietnamese) *' : 'Tiêu đề (Tiếng Việt) *'}
                             </label>
                             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                                placeholder="VD: Đề xuất giá đặc biệt cho Khách sạn Daewoo"
+                                placeholder={locale === 'en' ? 'e.g. Special pricing proposal for Daewoo Hotel' : 'VD: Đề xuất giá đặc biệt cho Khách sạn Daewoo'}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = '#0891B2'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
                         <div>
                             <label className="text-xs font-semibold uppercase mb-1.5 flex items-center justify-between" style={{ color: '#64748B' }}>
-                                <span>Tiêu đề tiếng Anh / English Title</span>
-                                <span className="text-[10px] lowercase font-normal text-slate-400">(Tùy chọn song ngữ)</span>
+                                <span>{locale === 'en' ? 'Title (English)' : 'Tiêu đề tiếng Anh / English Title'}</span>
+                                <span className="text-[10px] lowercase font-normal text-slate-400">{locale === 'en' ? '(Bilingual option)' : '(Tùy chọn song ngữ)'}</span>
                             </label>
                             <input value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))}
                                 placeholder="e.g. Special pricing proposal for Daewoo Hotel"
@@ -2409,9 +2416,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Content */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Nội dung chi tiết *</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.contentLabel}</label>
                         <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                            rows={5} placeholder="Mô tả chi tiết đề xuất..."
+                            rows={5} placeholder={t.createDrawer.contentPlaceholder}
                             style={{ ...inputStyle, resize: 'vertical' }}
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
@@ -2419,9 +2426,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Justification */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Lý do & phân tích</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{locale === 'en' ? 'Justification & Analysis' : 'Lý do & phân tích'}</label>
                         <textarea value={form.justification} onChange={e => setForm(f => ({ ...f, justification: e.target.value }))}
-                            rows={3} placeholder="Căn cứ và phân tích chi phí/lợi ích..."
+                            rows={3} placeholder={locale === 'en' ? 'Provide background, rationale, and cost-benefit analysis...' : 'Căn cứ và phân tích chi phí/lợi ích...'}
                             style={{ ...inputStyle, resize: 'vertical' }}
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
@@ -2429,9 +2436,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Expected Outcome */}
                     <div>
-                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Kết quả kỳ vọng</label>
+                        <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{locale === 'en' ? 'Expected Outcome' : 'Kết quả kỳ vọng'}</label>
                         <input value={form.expectedOutcome} onChange={e => setForm(f => ({ ...f, expectedOutcome: e.target.value }))}
-                            placeholder="VD: Mở rộng danh mục 15 SKU mới, tăng doanh thu 20%"
+                            placeholder={locale === 'en' ? 'e.g. Expand 15 new SKUs, increase revenue by 20%' : 'VD: Mở rộng danh mục 15 SKU mới, tăng doanh thu 20%'}
                             style={inputStyle}
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
@@ -2440,7 +2447,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     {/* Amount + Deadline row */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Giá trị ước tính (VND)</label>
+                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.valueLabel}</label>
                             <input type="number" value={form.estimatedAmount}
                                 onChange={e => setForm(f => ({ ...f, estimatedAmount: e.target.value }))}
                                 placeholder="0" style={inputStyle}
@@ -2448,7 +2455,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>Hạn xử lý</label>
+                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{locale === 'en' ? 'Deadline' : 'Hạn xử lý'}</label>
                             <input type="date" value={form.deadline}
                                 onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
                                 style={inputStyle}
@@ -2466,14 +2473,14 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-                            Lưu Bản Nháp
+                            {t.actions.saveDraft}
                         </button>
                         <button
                             onClick={onClose}
                             className="px-5 py-3 text-sm font-medium rounded-md"
                             style={{ background: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0' }}
                         >
-                            Huỷ
+                            {t.actions.cancel}
                         </button>
                     </div>
                 </div>
@@ -2495,6 +2502,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     onRefresh: () => void
     onPrint: (lang?: 'BILINGUAL' | 'VI' | 'EN') => void
 }) {
+    const { locale } = useAppLocale()
+    const t = PROPOSALS_I18N[locale] || PROPOSALS_I18N.vi
     const [comment, setComment] = useState('')
     const [sendingComment, setSendingComment] = useState(false)
     const [printMenuOpen, setPrintMenuOpen] = useState(false)
@@ -2514,6 +2523,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
     const isPending = detail && ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(detail.status)
     const canApproveDetail = Boolean(isPending && detail && canApproveAtLevel(detail.currentLevel, userRoles))
+    const bilingualTitle = formatBilingualTitle(detail?.title, locale)
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -2522,7 +2532,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                 <div className="flex items-center justify-between p-4 sm:p-5 gap-2" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <h3 className="text-base sm:text-lg font-bold truncate max-w-[150px] sm:max-w-none flex items-center gap-1.5" style={{ color: '#0F172A' }}>
                         <ClipboardCheck size={18} className="flex-shrink-0" style={{ color: '#0891B2' }} />
-                        <span className="truncate">Chi Tiết Tờ Trình</span>
+                        <span className="truncate">{t.detailDrawer.title}</span>
                     </h3>
                     <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                         {detail && (
@@ -2535,11 +2545,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     }}
                                     className="px-2 sm:px-2.5 py-1.5 text-xs font-semibold rounded-l flex items-center gap-1 transition-all cursor-pointer hover:opacity-90 whitespace-nowrap"
                                     style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)', borderRight: 'none' }}
-                                    title="In bản Song Ngữ (Mặc định)"
+                                    title={locale === 'en' ? 'Print Bilingual (Default)' : 'In bản Song Ngữ (Mặc định)'}
                                 >
                                     <Printer size={13} />
-                                    <span className="hidden sm:inline">In Song Ngữ (VI - EN)</span>
-                                    <span className="inline sm:hidden">In Song Ngữ</span>
+                                    <span className="hidden sm:inline">{locale === 'en' ? 'Print Bilingual (VI - EN)' : 'In Song Ngữ (VI - EN)'}</span>
+                                    <span className="inline sm:hidden">{locale === 'en' ? 'Print Bilingual' : 'In Song Ngữ'}</span>
                                 </button>
                                 <div className="relative">
                                     <button 
@@ -2547,7 +2557,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         onClick={() => setPrintMenuOpen(prev => !prev)}
                                         className="px-1.5 py-1.5 text-xs font-semibold rounded-r flex items-center transition-all cursor-pointer hover:opacity-90"
                                         style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)' }}
-                                        title="Tùy chọn ngôn ngữ in"
+                                        title={locale === 'en' ? 'Print language options' : 'Tùy chọn ngôn ngữ in'}
                                     >
                                         <ChevronDown size={13} />
                                     </button>
@@ -2566,7 +2576,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🌐</span> In Song Ngữ (Mặc định)
+                                                    <span className="text-sm">🌐</span> {locale === 'en' ? 'Print Bilingual (Default)' : 'In Song Ngữ (Mặc định)'}
                                                 </button>
                                                 <button 
                                                     type="button"
@@ -2576,7 +2586,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🇻🇳</span> In Tiếng Việt
+                                                    <span className="text-sm">🇻🇳</span> {locale === 'en' ? 'Print Vietnamese' : 'In Tiếng Việt'}
                                                 </button>
                                                 <button 
                                                     type="button"
@@ -2586,7 +2596,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🇬🇧</span> Print in English
+                                                    <span className="text-sm">🇬🇧</span> {locale === 'en' ? 'Print English' : 'Print in English'}
                                                 </button>
                                             </div>
                                         </>
@@ -2611,45 +2621,47 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     {detail.proposalNo}
                                 </span>
                                 <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold"
-                                    style={{ ...PRIORITY_LABELS[detail.priority] ? { background: PRIORITY_LABELS[detail.priority].bg, color: PRIORITY_LABELS[detail.priority].color } : {} }}>
-                                    {PRIORITY_LABELS[detail.priority]?.label}
+                                    style={{ background: getPriorityLabel(detail.priority, locale)?.bg, color: getPriorityLabel(detail.priority, locale)?.color }}>
+                                    {getPriorityLabel(detail.priority, locale)?.label}
                                 </span>
                                 <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium"
-                                    style={{ background: STATUS_LABELS[detail.status]?.bg, color: STATUS_LABELS[detail.status]?.color }}>
-                                    {STATUS_LABELS[detail.status]?.label}
+                                    style={{ background: getStatusLabel(detail.status, locale)?.bg, color: getStatusLabel(detail.status, locale)?.color }}>
+                                    {getStatusLabel(detail.status, locale)?.label}
                                 </span>
                             </div>
-                            {detail.title.includes(' / ') ? (
-                                <div className="mb-1.5">
-                                    <h4 className="text-lg sm:text-xl font-bold leading-snug" style={{ color: '#0F172A' }}>
-                                        {detail.title.split(' / ')[0]}
-                                    </h4>
-                                    <p className="text-xs sm:text-sm font-medium italic mt-0.5 text-slate-500">
-                                        {detail.title.split(' / ').slice(1).join(' / ')}
-                                    </p>
-                                </div>
-                            ) : (
-                                <h4 className="text-lg sm:text-xl font-bold mb-1 leading-snug" style={{ color: '#0F172A' }}>
-                                    {detail.title}
+                            <div className="mb-1.5">
+                                <h4 className="text-lg sm:text-xl font-bold leading-snug" style={{ color: '#0F172A' }}>
+                                    {bilingualTitle.main}
                                 </h4>
-                            )}
+                                {bilingualTitle.sub && (
+                                    <p className="text-xs sm:text-sm font-medium italic mt-0.5 text-slate-500">
+                                        {bilingualTitle.sub}
+                                    </p>
+                                )}
+                            </div>
                             <p className="text-xs" style={{ color: '#64748B' }}>
-                                {detail.creator.name} · {CATEGORY_LABELS[detail.category]} ·
-                                {detail.estimatedAmount ? ` ${formatVND(detail.estimatedAmount)}` : ' Không có giá trị'} ·
-                                {detail.submittedAt ? ` Trình ${new Date(detail.submittedAt).toLocaleDateString('vi-VN')}` : ' Chưa trình'}
+                                {detail.creator.name} · {getCategoryLabel(detail.category, locale)} ·
+                                {detail.estimatedAmount ? ` ${formatVND(detail.estimatedAmount)}` : (locale === 'en' ? ' No value' : ' Không có giá trị')} ·
+                                {detail.submittedAt 
+                                    ? ` ${locale === 'en' ? 'Submitted' : 'Trình'} ${new Date(detail.submittedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}` 
+                                    : (locale === 'en' ? ' Not submitted' : ' Chưa trình')}
                             </p>
                         </div>
 
                         {/* Approval Progress */}
                         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#64748B' }}>Tiến Trình Phê Duyệt</p>
+                            <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#64748B' }}>{t.detailDrawer.approvalMatrix}</p>
                             <div className="flex items-center gap-2">
                                 {detail.requiredLevels.map((level, i) => {
                                     const log = detail.approvalLogs.find(l => l.level === level)
                                     const isCurrent = detail.currentLevel === level && isPending
                                     const isDone = log?.action === 'APPROVE'
                                     const isRejected = log?.action === 'REJECT'
-                                    const levelLabel = level === 1 ? 'TP Bộ phận' : level === 2 ? 'KT Trưởng' : 'CEO'
+                                    const levelLabel = level === 1 
+                                        ? (locale === 'en' ? 'Dept Mgr' : 'TP Bộ phận') 
+                                        : level === 2 
+                                            ? (locale === 'en' ? 'Chief Acc' : 'KT Trưởng') 
+                                            : 'CEO'
 
                                     return (
                                         <React.Fragment key={level}>
@@ -2661,7 +2673,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                         border: `2px solid ${isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#E2E8F0'}`,
                                                         color: isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#64748B',
                                                     }}>
-                                                    {isDone ? '✓' : isRejected ? '✗' : level}
+                                                        {isDone ? '✓' : isRejected ? '✗' : level}
                                                 </div>
                                                 <span className="text-xs font-medium" style={{ color: isCurrent ? '#D4A853' : '#64748B' }}>
                                                     {levelLabel}
@@ -2681,41 +2693,43 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {/* Special pricing details */}
                         {detail.category === 'PRICE_ADJUSTMENT' && (
                             <div className="p-4 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <p className="text-xs font-semibold uppercase" style={{ color: '#0891B2' }}>Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt</p>
+                                <p className="text-xs font-semibold uppercase" style={{ color: '#0891B2' }}>
+                                    {locale === 'en' ? 'Special Pricing & Mechanism Information' : 'Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt'}
+                                </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
-                                        <p style={{ color: '#64748B' }}>Khách hàng áp dụng</p>
+                                        <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Applicable Customer' : 'Khách hàng áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
                                     </div>
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
-                                        <p style={{ color: '#64748B' }}>Phạm vi áp dụng</p>
+                                        <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Scope of Application' : 'Phạm vi áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>
-                                            {detail.scope === 'ENTIRE_PORTFOLIO' ? 'Toàn danh mục' : 
-                                             detail.scope === 'SPECIFIC_PRODUCTS' ? 'Một số sản phẩm' : 
-                                             detail.scope === 'MIXED' ? 'Kết hợp' : 'N/A'}
+                                            {detail.scope === 'ENTIRE_PORTFOLIO' ? (locale === 'en' ? 'Entire Portfolio' : 'Toàn danh mục') : 
+                                             detail.scope === 'SPECIFIC_PRODUCTS' ? (locale === 'en' ? 'Specific Products' : 'Một số sản phẩm') : 
+                                             detail.scope === 'MIXED' ? (locale === 'en' ? 'Mixed' : 'Kết hợp') : 'N/A'}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="p-2.5 rounded text-xs" style={{ background: '#FFFFFF' }}>
-                                    <p style={{ color: '#64748B' }}>Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)</p>
+                                    <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Validity Period (Start & End Date)' : 'Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)'}</p>
                                     <p className="font-bold mt-0.5" style={{ color: '#0891B2' }}>
-                                        📅 {detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : 'Từ ngày phê duyệt'} 
+                                        📅 {detail.startDate ? new Date(detail.startDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'From approval date' : 'Từ ngày phê duyệt')} 
                                         {' ➔ '} 
-                                        {detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : 'Khi có thông báo mới (không thời hạn)'}
+                                        {detail.endDate ? new Date(detail.endDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'Until further notice (Indefinite)' : 'Khi có thông báo mới (không thời hạn)')}
                                     </p>
                                 </div>
                                 
                                 {detail.discountPct !== null && detail.discountPct !== undefined && (
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Chiết khấu toàn danh mục</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{locale === 'en' ? 'Entire portfolio discount' : 'Chiết khấu toàn danh mục'}</p>
                                         <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{detail.discountPct}%</p>
                                     </div>
                                 )}
 
                                 {detail.priceItems && detail.priceItems.length > 0 && (
                                     <div className="space-y-1.5">
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Danh sách sản phẩm đề xuất giá:</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{locale === 'en' ? 'Proposed price item list:' : 'Danh sách sản phẩm đề xuất giá:'}</p>
                                         <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                                             {detail.priceItems.map((item: any) => {
                                                 const originalPrice = item.product?.wholesalePrice || 0
@@ -2731,7 +2745,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                         <div className="text-right pl-3 flex items-center gap-2">
                                                             <div>
                                                                 <p className="font-bold" style={{ color: '#0891B2' }}>{formatVND(item.proposedPrice)}</p>
-                                                                <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>Gốc: {formatVND(originalPrice)}</p>
+                                                                <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{locale === 'en' ? 'Orig: ' : 'Gốc: '}{formatVND(originalPrice)}</p>
                                                             </div>
                                                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diff < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
                                                                 {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
@@ -2756,20 +2770,20 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 }}>
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: '#92400E' }}>
-                                            🍷 TỜ TRÌNH TASTING & THỬ VANG
+                                            {locale === 'en' ? '🍷 TASTING & SAMPLE PROPOSAL' : '🍷 TỜ TRÌNH TASTING & THỬ VANG'}
                                         </p>
                                         {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
                                             <a
                                                 href={`/dashboard/sales?action=createTasting&proposalId=${detail.id}&customerId=${detail.customerId || ''}`}
                                                 className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
                                             >
-                                                🍷 + Lên Đơn Tasting Ngay
+                                                {locale === 'en' ? '🍷 + Create Tasting Order' : '🍷 + Lên Đơn Tasting Ngay'}
                                             </a>
                                         )}
                                     </div>
                                     {detail.customer && (
                                         <p className="text-xs font-medium" style={{ color: '#78350F' }}>
-                                            Khách hàng áp dụng: <strong style={{ color: '#451A03', fontWeight: 700 }}>{detail.customer.name}</strong> ({detail.customer.code})
+                                            {locale === 'en' ? 'Applicable customer: ' : 'Khách hàng áp dụng: '}<strong style={{ color: '#451A03', fontWeight: 700 }}>{detail.customer.name}</strong> ({detail.customer.code})
                                         </p>
                                     )}
                                 </div>
@@ -2779,7 +2793,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             {(detail as any).salesOrders && (detail as any).salesOrders.length > 0 && (
                                 <div className="p-4 rounded-md space-y-2.5 bg-white border border-slate-200">
                                     <p className="text-xs font-bold uppercase text-[#0891B2] flex items-center justify-between">
-                                        <span>📦 Các Đơn Hàng Đã Lên Theo Tờ Trình Này ({(detail as any).salesOrders.length})</span>
+                                        <span>📦 {locale === 'en' ? `Orders Created Under This Proposal (${(detail as any).salesOrders.length})` : `Các Đơn Hàng Đã Lên Theo Tờ Trình Này (${(detail as any).salesOrders.length})`}</span>
                                     </p>
                                     <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                                         {(detail as any).salesOrders.map((so: any) => (
@@ -2789,12 +2803,12 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     {so.orderType === 'TASTING' && (
                                                         <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-300 border border-amber-500/40">🍷 Tasting</span>
                                                     )}
-                                                    <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString('vi-VN')}</span>
+                                                    <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <span className="font-bold text-slate-900">{formatVND(Number(so.totalAmount))}</span>
                                                     <a href={`/dashboard/sales?search=${so.soNo}`} className="text-[11px] text-[#0891B2] hover:underline font-semibold">
-                                                        Xem SO →
+                                                        {locale === 'en' ? 'View SO →' : 'Xem SO →'}
                                                     </a>
                                                 </div>
                                             </div>
@@ -2804,18 +2818,24 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             )}
 
                             <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#0891B2' }}>Nội dung</p>
+                                <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#0891B2' }}>
+                                    {locale === 'en' ? 'Content' : 'Nội dung'}
+                                </p>
                                 <p className="text-sm whitespace-pre-wrap" style={{ color: '#0F172A', lineHeight: 1.6 }}>{detail.content}</p>
                             </div>
                             {detail.justification && (
                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#D4A853' }}>Lý do & Phân tích</p>
+                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#D4A853' }}>
+                                        {locale === 'en' ? 'Justification & Analysis' : 'Lý do & Phân tích'}
+                                    </p>
                                     <p className="text-sm whitespace-pre-wrap" style={{ color: '#0F172A', lineHeight: 1.6 }}>{detail.justification}</p>
                                 </div>
                             )}
                             {detail.expectedOutcome && (
                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#5BA88A' }}>Kết quả kỳ vọng</p>
+                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#5BA88A' }}>
+                                        {locale === 'en' ? 'Expected Outcome' : 'Kết quả kỳ vọng'}
+                                    </p>
                                     <p className="text-sm" style={{ color: '#0F172A' }}>{detail.expectedOutcome}</p>
                                 </div>
                             )}
@@ -2824,44 +2844,50 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {/* Approval Audit Trail Table */}
                         <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2] flex items-center justify-between">
-                                <span>📋 Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)</span>
-                                <span className="text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">3 Cấp Phê Duyệt</span>
+                                <span>📋 {locale === 'en' ? 'Digital Audit Trail' : 'Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)'}</span>
+                                <span className="text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {locale === 'en' ? '3 Approval Levels' : '3 Cấp Phê Duyệt'}
+                                </span>
                             </p>
                             
                             <div className="overflow-x-auto rounded-lg border border-slate-200">
                                 <table className="w-full text-xs text-left">
                                     <thead className="bg-white text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                                         <tr>
-                                            <th className="p-2.5 text-center w-10">STT</th>
-                                            <th className="p-2.5">Cấp Duyệt / Vai Trò</th>
-                                            <th className="p-2.5">Người Thực Hiện</th>
-                                            <th className="p-2.5 text-center">Trạng Thái</th>
-                                            <th className="p-2.5 text-center">Thời Gian</th>
-                                            <th className="p-2.5">Ghi Chú / Ý Kiến</th>
+                                            <th className="p-2.5 text-center w-10">#</th>
+                                            <th className="p-2.5">{locale === 'en' ? 'Level / Role' : 'Cấp Duyệt / Vai Trò'}</th>
+                                            <th className="p-2.5">{locale === 'en' ? 'Action By' : 'Người Thực Hiện'}</th>
+                                            <th className="p-2.5 text-center">{locale === 'en' ? 'Status' : 'Trạng Thái'}</th>
+                                            <th className="p-2.5 text-center">{locale === 'en' ? 'Timestamp' : 'Thời Gian'}</th>
+                                            <th className="p-2.5">{locale === 'en' ? 'Comments / Feedback' : 'Ghi Chú / Ý Kiến'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-200/60 text-slate-900">
                                         {/* Step 0: Creator */}
                                         <tr className="hover:bg-white/50">
                                             <td className="p-2.5 text-center font-mono text-gray-400">1</td>
-                                            <td className="p-2.5 font-medium text-slate-600 whitespace-nowrap">Người Lập Tờ Trình</td>
+                                            <td className="p-2.5 font-medium text-slate-600 whitespace-nowrap">
+                                                {locale === 'en' ? 'Proposal Creator' : 'Người Lập Tờ Trình'}
+                                            </td>
                                             <td className="p-2.5 font-bold text-slate-900 whitespace-nowrap">{detail.creator?.name || '—'}</td>
                                             <td className="p-2.5 text-center whitespace-nowrap">
                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                                                    ✓ Đã lập & trình
+                                                    ✓ {locale === 'en' ? 'Created & Submitted' : 'Đã lập & trình'}
                                                 </span>
                                             </td>
                                             <td className="p-2.5 text-center text-gray-400 font-mono text-[11px] whitespace-nowrap">
-                                                {detail.submittedAt ? new Date(detail.submittedAt).toLocaleString('vi-VN') : (detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '—')}
+                                                {detail.submittedAt ? new Date(detail.submittedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN') : (detail.createdAt ? new Date(detail.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN') : '—')}
                                             </td>
-                                            <td className="p-2.5 italic text-gray-400 text-[11px]">Khởi tạo tờ trình</td>
+                                            <td className="p-2.5 italic text-gray-400 text-[11px]">
+                                                {locale === 'en' ? 'Initiated proposal' : 'Khởi tạo tờ trình'}
+                                            </td>
                                         </tr>
 
                                         {/* Steps 1-3 */}
                                         {[
-                                            { level: 1, label: 'Cấp 1: Trưởng Bộ Phận' },
-                                            { level: 2, label: 'Cấp 2: Kế Toán Trưởng' },
-                                            { level: 3, label: 'Cấp 3: Tổng Giám Đốc (CEO)' },
+                                            { level: 1, label: locale === 'en' ? 'Level 1: Dept Manager' : 'Cấp 1: Trưởng Bộ Phận' },
+                                            { level: 2, label: locale === 'en' ? 'Level 2: Chief Accountant' : 'Cấp 2: Kế Toán Trưởng' },
+                                            { level: 3, label: locale === 'en' ? 'Level 3: Executive Board (CEO)' : 'Cấp 3: Tổng Giám Đốc (CEO)' },
                                         ].map((step, idx) => {
                                             const log = detail.approvalLogs.find(l => l.level === step.level)
                                             return (
@@ -2873,23 +2899,23 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                         {log ? (
                                                             log.action === 'APPROVE' ? (
                                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                                                                    ✓ Đã duyệt
+                                                                    ✓ {locale === 'en' ? 'Approved' : 'Đã duyệt'}
                                                                 </span>
                                                             ) : (
                                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
-                                                                    ✗ Từ chối
+                                                                    ✗ {locale === 'en' ? 'Rejected' : 'Từ chối'}
                                                                 </span>
                                                             )
                                                         ) : (
                                                             <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-700/40 text-gray-400 border border-gray-600/30 whitespace-nowrap">
-                                                                ⏳ Chưa duyệt
+                                                                ⏳ {locale === 'en' ? 'Pending' : 'Chưa duyệt'}
                                                             </span>
                                                         )}
                                                     </td>
                                                     <td className="p-2.5 text-center text-gray-400 font-mono text-[11px] whitespace-nowrap">
-                                                        {log ? new Date(log.createdAt).toLocaleString('vi-VN') : '—'}
+                                                        {log ? new Date(log.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
                                                     </td>
-                                                    <td className="p-2.5 italic text-gray-300 text-[11px]">
+                                                    <td className="p-2.5 italic text-gray-400 text-[11px]">
                                                         {log?.comment ? `"${log.comment}"` : '—'}
                                                     </td>
                                                 </tr>
@@ -2904,32 +2930,34 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#64748B' }}>
                                 <MessageSquare size={12} className="inline mr-1" />
-                                Thảo Luận ({detail.comments.length})
+                                {locale === 'en' ? `Discussion (${detail.comments.length})` : `Thảo Luận (${detail.comments.length})`}
                             </p>
                             <div className="space-y-2 mb-3 max-h-[200px] overflow-y-auto">
                                 {detail.comments.map(c => (
                                     <div key={c.id} className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>{c.author.name}</span>
-                                            <span className="text-xs" style={{ color: '#64748B' }}>{new Date(c.createdAt).toLocaleString('vi-VN')}</span>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>{new Date(c.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                         </div>
                                         <p className="text-sm" style={{ color: '#0F172A' }}>{c.content}</p>
                                     </div>
                                 ))}
                                 {detail.comments.length === 0 && (
-                                    <p className="text-xs text-center py-4" style={{ color: '#64748B' }}>Chưa có thảo luận</p>
+                                    <p className="text-xs text-center py-4" style={{ color: '#64748B' }}>
+                                        {locale === 'en' ? 'No comments yet' : 'Chưa có thảo luận'}
+                                    </p>
                                 )}
                             </div>
                             <div className="flex gap-2">
                                 <input value={comment} onChange={e => setComment(e.target.value)}
-                                    placeholder="Nhập bình luận..."
+                                    placeholder={locale === 'en' ? 'Type a comment...' : 'Nhập bình luận...'}
                                     className="flex-1 px-3 py-2 text-sm rounded-md"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
                                     onKeyDown={e => e.key === 'Enter' && handleComment()}
                                     onFocus={e => e.target.style.borderColor = '#0891B2'}
                                     onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                                 <button onClick={handleComment} disabled={sendingComment}
-                                    className="px-3 py-2 rounded-md transition-all"
+                                    className="px-3 py-2 rounded-md transition-all cursor-pointer"
                                     style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                     {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                 </button>
@@ -2944,28 +2972,29 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     disabled={Boolean(actionLoading)}
                                     className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs hover:opacity-95"
                                     style={{ background: 'rgba(91,168,138,0.25)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.5)' }}>
-                                    {actionLoading === detail.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Duyệt Tờ Trình
+                                    {actionLoading === detail.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} 
+                                    {locale === 'en' ? 'Approve Proposal' : 'Duyệt Tờ Trình'}
                                 </button>
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                     <button
                                         onClick={() => {
-                                            const reason = prompt('Ghi chú khi trả lại:')
+                                            const reason = prompt(locale === 'en' ? 'Notes for return:' : 'Ghi chú khi trả lại:')
                                             if (reason) onApproval('RETURN', reason)
                                         }}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
                                         style={{ background: 'rgba(196,90,42,0.1)', color: '#C45A2A', border: '1px solid rgba(196,90,42,0.2)' }}>
-                                        <RotateCcw size={14} className="inline mr-1" /> Trả Lại
+                                        <RotateCcw size={14} className="inline mr-1" /> {locale === 'en' ? 'Return' : 'Trả Lại'}
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const reason = prompt('Lý do từ chối:')
+                                            const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
                                             if (reason) onApproval('REJECT', reason)
                                         }}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
                                         style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
-                                        <XCircle size={14} className="inline mr-1" /> Từ Chối
+                                        <XCircle size={14} className="inline mr-1" /> {locale === 'en' ? 'Reject' : 'Từ Chối'}
                                     </button>
                                 </div>
                             </div>
@@ -2975,17 +3004,17 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {detail.status === 'APPROVED' && isCEO && (
                             <div className="flex gap-3">
                                 <button onClick={async () => { await updateProposalStatus(detail.id, 'IN_PROGRESS', userId); onRefresh() }}
-                                    className="flex-1 py-2.5 text-sm font-semibold rounded-md"
+                                    className="flex-1 py-2.5 text-sm font-semibold rounded-md cursor-pointer"
                                     style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                                    <ArrowRight size={14} className="inline mr-1" /> Chuyển &quot;Đang thực hiện&quot;
+                                    <ArrowRight size={14} className="inline mr-1" /> {locale === 'en' ? 'Mark In Progress' : 'Chuyển "Đang thực hiện"'}
                                 </button>
                             </div>
                         )}
                         {detail.status === 'IN_PROGRESS' && isCEO && (
                             <button onClick={async () => { await updateProposalStatus(detail.id, 'CLOSED', userId); onRefresh() }}
-                                className="w-full py-2.5 text-sm font-semibold rounded-md"
+                                className="w-full py-2.5 text-sm font-semibold rounded-md cursor-pointer"
                                 style={{ background: 'rgba(74,106,122,0.15)', color: '#64748B', border: '1px solid rgba(74,106,122,0.3)' }}>
-                                <CheckCircle2 size={14} className="inline mr-1" /> Đánh dấu Hoàn tất
+                                <CheckCircle2 size={14} className="inline mr-1" /> {locale === 'en' ? 'Mark Completed' : 'Đánh dấu Hoàn tất'}
                             </button>
                         )}
                     </div>
