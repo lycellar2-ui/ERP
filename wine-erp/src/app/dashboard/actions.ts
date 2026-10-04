@@ -1275,19 +1275,86 @@ export async function searchCustomersForDashboard(query: string = ''): Promise<D
     }))
 }
 
+export interface CustomerSpecialPriceRuleItem {
+    id: string
+    productId: string
+    skuCode: string
+    productName: string
+    wineType: string | null
+    country: string | null
+    ruleType: 'FIXED_DISCOUNT' | 'FIXED_PRICE' | 'SPECIAL_PRICE'
+    value: number
+    retailPrice: number | null
+    wholesalePrice: number | null
+    specialPrice: number
+    discountAmount: number
+    discountPct: number
+    startDate: string
+    endDate: string | null
+    isExpired: boolean
+    isExpiringSoon: boolean
+    notes: string | null
+}
+
+export interface CustomerPriceProposalItem {
+    id: string
+    proposalNo: string
+    title: string
+    status: string
+    startDate: string | null
+    endDate: string | null
+    resolvedAt: string | null
+    notes: string | null
+}
+
+export interface CustomerPricingInfo {
+    basePriceType: string
+    defaultDiscountPct: number
+    specialRules: CustomerSpecialPriceRuleItem[]
+    proposals: CustomerPriceProposalItem[]
+}
+
+export interface CustomerHealthInfo {
+    status: 'HEALTHY' | 'WARNING' | 'AT_RISK' | 'NEW'
+    statusLabel: string
+    daysSinceLastOrder: number | null
+    averageOrderCycleDays: number | null
+    delayDays: number
+}
+
+export interface CustomerOrderBreakdown {
+    commercialCount: number
+    commercialRevenue: number
+    commercialBottles: number
+    tastingCount: number
+    tastingBottles: number
+}
+
+export interface CustomerPreferenceInfo {
+    wineTypes: Array<{ type: string; label: string; bottles: number; revenue: number; pct: number }>
+    priceBrackets: Array<{ label: string; bottles: number; revenue: number; pct: number }>
+}
+
 export interface CustomerHistorySOItem {
     id: string
     soNo: string
     createdAt: string
+    orderType: string
     totalAmount: number
+    paidAmount: number
+    unpaidAmount: number
     status: string
     deliveryStatus: string
     salesRepName: string
     branchName?: string | null
     totalBottles: number
     lineCount: number
+    shippingAddress: string | null
+    receiverName: string | null
+    receiverPhone: string | null
+    deliveryNotes: string | null
     deliveryOrders: Array<{ id: string; doNo: string; status: string }>
-    arInvoices: Array<{ id: string; invoiceNo: string; status: string; amount: number }>
+    arInvoices: Array<{ id: string; invoiceNo: string; status: string; amount: number; paidAmount: number }>
     lines: Array<{
         id: string
         skuCode: string
@@ -1330,9 +1397,16 @@ export interface CustomerPurchaseHistoryResult {
         creditLimit: number
         entityType: string
         status: string
+        basePriceType: string
+        defaultDiscountPct: number
         salesRepName: string | null
         parentName: string | null
         childrenCount: number
+        purchasingName: string | null
+        purchasingPhone: string | null
+        receiverName: string | null
+        receiverPhone: string | null
+        deliveryNotes: string | null
     }
     kpis: {
         totalRevenue: number
@@ -1340,9 +1414,14 @@ export interface CustomerPurchaseHistoryResult {
         totalBottles: number
         lastOrderDate: string | null
         lastOrderNo: string | null
+        totalPaidAmount: number
         totalArDebt: number
         overdueArDebt: number
     }
+    pricing: CustomerPricingInfo
+    health: CustomerHealthInfo
+    orderBreakdown: CustomerOrderBreakdown
+    preferences: CustomerPreferenceInfo
     orders: CustomerHistorySOItem[]
     topProducts: CustomerHistoryTopProduct[]
     monthlyTrend: CustomerHistoryMonthlyTrend[]
@@ -1365,6 +1444,13 @@ export async function getCustomerPurchaseHistory(
             creditLimit: true,
             entityType: true,
             status: true,
+            basePriceType: true,
+            defaultDiscountPct: true,
+            purchasingName: true,
+            purchasingPhone: true,
+            receiverName: true,
+            receiverPhone: true,
+            deliveryNotes: true,
             salesRep: { select: { id: true, name: true } },
             parent: { select: { id: true, code: true, name: true } },
             children: { select: { id: true, code: true, name: true } },
@@ -1374,10 +1460,9 @@ export async function getCustomerPurchaseHistory(
     if (!customer) return null
 
     const targetCustomerIds = [customer.id, ...customer.children.map(c => c.id)]
-
     const now = new Date()
-    let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
 
+    let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
     if (timeRange === 'THIS_MONTH') {
         dateFilter = { gte: startOfMonth(now), lte: endOfMonth(now) }
     } else if (timeRange === 'LAST_6_MONTHS') {
@@ -1386,6 +1471,7 @@ export async function getCustomerPurchaseHistory(
         dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
     }
 
+    // 1. Fetch Orders with lines, shipping, delivery, and AR
     const orders = await prisma.salesOrder.findMany({
         where: {
             customerId: { in: targetCustomerIds },
@@ -1396,6 +1482,7 @@ export async function getCustomerPurchaseHistory(
         include: {
             customer: { select: { id: true, code: true, name: true } },
             salesRep: { select: { name: true } },
+            shippingAddress: { select: { label: true, address: true } },
             lines: {
                 include: {
                     product: {
@@ -1405,16 +1492,125 @@ export async function getCustomerPurchaseHistory(
                             productName: true,
                             wineType: true,
                             country: true,
+                            marginPrice: {
+                                select: {
+                                    retailPrice: true,
+                                    wholesalePrice: true,
+                                }
+                            }
                         }
                     }
                 }
             },
             deliveryOrders: { select: { id: true, doNo: true, status: true } },
-            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, paidAmount: true, dueDate: true } },
         }
     })
 
-    // Fetch AR debt across target customer IDs
+    // 2. Fetch Customer Price Rules (Bảng giá đặc biệt)
+    const rawPriceRules = await prisma.customerPriceRule.findMany({
+        where: {
+            customerId: { in: targetCustomerIds },
+            status: { in: ['APPROVED', 'DRAFT'] },
+        },
+        include: {
+            product: {
+                select: {
+                    id: true,
+                    skuCode: true,
+                    productName: true,
+                    wineType: true,
+                    country: true,
+                    marginPrice: {
+                        select: {
+                            retailPrice: true,
+                            wholesalePrice: true,
+                        }
+                    }
+                }
+            }
+        },
+        orderBy: [{ endDate: 'desc' }, { createdAt: 'desc' }]
+    })
+
+    const specialRules: CustomerSpecialPriceRuleItem[] = rawPriceRules.map(r => {
+        const val = Number(r.value)
+        const stdPrice = Number(r.product.marginPrice?.wholesalePrice ?? r.product.marginPrice?.retailPrice ?? 0)
+        let specialPrice = val
+        let discountAmount = 0
+        let discountPct = 0
+
+        if (r.ruleType === 'FIXED_DISCOUNT') {
+            discountPct = val
+            discountAmount = stdPrice > 0 ? (stdPrice * val) / 100 : 0
+            specialPrice = Math.max(0, stdPrice - discountAmount)
+        } else {
+            specialPrice = val
+            if (stdPrice > specialPrice) {
+                discountAmount = stdPrice - specialPrice
+                discountPct = stdPrice > 0 ? Math.round((discountAmount / stdPrice) * 100) : 0
+            }
+        }
+
+        const end = r.endDate ? new Date(r.endDate) : null
+        const isExpired = end !== null && end.getTime() < now.getTime()
+        const isExpiringSoon = end !== null && !isExpired && (end.getTime() - now.getTime()) < 15 * 86400000
+
+        return {
+            id: r.id,
+            productId: r.productId,
+            skuCode: r.product.skuCode,
+            productName: r.product.productName,
+            wineType: r.product.wineType,
+            country: r.product.country,
+            ruleType: r.ruleType,
+            value: val,
+            retailPrice: r.product.marginPrice?.retailPrice ? Number(r.product.marginPrice.retailPrice) : null,
+            wholesalePrice: r.product.marginPrice?.wholesalePrice ? Number(r.product.marginPrice.wholesalePrice) : null,
+            specialPrice,
+            discountAmount,
+            discountPct,
+            startDate: r.startDate.toISOString(),
+            endDate: r.endDate ? r.endDate.toISOString() : null,
+            isExpired,
+            isExpiringSoon,
+            notes: r.notes,
+        }
+    })
+
+    // 3. Fetch Price Adjustment Proposals (Tờ trình cơ chế giá)
+    const rawProposals = await prisma.proposal.findMany({
+        where: {
+            customerId: { in: targetCustomerIds },
+            category: 'PRICE_ADJUSTMENT',
+            status: { in: ['APPROVED', 'APPROVED_L2', 'CLOSED'] },
+        },
+        select: {
+            id: true,
+            proposalNo: true,
+            title: true,
+            status: true,
+            startDate: true,
+            endDate: true,
+            resolvedAt: true,
+            justification: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+    })
+
+    const proposals: CustomerPriceProposalItem[] = rawProposals.map(p => ({
+        id: p.id,
+        proposalNo: p.proposalNo,
+        title: p.title,
+        status: p.status,
+        startDate: p.startDate ? p.startDate.toISOString() : null,
+        endDate: p.endDate ? p.endDate.toISOString() : null,
+        resolvedAt: p.resolvedAt ? p.resolvedAt.toISOString() : null,
+        notes: p.justification,
+    }))
+
+    // 4. Fetch AR debt across target customer IDs
     const arInvoices = await prisma.aRInvoice.findMany({
         where: {
             customerId: { in: targetCustomerIds },
@@ -1440,8 +1636,17 @@ export async function getCustomerPurchaseHistory(
         }
     }
 
+    // 5. Calculate Metrics, Health, Preferences, and Monthly Trends
     let totalRevenue = 0
     let totalBottles = 0
+    let totalPaidAmount = 0
+
+    let commercialCount = 0
+    let commercialRevenue = 0
+    let commercialBottles = 0
+    let tastingCount = 0
+    let tastingBottles = 0
+
     const productMap = new Map<string, {
         productId: string
         skuCode: string
@@ -1454,11 +1659,34 @@ export async function getCustomerPurchaseHistory(
         lastPurchasedAt: Date
     }>()
 
+    const wineTypeMap = new Map<string, { bottles: number; revenue: number }>()
+    const priceBrackets = {
+        under500k: { label: 'Phổ thông (< 500k)', bottles: 0, revenue: 0 },
+        mid500k_1500k: { label: 'Trung cấp (500k – 1.5M)', bottles: 0, revenue: 0 },
+        grandCru: { label: 'Cao cấp (> 1.5M)', bottles: 0, revenue: 0 },
+    }
+
     const monthlyMap = new Map<string, { month: string; label: string; revenue: number; bottles: number; orders: number }>()
 
     for (const so of orders) {
         const amt = Number(so.totalAmount)
         totalRevenue += amt
+
+        const soPaid = so.arInvoices.reduce((s, inv) => s + Number(inv.paidAmount ?? 0), 0)
+        totalPaidAmount += soPaid
+
+        const isTasting = (so as any).orderType === 'TASTING'
+        const isSample = (so as any).orderType === 'SAMPLE'
+        const orderBottles = so.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+
+        if (isTasting || isSample) {
+            tastingCount++
+            tastingBottles += orderBottles
+        } else {
+            commercialCount++
+            commercialRevenue += amt
+            commercialBottles += orderBottles
+        }
 
         const orderDate = new Date(so.createdAt)
         const mKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`
@@ -1473,6 +1701,25 @@ export async function getCustomerPurchaseHistory(
             const lineSpend = qty * price * (1 - (Number(l.lineDiscountPct ?? 0) / 100))
             totalBottles += qty
             mCurr.bottles += qty
+
+            // Wine type breakdown
+            const wt = l.product?.wineType || 'OTHER'
+            const curWt = wineTypeMap.get(wt) ?? { bottles: 0, revenue: 0 }
+            curWt.bottles += qty
+            curWt.revenue += lineSpend
+            wineTypeMap.set(wt, curWt)
+
+            // Price tier breakdown
+            if (price < 500_000) {
+                priceBrackets.under500k.bottles += qty
+                priceBrackets.under500k.revenue += lineSpend
+            } else if (price <= 1_500_000) {
+                priceBrackets.mid500k_1500k.bottles += qty
+                priceBrackets.mid500k_1500k.revenue += lineSpend
+            } else {
+                priceBrackets.grandCru.bottles += qty
+                priceBrackets.grandCru.revenue += lineSpend
+            }
 
             if (l.product) {
                 const pid = l.product.id
@@ -1502,6 +1749,66 @@ export async function getCustomerPurchaseHistory(
         monthlyMap.set(mKey, mCurr)
     }
 
+    // Health / Buying cycle calculation
+    let daysSinceLastOrder: number | null = null
+    let averageOrderCycleDays: number | null = null
+    let healthStatus: 'HEALTHY' | 'WARNING' | 'AT_RISK' | 'NEW' = 'NEW'
+    let healthLabel = 'Khách mới / Chưa có lịch sử'
+    let delayDays = 0
+
+    if (orders.length > 0) {
+        const latestDate = new Date(orders[0].createdAt)
+        daysSinceLastOrder = Math.max(0, Math.floor((now.getTime() - latestDate.getTime()) / 86400000))
+
+        if (orders.length >= 2) {
+            const timestamps = orders.map(o => new Date(o.createdAt).getTime()).reverse()
+            let totalDiffDays = 0
+            for (let i = 1; i < timestamps.length; i++) {
+                totalDiffDays += (timestamps[i] - timestamps[i - 1]) / 86400000
+            }
+            averageOrderCycleDays = Math.max(1, Math.round(totalDiffDays / (timestamps.length - 1)))
+            delayDays = Math.max(0, daysSinceLastOrder - averageOrderCycleDays)
+
+            if (daysSinceLastOrder <= averageOrderCycleDays * 1.3) {
+                healthStatus = 'HEALTHY'
+                healthLabel = 'Đang nhập hàng đều đặn'
+            } else if (daysSinceLastOrder <= averageOrderCycleDays * 2.2) {
+                healthStatus = 'WARNING'
+                healthLabel = `Chậm lên đơn (${delayDays} ngày quá chu kỳ)`
+            } else {
+                healthStatus = 'AT_RISK'
+                healthLabel = `Nguy cơ rớt khách (${delayDays} ngày quá chu kỳ)`
+            }
+        } else {
+            healthStatus = 'HEALTHY'
+            healthLabel = 'Khách mới lên 1 đơn gần đây'
+        }
+    }
+
+    const WINE_TYPE_LABELS: Record<string, string> = {
+        RED: 'Vang Đỏ',
+        WHITE: 'Vang Trắng',
+        SPARKLING: 'Vang Nổ / Champagne',
+        ROSE: 'Vang Hồng',
+        DESSERT: 'Vang Ngọt',
+        FORTIFIED: 'Vang Cường Hoá',
+        OTHER: 'Khác',
+    }
+
+    const wineTypePreferences = Array.from(wineTypeMap.entries()).map(([k, v]) => ({
+        type: k,
+        label: WINE_TYPE_LABELS[k] ?? k,
+        bottles: v.bottles,
+        revenue: v.revenue,
+        pct: totalBottles > 0 ? Math.round((v.bottles / totalBottles) * 100) : 0,
+    })).sort((a, b) => b.bottles - a.bottles)
+
+    const priceTierPreferences = [
+        { ...priceBrackets.under500k, pct: totalBottles > 0 ? Math.round((priceBrackets.under500k.bottles / totalBottles) * 100) : 0 },
+        { ...priceBrackets.mid500k_1500k, pct: totalBottles > 0 ? Math.round((priceBrackets.mid500k_1500k.bottles / totalBottles) * 100) : 0 },
+        { ...priceBrackets.grandCru, pct: totalBottles > 0 ? Math.round((priceBrackets.grandCru.bottles / totalBottles) * 100) : 0 },
+    ]
+
     const topProducts = Array.from(productMap.values())
         .sort((a, b) => b.totalQty - a.totalQty)
 
@@ -1518,19 +1825,30 @@ export async function getCustomerPurchaseHistory(
             deliveryStatus = 'PREPARING'
         }
 
+        const soTotal = Number(o.totalAmount)
+        const soPaid = o.arInvoices.reduce((s, inv) => s + Number(inv.paidAmount ?? 0), 0)
+        const soUnpaid = Math.max(0, soTotal - soPaid)
+
         return {
             id: o.id,
             soNo: o.soNo,
             createdAt: o.createdAt.toISOString(),
-            totalAmount: Number(o.totalAmount),
+            orderType: (o as any).orderType || 'STANDARD',
+            totalAmount: soTotal,
+            paidAmount: soPaid,
+            unpaidAmount: soUnpaid,
             status: o.status,
             deliveryStatus,
             salesRepName: o.salesRep?.name ?? '—',
             branchName: o.customer.id !== customer.id ? `${o.customer.code} - ${o.customer.name}` : null,
             totalBottles: o.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
             lineCount: o.lines.length,
+            shippingAddress: o.shippingAddress?.address ? `${o.shippingAddress.label ? `[${o.shippingAddress.label}] ` : ''}${o.shippingAddress.address}` : null,
+            receiverName: (o as any).receiverName || customer.receiverName || null,
+            receiverPhone: (o as any).receiverPhone || customer.receiverPhone || null,
+            deliveryNotes: (o as any).deliveryNotes || customer.deliveryNotes || null,
             deliveryOrders: o.deliveryOrders.map(d => ({ id: d.id, doNo: d.doNo, status: d.status })),
-            arInvoices: o.arInvoices.map(i => ({ id: i.id, invoiceNo: i.invoiceNo, status: i.status, amount: Number(i.amount) })),
+            arInvoices: o.arInvoices.map(i => ({ id: i.id, invoiceNo: i.invoiceNo, status: i.status, amount: Number(i.amount), paidAmount: Number(i.paidAmount ?? 0) })),
             lines: o.lines.map(l => {
                 const qty = Number(l.qtyOrdered)
                 const price = Number(l.unitPrice)
@@ -1559,9 +1877,16 @@ export async function getCustomerPurchaseHistory(
             creditLimit: Number(customer.creditLimit),
             entityType: customer.entityType,
             status: customer.status,
+            basePriceType: customer.basePriceType ?? 'BY_CHANNEL',
+            defaultDiscountPct: Number(customer.defaultDiscountPct ?? 0),
             salesRepName: customer.salesRep?.name ?? null,
             parentName: customer.parent ? `${customer.parent.code} - ${customer.parent.name}` : null,
             childrenCount: customer.children.length,
+            purchasingName: customer.purchasingName,
+            purchasingPhone: customer.purchasingPhone,
+            receiverName: customer.receiverName,
+            receiverPhone: customer.receiverPhone,
+            deliveryNotes: customer.deliveryNotes,
         },
         kpis: {
             totalRevenue,
@@ -1569,8 +1894,33 @@ export async function getCustomerPurchaseHistory(
             totalBottles,
             lastOrderDate: orders[0]?.createdAt.toISOString() ?? null,
             lastOrderNo: orders[0]?.soNo ?? null,
+            totalPaidAmount,
             totalArDebt,
             overdueArDebt,
+        },
+        pricing: {
+            basePriceType: customer.basePriceType ?? 'BY_CHANNEL',
+            defaultDiscountPct: Number(customer.defaultDiscountPct ?? 0),
+            specialRules,
+            proposals,
+        },
+        health: {
+            status: healthStatus,
+            statusLabel: healthLabel,
+            daysSinceLastOrder,
+            averageOrderCycleDays,
+            delayDays,
+        },
+        orderBreakdown: {
+            commercialCount,
+            commercialRevenue,
+            commercialBottles,
+            tastingCount,
+            tastingBottles,
+        },
+        preferences: {
+            wineTypes: wineTypePreferences,
+            priceBrackets: priceTierPreferences,
         },
         orders: formattedOrders,
         topProducts: topProducts.map(p => ({

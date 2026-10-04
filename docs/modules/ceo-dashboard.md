@@ -421,4 +421,41 @@ Tích hợp trực tiếp widget tra cứu và phân tích lịch sử nhập h�
 - `getCustomerPurchaseHistory(customerId: string, timeRange?: 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH')`: Tính toán toàn bộ KPIs, gom nhóm SKU, tổng hợp công nợ AR và biểu đồ xu hướng theo tháng.
 - `getTopCustomers(limit, options)`: Bổ sung `id` và `code` để liên kết trực tiếp với widget Customer 360.
 
+---
+
+## Tính Năng v5 — "Tab Riêng Phân Tích Khách Hàng, Cơ Chế Giá & Bảng Giá Đặc Biệt" (04/10/2026)
+
+Nâng cấp Dashboard thành hệ thống 2 Tab độc lập, chuyên sâu theo phản hồi thực tế của ban điều hành:
+`[📊 Tổng Quan Điều Hành]` (Executive Overview) vs `[👥 Hồ Sơ & Cơ Chế Giá Khách Hàng (Customer 360°)]` (`tab=overview` / `tab=customers`).
+
+### 1. Kiến Trúc 2 Tab Độc Lập
+- **Tab 1: Tổng Quan Điều Hành**: Giữ nguyên vẹn nhịp đập tài chính P&L, dòng tiền, bảng AR Aging, container đang về, biểu đồ doanh thu theo ngày và Action Hub chờ CEO duyệt. Loại bỏ widget chèn giữa để màn hình overview luôn sắc nét, gọn gàng và tải tức thì.
+- **Tab 2: Phân Tích & Cơ Chế Giá Khách Hàng**: Không gian toàn màn hình dành riêng cho việc phân tích chuyên sâu từng đối tác khách hàng (nhà hàng, đại lý, khách sạn 5 sao).
+
+### 2. Thông Tin Cơ Chế Giá & Bảng Giá Đặc Biệt (Special Pricing & Agreements)
+- **Bảng giá cơ sở & Chiết khấu mặc định**: Hiển thị chính sách giá áp dụng (`basePriceType`: BY_CHANNEL, WHOLESALE, RETAIL, HORECA) và % chiết khấu kho cố định (`defaultDiscountPct`).
+- **Tờ trình cơ chế giá đã phê duyệt**: Tự động liệt kê các tờ trình điều chỉnh giá (`category: PRICE_ADJUSTMENT`, trạng thái `APPROVED` / `APPROVED_L2` / `CLOSED`) có liên quan đến khách hàng, kèm số tờ trình, tiêu đề, thời hạn hiệu lực và ghi chú.
+- **Bảng giá đặc biệt theo từng SKU (`CustomerPriceRule`)**:
+  - Liệt kê chi tiết giá bán riêng từng dòng rượu: Giá chuẩn niêm yết (Wholesale/Retail) vs Giá đặc biệt được duyệt.
+  - Mức giảm / tiết kiệm (% chiết khấu hoặc số tiền giảm cụ thể/chai).
+  - Thời hạn áp dụng (ngày bắt đầu → ngày kết thúc).
+  - Trạng thái hiệu lực: Đang hiệu lực, Sắp hết hạn (cảnh báo trước 15 ngày), Đã hết hạn.
+
+### 3. Cảnh Báo Chu Kỳ Mua Hàng & Sức Khỏe Khách Hàng (Buying Health)
+- **Đo lường tần suất đặt hàng**: Tính toán số ngày kể từ đơn gần nhất (`daysSinceLastOrder`) và chu kỳ trung bình giữa các lần nhập hàng (`averageOrderCycleDays`).
+- **Phân loại trạng thái**:
+  - `HEALTHY`: Đặt hàng đều đặn đúng nhịp.
+  - `WARNING`: Chậm đơn (vượt chu kỳ bình thường từ 1.3 đến 2.2 lần).
+  - `AT_RISK`: Nguy cơ rớt khách (quá chu kỳ trên 2.2 lần) kèm số ngày trễ cụ thể để Sale phụ trách lập tức liên hệ kiểm tra menu, tồn kho của đối tác.
+
+### 4. Bóc Tách Đơn Thương Mại vs Đơn Tasting / Hàng Mẫu
+- Tách bạch rõ ràng giữa đơn bán thương mại (`STANDARD`) và đơn thử nếm/mẫu (`TASTING`, `SAMPLE`) để không làm sai lệch số liệu doanh thu thực tế và giá trị đơn hàng trung bình.
+- Thống kê tỷ lệ tiền đã thu vs công nợ AR thực tế (kèm công nợ quá hạn).
+
+### 5. Gu Rượu & Phân Khúc Giá Ưa Chuộng
+- **Tỷ trọng loại vang**: Thống kê % sản lượng và doanh thu theo Vang Đỏ (Red), Vang Trắng (White), Vang Nổ/Champagne (Sparkling), Vang Hồng (Rose),...
+- **Phân khúc giá**: Thống kê thói quen nhập hàng theo 3 tầm giá: Phổ thông (< 500k), Trung cấp (500k – 1.5M), và Cao cấp (> 1.5M).
+- **Lịch sử đơn hàng có địa chỉ giao & người nhận**: Hiển thị rõ điểm giao hàng tại chi nhánh, người nhận hàng tại điểm, số điện thoại, ghi chú giao hàng và trạng thái hóa đơn VAT.
+
+
 

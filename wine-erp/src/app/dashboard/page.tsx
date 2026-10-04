@@ -10,7 +10,7 @@ import {
 } from './actions'
 import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
 import { DailyRevenueChart } from './DailyRevenueChart'
-import { CustomerOrderHistoryWidget } from './CustomerOrderHistoryWidget'
+import { CustomerAnalyticsDashboard } from './CustomerAnalyticsDashboard'
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { formatDate } from '@/lib/utils'
 import { getComplianceWarnings } from './contracts/reg-doc-actions'
@@ -95,6 +95,8 @@ interface PageProps {
         entity?: string
         from?: string
         to?: string
+        tab?: string
+        customerId?: string
     }>
 }
 
@@ -103,6 +105,7 @@ export default async function DashboardPage(props: PageProps) {
     const resolvedParams = props.searchParams ? await props.searchParams : {}
     const preset = (resolvedParams.preset as PresetKey) ?? 'THIS_MONTH'
     const entity = resolvedParams.entity ?? 'ALL'
+    const currentTab = resolvedParams.tab === 'customers' ? 'customers' : 'overview'
 
     const now = new Date()
     let from: Date
@@ -192,7 +195,7 @@ export default async function DashboardPage(props: PageProps) {
         has('pending_approvals') ? getPendingApprovalDetails() : [],
         has('cost_waterfall') ? getCostWaterfall() : [],
         has('revenue_yoy') ? getRevenueYoY() : null,
-        has('pl_summary') ? getTopCustomers(5, filterOptions) : [],
+        getTopCustomers(8, filterOptions),
         has('pl_summary') ? getTopProducts(5, filterOptions) : [],
         has('revenue_chart') ? getRevenueByChannel(filterOptions) : null,
         has('my_sales') && user ? getMySales(user.id) : null,
@@ -249,18 +252,56 @@ export default async function DashboardPage(props: PageProps) {
                 </form>
             </div>
 
-            {/* ═══ FILTER BAR (NEW) ═══ */}
-            <DashboardFilterBar
-                currentPreset={preset}
-                currentEntity={entity}
-                currentFrom={resolvedParams.from}
-                currentTo={resolvedParams.to}
-                legalEntities={legalEntities}
-                displayRangeText={displayRangeText}
-            />
+            {/* ═══ TAB NAVIGATION ═══ */}
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
+                <Link
+                    href={`/dashboard?tab=overview${resolvedParams.preset ? `&preset=${resolvedParams.preset}` : ''}${resolvedParams.entity ? `&entity=${resolvedParams.entity}` : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                        currentTab === 'overview'
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                >
+                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-cyan-400' : 'text-slate-400'} />
+                    <span>Tổng Quan Điều Hành</span>
+                </Link>
+                <Link
+                    href={`/dashboard?tab=customers${resolvedParams.preset ? `&preset=${resolvedParams.preset}` : ''}${resolvedParams.entity ? `&entity=${resolvedParams.entity}` : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                        currentTab === 'customers'
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                >
+                    <Users size={15} className={currentTab === 'customers' ? 'text-amber-400' : 'text-slate-400'} />
+                    <span>Hồ Sơ & Cơ Chế Giá Khách Hàng (Customer 360°)</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
+                        currentTab === 'customers' ? 'bg-amber-400/20 text-amber-300' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                        Bảng giá & Chiết khấu
+                    </span>
+                </Link>
+            </div>
 
-            {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {currentTab === 'customers' ? (
+                <CustomerAnalyticsDashboard
+                    topCustomers={topCustomers}
+                    initialCustomerId={resolvedParams.customerId}
+                />
+            ) : (
+                <>
+                    {/* ═══ FILTER BAR (NEW) ═══ */}
+                    <DashboardFilterBar
+                        currentPreset={preset}
+                        currentEntity={entity}
+                        currentFrom={resolvedParams.from}
+                        currentTo={resolvedParams.to}
+                        legalEntities={legalEntities}
+                        displayRangeText={displayRangeText}
+                    />
+
+                    {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <KpiCard label={revenueKpiLabel} value={formatFriendlyVND(primaryRevenue)}
                     sub={revenueSource}
                     trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% vs Kỳ trước` : undefined}
@@ -444,9 +485,6 @@ export default async function DashboardPage(props: PageProps) {
                     )}
                 </div>
             </div>
-
-            {/* ═══ CUSTOMER 360° PURCHASE HISTORY ═══ */}
-            <CustomerOrderHistoryWidget topCustomers={topCustomers} />
 
             {/* ═══ LAYER 4 — CEO ACTION HUB ═══ */}
             <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -763,6 +801,8 @@ export default async function DashboardPage(props: PageProps) {
                         ))}
                     </div>
                 </div>
+            )}
+                </>
             )}
         </div>
     )
