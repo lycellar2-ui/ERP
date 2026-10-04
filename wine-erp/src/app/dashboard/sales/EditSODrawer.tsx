@@ -10,6 +10,8 @@ import {
     getLegalEntities, LegalEntityRow, getCustomerProductCodes,
 } from './actions'
 import { formatVND, getLocalDateString } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { SALES_I18N, getSOChannelLabel, getPriceBadgeLabelByLocale } from './i18n'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
@@ -35,23 +37,6 @@ const getPriceBadgeStyle = (source: string) => {
             return 'bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700/50'
         default:
             return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-    }
-}
-
-const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
-    switch (resolved.source) {
-        case 'SPECIAL_PRICE':
-            return 'Giá Đặc Biệt (Campaign)'
-        case 'FIXED_PRICE':
-            return 'Giá Cố Định Riêng'
-        case 'FIXED_DISCOUNT':
-            return `Chiết Khấu Cố Định (-${resolved.discountPct}%)`
-        case 'CHANNEL_BASE':
-            return `Giá Kênh ${defaultChannel}`
-        case 'RETAIL_FALLBACK':
-            return 'Giá Bán Lẻ Mặc Định'
-        default:
-            return 'Giá Mặc Định'
     }
 }
 
@@ -97,6 +82,9 @@ interface EditSODrawerProps {
 }
 
 export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODrawerProps) {
+    const { locale, isEn, formatCurrency } = useAppLocale()
+    const t = SALES_I18N[locale].editDrawer
+
     // TanStack Query to fetch and cache reference data (shared cache with CreateSO)
     const { data: refData } = useQuery({
         queryKey: ['so_reference_data'],
@@ -214,7 +202,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         setLoadingSO(true)
         const { detail } = await getSalesOrderDetailWithMargin(soId)
         if (!detail) {
-            toast.error('Không tìm thấy SO')
+            toast.error(isEn ? 'Sales Order not found' : 'Không tìm thấy SO')
             onClose()
             return
         }
@@ -253,7 +241,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         })))
 
         setLoadingSO(false)
-    }, [soId, onClose])
+    }, [soId, onClose, isEn])
 
     useEffect(() => {
         if (open) {
@@ -375,7 +363,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     }
 
     const addLine = (productId: string) => {
-        if (lines.find(l => l.productId === productId)) return toast.error('Sản phẩm đã có trong đơn')
+        if (lines.find(l => l.productId === productId)) return toast.error(isEn ? 'Product already in order' : 'Sản phẩm đã có trong đơn')
         const p = products.find(p => p.id === productId)
         if (!p) return
         const price = priceMap[productId]?.price ?? 0
@@ -466,9 +454,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     const creditWarning = selectedCustomer && (finalTotal > creditAvailable || isCreditHold)
 
     const handleSave = async () => {
-        if (!customerId) return toast.error('Vui lòng chọn khách hàng')
-        if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
-        if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
+        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
+        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân xuất tuyến')
+        if (lines.length === 0) return toast.error(isEn ? 'Add at least 1 product' : 'Thêm ít nhất 1 sản phẩm')
 
         setSaving(true)
         const promise = updateSalesOrder({
@@ -491,15 +479,15 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 customerItemCode: l.customerItemCode || customerCodesMap[l.productId] || undefined,
             })),
         } as SOUpdateInput).then(res => {
-            if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
+            if (!res.success) throw new Error(res.error ?? (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
             return res
         })
 
         toast.promise(promise, {
-            loading: 'Đang cập nhật...',
+            loading: isEn ? 'Updating...' : 'Đang cập nhật...',
             success: () => {
                 setTimeout(() => { onSaved() }, 500)
-                return `Đã cập nhật thành công ${soNo}`
+                return isEn ? `Successfully updated ${soNo}` : `Đã cập nhật thành công ${soNo}`
             },
             error: (e: Error) => e.message,
             finally: () => setSaving(false),
@@ -524,18 +512,18 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-base font-bold text-slate-900 dark:text-white">Sửa Đơn Bán Hàng</h2>
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white">{t.title}</h2>
                                 <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700/50">
                                     {soNo}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Chỉnh sửa thông tin đơn hàng ở trạng thái DRAFT</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.subtitle}</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose} 
                         className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                        title="Đóng"
+                        title={isEn ? 'Close' : 'Đóng'}
                     >
                         <X size={18} />
                     </button>
@@ -546,7 +534,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                     {(loadingData || loadingSO) ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-3">
                             <Loader2 size={32} className="animate-spin text-amber-600 dark:text-amber-400" />
-                            <p className="text-xs text-slate-500 font-medium">Đang tải dữ liệu đơn hàng...</p>
+                            <p className="text-xs text-slate-500 font-medium">{t.loadingData}</p>
                         </div>
                     ) : (
                         <>
@@ -555,7 +543,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 {/* Customer Selection */}
                                 <div className="md:col-span-5">
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                        Khách Hàng *
+                                        {t.customerLabel}
                                     </label>
                                     <div className="relative">
                                         <div className={`relative flex items-center w-full rounded-lg border-2 transition-all bg-white ${customerDropdownOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'border-slate-200 hover:border-slate-300'}`}>
@@ -564,7 +552,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             </div>
                                             <input
                                                 type="text"
-                                                placeholder="Tìm theo mã hoặc tên khách hàng..."
+                                                placeholder={t.searchCustomerPlaceholder}
                                                 value={customerSearchInput}
                                                 onFocus={e => {
                                                     setCustomerDropdownOpen(true)
@@ -597,7 +585,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                         setCustomerDropdownOpen(true)
                                                     }}
                                                     className="absolute right-2 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
-                                                    title="Xóa khách hàng"
+                                                    title={t.clearCustomer}
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -613,7 +601,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white border border-slate-200 shadow-xl py-1 divide-y divide-slate-100">
                                                 {filteredCustomers.length === 0 ? (
                                                     <div className="px-4 py-3 text-xs text-slate-400 text-center">
-                                                        Không tìm thấy khách hàng phù hợp
+                                                        {t.noCustomerFound}
                                                     </div>
                                                 ) : (
                                                     filteredCustomers.map(c => {
@@ -627,7 +615,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 onMouseDown={(e) => {
                                                                     e.preventDefault()
                                                                     if (isDisabled) {
-                                                                        toast.error('Công ty này chỉ dùng quản lý công nợ. Vui lòng chọn Chi nhánh/Nhà hàng con!')
+                                                                        toast.error(t.companyDebtOnlyError)
                                                                         return
                                                                     }
                                                                     handleCustomerChange(c.id)
@@ -654,7 +642,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                         <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                                                             {isCompany && (
                                                                                 <span className="flex items-center gap-1 text-sky-600 font-medium">
-                                                                                    <Building2 size={11} /> {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ'}
+                                                                                    <Building2 size={11} /> {c.allowDirectSO ? t.company : t.parentCompany}
                                                                                 </span>
                                                                             )}
                                                                             {c.brandGroup && (
@@ -662,7 +650,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                                     ✨ {c.brandGroup}
                                                                                 </span>
                                                                             )}
-                                                                            {c.channel && <span>Kênh: {c.channel}</span>}
+                                                                            {c.channel && <span>{t.channelLabel}: {getSOChannelLabel(c.channel, locale, true)}</span>}
                                                                         </div>
                                                                     </div>
                                                                     {isSelected && (
@@ -683,15 +671,15 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 {/* Shipping Address Selection */}
                                 <div className="md:col-span-4">
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                        Địa Chỉ Giao Hàng *
+                                        {t.shippingAddressLabel}
                                     </label>
                                     {!selectedCustomer ? (
                                         <div className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-200 text-slate-400 bg-slate-100/60 dark:bg-slate-900/40">
-                                            Chưa chọn khách hàng
+                                            {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
                                         <div className="px-3 py-2 text-xs bg-rose-50 border border-rose-200 text-rose-600 rounded-lg">
-                                            ⚠️ Khách hàng chưa có địa chỉ
+                                            {t.noShippingAddress}
                                         </div>
                                     ) : (
                                         <select
@@ -699,7 +687,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             onChange={e => setShippingAddressId(e.target.value)}
                                             className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                         >
-                                            <option value="">-- Chọn địa chỉ giao hàng --</option>
+                                            <option value="">{t.selectAddressPlaceholder}</option>
                                             {selectedCustomer.addresses.map(addr => (
                                                 <option key={addr.id} value={addr.id}>
                                                     {addr.label}: {addr.address}
@@ -712,7 +700,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 {/* Order Date */}
                                 <div className="md:col-span-3">
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                        📅 Ngày Đơn Hàng *
+                                        📅 {t.orderDateLabel}
                                     </label>
                                     <input
                                         type="date"
@@ -738,7 +726,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         </div>
                                         {selectedAddr.isDefault && (
                                             <span className="px-2 py-0.5 text-[10px] font-bold bg-teal-200 text-teal-900 rounded-full border border-teal-300">
-                                                Mặc định
+                                                {t.defaultAddressBadge}
                                             </span>
                                         )}
                                     </div>
@@ -750,16 +738,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-xs text-xs">
                                     <div className="flex items-center gap-4 flex-wrap">
                                         <span className={`font-bold flex items-center gap-1.5 ${isCreditHold ? 'text-rose-600' : creditWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                            {isCreditHold ? '⚠️ Bị giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng hợp lệ'}
+                                            {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
                                         </span>
                                         <span className="text-slate-500 dark:text-slate-400">
-                                            Hạn mức: <strong className="font-mono text-slate-800 dark:text-slate-200">{formatVND(effectiveCreditLimit)}</strong>
+                                            {t.creditLimit} <strong className="font-mono text-slate-800 dark:text-slate-200">{formatCurrency(effectiveCreditLimit)}</strong>
                                         </span>
                                         <span className="text-slate-500 dark:text-slate-400">
-                                            Dư nợ: <strong className="font-mono text-amber-700 dark:text-amber-300">{formatVND(arBalance)}</strong>
+                                            {t.arBalance} <strong className="font-mono text-amber-700 dark:text-amber-300">{formatCurrency(arBalance)}</strong>
                                         </span>
                                         <span className="text-slate-500 dark:text-slate-400">
-                                            Khả dụng: <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatVND(Math.max(0, creditAvailable))}</strong>
+                                            {t.creditAvailable} <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(Math.max(0, creditAvailable))}</strong>
                                         </span>
                                     </div>
                                 </div>
@@ -769,40 +757,40 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                 <div>
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                        Kênh Bán
+                                        {t.channelLabel}
                                     </label>
                                     <select
                                         value={channel}
                                         onChange={e => handleChannelChange(e.target.value as SalesChannel)}
                                         className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
-                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{getSOChannelLabel(c.value, locale)}</option>)}
                                     </select>
                                 </div>
 
                                 <div>
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                        Payment Term (Hạn TT)
+                                        {t.paymentTermLabel}
                                     </label>
                                     <select
                                         value={paymentTerm}
                                         onChange={e => setPaymentTerm(e.target.value)}
                                         className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
-                                        {['COD', 'NET7', 'NET14', 'NET15', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
+                                        {['COD', 'NET7', 'NET14', 'NET15', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(term => <option key={term} value={term}>{term}</option>)}
                                     </select>
                                 </div>
 
                                 <div>
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                        Pháp Nhân Xuất Tuyến *
+                                        {t.entityLabel}
                                     </label>
                                     <select
                                         value={legalEntityId}
                                         onChange={e => setLegalEntityId(e.target.value)}
                                         className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
-                                        <option value="">— Chọn Pháp Nhân —</option>
+                                        <option value="">{t.selectEntityPlaceholder}</option>
                                         {entities.map(e => <option key={e.id} value={e.id}>{e.name} ({e.code})</option>)}
                                     </select>
                                 </div>
@@ -811,12 +799,12 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             {/* Diễn giải / Ghi chú đơn hàng */}
                             <div>
                                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                                    Diễn Giải / Ghi Chú Đơn Hàng
+                                    {t.notesLabel}
                                 </label>
                                 <DebouncedTextarea
                                     value={notes}
                                     onChange={setNotes}
-                                    placeholder="Nhập diễn giải/ghi chú giao hàng hoặc hóa đơn..."
+                                    placeholder={t.notesPlaceholder}
                                     rows={2}
                                     className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                 />
@@ -828,7 +816,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     <div className="flex items-center gap-2">
                                         <ShoppingBag size={16} className="text-amber-600" />
                                         <label className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                                            DANH SÁCH SẢN PHẨM * ({lines.length})
+                                            {t.itemsTitle(lines.length)}
                                         </label>
                                     </div>
 
@@ -837,7 +825,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         <div className="relative flex items-center">
                                             <input
                                                 type="text"
-                                                placeholder="Gõ mã SKU hoặc tên để thêm sản phẩm..."
+                                                placeholder={t.addProductPlaceholder}
                                                 value={addProductSearchQuery}
                                                 onFocus={() => setIsAddDropdownOpen(true)}
                                                 onBlur={() => {
@@ -862,7 +850,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white dark:bg-white border-slate-200 dark:border-slate-200 divide-y divide-slate-100 dark:divide-[#E2E8F0]">
                                                 {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
                                                     <div className="px-3 py-2.5 text-xs text-slate-400 text-center">
-                                                        Không tìm thấy hoặc sản phẩm đã có trong đơn
+                                                        {t.noProductFoundOrAdded}
                                                     </div>
                                                 ) : (
                                                     getFilteredAddProducts(addProductSearchQuery).map(p => (
@@ -885,7 +873,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{p.productName}</span>
                                                             </div>
                                                             <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 font-medium">
-                                                                (Tồn: {getProductStock(p, legalEntityId)})
+                                                                ({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})
                                                             </span>
                                                         </div>
                                                     ))
@@ -898,24 +886,24 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 {lines.length === 0 ? (
                                     <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-200 bg-white dark:bg-[#121E27]">
                                         <ShoppingBag size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Đơn hàng chưa có sản phẩm nào</p>
-                                        <p className="text-[11px] text-slate-400 mt-0.5">Tìm kiếm sản phẩm ở ô phía trên để thêm vào đơn</p>
+                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t.emptyItemsTitle}</p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">{t.emptyItemsSubtitle}</p>
                                     </div>
                                 ) : (
                                     <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-200 bg-white dark:bg-[#121E27] shadow-xs">
                                         <table className="w-full text-xs text-left border-collapse min-w-[650px]">
                                             <thead>
                                                 <tr className="bg-slate-100/90 dark:bg-[#162531] text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-200 font-bold">
-                                                    <th className="px-3.5 py-3">Sản Phẩm</th>
+                                                    <th className="px-3.5 py-3">{t.thProduct}</th>
                                                     {hasCustomerCodes && (
-                                                        <th className="px-3 py-3 w-24 text-center text-amber-600 dark:text-amber-400 font-bold">Mã Khách</th>
+                                                        <th className="px-3 py-3 w-24 text-center text-amber-600 dark:text-amber-400 font-bold">{t.thCustomerCode}</th>
                                                     )}
-                                                    <th className="px-3.5 py-3 w-20 text-center">Tồn Kho {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
-                                                    <th className="px-3 py-3 w-20 text-center">SL</th>
-                                                    <th className="px-3 py-3 w-28 text-right">Đơn Giá</th>
-                                                    <th className="px-3 py-3 w-20 text-center">CK %</th>
-                                                    <th className="px-3 py-3 w-20 text-center">VAT %</th>
-                                                    <th className="px-3 py-3 w-28 text-right">Thành Tiền</th>
+                                                    <th className="px-3.5 py-3 w-20 text-center">{t.thStock} {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
+                                                    <th className="px-3.5 py-3 w-20 text-center">{t.thQty}</th>
+                                                    <th className="px-3.5 py-3 w-28 text-right">{t.thUnitPrice}</th>
+                                                    <th className="px-3.5 py-3 w-20 text-center">{t.thDiscount}</th>
+                                                    <th className="px-3.5 py-3 w-20 text-center">{t.thVat}</th>
+                                                    <th className="px-3.5 py-3 w-28 text-right">{t.thTotal}</th>
                                                     <th className="px-2 py-3 w-10 text-center"></th>
                                                 </tr>
                                             </thead>
@@ -934,7 +922,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 {hasPriceBadge && (
                                                                     <div className="mt-1">
                                                                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getPriceBadgeStyle(priceSource)}`}>
-                                                                            <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
+                                                                            <Tag size={9} /> {getPriceBadgeLabelByLocale({ source: priceSource }, channel, locale)}
                                                                         </span>
                                                                     </div>
                                                                 )}
@@ -961,7 +949,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 />
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                                {formatVND(l.unitPrice)}
+                                                                {formatCurrency(l.unitPrice)}
                                                             </td>
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <input
@@ -985,14 +973,14 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 </select>
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right font-mono font-bold text-teal-700 dark:text-teal-400">
-                                                                {formatVND(lineTotal)}
+                                                                {formatCurrency(lineTotal)}
                                                             </td>
                                                             <td className="px-2 py-2.5 text-center">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => removeLine(idx)}
                                                                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
-                                                                    title="Xóa dòng"
+                                                                    title={t.deleteLine}
                                                                 >
                                                                     <Trash2 size={15} />
                                                                 </button>
@@ -1010,7 +998,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             <div className="p-4 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-2">
                                     <Tag size={15} className="text-amber-600" />
-                                    <span className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">CK Đơn Hàng:</span>
+                                    <span className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">{t.orderDiscountLabel}</span>
                                     <input
                                         type="number"
                                         min={0}
@@ -1025,24 +1013,29 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 <div className="text-right space-y-1">
                                     {isVatInclusive && (
                                         <div className="mb-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                            🏷️ Kênh {channel}: Giá bán lẻ niêm yết <strong>ĐÃ BAO GỒM VAT</strong>
+                                            {t.vatInclusiveNotice(channel)}
                                         </div>
                                     )}
                                     <div className="flex justify-end gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                                        <span>{isVatInclusive ? 'Tiền trước thuế (bóc tách):' : 'Trước thuế:'} <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(netSubtotal)}</strong></span>
+                                        <span>{isVatInclusive ? t.preTaxExtracted : t.preTaxNormal} <strong className="font-mono text-slate-700 dark:text-slate-200">{formatCurrency(netSubtotal)}</strong></span>
                                         <span>•</span>
                                         {vatBreakdown.length > 1 ? (
                                             <span>
-                                                VAT {isVatInclusive ? '(bóc tách):' : ':'} {vatBreakdown.map(v => `${v.rate}%: ${formatVND(Math.round(v.amount))}`).join(' | ')} (Tổng: {formatVND(vatAmount)})
+                                                VAT {isVatInclusive ? (isEn ? '(extracted):' : '(bóc tách):') : ':'}{' '}
+                                                {vatBreakdown.map(v => `${v.rate}%: ${formatCurrency(Math.round(v.amount))}`).join(' | ')}{' '}
+                                                ({isEn ? 'Total' : 'Tổng'}: {formatCurrency(vatAmount)})
                                             </span>
                                         ) : (
-                                            <span>VAT ({vatBreakdown[0]?.rate ?? 10}%){isVatInclusive ? ' (bóc tách)' : ''}: <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(vatAmount)}</strong></span>
+                                            <span>
+                                                VAT ({vatBreakdown[0]?.rate ?? 10}%){isVatInclusive ? (isEn ? ' (extracted)' : ' (bóc tách)') : ''}:{' '}
+                                                <strong className="font-mono text-slate-700 dark:text-slate-200">{formatCurrency(vatAmount)}</strong>
+                                            </span>
                                         )}
                                     </div>
                                     <div className="flex justify-end items-baseline gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Tổng thanh toán (Gồm VAT):</span>
+                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t.grandTotalLabel}</span>
                                         <span className="text-xl font-black font-mono text-amber-700 dark:text-amber-400">
-                                            {formatVND(finalTotal)}
+                                            {formatCurrency(finalTotal)}
                                         </span>
                                     </div>
                                 </div>
@@ -1058,7 +1051,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                         onClick={onClose}
                         className="px-5 py-2.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
                     >
-                        Hủy
+                        {t.cancel}
                     </button>
                     <button
                         type="button"
@@ -1067,7 +1060,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                         className="px-6 py-2.5 text-xs font-bold rounded-lg flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                     >
                         {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                        {saving ? t.saving : t.saveChanges}
                     </button>
                 </div>
             </div>

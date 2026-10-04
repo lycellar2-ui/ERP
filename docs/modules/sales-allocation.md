@@ -643,7 +643,16 @@ Tập trung hóa toàn bộ phân hệ quản lý giá khách hàng trực tiế
 | **Ma Trận Khách Hàng & 4 Thẻ KPI Điều Hành** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:getCustomerPricingMasterOverview` | Hiển thị bảng tổng quan toàn bộ khách hàng kèm Kênh, Cơ chế giá mặc định toàn kho, Tình trạng giá đặc biệt (số lượng chai và preview tên chai kèm giá). Đi kèm 4 thẻ KPI: Tổng Khách Hàng, Khách Có Chiết Khấu Riêng, Khách Có Giá Đặc Biệt, Đề Xuất Chờ Duyệt. |
 | **Dual-View Switcher (2 Chế Độ Xem)** | `CustomerRulesTab.tsx` | Chuyển đổi linh hoạt giữa: (1) `Theo Khách Hàng (Tổng Quan Cơ Chế & Giá)` phục vụ quản lý & sales và (2) `Toàn Bộ Quy Tắc (Audit & Duyệt Deal)` phục vụ Ban Giám Đốc rà soát, duyệt/từ chối tờ trình deal. |
 | **Slide-out Drawer So Sánh Giá Chi Tiết** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:getCustomerSpecialPriceDetail` | Drawer trượt từ bên phải hiển thị danh mục toàn bộ chai giá đặc biệt của khách hàng, đối chiếu Giá Niêm Yết vs Giá Thỏa Thuận, tỷ lệ Tiết Kiệm (%), Thời hạn hiệu lực và Người duyệt. |
-| **Modal Cấu Hình Cơ Chế Nhanh & Audit Log** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:updateCustomerDefaultPricing` | Modal điều chỉnh bảng giá gốc và % chiết khấu mặc định trực tiếp từ ma trận, tự động ghi Audit Log lịch sử thay đổi chính sách giá. |
+#### 🌐 Session 17 — Song Ngữ Toàn Diện Anh - Việt Cho Phân Hệ Sales Orders (04/10/2026)
 
-*Last updated: 2026-09-23 23:15 | Wine ERP v11.2*
+Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn hệ thống (`system-wide-bilingual-plan.md`):
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Từ Điển Song Ngữ Sales Orders** | `src/app/dashboard/sales/i18n.ts` | Khai báo từ điển `SALES_I18N` (vi/en) chi tiết cho toàn bộ module: tiêu đề trang, 6 KPI cards, các tab trạng thái SO, 14 cột bảng desktop & mobile cards, bộ lọc nâng cao, drawer chi tiết, modal thanh toán/kế toán/VNPT, form tạo SO (`createDrawer`) và form sửa SO (`editDrawer`). Cung cấp các helpers chuyển ngữ `getSOStatusLabel`, `getSOChannelLabel`, `getPriceBadgeLabelByLocale`. |
+| **Giao Diện Danh Sách & Chi Tiết SO** | `src/app/dashboard/sales/SalesClient.tsx` | Chuyển đổi song ngữ 100% không làm thay đổi URL (`/sales` giữ nguyên). Tích hợp `useAppLocale()` tự động render theo ngôn ngữ đang chọn từ Navbar. Hỗ trợ hiển thị tiền tệ thông minh: `1.000.000 ₫` (VI) vs `1,000,000 VND` (EN). |
+| **Drawer Tạo Đơn Bán Hàng & Tasting** | `src/app/dashboard/sales/CreateSODrawer.tsx` | Bản địa hóa toàn bộ quy trình lên đơn: phân tách đơn Thương Mại vs Tasting, liên kết Tờ trình tasting, tìm kiếm khách hàng autocomplete, địa chỉ giao hàng, banner hạn mức tín dụng & cảnh báo công nợ AR, bảng dòng sản phẩm, bóc tách VAT đa thuế suất, và popup xem trước phiếu in (Print Preview Modal). |
+| **Drawer Chỉnh Sửa Đơn Nháp (Edit SO)** | `src/app/dashboard/sales/EditSODrawer.tsx` | Chuyển ngữ toàn diện màn hình sửa đơn: trạng thái DRAFT, lựa chọn khách hàng, kênh bán, hạn thanh toán, pháp nhân xuất tuyến, badge nguồn giá (Campaign, Fixed Price, Channel Base), bảng tổng hợp tài chính và thông báo toast. |
+
+*Last updated: 2026-10-04 23:40 | Wine ERP v11.3*
 

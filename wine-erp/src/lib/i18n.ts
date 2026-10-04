@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { COMMON_I18N, formatCurrencyByLocale, formatDateByLocale, formatNumberByLocale } from './i18n/common'
 
 export type AppLocale = 'vi' | 'en'
 
@@ -91,5 +92,11 @@ export function useAppLocale() {
         toggleLocale,
         isEn: locale === 'en',
         isVi: locale === 'vi',
+        t: COMMON_I18N[locale],
+        formatCurrency: useCallback((amount: number | string | null | undefined) => formatCurrencyByLocale(amount, locale), [locale]),
+        formatDate: useCallback((date: any, includeTime?: boolean) => formatDateByLocale(date, locale, includeTime), [locale]),
+        formatNumber: useCallback((val: any) => formatNumberByLocale(val, locale), [locale]),
     }
 }
+
+export * from './i18n/common'

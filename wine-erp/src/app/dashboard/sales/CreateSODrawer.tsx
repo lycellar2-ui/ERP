@@ -11,6 +11,8 @@ import {
     getCustomerProductCodes,
 } from './actions'
 import { formatVND, getLocalDateString } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { SALES_I18N, getSOChannelLabel, getPriceBadgeLabelByLocale } from './i18n'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
 import { DebouncedInput, DebouncedTextarea } from '@/components/DebouncedInput'
@@ -136,6 +138,9 @@ export interface CloneSOData {
 }
 
 export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [], cloneData }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[]; cloneData?: CloneSOData | null }) {
+    const { locale, isEn, formatCurrency } = useAppLocale()
+    const t = SALES_I18N[locale].createDrawer
+
     // TanStack Query to fetch and cache reference data for Sales Order Creation
     const { data: refData } = useQuery({
         queryKey: ['so_reference_data'],
@@ -594,10 +599,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const creditWarning = selectedCustomer && (finalTotal > creditAvailable || isCreditHold)
 
     const handleSave = async () => {
-        if (!customerId) return toast.error('Vui lòng chọn khách hàng')
-        if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
-        if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
-        if (lines.some(l => !l.productId)) return toast.error('Vui lòng chọn sản phẩm cho tất cả các dòng')
+        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
+        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân xuất tuyến')
+        if (lines.length === 0) return toast.error(isEn ? 'Add at least 1 product' : 'Thêm ít nhất 1 sản phẩm')
+        if (lines.some(l => !l.productId)) return toast.error(isEn ? 'Please select a product for all lines' : 'Vui lòng chọn sản phẩm cho tất cả các dòng')
 
         setSaving(true)
         const promise = createSalesOrder({
@@ -622,17 +627,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
         } as SOCreateInput).then(res => {
-            if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
+            if (!res.success) throw new Error(res.error ?? (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
             return res
         })
 
         toast.promise(promise, {
-            loading: 'Đang tạo đơn hàng...',
+            loading: isEn ? 'Creating sales order...' : 'Đang tạo đơn hàng...',
             success: (result) => {
                 setTimeout(() => { onSaved(result.soId); resetForm() }, 500)
-                return `Tạo thành công ${result.soNo}`
+                return isEn ? `Successfully created ${result.soNo}` : `Tạo thành công ${result.soNo}`
             },
-            error: (err: any) => `Lỗi: ${err.message}`,
+            error: (err: any) => `${isEn ? 'Error:' : 'Lỗi:'} ${err.message}`,
             finally: () => setSaving(false)
         })
     }
@@ -669,14 +674,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    {orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : '🛒 Tạo Đơn Bán Hàng Mới'}
+                                    {orderType === 'TASTING' ? t.tastingTitle : t.title}
                                 </h3>
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
                                     {orderType === 'TASTING' ? 'TASTING' : 'STANDARD'}
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                Tạo đơn đặt hàng mới, kiểm tra hạn mức tín dụng và chính sách giá
+                                {t.subtitle}
                             </p>
                         </div>
                     </div>
@@ -698,7 +703,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             {/* Order Type Selector: Commercial vs Tasting */}
                             <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">LOẠI ĐƠN HÀNG:</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{t.orderTypeLabel}</span>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -711,7 +716,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
                                             }`}
                                         >
-                                            📦 Đơn Thương Mại
+                                            📦 {t.commercialOrder}
                                         </button>
                                         <button
                                             type="button"
@@ -726,14 +731,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     : 'bg-white text-amber-900 hover:bg-amber-50 border border-amber-400'
                                             }`}
                                         >
-                                            🍷 Đơn Tasting (Ko thu tiền)
+                                            🍷 {t.tastingOrder}
                                         </button>
                                     </div>
                                 </div>
 
                                 {orderType === 'TASTING' && (
                                     <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md flex items-center gap-1 font-semibold shadow-xs">
-                                        ✨ Đơn Tasting theo Sale — Đơn giá xuất kho 0 VNĐ & đính kèm Tờ trình Tasting
+                                        ✨ {t.tastingBanner}
                                     </span>
                                 )}
                             </div>
@@ -744,10 +749,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     <div className="flex items-center justify-between flex-wrap gap-1">
                                         <label className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
                                             <FileText size={16} className="text-amber-800" />
-                                            TỜ TRÌNH TASTING LIÊN KẾT *
+                                            {t.tastingProposalTitle}
                                         </label>
                                         <span className="text-[11px] font-bold text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-full border border-amber-300">
-                                            Căn cứ phê duyệt đơn xuất kho Tasting 0đ
+                                            {t.tastingProposalBasis}
                                         </span>
                                     </div>
 
@@ -755,7 +760,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         {/* Field 1: Choose Proposal */}
                                         <div className="md:col-span-6">
                                             <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
-                                                CHỌN TỜ TRÌNH TASTING ĐÃ DUYỆT *
+                                                {t.chooseProposalLabel}
                                             </label>
                                             <select
                                                 value={proposalId}
@@ -785,7 +790,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     stock: 100,
                                                                 }))
                                                                 setLines(loadedLines)
-                                                                toast.success(`✨ Tự động nạp ${loadedLines.length} sản phẩm và số lượng chuẩn từ Tờ trình ${fullProp.proposalNo}`)
+                                                                toast.success(t.autoLoadedProposalItems(loadedLines.length, fullProp.proposalNo))
                                                             }
                                                         }
                                                     } catch (err) {
@@ -794,10 +799,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 }}
                                                 className="w-full px-3 py-2 text-xs font-bold rounded-lg border-2 border-amber-400 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             >
-                                                <option value="" className="text-slate-500 font-normal">-- Chọn Tờ trình Tasting đã duyệt --</option>
+                                                <option value="" className="text-slate-500 font-normal">{t.chooseProposalPlaceholder}</option>
                                                 {proposals.map(p => (
                                                     <option key={p.id} value={p.id} className="text-slate-900 font-medium">
-                                                        [{p.proposalNo}] {p.title} ({p.customer ? p.customer.name : 'Chung'})
+                                                        [{p.proposalNo}] {p.title} ({p.customer ? p.customer.name : (isEn ? 'General' : 'Chung')})
                                                     </option>
                                                 ))}
                                             </select>
@@ -806,19 +811,19 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         {/* Field 2: SỐ TỜ TRÌNH (Explicit dedicated field) */}
                                         <div className="md:col-span-6">
                                             <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
-                                                SỐ TỜ TRÌNH (VD: TT-2026-008) *
+                                                {t.proposalNoLabel}
                                             </label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     readOnly
-                                                    placeholder="Số Tờ trình (Tự động điền khi chọn Tờ trình)"
+                                                    placeholder={t.proposalNoPlaceholder}
                                                     value={proposals.find(p => p.id === proposalId)?.proposalNo || (proposalId ? proposalId : '')}
                                                     className="w-full px-3 py-2 text-xs font-extrabold font-mono rounded-lg border-2 border-amber-400 bg-amber-100/90 text-amber-950 placeholder:text-amber-700/60 shadow-xs focus:outline-none"
                                                 />
                                                 {proposalId && (
                                                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded border border-emerald-400">
-                                                        ✓ ĐÃ LIÊN KẾT
+                                                        {t.proposalLinkedBadge}
                                                     </span>
                                                 )}
                                             </div>
@@ -827,7 +832,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         {/* Field 3: Notes / Note Details */}
                                         <div className="md:col-span-12">
                                             <DebouncedInput
-                                                placeholder="Ghi chú thêm về Đơn Tasting / Lý do cấp rượu mẫu..."
+                                                placeholder={t.proposalNotesPlaceholder}
                                                 value={notes}
                                                 onChange={setNotes}
                                                 className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-amber-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -843,12 +848,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 <div className="md:col-span-5">
                                     <div className="flex items-center justify-between mb-1">
                                         <label className="block text-[11px] font-bold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                            Khách Hàng *
+                                            {t.customerLabel}
                                         </label>
                                         {selectedCustomer && (
-                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-[#0891B2] hover:text-[#06748E] font-semibold hover:underline flex items-center gap-1 transition-colors" title="Mở tab CRM để xem lịch sử mua hàng chi tiết">
+                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-[#0891B2] hover:text-[#06748E] font-semibold hover:underline flex items-center gap-1 transition-colors" title={isEn ? "Open CRM to view customer purchase history" : "Mở tab CRM để xem lịch sử mua hàng chi tiết"}>
                                                 <History size={10} />
-                                                Lịch sử mua hàng
+                                                {t.purchaseHistory}
                                             </a>
                                         )}
                                     </div>
@@ -859,7 +864,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             </div>
                                             <input
                                                 type="text"
-                                                placeholder="Tìm kiếm theo mã, tên khách hàng..."
+                                                placeholder={t.searchCustomerPlaceholder}
                                                 value={customerSearchInput}
                                                 onFocus={e => {
                                                     setCustomerDropdownOpen(true)
@@ -892,7 +897,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         setCustomerDropdownOpen(true)
                                                     }}
                                                     className="absolute right-2 p-1.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-md transition-colors"
-                                                    title="Xóa khách hàng đã chọn"
+                                                    title={t.clearCustomer}
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -908,7 +913,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white border border-slate-200 shadow-xl py-1 divide-y divide-slate-100">
                                                 {filteredCustomers.length === 0 ? (
                                                     <div className="px-4 py-3 text-xs text-slate-400 text-center">
-                                                        Không tìm thấy khách hàng phù hợp
+                                                        {t.noCustomerFound}
                                                     </div>
                                                 ) : (
                                                     filteredCustomers.map(c => {
@@ -922,7 +927,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 onMouseDown={(e) => {
                                                                     e.preventDefault()
                                                                     if (isDisabled) {
-                                                                        toast.error('Công ty này chỉ dùng để quản lý công nợ tập trung. Vui lòng chọn Nhà hàng/Chi nhánh con bên dưới để lên đơn!')
+                                                                        toast.error(t.companyDebtOnlyError)
                                                                         return
                                                                     }
                                                                     handleCustomerChange(c.id)
@@ -945,7 +950,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                             {isCompany && (
                                                                                 <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-400' : 'text-sky-600'}`}>
                                                                                     <Building2 size={12} />
-                                                                                    {c.allowDirectSO ? 'Công ty' : 'Công ty Cha (Chỉ tính công nợ)'}
+                                                                                    {c.allowDirectSO ? t.company : t.parentCompanyOnly}
                                                                                 </span>
                                                                             )}
                                                                             {c.brandGroup && (
@@ -956,12 +961,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                             )}
                                                                             {c.channel && (
                                                                                 <span className="text-slate-500 font-medium border-l border-slate-200 pl-2 ml-1">
-                                                                                    {c.channel}
+                                                                                    {getSOChannelLabel(c.channel, locale, true)}
                                                                                 </span>
                                                                             )}
                                                                             {(c.taxId || (c as any).parent?.taxId) && (
                                                                                 <span className="text-slate-500 font-mono text-[11px] border-l border-slate-200 pl-2 ml-1">
-                                                                                    MST: {c.taxId || `${(c as any).parent?.taxId} (Cty Cha)`}
+                                                                                    MST: {c.taxId || `${(c as any).parent?.taxId} (${isEn ? 'Parent Co' : 'Cty Cha'})`}
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -984,15 +989,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Shipping Address Selection */}
                                 <div className="md:col-span-4">
                                     <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#64748B' }}>
-                                        Địa Chỉ Giao Hàng *
+                                        {t.shippingAddressLabel}
                                     </label>
                                     {!selectedCustomer ? (
                                         <div className="w-full px-3 py-2 text-xs rounded border border-slate-200 text-gray-500 bg-slate-50/40">
-                                            Chưa chọn khách hàng
+                                            {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
                                         <div className="px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-400 rounded">
-                                            ⚠️ Chưa có địa chỉ giao hàng
+                                            {t.noShippingAddress}
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
@@ -1002,7 +1007,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 className="w-full px-3 py-2 text-xs outline-none rounded"
                                                 style={{ ...inputStyle }}
                                             >
-                                                <option value="">-- Chọn địa chỉ --</option>
+                                                <option value="">{t.selectAddressPlaceholder}</option>
                                                 {selectedCustomer.addresses.map(addr => (
                                                     <option key={addr.id} value={addr.id}>
                                                         {addr.label} ({addr.address})
@@ -1016,7 +1021,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Order Date Selection */}
                                 <div className="md:col-span-3">
                                     <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#64748B' }}>
-                                        📅 Ngày Đơn Hàng *
+                                        📅 {t.orderDateLabel}
                                     </label>
                                     <input
                                         type="date"
@@ -1034,35 +1039,35 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                                         <div className="flex items-center gap-3">
                                             <span className="font-bold" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
-                                                {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
+                                                {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
                                             </span>
-                                            <span style={{ color: '#64748B' }}>Hạn mức: <strong className="font-mono text-slate-800">{formatVND(effectiveCreditLimit)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>Dư nợ: <strong className="font-mono text-amber-700">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#0D9488' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
+                                            <span style={{ color: '#64748B' }}>{t.creditLimit} <strong className="font-mono text-slate-800">{formatCurrency(effectiveCreditLimit)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>{t.arBalance} <strong className="font-mono text-amber-700">{loadingAR ? '...' : formatCurrency(arBalance)}</strong></span>
+                                            <span style={{ color: '#64748B' }}>{t.creditAvailable} <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#0D9488' }}>{formatCurrency(Math.max(0, creditAvailable))}</strong></span>
                                         </div>
                                         {canOverride && (
                                             <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}>
-                                                {overrideMode ? 'Xong' : 'Sửa thông tin'}
+                                                {overrideMode ? t.done : t.editInfo}
                                             </button>
                                         )}
                                     </div>
                                     <div className="h-px w-full bg-slate-200" />
                                     {!overrideMode ? (
                                         <div className="flex items-center gap-4 text-[11px] text-slate-600">
-                                            <span>Kênh: <strong className="text-slate-900">{CHANNELS.find(c => c.value === channel)?.label ?? channel}</strong></span>
-                                            <span>Thanh toán: <strong className="text-slate-900">{paymentTerm}</strong></span>
-                                            <span>Pháp nhân: <strong className="text-slate-900" title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}</strong></span>
+                                            <span>{t.channelLabel} <strong className="text-slate-900">{getSOChannelLabel(channel, locale)}</strong></span>
+                                            <span>{t.paymentLabel} <strong className="text-slate-900">{paymentTerm}</strong></span>
+                                            <span>{t.entityLabel} <strong className="text-slate-900" title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? t.defaultEntity}</strong></span>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-3 gap-2">
                                             <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                                {CHANNELS.map(c => <option key={c.value} value={c.value}>{getSOChannelLabel(c.value, locale)}</option>)}
                                             </select>
                                             <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
                                                 {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                             <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                <option value="">— Pháp Nhân —</option>
+                                                <option value="">{t.selectEntityPlaceholder}</option>
                                                 {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
                                             </select>
                                         </div>
@@ -1075,7 +1080,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 <DebouncedTextarea
                                     value={notes}
                                     onChange={setNotes}
-                                    placeholder="Nhập diễn giải/ghi chú đơn hàng..."
+                                    placeholder={t.notesPlaceholder}
                                     rows={1}
                                     className="w-full px-3 py-1.5 text-xs outline-none rounded"
                                     style={{ ...inputStyle }}
@@ -1086,18 +1091,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                        Sản Phẩm *
+                                        {t.productsLabel}
                                     </label>
                                     <button onClick={addLine}
                                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold transition-all"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}>
-                                        <Plus size={13} /> Thêm dòng
+                                        <Plus size={13} /> {t.addLine}
                                     </button>
                                 </div>
 
                                 {lines.length === 0 ? (
                                     <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
-                                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có sản phẩm — Click "+ Thêm dòng"</p>
+                                        <p className="text-sm" style={{ color: '#64748B' }}>{t.noProductsYet}</p>
                                     </div>
                                 ) : (
                                     <>
@@ -1106,15 +1111,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-white text-slate-500 border-b border-slate-200 font-semibold">
-                                                        <th className="px-3 py-2.5" style={{ minWidth: '300px' }}>Sản Phẩm *</th>
+                                                        <th className="px-3 py-2.5" style={{ minWidth: '300px' }}>{t.thProduct}</th>
                                                         {hasCustomerCodes && (
-                                                            <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">Mã Khách</th>
+                                                            <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">{t.thCustomerCode}</th>
                                                         )}
-                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">SL</th>
-                                                        <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">CK %</th>
-                                                        <th className="px-3 py-2.5 w-28 text-right">Thành Tiền</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">{t.thStock} {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">{t.thQty}</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">{t.thUnitPrice}</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">{t.thDiscount}</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">{t.thTotal}</th>
                                                         <th className="px-3 py-2.5 w-10 text-center"></th>
                                                     </tr>
                                                 </thead>
@@ -1132,7 +1137,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     <div className="relative">
                                                                         <input
                                                                             type="text"
-                                                                            placeholder="Gõ SKU hoặc tên sản phẩm..."
+                                                                            placeholder={t.searchProductPlaceholder}
                                                                             value={searchQueries[i] ?? ''}
                                                                             onFocus={e => {
                                                                                 setActiveDropdownIndex(i)
@@ -1164,7 +1169,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                             <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-white border border-slate-200 dark:border-slate-200 w-[520px] shadow-xl">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                                     <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
-                                                                                        Không tìm thấy sản phẩm
+                                                                                        {t.noProductFound}
                                                                                     </div>
                                                                                 ) : (
                                                                                     getFilteredProducts(searchQueries[i] ?? '').map(p => (
@@ -1185,7 +1190,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                 <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
                                                                                                 <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
                                                                                             </div>
-                                                                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
+                                                                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})</span>
                                                                                         </div>
                                                                                     ))
                                                                                 )}
@@ -1197,13 +1202,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         {alloc && (
                                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
                                                                                 <ShieldAlert size={10} />
-                                                                                {alloc.campaignName}: {quotaExceeded ? `Vượt! Còn ${alloc.remaining}` : `Còn ${alloc.remaining}`}
+                                                                                {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
                                                                             </span>
                                                                         )}
                                                                         {hasAutoPrice && (
                                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
                                                                                 style={getPriceBadgeStyle(resolved.source)}>
-                                                                                <Tag size={10} /> {getPriceBadgeLabel(resolved, channel)}
+                                                                                <Tag size={10} /> {getPriceBadgeLabelByLocale(resolved, channel, locale)}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -1229,10 +1234,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         className="w-14 px-2 py-1 text-xs text-center rounded outline-none"
                                                                         style={{ ...inputStyle }}
                                                                     />
-                                                                    {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
+                                                                    {lowStock && <p className="text-[10px] text-red-500 mt-0.5">{t.stockExceeded}</p>}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-right font-mono text-slate-600">
-                                                                    {formatVND(line.unitPrice)}
+                                                                    {formatCurrency(line.unitPrice)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
                                                                     <input
@@ -1246,7 +1251,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     />
                                                                 </td>
                                                                 <td className="px-3 py-2 text-right font-mono font-bold text-[#0891B2]">
-                                                                    {formatVND(lineTotal)}
+                                                                    {formatCurrency(lineTotal)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
                                                                     <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-400 p-1.5 rounded transition-all" type="button">
@@ -1276,7 +1281,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                             <div className="flex-1 relative">
                                                                 <input
                                                                     type="text"
-                                                                    placeholder="Gõ mã SKU hoặc tên sản phẩm..."
+                                                                    placeholder={t.searchProductPlaceholder}
                                                                     value={searchQueries[i] ?? ''}
                                                                     onFocus={e => {
                                                                         setActiveDropdownIndex(i)
@@ -1308,7 +1313,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white dark:bg-white border-slate-200 dark:border-slate-200">
                                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                             <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
-                                                                                Không tìm thấy sản phẩm
+                                                                                {t.noProductFound}
                                                                             </div>
                                                                         ) : (
                                                                             getFilteredProducts(searchQueries[i] ?? '').map(p => (
@@ -1329,7 +1334,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                         <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
                                                                                         <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
                                                                                     </div>
-                                                                                    <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
+                                                                                    <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})</span>
                                                                                 </div>
                                                                             ))
                                                                         )}
@@ -1347,28 +1352,28 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
                                                                     style={{ background: quotaExceeded ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.12)', color: quotaExceeded ? '#8B1A2E' : '#D4A853', border: `1px solid ${quotaExceeded ? 'rgba(139,26,46,0.3)' : 'rgba(212,168,83,0.25)'}` }}>
                                                                     <ShieldAlert size={11} />
-                                                                    {alloc.campaignName}: {quotaExceeded ? `Vượt! Còn ${alloc.remaining}` : `Còn ${alloc.remaining}`}
+                                                                    {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
                                                                 </span>
                                                             )}
                                                             {hasAutoPrice && (
                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
                                                                     style={getPriceBadgeStyle(resolved.source)}>
-                                                                    <Tag size={11} /> {getPriceBadgeLabel(resolved, channel)}
+                                                                    <Tag size={11} /> {getPriceBadgeLabelByLocale(resolved, channel, locale)}
                                                                 </span>
                                                             )}
                                                         </div>
                                                         <div className="grid grid-cols-4 gap-2">
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Số Lượng</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thQty}</p>
                                                                 <input type="number" min="1" value={line.qtyOrdered}
                                                                     onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
                                                                     style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#E2E8F0'}` }}
                                                                 />
-                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn ({line.stock})</p>}
+                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ {t.stockExceeded} ({line.stock})</p>}
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Đơn Giá</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thUnitPrice}</p>
                                                                 <input type="number" min="0" value={line.unitPrice}
                                                                     readOnly
                                                                     className="w-full px-2 py-1 text-xs outline-none opacity-70 cursor-not-allowed"
@@ -1376,7 +1381,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>CK (%)</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thDiscount}</p>
                                                                 <input type="number" min="0" max="100" value={line.lineDiscountPct}
                                                                     onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
@@ -1396,7 +1401,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         </div>
                                                         <div className="flex justify-end">
                                                             <p className="text-xs font-bold" style={{ color: '#0891B2' }}>
-                                                                = {formatVND(lineTotal)}
+                                                                = {formatCurrency(lineTotal)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1411,7 +1416,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             {lines.length > 0 && (
                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between mb-3">
-                                        <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Chiết Khấu Tổng Đơn (%)</label>
+                                        <label className="text-xs font-semibold" style={{ color: '#64748B' }}>{t.orderDiscountLabel}</label>
                                         <input type="number" min="0" max="100" value={orderDiscount}
                                             onChange={e => setOrderDiscount(Number(e.target.value))}
                                             className="w-24 px-2.5 py-1.5 text-sm outline-none text-right"
@@ -1420,42 +1425,42 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     </div>
                                     {isVatInclusive && (
                                         <div className="mb-2.5 px-2.5 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-400">
-                                            <span>🏷️ Kênh {channel}: Giá bán lẻ niêm yết <strong>ĐÃ BAO GỒM VAT</strong></span>
+                                            <span>{t.vatInclusiveNotice(channel)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-center text-xs text-slate-600 mb-1.5">
-                                        <p>{isVatInclusive ? 'Thành tiền hàng (Sau CK)' : 'Trước thuế (Sau CK)'}</p>
-                                        <p className="font-mono">{formatVND(isVatInclusive ? Math.round(subtotal * (1 - orderDiscount / 100)) : netSubtotal)}</p>
+                                        <p>{isVatInclusive ? t.subtotalGoods : t.subtotalBeforeTax}</p>
+                                        <p className="font-mono">{formatCurrency(isVatInclusive ? Math.round(subtotal * (1 - orderDiscount / 100)) : netSubtotal)}</p>
                                     </div>
                                     {isVatInclusive && (
                                         <div className="flex justify-between items-center text-xs text-slate-600 mb-1.5">
-                                            <p>↳ Giá trị trước thuế (bóc tách)</p>
-                                            <p className="font-mono">{formatVND(netSubtotal)}</p>
+                                            <p>{t.subtotalPreTaxExtracted}</p>
+                                            <p className="font-mono">{formatCurrency(netSubtotal)}</p>
                                         </div>
                                     )}
                                     {vatBreakdown.length > 1 ? (
                                         <div className="space-y-1 my-2 py-2 border-y border-slate-200/40 text-xs text-slate-600">
                                             {vatBreakdown.map(vb => (
                                                 <div key={vb.rate} className="flex justify-between items-center pl-2">
-                                                    <p>↳ Thuế GTGT ({vb.rate}%) {isVatInclusive ? '(bóc tách)' : ''}</p>
-                                                    <p className="font-mono">{formatVND(Math.round(vb.amount))}</p>
+                                                    <p>{isVatInclusive ? t.vatExtracted(vb.rate) : t.vatStandard(vb.rate)}</p>
+                                                    <p className="font-mono">{formatCurrency(Math.round(vb.amount))}</p>
                                                 </div>
                                             ))}
                                             <div className="flex justify-between items-center font-semibold pt-1 text-slate-900">
-                                                <p>Tổng tiền thuế VAT</p>
-                                                <p className="font-mono">{formatVND(vatAmount)}</p>
+                                                <p>{t.totalVat}</p>
+                                                <p className="font-mono">{formatCurrency(vatAmount)}</p>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="flex justify-between items-center text-xs text-slate-600 mb-2.5">
-                                            <p>{isVatInclusive ? '↳ Thuế VAT bóc tách' : 'Thuế VAT'} ({vatBreakdown[0]?.rate ?? 10}%)</p>
-                                            <p className="font-mono">{formatVND(vatAmount)}</p>
+                                            <p>{t.vatSingle(vatBreakdown[0]?.rate ?? 10, isVatInclusive)}</p>
+                                            <p className="font-mono">{formatCurrency(vatAmount)}</p>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        <p className="text-sm font-semibold" style={{ color: '#475569' }}>Tổng Thanh Toán (Gồm VAT)</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#475569' }}>{t.grandTotal}</p>
                                         <p className="text-xl font-bold" style={{ color: '#0891B2' }}>
-                                            {formatVND(finalTotal)}
+                                            {formatCurrency(finalTotal)}
                                         </p>
                                     </div>
                                 </div>
@@ -1472,19 +1477,19 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         type="button"
                         onClick={() => {
                             if (!selectedCustomer) {
-                                toast.error('Vui lòng chọn khách hàng để xem file in')
+                                toast.error(t.selectCustomerForPrint)
                                 return
                             }
                             if (lines.length === 0 || lines.every(l => !l.productId)) {
-                                toast.error('Vui lòng chọn ít nhất 1 sản phẩm để xem file in')
+                                toast.error(t.selectProductForPrint)
                                 return
                             }
                             setPreviewOpen(true)
                         }}
                         className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors bg-white dark:bg-white hover:bg-slate-100 dark:hover:bg-slate-50 text-slate-700 dark:text-slate-900 border border-slate-300 dark:border-slate-200 shadow-xs cursor-pointer"
-                        title="Xem trước phiếu đơn hàng trước khi tạo đơn"
+                        title={t.previewPrintHint}
                     >
-                        <Printer size={15} className="text-amber-500" /> Xem File In
+                        <Printer size={15} className="text-amber-500" /> {t.previewPrint}
                     </button>
 
                     <div className="flex items-center gap-3">
@@ -1493,7 +1498,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             onClick={onClose}
                             className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-50 transition-colors cursor-pointer"
                         >
-                            Huỷ
+                            {t.cancel}
                         </button>
                         <button
                             type="button"
@@ -1502,7 +1507,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            {saving ? 'Đang lưu...' : (orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : 'Tạo Đơn')}
+                            {saving ? t.saving : t.createOrderBtn(orderType === 'TASTING')}
                         </button>
                     </div>
                 </div>
@@ -1516,14 +1521,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                                 <Printer size={18} />
-                                <span>{orderType === 'TASTING' ? 'XEM TRƯỚC PHIẾU ĐƠN HÀNG TASTING (PRINT PREVIEW)' : 'XEM TRƯỚC PHIẾU ĐƠN BÁN HÀNG (PRINT PREVIEW)'}</span>
+                                <span>{orderType === 'TASTING' ? t.printPreviewTastingTitle : t.printPreviewTitle}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => window.print()}
                                     className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded transition-colors shadow"
                                 >
-                                    <Printer size={14} /> In / Xuất PDF
+                                    <Printer size={14} /> {t.printExportPdf}
                                 </button>
                                 <button
                                     onClick={() => setPreviewOpen(false)}

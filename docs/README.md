@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-04 23:05 | Wine ERP v10.50 - P&L Matching Principle & COGS Journal Idempotency (BUG-121)*
+*Last updated: 2026-10-04 23:40 | Wine ERP v11.3 - Phase 2 Bilingual VI/EN Rollout (Sales Orders Module)*
 
