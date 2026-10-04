@@ -77,10 +77,10 @@ const DELIVERY_BADGES: Record<string, { label: string; bg: string; color: string
 }
 
 const BASE_PRICE_LABELS: Record<string, string> = {
-    BY_CHANNEL: 'Giá sỉ theo kênh (HORECA / Đại Lý)',
-    WHOLESALE: 'Bảng giá bán buôn (Wholesale)',
-    RETAIL: 'Bảng giá bán lẻ niêm yết',
-    HORECA: 'Bảng giá riêng kênh HORECA',
+    BY_CHANNEL: 'Giá theo kênh bán hàng',
+    WHOLESALE: 'Bảng giá bán buôn',
+    RETAIL: 'Giá bán lẻ niêm yết',
+    HORECA: 'Bảng giá HORECA',
 }
 
 export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerId }: Props) {
@@ -188,7 +188,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Gõ tên khách hàng, mã (KH-...), số điện thoại người mua..."
+                                placeholder="Tìm theo tên khách, mã KH, số điện thoại..."
                                 value={searchQuery}
                                 onFocus={() => {
                                     setIsDropdownOpen(true)
@@ -217,11 +217,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <div className="absolute left-0 right-0 top-full mt-1 z-40 bg-white rounded-md shadow-lg border border-slate-200 max-h-80 overflow-y-auto divide-y divide-slate-100">
                                 {isSearching ? (
                                     <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                                        <RefreshCw size={12} className="animate-spin text-cyan-600" /> Đang tìm kiếm khách hàng...
+                                        <RefreshCw size={12} className="animate-spin text-cyan-600" /> Đang tìm...
                                     </div>
                                 ) : searchResults.length === 0 ? (
                                     <div className="py-4 text-center text-xs text-slate-500">
-                                        Không tìm thấy khách hàng phù hợp
+                                        Không tìm thấy khách hàng
                                     </div>
                                 ) : (
                                     searchResults.map(c => {
@@ -317,8 +317,8 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
             {isLoadingHistory && (
                 <div className="py-24 text-center bg-white rounded-lg border border-slate-200">
                     <RefreshCw size={26} className="animate-spin text-cyan-600 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-slate-800">Đang tổng hợp toàn bộ hồ sơ khách hàng & cơ chế giá...</p>
-                    <p className="text-xs text-slate-500 mt-1">Đang đối soát lịch sử SO, công nợ AR và các tờ trình giá đã duyệt</p>
+                    <p className="text-sm font-semibold text-slate-800">Đang tải dữ liệu khách hàng...</p>
+                    <p className="text-xs text-slate-500 mt-1">Nạp lịch sử đơn hàng, công nợ và chính sách giá riêng</p>
                 </div>
             )}
 
@@ -350,7 +350,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Nhân viên kinh doanh</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Sale phụ trách</span>
                                     <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
                                         <User size={13} className="text-slate-400" />
                                         {historyData.customer.salesRepName || 'Chưa phân bổ'}
@@ -358,7 +358,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 </div>
                                 {historyData.customer.parentName && (
                                     <div>
-                                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Trực thuộc công ty mẹ</span>
+                                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Công ty mẹ</span>
                                         <span className="font-semibold text-slate-800 flex items-center gap-1.5 mt-0.5">
                                             <Building2 size={13} className="text-slate-400" />
                                             {historyData.customer.parentName}
@@ -366,7 +366,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     </div>
                                 )}
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Người liên hệ thu mua</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Liên hệ thu mua</span>
                                     <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
                                         {historyData.customer.purchasingName || '—'}
                                         {historyData.customer.purchasingPhone && (
@@ -375,7 +375,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Người nhận hàng tại điểm</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Nhận hàng tại điểm</span>
                                     <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
                                         {historyData.customer.receiverName || '—'}
                                         {historyData.customer.receiverPhone && (
@@ -386,7 +386,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             </div>
                         </div>
 
-                        {/* Buying Health & Frequency (1 col) */}
+                        {/* Buying Frequency & Order Rhythm (1 col) */}
                         <div className={`rounded-lg border p-4 shadow-xs flex flex-col justify-between ${
                             historyData.health.status === 'AT_RISK'
                                 ? 'bg-rose-50/40 border-rose-200'
@@ -397,7 +397,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        Tần Suất & Sức Khỏe Mua Hàng
+                                        Theo Dõi Nhịp Đặt Hàng
                                     </span>
                                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                                         historyData.health.status === 'AT_RISK'
@@ -406,19 +406,19 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                             ? 'bg-amber-100 text-amber-800 border border-amber-300'
                                             : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                     }`}>
-                                        {historyData.health.status === 'AT_RISK' ? '⚠️ Nguy cơ rớt khách' : historyData.health.status === 'WARNING' ? '⚡ Chậm nhập hàng' : '✓ Nhập đều đặn'}
+                                        {historyData.health.status === 'AT_RISK' ? '⚠️ Quá chu kỳ' : historyData.health.status === 'WARNING' ? '⚡ Đang chậm đơn' : '✓ Đặt đều đặn'}
                                     </span>
                                 </div>
 
                                 <div className="space-y-1.5 mt-2 text-xs">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">Lần đặt gần nhất:</span>
+                                        <span className="text-slate-600">Đơn gần nhất:</span>
                                         <strong className="text-slate-900 font-mono">
                                             {historyData.health.daysSinceLastOrder !== null ? `Cách đây ${historyData.health.daysSinceLastOrder} ngày` : 'Chưa có đơn'}
                                         </strong>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">Chu kỳ mua trung bình:</span>
+                                        <span className="text-slate-600">Chu kỳ thường đặt:</span>
                                         <strong className="text-slate-900 font-mono">
                                             {historyData.health.averageOrderCycleDays ? `~ ${historyData.health.averageOrderCycleDays} ngày / đơn` : 'Chưa đủ dữ liệu'}
                                         </strong>
@@ -430,15 +430,15 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 <p className="text-slate-700 leading-snug">
                                     {historyData.health.status === 'AT_RISK' ? (
                                         <span className="text-rose-700 font-semibold">
-                                            Đã trễ {historyData.health.delayDays} ngày so với chu kỳ quen thuộc. Sale phụ trách cần liên hệ kiểm tra menu & tồn kho của khách!
+                                            Đã quá chu kỳ mua {historyData.health.delayDays} ngày. Sale cần chủ động liên hệ kiểm tra lại nhu cầu của khách.
                                         </span>
                                     ) : historyData.health.status === 'WARNING' ? (
                                         <span className="text-amber-800 font-medium">
-                                            Khách đang chậm hơn chu kỳ bình thường {historyData.health.delayDays} ngày.
+                                            Khách đang đặt chậm hơn chu kỳ {historyData.health.delayDays} ngày.
                                         </span>
                                     ) : (
-                                        <span className="text-emerald-800">
-                                            Khách hàng giữ nhịp đặt hàng tốt và duy trì đều đặn.
+                                        <span className="text-emerald-800 font-medium">
+                                            Khách duy trì đặt hàng đúng chu kỳ đều đặn.
                                         </span>
                                     )}
                                 </p>
@@ -446,7 +446,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         </div>
                     </div>
 
-                    {/* ═══ SECTION 2: CƠ CHẾ GIÁ & BẢNG GIÁ ĐẶC BIỆT ═══ */}
+                    {/* ═══ SECTION 2: CHÍNH SÁCH GIÁ & BẢNG GIÁ RIÊNG ═══ */}
                     <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                             <div className="flex items-center gap-2">
@@ -454,20 +454,20 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     <Tag size={16} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-sm text-slate-900">Cơ Chế Giá & Bảng Giá Đặc Biệt</h4>
-                                    <p className="text-xs text-slate-500">Các thỏa thuận giá riêng và tờ trình cơ chế đã được phê duyệt</p>
+                                    <h4 className="font-bold text-sm text-slate-900">Chính Sách Giá & Bảng Giá Riêng</h4>
+                                    <p className="text-xs text-slate-500">Chính sách chiết khấu và danh mục mã rượu có giá thỏa thuận riêng</p>
                                 </div>
                             </div>
 
                             {/* Base Pricing Badges */}
                             <div className="flex items-center gap-2 text-xs">
-                                <span className="text-slate-500">Bảng giá cơ sở:</span>
+                                <span className="text-slate-500">Chính sách giá:</span>
                                 <span className="font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200">
                                     {BASE_PRICE_LABELS[historyData.pricing.basePriceType] ?? historyData.pricing.basePriceType}
                                 </span>
                                 {historyData.pricing.defaultDiscountPct > 0 && (
                                     <span className="font-bold px-2 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        CK chung: -{historyData.pricing.defaultDiscountPct}%
+                                        Chiết khấu mặc định: -{historyData.pricing.defaultDiscountPct}%
                                     </span>
                                 )}
                             </div>
@@ -477,7 +477,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {historyData.pricing.proposals.length > 0 && (
                             <div className="mt-4 p-3 rounded-md bg-amber-50/40 border border-amber-200">
                                 <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                                    📜 Tờ trình cơ chế giá đã phê duyệt ({historyData.pricing.proposals.length}):
+                                    📜 Tờ trình duyệt giá riêng ({historyData.pricing.proposals.length}):
                                 </span>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {historyData.pricing.proposals.map(p => (
@@ -493,7 +493,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                 </div>
                                             </div>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-                                                CEO Duyệt ✓
+                                                Đã duyệt
                                             </span>
                                         </div>
                                     ))}
@@ -505,18 +505,18 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         <div className="mt-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-slate-800">
-                                    Bảng giá đặc biệt theo sản phẩm ({historyData.pricing.specialRules.length} SKU):
+                                    Bảng giá riêng theo từng mã hàng ({historyData.pricing.specialRules.length} SKU):
                                 </span>
                                 {historyData.pricing.specialRules.some(r => r.isExpiringSoon || r.isExpired) && (
                                     <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                                        <AlertTriangle size={12} /> Có mặt hàng sắp hoặc đã hết hạn
+                                        <AlertTriangle size={12} /> Có mã sắp hoặc đã hết hạn
                                     </span>
                                 )}
                             </div>
 
                             {historyData.pricing.specialRules.length === 0 ? (
                                 <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded border border-dashed border-slate-200">
-                                    Khách hàng này hiện chưa có ngoại lệ giá riêng theo từng SKU. Đang áp dụng <strong>{BASE_PRICE_LABELS[historyData.pricing.basePriceType] ?? 'giá sỉ chuẩn'}</strong>.
+                                    Khách hàng đang áp dụng theo bảng giá chung, chưa có giá thỏa thuận riêng cho từng mã.
                                 </div>
                             ) : (
                                 <div className="border border-slate-200 rounded-md overflow-hidden">
@@ -526,11 +526,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                 <tr>
                                                     <th className="py-2 px-3">Mã SKU & Tên Rượu</th>
                                                     <th className="py-2 px-3">Xuất Xứ</th>
-                                                    <th className="py-2 px-3 text-right">Giá Chuẩn Niêm Yết</th>
-                                                    <th className="py-2 px-3 text-right">Giá Đặc Biệt Riêng</th>
-                                                    <th className="py-2 px-3 text-right">Mức Giảm / Tiết Kiệm</th>
-                                                    <th className="py-2 px-3 text-center">Thời Gian Áp Dụng</th>
-                                                    <th className="py-2 px-3 text-center">Tình Trạng</th>
+                                                    <th className="py-2 px-3 text-right">Giá Niêm Yết</th>
+                                                    <th className="py-2 px-3 text-right">Giá Riêng Áp Dụng</th>
+                                                    <th className="py-2 px-3 text-right">Mức Giảm</th>
+                                                    <th className="py-2 px-3 text-center">Thời Hạn Áp Dụng</th>
+                                                    <th className="py-2 px-3 text-center">Trạng Thái</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
@@ -562,7 +562,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         <td className="py-2.5 px-3 text-right font-semibold text-emerald-700">
                                                             {rule.discountPct > 0 ? (
                                                                 <span>-{rule.discountPct}% <span className="text-[10px] font-normal text-slate-500">({formatVND(rule.discountAmount)})</span></span>
-                                                            ) : 'Giá cố định'}
+                                                            ) : 'Giá ấn định'}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center text-slate-600 whitespace-nowrap text-[11px]">
                                                             {new Date(rule.startDate).toLocaleDateString('vi-VN')}
@@ -579,7 +579,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                    Đang hiệu lực
+                                                                    Đang áp dụng
                                                                 </span>
                                                             )}
                                                         </td>
@@ -598,7 +598,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 1. Tổng tiền đã mua */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-cyan-600">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Tổng Doanh Số Mua Hàng
+                                Tổng Tiền Hàng Đã Mua
                             </span>
                             <p className="text-xl font-bold font-mono text-slate-900">
                                 {formatFriendlyVND(historyData.kpis.totalRevenue)}
@@ -611,7 +611,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 2. Đã thu vs Còn nợ AR */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-amber-500">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Đã Thu vs Công Nợ AR
+                                Đã Thanh Toán / Còn Nợ
                             </span>
                             <p className="text-xl font-bold font-mono text-emerald-700">
                                 {formatFriendlyVND(historyData.kpis.totalPaidAmount)}
@@ -627,20 +627,20 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 3. Sản lượng & Đơn thương mại vs Tasting */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-emerald-600">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Sản Lượng & Phân Loại Đơn
+                                Tổng Số Chai Đã Giao
                             </span>
                             <p className="text-xl font-bold font-mono text-slate-900">
                                 {historyData.kpis.totalBottles.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
                             </p>
                             <p className="text-[11px] text-slate-600 mt-1">
-                                <strong>{historyData.orderBreakdown.commercialCount}</strong> đơn bán ({historyData.orderBreakdown.commercialBottles} chai) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> đơn tasting
+                                <strong>{historyData.orderBreakdown.commercialCount}</strong> đơn bán ({historyData.orderBreakdown.commercialBottles} chai) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> đơn thử nếm
                             </p>
                         </div>
 
                         {/* 4. Điều khoản & Hạn mức */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-slate-700">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Điều Khoản & Hạn Mức Tín Dụng
+                                Hạn Mức Nợ & Điều Khoản
                             </span>
                             <p className="text-base font-bold text-slate-900">
                                 {historyData.customer.paymentTerm}
@@ -679,7 +679,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }`}
                                 >
                                     <Wine size={14} />
-                                    Gu Rượu & Sản Phẩm Đã Mua ({historyData.topProducts.length})
+                                    Danh Mục Rượu Đã Mua ({historyData.topProducts.length})
                                 </button>
                                 <button
                                     type="button"
@@ -691,7 +691,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }`}
                                 >
                                     <TrendingUp size={14} />
-                                    Biểu Đồ Xu Hướng ({historyData.monthlyTrend.length} tháng)
+                                    Lịch Sử Nhập Theo Tháng ({historyData.monthlyTrend.length} tháng)
                                 </button>
                             </div>
 
@@ -699,7 +699,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 href={`/dashboard/sales?search=${encodeURIComponent(historyData.customer.code)}`}
                                 className="text-xs font-bold text-cyan-700 hover:text-cyan-900 flex items-center gap-1 hover:underline"
                             >
-                                Mở toàn bộ trong module Bán Hàng <ExternalLink size={12} />
+                                Xem tại danh sách Bán hàng <ExternalLink size={12} />
                             </Link>
                         </div>
 
@@ -713,10 +713,10 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                         <span className="text-[11px] font-semibold text-slate-500">Lọc theo:</span>
                                         {[
                                             { key: 'ALL', label: 'Tất cả đơn' },
-                                            { key: 'COMMERCIAL', label: '🛒 Đơn bán thương mại' },
-                                            { key: 'TASTING', label: '🍷 Đơn Tasting / Mẫu' },
-                                            { key: 'UNPAID', label: '💳 Còn nợ tiền' },
-                                            { key: 'DELIVERED', label: '📦 Đã giao đủ' },
+                                            { key: 'COMMERCIAL', label: '🛒 Đơn bán hàng' },
+                                            { key: 'TASTING', label: '🍷 Hàng mẫu / Tasting' },
+                                            { key: 'UNPAID', label: '💳 Đơn còn nợ' },
+                                            { key: 'DELIVERED', label: '📦 Đã giao hàng' },
                                         ].map(f => (
                                             <button
                                                 key={f.key}
@@ -749,9 +749,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <tr>
                                                         <th className="py-2.5 px-3">Mã SO</th>
                                                         <th className="py-2.5 px-3">Ngày Đặt</th>
-                                                        <th className="py-2.5 px-3">Phân Loại</th>
+                                                        <th className="py-2.5 px-3">Loại Đơn</th>
                                                         <th className="py-2.5 px-3">Điểm Giao & Người Nhận</th>
-                                                        <th className="py-2.5 px-3 text-right">Sản Lượng</th>
+                                                        <th className="py-2.5 px-3 text-right">Số Chai</th>
                                                         <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
                                                         <th className="py-2.5 px-3 text-right">Đã Thu / Còn Nợ</th>
                                                         <th className="py-2.5 px-3 text-center">Trạng Thái Đơn</th>
@@ -785,7 +785,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                             </span>
                                                                         ) : (
                                                                             <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                                                                                Thương mại
+                                                                                Đơn bán
                                                                             </span>
                                                                         )}
                                                                     </td>
@@ -835,7 +835,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                             type="button"
                                                                             onClick={() => setExpandedSoId(isExpanded ? null : order.id)}
                                                                             className="p-1 rounded hover:bg-slate-200 text-slate-500 transition-colors"
-                                                                            title={isExpanded ? 'Thu gọn' : 'Xem các chai rượu trong đơn'}
+                                                                            title={isExpanded ? 'Thu gọn' : 'Xem chi tiết sản phẩm'}
                                                                         >
                                                                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                                                         </button>
@@ -850,7 +850,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                                 <div className="flex items-center justify-between mb-2">
                                                                                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                                                                         <Wine size={13} className="text-cyan-700" />
-                                                                                        Chi tiết {order.lines.length} sản phẩm trong đơn {order.soNo}:
+                                                                                        Danh sách {order.lines.length} sản phẩm trong đơn {order.soNo}:
                                                                                     </span>
                                                                                     {order.deliveryNotes && (
                                                                                         <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
@@ -907,12 +907,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {activeTab === 'WINES' && (
                             <div className="mt-4 space-y-4">
                                 
-                                {/* Gu Rượu & Phân Khúc Giá */}
+                                {/* Cơ Cấu Loại Rượu & Tầm Giá */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Gu Rượu */}
+                                    {/* Loại Vang */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
                                         <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🍷 Tỷ Trọng Gu Rượu Ưa Chuộng:
+                                            🍷 Cơ cấu theo loại vang:
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.wineTypes.map(wt => (
@@ -934,7 +934,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     {/* Phân khúc giá */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
                                         <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🏷️ Phân Khúc Giá Thường Nhập:
+                                            🏷️ Cơ cấu theo tầm giá:
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.priceBrackets.map(pb => (
@@ -958,13 +958,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 <div className="space-y-2 pt-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <span className="text-xs font-bold text-slate-800">
-                                            Toàn bộ danh mục rượu đã từng mua ({historyData.topProducts.length} dòng):
+                                            Danh mục các dòng rượu đã từng mua ({historyData.topProducts.length} dòng):
                                         </span>
                                         <div className="relative w-full sm:w-64">
                                             <Search size={12} className="absolute left-2.5 top-2.5 text-slate-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Lọc theo tên vang, SKU, xuất xứ..."
+                                                placeholder="Tìm tên vang, mã SKU, xuất xứ..."
                                                 value={wineSearch}
                                                 onChange={(e) => setWineSearch(e.target.value)}
                                                 className="w-full text-xs pl-7 pr-3 py-1.5 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600"
@@ -985,9 +985,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                             <th className="py-2.5 px-3 text-center w-10">#</th>
                                                             <th className="py-2.5 px-3">Mã SKU & Tên Rượu</th>
                                                             <th className="py-2.5 px-3">Xuất Xứ</th>
-                                                            <th className="py-2.5 px-3 text-right">Tổng Chai Đã Mua</th>
-                                                            <th className="py-2.5 px-3 text-right">Đơn Giá Mua Gần Nhất</th>
-                                                            <th className="py-2.5 px-3 text-right">Tổng Tiền Đã Chi</th>
+                                                            <th className="py-2.5 px-3 text-right">Số Chai Đã Mua</th>
+                                                            <th className="py-2.5 px-3 text-right">Giá Mua Gần Nhất</th>
+                                                            <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
                                                             <th className="py-2.5 px-3 text-center">Lần Mua Gần Nhất</th>
                                                         </tr>
                                                     </thead>
@@ -1036,12 +1036,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {activeTab === 'TREND' && (
                             <div className="mt-4 space-y-4">
                                 <p className="text-xs text-slate-600">
-                                    Biến động doanh thu và tổng số chai khách hàng đã nhập qua các tháng:
+                                    Sản lượng và tiền hàng theo từng tháng:
                                 </p>
 
                                 {historyData.monthlyTrend.length === 0 ? (
                                     <div className="py-12 text-center text-xs text-slate-500 bg-slate-50 rounded">
-                                        Chưa có dữ liệu xu hướng theo tháng
+                                        Chưa có dữ liệu theo tháng
                                     </div>
                                 ) : (
                                     <div className="p-4 rounded-md border border-slate-200 bg-slate-50/50 space-y-3">

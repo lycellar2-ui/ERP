@@ -1753,7 +1753,7 @@ export async function getCustomerPurchaseHistory(
     let daysSinceLastOrder: number | null = null
     let averageOrderCycleDays: number | null = null
     let healthStatus: 'HEALTHY' | 'WARNING' | 'AT_RISK' | 'NEW' = 'NEW'
-    let healthLabel = 'Khách mới / Chưa có lịch sử'
+    let healthLabel = 'Khách mới'
     let delayDays = 0
 
     if (orders.length > 0) {
@@ -1771,17 +1771,17 @@ export async function getCustomerPurchaseHistory(
 
             if (daysSinceLastOrder <= averageOrderCycleDays * 1.3) {
                 healthStatus = 'HEALTHY'
-                healthLabel = 'Đang nhập hàng đều đặn'
+                healthLabel = 'Nhập hàng đều'
             } else if (daysSinceLastOrder <= averageOrderCycleDays * 2.2) {
                 healthStatus = 'WARNING'
-                healthLabel = `Chậm lên đơn (${delayDays} ngày quá chu kỳ)`
+                healthLabel = `Chậm hơn chu kỳ (${delayDays} ngày)`
             } else {
                 healthStatus = 'AT_RISK'
-                healthLabel = `Nguy cơ rớt khách (${delayDays} ngày quá chu kỳ)`
+                healthLabel = `Quá hạn chu kỳ (${delayDays} ngày)`
             }
         } else {
             healthStatus = 'HEALTHY'
-            healthLabel = 'Khách mới lên 1 đơn gần đây'
+            healthLabel = 'Đã có 1 đơn gần đây'
         }
     }
 

@@ -274,11 +274,11 @@ export default async function DashboardPage(props: PageProps) {
                     }`}
                 >
                     <Users size={15} className={currentTab === 'customers' ? 'text-amber-400' : 'text-slate-400'} />
-                    <span>Hồ Sơ & Cơ Chế Giá Khách Hàng (Customer 360°)</span>
+                    <span>Khách Hàng & Bảng Giá Riêng</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
                         currentTab === 'customers' ? 'bg-amber-400/20 text-amber-300' : 'bg-amber-100 text-amber-800'
                     }`}>
-                        Bảng giá & Chiết khấu
+                        Giá riêng & Lịch sử mua
                     </span>
                 </Link>
             </div>
