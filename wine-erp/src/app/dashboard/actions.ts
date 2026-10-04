@@ -528,8 +528,8 @@ export async function getPLSummary(options?: DashboardFilterOptions) {
 
         let soRevenue = 0
         let soCOGS = 0
-        for (const so of monthOrders) {
-            for (const line of so.lines) {
+        for (const so of (monthOrders || [])) {
+            for (const line of so.lines || []) {
                 const qty = Number(line.qtyOrdered)
                 const price = Number(line.unitPrice)
                 const discPct = Number(line.lineDiscountPct)

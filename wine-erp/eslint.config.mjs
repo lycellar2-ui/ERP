@@ -14,16 +14,19 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
+    plugins: {
+      ...nextVitals[0].plugins,
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
+      "react/no-unescaped-entities": "warn",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      "react/no-unescaped-entities": "warn",
-      "prefer-const": "warn",
-      "@typescript-eslint/no-require-imports": "warn",
       "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/purity": "warn"
+      "react-hooks/purity": "warn",
+      "prefer-const": "warn",
+      "@typescript-eslint/no-require-imports": "warn"
     }
   }
 ]);

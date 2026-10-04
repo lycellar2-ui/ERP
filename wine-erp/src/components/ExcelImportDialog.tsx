@@ -191,6 +191,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 onDrop={handleDrop}
                                 onClick={() => inputRef.current?.click()}>
                                 <input ref={inputRef} type="file" className="hidden"
+                                    aria-label="Tải lên file Excel"
                                     accept=".xlsx,.xls"
                                     onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }} />
                                 <div className="flex flex-col items-center gap-3 text-center">

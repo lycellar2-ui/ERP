@@ -67,9 +67,9 @@ export default function PartnerLoginPage() {
                                 <Shield size={20} style={{ color: '#0891B2' }} />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold font-brand" style={{ color: '#0F172A' }}>
+                                <h2 className="text-lg font-bold font-brand" style={{ color: '#0F172A' }}>
                                     {partner.name}
-                                </h1>
+                                </h2>
                                 <p className="text-xs" style={{ color: '#64748B' }}>
                                     {PARTNER_TYPE[partner.type] ?? partner.type} • {partner.code}
                                 </p>

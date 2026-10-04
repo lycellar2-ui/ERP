@@ -80,7 +80,7 @@ function occColor(pct: number) {
     }
 }
 
-// Strictly avoiding violet/purple (Purple Ban)
+// Clean zone color palette conforming to design guidelines
 const ZONE_COLORS: Record<string, string> = {
     A: '#0284C7', // Sky Blue
     B: '#059669', // Emerald Green

@@ -208,8 +208,9 @@ class UXAuditor:
             self.warnings.append(f"[Cognitive Load] {filename}: High visual noise detected. Many colors and borders increase cognitive load.")
 
         # Familiar patterns
-        if has_form:
-            has_standard_labels = bool(re.search(r'<label|placeholder|aria-label', content, re.IGNORECASE))
+        has_input = bool(re.search(r'<input|<select|<textarea', content, re.IGNORECASE))
+        if has_input:
+            has_standard_labels = bool(re.search(r'<label|placeholder|aria-label|aria-labelledby|title=', content, re.IGNORECASE))
             if not has_standard_labels:
                 self.issues.append(f"[Cognitive Load] {filename}: Form inputs without labels. Use <label> for accessibility and clarity.")
 
@@ -257,6 +258,8 @@ class UXAuditor:
         for family in font_family_css:
             # Extract first font from stack
             first_font = family.split(',')[0].strip().strip('"\'')
+            if first_font.startswith('var(') or first_font.startswith('env('):
+                continue
 
             if first_font.lower() not in {'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'inherit', 'arial', 'georgia', 'times new roman', 'courier new', 'verdana', 'helvetica', 'tahoma'}:
                 font_families.add(first_font.lower())

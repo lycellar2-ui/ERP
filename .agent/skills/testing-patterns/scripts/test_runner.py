@@ -95,7 +95,8 @@ def run_tests(cmd: list, cwd: Path) -> dict:
             text=True,
             encoding='utf-8',
             errors='replace',
-            timeout=300  # 5 min timeout for tests
+            timeout=300,  # 5 min timeout for tests
+            shell=(sys.platform == 'win32')
         )
         
         result["output"] = proc.stdout[:3000] if proc.stdout else ""
@@ -105,15 +106,15 @@ def run_tests(cmd: list, cwd: Path) -> dict:
         # Try to parse test counts from output
         output = proc.stdout or ""
         
-        # Jest/Vitest pattern: "Tests: X passed, Y failed, Z total"
-        if "passed" in output.lower() and "failed" in output.lower():
+        # Jest/Vitest pattern: "Tests: X passed, Y failed, Z total" or "Tests  X passed"
+        if "passed" in output.lower():
             import re
             match = re.search(r'(\d+)\s+passed', output, re.IGNORECASE)
             if match:
                 result["tests_passed"] = int(match.group(1))
-            match = re.search(r'(\d+)\s+failed', output, re.IGNORECASE)
-            if match:
-                result["tests_failed"] = int(match.group(1))
+            match_fail = re.search(r'(\d+)\s+failed', output, re.IGNORECASE)
+            if match_fail:
+                result["tests_failed"] = int(match_fail.group(1))
             result["tests_run"] = result["tests_passed"] + result["tests_failed"]
         
         # Pytest pattern: "X passed, Y failed"

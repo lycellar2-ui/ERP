@@ -199,22 +199,22 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <p className="text-xs mb-1" style={{ color: '#64748B' }}>Giá tối thiểu (₫)</p>
-                            <input type="number" className="w-full px-3 py-2 rounded text-sm outline-none"
+                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Giá tối thiểu (₫)</label>
+                            <input type="number" aria-label="Giá tối thiểu" className="w-full px-3 py-2 rounded text-sm outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} />
                         </div>
                         <div>
-                            <p className="text-xs mb-1" style={{ color: '#64748B' }}>Giá tối đa (₫)</p>
-                            <input type="number" className="w-full px-3 py-2 rounded text-sm outline-none"
+                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Giá tối đa (₫)</label>
+                            <input type="number" aria-label="Giá tối đa" className="w-full px-3 py-2 rounded text-sm outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} />
                         </div>
                     </div>
 
                     <div>
-                        <p className="text-xs mb-1" style={{ color: '#64748B' }}>Ghi chú</p>
-                        <textarea className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
+                        <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Ghi chú</label>
+                        <textarea aria-label="Ghi chú" className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
                     </div>

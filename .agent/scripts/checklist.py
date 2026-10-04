@@ -26,6 +26,17 @@ import argparse
 from pathlib import Path
 from typing import List, Tuple, Optional
 
+# UTF-8 safety on Windows console
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
+KIT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 # ANSI colors for terminal output
 class Colors:
     HEADER = '\033[95m'
@@ -87,7 +98,7 @@ def run_script(name: str, script_path: Path, project_path: str, url: Optional[st
     print_step(f"Running: {name}")
     
     # Build command
-    cmd = ["python", str(script_path), project_path]
+    cmd = [sys.executable, str(script_path), project_path]
     if url and ("lighthouse" in script_path.name.lower() or "playwright" in script_path.name.lower()):
         cmd.append(url)
     
@@ -97,6 +108,8 @@ def run_script(name: str, script_path: Path, project_path: str, url: Optional[st
             cmd,
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
             timeout=300  # 5 minute timeout
         )
         
@@ -190,7 +203,9 @@ Examples:
     # Run core checks
     print_header("📋 CORE CHECKS")
     for name, script_path, required in CORE_CHECKS:
-        script = project_path / script_path
+        script = (project_path / script_path)
+        if not script.exists():
+            script = KIT_ROOT / script_path
         result = run_script(name, script, str(project_path))
         results.append(result)
         
@@ -204,7 +219,9 @@ Examples:
     if args.url and not args.skip_performance:
         print_header("⚡ PERFORMANCE CHECKS")
         for name, script_path, required in PERFORMANCE_CHECKS:
-            script = project_path / script_path
+            script = (project_path / script_path)
+            if not script.exists():
+                script = KIT_ROOT / script_path
             result = run_script(name, script, str(project_path), args.url)
             results.append(result)
     

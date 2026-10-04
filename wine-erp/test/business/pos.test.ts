@@ -4,8 +4,9 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/lib/utils', () => ({ generateSoNo: vi.fn((n) => `POS-SO-${n}`) }))
 vi.mock('@/lib/session', () => ({
-    requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
-    getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+    requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com', permissions: ['SLS:WRITE', 'SLS:READ', 'TAX:WRITE', 'TAX:CREATE'], roles: ['ACCOUNTANT'] }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com', permissions: ['SLS:WRITE', 'SLS:READ', 'TAX:WRITE', 'TAX:CREATE'], roles: ['ACCOUNTANT'] }),
+    requireAuth: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com', permissions: ['TAX:CREATE', 'TAX:WRITE', 'FIN:WRITE', 'SYS:ADMIN'], roles: ['ACCOUNTANT'] }),
 }))
 
 const mockTx = {
@@ -13,7 +14,8 @@ const mockTx = {
     salesOrderLine: { create: vi.fn() },
     aRInvoice: { create: vi.fn(), update: vi.fn() },
     aRPayment: { create: vi.fn() },
-    stockLot: { findMany: vi.fn(), update: vi.fn() },
+    stockLot: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    warehouse: { findFirst: vi.fn().mockResolvedValue({ id: 'wh-1', name: 'Kho GVM', allowSales: true }) },
     deliveryOrder: { create: vi.fn() },
     deliveryOrderLine: { create: vi.fn() },
     journalEntry: { count: vi.fn(), create: vi.fn() },
@@ -33,6 +35,7 @@ const mockPrisma = {
     priceList: { findFirst: vi.fn() },
     priceListLine: { findFirst: vi.fn(), findMany: vi.fn() },
     legalEntity: { findUnique: vi.fn(), findFirst: vi.fn() },
+    warehouse: { findFirst: vi.fn().mockResolvedValue({ id: 'wh-1', name: 'Kho GVM', allowSales: true }) },
     aRInvoice: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
     pOSShift: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
@@ -105,7 +108,7 @@ describe('POS-01: processPOSSale', () => {
             data: expect.objectContaining({ totalAmount: 900000, status: 'PAID' })
         }))
         // Verifies StockLot updated
-        expect(mockTx.stockLot.update).toHaveBeenCalled()
+        expect(mockTx.stockLot.updateMany).toHaveBeenCalled()
     })
 })
 

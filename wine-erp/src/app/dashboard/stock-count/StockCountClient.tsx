@@ -91,24 +91,6 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setShowAssignModal(true)
     }
 
-    const handleSaveZoneAssignments = async () => {
-        if (!assignSessionDetail) return
-        setIsSavingAssignments(true)
-        const arr = Object.entries(zoneAssignments).map(([zone, userId]) => ({
-            zone,
-            assignedToId: userId || null
-        }))
-        const res = await assignStaffToZones(assignSessionDetail.id, arr)
-        setIsSavingAssignments(false)
-
-        if (res.success) {
-            setShowAssignModal(false)
-            fetchData()
-        } else {
-            alert(res.error || 'Không thể lưu phân công vị trí')
-        }
-    }
-
     // Form inputs for creation
     const [warehouses, setWarehouses] = useState<Array<{ id: string; code: string; name: string }>>([])
     const [staffList, setStaffList] = useState<Array<{ id: string; name: string; email: string }>>([])
@@ -127,11 +109,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [createError, setCreateError] = useState('')
 
-    // Load initial dropdown options
-    useEffect(() => {
-        loadOptions()
-        fetchData()
-    }, [])
+    const fetchLocationOptions = async (whId: string) => {
+        const locs = await getWarehouseLocationOptions(whId)
+        setLocationOptions(locs)
+    }
 
     const loadOptions = async () => {
         const [whRes, staffRes] = await Promise.all([
@@ -146,11 +127,6 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         }
     }
 
-    const fetchLocationOptions = async (whId: string) => {
-        const locs = await getWarehouseLocationOptions(whId)
-        setLocationOptions(locs)
-    }
-
     const fetchData = async () => {
         setIsLoading(true)
         const [newList, newStats] = await Promise.all([
@@ -161,6 +137,30 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setStats(newStats)
         setIsLoading(false)
     }
+
+    const handleSaveZoneAssignments = async () => {
+        if (!assignSessionDetail) return
+        setIsSavingAssignments(true)
+        const arr = Object.entries(zoneAssignments).map(([zone, userId]) => ({
+            zone,
+            assignedToId: userId || null
+        }))
+        const res = await assignStaffToZones(assignSessionDetail.id, arr)
+        setIsSavingAssignments(false)
+
+        if (res.success) {
+            setShowAssignModal(false)
+            fetchData()
+        } else {
+            alert(res.error || 'Không thể lưu phân công vị trí')
+        }
+    }
+
+    // Load initial dropdown options
+    useEffect(() => {
+        loadOptions()
+        fetchData()
+    }, [])
 
     const handleOpenDetail = async (sessionId: string) => {
         const detail = await getStockCountDetail(sessionId)

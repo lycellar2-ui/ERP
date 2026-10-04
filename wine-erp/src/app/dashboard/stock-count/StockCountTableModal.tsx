@@ -41,6 +41,14 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
     const [zoneReport, setZoneReport] = useState<any>(null)
     const [isCompletingZone, setIsCompletingZone] = useState(false)
 
+    const loadDetail = async (showSpinner = true) => {
+        if (showSpinner) setIsLoading(true)
+        const d = await getStockCountDetail(sessionId)
+        setDetail(d)
+        setLastSyncTime(new Date())
+        if (showSpinner) setIsLoading(false)
+    }
+
     useEffect(() => {
         loadDetail()
     }, [sessionId])
@@ -57,14 +65,6 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
         }, 5000)
         return () => clearInterval(interval)
     }, [sessionId, isLiveSync])
-
-    const loadDetail = async (showSpinner = true) => {
-        if (showSpinner) setIsLoading(true)
-        const d = await getStockCountDetail(sessionId)
-        setDetail(d)
-        setLastSyncTime(new Date())
-        if (showSpinner) setIsLoading(false)
-    }
 
     const handleStartSession = async () => {
         setIsLoading(true)

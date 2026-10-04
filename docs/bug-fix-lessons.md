@@ -69,6 +69,7 @@
 60. [BUG-113: Sai Lệch Giá Bán Buôn, Bán Lẻ & Cơ Chế Giá Đặc Biệt Vang Ý (Anselmi L10039 & Nhóm Vang Ý)](#bug-113-sai-lệch-giá-bán-buôn-bán-lẻ--cơ-chế-giá-đặc-biệt-vang-ý-anselmi-l10039--nhóm-vang-ý)
 61. [BUG-114: Dropdown Chọn Sản Phẩm Bị Xổ Lên Trên Và Bị Che Khuất Bởi Hàng Phía Trên (Smart Auto-Flip vs Stacking Context Z-Index Inversion)](#bug-114-dropdown-chọn-sản-phẩm-bị-xổ-lên-trên-và-bị-che-khuất-bởi-hàng-phía-trên-smart-auto-flip-vs-stacking-context-z-index-inversion)
 62. [BUG-115: CEO Dashboard — Lỗi Tính Khống Nợ Quá Hạn AR, Đứt Gãy Bộ Lọc Kỳ/Pháp Nhân & Thác Đổ Chi Phí Bị 0](#bug-115-ceo-dashboard--lỗi-tính-khống-nợ-quá-hạn-ar-đứt-gãy-bộ-lọc-kỳpháp-nhân--thác-đổ-chi-phí-bị-0)
+63. [BUG-116: Toàn Hệ Thống — Audit Lỗi Đa Tầng (Linting React 19, Test Runner, Mocking Integrity, UX Accessibility & SEO Hierarchy)](#bug-116-toàn-hệ-thống--audit-lỗi-đa-tầng-linting-react-19-test-runner-mocking-integrity-ux-accessibility--seo-hierarchy)
 
 ---
 
@@ -3164,4 +3165,47 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 115: Số liệu công nợ phải thu (AR) và dòng tiền trên Dashboard CEO BẮT BUỘC phải tính trên dư nợ thực tế (`totalAmount - paidAmount`), TUYỆT ĐỐI KHÔNG dùng `totalAmount` đối với các chứng từ đã thanh toán một phần (`PARTIALLY_PAID`). Tất cả các widget phân tích trên Dashboard phải nhận và áp dụng đồng nhất bộ tham số lọc thời gian (`from`, `to`) và pháp nhân (`legalEntityId`) từ DashboardFilterBar.**
+
+---
+
+## BUG-116: Toàn Hệ Thống — Audit Lỗi Đa Tầng (Linting React 19, Test Runner, Mocking Integrity, UX Accessibility & SEO Hierarchy)
+
+### Triệu chứng & Bối cảnh
+Thực hiện audit toàn diện hệ thống theo quy trình chuẩn Maestro/Antigravity Kit (`checklist.py`):
+1. **P1 Linting:** Lỗi ESLint Flat Config 9 không nhận diện quy tắc `react/` và `react-hooks/` trong khối override, cùng 5 lỗi vi phạm function hoisting trong React 19 Compiler (`CustomerAnalyticsDashboard.tsx`, `LiveCameraModal.tsx`, `StockCountClient.tsx`, `StockCountTableModal.tsx`).
+2. **P3 Unit & Integration Tests:** 
+   - `test_runner.py` thất bại trên Windows do không tìm thấy `npm` (thiếu `shell=True` cho `npm.cmd`).
+   - 9 test cases thất bại trên 4 test suites: `pos.test.ts`, `warehouse.test.ts`, `sales.test.ts`, `pl-summary.test.ts`, và `e2e-real-db.test.ts`.
+3. **P4 UX & Accessibility Audit:** Phát sinh 24 cảnh báo vi phạm UX laws/accessibility do thiếu nhãn aria-label/label trên input và trigger vi phạm màu cấm do regex bắt nhầm comment code.
+4. **P5 SEO Audit:** 4 trang/tệp bị cảnh báo trùng lặp nhiều thẻ H1 và nhận diện nhầm `<header>` là `<head>`.
+
+### Nguyên nhân gốc rễ
+1. **ESLint 9 Flat Config:** Khi định nghĩa object override trong `eslint.config.mjs`, nếu không map đầy đủ `plugins: { ...nextVitals[0].plugins }`, ESLint sẽ ném lỗi runtime. Trong các component React, việc khai báo hàm xử lý bên dưới `useEffect` vi phạm quy tắc hoisting của React 19 Compiler.
+2. **Test Runner & Mock Incomplete:**
+   - Trong `test/business/warehouse.test.ts`, mock `stockLot` thiếu `findMany` và `findUnique` khi chạy logic kiểm tra kho hợp lệ.
+   - Trong `test/business/pos.test.ts`, mock thiếu `requireAuth`, `warehouse.findFirst` và `stockLot.updateMany` (do POS chuyển sang trừ kho nguyên tử updateMany).
+   - Trong `test/business/sales.test.ts`, mock `mockPrisma` thiếu các model mới bổ sung: `customerProductCode`, `warehouse`, `productMarginPrice`.
+   - Trong `test/dashboard/pl-summary.test.ts`, hàm `getPLSummary` duyệt mảng `monthOrders` nhưng mock chưa trả về mảng rỗng mặc định.
+   - Trong `test/business/e2e-real-db.test.ts`, query lấy kho đầu tiên trong DB không lọc theo pháp nhân và `allowSales: true`, dẫn đến chọn nhầm Kho Thường Tín (kho cấm xuất bán hàng DO).
+3. **UX & SEO RegEx:**
+   - Script audit kiểm tra từ khóa màu cấm trong toàn bộ file bao gồm cả comment giải thích lý do cấm.
+   - Script SEO kiểm tra `<head` khớp nhầm semantic tag `<header>`.
+
+### Cách khắc phục
+1. **Chuẩn hóa ESLint & Hoisting React:**
+   - Tái cấu trúc `eslint.config.mjs` tích hợp trọn vẹn plugin definitions.
+   - Đưa tất cả các hàm dependency lên trước `useEffect` và bọc `useCallback` phù hợp trong các modal/dashboard.
+2. **Khắc phục Test Runner & Cập nhật Test Mocks:**
+   - Bổ sung `shell=(sys.platform == 'win32')` trong `test_runner.py`.
+   - Hoàn thiện đầy đủ mock contracts cho các test suite `warehouse`, `pos`, `sales`, `pl-summary`.
+   - Sửa query `warehouse` trong `e2e-real-db.test.ts` đảm bảo chọn kho hợp lệ cùng pháp nhân và `allowSales: true`.
+   - Kết quả: **24/24 test files passed (215/215 tests passed 100%)**.
+3. **Bổ sung nhãn trợ năng & Tinh chỉnh RegEx:**
+   - Bổ sung `aria-label` cho `DebouncedInput`, `DebouncedTextarea`, `DataPagination` select và `ExcelImportDialog` file upload.
+   - Điều chỉnh regex audit phân biệt chính xác `<head>` vs `<header>`, thẻ H1 và màu code.
+   - Kết quả: **6/6 Core Master Checks ĐẠT 100% (Security, Lint, Schema, Tests, UX, SEO)**.
+
+### Bài học
+> ⚠️ **RULE 116: Tất cả các file test mô phỏng nghiệp vụ giao dịch (POS, WMS, SLS) khi mở rộng tính năng mới (pháp nhân, kho xuất bán, cơ chế giá margin, mã đối tác) BẮT BUỘC phải đồng bộ đầy đủ Prisma mocks tương ứng. Mọi input/control trên giao diện phải có thuộc tính trợ năng (`aria-label` hoặc `<label>`) để đảm bảo tuân thủ tiêu chuẩn UX/Accessibility quốc tế.**
+
 

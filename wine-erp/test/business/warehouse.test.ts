@@ -20,7 +20,7 @@ vi.mock('@/app/dashboard/qr-codes/actions', () => ({
 const mockTx = {
     goodsReceipt: { create: vi.fn(), update: vi.fn() },
     goodsReceiptLine: { create: vi.fn() },
-    stockLot: { create: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
+    stockLot: { create: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
     purchaseOrderLine: { findMany: vi.fn() },
     deliveryOrder: { create: vi.fn(), update: vi.fn(), count: vi.fn() },
     deliveryOrderLine: { create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
@@ -234,6 +234,11 @@ describe('createDeliveryOrder', () => {
         mockPrisma.salesOrder.findUnique.mockResolvedValue({ id: 'so-1', status: 'CONFIRMED' })
         mockPrisma.deliveryOrder.count.mockResolvedValue(3)
         mockTx.deliveryOrder.create.mockResolvedValue({ id: 'do-new', doNo: 'DO-2603-0004' })
+        mockTx.stockLot.findUnique.mockResolvedValue({
+            id: 'lot-1',
+            lotNo: 'L-01',
+            location: { warehouseId: 'wh-1' },
+        })
 
         const result = await createDeliveryOrder({
             soId: 'so-1', warehouseId: 'wh-1',

@@ -104,11 +104,23 @@ describe('E2E Real Database Flow: New Product, Customer, Sales Order, and Delive
         }
         producerId = producer.id
 
-        // 3. Warehouse
-        let warehouse = await prisma.warehouse.findFirst()
+        // 3. Warehouse (must belong to same legalEntity and allowSales)
+        let warehouse = await prisma.warehouse.findFirst({
+            where: {
+                legalEntityId,
+                allowSales: true,
+                code: { not: 'WH-TA-TT' }
+            }
+        })
         if (!warehouse) {
             warehouse = await prisma.warehouse.create({
-                data: { code: 'E2E-WH-1', name: 'E2E Warehouse 1', address: '123 E2E St' }
+                data: {
+                    code: `E2E-WH-${Date.now().toString().slice(-4)}`,
+                    name: 'E2E Warehouse 1',
+                    address: '123 E2E St',
+                    legalEntityId,
+                    allowSales: true,
+                }
             })
         }
         warehouseId = warehouse.id

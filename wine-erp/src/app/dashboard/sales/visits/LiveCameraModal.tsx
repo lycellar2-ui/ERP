@@ -40,12 +40,12 @@ export function LiveCameraModal({
     const [cameraError, setCameraError] = useState<string | null>(null)
     const [starting, setStarting] = useState(true)
 
-    const stopActiveStream = () => {
+    const stopActiveStream = useCallback(() => {
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop())
             streamRef.current = null
         }
-    }
+    }, [])
 
     const startCamera = useCallback(async (mode: 'environment' | 'user') => {
         setStarting(true)
@@ -94,7 +94,7 @@ export function LiveCameraModal({
             }
         }
         setStarting(false)
-    }, [])
+    }, [locale, stopActiveStream])
 
     useEffect(() => {
         startCamera(facingMode)

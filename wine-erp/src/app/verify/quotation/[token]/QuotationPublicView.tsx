@@ -255,7 +255,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(91,168,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <CheckCircle2 size={48} style={{ color: '#5BA88A' }} />
                             </div>
-                            <h1 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, letterSpacing: '0.02em' }}>Thank You!</h1>
+                            <h2 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, letterSpacing: '0.02em' }}>Thank You!</h2>
                             <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
                                 The proposal <strong style={{ color: '#0891B2' }}>{data.quotationNo}</strong> has been successfully approved.
                                 Our LY's Cellars team will contact you shortly to coordinate logistics and delivery.
@@ -266,7 +266,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(139,26,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <XCircle size={48} style={{ color: '#8B1A2E' }} />
                             </div>
-                            <h1 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16 }}>Feedback Recorded</h1>
+                            <h2 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16 }}>Feedback Recorded</h2>
                             <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
                                 Your request to decline this proposal has been successfully recorded. We will quickly adjust the commercial terms and send a revised offer as soon as possible.
                             </p>

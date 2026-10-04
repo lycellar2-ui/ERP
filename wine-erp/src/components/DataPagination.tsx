@@ -38,7 +38,7 @@ export function DataPagination({
                     Hiển thị <span style={{ color: '#475569' }}>{start}–{end}</span> trong <span style={{ color: '#475569' }}>{total.toLocaleString()}</span>
                 </p>
                 {onPageSizeChange && (
-                    <select value={pageSize} onChange={e => onPageSizeChange(Number(e.target.value))}
+                    <select aria-label="Số dòng trên mỗi trang" value={pageSize} onChange={e => onPageSizeChange(Number(e.target.value))}
                         className="px-2 py-1 text-xs outline-none cursor-pointer"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', borderRadius: '4px' }}>
                         {pageSizeOptions.map(s => <option key={s} value={s}>{s} / trang</option>)}

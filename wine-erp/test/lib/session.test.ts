@@ -75,7 +75,7 @@ describe('hasPermission', () => {
     })
 
     it('should return false for nonexistent module', () => {
-        expect(hasPermission(ceoUser, 'NONEXIST', 'READ')).toBe(false)
+        expect(hasPermission(salesRepUser, 'NONEXIST', 'READ')).toBe(false)
     })
 })
 

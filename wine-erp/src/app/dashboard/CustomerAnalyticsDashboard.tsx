@@ -108,6 +108,22 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
     const searchRef = useRef<HTMLDivElement>(null)
 
+    const handleSearchChange = (val: string) => {
+        setSearchQuery(val)
+        setIsDropdownOpen(true)
+        startSearch(async () => {
+            const results = await searchCustomersForDashboard(val)
+            setSearchResults(results)
+        })
+    }
+
+    const handleSelectCustomer = (id: string, name?: string) => {
+        setSelectedCustomerId(id)
+        setIsDropdownOpen(false)
+        if (name) setSearchQuery(name)
+        setExpandedSoId(null)
+    }
+
     // Close dropdown on outside click
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -146,22 +162,6 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
             isCancelled = true
         }
     }, [selectedCustomerId, timeRange])
-
-    const handleSearchChange = (val: string) => {
-        setSearchQuery(val)
-        setIsDropdownOpen(true)
-        startSearch(async () => {
-            const results = await searchCustomersForDashboard(val)
-            setSearchResults(results)
-        })
-    }
-
-    const handleSelectCustomer = (id: string, name?: string) => {
-        setSelectedCustomerId(id)
-        setIsDropdownOpen(false)
-        if (name) setSearchQuery(name)
-        setExpandedSoId(null)
-    }
 
     // Filter orders
     const filteredOrders = (historyData?.orders ?? []).filter(o => {

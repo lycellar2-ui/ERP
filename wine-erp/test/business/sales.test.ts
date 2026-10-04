@@ -27,6 +27,9 @@ const mockPrisma = {
     aRInvoice: { aggregate: vi.fn(), findMany: vi.fn() },
     stockLot: { findMany: vi.fn() },
     customer: { findUnique: vi.fn(), findMany: vi.fn() },
+    customerProductCode: { findMany: vi.fn().mockResolvedValue([]) },
+    warehouse: { findFirst: vi.fn().mockResolvedValue({ id: 'wh-1' }) },
+    productMarginPrice: { findMany: vi.fn().mockResolvedValue([]) },
     user: { findMany: vi.fn() },
     $transaction: vi.fn(async (ops: any) => Promise.all(ops)),
 }
@@ -52,6 +55,9 @@ beforeEach(() => {
     mockPrisma.salesOrder.findUnique.mockResolvedValue(null)
     mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-new', soNo: `SO-${currentYYMM}-0043`, lines: [] })
     mockPrisma.user.findMany.mockResolvedValue([])
+    mockPrisma.customerProductCode.findMany.mockResolvedValue([])
+    mockPrisma.warehouse.findFirst.mockResolvedValue({ id: 'wh-1' })
+    mockPrisma.productMarginPrice.findMany.mockResolvedValue([])
 })
 
 // ═══════════════════════════════════════════════════

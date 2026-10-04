@@ -68,6 +68,7 @@ export const DebouncedTextarea = memo(forwardRef<HTMLTextAreaElement, DebouncedT
                 value={localValue}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                aria-label={rest['aria-label'] || rest.placeholder || 'Text input'}
                 {...rest}
             />
         )
@@ -135,6 +136,7 @@ export const DebouncedInput = memo(forwardRef<HTMLInputElement, DebouncedInputPr
                 value={localValue}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                aria-label={rest['aria-label'] || rest.placeholder || 'Search input'}
                 {...rest}
             />
         )

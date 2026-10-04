@@ -24,7 +24,10 @@ vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
 const { getPLSummary, getARAgingChart, approveSO, rejectSO } = await import('@/app/dashboard/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.salesOrder.findMany.mockResolvedValue([])
+})
 
 describe('getPLSummary', () => {
     it('should calculate revenue, COGS, gross/net profit correctly', async () => {
