@@ -149,6 +149,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         }
     }
 
+    const initialFormRef = useRef<CustomerInput | null>(null)
+
     useEffect(() => {
         if (!open) return
 
@@ -160,7 +162,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             setLoading(true)
             getCustomerById(editingId).then(data => {
                 if (data) {
-                    setForm({
+                    const loadedForm: CustomerInput = {
                         code: data.code,
                         name: data.name,
                         shortName: data.shortName,
@@ -192,13 +194,17 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         orderChannel: data.orderChannel as any,
                         basePriceType: (data as any).basePriceType || 'BY_CHANNEL',
                         defaultDiscountPct: Number((data as any).defaultDiscountPct || 0),
-                    })
+                    }
+                    setForm(loadedForm)
+                    initialFormRef.current = loadedForm
                     setOfficialCodeInput('')
                     setApprovalError('')
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 })
+            const newForm: CustomerInput = { paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 }
+            setForm(newForm)
+            initialFormRef.current = null
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
@@ -286,7 +292,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     }, [form.taxId, form.phone, form.name, form.parentId, open, editingId])
 
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
-    const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+    const inputCls = "w-full px-3.5 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-all placeholder:text-slate-400"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handlePrintCustomer = () => {
@@ -556,33 +562,66 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         }
     }
 
+    const handleClose = () => {
+        let isDirty = false
+        if (!isEdit) {
+            isDirty = Boolean(form.name || form.taxId || form.phone || form.address)
+        } else if (initialFormRef.current) {
+            isDirty = Object.keys(form).some(k => {
+                const key = k as keyof CustomerInput
+                const curVal = form[key] ?? null
+                const initVal = initialFormRef.current?.[key] ?? null
+                return curVal !== initVal
+            })
+        }
+        if (isDirty) {
+            if (window.confirm('Bạn có thông tin chưa lưu. Bạn có chắc chắn muốn đóng?')) {
+                onClose()
+            }
+        } else {
+            onClose()
+        }
+    }
+
+    useEffect(() => {
+        if (!open) return
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                handleClose()
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [open, form, isEdit])
+
     return (
         <>
             <div className="fixed inset-0 z-40 transition-opacity duration-300"
                 style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-                onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
-                style={{ width: 'min(560px, 95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                onClick={handleClose} />
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300 w-full sm:w-[560px] max-w-full shadow-2xl"
+                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
                             <Users size={16} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
+                            <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#0F172A' }}>
                                 {isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
                             </h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>
+                            <p className="text-xs hidden sm:block" style={{ color: '#64748B' }}>
                                 {isEdit ? 'Điền thông tin đầy đủ về khách hàng' : 'Khách sạn, nhà hàng, phân phối, VIP retail'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#64748B' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}><X size={18} /></button>
+                    <button onClick={handleClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all hover:bg-slate-200" title="Đóng (Esc)"><X size={18} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
                     {loading ? (
                         <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                     ) : (
@@ -645,7 +684,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             )}
 
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
                                     <div className="flex gap-2">
@@ -661,7 +700,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 onClick={() => handleAutoGenerateCode()}
                                                 disabled={generatingCode}
                                                 title="Tạo mã tự động theo chuẩn Master Data"
-                                                className="px-2.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-[#0891B2] border border-slate-200 whitespace-nowrap"
+                                                className="px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-[#0891B2] border border-slate-200 whitespace-nowrap shrink-0 min-h-[42px] sm:min-h-0"
                                                 style={{ background: '#FFFFFF' }}
                                             >
                                                 {generatingCode ? <Loader2 size={13} className="animate-spin" /> : '🎲 Sinh mã'}
@@ -805,7 +844,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
                                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại thực thể</label>
                                             <select className={inputCls} style={inputStyle} value={form.entityType ?? 'RESTAURANT'}
@@ -823,7 +862,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             </select>
                                         </div>
                                         {form.entityType === 'COMPANY' ? (
-                                            <div className="flex items-center pt-6">
+                                            <div className="flex items-center pt-2 sm:pt-6">
                                                 <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#0F172A' }}>
                                                     <input type="checkbox" checked={form.allowDirectSO ?? false}
                                                         onChange={e => set('allowDirectSO', e.target.checked)}
@@ -856,7 +895,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên viết tắt</label>
                                     <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="PH Saigon"
@@ -876,14 +915,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                             {/* VAT INVOICE SECTION */}
                             <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.25)' }}>
-                                <div className="flex items-center justify-between flex-wrap gap-1">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
                                     <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#D4A853' }}>
                                         <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
                                     </p>
                                     {form.parentId && (() => {
                                         const parent = parentCandidates.find(p => p.id === form.parentId)
                                         return (
-                                            <span className="text-[10px] font-medium text-amber-300 bg-amber-950/70 px-2 py-0.5 rounded border border-amber-700/50">
+                                            <span className="text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">
                                                 ℹ️ {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
                                             </span>
                                         )
@@ -900,9 +939,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <div>
-                                        <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center justify-between mb-1.5 gap-2">
                                             <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
                                                 Mã Số Thuế VAT
                                             </label>
@@ -910,7 +949,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 type="button"
                                                 disabled={taxLookupLoading}
                                                 onClick={handleLookupTax}
-                                                className="px-2 py-0.5 rounded text-[11px] font-extrabold bg-teal-50 text-[#0891B2] hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95"
+                                                className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-[#0891B2] hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
                                                 title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
                                             >
                                                 {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
@@ -980,7 +1019,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ & Địa Chỉ</p>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
                                     <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="Nguyễn Văn A"
@@ -1011,7 +1050,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     onChange={e => set('address', e.target.value || null)}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phường/Xã</label>
                                     <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder="Phường Bến Nghé"
@@ -1036,7 +1075,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên người thu mua</label>
                                     <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
@@ -1065,7 +1104,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người nhận hàng</label>
                                     <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
@@ -1098,7 +1137,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </Link>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <div>
                                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
                                             Bảng giá gốc áp dụng
@@ -1142,7 +1181,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Tín Dụng & Thanh Toán</p>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Điều khoản</label>
                                     <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET30'}
@@ -1185,32 +1224,37 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0' }}>
-                    {isEdit && (
-                        <div className="mr-auto flex gap-2">
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                    {isEdit ? (
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                             <button onClick={handlePrintCustomer} type="button"
-                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-slate-200 text-[#D4A853] hover:bg-[#D4A853]/10">
+                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 text-[#D4A853] hover:bg-[#D4A853]/10 min-h-[42px] sm:min-h-0">
                                 <Printer size={14} /> In Hồ Sơ
                             </button>
                             <button onClick={handleExportExcelForm} disabled={exportingExcel} type="button"
-                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-slate-200 text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50">
+                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50 min-h-[42px] sm:min-h-0">
                                 {exportingExcel ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                                 Xuất Excel
                             </button>
                         </div>
-                    )}
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}>Hủy</button>
-                    <button onClick={handleSave} disabled={saving || loading}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => !saving && (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo KH'}
-                    </button>
+                    ) : <div className="hidden sm:block" />}
+                    
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button onClick={handleClose} type="button" className="flex-1 sm:flex-initial px-4 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px] sm:min-h-0 flex items-center justify-center"
+                            style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}>
+                            Hủy
+                        </button>
+                        <button onClick={handleSave} disabled={saving || loading} type="button"
+                            className="flex-[2] sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all disabled:opacity-60 min-h-[44px] sm:min-h-0"
+                            style={{ background: '#0891B2', color: '#FFFFFF' }}
+                            onMouseEnter={e => !saving && (e.currentTarget.style.background = '#0E7490')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '#0891B2')}>
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo KH'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </>
@@ -1395,10 +1439,10 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                         <Upload size={16} /> Import Excel
                     </button>
                     <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
+                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 min-h-[44px] md:min-h-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        onMouseEnter={e => (e.currentTarget.style.background = '#0E7490')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#0891B2')}>
                         <Plus size={16} /> Thêm Khách Hàng
                     </button>
                 </div>
