@@ -25,10 +25,23 @@ function formatCompactVND(amount: number): string {
     return `${amount}`
 }
 
+function translateDayLabel(label: string, isEn: boolean): string {
+    if (!isEn || !label) return label
+    return label
+        .replace('Thứ 2', 'Mon')
+        .replace('Thứ 3', 'Tue')
+        .replace('Thứ 4', 'Wed')
+        .replace('Thứ 5', 'Thu')
+        .replace('Thứ 6', 'Fri')
+        .replace('Thứ 7', 'Sat')
+        .replace('Chủ Nhật', 'Sun')
+        .replace('CN', 'Sun')
+}
+
 export function DailyRevenueChart({ data }: Props) {
     const [hoveredItem, setHoveredItem] = useState<DailyRevenueItem | null>(null)
     const { items, totalRevenue, totalOrders, avgOrderValue, peakDay } = data
-    const { locale, isEn } = useAppLocale()
+    const { locale, isEn, formatCurrency } = useAppLocale()
     const t = getDashboardDictionary(locale)
 
     const maxRevenue = Math.max(...items.map((it) => it.revenue), 1)
@@ -55,8 +68,8 @@ export function DailyRevenueChart({ data }: Props) {
                     <div className="flex items-center gap-1.5 text-xs text-[#D4A853] bg-[#D4A853]/10 px-2.5 py-1 rounded-md border border-[#D4A853]/25 font-medium">
                         <Award size={13} />
                         <span>{t.dailyChart.peakDay}</span>
-                        <strong>{peakDay.label}</strong>
-                        <span>({formatVND(peakDay.revenue)})</span>
+                        <strong>{translateDayLabel(peakDay.label, isEn)}</strong>
+                        <span>({formatCurrency(peakDay.revenue)})</span>
                     </div>
                 )}
             </div>
@@ -68,7 +81,7 @@ export function DailyRevenueChart({ data }: Props) {
                         {t.dailyChart.totalRevenue}
                     </span>
                     <span className="text-base font-bold text-[#0891B2] font-mono">
-                        {formatVND(totalRevenue)}
+                        {formatCurrency(totalRevenue)}
                     </span>
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
@@ -84,7 +97,7 @@ export function DailyRevenueChart({ data }: Props) {
                         {t.dailyChart.avgOrderValue}
                     </span>
                     <span className="text-base font-bold text-[#D4A853] font-mono">
-                        {formatVND(avgOrderValue)}
+                        {formatCurrency(avgOrderValue)}
                     </span>
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
@@ -92,7 +105,7 @@ export function DailyRevenueChart({ data }: Props) {
                         {t.dailyChart.peakDate}
                     </span>
                     <span className="text-base font-bold text-[#5BA88A] font-mono truncate block">
-                        {peakDay ? peakDay.label : '—'}
+                        {peakDay ? translateDayLabel(peakDay.label, isEn) : '—'}
                     </span>
                 </div>
             </div>
@@ -107,7 +120,7 @@ export function DailyRevenueChart({ data }: Props) {
                 <div className="bg-white p-5 rounded-lg border border-slate-200 text-center space-y-3">
                     <p className="text-xs text-slate-600 font-medium">
                         {isEn ? 'Date details' : 'Chi tiết ngày'}{' '}
-                        <strong className="text-slate-900">{items[0].label}</strong> ({items[0].dayOfWeek})
+                        <strong className="text-slate-900">{items[0].label}</strong> ({translateDayLabel(items[0].dayOfWeek, isEn)})
                     </p>
                     <div className="flex items-center justify-center gap-6">
                         <div>
@@ -115,7 +128,7 @@ export function DailyRevenueChart({ data }: Props) {
                                 {isEn ? 'Day Revenue' : 'Doanh thu ngày'}
                             </span>
                             <span className="text-2xl font-bold text-[#0891B2] font-mono">
-                                {formatVND(items[0].revenue)}
+                                {formatCurrency(items[0].revenue)}
                             </span>
                         </div>
                         <div className="h-8 w-px bg-[#E2E8F0]" />
@@ -209,7 +222,7 @@ export function DailyRevenueChart({ data }: Props) {
                             <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-slate-900">
-                                        {hoveredItem.dayOfWeek}, {hoveredItem.date}
+                                        {translateDayLabel(hoveredItem.dayOfWeek, isEn)}, {hoveredItem.date}
                                     </span>
                                     {hoveredItem.isWeekend && (
                                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#D4A853]/15 text-[#D4A853] font-medium">
@@ -223,7 +236,7 @@ export function DailyRevenueChart({ data }: Props) {
                                         <strong className="text-slate-900">{hoveredItem.orderCount}</strong>
                                     </span>
                                     <span className="text-[#0891B2] font-bold text-sm font-mono">
-                                        {formatVND(hoveredItem.revenue)}
+                                        {formatCurrency(hoveredItem.revenue)}
                                     </span>
                                 </div>
                             </div>

@@ -120,6 +120,7 @@ export const DASHBOARD_I18N = {
             invoicesCount: 'hóa đơn',
             totalDebt: 'tổng nợ',
             overdueDebt: 'quá hạn',
+            totalOutstanding: 'Tổng Công Nợ',
             buckets: {
                 notDue: 'Chưa đến hạn',
                 '1_30': '1–30 ngày',
@@ -139,6 +140,73 @@ export const DASHBOARD_I18N = {
             grossProfitLabel: 'Lãi gộp',
             channelTitle: 'Cơ Cấu Doanh Thu Kênh Phân Phối',
             totalChannelSales: 'Tổng Doanh Thu Kênh',
+            monthTitle: 'Top Tháng Này',
+            periodTitle: 'Top Bán Hàng Trong Kỳ',
+        },
+
+        // Operations & Containers
+        containers: {
+            title: 'Container Đang Về',
+            empty: 'Không có container đang về',
+            eta: 'ETA',
+            statuses: {
+                BOOKED: 'Đã đặt',
+                ON_VESSEL: 'Trên biển',
+                ARRIVED_PORT: 'Sắp đến cảng',
+                CUSTOMS_CLEARED: 'Đã thông quan',
+                DELIVERED_TO_WAREHOUSE: 'Đã về kho',
+            },
+        },
+
+        // Approvals Hub
+        approvals: {
+            title: 'Chờ CEO Duyệt',
+            viewAll: 'Xem tất cả →',
+            noPending: 'Không có mục nào chờ duyệt',
+            reviewAndApprove: 'Xem & Duyệt',
+            step: 'Bước',
+            approve: 'Duyệt',
+            reject: 'Từ Chối',
+        },
+
+        // In-depth Analysis
+        inDepth: {
+            title: 'Phân Tích Chuyên Sâu',
+            monthlyKpiTargets: 'KPI Tháng Này',
+            achieved: 'đạt',
+            onTrack: 'Đạt',
+            atRisk: 'Cận',
+            behind: 'Chậm',
+            revenueYoY: 'Doanh Thu',
+        },
+
+        // Compliance
+        compliance: {
+            title: 'Cảnh Báo Tuân Thủ',
+            documents: 'giấy tờ',
+            viewAll: 'Xem tất cả →',
+            overdue: 'Quá hạn',
+            daysRemaining: 'ngày',
+        },
+
+        // Quick Access
+        quickAccess: {
+            title: 'Truy Cập Nhanh',
+        },
+
+        // Role-Specific Sections
+        mySales: {
+            title: 'Doanh Số Của Tôi',
+            orders: 'đơn',
+        },
+
+        warehouseOverview: {
+            title: 'Tổng Quan Kho',
+            totalBottles: 'Tổng Chai',
+            lowStockSKUs: 'SKU Sắp Hết',
+            quarantined: 'Cách Ly',
+            pendingGRs: 'GR Chờ',
+            pendingDOs: 'DO Chờ',
         },
 
         // Customer 360 Analytics
@@ -306,6 +374,7 @@ export const DASHBOARD_I18N = {
             invoicesCount: 'invoices',
             totalDebt: 'total outstanding',
             overdueDebt: 'overdue',
+            totalOutstanding: 'Total Outstanding AR',
             buckets: {
                 notDue: 'Current (Not Due)',
                 '1_30': '1–30 Days',
@@ -325,6 +394,73 @@ export const DASHBOARD_I18N = {
             grossProfitLabel: 'Gross Profit',
             channelTitle: 'Revenue Breakdown by Channel',
             totalChannelSales: 'Total Channel Revenue',
+            monthTitle: 'Top Sales This Month',
+            periodTitle: 'Top Sales in Period',
+        },
+
+        // Operations & Containers
+        containers: {
+            title: 'Inbound Containers',
+            empty: 'No containers currently in transit',
+            eta: 'ETA',
+            statuses: {
+                BOOKED: 'Booked',
+                ON_VESSEL: 'On Vessel',
+                ARRIVED_PORT: 'Arrived Port',
+                CUSTOMS_CLEARED: 'Customs Cleared',
+                DELIVERED_TO_WAREHOUSE: 'In Warehouse',
+            },
+        },
+
+        // Approvals Hub
+        approvals: {
+            title: 'Pending CEO Approvals',
+            viewAll: 'View all →',
+            noPending: 'No pending items requiring review',
+            reviewAndApprove: 'Review & Approve',
+            step: 'Step',
+            approve: 'Approve',
+            reject: 'Reject',
+        },
+
+        // In-depth Analysis
+        inDepth: {
+            title: 'In-Depth Financial Analysis',
+            monthlyKpiTargets: 'Monthly KPI Targets',
+            achieved: 'achieved',
+            onTrack: 'On Track',
+            atRisk: 'At Risk',
+            behind: 'Behind',
+            revenueYoY: 'Revenue',
+        },
+
+        // Compliance
+        compliance: {
+            title: 'Compliance Warnings',
+            documents: 'documents',
+            viewAll: 'View all →',
+            overdue: 'Overdue',
+            daysRemaining: 'd',
+        },
+
+        // Quick Access
+        quickAccess: {
+            title: 'Quick Access',
+        },
+
+        // Role-Specific Sections
+        mySales: {
+            title: 'My Sales Performance',
+            orders: 'orders',
+        },
+
+        warehouseOverview: {
+            title: 'Warehouse Overview',
+            totalBottles: 'Total Bottles',
+            lowStockSKUs: 'Low Stock SKUs',
+            quarantined: 'Quarantined',
+            pendingGRs: 'Pending GRs',
+            pendingDOs: 'Pending DOs',
         },
 
         // Customer 360 Analytics

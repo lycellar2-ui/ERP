@@ -480,5 +480,9 @@ Nhằm phục vụ cả Ban Giám Đốc người Việt và chuyên gia/cổ đ
   - Đảm bảo khi CEO hoặc Sales đổi sang English tại Dashboard thì toàn bộ Header, thanh filter và phân hệ Field Visits đều đổi sang English ngay lập tức mà không bị xung đột hay reload trang.
 - Nút chuyển nhanh `[VI | EN]` được tích hợp trực tiếp tại Header hệ thống và thanh điều khiển thời gian của Dashboard.
 
-
-
+### 3. Bản Địa Hóa Toàn Diện Tổng Quan Điều Hành & Biểu Đồ Doanh Thu
+- **6 Thẻ KPI & P&L / Dòng Tiền**: Doanh thu kỳ lọc, Lãi gộp, Dòng tiền ròng, Giá trị tồn kho, Công nợ AR, Yêu cầu chờ CEO duyệt.
+- **Biểu đồ DailyRevenueChart**: Tự động chuyển đổi tên ngày trong tuần (`Mon`, `Tue`... vs `Thứ 2`, `Thứ 3`...), nhãn tổng quan, tooltip tương tác.
+- **Container đang về & AR Aging**: Quản lý trạng thái vận đơn tàu biển (Booked, On Vessel, Arrived Port, Customs Cleared, In Warehouse) và phân tầng tuổi nợ.
+- **Trung tâm phê duyệt CEO & Cảnh báo tuân thủ**: Tờ trình (Proposals), Đơn bán hàng SO, Tờ khai pháp lý & giấy phép sắp hết hạn.
+- **Thống kê chuyên biệt theo Role**: Doanh số cá nhân của Sales Rep (`My Sales Performance`) và Tồn kho tổng hợp (`Warehouse Overview`).

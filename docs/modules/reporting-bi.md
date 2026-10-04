@@ -138,3 +138,43 @@ ReportRun { schedule_id, run_at, status, output_url }
 ```
 
 *(Dữ liệu thực tế được query trực tiếp từ các bảng domain của từng module, không lưu trữ riêng để tránh data stale)*
+
+---
+
+## 8. Kiến Trúc Song Ngữ (Bilingual Architecture VI / EN)
+
+Phân hệ Báo cáo & Điều hành BI Quản trị được trang bị giải pháp song ngữ toàn diện tại `src/app/dashboard/reports/i18n.ts` và tích hợp `useAppLocale()`:
+
+### 1. Đồng Bộ 16 Báo Cáo Chuẩn (R01 — R16)
+
+| Mã | Tên Tiếng Việt | English Name | Module Domain |
+|:---:|---|---|:---:|
+| **R01** | Tồn Kho Chi Tiết | Detailed Inventory Stock | WMS |
+| **R02** | Doanh Thu Bán Hàng | Sales Revenue Breakdown | SLS |
+| **R03** | Công Nợ Phải Thu (AR Aging) | Accounts Receivable Aging (AR) | FIN |
+| **R04** | Phân Tích Giá Vốn & Biên LN | COGS & Gross Margin Analysis | CST |
+| **R05** | Công Nợ Phải Trả (AP) | Accounts Payable Outstanding (AP) | FIN |
+| **R06** | Tình Trạng Đơn Mua Hàng | Purchase Order (PO) Status | PRC |
+| **R07** | Kết Quả Kinh Doanh Tháng | Monthly P&L Statement | FIN |
+| **R08** | Biên Lợi Nhuận Theo SKU | Profit Margin per SKU | SLS |
+| **R09** | Hiệu Suất Kênh Bán | Channel Performance Analytics | SLS |
+| **R10** | Xếp Hạng Khách Hàng | Customer Revenue Ranking | CRM |
+| **R11** | Hàng Tồn Chậm Luân Chuyển | Slow-Moving Inventory Stock | WMS |
+| **R12** | Sử Dụng Tem Rượu | Excise Wine Stamp Utilization | STM |
+| **R13** | Tổng Hợp Thuế NK/TTĐB/VAT | Import & Excise & VAT Summary | TAX |
+| **R14** | Tổng Hợp Chi Phí | Operating Expenses Summary | FIN |
+| **R15** | Sổ Nhật Ký Kế Toán | General Journal & Ledger | FIN |
+| **R16** | Doanh Thu Theo Brand | Revenue by Wine Brand | SLS |
+
+### 2. Trải Nghiệm Giao Diện 3 Tabs Bản Địa Hóa
+1. **Executive BI Overview (`overview`):**
+   - KPI cards (Doanh thu 6 tháng, Giá trị tồn kho, Tổng lượng chai, SKU đang có hàng).
+   - Thống kê công nợ AR/AP đối soát song song.
+   - Biểu đồ doanh thu 6 tháng gần nhất kèm tooltip chi tiết.
+   - Cơ cấu kênh bán phân loại chuẩn quốc tế: `HORECA`, `Wholesale / Distributor`, `VIP Retail`, `Direct / Retail`.
+   - Top 10 SKU bán chạy kèm phân loại vang: Red, White, Rosé, Sparkling, Fortified, Dessert.
+   - Phân rã doanh thu theo Brand, xếp hạng Top 5 Khách hàng, Top Sales Rep và Cảnh báo tồn kho thấp.
+2. **Xuất Excel 16 Báo Cáo (`export`):**
+   - Bảng kê 16 báo cáo chuẩn hóa, hiển thị mã, tên báo cáo theo ngôn ngữ đã chọn, module phụ trách và trạng thái tải file.
+3. **Lịch Báo Cáo Tự Động (`schedule`):**
+   - Giám sát tiến độ cron job gửi email, tần suất Hàng ngày / Hàng tuần / Hàng tháng (Daily / Weekly / Monthly).

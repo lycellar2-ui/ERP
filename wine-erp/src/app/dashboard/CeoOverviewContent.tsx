@@ -17,21 +17,21 @@ import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { CATEGORY_LABELS, PRIORITY_LABELS } from './proposals/constants'
 import type { PresetKey } from './DashboardFilterBar'
 
-function formatFriendlyVND(amount: number | null | undefined): string {
-    if (!amount || amount === 0) return '0 đ'
+function formatFriendlyVND(amount: number | null | undefined, isEn = false): string {
+    if (!amount || amount === 0) return isEn ? '0 VND' : '0 đ'
     const abs = Math.abs(amount)
     const sign = amount < 0 ? '−' : ''
 
     if (abs >= 1_000_000_000) {
         const billions = abs / 1_000_000_000
         const formatted = billions >= 10 ? billions.toFixed(1) : billions.toFixed(2)
-        return `${sign}${formatted.replace('.', ',')} Tỷ`
+        return isEn ? `${sign}${formatted}B VND` : `${sign}${formatted.replace('.', ',')} Tỷ`
     } else if (abs >= 1_000_000) {
         const millions = abs / 1_000_000
         const formatted = millions >= 10 ? millions.toFixed(0) : millions.toFixed(1)
-        return `${sign}${formatted.replace('.', ',')} Tr`
+        return isEn ? `${sign}${formatted}M VND` : `${sign}${formatted.replace('.', ',')} Tr`
     }
-    return `${sign}${abs.toLocaleString('vi-VN')} đ`
+    return isEn ? `${sign}${abs.toLocaleString('en-US')} VND` : `${sign}${abs.toLocaleString('vi-VN')} đ`
 }
 
 function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#87CBB9' }: {
@@ -132,7 +132,7 @@ export function CeoOverviewContent({
 }: CeoOverviewContentProps) {
     const router = useRouter()
     const [isPendingAction, startTransition] = useTransition()
-    const { locale, isEn } = useAppLocale()
+    const { locale, isEn, formatCurrency, formatDate } = useAppLocale()
     const t = getDashboardDictionary(locale)
 
     const revenueKpiLabel = preset === 'THIS_MONTH'
@@ -175,7 +175,7 @@ export function CeoOverviewContent({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <KpiCard
                     label={revenueKpiLabel}
-                    value={formatFriendlyVND(primaryRevenue)}
+                    value={formatFriendlyVND(primaryRevenue, isEn)}
                     sub={revenueSource}
                     trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% ${t.kpis.vsPrevPeriod}` : undefined}
                     trendUp={stats.revenueGrowth >= 0}
@@ -183,7 +183,7 @@ export function CeoOverviewContent({
                 />
                 <KpiCard
                     label={t.kpis.grossProfit}
-                    value={formatFriendlyVND(pl.grossProfit)}
+                    value={formatFriendlyVND(pl.grossProfit, isEn)}
                     sub={`${t.kpis.margin}: ${pl.grossMargin.toFixed(1)}%`}
                     trend={pl.grossMargin >= 25 ? t.kpis.good : t.kpis.fair}
                     trendUp={pl.grossMargin >= 25}
@@ -191,20 +191,20 @@ export function CeoOverviewContent({
                 />
                 <KpiCard
                     label={t.kpis.netCashFlow}
-                    value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow)}`}
-                    sub={`${t.kpis.cashIn}: ${formatFriendlyVND(cash.cashIn)} · ${t.kpis.cashOut}: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses)}`}
+                    value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow, isEn)}`}
+                    sub={`${t.kpis.cashIn}: ${formatFriendlyVND(cash.cashIn, isEn)} · ${t.kpis.cashOut}: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses, isEn)}`}
                     accentColor={cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E'}
                 />
                 <KpiCard
                     label={t.kpis.inventoryValue}
-                    value={formatFriendlyVND(stats.stockTotalValue)}
-                    sub={`${stats.stockQty.toLocaleString()} ${t.kpis.bottlesUnit}`}
+                    value={formatFriendlyVND(stats.stockTotalValue, isEn)}
+                    sub={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
                     accentColor="#4A8FAB"
                 />
                 <KpiCard
                     label={t.kpis.arOutstanding}
-                    value={formatFriendlyVND(ar.totalOutstanding)}
-                    sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue)} ${t.kpis.overdue}` : t.kpis.onTime}
+                    value={formatFriendlyVND(ar.totalOutstanding, isEn)}
+                    sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue, isEn)} ${t.kpis.overdue}` : t.kpis.onTime}
                     accentColor={arOverdue > 0 ? '#E05252' : '#5BA88A'}
                 />
                 <KpiCard
@@ -244,7 +244,7 @@ export function CeoOverviewContent({
                                 <div className="flex justify-between items-center">
                                     <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#475569' }}>{r.label}</span>
                                     <span className={`text-sm ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
-                                        {r.value < 0 ? `− ${formatVND(Math.abs(r.value))}` : formatVND(r.value)}
+                                        {r.value < 0 ? `− ${formatCurrency(Math.abs(r.value))}` : formatCurrency(r.value)}
                                     </span>
                                 </div>
                             </div>
@@ -263,7 +263,7 @@ export function CeoOverviewContent({
                     <div className="p-3 rounded-md mb-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>{t.cashFlow.periodNetCash}</p>
                         <p className="text-xl font-bold font-mono" style={{ color: cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E' }}>
-                            {cash.netCashFlow >= 0 ? '+' : ''}{formatVND(cash.netCashFlow)}
+                            {cash.netCashFlow >= 0 ? '+' : ''}{formatCurrency(cash.netCashFlow)}
                         </p>
                     </div>
                     <div className="space-y-2">
@@ -272,25 +272,25 @@ export function CeoOverviewContent({
                                 <ArrowDownLeft size={13} style={{ color: '#5BA88A' }} />
                                 <span className="text-xs" style={{ color: '#5BA88A' }}>{t.cashFlow.inflowSub}</span>
                             </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>+{formatVND(cash.cashIn)}</span>
+                            <span className="text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>+{formatCurrency(cash.cashIn)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
                             <div className="flex items-center gap-2">
                                 <ArrowUpRight size={13} style={{ color: '#E05252' }} />
                                 <span className="text-xs" style={{ color: '#E05252' }}>{t.cashFlow.outflowAP}</span>
                             </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#E05252' }}>−{formatVND(cash.cashOutAP)}</span>
+                            <span className="text-xs font-bold font-mono" style={{ color: '#E05252' }}>−{formatCurrency(cash.cashOutAP)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
                             <div className="flex items-center gap-2">
                                 <ArrowUpRight size={13} style={{ color: '#D4A853' }} />
                                 <span className="text-xs" style={{ color: '#D4A853' }}>{t.cashFlow.outflowExpense}</span>
                             </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#D4A853' }}>−{formatVND(cash.cashOutExpenses)}</span>
+                            <span className="text-xs font-bold font-mono" style={{ color: '#D4A853' }}>−{formatCurrency(cash.cashOutExpenses)}</span>
                         </div>
                         <div style={{ borderTop: '1px solid #E2E8F0' }} className="pt-2 flex justify-between text-xs">
                             <span style={{ color: '#64748B' }}>{t.cashFlow.workingCapital}</span>
-                            <span style={{ color: '#475569' }} className="font-mono">{formatVND(cash.arOutstanding)} / {formatVND(cash.apOutstanding)}</span>
+                            <span style={{ color: '#475569' }} className="font-mono">{formatCurrency(cash.arOutstanding)} / {formatCurrency(cash.apOutstanding)}</span>
                         </div>
                     </div>
                 </div>
@@ -302,31 +302,32 @@ export function CeoOverviewContent({
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <SectionHead
                         icon={<Ship size={15} style={{ color: '#0891B2' }} />}
-                        title={isEn ? 'Inbound Containers' : 'Container Đang Về'}
+                        title={t.containers.title}
                         badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>{stats.inTransitShipments.length}</span>}
                     />
                     {stats.inTransitShipments.length === 0 ? (
                         <div className="flex flex-col items-center py-6 gap-1">
                             <Package size={24} style={{ color: '#E2E8F0' }} />
-                            <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'No containers currently in transit' : 'Không có container đang về'}</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
                             {stats.inTransitShipments.map((s: any) => {
                                 const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
+                                const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
                                 return (
                                     <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
                                                 <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
-                                                    ETA: {s.eta ? new Date(s.eta).toLocaleDateString(isEn ? 'en-US' : 'vi-VN') : '--'}
+                                                    {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString()} {s.cifCurrency}</p>
+                                                <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                                                    {isEn ? cfg.en : cfg.vi}
+                                                    {statusLabel}
                                                 </span>
                                             </div>
                                         </div>
@@ -345,15 +346,15 @@ export function CeoOverviewContent({
                         badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
                     />
                     <div className="p-2.5 rounded mb-3" style={{ background: '#FFFFFF' }}>
-                        <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{isEn ? 'Total Outstanding AR' : 'Tổng Công Nợ'}</p>
-                        <p className="text-lg font-bold font-mono" style={{ color: '#D4A853' }}>{formatVND(ar.totalOutstanding)}</p>
+                        <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
+                        <p className="text-lg font-bold font-mono" style={{ color: '#D4A853' }}>{formatCurrency(ar.totalOutstanding)}</p>
                     </div>
                     <div className="space-y-2.5">
                         {ar.buckets.map((b: any) => (
                             <div key={b.label}>
                                 <div className="flex justify-between mb-0.5">
                                     <span className="text-[11px]" style={{ color: '#475569' }}>{translateBucketLabel(b.label)}</span>
-                                    <span className="text-[11px] font-bold font-mono" style={{ color: b.color }}>{b.amount > 0 ? formatVND(b.amount) : '—'}</span>
+                                    <span className="text-[11px] font-bold font-mono" style={{ color: b.color }}>{b.amount > 0 ? formatCurrency(b.amount) : '—'}</span>
                                 </div>
                                 <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
                                     <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(b.amount > 0 ? 4 : 0, (b.amount / arMax) * 100)}%`, background: b.color }} />
@@ -367,7 +368,7 @@ export function CeoOverviewContent({
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <SectionHead
                         icon={<Trophy size={15} style={{ color: '#D4A853' }} />}
-                        title={preset === 'THIS_MONTH' ? (isEn ? 'Top Sales This Month' : 'Top Tháng Này') : (isEn ? 'Top Sales in Period' : 'Top Bán Hàng Trong Kỳ')}
+                        title={preset === 'THIS_MONTH' ? t.rankings.monthTitle : t.rankings.periodTitle}
                     />
                     {/* Top Customers */}
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
@@ -383,7 +384,7 @@ export function CeoOverviewContent({
                                         <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#D4A853' : '#64748B' }}>{i + 1}.</span>
                                         <span className="text-xs truncate" style={{ color: '#0F172A' }}>{c.name}</span>
                                     </div>
-                                    <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue)}</span>
+                                    <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
                                 </div>
                             ))}
                         </div>
@@ -403,7 +404,7 @@ export function CeoOverviewContent({
                                         <span className="text-xs truncate" style={{ color: '#0F172A' }}>{p.name}</span>
                                     </div>
                                     <span className="text-[10px] font-mono flex-shrink-0" style={{ color: '#475569' }}>
-                                        {p.qty} {t.rankings.bottlesSold} · {formatFriendlyVND(p.revenue)}
+                                        {p.qty} {t.rankings.bottlesSold} · {formatFriendlyVND(p.revenue, isEn)}
                                     </span>
                                 </div>
                             ))}
@@ -417,7 +418,7 @@ export function CeoOverviewContent({
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
-                            {isEn ? '⏳ Pending CEO Approvals' : '⏳ Chờ CEO Duyệt'}
+                            ⏳ {t.approvals.title}
                         </h3>
                         <span className="px-2 py-0.5 text-xs font-bold rounded-full" style={{ background: 'rgba(139,26,46,0.2)', color: '#8B1A2E' }}>
                             {totalPending}
@@ -428,14 +429,14 @@ export function CeoOverviewContent({
                         className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
                         style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.08)' }}
                     >
-                        {isEn ? 'View all →' : 'Xem tất cả →'}
+                        {t.approvals.viewAll}
                     </Link>
                 </div>
                 {totalPending === 0 ? (
                     <div className="flex flex-col items-center py-6 gap-1">
                         <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
                         <p className="text-xs" style={{ color: '#64748B' }}>
-                            {isEn ? 'No pending items requiring review' : 'Không có mục nào chờ duyệt'}
+                            {t.approvals.noPending}
                         </p>
                     </div>
                 ) : (
@@ -458,9 +459,9 @@ export function CeoOverviewContent({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 flex-shrink-0">
-                                        {p.estimatedAmount && <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatVND(p.estimatedAmount)}</span>}
+                                        {p.estimatedAmount && <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(p.estimatedAmount)}</span>}
                                         <Link href="/dashboard/proposals" className="px-2.5 py-1 text-xs font-semibold rounded" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                            {isEn ? 'Review & Approve' : 'Xem & Duyệt'}
+                                            {t.approvals.reviewAndApprove}
                                         </Link>
                                     </div>
                                 </div>
@@ -476,7 +477,7 @@ export function CeoOverviewContent({
                                     <span className="text-sm" style={{ color: '#0F172A' }}>{arItem.templateName}</span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px]" style={{ color: '#475569' }}>{isEn ? 'Step' : 'Bước'} {arItem.currentStep}</p>
+                                    <p className="text-[10px]" style={{ color: '#475569' }}>{t.approvals.step} {arItem.currentStep}</p>
                                     <p className="text-[10px]" style={{ color: '#64748B' }}>{arItem.requestedBy}</p>
                                 </div>
                             </div>
@@ -492,7 +493,7 @@ export function CeoOverviewContent({
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <p className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatVND(so.amount)}</p>
+                                        <p className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(so.amount)}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>{so.customerName}</p>
                                     </div>
                                     <div className="flex gap-1.5">
@@ -503,7 +504,7 @@ export function CeoOverviewContent({
                                             className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
                                             style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}
                                         >
-                                            {isEn ? 'Approve' : 'Duyệt'}
+                                            {t.approvals.approve}
                                         </button>
                                         <button
                                             type="button"
@@ -512,7 +513,7 @@ export function CeoOverviewContent({
                                             className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
                                             style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}
                                         >
-                                            {isEn ? 'Reject' : 'Từ Chối'}
+                                            {t.approvals.reject}
                                         </button>
                                     </div>
                                 </div>
@@ -525,7 +526,7 @@ export function CeoOverviewContent({
             {/* ═══ LAYER 5 — DEEP ANALYSIS (Grid of cards) ═══ */}
             <div className="space-y-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
-                    {isEn ? '📈 In-Depth Financial Analysis' : '📈 Phân Tích Chuyên Sâu'}
+                    📈 {t.inDepth.title}
                 </h3>
 
                 {/* KPI Progress + Channel Breakdown */}
@@ -534,10 +535,10 @@ export function CeoOverviewContent({
                     <div className="lg:col-span-3 rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <SectionHead
                             icon={<Target size={15} style={{ color: '#0891B2' }} />}
-                            title={isEn ? 'Monthly KPI Targets' : 'KPI Tháng Này'}
+                            title={t.inDepth.monthlyKpiTargets}
                             badge={
                                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
-                                    {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {isEn ? 'achieved' : 'đạt'}
+                                    {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {t.inDepth.achieved}
                                 </span>
                             }
                         />
@@ -545,7 +546,7 @@ export function CeoOverviewContent({
                             {kpis.map((kpi: any) => {
                                 const pct = Math.min(kpi.progressPct, 100)
                                 const sc = kpi.status === 'ON_TRACK' ? '#5BA88A' : kpi.status === 'AT_RISK' ? '#D4A853' : '#8B1A2E'
-                                const sl = kpi.status === 'ON_TRACK' ? (isEn ? 'On Track' : 'Đạt') : kpi.status === 'AT_RISK' ? (isEn ? 'At Risk' : 'Cận') : (isEn ? 'Behind' : 'Chậm')
+                                const sl = kpi.status === 'ON_TRACK' ? t.inDepth.onTrack : kpi.status === 'AT_RISK' ? t.inDepth.atRisk : t.inDepth.behind
                                 return (
                                     <div key={kpi.metric} className="space-y-1.5">
                                         <div className="flex items-center justify-between">
@@ -557,9 +558,9 @@ export function CeoOverviewContent({
                                         </div>
                                         <div className="flex justify-between font-mono">
                                             <span className="text-[10px] font-bold" style={{ color: '#0F172A' }}>
-                                                {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual) : kpi.actual}
+                                                {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual, isEn) : kpi.actual}
                                             </span>
-                                            <span className="text-[10px]" style={{ color: '#64748B' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target) : kpi.target}</span>
+                                            <span className="text-[10px]" style={{ color: '#64748B' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target, isEn) : kpi.target}</span>
                                         </div>
                                     </div>
                                 )
@@ -579,7 +580,7 @@ export function CeoOverviewContent({
                                         <div className="flex justify-between mb-0.5">
                                             <span className="text-xs" style={{ color: '#475569' }}>{ch.label}</span>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue)}</span>
+                                                <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
                                             </div>
                                         </div>
@@ -603,7 +604,7 @@ export function CeoOverviewContent({
                             <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <SectionHead
                                     icon={<TrendingUp size={15} style={{ color: '#0891B2' }} />}
-                                    title={isEn ? `Revenue ${yoyData.thisYear} vs ${yoyData.lastYear}` : `Doanh Thu ${yoyData.thisYear} vs ${yoyData.lastYear}`}
+                                    title={`${t.inDepth.revenueYoY} ${yoyData.thisYear} vs ${yoyData.lastYear}`}
                                 >
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)', color: yoyData.yoyGrowth >= 0 ? '#5BA88A' : '#8B1A2E' }}>
                                         {yoyData.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoyData.yoyGrowth).toFixed(1)}% YoY
@@ -630,11 +631,11 @@ export function CeoOverviewContent({
                                 <div className="flex justify-center gap-6 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                                     <div className="text-center">
                                         <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.thisYear}</p>
-                                        <p className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{formatVND(yoyData.totalCurrent)}</p>
+                                        <p className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{formatCurrency(yoyData.totalCurrent)}</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.lastYear}</p>
-                                        <p className="text-xs font-bold font-mono" style={{ color: '#64748B' }}>{formatVND(yoyData.totalPrevious)}</p>
+                                        <p className="text-xs font-bold font-mono" style={{ color: '#64748B' }}>{formatCurrency(yoyData.totalPrevious)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -655,7 +656,7 @@ export function CeoOverviewContent({
                                 return (
                                     <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
                                         <span className="text-[10px] font-bold font-mono" style={{ color: bar.color }}>
-                                            {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value)) : '0 đ'}
+                                            {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value), isEn) : (isEn ? '0 VND' : '0 đ')}
                                         </span>
                                         <div className="w-full relative" style={{ height: 120 }}>
                                             <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
@@ -669,15 +670,15 @@ export function CeoOverviewContent({
                         </div>
                         <div className="flex items-center justify-center gap-4 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                             {[
-                                { label: isEn ? 'Revenue' : 'DT', color: '#5BA88A', val: wf.revenue },
+                                { label: t.waterfall.revenue, color: '#5BA88A', val: wf.revenue },
                                 { label: 'COGS', color: '#E05252', val: wf.cogs },
                                 { label: isEn ? 'OPEX' : 'CP', color: '#D4A853', val: wf.totalExpenses },
-                                { label: isEn ? 'Net Profit' : 'Lãi ròng', color: wf.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: wf.netProfit },
+                                { label: t.waterfall.netProfit, color: wf.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: wf.netProfit },
                             ].map(l => (
                                 <div key={l.label} className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
                                     <span className="text-[10px]" style={{ color: '#64748B' }}>{l.label}</span>
-                                    <span className="text-[10px] font-bold font-mono" style={{ color: l.color }}>{formatVND(Math.abs(l.val))}</span>
+                                    <span className="text-[10px] font-bold font-mono" style={{ color: l.color }}>{formatCurrency(Math.abs(l.val))}</span>
                                 </div>
                             ))}
                         </div>
@@ -689,15 +690,15 @@ export function CeoOverviewContent({
                     <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <SectionHead
                             icon={<Shield size={15} style={{ color: '#D4A853' }} />}
-                            title={isEn ? 'Compliance Warnings' : 'Cảnh Báo Tuân Thủ'}
+                            title={t.compliance.title}
                             badge={
                                 <span className="px-2 py-0.5 text-[10px] font-bold rounded-full" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(224,82,82,0.2)' : 'rgba(212,168,83,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#E05252' : '#D4A853' }}>
-                                    {complianceWarnings.length} {isEn ? 'documents' : 'giấy tờ'}
+                                    {complianceWarnings.length} {t.compliance.documents}
                                 </span>
                             }
                         >
                             <Link href="/dashboard/contracts" className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
-                                {isEn ? 'View all →' : 'Xem tất cả →'}
+                                {t.compliance.viewAll}
                             </Link>
                         </SectionHead>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -713,7 +714,7 @@ export function CeoOverviewContent({
                                             </div>
                                         </div>
                                         <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c }}>
-                                            {w.daysRemaining !== null && w.daysRemaining <= 0 ? (isEn ? `Overdue ${Math.abs(w.daysRemaining)}d` : `Quá hạn ${Math.abs(w.daysRemaining)}d`) : `${w.daysRemaining}d`}
+                                            {w.daysRemaining !== null && w.daysRemaining <= 0 ? `${t.compliance.overdue} ${Math.abs(w.daysRemaining)}d` : `${w.daysRemaining}${t.compliance.daysRemaining}`}
                                         </span>
                                     </div>
                                 )
@@ -727,7 +728,7 @@ export function CeoOverviewContent({
             {dashConfig.quickLinks.length > 0 && (
                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
-                        {isEn ? 'Quick Access' : 'Truy Cập Nhanh'}
+                        {t.quickAccess.title}
                     </p>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         {dashConfig.quickLinks.map((link: any) => (
@@ -747,11 +748,11 @@ export function CeoOverviewContent({
                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex items-center justify-between mb-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#D4A853' }}>
-                            {isEn ? '📊 My Sales Performance' : '📊 Doanh Số Của Tôi'}
+                            📊 {t.mySales.title}
                         </p>
                         <div className="flex items-center gap-3 font-mono">
-                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{mySales.orderCount} {isEn ? 'orders' : 'đơn'}</span>
-                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(mySales.totalRevenue)}</span>
+                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{mySales.orderCount} {t.mySales.orders}</span>
+                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatCurrency(mySales.totalRevenue)}</span>
                         </div>
                     </div>
                     <div className="space-y-1 max-h-[200px] overflow-y-auto">
@@ -760,7 +761,7 @@ export function CeoOverviewContent({
                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
                                 <span className="text-xs" style={{ color: '#475569' }}>{o.customerName}</span>
                                 <span className="text-[10px] px-1 py-0.5 rounded" style={{ background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)', color: o.status === 'PAID' ? '#5BA88A' : '#475569' }}>{o.status}</span>
-                                <span className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{formatVND(o.amount)}</span>
+                                <span className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(o.amount)}</span>
                             </div>
                         ))}
                         {mySales.orders.length === 0 && <p className="text-xs text-center py-3" style={{ color: '#64748B' }}>{t.noData}</p>}
@@ -772,15 +773,15 @@ export function CeoOverviewContent({
             {warehouseData && (
                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A8FAB' }}>
-                        {isEn ? '📦 Warehouse Overview' : '📦 Tổng Quan Kho'}
+                        📦 {t.warehouseOverview.title}
                     </p>
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
                         {[
-                            { label: isEn ? 'Total Bottles' : 'Tổng Chai', value: warehouseData.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN'), color: '#0891B2' },
-                            { label: isEn ? 'Low Stock SKUs' : 'SKU Sắp Hết', value: warehouseData.lowStockSKUs, color: '#D4A853' },
-                            { label: isEn ? 'Quarantined' : 'Cách Ly', value: warehouseData.quarantinedLots, color: '#8B1A2E' },
-                            { label: isEn ? 'Pending GRs' : 'GR Chờ', value: warehouseData.pendingGoodsReceipts, color: '#4A8FAB' },
-                            { label: isEn ? 'Pending DOs' : 'DO Chờ', value: warehouseData.pendingDeliveryOrders, color: '#5BA88A' },
+                            { label: t.warehouseOverview.totalBottles, value: warehouseData.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN'), color: '#0891B2' },
+                            { label: t.warehouseOverview.lowStockSKUs, value: warehouseData.lowStockSKUs, color: '#D4A853' },
+                            { label: t.warehouseOverview.quarantined, value: warehouseData.quarantinedLots, color: '#8B1A2E' },
+                            { label: t.warehouseOverview.pendingGRs, value: warehouseData.pendingGoodsReceipts, color: '#4A8FAB' },
+                            { label: t.warehouseOverview.pendingDOs, value: warehouseData.pendingDeliveryOrders, color: '#5BA88A' },
                         ].map(s => (
                             <div key={s.label} className="text-center p-2.5 rounded" style={{ background: '#FFFFFF', border: '1px solid #F1F5F9' }}>
                                 <p className="text-lg font-bold font-mono" style={{ color: s.color }}>{s.value}</p>

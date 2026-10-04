@@ -148,12 +148,22 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
   - Quản lý hạn ngạch tem Bộ Tài Chính, dán tem, quyết toán tem.
 - [ ] **Khai Báo & Quyết Toán Thuế (`/declarations`):**
   - Bảng kê thuế tiêu thụ đặc biệt, thuế GTGT, hồ sơ điện tử.
-- [ ] **Báo Cáo Quản Trị & BI (`/reports`):**
-  - Báo cáo doanh số đa chiều (kênh, nhân viên, sản phẩm, vùng miền).
+- [x] **Báo Cáo Quản Trị & BI (`/reports`) — HOÀN THÀNH (Triển khai cùng CEO Dashboard theo chỉ đạo Giai Đoạn 6):**
+  - 16 danh mục báo cáo Excel chuẩn (R01–R16) song ngữ, 3 tabs phân tích đa chiều (Overview, Export, Schedule), format VND thích ứng theo locale.
 
 ---
 
-### 🔷 Giai Đoạn 6: Master Data, CRM, Nhân Sự & Quản Trị Hệ Thống
+### 🔷 Giai Đoạn 6: Báo Cáo & Điều Hành (Executive Dashboard & BI Reports) — ĐÃ HOÀN THÀNH ✅
+*Phạm vi hoàn tất:*
+- [x] **CEO Executive Dashboard (`/dashboard`):**
+  - 100% nhãn KPI cards, P&L, Cash Flow, AR Aging, In-depth targets, Top rankings.
+  - Vận đơn Container đang về, Cảnh báo tuân thủ pháp lý, Trung tâm phê duyệt CEO (Proposals & SOs).
+  - Biểu đồ DailyRevenueChart tự động dịch ngày trong tuần (Mon..Sun vs Thứ 2..CN), tooltip và format tiền tệ.
+  - Đồng bộ `useAppLocale()`, `formatCurrency`, `formatDate`.
+- [x] **Báo Cáo BI Quản Trị (`/dashboard/reports`):**
+  - Tạo mới bộ từ điển `REPORTS_I18N` tại `src/app/dashboard/reports/i18n.ts`.
+  - 3 tabs trực quan: Tổng quan BI, Bảng kê 16 báo cáo Excel (.xlsx), Giám sát lịch gửi tự động.
+  - Phân loại kênh bán quốc tế (`HORECA`, `Wholesale / Distributor`, `VIP Retail`, `Direct / Retail`) và chủng loại rượu vang.
 *Đặc thù: Quản trị dữ liệu dùng chung và công cụ quản trị.*
 - [ ] **Master Data (`/products`, `/customers`, `/suppliers`):**
   - Danh mục rượu (Giống nho - Grape variety, Niên vụ - Vintage, Vùng làm rượu - Region/Appellation, Nồng độ - ABV).
