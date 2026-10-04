@@ -189,11 +189,11 @@ export default async function DashboardPage(props: PageProps) {
         getDailyRevenueChart(filterOptions),
         getDashboardStats('month', filterOptions),
         has('pl_summary') ? getPLSummary(filterOptions) : null,
-        has('cash_position') ? getCashPosition() : null,
+        has('cash_position') ? getCashPosition(filterOptions) : null,
         has('kpi_targets') ? getKpiSummary() : null,
-        has('ar_aging') ? getARAgingChart() : null,
+        has('ar_aging') ? getARAgingChart(filterOptions) : null,
         has('pending_approvals') ? getPendingApprovalDetails() : [],
-        has('cost_waterfall') ? getCostWaterfall() : [],
+        has('cost_waterfall') ? getCostWaterfall(filterOptions) : [],
         has('revenue_yoy') ? getRevenueYoY() : null,
         getTopCustomers(8, filterOptions),
         has('pl_summary') ? getTopProducts(5, filterOptions) : [],
@@ -220,6 +220,12 @@ export default async function DashboardPage(props: PageProps) {
     const arMax = ar.buckets.length > 0 ? Math.max(...ar.buckets.map(b => b.amount), 1) : 1
     const arOverdue = ar.buckets.filter(b => b.label !== 'Chưa đến hạn').reduce((s, b) => s + b.amount, 0)
     const totalPending = pendingProposals.length + stats.pendingSOs.length + (Array.isArray(pendingApprovalReqs) ? pendingApprovalReqs.length : 0)
+
+    const pendingParts: string[] = []
+    if (pendingProposals.length > 0) pendingParts.push(`${pendingProposals.length} tờ trình`)
+    if (stats.pendingSOs.length > 0) pendingParts.push(`${stats.pendingSOs.length} SO`)
+    if (Array.isArray(pendingApprovalReqs) && pendingApprovalReqs.length > 0) pendingParts.push(`${pendingApprovalReqs.length} yêu cầu`)
+    const pendingSub = pendingParts.length > 0 ? pendingParts.join(' · ') : 'Không có mục chờ'
 
     const revenueKpiLabel = preset === 'THIS_MONTH'
         ? 'DOANH THU THÁNG'
@@ -318,7 +324,7 @@ export default async function DashboardPage(props: PageProps) {
                     sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue)} quá hạn` : 'Chưa quá hạn'}
                     accentColor={arOverdue > 0 ? '#E05252' : '#5BA88A'} />
                 <KpiCard label="CHỜ CEO DUYỆT" value={String(totalPending)}
-                    sub={`${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} SO`}
+                    sub={pendingSub}
                     accentColor="#8B1A2E" />
             </div>
 
@@ -332,7 +338,7 @@ export default async function DashboardPage(props: PageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* P&L Summary */}
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />} title="Kết Quả Kinh Doanh Tháng"
+                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />} title={preset === 'THIS_MONTH' ? 'Kết Quả Kinh Doanh Tháng' : `Kết Quả Kinh Doanh (${displayRangeText})`}
                         badge={<span className="text-[10px] px-2 py-0.5 rounded-full font-bold ml-1" style={{ background: pl.grossMargin >= 25 ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)', color: pl.grossMargin >= 25 ? '#5BA88A' : '#D4A853' }}>Biên {pl.grossMargin.toFixed(1)}%</span>} />
                     <div className="space-y-2.5">
                         {[
@@ -353,35 +359,35 @@ export default async function DashboardPage(props: PageProps) {
                             </div>
                         ))}
                         {stats.revenueGrowth !== 0 && (
-                            <p className="text-[10px] text-right mt-1" style={{ color: '#64748B' }}>vs tháng trước: {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%</p>
+                            <p className="text-[10px] text-right mt-1" style={{ color: '#64748B' }}>vs kỳ trước: {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%</p>
                         )}
                     </div>
                 </div>
 
                 {/* Cash Position */}
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead icon={<Wallet size={15} style={{ color: '#0891B2' }} />} title="Vị Thế Tiền Mặt" />
+                    <SectionHead icon={<Wallet size={15} style={{ color: '#0891B2' }} />} title="Dòng Tiền & Cân Đối Thu - Chi" />
                     <div className="p-3 rounded-md mb-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>Dòng Tiền Ròng Tháng</p>
+                        <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>Dòng Tiền Ròng Trong Kỳ</p>
                         <p className="text-xl font-bold" style={{ color: cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E' }}>
                             {cash.netCashFlow >= 0 ? '+' : ''}{formatVND(cash.netCashFlow)}
                         </p>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
-                            <div className="flex items-center gap-2"><ArrowDownLeft size={13} style={{ color: '#5BA88A' }} /><span className="text-xs" style={{ color: '#5BA88A' }}>Thu AR</span></div>
+                            <div className="flex items-center gap-2"><ArrowDownLeft size={13} style={{ color: '#5BA88A' }} /><span className="text-xs" style={{ color: '#5BA88A' }}>Thu nợ bán hàng (AR)</span></div>
                             <span className="text-xs font-bold" style={{ color: '#5BA88A' }}>+{formatVND(cash.cashIn)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
-                            <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#E05252' }} /><span className="text-xs" style={{ color: '#E05252' }}>Trả NCC</span></div>
+                            <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#E05252' }} /><span className="text-xs" style={{ color: '#E05252' }}>Trả nhà cung cấp (AP)</span></div>
                             <span className="text-xs font-bold" style={{ color: '#E05252' }}>−{formatVND(cash.cashOutAP)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
-                            <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#D4A853' }} /><span className="text-xs" style={{ color: '#D4A853' }}>Chi phí</span></div>
+                            <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#D4A853' }} /><span className="text-xs" style={{ color: '#D4A853' }}>Chi phí hoạt động</span></div>
                             <span className="text-xs font-bold" style={{ color: '#D4A853' }}>−{formatVND(cash.cashOutExpenses)}</span>
                         </div>
                         <div style={{ borderTop: '1px solid #E2E8F0' }} className="pt-2 flex justify-between text-xs">
-                            <span style={{ color: '#64748B' }}>AR chưa thu / AP chưa trả</span>
+                            <span style={{ color: '#64748B' }}>Phải thu (AR) / Phải trả (AP)</span>
                             <span style={{ color: '#475569' }}>{formatVND(cash.arOutstanding)} / {formatVND(cash.apOutstanding)}</span>
                         </div>
                     </div>
@@ -444,7 +450,7 @@ export default async function DashboardPage(props: PageProps) {
 
                 {/* Top KH + Top SP */}
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead icon={<Trophy size={15} style={{ color: '#D4A853' }} />} title="Top Tháng Này" />
+                    <SectionHead icon={<Trophy size={15} style={{ color: '#D4A853' }} />} title={preset === 'THIS_MONTH' ? 'Top Tháng Này' : 'Top Bán Hàng Trong Kỳ'} />
                     {/* Top Customers */}
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
                         <Users size={11} className="inline mr-1" />Top Khách Hàng
@@ -699,7 +705,7 @@ export default async function DashboardPage(props: PageProps) {
                                 { label: 'DT', color: '#5BA88A', val: wf.revenue },
                                 { label: 'COGS', color: '#E05252', val: wf.cogs },
                                 { label: 'CP', color: '#D4A853', val: wf.totalExpenses },
-                                { label: 'Lãi', color: wf.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: wf.netProfit },
+                                { label: 'Lãi ròng', color: wf.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: wf.netProfit },
                             ].map(l => (
                                 <div key={l.label} className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />

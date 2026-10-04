@@ -552,26 +552,39 @@ export async function getPLSummary(options?: DashboardFilterOptions) {
 }
 
 // ─── Cash Position for Dashboard ─────────────────────────
-export async function getCashPosition() {
-    return cached('dashboard:cash-position', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getCashPosition(options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityId = options?.legalEntityId
 
-        const [arPayments, apPayments, approvedExpenses, totalAR, totalAP] = await Promise.all([
-            // AR Payments received this month (cash in)
+    const cacheKey = `dashboard:cash-position:${from.getTime()}-${to.getTime()}-${entityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
+        const arEntityFilter = entityId ? { invoice: { legalEntityId: entityId } } : {}
+        const apEntityFilter = entityId ? { invoice: { legalEntityId: entityId } } : {}
+        const invEntityFilter = entityId ? { legalEntityId: entityId } : {}
+
+        const [arPayments, apPayments, approvedExpenses, unpaidInvoices, unpaidAPInvoices] = await Promise.all([
+            // AR Payments received in this period (cash in)
             prisma.aRPayment.aggregate({
-                where: { paidAt: { gte: from, lte: to } },
+                where: {
+                    paidAt: { gte: from, lte: to },
+                    ...arEntityFilter,
+                },
                 _sum: { amount: true },
             }),
 
-            // AP Payments made this month (cash out)
+            // AP Payments made in this period (cash out)
             prisma.aPPayment.aggregate({
-                where: { paidAt: { gte: from, lte: to } },
+                where: {
+                    paidAt: { gte: from, lte: to },
+                    ...apEntityFilter,
+                },
                 _sum: { amount: true },
             }),
 
-            // Expenses approved this month (cash out)
+            // Expenses approved in this period (cash out)
             prisma.expense.aggregate({
                 where: {
                     status: 'APPROVED',
@@ -580,16 +593,26 @@ export async function getCashPosition() {
                 _sum: { amount: true },
             }),
 
-            // Total outstanding AR (unpaid, partially paid)
-            prisma.aRInvoice.aggregate({
-                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-                _sum: { totalAmount: true },
+            // Actual remaining unpaid AR debt (subtract already received payments)
+            prisma.aRInvoice.findMany({
+                where: {
+                    status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                    ...invEntityFilter,
+                },
+                select: { totalAmount: true, paidAmount: true },
             }),
 
-            // Total outstanding AP (unpaid, partially paid)
-            prisma.aPInvoice.aggregate({
-                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-                _sum: { amount: true },
+            // Total outstanding AP
+            prisma.aPInvoice.findMany({
+                where: {
+                    status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                    ...invEntityFilter,
+                },
+                select: {
+                    amount: true,
+                    exchangeRate: true,
+                    payments: { select: { amount: true } },
+                },
             }),
         ])
 
@@ -598,8 +621,18 @@ export async function getCashPosition() {
         const cashOutExpenses = Number(approvedExpenses._sum.amount ?? 0)
         const cashOut = cashOutAP + cashOutExpenses
         const netCashFlow = cashIn - cashOut
-        const arOutstanding = Number(totalAR._sum.totalAmount ?? 0)
-        const apOutstanding = Number(totalAP._sum.amount ?? 0)
+
+        const arOutstanding = unpaidInvoices.reduce((sum, inv) => {
+            const remaining = Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount ?? 0))
+            return sum + remaining
+        }, 0)
+
+        const apOutstanding = unpaidAPInvoices.reduce((sum, inv) => {
+            const rate = Number(inv.exchangeRate ?? 1)
+            const totalVnd = Number(inv.amount) * rate
+            const paidVnd = inv.payments.reduce((pSum, p) => pSum + Number(p.amount) * rate, 0)
+            return sum + Math.max(0, totalVnd - paidVnd)
+        }, 0)
 
         return {
             cashIn,
@@ -610,49 +643,59 @@ export async function getCashPosition() {
             arOutstanding,
             apOutstanding,
         }
-    }, 60_000) // 60s
+    }, 15_000) // 15s
 }
 
 // ─── AR Aging Chart for Dashboard ────────────────────────
-export async function getARAgingChart() {
-    return cached('dashboard:ar-aging', async () => {
+export async function getARAgingChart(options?: DashboardFilterOptions) {
+    const entityId = options?.legalEntityId
+    const cacheKey = `dashboard:ar-aging:${entityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
         const now = new Date()
+        const entityFilter = entityId ? { legalEntityId: entityId } : {}
 
         const invoices = await prisma.aRInvoice.findMany({
             where: {
                 status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                ...entityFilter,
             },
             select: {
                 totalAmount: true,
+                paidAmount: true,
                 dueDate: true,
                 status: true,
             },
         })
 
-        // Aggregate paid amounts per invoice to calculate remaining
+        // Accurate remaining unpaid debt per invoice
         const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90plus: 0 }
+        let totalActiveInvoices = 0
 
         for (const inv of invoices) {
-            const amount = Number(inv.totalAmount)
+            const remainingAmount = Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount ?? 0))
+            if (remainingAmount <= 0) continue
+
+            totalActiveInvoices++
             const daysPast = Math.floor(
                 (now.getTime() - new Date(inv.dueDate).getTime()) / 86400000
             )
 
             if (daysPast <= 0) {
-                buckets.current += amount     // Not yet due
+                buckets.current += remainingAmount     // Chưa đến hạn
             } else if (daysPast <= 30) {
-                buckets.d30 += amount         // 1-30 days overdue
+                buckets.d30 += remainingAmount         // Quá hạn 1-30 ngày
             } else if (daysPast <= 60) {
-                buckets.d60 += amount         // 31-60 days overdue
+                buckets.d60 += remainingAmount         // Quá hạn 31-60 ngày
             } else if (daysPast <= 90) {
-                buckets.d90 += amount         // 61-90 days overdue
+                buckets.d90 += remainingAmount         // Quá hạn 61-90 ngày
             } else {
-                buckets.d90plus += amount     // >90 days overdue
+                buckets.d90plus += remainingAmount     // Quá hạn >90 ngày
             }
         }
 
         return {
-            invoiceCount: invoices.length,
+            invoiceCount: totalActiveInvoices,
             totalOutstanding: Object.values(buckets).reduce((a, b) => a + b, 0),
             buckets: [
                 { label: 'Chưa đến hạn', amount: buckets.current, color: '#5BA88A' },
@@ -662,7 +705,7 @@ export async function getARAgingChart() {
                 { label: '>90 ngày', amount: buckets.d90plus, color: '#8B1A2E' },
             ],
         }
-    }, 60_000) // 60s
+    }, 15_000)
 }
 
 // ── Export Dashboard Data to Excel ─────────────────
@@ -712,12 +755,15 @@ export type WaterfallBar = {
     pct: number // % of revenue
 }
 
-export async function getCostWaterfall() {
-    return cached('dashboard:cost-waterfall', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getCostWaterfall(options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityId = options?.legalEntityId
 
+    const cacheKey = `dashboard:cost-waterfall:${from.getTime()}-${to.getTime()}-${entityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
         // Group journal lines by account on the DB side for performance
         const groups = await prisma.journalLine.groupBy({
             by: ['account'],
@@ -732,17 +778,73 @@ export async function getCostWaterfall() {
         let financialExp = 0 // TK 635
         let otherExp = 0     // TK 811
 
-        for (const g of groups) {
-            const acc = g.account.split(' - ')[0]?.trim() ?? g.account
-            const debit = Number(g._sum.debit ?? 0)
-            const credit = Number(g._sum.credit ?? 0)
+        if (!entityId) {
+            for (const g of groups) {
+                const acc = g.account.split(' - ')[0]?.trim() ?? g.account
+                const debit = Number(g._sum.debit ?? 0)
+                const credit = Number(g._sum.credit ?? 0)
 
-            if (acc.startsWith('511')) revenue += credit - debit
-            else if (acc.startsWith('632')) cogs += debit - credit
-            else if (acc.startsWith('641')) sellingExp += debit - credit
-            else if (acc.startsWith('642')) adminExp += debit - credit
-            else if (acc.startsWith('635')) financialExp += debit - credit
-            else if (acc.startsWith('811')) otherExp += debit - credit
+                if (acc.startsWith('511')) revenue += credit - debit
+                else if (acc.startsWith('632')) cogs += debit - credit
+                else if (acc.startsWith('641')) sellingExp += debit - credit
+                else if (acc.startsWith('642')) adminExp += debit - credit
+                else if (acc.startsWith('635')) financialExp += debit - credit
+                else if (acc.startsWith('811')) otherExp += debit - credit
+            }
+        }
+
+        // Fallback to SO revenue & estimated COGS + approved expenses if journal hasn't been posted
+        if (revenue === 0) {
+            const entityFilter = entityId ? { legalEntityId: entityId } : {}
+            const [orders, expensesList] = await Promise.all([
+                prisma.salesOrder.findMany({
+                    where: {
+                        status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                        createdAt: { gte: from, lte: to },
+                        ...entityFilter,
+                    },
+                    include: {
+                        lines: {
+                            include: {
+                                product: { select: { marginPrice: { select: { costPrice: true } } } }
+                            }
+                        }
+                    }
+                }),
+                prisma.expense.findMany({
+                    where: {
+                        status: 'APPROVED',
+                        createdAt: { gte: from, lte: to },
+                    },
+                    select: { account: true, category: true, amount: true }
+                })
+            ])
+
+            for (const so of orders) {
+                for (const l of so.lines) {
+                    const qty = Number(l.qtyOrdered)
+                    const price = Number(l.unitPrice)
+                    const discPct = Number(l.lineDiscountPct)
+                    const rev = qty * price * (1 - discPct / 100)
+                    const cost = l.product?.marginPrice ? Number(l.product.marginPrice.costPrice) : 0
+                    revenue += rev
+                    cogs += qty * cost
+                }
+            }
+
+            for (const exp of expensesList) {
+                const amt = Number(exp.amount)
+                const cat = exp.category
+                if (cat === 'LOGISTICS' || cat === 'MARKETING' || exp.account.startsWith('641')) {
+                    sellingExp += amt
+                } else if (cat === 'SALARY' || cat === 'RENT' || cat === 'UTILITIES' || exp.account.startsWith('642')) {
+                    adminExp += amt
+                } else if (exp.account.startsWith('635')) {
+                    financialExp += amt
+                } else {
+                    otherExp += amt
+                }
+            }
         }
 
         const grossProfit = revenue - cogs
@@ -763,7 +865,7 @@ export async function getCostWaterfall() {
         ]
 
         return { bars, revenue, cogs, grossProfit, totalExpenses, netProfit }
-    }, 60_000)
+    }, 15_000)
 }
 
 // ─── Revenue YoY Comparison (12 months) ──────────────

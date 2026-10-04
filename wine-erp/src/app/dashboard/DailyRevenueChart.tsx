@@ -42,7 +42,7 @@ export function DailyRevenueChart({ data }: Props) {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <TrendingUp size={16} className="text-[#0891B2]" />
-                    <h3 className="font-semibold text-sm text-slate-900">Biến Động Doanh Số Theo Ngày</h3>
+                    <h3 className="font-semibold text-sm text-slate-900">Doanh Thu Theo Từng Ngày</h3>
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#87CBB9]/10 text-[#0891B2] border border-[#87CBB9]/20">
                         {items.length} ngày
                     </span>
@@ -61,7 +61,7 @@ export function DailyRevenueChart({ data }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Tổng Doanh Số Kỳ
+                        Tổng Doanh Thu Kỳ
                     </span>
                     <span className="text-base font-bold text-[#0891B2] font-mono">
                         {formatVND(totalRevenue)}
@@ -77,7 +77,7 @@ export function DailyRevenueChart({ data }: Props) {
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Giá Trị TB / Đơn (AOV)
+                        Giá Trị Đơn Trung Bình
                     </span>
                     <span className="text-base font-bold text-[#D4A853] font-mono">
                         {formatVND(avgOrderValue)}
@@ -138,8 +138,8 @@ export function DailyRevenueChart({ data }: Props) {
                                 : it.revenue > 0
                                 ? '#4A8FAB'
                                 : it.isWeekend
-                                ? '#223847'
-                                : '#1E3342'
+                                ? '#E2E8F0'
+                                : '#F1F5F9'
 
                             return (
                                 <div
