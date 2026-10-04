@@ -99,7 +99,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                 ].map(f => (
                     <div key={f.key}>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>{f.label}</label>
-                        <input className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                        <input className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none"
                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                             value={(form as any)[f.key]} placeholder={f.placeholder}
                             onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
@@ -1091,7 +1091,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
             {/* ═══ VIEW MODE 2: MÀN HÌNH LÀM VIỆC CHI TIẾT (WORKSPACE VIEW) ═══ */}
             {viewMode === 'workspace' && (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-24 md:pb-8">
 
                     {/* NXT — Stock Movement Report Tab */}
                     {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} selectedWarehouseId={selectedWH ?? undefined} />}
@@ -1165,26 +1165,26 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     const totalVarianceQty = totalOnHandQty - totalBookQty
 
                                     return (
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
+                                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
                                                 {filteredLots.length} lô
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0">
                                                 Sổ: <strong>{totalBookQty.toLocaleString()}</strong>c
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 shrink-0">
                                                 On-hand: <strong>{totalOnHandQty.toLocaleString()}</strong>c
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 shrink-0">
                                                 Khả dụng: <strong>{totalAvailableQty.toLocaleString()}</strong>c
                                             </span>
                                             {totalReservedQty > 0 && (
-                                                <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200">
+                                                <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 shrink-0">
                                                     Đã đặt: <strong>{totalReservedQty.toLocaleString()}</strong>c
                                                 </span>
                                             )}
                                             {totalVarianceQty !== 0 && (
-                                                <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border ${
+                                                <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 ${
                                                     totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
                                                 }`}>
                                                     ⚠️ Lệch: {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}c
@@ -1208,7 +1208,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                 a.download = `ton-kho-so-sach-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
                                                 a.click()
                                                 URL.revokeObjectURL(url)
-                                            }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs cursor-pointer"
+                                            }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs cursor-pointer shrink-0"
                                                 style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
                                                 <Download size={13} /> Export CSV
                                             </button>
@@ -1223,12 +1223,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                                         <input placeholder="Tìm lô, sản phẩm, SKU..." value={search}
                                             onChange={e => setSearch(e.target.value)}
-                                            className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            className="w-full pl-9 pr-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }} />
                                     </div>
                                     <div className="flex gap-2">
                                         <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
-                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: wineFilter ? '#0F172A' : '#64748B' }}>
                                             <option value="">Tất cả loại rượu</option>
                                             <option value="RED">🔴 Đỏ</option>
@@ -1239,7 +1239,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                             <option value="DESSERT">🍮 Dessert</option>
                                         </select>
                                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: statusFilter ? '#0F172A' : '#64748B' }}>
                                             <option value="">Tất cả trạng thái</option>
                                             <option value="AVAILABLE">✅ Sẵn sàng</option>

@@ -89,10 +89,10 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
         return acc
     }, {})
 
-    const inputCls = "w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "w-full px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20 md:pb-4">
             {/* Header */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3">

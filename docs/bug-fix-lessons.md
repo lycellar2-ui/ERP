@@ -3274,5 +3274,45 @@ Khi nhân viên kinh doanh sử dụng điện thoại di động (iPhone Safari
 ### Bài học
 > ⚠️ **RULE 118: Mọi Modal / Drawer nhập liệu biểu mẫu nghiệp vụ (Form Modals) BẮT BUỘC phải tuân thủ chuẩn Responsive Ergonomics: (1) Lưới nhiều cột phải là `grid-cols-1 sm:grid-cols-2/3` để không bị bóp nghẹt trên mobile; (2) Font size của input phải là `text-base sm:text-sm` để triệt tiêu lỗi auto-zoom của iOS Safari; (3) Mọi nút bấm trên mobile phải đạt chuẩn touch target tối thiểu 44px; (4) Phải có cơ chế kiểm tra dữ liệu chưa lưu (Dirty State Guard) khi đóng drawer bằng backdrop, nút Hủy hoặc phím Esc; (5) Màu sắc hover/leave phải đồng bộ chính xác với bảng màu Design System đã định hình.**
 
+---
+
+## BUG-119: Kho Hàng (WMS) — Lỗi UI/UX Trên Thiết Bị Di Động (Bảng Chi Tiết Bị Co Bóp, Drawer Mất Chân Trang, iOS Safari Auto-Zoom & Thanh Điều Hướng Đáy Che Khuất)
+
+### Triệu chứng & Bối cảnh
+Khi thủ kho hoặc nhân viên vận hành sử dụng điện thoại di động (iPhone Safari, Android Chrome) tại hiện trường kho hàng để kiểm tra phiếu nhập kho (GR), soạn phiếu xuất hàng (DO), tra cứu vị trí kệ hoặc duyệt tồn kho:
+1. **Bảng chi tiết phiếu nhập (GR Lines Table) bị co nát trên Mobile:** Modal chi tiết phiếu nhập kho (`GRDetailModal` trong `GoodsReceiptTab.tsx`) hiển thị bảng 9 cột (SKU, Tên rượu, Vintage, PO Qty, Đã nhận, Nhận đợt này, Chênh lệch, Vị trí, Số lô). Trên màn hình điện thoại 360–390px, các cột bị ép dẹt, chữ nhảy dòng liên tục và người dùng không thể thao tác cuộn ngang để xem vị trí lưu kho hoặc số lô.
+2. **Drawer Tạo phiếu nhập bị trôi mất nút bấm hành động (Off-screen Action Buttons):** Form tạo phiếu nhập (`CreateGRDrawer`) có vùng nội dung dài nhưng bao bọc bởi container `overflow-y-auto` duy nhất, khiến 2 nút "Lưu Nháp" và "Tạo & Xác Nhận Nhập Kho" bị đẩy tít xuống tận cùng trang dưới. Khi nhập nhiều SKU, thủ kho phải cuộn rất dài mới tìm thấy nút Lưu hoặc Xác Nhận.
+3. **Hiện tượng giật màn hình & cưỡng bức Zoom trên iOS Safari:** Các ô input (tìm kiếm, chọn kho, vị trí kệ, số lượng, ngày nhập) trên toàn bộ các tab kho đặt font `text-xs` hoặc `text-sm` (12–14px). Khi chạm vào để gõ số lượng hoặc chọn kho, iOS Safari tự động zoom phóng to giao diện, làm lệch khung nhìn thao tác của thủ kho.
+4. **Thanh điều hướng đáy (Bottom Bar) che khuất nội dung trang:** Màn hình `WarehouseClient.tsx` có thanh điều hướng chuyển tab cố định ở chân màn hình (`fixed bottom-0 z-40`). Tuy nhiên các tab con (`GoodsReceiptTab`, `DeliveryOrderTab`, `StockMovementTab`, `LocationManager`, `SampleInventoryTab`, `TransfersTab`) thiếu khoảng đệm đáy (`pb-20`), dẫn đến các dòng dữ liệu cuối bảng hoặc nút phân trang bị thanh bottom bar che lấp hoàn toàn.
+5. **Dàn chip chỉ số thống kê tồn kho bị vỡ hàng dọc (Wrap Squish):** 8 chip chỉ số tồn kho (Tất cả, Thùng nguyên, Lẻ chai, Sắp hết, Hết hàng, Đã gán vị trí, Chưa gán, Lệch sổ sách) sử dụng `flex-wrap` khiến trên mobile dàn thành 4–5 hàng dọc ngắt quãng, chiếm tới 40% diện tích màn hình phía trên.
+6. **Màu Tab bộ lọc trạng thái vi phạm độ tương phản:** `FilterTabs` trong `GoodsReceiptTab.tsx` dùng màu nền `#87CBB9` (xanh bạc hà nhạt) cho trạng thái kích hoạt, chữ trắng trên nền này vi phạm nghiêm trọng độ tương phản WCAG AA.
+
+### Nguyên nhân gốc rễ
+1. Thiếu cấu trúc Dual-View (Table cho desktop, Card View cho mobile) trong các modal nghiệp vụ WMS chi tiết.
+2. Thiết kế Drawer phân chia layout cuộn sai cấp: Outer wrapper cuộn tự do thay vì thiết lập Flex Column với body cuộn độc lập và footer cố định.
+3. Cỡ chữ của input thiếu tiền tố thích ứng di động `text-base sm:text-sm` (16px chuẩn cho mobile).
+4. Container của các tab con dùng `pb-4` hoặc không có padding-bottom, không tính đến chiều cao thanh điều hướng cố định chân trang trên mobile.
+5. Thiếu thuộc tính cuộn ngang `overflow-x-auto no-scrollbar` cho cụm thống kê nhanh.
+
+### Cách khắc phục
+1. **Thiết kế Dual-View cho Chi tiết Nhập kho (`GRDetailModal`):**
+   - **Mobile Card View (`block md:hidden`):** Mỗi dòng sản phẩm được gom gọn trong một thẻ card trực quan bo góc, hiển thị rõ ràng SKU Badge, Vintage, Tên sản phẩm, Vị trí lưu kho (`📍 [Mã Vị Trí]`), Số lô (`Lô: [LotNo]`), và bộ so sánh số lượng (SL Đặt trên PO vs Thực nhận vs Chênh lệch).
+   - **Desktop Table (`hidden md:block`):** Giữ nguyên bảng 9 cột chi tiết cho máy tính để bàn.
+2. **Cố định Chân trang Tác vụ (Sticky Action Footer):**
+   - Tái cấu trúc `CreateGRDrawer`: Container chính `flex flex-col overflow-hidden`, thân form `flex-1 overflow-y-auto pb-28 sm:pb-6`, và footer cố định `shrink-0 sticky bottom-0 z-20 shadow-lg bg-white border-t`.
+   - Các nút hành động nâng lên chiều cao chuẩn ngón cái `min-h-[44px]`.
+3. **Triệt tiêu lỗi iOS Safari Auto-Zoom:**
+   - Chuẩn hóa toàn bộ `inputCls`, dropdown chọn kho, chọn vị trí kệ và ô tìm kiếm sang `text-base sm:text-sm` trên tất cả 7 component kho hàng.
+4. **Khắc phục che lấp nội dung đáy màn hình:**
+   - Bổ sung `pb-24 md:pb-8` cho `WarehouseClient.tsx` và `pb-20 md:pb-4` cho toàn bộ các component tab con (`GoodsReceiptTab`, `DeliveryOrderTab`, `StockMovementTab`, `LocationManager`, `SampleInventoryTab`, `TransfersTab`).
+5. **Thanh cuộn trượt ngang cho Chip Thống Kê:**
+   - Chuyển cụm thống kê tồn kho sang `overflow-x-auto no-scrollbar flex items-center gap-1.5 py-1 shrink-0`, giúp lướt nhanh bằng ngón tay mượt mà mà không chiếm dụng chiều dọc màn hình.
+6. **Đồng bộ Màu Sắc Thương Hiệu:**
+   - Thay thế màu `#87CBB9` bằng mã màu thương hiệu Pure Light chuẩn `bg-[#0891B2]` với chữ trắng rõ nét, đạt độ tương phản cao.
+
+### Bài học
+> ⚠️ **RULE 119: Mọi phân hệ quản trị Kho Hàng (WMS) khi thao tác trên thiết bị di động BẮT BUỘC: (1) Với bảng dữ liệu nhiều cột (> 5 cột như chi tiết Nhập kho GR / Xuất kho DO), phải triển khai cơ chế Dual-View: Desktop Table và Mobile Card View dạng thẻ tóm tắt trực quan; (2) Toàn bộ input/select phải có font tối thiểu 16px trên mobile (`text-base sm:text-sm`) để ngăn chặn hoàn toàn lỗi cưỡng bức Auto-Zoom của iOS Safari; (3) Drawer/Modal nhập liệu phải cố định nút bấm hành động (`sticky bottom-0 z-20` hoặc Flex Column Footer) với chiều cao tối thiểu 44px, tránh để nút trôi mất; (4) Tất cả tab màn hình phải có khoảng đệm chân trang tối thiểu `pb-20` để không bị che khuất bởi thanh điều hướng đáy (Bottom Navigation Bar).**
+
+
 
 

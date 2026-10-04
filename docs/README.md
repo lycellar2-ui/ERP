@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 118 Rules rút ra từ 82 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 119 Rules rút ra từ 83 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-04 16:45 | Wine ERP v10.47 - Customer Responsive UI/UX & iOS Safari Ergonomics (BUG-118)*
+*Last updated: 2026-10-04 17:30 | Wine ERP v10.48 - WMS Mobile Ergonomics & iOS Safari Zoom Prevention (BUG-119)*
 

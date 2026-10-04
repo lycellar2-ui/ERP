@@ -154,7 +154,7 @@ export function TransfersTab() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20 md:pb-4">
             {/* Top Toolbar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ export function TransfersTab() {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
-                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-base sm:text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
                     />
                 </div>
             </div>

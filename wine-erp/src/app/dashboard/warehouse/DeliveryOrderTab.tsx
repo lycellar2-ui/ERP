@@ -192,7 +192,7 @@ export function DeliveryOrderTab({ warehouses }: {
     }
 
     return (
-        <div className="space-y-3 sm:space-y-5">
+        <div className="space-y-3 sm:space-y-5 pb-20 md:pb-4">
             {/* Header & Sub-tab Navigation */}
             <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -254,7 +254,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Tìm Mã SO, Tên KH, SKU..."
-                            className="w-full pl-9 pr-3 py-2 text-[11px] rounded-lg outline-none font-medium"
+                            className="w-full pl-9 pr-3 py-2.5 text-base sm:text-xs rounded-lg outline-none font-medium"
                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                         />
                         <span className="absolute right-3 top-2.5 text-[10px] font-semibold" style={{ color: '#64748B' }}>
@@ -824,7 +824,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <select
                 value={selectedSO?.id ?? ''}
                 onChange={e => selectSO(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none transition-colors"
+                className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm font-mono outline-none transition-colors"
                 style={lightInputStyle}
             >
                 <option value="">— Chọn đơn SO —</option>
@@ -842,7 +842,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 type="date"
                 value={issuedDate}
                 onChange={e => setIssuedDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium"
+                className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                 style={lightInputStyle}
             />
         </div>
@@ -854,7 +854,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <select
                 value={warehouseId}
                 onChange={e => setWarehouseId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors font-medium"
+                className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-colors font-medium"
                 style={lightInputStyle}
             >
                 <option value="">— Chọn kho xuất bán —</option>
@@ -985,7 +985,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         }
                                                         setLines(v)
                                                     }}
-                                                    className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium bg-white border border-slate-300 text-slate-900"
+                                                    className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium bg-white border border-slate-300 text-slate-900"
                                                 >
                                                     <option value="">— Chọn vị trí nhặt hàng —</option>
                                                     {availLots.map((lot, idx) => {
@@ -1022,11 +1022,11 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         min={0}
                                                         value={pick.qtyPicked}
                                                         onChange={e => {
-                                                            const v = [...lines]
-                                                            v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
-                                                            setLines(v)
+                                                             const v = [...lines]
+                                                             v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
+                                                             setLines(v)
                                                         }}
-                                                        className="w-full px-3 py-2 rounded-lg text-sm font-mono font-bold text-center outline-none bg-white border"
+                                                        className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm font-mono font-bold text-center outline-none bg-white border"
                                                         style={{
                                                             borderColor: isLocInsufficient ? '#EF4444' : '#CBD5E1',
                                                             color: isLocInsufficient ? '#DC2626' : '#16A34A'

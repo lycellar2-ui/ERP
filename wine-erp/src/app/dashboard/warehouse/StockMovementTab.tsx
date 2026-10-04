@@ -259,10 +259,10 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
         URL.revokeObjectURL(url)
     }
 
-    const inputCls = "px-3 py-2 rounded-xl text-xs outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-5 pb-20 md:pb-4">
             {/* ═════════════════════════════════════════════════════ */}
             {/* GLOBAL FILTER BAR (Light Theme)                      */}
             {/* ═════════════════════════════════════════════════════ */}

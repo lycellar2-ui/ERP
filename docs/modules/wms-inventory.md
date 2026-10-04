@@ -598,6 +598,17 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Kiểm Đếm Thực Nhận & Xử Lý Hao Hụt/Vỡ** | `TransferDetailDrawer.tsx`, `transfers/actions.ts` | Bổ sung popup kiểm đếm thực nhận cho từng SKU khi hàng đến kho nhận. Cho phép thủ kho điều chỉnh số lượng thực tế, chọn vị trí kệ lưu kho cụ thể tại kho đến, và ghi nhận biên bản hao hụt/vỡ hỏng vào lịch sử phiếu |
 | **Bảo Toàn Truy Xuất Nguồn Gốc Lô Hàng (Lot Traceability)** | `transfers/actions.ts` | Khi nhận kho, kế thừa định danh từ lô gốc (`[Mã Lô Gốc]/[Mã Kho Đến]`), liên kết trọn vẹn `shipmentId`, `unitLandedCost`, `vintage` và pháp nhân sở hữu `ownerEntityId`. Cộng dồn tồn kho nếu cùng lô/kệ thay vì sinh lô rác |
 
+#### Phase 12: Tối Ưu Hóa Trải Nghiệm Mobile & Công Thái Học Thủ Kho (Mobile WMS Ergonomics) (04/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Dual-View Chi Tiết Phiếu Nhập Kho** | `GoodsReceiptTab.tsx` | Bổ sung Mobile Card View (`block md:hidden`) hiển thị trực quan thông tin dòng hàng GR (SKU badge, Vintage, Vị trí kệ, Số lô, SL PO vs Nhận thực tế) song song với Desktop Table (9 cột), xóa bỏ hoàn toàn tình trạng bảng bị bóp nghẹt trên điện thoại |
+| **Cố Định Chân Trang Drawer Tạo Phiếu Nhập** | `GoodsReceiptTab.tsx` | Tái cấu trúc `CreateGRDrawer` thành Flex Column: Header + Thân cuộn (`overflow-y-auto pb-28`) + Footer cố định (`sticky bottom-0 z-20`) với các nút Lưu nháp & Xác nhận đạt chuẩn touch target $\ge 44$px |
+| **Triệt Tiêu Lỗi iOS Safari Auto-Zoom** | Tất cả 7 component kho hàng | Chuẩn hóa toàn bộ ô nhập liệu và dropdown sang `text-base sm:text-sm` (16px trên mobile), ngăn chặn hoàn toàn việc trình duyệt iPhone tự ý zoom phóng to giao diện |
+| **Chống Che Khuất Bởi Thanh Điều Hướng Đáy** | `WarehouseClient.tsx`, các Tabs con | Bổ sung `pb-24 md:pb-8` cho Workspace và `pb-20 md:pb-4` cho tất cả tab con, đảm bảo bảng dữ liệu và nút bấm cuối trang không bị thanh điều hướng mobile che lấp |
+| **Thanh Trượt Ngang Chip Thống Kê Tồn Kho** | `WarehouseClient.tsx` | Chuyển cụm 8 chip lọc tồn kho sang `overflow-x-auto no-scrollbar flex shrink-0` lướt ngón tay mượt mà thay vì vỡ thành 4–5 hàng dọc |
+| **Đồng Bộ Màu Thương Hiệu Pure Light** | `GoodsReceiptTab.tsx` | Thay thế mã màu xanh nhạt `#87CBB9` bằng brand cyan `#0891B2` tương phản cao |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -608,6 +619,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-09-10 | Wine ERP v10.21 — Enhanced Transfer Order Receipt & Lot Traceability*
+*Last updated: 2026-10-04 | Wine ERP v10.48 — Mobile WMS Ergonomics & iOS Safari Zoom Prevention (BUG-119)*
+
 
 

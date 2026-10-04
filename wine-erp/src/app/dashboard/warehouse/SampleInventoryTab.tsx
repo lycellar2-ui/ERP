@@ -166,10 +166,10 @@ export function SampleInventoryTab() {
         setShowOutboundModal(true)
     }
 
-    const inputCls = "px-3 py-2 rounded-xl text-xs outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-5 pb-20 md:pb-4">
             {/* TOP HEADER & ACTION BAR */}
             <div className="p-4 sm:p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">

@@ -197,16 +197,16 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                         onClick={() => onChange(tab === 'ALL' ? '' : tab)}
                         className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer"
                         style={{
-                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            color: isActive ? '#87CBB9' : '#475569',
-                            border: isActive ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
+                            background: isActive ? 'rgba(8, 145, 178, 0.1)' : 'transparent',
+                            color: isActive ? '#0891B2' : '#475569',
+                            border: isActive ? '1px solid rgba(8, 145, 178, 0.35)' : '1px solid transparent',
                         }}
                     >
                         <span>{TAB_LABELS[tab]}</span>
                         <span
                             className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold"
                             style={{
-                                background: isActive ? '#87CBB9' : '#E2E8F0',
+                                background: isActive ? '#0891B2' : '#E2E8F0',
                                 color: isActive ? '#FFFFFF' : '#475569',
                             }}
                         >
@@ -407,7 +407,7 @@ export function GoodsReceiptTab({ warehouses }: {
         return filteredRows.reduce((sum, r) => sum + (r.totalCases || Math.round((r.totalQtyReceived / 6) * 10) / 10), 0)
     }, [filteredRows])
 
-    const inputCls = "px-3 py-2 rounded-lg text-xs outline-none transition-all"
+    const inputCls = "px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-all"
     const darkInputStyle = {
         background: '#FFFFFF',
         border: '1px solid #E2E8F0',
@@ -415,7 +415,7 @@ export function GoodsReceiptTab({ warehouses }: {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20 md:pb-4">
             {/* ── 1. Header with Inline Metrics & Quick Actions (Sales/Procurement Style) ── */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-xl border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
@@ -1051,7 +1051,59 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </span>
                                     </div>
 
-                                    <div className="rounded-xl overflow-hidden border shadow-sm"
+                                    {/* Mobile Product Cards (< 768px) */}
+                                    <div className="block md:hidden space-y-2.5">
+                                        {detailData.lines.map(l => (
+                                            <div key={l.id} className="p-3.5 rounded-xl space-y-2 border border-slate-200 bg-white shadow-2xs">
+                                                <div className="flex items-center justify-between gap-1.5">
+                                                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
+                                                        {l.skuCode}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                                            {l.vintage ? `VTG ${l.vintage}` : 'NV'}
+                                                        </span>
+                                                        {l.variance !== 0 && (
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                                                l.variance > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                            }`}>
+                                                                {l.variance > 0 ? `+${l.variance}` : l.variance} lệch
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <p className="text-xs font-bold text-slate-900 leading-snug">
+                                                    {l.productName}
+                                                </p>
+
+                                                <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                                    <span>📍 Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong></span>
+                                                    <span>Lô: <strong className="font-mono text-slate-800">{l.lotNo}</strong></span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 text-center">
+                                                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Dự kiến PO</span>
+                                                        <strong className="font-mono text-slate-700">
+                                                            {l.casesExpected ?? Math.round((l.qtyExpected / (l.unitsPerCase || 6)) * 10) / 10} thg
+                                                        </strong>
+                                                        <span className="text-[10px] text-slate-500 block">({l.qtyExpected} chai)</span>
+                                                    </div>
+                                                    <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-200 text-center">
+                                                        <span className="text-[10px] uppercase font-bold text-emerald-700 block">Thực nhận</span>
+                                                        <strong className="font-mono text-emerald-800 font-extrabold">
+                                                            {l.casesReceived ?? Math.round((l.qtyReceived / (l.unitsPerCase || 6)) * 10) / 10} thg
+                                                        </strong>
+                                                        <span className="text-[10px] text-emerald-700 block">({l.qtyReceived} chai)</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Desktop Table View (>= 768px) */}
+                                    <div className="hidden md:block rounded-xl overflow-hidden border shadow-sm"
                                         style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse text-xs">
@@ -1254,7 +1306,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
+    const inputCls = "w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-all"
     const darkInputStyle = {
         background: '#FFFFFF',
         border: '1px solid #E2E8F0',
@@ -1263,27 +1315,27 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full sm:w-[740px] max-w-full h-full overflow-y-auto border-l border-slate-200 dark:border-slate-200 bg-white dark:bg-slate-50 shadow-2xl flex flex-col">
+            <div className="w-full sm:w-[740px] max-w-full h-full overflow-hidden border-l border-slate-200 bg-white shadow-2xl flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50 flex-shrink-0">
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex-shrink-0">
                     <div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        <h3 className="text-base font-bold text-slate-900">
                             Tạo Phiếu Nhập Kho (Goods Receipt)
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-0.5">
                             Nhập hàng từ đơn mua PO đã duyệt vào vị trí kho thực tế
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-5 space-y-4 flex-1 overflow-y-auto">
+                <div className="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto pb-28 sm:pb-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         {/* PO Selector */}
                         <div>
@@ -1523,28 +1575,29 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     )}
                 </div>
 
-                {/* Footer with Dual Action Buttons */}
-                <div className="p-4 border-t flex-shrink-0 flex items-center justify-between gap-3"
-                    style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                {/* Footer with Dual Action Buttons (Sticky at bottom) */}
+                <div className="p-3.5 sm:p-4 border-t flex-shrink-0 flex items-center justify-between gap-3 bg-white shadow-lg sticky bottom-0 z-20"
+                    style={{ borderColor: '#E2E8F0' }}>
                     <button
                         onClick={() => handleSave(false)}
                         disabled={saving || !selectedPO}
-                        className="px-4 py-2.5 text-xs font-semibold rounded-xl transition-all border cursor-pointer disabled:opacity-50 hover:bg-white"
-                        style={{ color: '#475569', borderColor: '#E2E8F0' }}
+                        className="px-4 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all border cursor-pointer disabled:opacity-50 hover:bg-slate-50 flex items-center justify-center shrink-0"
+                        style={{ color: '#475569', borderColor: '#CBD5E1', minHeight: '44px' }}
                         title="Lưu phiếu GR ở trạng thái Nháp (chưa ghi nhận tồn kho)"
                     >
-                        Lưu Nháp (DRAFT)
+                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} className="mr-1.5" />}
+                        <span>Lưu Nháp (DRAFT)</span>
                     </button>
 
                     <button
                         onClick={() => handleSave(true)}
                         disabled={saving || !selectedPO}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 hover:opacity-90 active:scale-[0.99]"
-                        style={{ background: '#5BA88A', color: '#FFFFFF' }}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                        style={{ background: '#0891B2', color: '#FFFFFF', minHeight: '44px' }}
                         title="Tạo phiếu và ghi nhận tồn kho vào kho thực tế ngay lập tức"
                     >
-                        {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                        <span>Tạo & Xác Nhận Nhập Kho (Cộng Tồn)</span>
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                        <span>Tạo & Xác Nhận Nhập Kho</span>
                     </button>
                 </div>
             </div>
