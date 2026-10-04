@@ -457,5 +457,28 @@ Nâng cấp Dashboard thành hệ thống 2 Tab độc lập, chuyên sâu theo 
 - **Phân khúc giá**: Thống kê thói quen nhập hàng theo 3 tầm giá: Phổ thông (< 500k), Trung cấp (500k – 1.5M), và Cao cấp (> 1.5M).
 - **Lịch sử đơn hàng có địa chỉ giao & người nhận**: Hiển thị rõ điểm giao hàng tại chi nhánh, người nhận hàng tại điểm, số điện thoại, ghi chú giao hàng và trạng thái hóa đơn VAT.
 
+---
+
+## 11. Kiến Trúc Song Ngữ (Bilingual Architecture) & Đồng Bộ Phân Hệ
+
+Nhằm phục vụ cả Ban Giám Đốc người Việt và chuyên gia/cổ đông nước ngoài, Dashboard được trang bị đầy đủ song ngữ **Tiếng Việt & English**:
+
+### 1. Chuẩn Hóa Thuật Ngữ Thương Mại Rượu Vang
+- Toàn bộ từ ngữ đều áp dụng chuẩn ERP phân phối đồ uống quốc tế, không dùng dịch máy:
+  - *Doanh thu thuần*: Period Revenue / MTD Revenue.
+  - *Lãi gộp & biên lợi nhuận*: Gross Profit & Gross Margin.
+  - *Dòng tiền ròng*: Net Cash Flow (Cash In / Cash Out).
+  - *Công nợ phải thu & tuổi nợ*: Accounts Receivable (AR Outstanding & AR Aging).
+  - *Giá niêm yết vs Giá thỏa thuận riêng*: Standard List Price vs Negotiated Special Price.
+  - *Hàng mẫu & thử nếm*: Tasting / Commercial Samples.
+
+### 2. Bộ Quản Lý Locale Trung Tâm (`src/lib/i18n.ts`)
+- Quản lý đồng bộ locale toàn hệ thống qua `erp_locale`.
+- **Đồng bộ đa phân hệ (Cross-Module Sync)**:
+  - Tự động đồng bộ 2 chiều với `sales_visits_locale` của phân hệ Sales Đi Thị Trường.
+  - Khi chuyển đổi ngôn ngữ tại Dashboard hoặc Header, hệ thống phát đồng thời 2 Custom Events: `erp_locale_change` và `sales_visits_locale_change`.
+  - Đảm bảo khi CEO hoặc Sales đổi sang English tại Dashboard thì toàn bộ Header, thanh filter và phân hệ Field Visits đều đổi sang English ngay lập tức mà không bị xung đột hay reload trang.
+- Nút chuyển nhanh `[VI | EN]` được tích hợp trực tiếp tại Header hệ thống và thanh điều khiển thời gian của Dashboard.
+
 
 

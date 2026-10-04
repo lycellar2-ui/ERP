@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
+import { useAppLocale } from '@/lib/i18n'
+import { getDashboardDictionary } from './i18n'
 
 interface TopCustomerSimple {
     id: string
@@ -36,13 +38,6 @@ interface Props {
 
 type TimeRangeKey = 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH'
 
-const TIME_RANGE_OPTIONS: { key: TimeRangeKey; label: string }[] = [
-    { key: 'ALL', label: 'Toàn bộ thời gian' },
-    { key: 'THIS_YEAR', label: 'Năm nay (2026)' },
-    { key: 'LAST_6_MONTHS', label: '6 tháng qua' },
-    { key: 'THIS_MONTH', label: 'Tháng này' },
-]
-
 function formatFriendlyVND(amount: number | null | undefined): string {
     if (!amount || amount === 0) return '0 đ'
     const abs = Math.abs(amount)
@@ -52,44 +47,54 @@ function formatFriendlyVND(amount: number | null | undefined): string {
         return `${sign}${billions >= 10 ? billions.toFixed(1) : billions.toFixed(2).replace('.', ',')} Tỷ`
     } else if (abs >= 1_000_000) {
         const millions = abs / 1_000_000
-        return `${sign}${millions >= 10 ? millions.toFixed(0) : millions.toFixed(1).replace('.', ',')} Triệu`
+        return `${sign}${millions >= 10 ? millions.toFixed(0) : millions.toFixed(1).replace('.', ',')} Tr`
     }
     return `${sign}${abs.toLocaleString('vi-VN')} đ`
 }
 
-const STATUS_BADGES: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    CONFIRMED: { label: 'Đã xác nhận', bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.2)' },
-    PARTIALLY_DELIVERED: { label: 'Giao một phần', bg: 'rgba(212,168,83,0.1)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
-    DELIVERED: { label: 'Đã giao hàng', bg: 'rgba(91,168,138,0.12)', color: '#16A34A', border: 'rgba(91,168,138,0.25)' },
-    INVOICED: { label: 'Đã xuất HĐ', bg: 'rgba(2,132,199,0.1)', color: '#0284C7', border: 'rgba(2,132,199,0.25)' },
-    PAID: { label: 'Đã thanh toán', bg: 'rgba(22,163,74,0.12)', color: '#15803D', border: 'rgba(22,163,74,0.25)' },
-    PENDING_APPROVAL: { label: 'Chờ duyệt', bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
-    PENDING_ACCOUNTING: { label: 'Chờ kế toán', bg: 'rgba(212,168,83,0.1)', color: '#D97706', border: 'rgba(212,168,83,0.2)' },
-    DRAFT: { label: 'Bản nháp', bg: '#F1F5F9', color: '#64748B', border: '#CBD5E1' },
-    CANCELLED: { label: 'Đã hủy', bg: 'rgba(224,82,82,0.1)', color: '#E05252', border: 'rgba(224,82,82,0.2)' },
+const STATUS_BADGES: Record<string, { labelVi: string; labelEn: string; bg: string; color: string; border: string }> = {
+    CONFIRMED: { labelVi: 'Đã xác nhận', labelEn: 'Confirmed', bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.2)' },
+    PARTIALLY_DELIVERED: { labelVi: 'Giao một phần', labelEn: 'Partially Delivered', bg: 'rgba(212,168,83,0.1)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
+    DELIVERED: { labelVi: 'Đã giao hàng', labelEn: 'Delivered', bg: 'rgba(91,168,138,0.12)', color: '#16A34A', border: 'rgba(91,168,138,0.25)' },
+    INVOICED: { labelVi: 'Đã xuất HĐ', labelEn: 'Invoiced', bg: 'rgba(2,132,199,0.1)', color: '#0284C7', border: 'rgba(2,132,199,0.25)' },
+    PAID: { labelVi: 'Đã thanh toán', labelEn: 'Paid', bg: 'rgba(22,163,74,0.12)', color: '#15803D', border: 'rgba(22,163,74,0.25)' },
+    PENDING_APPROVAL: { labelVi: 'Chờ duyệt', labelEn: 'Pending Approval', bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
+    PENDING_ACCOUNTING: { labelVi: 'Chờ kế toán', labelEn: 'Pending Accounting', bg: 'rgba(212,168,83,0.1)', color: '#D97706', border: 'rgba(212,168,83,0.2)' },
+    DRAFT: { labelVi: 'Bản nháp', labelEn: 'Draft', bg: '#F1F5F9', color: '#64748B', border: '#CBD5E1' },
+    CANCELLED: { labelVi: 'Đã hủy', labelEn: 'Cancelled', bg: 'rgba(224,82,82,0.1)', color: '#E05252', border: 'rgba(224,82,82,0.2)' },
 }
 
-const DELIVERY_BADGES: Record<string, { label: string; bg: string; color: string }> = {
-    DELIVERED: { label: 'Giao đủ', bg: 'rgba(22,163,74,0.1)', color: '#16A34A' },
-    PARTIALLY_DELIVERED: { label: 'Giao 1 phần', bg: 'rgba(212,168,83,0.1)', color: '#B45309' },
-    PREPARING: { label: 'Đang chuẩn bị', bg: 'rgba(8,145,178,0.08)', color: '#0891B2' },
-    UNDELIVERED: { label: 'Chưa giao', bg: '#F1F5F9', color: '#64748B' },
+const DELIVERY_BADGES: Record<string, { labelVi: string; labelEn: string; bg: string; color: string }> = {
+    DELIVERED: { labelVi: 'Giao đủ', labelEn: 'Fully Delivered', bg: 'rgba(22,163,74,0.1)', color: '#16A34A' },
+    PARTIALLY_DELIVERED: { labelVi: 'Giao 1 phần', labelEn: 'Partially Delivered', bg: 'rgba(212,168,83,0.1)', color: '#B45309' },
+    PREPARING: { labelVi: 'Đang chuẩn bị', labelEn: 'Preparing', bg: 'rgba(8,145,178,0.08)', color: '#0891B2' },
+    UNDELIVERED: { labelVi: 'Chưa giao', labelEn: 'Not Dispatched', bg: '#F1F5F9', color: '#64748B' },
 }
 
-const BASE_PRICE_LABELS: Record<string, string> = {
-    BY_CHANNEL: 'Giá theo kênh bán hàng',
-    WHOLESALE: 'Bảng giá bán buôn',
-    RETAIL: 'Giá bán lẻ niêm yết',
-    HORECA: 'Bảng giá HORECA',
+const BASE_PRICE_LABELS: Record<string, { vi: string; en: string }> = {
+    BY_CHANNEL: { vi: 'Giá theo kênh bán hàng', en: 'Channel-based pricing' },
+    WHOLESALE: { vi: 'Bảng giá bán buôn', en: 'Standard Wholesale Price' },
+    RETAIL: { vi: 'Giá bán lẻ niêm yết', en: 'Retail List Price' },
+    HORECA: { vi: 'Bảng giá HORECA', en: 'HORECA Price List' },
 }
 
 export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerId }: Props) {
+    const { locale, isEn } = useAppLocale()
+    const t = getDashboardDictionary(locale)
+
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(initialCustomerId ?? null)
     const [timeRange, setTimeRange] = useState<TimeRangeKey>('ALL')
     const [activeTab, setActiveTab] = useState<'ORDERS' | 'WINES' | 'TREND'>('ORDERS')
     const [expandedSoId, setExpandedSoId] = useState<string | null>(null)
     const [orderFilter, setOrderFilter] = useState<'ALL' | 'COMMERCIAL' | 'TASTING' | 'UNPAID' | 'DELIVERED'>('ALL')
     const [wineSearch, setWineSearch] = useState<string>('')
+
+    const timeRangeOptions: { key: TimeRangeKey; label: string }[] = [
+        { key: 'ALL', label: isEn ? 'All time' : 'Toàn bộ thời gian' },
+        { key: 'THIS_YEAR', label: isEn ? 'This year (2026)' : 'Năm nay (2026)' },
+        { key: 'LAST_6_MONTHS', label: isEn ? 'Last 6 months' : '6 tháng qua' },
+        { key: 'THIS_MONTH', label: isEn ? 'This month' : 'Tháng này' },
+    ]
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('')
@@ -188,7 +193,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Tìm theo tên khách, mã KH, số điện thoại..."
+                                placeholder={t.customer360.searchPlaceholder}
                                 value={searchQuery}
                                 onFocus={() => {
                                     setIsDropdownOpen(true)
@@ -217,11 +222,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <div className="absolute left-0 right-0 top-full mt-1 z-40 bg-white rounded-md shadow-lg border border-slate-200 max-h-80 overflow-y-auto divide-y divide-slate-100">
                                 {isSearching ? (
                                     <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                                        <RefreshCw size={12} className="animate-spin text-cyan-600" /> Đang tìm...
+                                        <RefreshCw size={12} className="animate-spin text-cyan-600" /> {isEn ? 'Searching...' : 'Đang tìm...'}
                                     </div>
                                 ) : searchResults.length === 0 ? (
                                     <div className="py-4 text-center text-xs text-slate-500">
-                                        Không tìm thấy khách hàng
+                                        {isEn ? 'No customer found' : 'Không tìm thấy khách hàng'}
                                     </div>
                                 ) : (
                                     searchResults.map(c => {
@@ -246,12 +251,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                                        {c.salesRepName && <span>Sale phụ trách: <strong>{c.salesRepName}</strong></span>}
-                                                        {c.parentName && <span>&bull; Thuộc: {c.parentName}</span>}
+                                                        {c.salesRepName && <span>{isEn ? 'Sales Rep:' : 'Sale phụ trách:'} <strong>{c.salesRepName}</strong></span>}
+                                                        {c.parentName && <span>&bull; {isEn ? 'Group:' : 'Thuộc:'} {c.parentName}</span>}
                                                     </div>
                                                 </div>
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 flex-shrink-0">
-                                                    {c.orderCount} đơn hàng
+                                                    {c.orderCount} {isEn ? 'orders' : 'đơn hàng'}
                                                 </span>
                                             </button>
                                         )
@@ -263,7 +268,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
                     {/* Time Range Selector */}
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md border border-slate-200 self-start lg:self-auto overflow-x-auto max-w-full">
-                        {TIME_RANGE_OPTIONS.map(opt => (
+                        {timeRangeOptions.map(opt => (
                             <button
                                 key={opt.key}
                                 type="button"
@@ -284,7 +289,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                 {topCustomers.length > 0 && (
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs overflow-x-auto">
                         <span className="text-[11px] font-semibold text-slate-500 flex-shrink-0 flex items-center gap-1">
-                            <Users size={12} className="text-amber-500" /> Top Doanh Số:
+                            <Users size={12} className="text-amber-500" /> {t.customer360.quickPickTitle}
                         </span>
                         <div className="flex items-center gap-1.5 flex-nowrap">
                             {topCustomers.map((tc, idx) => {
@@ -343,22 +348,26 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 </span>
                                 {historyData.customer.entityType === 'COMPANY' && (
                                     <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                        Công ty Mẹ ({historyData.customer.childrenCount} chi nhánh con)
+                                        {isEn ? `Parent Group (${historyData.customer.childrenCount} branches)` : `Công ty Mẹ (${historyData.customer.childrenCount} chi nhánh con)`}
                                     </span>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Sale phụ trách</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                                        {isEn ? 'Assigned Sales Rep' : 'Sale phụ trách'}
+                                    </span>
                                     <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
                                         <User size={13} className="text-slate-400" />
-                                        {historyData.customer.salesRepName || 'Chưa phân bổ'}
+                                        {historyData.customer.salesRepName || (isEn ? 'Unassigned' : 'Chưa phân bổ')}
                                     </span>
                                 </div>
                                 {historyData.customer.parentName && (
                                     <div>
-                                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Công ty mẹ</span>
+                                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                                            {isEn ? 'Parent Company' : 'Công ty mẹ'}
+                                        </span>
                                         <span className="font-semibold text-slate-800 flex items-center gap-1.5 mt-0.5">
                                             <Building2 size={13} className="text-slate-400" />
                                             {historyData.customer.parentName}
@@ -366,7 +375,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     </div>
                                 )}
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Liên hệ thu mua</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                                        {isEn ? 'Purchasing Contact' : 'Liên hệ thu mua'}
+                                    </span>
                                     <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
                                         {historyData.customer.purchasingName || '—'}
                                         {historyData.customer.purchasingPhone && (
@@ -375,7 +386,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Nhận hàng tại điểm</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                                        {isEn ? 'Site Receiver' : 'Nhận hàng tại điểm'}
+                                    </span>
                                     <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
                                         {historyData.customer.receiverName || '—'}
                                         {historyData.customer.receiverPhone && (
@@ -397,7 +410,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        Theo Dõi Nhịp Đặt Hàng
+                                        {isEn ? 'Order Rhythm & Frequency' : 'Theo Dõi Nhịp Đặt Hàng'}
                                     </span>
                                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                                         historyData.health.status === 'AT_RISK'
@@ -406,21 +419,29 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                             ? 'bg-amber-100 text-amber-800 border border-amber-300'
                                             : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                     }`}>
-                                        {historyData.health.status === 'AT_RISK' ? '⚠️ Quá chu kỳ' : historyData.health.status === 'WARNING' ? '⚡ Đang chậm đơn' : '✓ Đặt đều đặn'}
+                                        {historyData.health.status === 'AT_RISK'
+                                            ? (isEn ? '⚠️ Overdue Cycle' : '⚠️ Quá chu kỳ')
+                                            : historyData.health.status === 'WARNING'
+                                            ? (isEn ? '⚡ Delay Warning' : '⚡ Đang chậm đơn')
+                                            : (isEn ? '✓ Regular Rhythm' : '✓ Đặt đều đặn')}
                                     </span>
                                 </div>
 
                                 <div className="space-y-1.5 mt-2 text-xs">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">Đơn gần nhất:</span>
+                                        <span className="text-slate-600">{isEn ? 'Last order:' : 'Đơn gần nhất:'}</span>
                                         <strong className="text-slate-900 font-mono">
-                                            {historyData.health.daysSinceLastOrder !== null ? `Cách đây ${historyData.health.daysSinceLastOrder} ngày` : 'Chưa có đơn'}
+                                            {historyData.health.daysSinceLastOrder !== null
+                                                ? (isEn ? `${historyData.health.daysSinceLastOrder} days ago` : `Cách đây ${historyData.health.daysSinceLastOrder} ngày`)
+                                                : (isEn ? 'No orders recorded' : 'Chưa có đơn')}
                                         </strong>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">Chu kỳ thường đặt:</span>
+                                        <span className="text-slate-600">{isEn ? 'Average cycle:' : 'Chu kỳ thường đặt:'}</span>
                                         <strong className="text-slate-900 font-mono">
-                                            {historyData.health.averageOrderCycleDays ? `~ ${historyData.health.averageOrderCycleDays} ngày / đơn` : 'Chưa đủ dữ liệu'}
+                                            {historyData.health.averageOrderCycleDays
+                                                ? `~ ${historyData.health.averageOrderCycleDays} ${isEn ? 'days / order' : 'ngày / đơn'}`
+                                                : (isEn ? 'Insufficient data' : 'Chưa đủ dữ liệu')}
                                         </strong>
                                     </div>
                                 </div>
@@ -430,15 +451,19 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 <p className="text-slate-700 leading-snug">
                                     {historyData.health.status === 'AT_RISK' ? (
                                         <span className="text-rose-700 font-semibold">
-                                            Đã quá chu kỳ mua {historyData.health.delayDays} ngày. Sale cần chủ động liên hệ kiểm tra lại nhu cầu của khách.
+                                            {isEn
+                                                ? `Exceeded typical order cycle by ${historyData.health.delayDays} days. Sales rep should follow up.`
+                                                : `Đã quá chu kỳ mua ${historyData.health.delayDays} ngày. Sale cần chủ động liên hệ kiểm tra lại nhu cầu của khách.`}
                                         </span>
                                     ) : historyData.health.status === 'WARNING' ? (
                                         <span className="text-amber-800 font-medium">
-                                            Khách đang đặt chậm hơn chu kỳ {historyData.health.delayDays} ngày.
+                                            {isEn
+                                                ? `Customer ordering slower than usual by ${historyData.health.delayDays} days.`
+                                                : `Khách đang đặt chậm hơn chu kỳ ${historyData.health.delayDays} ngày.`}
                                         </span>
                                     ) : (
                                         <span className="text-emerald-800 font-medium">
-                                            Khách duy trì đặt hàng đúng chu kỳ đều đặn.
+                                            {isEn ? 'Customer maintains a consistent ordering rhythm.' : 'Khách duy trì đặt hàng đúng chu kỳ đều đặn.'}
                                         </span>
                                     )}
                                 </p>
@@ -454,20 +479,24 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     <Tag size={16} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-sm text-slate-900">Chính Sách Giá & Bảng Giá Riêng</h4>
-                                    <p className="text-xs text-slate-500">Chính sách chiết khấu và danh mục mã rượu có giá thỏa thuận riêng</p>
+                                    <h4 className="font-bold text-sm text-slate-900">
+                                        {isEn ? 'Pricing Policy & Special Price Lists' : 'Chính Sách Giá & Bảng Giá Riêng'}
+                                    </h4>
+                                    <p className="text-xs text-slate-500">
+                                        {isEn ? 'Discount terms and wine SKUs with approved custom rates' : 'Chính sách chiết khấu và danh mục mã rượu có giá thỏa thuận riêng'}
+                                    </p>
                                 </div>
                             </div>
 
                             {/* Base Pricing Badges */}
                             <div className="flex items-center gap-2 text-xs">
-                                <span className="text-slate-500">Chính sách giá:</span>
+                                <span className="text-slate-500">{isEn ? 'Pricing policy:' : 'Chính sách giá:'}</span>
                                 <span className="font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200">
-                                    {BASE_PRICE_LABELS[historyData.pricing.basePriceType] ?? historyData.pricing.basePriceType}
+                                    {BASE_PRICE_LABELS[historyData.pricing.basePriceType]?.[isEn ? 'en' : 'vi'] ?? historyData.pricing.basePriceType}
                                 </span>
                                 {historyData.pricing.defaultDiscountPct > 0 && (
                                     <span className="font-bold px-2 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        Chiết khấu mặc định: -{historyData.pricing.defaultDiscountPct}%
+                                        {isEn ? `Default discount: -${historyData.pricing.defaultDiscountPct}%` : `Chiết khấu mặc định: -${historyData.pricing.defaultDiscountPct}%`}
                                     </span>
                                 )}
                             </div>
@@ -477,7 +506,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {historyData.pricing.proposals.length > 0 && (
                             <div className="mt-4 p-3 rounded-md bg-amber-50/40 border border-amber-200">
                                 <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                                    📜 Tờ trình duyệt giá riêng ({historyData.pricing.proposals.length}):
+                                    📜 {isEn ? `Approved Price Proposals (${historyData.pricing.proposals.length}):` : `Tờ trình duyệt giá riêng (${historyData.pricing.proposals.length}):`}
                                 </span>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {historyData.pricing.proposals.map(p => (
@@ -488,12 +517,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <span className="truncate">{p.title}</span>
                                                 </div>
                                                 <div className="text-[11px] text-slate-500 mt-0.5">
-                                                    {p.startDate ? `${new Date(p.startDate).toLocaleDateString('vi-VN')} – ` : ''}
-                                                    {p.endDate ? new Date(p.endDate).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
+                                                    {p.startDate ? `${new Date(p.startDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')} – ` : ''}
+                                                    {p.endDate ? new Date(p.endDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN') : (isEn ? 'Indefinite' : 'Vô thời hạn')}
                                                 </div>
                                             </div>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-                                                Đã duyệt
+                                                {isEn ? 'Approved' : 'Đã duyệt'}
                                             </span>
                                         </div>
                                     ))}
@@ -505,18 +534,18 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         <div className="mt-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-slate-800">
-                                    Bảng giá riêng theo từng mã hàng ({historyData.pricing.specialRules.length} SKU):
+                                    {isEn ? `Custom price rules by SKU (${historyData.pricing.specialRules.length} SKUs):` : `Bảng giá riêng theo từng mã hàng (${historyData.pricing.specialRules.length} SKU):`}
                                 </span>
                                 {historyData.pricing.specialRules.some(r => r.isExpiringSoon || r.isExpired) && (
                                     <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                                        <AlertTriangle size={12} /> Có mã sắp hoặc đã hết hạn
+                                        <AlertTriangle size={12} /> {isEn ? 'Expiring or expired rates exist' : 'Có mã sắp hoặc đã hết hạn'}
                                     </span>
                                 )}
                             </div>
 
                             {historyData.pricing.specialRules.length === 0 ? (
                                 <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded border border-dashed border-slate-200">
-                                    Khách hàng đang áp dụng theo bảng giá chung, chưa có giá thỏa thuận riêng cho từng mã.
+                                    {isEn ? 'Customer is on standard wholesale pricing. No SKU-specific custom price rules assigned.' : 'Khách hàng đang áp dụng theo bảng giá chung, chưa có giá thỏa thuận riêng cho từng mã.'}
                                 </div>
                             ) : (
                                 <div className="border border-slate-200 rounded-md overflow-hidden">
@@ -524,13 +553,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                         <table className="w-full text-xs text-left">
                                             <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase font-semibold tracking-wider border-b border-slate-200">
                                                 <tr>
-                                                    <th className="py-2 px-3">Mã SKU & Tên Rượu</th>
-                                                    <th className="py-2 px-3">Xuất Xứ</th>
-                                                    <th className="py-2 px-3 text-right">Giá Niêm Yết</th>
-                                                    <th className="py-2 px-3 text-right">Giá Riêng Áp Dụng</th>
-                                                    <th className="py-2 px-3 text-right">Mức Giảm</th>
-                                                    <th className="py-2 px-3 text-center">Thời Hạn Áp Dụng</th>
-                                                    <th className="py-2 px-3 text-center">Trạng Thái</th>
+                                                    <th className="py-2 px-3">{isEn ? 'SKU Code & Wine Name' : 'Mã SKU & Tên Rượu'}</th>
+                                                    <th className="py-2 px-3">{isEn ? 'Origin' : 'Xuất Xứ'}</th>
+                                                    <th className="py-2 px-3 text-right">{isEn ? 'List Price' : 'Giá Niêm Yết'}</th>
+                                                    <th className="py-2 px-3 text-right">{isEn ? 'Special Price' : 'Giá Riêng Áp Dụng'}</th>
+                                                    <th className="py-2 px-3 text-right">{isEn ? 'Discount' : 'Mức Giảm'}</th>
+                                                    <th className="py-2 px-3 text-center">{isEn ? 'Validity Period' : 'Thời Hạn Áp Dụng'}</th>
+                                                    <th className="py-2 px-3 text-center">{isEn ? 'Status' : 'Trạng Thái'}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
@@ -562,24 +591,24 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         <td className="py-2.5 px-3 text-right font-semibold text-emerald-700">
                                                             {rule.discountPct > 0 ? (
                                                                 <span>-{rule.discountPct}% <span className="text-[10px] font-normal text-slate-500">({formatVND(rule.discountAmount)})</span></span>
-                                                            ) : 'Giá ấn định'}
+                                                            ) : (isEn ? 'Fixed rate' : 'Giá ấn định')}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center text-slate-600 whitespace-nowrap text-[11px]">
-                                                            {new Date(rule.startDate).toLocaleDateString('vi-VN')}
-                                                            {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : ' (Vô thời hạn)'}
+                                                            {new Date(rule.startDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}
+                                                            {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}` : ` (${isEn ? 'Indefinite' : 'Vô thời hạn'})`}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                             {rule.isExpired ? (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                                                                    Đã hết hạn
+                                                                    {isEn ? 'Expired' : 'Đã hết hạn'}
                                                                 </span>
                                                             ) : rule.isExpiringSoon ? (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                                                    Sắp hết hạn
+                                                                    {isEn ? 'Expiring Soon' : 'Sắp hết hạn'}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                    Đang áp dụng
+                                                                    {isEn ? 'Active' : 'Đang áp dụng'}
                                                                 </span>
                                                             )}
                                                         </td>
@@ -598,7 +627,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 1. Tổng tiền đã mua */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-cyan-600">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Tổng Tiền Hàng Đã Mua
+                                {isEn ? 'LIFETIME PURCHASES' : 'Tổng Tiền Hàng Đã Mua'}
                             </span>
                             <p className="text-xl font-bold font-mono text-slate-900">
                                 {formatFriendlyVND(historyData.kpis.totalRevenue)}
@@ -611,15 +640,17 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 2. Đã thu vs Còn nợ AR */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-amber-500">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Đã Thanh Toán / Còn Nợ
+                                {isEn ? 'PAID / OUTSTANDING DEBT' : 'Đã Thanh Toán / Còn Nợ'}
                             </span>
                             <p className="text-xl font-bold font-mono text-emerald-700">
                                 {formatFriendlyVND(historyData.kpis.totalPaidAmount)}
                             </p>
                             <p className="text-[11px] mt-1 font-medium">
-                                Còn nợ: <strong className="text-amber-800">{formatFriendlyVND(historyData.kpis.totalArDebt)}</strong>
+                                {isEn ? 'Balance: ' : 'Còn nợ: '}<strong className="text-amber-800">{formatFriendlyVND(historyData.kpis.totalArDebt)}</strong>
                                 {historyData.kpis.overdueArDebt > 0 && (
-                                    <span className="text-rose-600 font-bold ml-1">({formatFriendlyVND(historyData.kpis.overdueArDebt)} quá hạn)</span>
+                                    <span className="text-rose-600 font-bold ml-1">
+                                        ({formatFriendlyVND(historyData.kpis.overdueArDebt)} {isEn ? 'overdue' : 'quá hạn'})
+                                    </span>
                                 )}
                             </p>
                         </div>
@@ -627,26 +658,26 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* 3. Sản lượng & Đơn thương mại vs Tasting */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-emerald-600">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Tổng Số Chai Đã Giao
+                                {isEn ? 'TOTAL BOTTLES DELIVERED' : 'Tổng Số Chai Đã Giao'}
                             </span>
                             <p className="text-xl font-bold font-mono text-slate-900">
-                                {historyData.kpis.totalBottles.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
+                                {historyData.kpis.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN')} <span className="text-xs font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
                             </p>
                             <p className="text-[11px] text-slate-600 mt-1">
-                                <strong>{historyData.orderBreakdown.commercialCount}</strong> đơn bán ({historyData.orderBreakdown.commercialBottles} chai) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> đơn thử nếm
+                                <strong>{historyData.orderBreakdown.commercialCount}</strong> {isEn ? 'sales orders' : 'đơn bán'} ({historyData.orderBreakdown.commercialBottles} {isEn ? 'btls' : 'chai'}) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> {isEn ? 'tasting orders' : 'đơn thử nếm'}
                             </p>
                         </div>
 
                         {/* 4. Điều khoản & Hạn mức */}
                         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-slate-700">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                Hạn Mức Nợ & Điều Khoản
+                                {isEn ? 'CREDIT LIMIT & TERMS' : 'Hạn Mức Nợ & Điều Khoản'}
                             </span>
                             <p className="text-base font-bold text-slate-900">
                                 {historyData.customer.paymentTerm}
                             </p>
                             <p className="text-[11px] text-slate-600 mt-1">
-                                Hạn mức: <strong className="text-slate-800">{formatFriendlyVND(historyData.customer.creditLimit)}</strong>
+                                {isEn ? 'Credit limit: ' : 'Hạn mức: '}<strong className="text-slate-800">{formatFriendlyVND(historyData.customer.creditLimit)}</strong>
                             </p>
                         </div>
                     </div>
@@ -667,7 +698,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }`}
                                 >
                                     <FileText size={14} />
-                                    Lịch Sử Đơn Hàng ({historyData.orders.length})
+                                    {isEn ? `Order History (${historyData.orders.length})` : `Lịch Sử Đơn Hàng (${historyData.orders.length})`}
                                 </button>
                                 <button
                                     type="button"
@@ -679,7 +710,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }`}
                                 >
                                     <Wine size={14} />
-                                    Danh Mục Rượu Đã Mua ({historyData.topProducts.length})
+                                    {isEn ? `Purchased Wines (${historyData.topProducts.length})` : `Danh Mục Rượu Đã Mua (${historyData.topProducts.length})`}
                                 </button>
                                 <button
                                     type="button"
@@ -691,7 +722,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }`}
                                 >
                                     <TrendingUp size={14} />
-                                    Lịch Sử Nhập Theo Tháng ({historyData.monthlyTrend.length} tháng)
+                                    {isEn ? `Monthly Purchases (${historyData.monthlyTrend.length} mo)` : `Lịch Sử Nhập Theo Tháng (${historyData.monthlyTrend.length} tháng)`}
                                 </button>
                             </div>
 
@@ -699,7 +730,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 href={`/dashboard/sales?search=${encodeURIComponent(historyData.customer.code)}`}
                                 className="text-xs font-bold text-cyan-700 hover:text-cyan-900 flex items-center gap-1 hover:underline"
                             >
-                                Xem tại danh sách Bán hàng <ExternalLink size={12} />
+                                {isEn ? 'View in Sales Orders' : 'Xem tại danh sách Bán hàng'} <ExternalLink size={12} />
                             </Link>
                         </div>
 
@@ -710,13 +741,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 {/* Order Sub-filters */}
                                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-[11px] font-semibold text-slate-500">Lọc theo:</span>
+                                        <span className="text-[11px] font-semibold text-slate-500">{isEn ? 'Filter by:' : 'Lọc theo:'}</span>
                                         {[
-                                            { key: 'ALL', label: 'Tất cả đơn' },
-                                            { key: 'COMMERCIAL', label: '🛒 Đơn bán hàng' },
-                                            { key: 'TASTING', label: '🍷 Hàng mẫu / Tasting' },
-                                            { key: 'UNPAID', label: '💳 Đơn còn nợ' },
-                                            { key: 'DELIVERED', label: '📦 Đã giao hàng' },
+                                            { key: 'ALL', label: isEn ? 'All orders' : 'Tất cả đơn' },
+                                            { key: 'COMMERCIAL', label: isEn ? '🛒 Sales orders' : '🛒 Đơn bán hàng' },
+                                            { key: 'TASTING', label: isEn ? '🍷 Tasting / Samples' : '🍷 Hàng mẫu / Tasting' },
+                                            { key: 'UNPAID', label: isEn ? '💳 Outstanding debt' : '💳 Đơn còn nợ' },
+                                            { key: 'DELIVERED', label: isEn ? '📦 Delivered' : '📦 Đã giao hàng' },
                                         ].map(f => (
                                             <button
                                                 key={f.key}
@@ -733,13 +764,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                         ))}
                                     </div>
                                     <span className="text-[11px] text-slate-500">
-                                        Hiển thị {filteredOrders.length} / {historyData.orders.length} đơn
+                                        {isEn ? `Showing ${filteredOrders.length} / ${historyData.orders.length} orders` : `Hiển thị ${filteredOrders.length} / ${historyData.orders.length} đơn`}
                                     </span>
                                 </div>
 
                                 {filteredOrders.length === 0 ? (
                                     <div className="py-12 text-center text-xs text-slate-500 bg-slate-50 rounded-md">
-                                        Không có đơn hàng nào khớp với bộ lọc
+                                        {isEn ? 'No orders match the selected filter' : 'Không có đơn hàng nào khớp với bộ lọc'}
                                     </div>
                                 ) : (
                                     <div className="border border-slate-200 rounded-md overflow-hidden">
@@ -747,17 +778,17 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                             <table className="w-full text-xs text-left">
                                                 <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase font-semibold tracking-wider border-b border-slate-200">
                                                     <tr>
-                                                        <th className="py-2.5 px-3">Mã SO</th>
-                                                        <th className="py-2.5 px-3">Ngày Đặt</th>
-                                                        <th className="py-2.5 px-3">Loại Đơn</th>
-                                                        <th className="py-2.5 px-3">Điểm Giao & Người Nhận</th>
-                                                        <th className="py-2.5 px-3 text-right">Số Chai</th>
-                                                        <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
-                                                        <th className="py-2.5 px-3 text-right">Đã Thu / Còn Nợ</th>
-                                                        <th className="py-2.5 px-3 text-center">Trạng Thái Đơn</th>
-                                                        <th className="py-2.5 px-3 text-center">Giao Hàng</th>
-                                                        <th className="py-2.5 px-3 text-center">Hóa Đơn</th>
-                                                        <th className="py-2.5 px-3 text-center">Chi Tiết</th>
+                                                        <th className="py-2.5 px-3">{isEn ? 'SO No.' : 'Mã SO'}</th>
+                                                        <th className="py-2.5 px-3">{isEn ? 'Order Date' : 'Ngày Đặt'}</th>
+                                                        <th className="py-2.5 px-3">{isEn ? 'Order Type' : 'Loại Đơn'}</th>
+                                                        <th className="py-2.5 px-3">{isEn ? 'Destination & Contact' : 'Điểm Giao & Người Nhận'}</th>
+                                                        <th className="py-2.5 px-3 text-right">{isEn ? 'Bottles' : 'Số Chai'}</th>
+                                                        <th className="py-2.5 px-3 text-right">{isEn ? 'Total Amount' : 'Tổng Tiền'}</th>
+                                                        <th className="py-2.5 px-3 text-right">{isEn ? 'Paid / Balance' : 'Đã Thu / Còn Nợ'}</th>
+                                                        <th className="py-2.5 px-3 text-center">{isEn ? 'Order Status' : 'Trạng Thái Đơn'}</th>
+                                                        <th className="py-2.5 px-3 text-center">{isEn ? 'Delivery' : 'Giao Hàng'}</th>
+                                                        <th className="py-2.5 px-3 text-center">{isEn ? 'Invoice' : 'Hóa Đơn'}</th>
+                                                        <th className="py-2.5 px-3 text-center">{isEn ? 'Details' : 'Chi Tiết'}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
@@ -776,7 +807,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                         </Link>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                                                                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                                                                        {new Date(order.createdAt).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}
                                                                     </td>
                                                                     <td className="py-2.5 px-3 whitespace-nowrap">
                                                                         {isTasting ? (
@@ -785,20 +816,20 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                             </span>
                                                                         ) : (
                                                                             <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                                                                                Đơn bán
+                                                                                {isEn ? 'Commercial' : 'Đơn bán'}
                                                                             </span>
                                                                         )}
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-slate-700 max-w-[180px]">
-                                                                        <p className="truncate font-medium">{order.shippingAddress || order.branchName || 'Kho trung tâm'}</p>
+                                                                        <p className="truncate font-medium">{order.shippingAddress || order.branchName || (isEn ? 'Central Warehouse' : 'Kho trung tâm')}</p>
                                                                         {order.receiverName && (
                                                                             <p className="text-[10px] text-slate-400 truncate">
-                                                                                Người nhận: {order.receiverName} {order.receiverPhone ? `(${order.receiverPhone})` : ''}
+                                                                                {isEn ? 'Recipient: ' : 'Người nhận: '}{order.receiverName} {order.receiverPhone ? `(${order.receiverPhone})` : ''}
                                                                             </p>
                                                                         )}
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-right font-medium text-slate-900 whitespace-nowrap">
-                                                                        {order.totalBottles} chai <span className="text-[10px] text-slate-400">({order.lineCount} dòng)</span>
+                                                                        {order.totalBottles} {isEn ? 'btls' : 'chai'} <span className="text-[10px] text-slate-400">({order.lineCount} {isEn ? 'lines' : 'dòng'})</span>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                                                                         {formatVND(order.totalAmount)}
@@ -806,25 +837,27 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                     <td className="py-2.5 px-3 text-right whitespace-nowrap">
                                                                         <span className="text-emerald-700 font-mono font-semibold block">{formatVND(order.paidAmount)}</span>
                                                                         {order.unpaidAmount > 0 && (
-                                                                            <span className="text-rose-600 font-mono text-[10px]">Còn: {formatVND(order.unpaidAmount)}</span>
+                                                                            <span className="text-rose-600 font-mono text-[10px]">
+                                                                                {isEn ? 'Balance: ' : 'Còn: '}{formatVND(order.unpaidAmount)}
+                                                                            </span>
                                                                         )}
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block"
                                                                             style={{ background: statusCfg.bg, color: statusCfg.color, border: `1px solid ${statusCfg.border}` }}>
-                                                                            {statusCfg.label}
+                                                                            {isEn ? statusCfg.labelEn : statusCfg.labelVi}
                                                                         </span>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                                         <span className="text-[10px] font-medium px-2 py-0.5 rounded inline-block"
                                                                             style={{ background: delivCfg.bg, color: delivCfg.color }}>
-                                                                            {delivCfg.label}
+                                                                            {isEn ? delivCfg.labelEn : delivCfg.labelVi}
                                                                         </span>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                                         {order.arInvoices.length > 0 ? (
                                                                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                                {order.arInvoices[0].invoiceNo || 'Có HĐ'}
+                                                                                {order.arInvoices[0].invoiceNo || (isEn ? 'Has Inv' : 'Có HĐ')}
                                                                             </span>
                                                                         ) : (
                                                                             <span className="text-[10px] text-slate-400">—</span>
@@ -835,7 +868,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                             type="button"
                                                                             onClick={() => setExpandedSoId(isExpanded ? null : order.id)}
                                                                             className="p-1 rounded hover:bg-slate-200 text-slate-500 transition-colors"
-                                                                            title={isExpanded ? 'Thu gọn' : 'Xem chi tiết sản phẩm'}
+                                                                            title={isExpanded ? (isEn ? 'Collapse' : 'Thu gọn') : (isEn ? 'View products' : 'Xem chi tiết sản phẩm')}
                                                                         >
                                                                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                                                         </button>
@@ -850,11 +883,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                                 <div className="flex items-center justify-between mb-2">
                                                                                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                                                                         <Wine size={13} className="text-cyan-700" />
-                                                                                        Danh sách {order.lines.length} sản phẩm trong đơn {order.soNo}:
+                                                                                        {isEn ? `Order items (${order.lines.length} products) in SO ${order.soNo}:` : `Danh sách ${order.lines.length} sản phẩm trong đơn ${order.soNo}:`}
                                                                                     </span>
                                                                                     {order.deliveryNotes && (
                                                                                         <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                                                                            Ghi chú giao hàng: {order.deliveryNotes}
+                                                                                            {isEn ? 'Delivery note: ' : 'Ghi chú giao hàng: '}{order.deliveryNotes}
                                                                                         </span>
                                                                                     )}
                                                                                 </div>
@@ -862,13 +895,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                                     <table className="w-full text-xs">
                                                                                         <thead className="bg-slate-50 text-[10px] text-slate-500 font-semibold border-b border-slate-200">
                                                                                             <tr>
-                                                                                                <th className="py-1.5 px-2 text-left">Mã SKU</th>
-                                                                                                <th className="py-1.5 px-2 text-left">Tên Rượu</th>
-                                                                                                <th className="py-1.5 px-2 text-center">Loại Vang</th>
-                                                                                                <th className="py-1.5 px-2 text-right">Số Lượng</th>
-                                                                                                <th className="py-1.5 px-2 text-right">Đơn Giá</th>
-                                                                                                <th className="py-1.5 px-2 text-right">Chiết Khấu</th>
-                                                                                                <th className="py-1.5 px-2 text-right">Thành Tiền</th>
+                                                                                                <th className="py-1.5 px-2 text-left">{isEn ? 'SKU Code' : 'Mã SKU'}</th>
+                                                                                                <th className="py-1.5 px-2 text-left">{isEn ? 'Wine Name' : 'Tên Rượu'}</th>
+                                                                                                <th className="py-1.5 px-2 text-center">{isEn ? 'Wine Type' : 'Loại Vang'}</th>
+                                                                                                <th className="py-1.5 px-2 text-right">{isEn ? 'Quantity' : 'Số Lượng'}</th>
+                                                                                                <th className="py-1.5 px-2 text-right">{isEn ? 'Unit Price' : 'Đơn Giá'}</th>
+                                                                                                <th className="py-1.5 px-2 text-right">{isEn ? 'Discount' : 'Chiết Khấu'}</th>
+                                                                                                <th className="py-1.5 px-2 text-right">{isEn ? 'Line Total' : 'Thành Tiền'}</th>
                                                                                             </tr>
                                                                                         </thead>
                                                                                         <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -877,7 +910,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                                                     <td className="py-1.5 px-2 font-mono text-[10px] text-slate-500">{l.skuCode}</td>
                                                                                                     <td className="py-1.5 px-2 font-bold text-slate-900">{l.productName}</td>
                                                                                                     <td className="py-1.5 px-2 text-center text-slate-600">{l.wineType || '—'}</td>
-                                                                                                    <td className="py-1.5 px-2 text-right font-semibold">{l.qtyOrdered} chai</td>
+                                                                                                    <td className="py-1.5 px-2 text-right font-semibold">{l.qtyOrdered} {isEn ? 'btls' : 'chai'}</td>
                                                                                                     <td className="py-1.5 px-2 text-right font-mono">{formatVND(l.unitPrice)}</td>
                                                                                                     <td className="py-1.5 px-2 text-right text-slate-500">
                                                                                                         {l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : '—'}
@@ -912,7 +945,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     {/* Loại Vang */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
                                         <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🍷 Cơ cấu theo loại vang:
+                                            🍷 {isEn ? 'Breakdown by wine type:' : 'Cơ cấu theo loại vang:'}
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.wineTypes.map(wt => (
@@ -920,7 +953,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <div className="flex justify-between items-center mb-1">
                                                         <span className="font-semibold text-slate-800">{wt.label}</span>
                                                         <span className="text-slate-500 font-mono">
-                                                            {wt.bottles} chai ({wt.pct}%) &bull; <strong>{formatFriendlyVND(wt.revenue)}</strong>
+                                                            {wt.bottles} {isEn ? 'btls' : 'chai'} ({wt.pct}%) &bull; <strong>{formatFriendlyVND(wt.revenue)}</strong>
                                                         </span>
                                                     </div>
                                                     <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
@@ -934,7 +967,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     {/* Phân khúc giá */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
                                         <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🏷️ Cơ cấu theo tầm giá:
+                                            🏷️ {isEn ? 'Breakdown by price bracket:' : 'Cơ cấu theo tầm giá:'}
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.priceBrackets.map(pb => (
@@ -942,7 +975,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <div className="flex justify-between items-center mb-1">
                                                         <span className="font-semibold text-slate-800">{pb.label}</span>
                                                         <span className="text-slate-500 font-mono">
-                                                            {pb.bottles} chai ({pb.pct}%) &bull; <strong>{formatFriendlyVND(pb.revenue)}</strong>
+                                                            {pb.bottles} {isEn ? 'btls' : 'chai'} ({pb.pct}%) &bull; <strong>{formatFriendlyVND(pb.revenue)}</strong>
                                                         </span>
                                                     </div>
                                                     <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
@@ -958,13 +991,13 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 <div className="space-y-2 pt-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <span className="text-xs font-bold text-slate-800">
-                                            Danh mục các dòng rượu đã từng mua ({historyData.topProducts.length} dòng):
+                                            {isEn ? `Purchased wines catalogue (${historyData.topProducts.length} items):` : `Danh mục các dòng rượu đã từng mua (${historyData.topProducts.length} dòng):`}
                                         </span>
                                         <div className="relative w-full sm:w-64">
                                             <Search size={12} className="absolute left-2.5 top-2.5 text-slate-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Tìm tên vang, mã SKU, xuất xứ..."
+                                                placeholder={isEn ? 'Search wine name, SKU, country...' : 'Tìm tên vang, mã SKU, xuất xứ...'}
                                                 value={wineSearch}
                                                 onChange={(e) => setWineSearch(e.target.value)}
                                                 className="w-full text-xs pl-7 pr-3 py-1.5 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600"
@@ -974,7 +1007,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
                                     {filteredWines.length === 0 ? (
                                         <div className="py-8 text-center text-xs text-slate-500 bg-slate-50 rounded">
-                                            Không tìm thấy dòng rượu phù hợp
+                                            {isEn ? 'No matching wines found' : 'Không tìm thấy dòng rượu phù hợp'}
                                         </div>
                                     ) : (
                                         <div className="border border-slate-200 rounded-md overflow-hidden">
@@ -983,12 +1016,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase font-semibold tracking-wider border-b border-slate-200">
                                                         <tr>
                                                             <th className="py-2.5 px-3 text-center w-10">#</th>
-                                                            <th className="py-2.5 px-3">Mã SKU & Tên Rượu</th>
-                                                            <th className="py-2.5 px-3">Xuất Xứ</th>
-                                                            <th className="py-2.5 px-3 text-right">Số Chai Đã Mua</th>
-                                                            <th className="py-2.5 px-3 text-right">Giá Mua Gần Nhất</th>
-                                                            <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
-                                                            <th className="py-2.5 px-3 text-center">Lần Mua Gần Nhất</th>
+                                                            <th className="py-2.5 px-3">{isEn ? 'SKU & Wine Name' : 'Mã SKU & Tên Rượu'}</th>
+                                                            <th className="py-2.5 px-3">{isEn ? 'Origin' : 'Xuất Xứ'}</th>
+                                                            <th className="py-2.5 px-3 text-right">{isEn ? 'Bottles Purchased' : 'Số Chai Đã Mua'}</th>
+                                                            <th className="py-2.5 px-3 text-right">{isEn ? 'Last Unit Price' : 'Giá Mua Gần Nhất'}</th>
+                                                            <th className="py-2.5 px-3 text-right">{isEn ? 'Total Spend' : 'Tổng Tiền'}</th>
+                                                            <th className="py-2.5 px-3 text-center">{isEn ? 'Last Purchase Date' : 'Lần Mua Gần Nhất'}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
@@ -1010,7 +1043,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                 </td>
                                                                 <td className="py-2.5 px-3 text-slate-600">{wine.originCountry || '—'}</td>
                                                                 <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                                                                    {wine.totalQty.toLocaleString('vi-VN')} chai
+                                                                    {wine.totalQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {isEn ? 'btls' : 'chai'}
                                                                 </td>
                                                                 <td className="py-2.5 px-3 text-right font-mono text-slate-700">
                                                                     {formatVND(wine.lastUnitPrice)}
@@ -1019,7 +1052,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                     {formatVND(wine.totalSpend)}
                                                                 </td>
                                                                 <td className="py-2.5 px-3 text-center text-slate-500 whitespace-nowrap">
-                                                                    {new Date(wine.lastPurchasedAt).toLocaleDateString('vi-VN')}
+                                                                    {new Date(wine.lastPurchasedAt).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -1036,12 +1069,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {activeTab === 'TREND' && (
                             <div className="mt-4 space-y-4">
                                 <p className="text-xs text-slate-600">
-                                    Sản lượng và tiền hàng theo từng tháng:
+                                    {isEn ? 'Monthly order volume and purchase value:' : 'Sản lượng và tiền hàng theo từng tháng:'}
                                 </p>
 
                                 {historyData.monthlyTrend.length === 0 ? (
                                     <div className="py-12 text-center text-xs text-slate-500 bg-slate-50 rounded">
-                                        Chưa có dữ liệu theo tháng
+                                        {isEn ? 'No monthly purchase data recorded' : 'Chưa có dữ liệu theo tháng'}
                                     </div>
                                 ) : (
                                     <div className="p-4 rounded-md border border-slate-200 bg-slate-50/50 space-y-3">
@@ -1057,7 +1090,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                     <span className="font-bold text-slate-800 w-20">{m.label}</span>
                                                                     <div className="flex items-center gap-4">
                                                                         <span className="text-slate-500 text-[11px] font-mono">
-                                                                            {m.orders} đơn &bull; {m.bottles} chai
+                                                                            {m.orders} {isEn ? 'orders' : 'đơn'} &bull; {m.bottles} {isEn ? 'btls' : 'chai'}
                                                                         </span>
                                                                         <span className="font-bold font-mono text-cyan-900 text-xs w-32 text-right">
                                                                             {formatVND(m.revenue)}

@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Calendar, Building2, Filter, Loader2, Check, ArrowRight } from 'lucide-react'
+import { useAppLocale } from '@/lib/i18n'
+import { getDashboardDictionary } from './i18n'
 
 export type PresetKey = 'TODAY' | 'YESTERDAY' | '7DAYS' | 'THIS_MONTH' | 'LAST_MONTH' | 'CUSTOM'
 
@@ -21,15 +23,6 @@ interface Props {
     displayRangeText: string
 }
 
-const PRESETS: { key: PresetKey; label: string }[] = [
-    { key: 'TODAY', label: 'Hôm nay' },
-    { key: 'YESTERDAY', label: 'Hôm qua' },
-    { key: '7DAYS', label: '7 ngày qua' },
-    { key: 'THIS_MONTH', label: 'Tháng này' },
-    { key: 'LAST_MONTH', label: 'Tháng trước' },
-    { key: 'CUSTOM', label: 'Tùy chọn...' },
-]
-
 export function DashboardFilterBar({
     currentPreset,
     currentEntity,
@@ -42,12 +35,23 @@ export function DashboardFilterBar({
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [isPending, startTransition] = useTransition()
+    const { locale, setLocale, isEn } = useAppLocale()
+    const t = getDashboardDictionary(locale)
 
     const [preset, setPreset] = useState<PresetKey>(currentPreset)
     const [entity, setEntity] = useState<string>(currentEntity)
     const [customFrom, setCustomFrom] = useState<string>(currentFrom)
     const [customTo, setCustomTo] = useState<string>(currentTo)
     const [showCustomModal, setShowCustomModal] = useState<boolean>(currentPreset === 'CUSTOM')
+
+    const PRESETS: { key: PresetKey; label: string }[] = [
+        { key: 'TODAY', label: t.filters.presets.TODAY },
+        { key: 'YESTERDAY', label: t.filters.presets.YESTERDAY },
+        { key: '7DAYS', label: t.filters.presets['7DAYS'] },
+        { key: 'THIS_MONTH', label: t.filters.presets.THIS_MONTH },
+        { key: 'LAST_MONTH', label: t.filters.presets.LAST_MONTH },
+        { key: 'CUSTOM', label: t.filters.presets.CUSTOM },
+    ]
 
     const applyFilter = (newPreset: PresetKey, newEntity: string, fromVal?: string, toVal?: string) => {
         const params = new URLSearchParams(searchParams.toString())
@@ -107,7 +111,7 @@ export function DashboardFilterBar({
                 {/* ── Preset Buttons ── */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[11px] font-semibold uppercase tracking-wider mr-1 text-slate-500 flex items-center gap-1">
-                        <Filter size={12} /> Thời gian:
+                        <Filter size={12} /> {t.filters.period}
                     </span>
                     {PRESETS.map((item) => {
                         const active = preset === item.key
@@ -118,8 +122,8 @@ export function DashboardFilterBar({
                                 onClick={() => handlePresetClick(item.key)}
                                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
                                     active
-                                        ? 'bg-[#87CBB9]/20 text-[#0891B2] border border-[#87CBB9]/40 shadow-sm'
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-[#64748B]'
+                                        ? 'bg-[#87CBB9]/20 text-[#0891B2] border border-[#87CBB9]/40 shadow-xs font-bold'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300'
                                 }`}
                             >
                                 {active && <Check size={11} className="text-[#0891B2]" />}
@@ -129,18 +133,18 @@ export function DashboardFilterBar({
                     })}
                 </div>
 
-                {/* ── Legal Entity Filter & Active Badge ── */}
+                {/* ── Legal Entity Filter, Quick Language Switcher & Status ── */}
                 <div className="flex items-center gap-2.5 ml-auto flex-wrap">
                     <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-slate-200">
                         <Building2 size={13} className="text-[#0891B2]" />
-                        <span className="text-xs text-slate-600 font-medium hidden sm:inline">Pháp nhân:</span>
+                        <span className="text-xs text-slate-600 font-medium hidden sm:inline">{t.filters.entity}</span>
                         <select
                             value={entity}
                             onChange={handleEntityChange}
                             className="bg-transparent text-xs font-semibold text-slate-900 focus:outline-none cursor-pointer"
                         >
                             <option value="ALL" className="bg-white text-slate-900">
-                                Tất cả pháp nhân (Toàn công ty)
+                                {t.filters.allEntities}
                             </option>
                             {legalEntities.map((le) => (
                                 <option key={le.id} value={le.id} className="bg-white text-slate-900">
@@ -150,9 +154,37 @@ export function DashboardFilterBar({
                         </select>
                     </div>
 
+                    {/* Quick VI / EN Switcher on Filter Bar */}
+                    <div className="flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-bold">
+                        <button
+                            type="button"
+                            onClick={() => setLocale('vi')}
+                            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                                locale === 'vi'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                            title="Tiếng Việt"
+                        >
+                            VI
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLocale('en')}
+                            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                                locale === 'en'
+                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                            title="English"
+                        >
+                            EN
+                        </button>
+                    </div>
+
                     {isPending && (
                         <div className="flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#87CBB9]/10">
-                            <Loader2 size={12} className="animate-spin" /> Đang tải...
+                            <Loader2 size={12} className="animate-spin" /> {isEn ? 'Loading...' : 'Đang tải...'}
                         </div>
                     )}
                 </div>
@@ -165,7 +197,7 @@ export function DashboardFilterBar({
                     className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs"
                 >
                     <span className="text-slate-600 font-medium flex items-center gap-1">
-                        <Calendar size={13} className="text-[#D4A853]" /> Khoảng ngày:
+                        <Calendar size={13} className="text-[#D4A853]" /> {isEn ? 'Date range:' : 'Khoảng ngày:'}
                     </span>
                     <input
                         type="date"
@@ -184,9 +216,9 @@ export function DashboardFilterBar({
                     />
                     <button
                         type="submit"
-                        className="px-3 py-1 rounded bg-[#5BA88A] hover:bg-[#5BA88A]/80 text-slate-900 font-semibold text-xs transition-all cursor-pointer"
+                        className="px-3 py-1 rounded bg-[#0891B2] hover:bg-[#0891B2]/90 text-white font-semibold text-xs transition-all cursor-pointer"
                     >
-                        Áp dụng ngày
+                        {t.apply}
                     </button>
                     <button
                         type="button"
@@ -198,27 +230,29 @@ export function DashboardFilterBar({
                         }}
                         className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900"
                     >
-                        Đóng
+                        {t.close}
                     </button>
                 </form>
             )}
 
             {/* ── Current Filter Status Pill ── */}
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
-                    <span>Dữ liệu đang lọc theo:</span>
+                    <span>{isEn ? 'Filtered by:' : 'Dữ liệu đang lọc theo:'}</span>
                     <strong className="text-[#0891B2]">{displayRangeText}</strong>
                     {entity !== 'ALL' && (
                         <span>
-                            · Pháp nhân:{' '}
+                            · {isEn ? 'Entity:' : 'Pháp nhân:'}{' '}
                             <strong className="text-[#D4A853]">
                                 {legalEntities.find((le) => le.id === entity)?.name ?? entity}
                             </strong>
                         </span>
                     )}
                 </div>
-                <span className="text-[10px] hidden md:inline">Doanh số tính theo ngày tạo đơn hàng hợp lệ</span>
+                <span className="text-[10px] hidden md:inline">
+                    {isEn ? 'Revenue calculated by valid sales order dates' : 'Doanh thu tính theo ngày tạo đơn hàng hợp lệ'}
+                </span>
             </div>
         </div>
     )

@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { Calendar, TrendingUp, ShoppingBag, DollarSign, Award, Clock } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getDashboardDictionary } from './i18n'
 import type { DailyRevenueSummary, DailyRevenueItem } from './actions'
 
 interface Props {
@@ -26,6 +28,8 @@ function formatCompactVND(amount: number): string {
 export function DailyRevenueChart({ data }: Props) {
     const [hoveredItem, setHoveredItem] = useState<DailyRevenueItem | null>(null)
     const { items, totalRevenue, totalOrders, avgOrderValue, peakDay } = data
+    const { locale, isEn } = useAppLocale()
+    const t = getDashboardDictionary(locale)
 
     const maxRevenue = Math.max(...items.map((it) => it.revenue), 1)
     const isSingleDay = items.length === 1
@@ -42,15 +46,15 @@ export function DailyRevenueChart({ data }: Props) {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <TrendingUp size={16} className="text-[#0891B2]" />
-                    <h3 className="font-semibold text-sm text-slate-900">Doanh Thu Theo Từng Ngày</h3>
+                    <h3 className="font-semibold text-sm text-slate-900">{t.dailyChart.title}</h3>
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#87CBB9]/10 text-[#0891B2] border border-[#87CBB9]/20">
-                        {items.length} ngày
+                        {items.length} {t.dailyChart.daysUnit}
                     </span>
                 </div>
                 {peakDay && (
                     <div className="flex items-center gap-1.5 text-xs text-[#D4A853] bg-[#D4A853]/10 px-2.5 py-1 rounded-md border border-[#D4A853]/25 font-medium">
                         <Award size={13} />
-                        <span>Đỉnh kỳ:</span>
+                        <span>{t.dailyChart.peakDay}</span>
                         <strong>{peakDay.label}</strong>
                         <span>({formatVND(peakDay.revenue)})</span>
                     </div>
@@ -61,7 +65,7 @@ export function DailyRevenueChart({ data }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Tổng Doanh Thu Kỳ
+                        {t.dailyChart.totalRevenue}
                     </span>
                     <span className="text-base font-bold text-[#0891B2] font-mono">
                         {formatVND(totalRevenue)}
@@ -69,15 +73,15 @@ export function DailyRevenueChart({ data }: Props) {
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Tổng Đơn Hàng
+                        {t.dailyChart.totalOrders}
                     </span>
                     <span className="text-base font-bold text-slate-900 font-mono">
-                        {totalOrders} đơn
+                        {totalOrders} {t.dailyChart.ordersUnit}
                     </span>
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Giá Trị Đơn Trung Bình
+                        {t.dailyChart.avgOrderValue}
                     </span>
                     <span className="text-base font-bold text-[#D4A853] font-mono">
                         {formatVND(avgOrderValue)}
@@ -85,7 +89,7 @@ export function DailyRevenueChart({ data }: Props) {
                 </div>
                 <div className="bg-white p-3 rounded-md border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
-                        Ngày Cao Điểm Nhất
+                        {t.dailyChart.peakDate}
                     </span>
                     <span className="text-base font-bold text-[#5BA88A] font-mono truncate block">
                         {peakDay ? peakDay.label : '—'}
@@ -96,26 +100,31 @@ export function DailyRevenueChart({ data }: Props) {
             {/* ─── Main Chart Visual ─── */}
             {items.length === 0 ? (
                 <div className="py-12 text-center text-xs text-slate-500">
-                    Không có dữ liệu trong khoảng thời gian đã chọn
+                    {t.dailyChart.noDataPeriod}
                 </div>
             ) : isSingleDay ? (
                 /* Single Day View (e.g. Today / Yesterday) */
                 <div className="bg-white p-5 rounded-lg border border-slate-200 text-center space-y-3">
                     <p className="text-xs text-slate-600 font-medium">
-                        Chi tiết ngày <strong className="text-slate-900">{items[0].label}</strong> ({items[0].dayOfWeek})
+                        {isEn ? 'Date details' : 'Chi tiết ngày'}{' '}
+                        <strong className="text-slate-900">{items[0].label}</strong> ({items[0].dayOfWeek})
                     </p>
                     <div className="flex items-center justify-center gap-6">
                         <div>
-                            <span className="text-[10px] uppercase text-slate-500 block">Doanh thu ngày</span>
+                            <span className="text-[10px] uppercase text-slate-500 block">
+                                {isEn ? 'Day Revenue' : 'Doanh thu ngày'}
+                            </span>
                             <span className="text-2xl font-bold text-[#0891B2] font-mono">
                                 {formatVND(items[0].revenue)}
                             </span>
                         </div>
                         <div className="h-8 w-px bg-[#E2E8F0]" />
                         <div>
-                            <span className="text-[10px] uppercase text-slate-500 block">Số đơn phát sinh</span>
+                            <span className="text-[10px] uppercase text-slate-500 block">
+                                {isEn ? 'Order Count' : 'Số đơn phát sinh'}
+                            </span>
                             <span className="text-2xl font-bold text-slate-900 font-mono">
-                                {items[0].orderCount} đơn
+                                {items[0].orderCount} {t.dailyChart.ordersUnit}
                             </span>
                         </div>
                     </div>
@@ -200,17 +209,17 @@ export function DailyRevenueChart({ data }: Props) {
                             <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-slate-900">
-                                        {hoveredItem.dayOfWeek}, ngày {hoveredItem.date}
+                                        {hoveredItem.dayOfWeek}, {hoveredItem.date}
                                     </span>
                                     {hoveredItem.isWeekend && (
-                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#D4A853]/15 text-[#D4A853]">
-                                            Cuối tuần
+                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#D4A853]/15 text-[#D4A853] font-medium">
+                                            {isEn ? 'Weekend' : 'Cuối tuần'}
                                         </span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <span className="text-slate-600">
-                                        Số đơn:{' '}
+                                        {isEn ? 'Orders:' : 'Số đơn:'}{' '}
                                         <strong className="text-slate-900">{hoveredItem.orderCount}</strong>
                                     </span>
                                     <span className="text-[#0891B2] font-bold text-sm font-mono">
@@ -221,7 +230,11 @@ export function DailyRevenueChart({ data }: Props) {
                         ) : (
                             <div className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
                                 <Clock size={12} />
-                                <span>Rê chuột vào từng cột để xem chi tiết doanh số và số lượng đơn hàng của ngày đó</span>
+                                <span>
+                                    {isEn
+                                        ? 'Hover over any bar to view net sales and order volume for that date'
+                                        : 'Rê chuột vào từng cột để xem chi tiết doanh thu và số lượng đơn hàng của ngày đó'}
+                                </span>
                             </div>
                         )}
                     </div>

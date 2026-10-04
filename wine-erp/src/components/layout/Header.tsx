@@ -9,7 +9,7 @@ import { signOut } from '@/app/login/actions'
 import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
 import { toast } from 'sonner'
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/lib/notifications'
-import { getVisitLocale, setVisitLocale, VISIT_LOCALE_CHANGE_EVENT, type VisitLocale } from '@/app/dashboard/sales/visits/i18n'
+import { useAppLocale } from '@/lib/i18n'
 
 interface HeaderProps {
     title?: string
@@ -62,23 +62,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
     const [showMyAccount, setShowMyAccount] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
-    const [visitLocale, setVisitLocaleState] = useState<VisitLocale>('vi')
-
-    useEffect(() => {
-        setVisitLocaleState(getVisitLocale())
-        const handleLocaleChange = (e: Event) => {
-            const customEvent = e as CustomEvent<VisitLocale>
-            if (customEvent.detail) setVisitLocaleState(customEvent.detail)
-            else setVisitLocaleState(getVisitLocale())
-        }
-        window.addEventListener(VISIT_LOCALE_CHANGE_EVENT, handleLocaleChange)
-        return () => window.removeEventListener(VISIT_LOCALE_CHANGE_EVENT, handleLocaleChange)
-    }, [])
-
-    const handleSetVisitLocale = (newLoc: VisitLocale) => {
-        setVisitLocaleState(newLoc)
-        setVisitLocale(newLoc)
-    }
+    const { locale, setLocale } = useAppLocale()
 
     const fetchNotifications = useCallback(async (isLoadMore = false) => {
         if (loadingNoti) return
@@ -171,46 +155,46 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
         if (pathname === '/dashboard/margin') return 'Check Margin'
 
         const routes = [
-            { path: '/dashboard/proposals', title: 'Tờ Trình — Đề Xuất' },
-            { path: '/dashboard/products', title: 'Sản Phẩm' },
-            { path: '/dashboard/suppliers', title: 'Nhà Cung Cấp' },
-            { path: '/dashboard/customers', title: 'Khách Hàng' },
-            { path: '/dashboard/contracts', title: 'Hợp Đồng' },
-            { path: '/dashboard/procurement', title: 'Đơn Mua Hàng' },
-            { path: '/dashboard/shipments', title: 'Lô Hàng' },
+            { path: '/dashboard/proposals', title: locale === 'en' ? 'Proposals & Submissions' : 'Tờ Trình — Đề Xuất' },
+            { path: '/dashboard/products', title: locale === 'en' ? 'Product Catalog' : 'Sản Phẩm' },
+            { path: '/dashboard/suppliers', title: locale === 'en' ? 'Suppliers' : 'Nhà Cung Cấp' },
+            { path: '/dashboard/customers', title: locale === 'en' ? 'Customers' : 'Khách Hàng' },
+            { path: '/dashboard/contracts', title: locale === 'en' ? 'Contracts' : 'Hợp Đồng' },
+            { path: '/dashboard/procurement', title: locale === 'en' ? 'Purchase Orders' : 'Đơn Mua Hàng' },
+            { path: '/dashboard/shipments', title: locale === 'en' ? 'Shipments' : 'Lô Hàng' },
             { path: '/dashboard/agency', title: 'Agency Portal' },
-            { path: '/dashboard/costing', title: 'Tính Giá Vốn (CST)' },
-            { path: '/dashboard/warehouse', title: 'Kho Hàng' },
-            { path: '/dashboard/transfers', title: 'Chuyển Kho' },
-            { path: '/dashboard/stock-count', title: 'Kiểm Kê' },
-            { path: '/dashboard/sales/visits', title: visitLocale === 'en' ? 'Field Check-in Management' : 'Quản Lý Check-in Thị Trường' },
-            { path: '/dashboard/sales', title: 'Đơn Bán Hàng' },
-            { path: '/dashboard/quotations', title: 'Báo Giá' },
-            { path: '/dashboard/price-list', title: 'Bảng Giá' },
-            { path: '/dashboard/crm', title: 'CRM — Khách Hàng' },
-            { path: '/dashboard/consignment', title: 'Ký Gửi (CSG)' },
+            { path: '/dashboard/costing', title: locale === 'en' ? 'Costing (CST)' : 'Tính Giá Vốn (CST)' },
+            { path: '/dashboard/warehouse', title: locale === 'en' ? 'Warehouses & Stock' : 'Kho Hàng' },
+            { path: '/dashboard/transfers', title: locale === 'en' ? 'Transfers' : 'Chuyển Kho' },
+            { path: '/dashboard/stock-count', title: locale === 'en' ? 'Stock Auditing' : 'Kiểm Kê' },
+            { path: '/dashboard/sales/visits', title: locale === 'en' ? 'Field Check-in Management' : 'Quản Lý Check-in Thị Trường' },
+            { path: '/dashboard/sales', title: locale === 'en' ? 'Sales Orders' : 'Đơn Bán Hàng' },
+            { path: '/dashboard/quotations', title: locale === 'en' ? 'Quotations' : 'Báo Giá' },
+            { path: '/dashboard/price-list', title: locale === 'en' ? 'Price Lists' : 'Bảng Giá' },
+            { path: '/dashboard/crm', title: locale === 'en' ? 'CRM — Customers' : 'CRM — Khách Hàng' },
+            { path: '/dashboard/consignment', title: locale === 'en' ? 'Consignments (CSG)' : 'Ký Gửi (CSG)' },
             { path: '/dashboard/allocation', title: 'Allocation Engine' },
-            { path: '/dashboard/delivery', title: 'Vận Chuyển' },
-            { path: '/dashboard/returns', title: 'Trả Hàng & CN' },
+            { path: '/dashboard/delivery', title: locale === 'en' ? 'Deliveries & Logistics' : 'Vận Chuyển' },
+            { path: '/dashboard/returns', title: locale === 'en' ? 'Returns & CN' : 'Trả Hàng & CN' },
             { path: '/dashboard/pos', title: 'POS Showroom' },
-            { path: '/dashboard/qr-codes', title: 'QR Truy Xuất' },
-            { path: '/dashboard/finance', title: 'Công Nợ & Kế Toán' },
-            { path: '/dashboard/reconciliation', title: 'Đối Chiếu Hóa Đơn' },
-            { path: '/dashboard/declarations', title: 'Tờ Khai Thuế' },
-            { path: '/dashboard/stamps', title: 'Quản Lý Tem' },
-            { path: '/dashboard/reports', title: 'Báo Cáo' },
-            { path: '/dashboard/market-price', title: 'Giá Thị Trường' },
-            { path: '/dashboard/kpi', title: 'KPI Chỉ Tiêu' },
-            { path: '/dashboard/media', title: 'Thư Viện Ảnh' },
-            { path: '/dashboard/audit-log', title: 'Nhật Ký Hệ Thống' },
+            { path: '/dashboard/qr-codes', title: locale === 'en' ? 'QR Traceability' : 'QR Truy Xuất' },
+            { path: '/dashboard/finance', title: locale === 'en' ? 'Finance & Accounting' : 'Công Nợ & Kế Toán' },
+            { path: '/dashboard/reconciliation', title: locale === 'en' ? 'Reconciliation' : 'Đối Chiếu Hóa Đơn' },
+            { path: '/dashboard/declarations', title: locale === 'en' ? 'Customs Declarations' : 'Tờ Khai Thuế' },
+            { path: '/dashboard/stamps', title: locale === 'en' ? 'Stamp Management' : 'Quản Lý Tem' },
+            { path: '/dashboard/reports', title: locale === 'en' ? 'Reports' : 'Báo Cáo' },
+            { path: '/dashboard/market-price', title: locale === 'en' ? 'Market Prices' : 'Giá Thị Trường' },
+            { path: '/dashboard/kpi', title: locale === 'en' ? 'KPI Targets' : 'KPI Chỉ Tiêu' },
+            { path: '/dashboard/media', title: locale === 'en' ? 'Media Library' : 'Thư Viện Ảnh' },
+            { path: '/dashboard/audit-log', title: locale === 'en' ? 'Audit Log' : 'Nhật Ký Hệ Thống' },
             { path: '/dashboard/ai', title: 'AI & Prompt' },
-            { path: '/dashboard/settings/approval-matrix', title: 'Ma Trận Phân Quyền' },
-            { path: '/dashboard/settings', title: 'Cài Đặt & RBAC' },
-            { path: '/dashboard', title: 'Dashboard CEO' },
+            { path: '/dashboard/settings/approval-matrix', title: locale === 'en' ? 'Approval Matrix' : 'Ma Trận Phân Quyền' },
+            { path: '/dashboard/settings', title: locale === 'en' ? 'Settings & RBAC' : 'Cài Đặt & RBAC' },
+            { path: '/dashboard', title: locale === 'en' ? 'Executive Dashboard (CEO)' : 'Dashboard CEO' },
         ]
 
         const matched = routes.find(r => pathname.startsWith(r.path))
-        return matched ? matched.title : "Hệ Thống"
+        return matched ? matched.title : (locale === 'en' ? 'System' : 'Hệ Thống')
     }
 
     const title = getHeaderTitle()
@@ -251,16 +235,16 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
             {/* Right side */}
             <div className="flex items-center gap-2">
-                {/* Language Switcher for Field Check-in */}
-                {pathname.startsWith('/dashboard/sales/visits') && (
+                {/* Global Language Switcher */}
+                {pathname.startsWith('/dashboard') && (
                     <div className="flex items-center p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold shadow-xs">
                         <button
                             type="button"
-                            onClick={() => handleSetVisitLocale('vi')}
+                            onClick={() => setLocale('vi')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                visitLocale === 'vi'
+                                locale === 'vi'
                                     ? 'bg-[#0891B2] text-white font-black shadow-xs'
-                                    : 'text-slate-600 hover:text-white'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                             }`}
                             title="Tiếng Việt"
                         >
@@ -268,11 +252,11 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         </button>
                         <button
                             type="button"
-                            onClick={() => handleSetVisitLocale('en')}
+                            onClick={() => setLocale('en')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                visitLocale === 'en'
+                                locale === 'en'
                                     ? 'bg-[#0891B2] text-white font-black shadow-xs'
-                                    : 'text-slate-600 hover:text-white'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                             }`}
                             title="English"
                         >
@@ -280,6 +264,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         </button>
                     </div>
                 )}
+
 
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
