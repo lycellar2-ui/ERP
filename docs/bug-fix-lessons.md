@@ -3238,5 +3238,41 @@ Khi nhân viên kinh doanh hoặc quản trị viên tạo/cập nhật Khách h
 ### Bài học
 > ⚠️ **RULE 117: Trong mô hình phân cấp khách hàng B2B/HORECA (Parent Company - Child Branches), khách hàng con (`parentId` được thiết lập) được quyền dùng chung Mã số thuế (MST) và Số điện thoại (SĐT) với Công ty Mẹ (`id === parentId`) hoặc các chi nhánh anh em trong cùng hệ thống (`parentId === parentId`). Kiểm tra trùng lặp (Duplicate Check) cả ở tầng UI realtime lẫn Server Actions (`createCustomer`, `updateCustomer`) BẮT BUỘC phải loại trừ các bản ghi thuộc cùng cấu trúc phân cấp công ty mẹ con, chỉ kích hoạt cảnh báo/chặn khi MST hoặc SĐT trùng với khách hàng độc lập bên ngoài.**
 
+---
+
+## BUG-118: Khách Hàng (MDM/CRM) — Lỗi UI/UX Responsive Form Tạo & Chỉnh Sửa Khách Hàng (Grid Squish, iOS Safari Auto-Zoom, Accidental Dismissal & Button Hover Bug)
+
+### Triệu chứng & Bối cảnh
+Khi nhân viên kinh doanh sử dụng điện thoại di động (iPhone Safari, Android Chrome) hoặc máy tính bảng để thao tác tạo mới hoặc chỉnh sửa hồ sơ khách hàng (`CustomerDrawer` trong `CustomersClient.tsx`):
+1. **Lưới nhập liệu bị chèn ép trên Mobile (Grid Squishing):** Các nhóm thông tin Địa chỉ (Phường/Xã - Quận/Huyện - Tỉnh/TP), Thu mua (Tên - SĐT - Kênh) và Tín dụng (Điều khoản - Hạn mức - Trạng thái) bị cố định `grid-cols-2` và `grid-cols-3`. Trên màn hình hẹp (360–390px), mỗi cột bị co lại chỉ còn 80–90px khiến text trong các ô input và select bị cắt cụt, mũi tên dropdown đè lên chữ.
+2. **Cưỡng bức Zoom màn hình trên iOS (Auto-Zoom):** Font size của input được đặt `text-sm` (14px). Khi chạm vào ô nhập trên Safari iOS, trình duyệt tự động zoom phóng to toàn bộ giao diện khiến layout bị lệch khung nhìn.
+3. **Mất trắng dữ liệu khi chạm nhầm viền hoặc nút Hủy (Accidental Form Loss):** Khung drawer trên mobile có độ rộng `min(560px, 95vw)` để lộ khe viền backdrop ~18px. Bấm nhầm vào khe viền hoặc bấm nút "Hủy" sẽ đóng modal ngay lập tức và xóa sạch toàn bộ dữ liệu người dùng đang nhập mà không hỏi xác nhận. Trong chế độ chỉnh sửa (Edit mode), tình trạng mất dữ liệu chưa lưu cũng xảy ra tương tự.
+4. **Vỡ hàng nút chân trang (Footer Overflow):** Ở chế độ chỉnh sửa (Edit), 4 nút bấm (`In Hồ Sơ`, `Xuất Excel`, `Hủy`, `Lưu thay đổi`) dàn hàng ngang khiến màn hình hẹp bị tràn viền hoặc ngắt dòng lộn xộn.
+5. **Nút bấm quá nhỏ (Touch Target Failure):** Nút "Tra Cứu Cục Thuế" và "🎲 Sinh mã" có chiều cao < 30px, ngón tay rất dễ chạm trượt vào input bên dưới.
+6. **Lỗi nút hover bị bạc màu (Hover State Glitch):** Nút chính `Lưu thay đổi` và `Thêm Khách Hàng` dùng màu cyan `#0891B2`, nhưng sự kiện `onMouseLeave` lại gán về `#87CBB9` (xanh bạc hà nhạt). Sau khi rê chuột qua 1 lần, nút bị đổi màu vĩnh viễn và chữ trắng trên nền nhạt vi phạm chuẩn tương phản WCAG.
+
+### Nguyên nhân gốc rễ
+1. Hardcoded lưới Tailwind `grid-cols-2` và `grid-cols-3` thiếu tiền tố responsive breakpoint `sm:`.
+2. Input font size thiếu cấu hình thích ứng `text-base sm:text-sm` cho thiết bị cảm ứng di động.
+3. Thiếu kiểm tra dirty-state (dữ liệu đã thay đổi so với ban đầu) trước khi đóng drawer, đồng thời nút Hủy gọi trực tiếp `onClose` thay vì `handleClose`.
+4. Footer thiếu layout responsive `flex-col-reverse sm:flex-row`.
+5. Thuộc tính `onMouseLeave` bị gán nhầm mã màu của theme cũ `#87CBB9` thay vì `#0891B2`.
+
+### Cách khắc phục
+1. **Responsive Grid:** Chuyển toàn bộ nhóm 2 và 3 cột sang `grid-cols-1 sm:grid-cols-2` và `grid-cols-1 sm:grid-cols-3`.
+2. **Ngăn chặn iOS Auto-zoom:** Cập nhật `inputCls` thành `text-base sm:text-sm` (16px chuẩn trên mobile, 14px trên desktop).
+3. **Bảo vệ dữ liệu chưa lưu (Unsaved Changes Guard):** 
+   - Mở rộng drawer mobile chiếm trọn `w-full sm:w-[560px]`.
+   - Dùng `initialFormRef` lưu trữ trạng thái dữ liệu ban đầu khi load chỉnh sửa.
+   - Hàm `handleClose` kiểm tra so sánh dữ liệu thực tế: nếu có thay đổi (ở cả chế độ Tạo mới lẫn Chỉnh sửa), hiển thị hộp thoại `confirm()` xác nhận trước khi hủy.
+4. **Công thái học chân trang & Touch Targets:**
+   - Dàn nút theo `flex-col-reverse sm:flex-row`: Nút Hủy và Lưu đặt ở hàng dưới tiện ngón cái bấm với chiều cao `min-h-[44px]`; các nút in/xuất đặt ở hàng riêng bên trên.
+   - Nâng chiều cao nút Tra Cứu Cục Thuế lên `min-h-[30px]` và nút Sinh mã lên `min-h-[42px]`.
+5. **Sửa mã màu Hover:** Điều chỉnh `onMouseEnter` sang `#0E7490` và `onMouseLeave` sang `#0891B2`.
+6. **Hỗ trợ Phím Tắt:** Bổ sung <kbd>Esc</kbd> đóng an toàn và <kbd>Ctrl/Cmd + Enter</kbd> lưu nhanh.
+
+### Bài học
+> ⚠️ **RULE 118: Mọi Modal / Drawer nhập liệu biểu mẫu nghiệp vụ (Form Modals) BẮT BUỘC phải tuân thủ chuẩn Responsive Ergonomics: (1) Lưới nhiều cột phải là `grid-cols-1 sm:grid-cols-2/3` để không bị bóp nghẹt trên mobile; (2) Font size của input phải là `text-base sm:text-sm` để triệt tiêu lỗi auto-zoom của iOS Safari; (3) Mọi nút bấm trên mobile phải đạt chuẩn touch target tối thiểu 44px; (4) Phải có cơ chế kiểm tra dữ liệu chưa lưu (Dirty State Guard) khi đóng drawer bằng backdrop, nút Hủy hoặc phím Esc; (5) Màu sắc hover/leave phải đồng bộ chính xác với bảng màu Design System đã định hình.**
+
 
 
