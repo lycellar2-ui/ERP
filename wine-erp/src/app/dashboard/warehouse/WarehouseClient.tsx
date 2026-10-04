@@ -21,7 +21,8 @@ import {
     getWarehouses, getWMSStats, getLatestPendingDO
 } from './actions'
 import { getLegalEntities } from '../sales/actions'
-import { formatVND, formatDate } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { WAREHOUSE_I18N, getLotStatusLabel, getWineTypeLabel } from './i18n'
 import { GoodsReceiptTab } from './GoodsReceiptTab'
 import { DeliveryOrderTab } from './DeliveryOrderTab'
 import { LocationManager } from './LocationManager'
@@ -36,7 +37,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
     US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
     AT: '🇦🇹', GR: '🇬🇷', HU: '🇭🇺', GE: '🇬🇪', RO: '🇷🇴',
-    IL: '🇮🇱', LB: '🇱🇧', UY: '🇺🇾', BR: '🇧🇷', MX: '🇲🇽',
+    IL: '🇮🇱', LB: '🇱🇧', UY: 'UY', BR: '🇧🇷', MX: '🇲🇽',
     CN: '🇨🇳', JP: '🇯🇵', GB: '🇬🇧', CH: '🇨🇭', HR: '🇭🇷',
     SI: '🇸🇮', MD: '🇲🇩', BG: '🇧🇬', TR: '🇹🇷', MA: '🇲🇦',
 }
@@ -46,18 +47,24 @@ const WINE_TYPE_COLOR: Record<string, string> = {
     SPARKLING: '#7AC4C4', FORTIFIED: '#B87333', DESSERT: '#D4963A',
 }
 
-const LOT_STATUS: Record<string, { label: string; color: string }> = {
-    AVAILABLE: { label: 'Sẵn sàng', color: '#16A34A' },
-    RESERVED: { label: 'Đã đặt trước', color: '#2563EB' },
-    QUARANTINE: { label: 'Cách ly', color: '#B47816' },
-    CONSUMED: { label: 'Đã xuất', color: '#64748B' },
-    DAMAGED: { label: 'Hư hỏng', color: '#DC2626' },
+const getLotStatusConfig = (status: string, locale: any) => {
+    const label = getLotStatusLabel(status, locale)
+    switch (status) {
+        case 'AVAILABLE': return { label, color: '#16A34A' }
+        case 'RESERVED': return { label, color: '#2563EB' }
+        case 'QUARANTINE': return { label, color: '#B47816' }
+        case 'CONSUMED': return { label, color: '#64748B' }
+        case 'DAMAGED': return { label, color: '#DC2626' }
+        default: return { label, color: '#64748B' }
+    }
 }
 
 // ── Create Warehouse Modal ─────────────────────────
 function CreateWarehouseModal({ open, onClose, onCreated }: {
     open: boolean; onClose: () => void; onCreated: () => void
 }) {
+    const { locale } = useAppLocale()
+    const t = WAREHOUSE_I18N[locale].createModal
     const [form, setForm] = useState({ code: '', name: '', address: '' })
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -65,7 +72,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
     if (!open) return null
 
     const handleSave = async () => {
-        if (!form.code || !form.name) return setError('Điền đầy đủ mã và tên kho')
+        if (!form.code || !form.name) return setError(t.errorRequired)
         setSaving(true)
         try {
             await createWarehouse({ code: form.code.toUpperCase(), name: form.name, address: form.address || null })
@@ -85,7 +92,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                        🏭 Tạo Kho Mới
+                        {t.title}
                     </h3>
                     <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
@@ -93,9 +100,9 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                 {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>{error}</div>}
 
                 {[
-                    { key: 'code', label: 'Mã Kho (VD: KHO-HCM)', placeholder: 'KHO-HCM-01' },
-                    { key: 'name', label: 'Tên Kho', placeholder: 'Kho Cửa hàng' },
-                    { key: 'address', label: 'Địa Chỉ', placeholder: '15 Đường Xuyên Á, Củ Chi, TP.HCM' },
+                    { key: 'code', label: t.codeLabel, placeholder: t.codePlaceholder },
+                    { key: 'name', label: t.nameLabel, placeholder: t.namePlaceholder },
+                    { key: 'address', label: t.addressLabel, placeholder: t.addressPlaceholder },
                 ].map(f => (
                     <div key={f.key}>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>{f.label}</label>
@@ -108,12 +115,12 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
 
                 <div className="flex justify-end gap-3 pt-2">
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>Hủy</button>
+                        style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>{t.cancel}</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md"
                         style={{ background: '#D97706', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? '...' : 'Lưu Kho'}
+                        {saving ? t.saving : t.save}
                     </button>
                 </div>
             </div>
@@ -123,12 +130,14 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
 
 // ── Days-in-stock badge ───────────────────────────
 function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
+    const { locale } = useAppLocale()
     const days = Math.floor((Date.now() - new Date(receivedDate).getTime()) / 86400000)
     const color = days > 180 ? '#DC2626' : days > 90 ? '#B47816' : '#64748B'
+    const suffix = WAREHOUSE_I18N[locale].table.daysSuffix
     return (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
             style={{ color, background: `${color}15` }}>
-            {days}d
+            {days}{suffix}
         </span>
     )
 }
@@ -139,28 +148,31 @@ function StockTable({ lots, sortConfig, onSort }: {
     sortConfig: { key: string; dir: 'asc' | 'desc' }
     onSort: (key: string) => void
 }) {
+    const { locale, formatCurrency, formatDate: formatDateLocale } = useAppLocale()
+    const t = WAREHOUSE_I18N[locale].table
+
     if (lots.length === 0) {
         return (
             <div className="flex flex-col items-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                 <Box size={32} style={{ color: '#94A3B8' }} />
-                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Chưa có tồn kho</p>
-                <p className="text-xs" style={{ color: '#64748B' }}>Nhập hàng qua Goods Receipt để tạo stock lots</p>
+                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.emptyTitle}</p>
+                <p className="text-xs" style={{ color: '#64748B' }}>{t.emptySubtitle}</p>
             </div>
         )
     }
 
     const headers = [
-        { key: 'skuCode', label: 'Mã SKU', align: 'left' as const },
-        { key: 'productName', label: 'Sản Phẩm', align: 'left' as const },
-        { key: 'vintage', label: 'VTG', align: 'center' as const },
-        { key: 'lotNo', label: 'Lô Hàng (Lot)', align: 'left' as const },
-        { key: 'locationCode', label: 'Vị Trí', align: 'left' as const },
-        { key: 'receivedDate', label: 'Nhập Kho', align: 'left' as const },
-        { key: 'qtyBook', label: 'Tồn Sổ Sách', align: 'center' as const },
-        { key: 'qtyOnHand', label: 'Tồn On-hand', align: 'center' as const },
-        { key: 'qtyAvailable', label: 'Khả Dụng', align: 'center' as const },
-        { key: 'value', label: 'Giá Trị Lô', align: 'right' as const },
-        { key: 'status', label: 'TT', align: 'center' as const },
+        { key: 'skuCode', label: t.thSku, align: 'left' as const },
+        { key: 'productName', label: t.thProduct, align: 'left' as const },
+        { key: 'vintage', label: t.thVintage, align: 'center' as const },
+        { key: 'lotNo', label: t.thLot, align: 'left' as const },
+        { key: 'locationCode', label: t.thLocation, align: 'left' as const },
+        { key: 'receivedDate', label: t.thReceivedDate, align: 'left' as const },
+        { key: 'qtyBook', label: t.thBookQty, align: 'center' as const },
+        { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const },
+        { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const },
+        { key: 'value', label: t.thLotValue, align: 'right' as const },
+        { key: 'status', label: t.thStatus, align: 'center' as const },
     ]
 
     return (
@@ -188,7 +200,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                         {lots.map(lot => {
                             const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
                             const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
-                            const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
+                            const statusCfg = getLotStatusConfig(lot.status, locale)
                             const baseQty = lot.qtyOnHand > 0 ? lot.qtyOnHand : (lot.qtyReceived > 0 ? lot.qtyReceived : 1)
                             const pctRemaining = Math.min(100, Math.max(0, (lot.qtyAvailable / baseQty) * 100))
                             const lotValue = lot.qtyAvailable * lot.unitLandedCost
@@ -227,7 +239,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-xs text-slate-600 font-mono">{formatDate(lot.receivedDate)}</span>
+                                            <span className="text-xs text-slate-600 font-mono">{formatDateLocale(lot.receivedDate)}</span>
                                             <DaysInStockBadge receivedDate={lot.receivedDate} />
                                         </div>
                                     </td>
@@ -246,8 +258,8 @@ function StockTable({ lots, sortConfig, onSort }: {
                                             {variance !== 0 && (
                                                 <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
                                                     variance < 0 ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
-                                                }`} title={`Lệch ${variance > 0 ? `+${variance}` : variance} chai giữa On-hand (${onHandQty}) và Sổ sách (${bookQty})`}>
-                                                    ⚠️ {variance > 0 ? `+${variance}` : variance} lệch
+                                                }`} title={t.varianceTitle(variance, onHandQty, bookQty)}>
+                                                    {t.varianceBadge(variance)}
                                                 </span>
                                             )}
                                         </div>
@@ -261,7 +273,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                                 </span>
                                                 {lot.qtyReserved > 0 && (
                                                     <span className="block text-[9px] text-blue-600 font-bold whitespace-nowrap">
-                                                        (Đặt: {lot.qtyReserved})
+                                                        {t.reservedLabel(lot.qtyReserved)}
                                                     </span>
                                                 )}
                                             </div>
@@ -276,7 +288,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     <td className="px-3 py-1.5 text-right whitespace-nowrap">
                                         {lotValue > 0 ? (
                                             <span className="text-xs font-mono font-semibold text-slate-900">
-                                                {formatVND(lotValue)}
+                                                {formatCurrency(lotValue)}
                                             </span>
                                         ) : (
                                             <span className="text-xs text-[#94A3B8]">—</span>
@@ -300,7 +312,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                 {lots.map(lot => {
                     const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
-                    const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
+                    const statusCfg = getLotStatusConfig(lot.status, locale)
                     const bookQty = lot.qtyBook ?? lot.qtyReceived
                     const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
                     const variance = lot.variance ?? (onHandQty - bookQty)
@@ -324,13 +336,13 @@ function StockTable({ lots, sortConfig, onSort }: {
                             </div>
                             <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-100 text-xs">
                                 <div className="text-center bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Tồn Sổ:</span>
+                                    <span className="text-slate-500 text-[10px] uppercase font-bold block">{t.tagBook}</span>
                                     <span className="font-bold font-mono text-xs text-slate-800">
                                         {bookQty.toLocaleString()}
                                     </span>
                                 </div>
                                 <div className="text-center bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
-                                    <span className="text-emerald-700 text-[10px] uppercase font-bold block">On-hand:</span>
+                                    <span className="text-emerald-700 text-[10px] uppercase font-bold block">{t.tagOnHand}</span>
                                     <span className="font-extrabold font-mono text-xs text-emerald-800">
                                         {onHandQty.toLocaleString()}
                                     </span>
@@ -341,19 +353,19 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     )}
                                 </div>
                                 <div className="text-center bg-amber-50 p-1.5 rounded-lg border border-amber-200">
-                                    <span className="text-amber-700 text-[10px] uppercase font-bold block">Khả Dụng:</span>
+                                    <span className="text-amber-700 text-[10px] uppercase font-bold block">{t.tagAvailable}</span>
                                     <span className="font-extrabold font-mono text-xs text-amber-900">
                                         {lot.qtyAvailable.toLocaleString()}
                                     </span>
                                     {lot.qtyReserved > 0 && (
                                         <span className="text-[9px] text-blue-600 block font-semibold">
-                                            (Đặt: {lot.qtyReserved})
+                                            {t.reservedLabel(lot.qtyReserved)}
                                         </span>
                                     )}
                                 </div>
                             </div>
                             <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                                <span className="text-slate-500 font-mono">{formatDate(lot.receivedDate)}</span>
+                                <span className="text-slate-500 font-mono">{formatDateLocale(lot.receivedDate)}</span>
                                 <span className="font-bold px-2 py-0.5 rounded-full text-[10px] uppercase border"
                                     style={{ color: statusCfg.color, background: `${statusCfg.color}15`, borderColor: `${statusCfg.color}30` }}>
                                     {statusCfg.label}
@@ -369,6 +381,8 @@ function StockTable({ lots, sortConfig, onSort }: {
 
 // ── Quarantine & Write-Off Panel ──────────────────
 function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: boolean; onRefresh: () => void }) {
+    const { locale, formatDate: formatDateLocale } = useAppLocale()
+    const t = WAREHOUSE_I18N[locale].quarantinePanel
     const [processing, setProcessing] = useState<string | null>(null)
 
     const handleRelease = async (lotId: string, action: 'RESTORE' | 'WRITE_OFF') => {
@@ -384,24 +398,24 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
         <div className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-xl shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <ShieldAlert size={16} style={{ color: '#DC2626' }} /> Hàng Đang Cách Ly & Xử Lý Sự Cố
+                    <ShieldAlert size={16} style={{ color: '#DC2626' }} /> {t.title}
                     {lots.length > 0 && (
                         <span className="ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold"
                             style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>
-                            {lots.length} lô
+                            {t.lotsCount(lots.length)}
                         </span>
                     )}
                 </h3>
-                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100"
+                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100 cursor-pointer"
                     style={{ border: '1px solid #CBD5E1', color: '#475569', background: '#F1F5F9' }}>
-                    Làm Mới
+                    {t.refresh}
                 </button>
             </div>
 
             {lots.length === 0 ? (
                 <div className="flex flex-col items-center py-12 gap-2 rounded-xl shadow-xs" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                     <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
-                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>Không có lô hàng nào đang cách ly</p>
+                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{t.empty}</p>
                 </div>
             ) : (
                 <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -410,8 +424,8 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                         <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Lô Hàng', 'Sản Phẩm', 'SL', 'Vị Trí', 'Ngày Nhập', ''].map(h => (
-                                        <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
+                                    {[t.thLot, t.thProduct, t.thQty, t.thLocation, t.thReceivedDate, ''].map((h, idx) => (
+                                        <th key={idx} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -422,18 +436,18 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
                                         <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
                                         <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>
-                                        <td className="px-4 py-3 text-[#64748B]">{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
+                                        <td className="px-4 py-3 text-[#64748B]">{formatDateLocale(lot.receivedDate)}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex gap-2 justify-end">
                                                 <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
                                                     className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
                                                     style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
-                                                    {processing === lot.id ? '...' : 'Khôi Phục'}
+                                                    {processing === lot.id ? '...' : t.restore}
                                                 </button>
                                                 <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
                                                     className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
                                                     style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}>
-                                                    <Trash2 size={11} className="inline mr-0.5" />Hủy Kho
+                                                    <Trash2 size={11} className="inline mr-0.5" />{t.writeOff}
                                                 </button>
                                             </div>
                                         </td>
@@ -449,10 +463,10 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                             <div key={lot.id} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                                        Lô: {lot.lotNo}
+                                        {t.thLot}: {lot.lotNo}
                                     </span>
                                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        📍 {lot.location?.locationCode || 'Chưa gán'}
+                                        📍 {lot.location?.locationCode || t.unassigned}
                                     </span>
                                 </div>
                                 <div>
@@ -460,9 +474,9 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         {lot.product?.productName || lot.productId}
                                     </p>
                                     <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
-                                        <span>Ngày nhập: {new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</span>
+                                        <span>{t.thReceivedDate}: {formatDateLocale(lot.receivedDate)}</span>
                                         <span className="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                            Cách ly: {Number(lot.qtyAvailable).toLocaleString()} chai
+                                            {t.quarantineCountBadge(Number(lot.qtyAvailable))}
                                         </span>
                                     </div>
                                 </div>
@@ -473,7 +487,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
                                         style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}
                                     >
-                                        {processing === lot.id ? '...' : 'Khôi Phục'}
+                                        {processing === lot.id ? '...' : t.restore}
                                     </button>
                                     <button
                                         onClick={() => handleRelease(lot.id, 'WRITE_OFF')}
@@ -482,7 +496,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}
                                     >
                                         <Trash2 size={12} className="inline mr-1" />
-                                        Hủy Kho
+                                        {t.writeOff}
                                     </button>
                                 </div>
                             </div>
@@ -509,6 +523,8 @@ interface Props {
 }
 
 export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Props) {
+    const { locale, formatCurrency, formatDate: formatDateLocale } = useAppLocale()
+    const t = WAREHOUSE_I18N[locale]
     const [warehouses, setWarehouses] = useState<WarehouseRow[]>(initialWarehouses ?? [])
     const [stats, setStats] = useState(initialStats ?? {
         warehouses: 0, totalLots: 0,
@@ -558,18 +574,18 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             localStorage.setItem('wms_audio_notify', 'true')
             playNotificationSound()
             if (granted) {
-                toast.success('🔊 Đã bật thông báo nhặt hàng nổi & âm thanh!', {
-                    description: 'Hệ thống sẽ nảy ô thông báo ngoài màn hình và phát chuông khi có đơn mới.'
+                toast.success(t.notifications.toastDesktopGranted, {
+                    description: t.notifications.toastDesktopGrantedDesc
                 })
             } else {
-                toast.info('🔊 Đã bật âm thanh nhặt hàng!', {
-                    description: 'Bạn có thể cấp quyền thông báo trình duyệt để nhận thông báo nổi.'
+                toast.info(t.notifications.toastSoundOnly, {
+                    description: t.notifications.toastSoundOnlyDesc
                 })
             }
         } else {
             setAudioNotifyEnabled(false)
             localStorage.setItem('wms_audio_notify', 'false')
-            toast.info('🔕 Đã tắt thông báo nhắc nhặt hàng.')
+            toast.info(t.notifications.toastDisabled)
         }
     }
 
@@ -588,16 +604,16 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 if (lastDOId && lastDOId !== res.latest.id) {
                     if (audioNotifyEnabled) {
                         playNotificationSound()
-                        sendDesktopNotification(`📦 [LỆNH NHẶT HÀNG MỚI] ${res.latest.doNo}`, {
+                        sendDesktopNotification(t.notifications.desktopNotifyTitle(res.latest.doNo), {
                             body: `Khách hàng: ${res.latest.customerName}\nKho: ${res.latest.warehouseName} (${res.latest.lineCount} SKU)\nĐơn SO: ${res.latest.soNo}`,
                             onClickUrl: '/dashboard/warehouse?tab=do',
                         })
                     }
 
-                    toast.warning(`📦 LỆNH NHẶT HÀNG MỚI: ${res.latest.doNo}`, {
-                        description: `Khách hàng: ${res.latest.customerName} — Đơn gốc ${res.latest.soNo} (${res.latest.lineCount} sản phẩm cần nhặt)`,
+                    toast.warning(t.notifications.toastNewDOTitle(res.latest.doNo), {
+                        description: t.notifications.toastNewDODesc(res.latest.customerName, res.latest.soNo, res.latest.lineCount),
                         action: {
-                            label: 'Đi nhặt hàng',
+                            label: t.notifications.actionGoPick,
                             onClick: () => {
                                 setViewMode('workspace')
                                 setActiveTab('do')
@@ -638,7 +654,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         isDefault: w.isDefault
     }))
 
-    // 9 Unified Warehouse Feature Modules
+    // 11 Unified Warehouse Feature Modules
     const wmsFeatureModules: {
         key: WMSTab
         title: string
@@ -652,114 +668,114 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     }[] = [
         {
             key: 'inventory',
-            title: '📦 Tồn Kho Chủng Loại',
-            subtitle: 'Stock Inventory',
+            title: t.modules.inventory.title,
+            subtitle: t.modules.inventory.subtitle,
             icon: Package,
             color: '#0F172A',
             bg: 'rgba(15,23,42,0.06)',
-            description: 'Tra cứu chi tiết từng lô hàng, SKU, loại rượu & tồn khả dụng theo từng kho',
-            actionLabel: 'Mở Tồn Kho'
+            description: t.modules.inventory.description,
+            actionLabel: t.modules.inventory.actionLabel,
         },
         {
             key: 'gr',
-            title: '📥 Nhập Kho (GR)',
-            subtitle: 'Goods Receipt',
+            title: t.modules.gr.title,
+            subtitle: t.modules.gr.subtitle,
             icon: PackagePlus,
             color: '#16A34A',
             bg: 'rgba(22,163,74,0.1)',
-            description: 'Tạo phiếu nhập kho GR từ Đơn mua PO, gán lô & vị trí cất hàng, in phiếu GR',
-            actionLabel: 'Tạo / Nhập GR'
+            description: t.modules.gr.description,
+            actionLabel: t.modules.gr.actionLabel,
         },
         {
             key: 'do',
-            title: '📤 Xuất Kho (DO)',
-            subtitle: 'Delivery Orders',
+            title: t.modules.do.title,
+            subtitle: t.modules.do.subtitle,
             icon: Truck,
             color: '#B47816',
             bg: 'rgba(212,168,83,0.15)',
-            description: 'Tự động chọn lô FIFO, tạo phiếu xuất kho DO, xác nhận giao hàng & in phiếu DO',
-            actionLabel: 'Nhặt Hàng Xuất Kho'
+            description: t.modules.do.description,
+            actionLabel: t.modules.do.actionLabel,
         },
         {
             key: 'replenishment',
-            title: '🔄 Gợi Ý Điều Chuyển Kho',
-            subtitle: 'Stock Replenishment & Rebalance',
+            title: t.modules.replenishment.title,
+            subtitle: t.modules.replenishment.subtitle,
             icon: ArrowRightLeft,
             color: '#6366F1',
             bg: 'rgba(99,102,241,0.1)',
-            description: 'Tự động phát hiện lệch tồn, cảnh báo kho sắp hết và gợi ý điều chuyển từ kho còn hàng',
-            actionLabel: 'Xem Gợi Ý Điều Chuyển'
+            description: t.modules.replenishment.description,
+            actionLabel: t.modules.replenishment.actionLabel,
         },
         {
             key: 'transfer',
-            title: '🔄 Chuyển Kho Nội Bộ',
-            subtitle: 'Stock Transfers',
+            title: t.modules.transfer.title,
+            subtitle: t.modules.transfer.subtitle,
             icon: ArrowRightLeft,
             color: '#2563EB',
             bg: 'rgba(37,99,235,0.1)',
-            description: 'Lập lệnh chuyển kho/vị trí, theo dõi hàng đang vận chuyển & xác nhận nhận kho',
-            actionLabel: 'Lập Lệnh Chuyển Kho'
+            description: t.modules.transfer.description,
+            actionLabel: t.modules.transfer.actionLabel,
         },
         {
             key: 'stock-count',
-            title: '📋 Kiểm Kê Kho',
-            subtitle: 'Stock Audit & Barcode',
+            title: t.modules.stockCount.title,
+            subtitle: t.modules.stockCount.subtitle,
             icon: ClipboardList,
             color: '#0891B2',
             bg: 'rgba(8,145,178,0.1)',
-            description: 'Tạo đợt kiểm kê, quét Barcode di động, đối soát chênh lệch & tự động chỉnh tồn',
-            actionLabel: 'Kiểm Kê Kho'
+            description: t.modules.stockCount.description,
+            actionLabel: t.modules.stockCount.actionLabel,
         },
         {
             key: 'map',
-            title: '🗺️ Sơ Đồ Kho 2D',
-            subtitle: 'Interactive Layout Map',
+            title: t.modules.map.title,
+            subtitle: t.modules.map.subtitle,
             icon: Layers,
             color: '#0284C7',
             bg: 'rgba(2,132,199,0.1)',
-            description: 'Sơ đồ bản đồ 2D trực quan các Zone, Kệ Rack & tỷ lệ lấp đầy kho hàng',
-            actionLabel: 'Xem Sơ Đồ Kho'
+            description: t.modules.map.description,
+            actionLabel: t.modules.map.actionLabel,
         },
         {
             key: 'locations',
-            title: '📍 Quản Lý Vị Trí Kho',
-            subtitle: 'Zones, Racks & Bins',
+            title: t.modules.locations.title,
+            subtitle: t.modules.locations.subtitle,
             icon: MapPin,
             color: '#D97706',
             bg: 'rgba(217,119,6,0.1)',
-            description: 'Quản lý danh mục Zone, kệ Rack, vị trí Bin, nhiệt độ bảo quản & sức chứa',
-            actionLabel: 'Quản Lý Vị Trí'
+            description: t.modules.locations.description,
+            actionLabel: t.modules.locations.actionLabel,
         },
         {
             key: 'quarantine',
-            title: '⚠️ Cách Ly & Xử Lý',
-            subtitle: 'Quarantine & Write-off',
+            title: t.modules.quarantine.title,
+            subtitle: t.modules.quarantine.subtitle,
             icon: ShieldAlert,
             color: '#DC2626',
             bg: 'rgba(220,38,38,0.1)',
             badge: stats.quarantinedCount,
-            description: 'Quản lý lô hàng hư hỏng, hết hạn, cách ly chờ kiểm định & hủy kho',
-            actionLabel: 'Xử Lý Cách Ly'
+            description: t.modules.quarantine.description,
+            actionLabel: t.modules.quarantine.actionLabel,
         },
         {
             key: 'nxt',
-            title: '📊 Báo Cáo Nhập Xuất Tồn',
-            subtitle: 'Stock Movement Ledger',
+            title: t.modules.nxt.title,
+            subtitle: t.modules.nxt.subtitle,
             icon: BarChart3,
             color: '#059669',
             bg: 'rgba(5,150,105,0.1)',
-            description: 'Sổ chi tiết luân chuyển kho hàng, tốc độ quay vòng & báo cáo NXT',
-            actionLabel: 'Xem Báo Cáo NXT'
+            description: t.modules.nxt.description,
+            actionLabel: t.modules.nxt.actionLabel,
         },
         {
             key: 'sample',
-            title: '🍷 Quản Lý Hàng Mẫu',
-            subtitle: 'Sample Wine Inventory',
+            title: t.modules.sample.title,
+            subtitle: t.modules.sample.subtitle,
             icon: Wine,
             color: '#D4A853',
             bg: 'rgba(212,168,83,0.1)',
-            description: 'Kho hàng mẫu riêng biệt không bán hàng, quản lý nguồn ngạch & xuất sử dụng',
-            actionLabel: 'Quản Lý Hàng Mẫu'
+            description: t.modules.sample.description,
+            actionLabel: t.modules.sample.actionLabel,
         },
     ]
 
@@ -822,12 +838,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         })
 
     const statCards = [
-        { label: 'Số Kho', value: stats.warehouses, accent: '#0F172A', icon: Warehouse },
-        { label: 'Tổng Tồn Kho', value: `${stats.availableBottles.toLocaleString()} chai`, accent: '#16A34A', icon: Package },
-        { label: 'Giá Trị Kho', value: formatVND(stats.inventoryValue), accent: '#B47816', icon: DollarSign },
-        { label: 'Đã Đặt Trước', value: `${stats.reservedBottles.toLocaleString()} chai`, accent: '#2563EB', icon: Box },
-        { label: 'Tồn Thấp', value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#B47816' : '#16A34A', icon: AlertTriangle },
-        { label: 'Hàng >180 Ngày', value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#DC2626' : '#16A34A', icon: TrendingDown },
+        { label: t.stats.warehouses, value: stats.warehouses, accent: '#0F172A', icon: Warehouse },
+        { label: t.stats.totalStock, value: `${stats.availableBottles.toLocaleString()} ${t.bottlesUnit}`, accent: '#16A34A', icon: Package },
+        { label: t.stats.inventoryValue, value: formatCurrency(stats.inventoryValue), accent: '#B47816', icon: DollarSign },
+        { label: t.stats.reserved, value: `${stats.reservedBottles.toLocaleString()} ${t.bottlesUnit}`, accent: '#2563EB', icon: Box },
+        { label: t.stats.lowStock, value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#B47816' : '#16A34A', icon: AlertTriangle },
+        { label: t.stats.slowMoving, value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#DC2626' : '#16A34A', icon: TrendingDown },
     ]
 
     const activeModule = wmsFeatureModules.find(m => m.key === activeTab)
@@ -845,12 +861,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             </div>
                             <div>
                                 <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-none">
-                                    Kho Hàng
+                                    {t.pageTitle}
                                     <span className="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200">
-                                        {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : 'Tất cả kho'}
+                                        {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
                                     </span>
                                 </h2>
-                                <p className="text-[10px] text-slate-500 mt-0.5">Bảng làm việc thủ kho mobile</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">{t.pageSubtitle}</p>
                             </div>
                         </div>
                     ) : (
@@ -859,7 +875,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 onClick={() => setViewMode('grid')}
                                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
                             >
-                                <ArrowLeft size={14} /> Menu Kho
+                                <ArrowLeft size={14} /> {t.mobileMenuBtn}
                             </button>
                             <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl truncate">
                                 {activeModule?.title}
@@ -884,10 +900,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 }}
                                 className="appearance-none pl-2 pr-6 py-1.5 rounded-xl text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
                             >
-                                <option value="">🏢 Tất cả ({stats.warehouses})</option>
+                                <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        🏢 {w.name} ({w.totalStock.toLocaleString()} chai)
+                                        🏢 {w.name} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
@@ -939,7 +955,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-slate-900"
                             title="Nhấn vào Kho Hàng để về trang Bảng Chức Năng Kho"
                         >
-                            <Warehouse size={20} className="text-amber-500" /> Kho Hàng
+                            <Warehouse size={20} className="text-amber-500" /> {t.pageTitle}
                         </button>
 
                         {viewMode === 'workspace' && (
@@ -952,7 +968,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     onClick={() => setViewMode('grid')}
                                     className="ml-2 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold transition shadow-2xs cursor-pointer active:scale-95"
                                 >
-                                    ← Về Menu Kho
+                                    {t.backToMenu}
                                 </button>
                             </div>
                         )}
@@ -980,12 +996,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/20'
                                     : 'bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200'
                             }`}
-                            title={audioNotifyEnabled ? 'Đã bật thông báo nhặt hàng (Bấm để tắt)' : 'Bấm để bật thông báo nhặt hàng nổi & âm thanh'}
+                            title={audioNotifyEnabled ? t.notifications.tooltipOn : t.notifications.tooltipOff}
                         >
                             {audioNotifyEnabled ? (
                                 <>
                                     <BellRing size={14} className="text-emerald-600 animate-pulse shrink-0" />
-                                    <span>Nhắc Đơn: BẬT</span>
+                                    <span>{t.notifications.titleOn}</span>
                                     {pendingDOCount > 0 && (
                                         <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-extrabold ml-0.5">
                                             {pendingDOCount}
@@ -995,7 +1011,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             ) : (
                                 <>
                                     <BellOff size={14} className="text-slate-400 shrink-0" />
-                                    <span>Bật Nhắc Đơn</span>
+                                    <span>{t.notifications.titleOff}</span>
                                 </>
                             )}
                         </button>
@@ -1015,10 +1031,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 }}
                                 className="appearance-none pl-3 pr-8 py-2 rounded-xl text-base sm:text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
                             >
-                                <option value="">🏢 Tất cả các kho ({stats.warehouses})</option>
+                                <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        🏢 {w.name} {w.allowSales === false ? '⛔ [Chỉ Điều Chuyển]' : w.isDefault ? '⭐ [Kho Mặc Định]' : ''} ({w.totalStock.toLocaleString()} chai)
+                                        🏢 {w.name} {w.allowSales === false ? '⛔ [Chỉ Điều Chuyển]' : w.isDefault ? '⭐ [Kho Mặc Định]' : ''} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
@@ -1027,7 +1043,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                         <button onClick={() => setCreateWHOpen(true)}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all hover:brightness-105 shrink-0 cursor-pointer bg-amber-500 text-slate-950">
-                            <Plus size={14} /> Tạo Kho Mới
+                            <Plus size={14} /> {t.createWarehouseBtn}
                         </button>
                     </div>
                 </div>
@@ -1040,10 +1056,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     <div className="block md:hidden space-y-3 pb-20">
                         <div className="flex items-center justify-between px-1">
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
-                                Bảng Chức Năng Quản Lý Kho
+                                {t.menuTitle}
                             </p>
                             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                                {wmsFeatureModules.length} Phân Hệ
+                                {t.modulesCount(wmsFeatureModules.length)}
                             </span>
                         </div>
 
@@ -1081,7 +1097,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     <div className="hidden md:block space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
-                            Chức Năng Quản Lý Kho
+                            {t.menuTitle}
                         </p>
                     </div>
 
@@ -1108,7 +1124,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                             {mod.badge !== undefined && mod.badge > 0 && (
                                                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold shadow-xs"
                                                     style={{ background: '#DC2626', color: '#FFFFFF' }}>
-                                                    {mod.badge} cảnh báo
+                                                    {t.modules.quarantine.badgeAlerts(mod.badge)}
                                                 </span>
                                             )}
                                         </div>
@@ -1190,7 +1206,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                                     <MapPin size={36} style={{ color: '#94A3B8' }} />
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                                        Vui lòng chọn một kho từ danh sách ở trên để quản lý vị trí
+                                        {t.locationsPanel.promptSelectWh}
                                     </p>
                                 </div>
                             )}
@@ -1202,9 +1218,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         <div className="w-full space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>
-                                    {selectedWH
-                                        ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
-                                        : 'Tồn Kho — Tất cả kho'}
+                                    {t.table.whInventoryTitle(selectedWH ? warehouses.find(w => w.id === selectedWH)?.name : undefined)}
                                 </p>
                                 {selectedWH && (() => {
                                     const totalBookQty = filteredLots.reduce((sum, l) => sum + (l.qtyBook ?? l.qtyReceived ?? 0), 0)
@@ -1216,37 +1230,39 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     return (
                                         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
                                             <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
-                                                {filteredLots.length} lô
+                                                {t.lotsCount(filteredLots.length)}
                                             </span>
                                             <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0">
-                                                Sổ: <strong>{totalBookQty.toLocaleString()}</strong>c
+                                                {t.table.tagBook} <strong>{totalBookQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
                                             <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 shrink-0">
-                                                On-hand: <strong>{totalOnHandQty.toLocaleString()}</strong>c
+                                                {t.table.tagOnHand} <strong>{totalOnHandQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
                                             <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 shrink-0">
-                                                Khả dụng: <strong>{totalAvailableQty.toLocaleString()}</strong>c
+                                                {t.table.tagAvailable} <strong>{totalAvailableQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
                                             {totalReservedQty > 0 && (
                                                 <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 shrink-0">
-                                                    Đã đặt: <strong>{totalReservedQty.toLocaleString()}</strong>c
+                                                    {t.table.tagReserved} <strong>{totalReservedQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                                 </span>
                                             )}
                                             {totalVarianceQty !== 0 && (
                                                 <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 ${
                                                     totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
                                                 }`}>
-                                                    ⚠️ Lệch: {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}c
+                                                    ⚠️ {t.table.tagVariance} {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}{t.bottlesUnit.charAt(0)}
                                                 </span>
                                             )}
                                             <button onClick={() => {
                                                 if (filteredLots.length === 0) return
-                                                const headers = ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
+                                                const headers = locale === 'en'
+                                                    ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
+                                                    : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
                                                 const rows = filteredLots.map(l => [
                                                     l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
                                                     l.qtyBook ?? l.qtyReceived, l.qtyOnHand ?? l.qtyAvailable, l.qtyAvailable, l.qtyReserved ?? 0, l.variance ?? 0,
                                                     l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
-                                                    new Date(l.receivedDate).toLocaleDateString('vi-VN'), l.status,
+                                                    formatDateLocale(l.receivedDate), getLotStatusLabel(l.status, locale),
                                                 ])
                                                 const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
                                                 const BOM = '\uFEFF'
@@ -1254,12 +1270,14 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                 const url = URL.createObjectURL(blob)
                                                 const a = document.createElement('a')
                                                 a.href = url
-                                                a.download = `ton-kho-so-sach-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
+                                                a.download = locale === 'en'
+                                                    ? `stock-inventory-book-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
+                                                    : `ton-kho-so-sach-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
                                                 a.click()
                                                 URL.revokeObjectURL(url)
                                             }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs cursor-pointer shrink-0"
                                                 style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
-                                                <Download size={13} /> Export CSV
+                                                <Download size={13} /> {t.table.exportCsv}
                                             </button>
                                         </div>
                                     )
@@ -1270,7 +1288,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <div className="relative flex-1 min-w-[200px]">
                                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                                        <input placeholder="Tìm lô, sản phẩm, SKU..." value={search}
+                                        <input placeholder={t.table.searchPlaceholder} value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             className="w-full pl-9 pr-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }} />
@@ -1279,21 +1297,21 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
                                             className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: wineFilter ? '#0F172A' : '#64748B' }}>
-                                            <option value="">Tất cả loại rượu</option>
-                                            <option value="RED">🔴 Đỏ</option>
-                                            <option value="WHITE">🟡 Trắng</option>
-                                            <option value="ROSE">🌸 Rosé</option>
-                                            <option value="SPARKLING">🥂 Sủi tăm</option>
-                                            <option value="FORTIFIED">🍯 Fortified</option>
-                                            <option value="DESSERT">🍮 Dessert</option>
+                                            <option value="">{t.table.allWineTypes}</option>
+                                            <option value="RED">{t.wineTypes.RED}</option>
+                                            <option value="WHITE">{t.wineTypes.WHITE}</option>
+                                            <option value="ROSE">{t.wineTypes.ROSE}</option>
+                                            <option value="SPARKLING">{t.wineTypes.SPARKLING}</option>
+                                            <option value="FORTIFIED">{t.wineTypes.FORTIFIED}</option>
+                                            <option value="DESSERT">{t.wineTypes.DESSERT}</option>
                                         </select>
                                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
                                             className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: statusFilter ? '#0F172A' : '#64748B' }}>
-                                            <option value="">Tất cả trạng thái</option>
-                                            <option value="AVAILABLE">✅ Sẵn sàng</option>
-                                            <option value="RESERVED">📌 Đã đặt</option>
-                                            <option value="QUARANTINE">⚠️ Cách ly</option>
+                                            <option value="">{t.table.allStatuses}</option>
+                                            <option value="AVAILABLE">✅ {t.lotStatuses.AVAILABLE}</option>
+                                            <option value="RESERVED">📌 {t.lotStatuses.RESERVED}</option>
+                                            <option value="QUARANTINE">⚠️ {t.lotStatuses.QUARANTINE}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1310,7 +1328,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                                     <Warehouse size={36} style={{ color: '#94A3B8' }} />
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                                        Vui lòng chọn một kho để xem tồn kho chi tiết
+                                        {t.table.selectWhPrompt}
                                     </p>
                                 </div>
                             )}
@@ -1327,7 +1345,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <LayoutGrid size={16} />
-                        Menu Kho
+                        {t.bottomNav.menu}
                     </button>
 
                     <button
@@ -1338,7 +1356,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Package size={16} />
-                        Tồn Kho
+                        {t.bottomNav.inventory}
                     </button>
 
                     <button
@@ -1349,7 +1367,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Truck size={16} />
-                        Xuất Kho
+                        {t.bottomNav.do}
                     </button>
 
                     <button
@@ -1360,7 +1378,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <PackagePlus size={16} />
-                        Nhập Kho
+                        {t.bottomNav.gr}
                     </button>
 
                     <button
@@ -1371,7 +1389,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <ClipboardList size={16} />
-                        Kiểm Kê
+                        {t.bottomNav.stockCount}
                     </button>
                 </div>
             </div>

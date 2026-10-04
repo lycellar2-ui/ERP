@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-04 23:40 | Wine ERP v11.3 - Phase 2 Bilingual VI/EN Rollout (Sales Orders Module)*
+*Last updated: 2026-10-04 23:55 | Wine ERP v11.4 - Phase 3 Bilingual VI/EN Rollout (Warehouse & Inventory Module)*
 

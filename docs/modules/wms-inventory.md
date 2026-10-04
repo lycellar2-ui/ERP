@@ -612,6 +612,16 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Dual-View Chi Tiết Phiếu Chuyển Kho & Cách Ly** | `TransferDetailDrawer.tsx`, `WarehouseClient.tsx` | Tích hợp Mobile Card View độc lập với Desktop Table cho dòng hàng chuyển kho và lô hàng cách ly kiểm soát hư hao |
 | **Đồng Bộ Màu Thương Hiệu Pure Light** | `GoodsReceiptTab.tsx`, `ReplenishmentTab.tsx` | Thay thế các mã màu xanh nhạt `#87CBB9` bằng brand cyan `#0891B2` tương phản cao chuẩn WCAG AA |
 
+#### Phase 13: Bản Địa Hóa Song Ngữ Toàn Diện (VI / EN Bilingual WMS & Multi-Currency) (04/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Từ Điển WMS Song Ngữ Tập Trung** | `warehouse/i18n.ts` | Xây dựng bộ từ điển chuẩn hóa Anh - Việt `WAREHOUSE_I18N` bao gồm 11 Phân hệ chức năng WMS, danh mục 6 loại rượu, 5 trạng thái lô hàng (`getLotStatusLabel`), thông báo nhắc nhặt hàng (`notifications`), các tiêu đề bảng đối soát và modal tạo kho mới |
+| **Bản Địa Hóa Bảng Tồn Kho & Cách Ly** | `WarehouseClient.tsx` | Chuyển đổi 100% nhãn tiêu đề, badge lệch tồn (`varianceBadge`), tooltip đối soát, giá trị lô hàng sang `formatCurrency` đa tiền tệ, trạng thái lô hàng đa ngôn ngữ trên cả Desktop Table và Mobile Card View |
+| **Bảo Toàn Định Danh Kỹ Thuật & Barcode** | `WarehouseClient.tsx` | Giữ nguyên vẹn mã kho (`WH-TA-GVM`), mã vị trí kệ (`HN-A1-K3`), số lô (`LOT-xxx`) và mã SKU trên giao diện nhằm đảm bảo tính tương thích tuyệt đối với máy quét mã vạch và nhãn dán vật lý tại kho |
+| **Bản Địa Hóa Xuất File CSV Tồn Kho** | `WarehouseClient.tsx` | Tự động dịch tiêu đề 14 cột CSV (`Stock Lot`, `Book Qty`, `On-hand Qty`...) và tên file xuất theo ngôn ngữ đang chọn của người dùng |
+| **Đồng Bộ Thanh Điều Hướng Đáy Mobile & Alerts** | `WarehouseClient.tsx` | Dịch toàn bộ thanh dock điều hướng ngón tay cái và các thông báo nảy nổi/âm thanh nhắc nhặt hàng sang tiếng Anh khi kích hoạt EN |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -622,7 +632,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-04 | Wine ERP v10.49 — Transfers & Replenishment Mobile Ergonomics (BUG-120)*
+*Last updated: 2026-10-04 | Wine ERP v10.50 — Complete Bilingual VI/EN Support for Central Warehouse & Inventory (Session 18)*
 
 
 
