@@ -3350,6 +3350,34 @@ Khi thủ kho hoặc nhân viên điều phối sử dụng điện thoại di �
 ### Bài học
 > ⚠️ **RULE 120: Trong mọi form tạo/duyệt điều chuyển kho (Transfers) và cân bằng tồn (Replenishment): (1) Tuyệt đối không được chỉ dùng `hidden sm:block` cho bảng dòng hàng mà BẮT BUỘC phải có khối Mobile Card View (`block sm:hidden`) tương ứng để không bị ẩn hoàn toàn danh sách sản phẩm trên màn hình điện thoại; (2) Toàn bộ combobox chọn rượu, dropdown chọn kho/vintage và input số lượng phải có font tối thiểu 16px (`text-base sm:text-xs`) trên mobile; (3) Hộp gợi ý tìm kiếm combobox không được đặt `min-w` cố định lớn hơn chiều rộng màn hình di động (dùng `w-full sm:min-w-[420px] max-w-full`); (4) Bảng đề xuất cân bằng tồn kho nhiều cột phải triển khai Dual-View với thẻ tóm tắt trực quan và nút bấm hành động ngón cái `⚡ Tạo Lệnh Chuyển Ngay` (chiều cao >= 44px).**
 
+---
+
+## BUG-121: Finance & Dashboard — Biên Lợi Nhuận Gộp Âm Do Trùng Lặp Bút Toán Giá Vốn (Duplicate COGS Journal Entries) & Lệch Nguồn Dữ Liệu P&L (Matching Principle Mismatch)
+
+### Triệu chứng & Bối cảnh
+Khi kiểm tra báo cáo P&L (Profit & Loss) và chỉ số Gross Profit trên CEO Dashboard (`/dashboard`) cho tháng hiện tại (Tháng 10/2026):
+1. **Lợi nhuận gộp bị âm sâu bất thường (-359.119.769 VNĐ):** Trong khi doanh thu thực tế từ các đơn hàng bán (Confirmed Sales Orders) là 15.880.231 VNĐ và giá vốn đơn hàng (SO COGS) chỉ là 8.684.192 VNĐ (Lợi nhuận gộp thực tế dương +7.196.039 VNĐ, biên lợi nhuận +45.3%), màn hình Dashboard lại báo Gross Profit âm ~359 triệu VNĐ.
+2. **Xuất hiện 5 bút toán giá vốn giống hệt nhau trong Sổ Cái (General Ledger):** Kiểm tra bảng `JournalEntry` và `JournalLine`, phát sinh 5 bút toán `JE-COGS-000224`, `JE-COGS-000225`, `JE-COGS-000226`, `JE-COGS-000227`, `JE-COGS-000228` được tạo cùng một thời điểm cho phiếu xuất kho `DO-2610-0001` với số tiền 75.000.000 VNĐ mỗi bút toán (tổng giá vốn ghi nhận lên tới 375.000.000 VNĐ).
+3. **Bút toán mồ côi (Orphan Journal Entries):** Phiếu xuất kho `DO-2610-0001` đã bị xóa hoặc hủy, nhưng 5 bút toán giá vốn tương ứng vẫn tồn tại mồ côi trong sổ kế toán mà không được đảo hoặc xóa.
+4. **Vi phạm nguyên tắc phù hợp kế toán (Matching Principle) trong `getPLSummary`:** Khi hệ thống chưa ghi nhận bút toán doanh thu trong sổ cái (`revenueFromJournal === 0`), hàm `getPLSummary` lấy doanh thu từ đơn hàng bán lẻ (`revenue = soRevenue`), nhưng lại lấy giá vốn từ sổ cái mồ côi (`cogs = cogsFromJournal = 375.000.000 VNĐ`), dẫn đến phép tính khập khiễng `15.880.231 - 375.000.000 = -359.119.769 VNĐ`.
+
+### Nguyên nhân gốc rễ
+1. **Thiếu Idempotency Guard trong `generateDeliveryOrderCOGSJournal`:** Hàm tự động sinh bút toán giá vốn xuất kho (`src/app/dashboard/finance/actions.ts`) không kiểm tra xem phiếu DO đó đã có bút toán giá vốn hợp lệ hay chưa trước khi tạo mới. Khi người dùng thao tác hoặc quy trình xuất kho được kích hoạt lại nhiều lần, hệ thống liên tiếp tạo ra nhiều bút toán `JE-COGS` trùng lặp cho cùng một mã DO.
+2. **Không đồng bộ nguồn dữ liệu Doanh thu & Giá vốn trong `getPLSummary`:** Trong `src/app/dashboard/actions.ts`, biểu thức tính giá vốn đã ưu tiên lấy `cogsFromJournal` ngay cả khi `revenue` đang được lấy từ đơn bán hàng `soRevenue`. Điều này vi phạm nguyên tắc phù hợp (Matching Principle) trong kế toán: nếu doanh thu lấy từ nguồn nào thì giá vốn tương ứng phải lấy từ nguồn đó.
+
+### Cách khắc phục
+1. **Dọn dẹp dữ liệu mồ côi (Data Remediation):**
+   - Chạy script kiểm tra và xóa an toàn 10 dòng `JournalLine` và 5 bút toán mồ côi `JournalEntry` trùng lặp (`JE-COGS-000224` đến `000228`) trong cơ sở dữ liệu.
+   - Revalidate cache dashboard và tài chính, đưa Gross Profit tháng 10/2026 trở về con số chính xác: **+7.196.039 VNĐ (+45.3%)**.
+2. **Thiết lập Idempotency Guard cho `generateDeliveryOrderCOGSJournal`:**
+   - Bổ sung bước kiểm tra trước khi tạo bút toán: nếu đã tồn tại bút toán `docType: 'COGS'`, `docId: doId` (không phải bút toán đảo `REV`), lập tức trả về `entryId` hiện có và dừng lại, ngăn chặn 100% rủi ro tạo bút toán trùng lặp.
+3. **Đồng bộ nguyên tắc phù hợp (Matching Principle) trong `getPLSummary`:**
+   - Cập nhật logic: Nếu `revenue` lấy từ sổ cái (`revenueFromJournal > 0`), giá vốn sẽ ưu tiên lấy từ sổ cái (`cogsFromJournal`). Ngược lại, nếu `revenue` lấy từ đơn hàng bán lẻ `soRevenue`, giá vốn bắt buộc phải lấy từ giá vốn đơn hàng `soCOGS`.
+
+### Bài học
+> ⚠️ **RULE 121: (1) Mọi hàm tự động sinh bút toán kế toán (Auto-Journal Generation) như `generateDeliveryOrderCOGSJournal` BẮT BUỘC phải có Idempotency Guard (kiểm tra `docType` + `docId` đã tồn tại chưa) trước khi thực hiện `client.journalEntry.create`, ngăn chặn triệt để tình trạng nhân bản bút toán do retry hoặc double-click; (2) Các hàm tổng hợp báo cáo tài chính P&L tổng quan (như `getPLSummary`) BẮT BUỘC phải tuân thủ nghiêm ngặt nguyên tắc phù hợp (Accounting Matching Principle): Nguồn dữ liệu của Doanh thu và Giá vốn phải đồng nhất (cùng từ General Ledger hoặc cùng từ Sales Orders fallback), tuyệt đối không ghép Doanh thu từ Đơn bán hàng với Giá vốn mồ côi từ Sổ cái.**
+
+
 
 
 

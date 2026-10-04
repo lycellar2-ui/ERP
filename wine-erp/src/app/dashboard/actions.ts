@@ -540,8 +540,11 @@ export async function getPLSummary(options?: DashboardFilterOptions) {
             }
         }
 
+        // Match revenue and COGS by source (Accounting Matching Principle)
         const revenue = revenueFromJournal > 0 ? revenueFromJournal : soRevenue
-        const cogs = cogsFromJournal >= soCOGS && soCOGS > 0 ? cogsFromJournal : (soCOGS > 0 ? soCOGS : cogsFromJournal)
+        const cogs = revenueFromJournal > 0
+            ? (cogsFromJournal > 0 ? cogsFromJournal : soCOGS)
+            : (soCOGS > 0 ? soCOGS : cogsFromJournal)
 
         const grossProfit = revenue - cogs
         const netProfit = grossProfit - expenses

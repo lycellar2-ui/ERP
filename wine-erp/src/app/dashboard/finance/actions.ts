@@ -891,6 +891,18 @@ export async function generateDeliveryOrderCOGSJournal(
 ): Promise<{ success: boolean; entryId?: string; error?: string }> {
     const client = txClient || prisma
     try {
+        // Idempotency check: don't create duplicate journal entry if one already exists for this DO
+        const existingEntry = await client.journalEntry.findFirst({
+            where: {
+                docType: 'COGS',
+                docId: doId,
+                NOT: { entryNo: { contains: 'REV' } },
+            },
+        })
+        if (existingEntry) {
+            return { success: true, entryId: existingEntry.id }
+        }
+
         const deliveryOrder = await client.deliveryOrder.findUnique({
             where: { id: doId },
             include: {

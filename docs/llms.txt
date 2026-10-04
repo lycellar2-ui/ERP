@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-10-04 18:10
+> Last updated: 2026-10-04 23:05
 > Status: Production — 30 modules, 130 DB models, 82 enums, 36 dashboard routes, Pure Light Design System v2.2
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 120 rules from 84 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 121 rules from 85 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)
