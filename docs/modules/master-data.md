@@ -182,9 +182,10 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 | `brandGroup` | Tên Brand của nhà hàng (chỉ có ý nghĩa khi `entityType === 'RESTAURANT'`) | ✅ Nhập văn bản |
 | `status` | ACTIVE / PENDING_APPROVAL / REJECTED / CREDIT_HOLD / INACTIVE | ✅ Filter |
 
-> ℹ️ **Cơ chế Kế thừa Thông tin VAT từ Công Ty Cha (Parent Inheritance):**
-> Đối với các chi nhánh / nhà hàng con (`RESTAURANT` có `parentId`), nếu các trường thông tin xuất hóa đơn VAT (`vatCompanyName`, `taxId`, `vatAddress`, `vatEmail`) được để trống, hệ thống sẽ tự động kế thừa toàn bộ thông tin VAT từ **Công Ty Cha (`COMPANY`)**.
-> Trên giao diện quản lý khách hàng, nếu mã số thuế được kế thừa từ công ty cha, danh sách sẽ hiển thị badge màu hổ da cam dạng `0316123456 (Cha)` để dễ phân biệt.
+> ℹ️ **Cơ chế Kế thừa & Dùng chung Thông tin VAT / SĐT từ Công Ty Cha (Parent Hierarchy Sharing):**
+> - Đối với các chi nhánh / nhà hàng con (`RESTAURANT` có `parentId`), nếu các trường thông tin xuất hóa đơn VAT (`vatCompanyName`, `taxId`, `vatAddress`, `vatEmail`) được để trống, hệ thống sẽ tự động kế thừa toàn bộ thông tin VAT từ **Công Ty Cha (`COMPANY`)**.
+> - Trên giao diện quản lý khách hàng, nếu mã số thuế được kế thừa từ công ty cha, danh sách sẽ hiển thị badge màu hổ da cam dạng `0316123456 (Cha)` để dễ phân biệt.
+> - **Chính sách không chặn trùng lặp nội bộ tập đoàn (BUG-117 / RULE 117):** Khi khách hàng con điền MST hoặc SĐT của công ty mẹ (hoặc dùng chung với các chi nhánh anh em cùng `parentId`), hệ thống (`checkCustomerDuplicates`, `createCustomer`, `updateCustomer`) nhận diện quan hệ gia đình và cho phép lưu hợp lệ, chỉ chặn/cảnh báo trùng khi MST hoặc SĐT bị trùng với khách hàng độc lập bên ngoài.
 
 **Địa chỉ (CustomerAddress):**
 

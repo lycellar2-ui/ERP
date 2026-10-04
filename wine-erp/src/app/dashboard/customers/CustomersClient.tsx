@@ -272,6 +272,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     phone: form.phone,
                     name: form.name,
                     excludeId: editingId || undefined,
+                    parentId: form.parentId || undefined,
                 }).then(res => {
                     if (res.success && res.warnings) {
                         setDuplicateWarnings(res.warnings)
@@ -282,7 +283,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             }
         }, 350)
         return () => clearTimeout(timer)
-    }, [form.taxId, form.phone, form.name, open, editingId])
+    }, [form.taxId, form.phone, form.name, form.parentId, open, editingId])
 
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
@@ -938,6 +939,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         >
                                                             Áp dụng
                                                         </button>
+                                                    </div>
+                                                )
+                                            }
+                                            if (parent?.taxId && form.taxId === parent.taxId) {
+                                                return (
+                                                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200">
+                                                        <span>✅ Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
                                                     </div>
                                                 )
                                             }

@@ -495,19 +495,26 @@ export async function createCustomer(input: CustomerInput) {
             salesRepId = user.id
         }
 
-        // Check duplicate Tax ID
+        // Check duplicate Tax ID (allow sharing with parent company or sibling branches under the same parent)
         if (data.taxId && data.taxId.trim()) {
+            const cleanTax = data.taxId.trim()
+            const notList: any[] = []
+            if (data.parentId) {
+                notList.push({ id: data.parentId })
+                notList.push({ parentId: data.parentId })
+            }
             const existingTax = await prisma.customer.findFirst({
                 where: {
                     deletedAt: null,
-                    taxId: { equals: data.taxId.trim(), mode: 'insensitive' }
+                    taxId: { equals: cleanTax, mode: 'insensitive' },
+                    ...(notList.length > 0 ? { NOT: notList } : {})
                 },
                 select: { code: true, name: true }
             })
             if (existingTax) {
                 return {
                     success: false,
-                    error: `Mã số thuế '${data.taxId.trim()}' đã tồn tại cho Khách hàng [${existingTax.code}] ${existingTax.name}.`
+                    error: `Mã số thuế '${cleanTax}' đã tồn tại cho Khách hàng [${existingTax.code}] ${existingTax.name}.`
                 }
             }
         }
@@ -660,6 +667,36 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
                 delete customerData.status
             }
             delete customerData.code
+        }
+
+        // Check duplicate Tax ID if updating taxId (allow sharing with parent company, sibling branches, or own children)
+        if (customerData.taxId && customerData.taxId.trim()) {
+            const cleanTax = customerData.taxId.trim()
+            const currentEntityType = customerData.entityType ?? oldCustomer.entityType
+            const effectiveParentId = currentEntityType === 'COMPANY' ? null : (customerData.parentId !== undefined ? customerData.parentId : oldCustomer.parentId)
+
+            const notList: any[] = [{ id }]
+            if (effectiveParentId) {
+                notList.push({ id: effectiveParentId })
+                notList.push({ parentId: effectiveParentId })
+            } else if (currentEntityType === 'COMPANY') {
+                notList.push({ parentId: id })
+            }
+
+            const existingTax = await prisma.customer.findFirst({
+                where: {
+                    deletedAt: null,
+                    taxId: { equals: cleanTax, mode: 'insensitive' },
+                    NOT: notList
+                },
+                select: { code: true, name: true }
+            })
+            if (existingTax) {
+                return {
+                    success: false,
+                    error: `Mã số thuế '${cleanTax}' đã tồn tại cho Khách hàng [${existingTax.code}] ${existingTax.name}.`
+                }
+            }
         }
 
         const updateData: any = {}
@@ -1356,18 +1393,28 @@ export async function checkCustomerDuplicates(input: {
     phone?: string | null
     name?: string | null
     excludeId?: string | null
+    parentId?: string | null
 }) {
     try {
         const warnings: { type: 'TAX_ID' | 'PHONE' | 'NAME'; message: string; customer: { id: string; code: string; name: string } }[] = []
 
-        const whereNotId = input.excludeId ? { id: { not: input.excludeId } } : {}
+        const exclusions: any[] = []
+        if (input.excludeId) {
+            exclusions.push({ id: input.excludeId })
+            exclusions.push({ parentId: input.excludeId })
+        }
+        if (input.parentId) {
+            exclusions.push({ id: input.parentId })
+            exclusions.push({ parentId: input.parentId })
+        }
+        const notWhere = exclusions.length > 0 ? { NOT: exclusions } : {}
 
-        // 1. Check Tax ID
+        // 1. Check Tax ID (ignore parent & sibling branches)
         if (input.taxId && input.taxId.trim()) {
             const cleanTax = input.taxId.trim()
             const existingTax = await prisma.customer.findFirst({
                 where: {
-                    ...whereNotId,
+                    ...notWhere,
                     deletedAt: null,
                     taxId: { equals: cleanTax, mode: 'insensitive' }
                 },
@@ -1382,7 +1429,7 @@ export async function checkCustomerDuplicates(input: {
             }
         }
 
-        // 2. Check Phone
+        // 2. Check Phone (ignore parent & sibling branches)
         if (input.phone && input.phone.trim()) {
             const cleanPhone = input.phone.trim()
             const existingPhoneContact = await prisma.customerContact.findFirst({
@@ -1390,16 +1437,35 @@ export async function checkCustomerDuplicates(input: {
                     phone: { equals: cleanPhone, mode: 'insensitive' },
                     customer: {
                         deletedAt: null,
-                        ...(input.excludeId ? { id: { not: input.excludeId } } : {})
+                        ...notWhere,
                     }
                 },
-                include: { customer: { select: { id: true, code: true, name: true } } }
+                include: { customer: { select: { id: true, code: true, name: true, parentId: true } } }
             })
-            if (existingPhoneContact) {
+
+            let matchingPhoneCustomer = existingPhoneContact?.customer
+            if (!matchingPhoneCustomer) {
+                const existingDirectPhone = await prisma.customer.findFirst({
+                    where: {
+                        ...notWhere,
+                        deletedAt: null,
+                        OR: [
+                            { purchasingPhone: { equals: cleanPhone, mode: 'insensitive' } },
+                            { receiverPhone: { equals: cleanPhone, mode: 'insensitive' } },
+                        ]
+                    },
+                    select: { id: true, code: true, name: true, parentId: true }
+                })
+                if (existingDirectPhone) {
+                    matchingPhoneCustomer = existingDirectPhone
+                }
+            }
+
+            if (matchingPhoneCustomer) {
                 warnings.push({
                     type: 'PHONE',
-                    message: `Số điện thoại '${cleanPhone}' đã trùng với SĐT liên hệ của [${existingPhoneContact.customer.code}] ${existingPhoneContact.customer.name}`,
-                    customer: { id: existingPhoneContact.customer.id, code: existingPhoneContact.customer.code, name: existingPhoneContact.customer.name }
+                    message: `Số điện thoại '${cleanPhone}' đã trùng với SĐT của [${matchingPhoneCustomer.code}] ${matchingPhoneCustomer.name}`,
+                    customer: { id: matchingPhoneCustomer.id, code: matchingPhoneCustomer.code, name: matchingPhoneCustomer.name }
                 })
             }
         }
@@ -1409,7 +1475,7 @@ export async function checkCustomerDuplicates(input: {
             const cleanName = input.name.trim()
             const existingName = await prisma.customer.findFirst({
                 where: {
-                    ...whereNotId,
+                    ...(input.excludeId ? { id: { not: input.excludeId } } : {}),
                     deletedAt: null,
                     name: { equals: cleanName, mode: 'insensitive' }
                 },

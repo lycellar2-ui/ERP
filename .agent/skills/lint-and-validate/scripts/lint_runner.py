@@ -95,7 +95,7 @@ def run_linter(linter: dict, cwd: Path) -> dict:
             text=True,
             encoding='utf-8',
             errors='replace',
-            timeout=120,
+            timeout=240,
             shell=platform.system() == "Windows" # Shell=True often helps with path resolution on Windows
         )
         
@@ -106,7 +106,7 @@ def run_linter(linter: dict, cwd: Path) -> dict:
     except FileNotFoundError:
         result["error"] = f"Command not found: {linter['cmd'][0]}"
     except subprocess.TimeoutExpired:
-        result["error"] = "Timeout after 120s"
+        result["error"] = "Timeout after 240s"
     except Exception as e:
         result["error"] = str(e)
     

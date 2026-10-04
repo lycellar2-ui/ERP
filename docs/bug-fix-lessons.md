@@ -3208,4 +3208,35 @@ Thực hiện audit toàn diện hệ thống theo quy trình chuẩn Maestro/An
 ### Bài học
 > ⚠️ **RULE 116: Tất cả các file test mô phỏng nghiệp vụ giao dịch (POS, WMS, SLS) khi mở rộng tính năng mới (pháp nhân, kho xuất bán, cơ chế giá margin, mã đối tác) BẮT BUỘC phải đồng bộ đầy đủ Prisma mocks tương ứng. Mọi input/control trên giao diện phải có thuộc tính trợ năng (`aria-label` hoặc `<label>`) để đảm bảo tuân thủ tiêu chuẩn UX/Accessibility quốc tế.**
 
+---
+
+## BUG-117: Khách Hàng (MDM/CRM) — Chặn Nhầm Trùng Lặp Mã Số Thuế & Số Điện Thoại Khi Tạo Khách Hàng Con (Hierarchy Parent/Sibling Sharing)
+
+### Triệu chứng & Bối cảnh
+Khi nhân viên kinh doanh hoặc quản trị viên tạo/cập nhật Khách hàng con (chi nhánh, nhà hàng thuộc chuỗi, khách sạn thuộc tập đoàn) có liên kết Công ty Mẹ (`parentId`):
+1. **Hard Block ở Server:** Điền Mã số thuế (MST) của công ty mẹ (hoặc bấm nút "Áp dụng MST Công ty Cha" trên form) khiến Server Action `createCustomer` trả về lỗi và chặn hoàn toàn: `Mã số thuế '...' đã tồn tại cho Khách hàng [CHA] Tên Công Ty Cha`.
+2. **Cảnh báo sai ở Client UI:** Khi người dùng nhập MST hoặc SĐT của công ty mẹ (hoặc chi nhánh cùng hệ thống dùng chung tổng đài mua hàng), `checkCustomerDuplicates` truy vấn toàn cầu không truyền `parentId`, làm giao diện hiển thị banner cảnh báo đỏ/vàng giả định trùng lặp thông tin với chính công ty mẹ.
+
+### Nguyên nhân gốc rễ
+1. **Thiếu ngữ cảnh quan hệ mẹ-con khi kiểm tra MST:** Trong `createCustomer` (`src/app/dashboard/customers/actions.ts`), câu lệnh `prisma.customer.findFirst` kiểm tra `taxId` chỉ lọc `deletedAt: null` mà không loại trừ bản thân công ty mẹ (`id: parentId`) và các chi nhánh anh em đã tạo trước đó (`parentId: parentId`).
+2. **Hàm `checkCustomerDuplicates` thiếu tham số `parentId`:** Signature hàm chỉ nhận `taxId`, `phone`, `name`, `excludeId` mà không nhận `parentId`. Do đó câu lệnh tìm kiếm trong bảng `customer` và `customerContact` không loại trừ quan hệ phân cấp gia đình công ty mẹ con.
+3. **Frontend chưa truyền `parentId`:** Trong `CustomersClient.tsx`, hook `useEffect` gọi `checkCustomerDuplicates` không truyền `form.parentId` và thiếu dependency `form.parentId`.
+
+### Cách khắc phục
+1. **Server Actions (`createCustomer` & `updateCustomer`):**
+   - Bổ sung `NOT: [{ id: parentId }, { parentId: parentId }]` khi kiểm tra trùng MST trong `createCustomer`. Chỉ chặn khi MST thuộc về khách hàng độc lập bên ngoài.
+   - Thêm kiểm tra trùng MST tương thích phân cấp gia đình cho `updateCustomer` (loại trừ `id`, `parentId`, hoặc các con trực thuộc nếu đang sửa công ty mẹ).
+2. **Cập nhật `checkCustomerDuplicates`:**
+   - Tiếp nhận `parentId?: string | null`.
+   - Khi `parentId` hoặc `excludeId` được cung cấp, tự động loại trừ công ty mẹ (`id`) và các chi nhánh con (`parentId`) khỏi cả kiểm tra `taxId` và `phone` (bao gồm `customerContact`, `purchasingPhone`, `receiverPhone`).
+3. **UI `CustomersClient.tsx`:**
+   - Truyền `parentId: form.parentId || undefined` vào `checkCustomerDuplicates`, thêm `form.parentId` vào dependency array của debounce effect.
+   - Bổ sung huy hiệu xác nhận trực quan màu xanh teal khi chi nhánh con kế thừa/sử dụng chung MST với Công ty Mẹ: `✅ Đang dùng chung MST với Công ty Cha ([CODE] — Tên Cha)`.
+4. **Kiểm thử tự động:**
+   - Bổ sung bộ test `test/business/customers.test.ts` (8/8 test cases passed) kiểm thử toàn diện mọi tình huống: cho phép chia sẻ MST/SĐT nội bộ tập đoàn, chặn khi trùng với khách hàng bên ngoài.
+
+### Bài học
+> ⚠️ **RULE 117: Trong mô hình phân cấp khách hàng B2B/HORECA (Parent Company - Child Branches), khách hàng con (`parentId` được thiết lập) được quyền dùng chung Mã số thuế (MST) và Số điện thoại (SĐT) với Công ty Mẹ (`id === parentId`) hoặc các chi nhánh anh em trong cùng hệ thống (`parentId === parentId`). Kiểm tra trùng lặp (Duplicate Check) cả ở tầng UI realtime lẫn Server Actions (`createCustomer`, `updateCustomer`) BẮT BUỘC phải loại trừ các bản ghi thuộc cùng cấu trúc phân cấp công ty mẹ con, chỉ kích hoạt cảnh báo/chặn khi MST hoặc SĐT trùng với khách hàng độc lập bên ngoài.**
+
+
 
