@@ -604,10 +604,13 @@ Cần thiết vì kho có thể có vùng mù sóng.
 |---|---|---|
 | **Dual-View Chi Tiết Phiếu Nhập Kho** | `GoodsReceiptTab.tsx` | Bổ sung Mobile Card View (`block md:hidden`) hiển thị trực quan thông tin dòng hàng GR (SKU badge, Vintage, Vị trí kệ, Số lô, SL PO vs Nhận thực tế) song song với Desktop Table (9 cột), xóa bỏ hoàn toàn tình trạng bảng bị bóp nghẹt trên điện thoại |
 | **Cố Định Chân Trang Drawer Tạo Phiếu Nhập** | `GoodsReceiptTab.tsx` | Tái cấu trúc `CreateGRDrawer` thành Flex Column: Header + Thân cuộn (`overflow-y-auto pb-28`) + Footer cố định (`sticky bottom-0 z-20`) với các nút Lưu nháp & Xác nhận đạt chuẩn touch target $\ge 44$px |
-| **Triệt Tiêu Lỗi iOS Safari Auto-Zoom** | Tất cả 7 component kho hàng | Chuẩn hóa toàn bộ ô nhập liệu và dropdown sang `text-base sm:text-sm` (16px trên mobile), ngăn chặn hoàn toàn việc trình duyệt iPhone tự ý zoom phóng to giao diện |
-| **Chống Che Khuất Bởi Thanh Điều Hướng Đáy** | `WarehouseClient.tsx`, các Tabs con | Bổ sung `pb-24 md:pb-8` cho Workspace và `pb-20 md:pb-4` cho tất cả tab con, đảm bảo bảng dữ liệu và nút bấm cuối trang không bị thanh điều hướng mobile che lấp |
+| **Triệt Tiêu Lỗi iOS Safari Auto-Zoom** | Tất cả component kho & chuyển kho | Chuẩn hóa toàn bộ ô nhập liệu, combobox và dropdown sang `text-base sm:text-xs/sm` (16px trên mobile), ngăn chặn hoàn toàn việc trình duyệt iPhone tự ý zoom phóng to giao diện |
+| **Chống Che Khuất Bởi Thanh Điều Hướng Đáy** | `WarehouseClient.tsx`, các Tabs con | Bổ sung `pb-24 md:pb-8` cho Workspace và `pb-20 md:pb-4` cho tất cả tab con kể cả `ReplenishmentTab`, đảm bảo bảng dữ liệu và nút bấm cuối trang không bị thanh điều hướng mobile che lấp |
 | **Thanh Trượt Ngang Chip Thống Kê Tồn Kho** | `WarehouseClient.tsx` | Chuyển cụm 8 chip lọc tồn kho sang `overflow-x-auto no-scrollbar flex shrink-0` lướt ngón tay mượt mà thay vì vỡ thành 4–5 hàng dọc |
-| **Đồng Bộ Màu Thương Hiệu Pure Light** | `GoodsReceiptTab.tsx` | Thay thế mã màu xanh nhạt `#87CBB9` bằng brand cyan `#0891B2` tương phản cao |
+| **Khôi Phục Dòng Hàng Chuyển Kho Trên Mobile** | `CreateTransferDrawer.tsx` | Bổ sung Mobile Card View (`block sm:hidden space-y-3`) khắc phục lỗi mất hiển thị 100% dòng sản phẩm khi lập phiếu chuyển trên điện thoại; sửa Combobox chống tràn màn hình |
+| **Dual-View Gợi Ý Cân Bằng Tồn Kho** | `ReplenishmentTab.tsx` | Bổ sung Mobile Card View với thẻ trực quan so sánh 2 kho và nút bấm ngón cái full-width `[⚡ Tạo Lệnh Chuyển Ngay]` đạt chuẩn $\ge 44$px |
+| **Dual-View Chi Tiết Phiếu Chuyển Kho & Cách Ly** | `TransferDetailDrawer.tsx`, `WarehouseClient.tsx` | Tích hợp Mobile Card View độc lập với Desktop Table cho dòng hàng chuyển kho và lô hàng cách ly kiểm soát hư hao |
+| **Đồng Bộ Màu Thương Hiệu Pure Light** | `GoodsReceiptTab.tsx`, `ReplenishmentTab.tsx` | Thay thế các mã màu xanh nhạt `#87CBB9` bằng brand cyan `#0891B2` tương phản cao chuẩn WCAG AA |
 
 ### Chi tiết GR Variance Report
 
@@ -619,7 +622,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-04 | Wine ERP v10.48 — Mobile WMS Ergonomics & iOS Safari Zoom Prevention (BUG-119)*
+*Last updated: 2026-10-04 | Wine ERP v10.49 — Transfers & Replenishment Mobile Ergonomics (BUG-120)*
 
 
 

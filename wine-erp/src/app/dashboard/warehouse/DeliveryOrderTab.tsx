@@ -485,7 +485,7 @@ export function DeliveryOrderTab({ warehouses }: {
             {/* Detail Drawer */}
             {(detailData || detailLoading) && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15,23,42,0.4)' }}>
-                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto shadow-2xl flex flex-col" style={{ background: '#FFFFFF' }}>
+                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-hidden shadow-2xl flex flex-col" style={{ background: '#FFFFFF' }}>
                         <div className="flex items-center justify-between p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
                                 <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -534,7 +534,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             type="date"
                                             value={editDoDate}
                                             onChange={e => setEditDoDate(e.target.value)}
-                                            className="px-2 py-1 text-xs rounded border border-slate-300 font-mono outline-none shadow-xs"
+                                            className="px-2 py-1.5 text-base sm:text-xs rounded-lg border border-slate-300 font-mono outline-none shadow-xs"
                                             style={{ background: '#FFFFFF', color: '#0F172A' }}
                                         />
                                         <button

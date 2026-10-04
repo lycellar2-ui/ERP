@@ -3313,6 +3313,44 @@ Khi thủ kho hoặc nhân viên vận hành sử dụng điện thoại di đ�
 ### Bài học
 > ⚠️ **RULE 119: Mọi phân hệ quản trị Kho Hàng (WMS) khi thao tác trên thiết bị di động BẮT BUỘC: (1) Với bảng dữ liệu nhiều cột (> 5 cột như chi tiết Nhập kho GR / Xuất kho DO), phải triển khai cơ chế Dual-View: Desktop Table và Mobile Card View dạng thẻ tóm tắt trực quan; (2) Toàn bộ input/select phải có font tối thiểu 16px trên mobile (`text-base sm:text-sm`) để ngăn chặn hoàn toàn lỗi cưỡng bức Auto-Zoom của iOS Safari; (3) Drawer/Modal nhập liệu phải cố định nút bấm hành động (`sticky bottom-0 z-20` hoặc Flex Column Footer) với chiều cao tối thiểu 44px, tránh để nút trôi mất; (4) Tất cả tab màn hình phải có khoảng đệm chân trang tối thiểu `pb-20` để không bị che khuất bởi thanh điều hướng đáy (Bottom Navigation Bar).**
 
+---
+
+## BUG-120: Điều Chuyển Kho & Cân Bằng Tồn (Transfers & Replenishment) — Lỗi Ẩn Toàn Bộ Dòng Hàng Chuyển Trên Mobile (< sm), Bảng Đề Xuất Điều Chuyển Bị Co Bóp & Cưỡng Bức Phóng To iOS Safari
+
+### Triệu chứng & Bối cảnh
+Khi thủ kho hoặc nhân viên điều phối sử dụng điện thoại di động (iPhone Safari, Android Chrome) để lập lệnh điều chuyển kho hoặc xem các cảnh báo lệch tồn kho giữa các chi nhánh:
+1. **Lỗi biến mất hoàn toàn danh sách sản phẩm chuyển kho trên Mobile (`CreateTransferDrawer.tsx`):** Khi người dùng mở drawer tạo phiếu chuyển kho trên màn hình điện thoại (< 640px) và bấm "+ Thêm Rượu", dù dữ liệu các dòng sản phẩm đã được thêm vào state nhưng không có bất kỳ sản phẩm nào hiển thị trên màn hình. Người dùng hoàn toàn không xem được danh sách rượu, không chọn được niên vụ (vintage), không chỉnh được số lượng chai và không thể xóa dòng hàng.
+2. **Bảng Gợi ý Điều Chuyển Kho bị bóp nghẹt 7 cột (`ReplenishmentTab.tsx`):** Bảng gợi ý cân bằng tồn kho dàn trải 7 cột (SKU, Vintage, Kho Đích, Kho Nguồn, Đề xuất, Lý do, Thao tác). Trên màn hình điện thoại, người dùng phải vuốt ngang rất xa qua nhiều cột mới thấy nút `[Tạo Lệnh Chuyển]`. Tab này cũng thiếu khoảng đệm đáy `pb-20` khiến nội dung cuối bị thanh bottom navigation của WMS che lấp.
+3. **Hiện tượng giật rung & cưỡng bức phóng to trên iOS Safari:** Các dropdown chọn kho đi/đến, ngày chuyển, lý do, ghi chú, ô tìm kiếm rượu và combobox sản phẩm đều có cỡ chữ 12px (`text-xs`). Khi chạm vào, Safari iOS tự động zoom to làm giao diện nhảy loạn xạ. Dropdown danh sách tìm kiếm rượu có thuộc tính `min-w-[420px]` tràn ra ngoài màn hình điện thoại.
+4. **Bảng Hàng Cách Ly (Quarantine) thiếu Mobile View:** Bảng cách ly trong `WarehouseClient.tsx` có 6 cột hiển thị trực tiếp bằng table khiến các nút hành động "Khôi Phục" và "Hủy Kho" bị đè chèn trên mobile.
+5. **Modal Chi tiết Xuất kho DO (`DeliveryOrderTab.tsx`):** Container ngoài cùng đặt `overflow-y-auto` gây xung đột cuộn 2 tầng (double scrolling) và ô chọn ngày xuất có cỡ chữ 12px kích hoạt auto-zoom.
+
+### Nguyên nhân gốc rễ
+1. Trong `CreateTransferDrawer.tsx`, bảng dòng sản phẩm được bao bọc bởi `<div className="hidden sm:block">` nhưng lập trình viên quên không viết khối giao diện Mobile `<div className="block sm:hidden">`, dẫn đến toàn bộ nội dung dòng hàng bị ẩn 100% trên điện thoại.
+2. `ProductCombobox` sử dụng thuộc tính cố định `min-w-[420px]` lớn hơn bề rộng màn hình di động (360–390px).
+3. Thiếu chuẩn Responsive Typography `text-base sm:text-xs` cho các form điều chuyển kho và cân bằng tồn.
+4. Thiếu cấu trúc Dual-View trong phân hệ Gợi ý điều chuyển kho (`ReplenishmentTab.tsx`) và Hàng cách ly (`QuarantineTab`).
+
+### Cách khắc phục
+1. **Khôi phục hiển thị dòng hàng chuyển kho trên Mobile (`CreateTransferDrawer.tsx`):**
+   - Bổ sung khối **Mobile Card View** (`block sm:hidden space-y-3`): Mỗi mặt hàng được tổ chức thành 1 thẻ card bo góc chuyên biệt với đầy đủ mã SKU, tên rượu, tồn kho xuất trực quan, dropdown chọn Niên Vụ (Vintage) và ô nhập số lượng chuyển thích ứng cảm ứng, cùng nút xóa thùng rác tiện lợi.
+   - Sửa dropdown combobox thành `w-full sm:min-w-[420px] max-w-full`.
+   - Nâng cấp thanh chân trang footer sang `flex-col sm:flex-row` với nút đạt chuẩn ngón cái `min-h-[44px]`.
+2. **Triển khai Dual-View cho Bảng Gợi Ý Cân Bằng Tồn (`ReplenishmentTab.tsx`):**
+   - **Mobile Card View (`block md:hidden`):** Hiển thị thẻ tóm tắt trực quan từng đề xuất với huy hiệu SKU/Vintage, khối so sánh song song 2 kho (Kho Đích ⚠️ Còn X chai vs Kho Nguồn 🟢 Sẵn Y chai), số lượng đề xuất quy đổi ra thùng, và nút bấm ngón cái full-width `[⚡ Tạo Lệnh Chuyển Ngay]` (`min-h-[44px]`).
+   - Bổ sung `pb-20 md:pb-4` chống che khuất đáy và chuẩn hóa ô tìm kiếm sang `text-base sm:text-xs`.
+3. **Tối ưu Hàng Cách Ly (`WarehouseClient.tsx`):**
+   - Tích hợp Mobile Card View cho từng lô cách ly với 2 nút tác vụ "Khôi Phục" và "Hủy Kho" bo góc rộng rãi, độc lập với Desktop Table.
+   - Sửa dropdown chọn kho ở thanh điều hướng trên cùng sang `text-base sm:text-xs`.
+4. **Chuẩn hóa Modal Chi Tiết Xuất Kho (`DeliveryOrderTab.tsx`):**
+   - Đổi container ngoài sang `overflow-hidden` triệt tiêu lỗi cuộn 2 tầng và sửa ô chọn ngày sang `text-base sm:text-xs`.
+5. **Sơ Đồ Kho 2D (`WarehouseMapTab.tsx`):**
+   - Sửa ô tìm kiếm SKU/Pallet mặt bằng kho sang `text-base sm:text-xs` ngăn chặn iOS auto-zoom.
+
+### Bài học
+> ⚠️ **RULE 120: Trong mọi form tạo/duyệt điều chuyển kho (Transfers) và cân bằng tồn (Replenishment): (1) Tuyệt đối không được chỉ dùng `hidden sm:block` cho bảng dòng hàng mà BẮT BUỘC phải có khối Mobile Card View (`block sm:hidden`) tương ứng để không bị ẩn hoàn toàn danh sách sản phẩm trên màn hình điện thoại; (2) Toàn bộ combobox chọn rượu, dropdown chọn kho/vintage và input số lượng phải có font tối thiểu 16px (`text-base sm:text-xs`) trên mobile; (3) Hộp gợi ý tìm kiếm combobox không được đặt `min-w` cố định lớn hơn chiều rộng màn hình di động (dùng `w-full sm:min-w-[420px] max-w-full`); (4) Bảng đề xuất cân bằng tồn kho nhiều cột phải triển khai Dual-View với thẻ tóm tắt trực quan và nút bấm hành động ngón cái `⚡ Tạo Lệnh Chuyển Ngay` (chiều cao >= 44px).**
+
+
 
 
 

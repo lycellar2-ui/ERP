@@ -534,7 +534,7 @@ export function WarehouseMapTab({
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSearch()}
                             placeholder="Tìm SKU, Pallet, rượu..."
-                            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
+                            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-base sm:text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
                         />
                     </div>
 

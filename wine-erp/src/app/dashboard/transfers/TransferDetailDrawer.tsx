@@ -568,7 +568,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                         {/* Line Items Table */}
                                         <div className="rounded-xl overflow-hidden shadow-2xs border border-slate-200 bg-white">
-                                            <div className="overflow-x-auto">
+                                            {/* Desktop Table View (>= 768px) */}
+                                            <div className="hidden md:block overflow-x-auto">
                                                 <table className="w-full text-left text-xs border-collapse">
                                                     <thead>
                                                         <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
@@ -597,7 +598,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                 <select
                                                                                     value={selectedNewVintage}
                                                                                     onChange={e => setSelectedNewVintage(e.target.value)}
-                                                                                    className="px-1.5 py-1 text-xs rounded border border-slate-300 bg-white text-slate-900 font-mono shadow-2xs outline-none focus:border-amber-500"
+                                                                                    className="px-2 py-1 text-base sm:text-xs rounded border border-slate-300 bg-white text-slate-900 font-mono shadow-2xs outline-none focus:border-amber-500"
                                                                                 >
                                                                                     {l.availableVintages && l.availableVintages.length > 0 ? (
                                                                                         l.availableVintages.map(v => (
@@ -682,6 +683,62 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         </tr>
                                                     </tfoot>
                                                 </table>
+                                            </div>
+
+                                            {/* Mobile Card View (< 768px) */}
+                                            <div className="block md:hidden p-3 space-y-3">
+                                                {detail.lines.map((l, idx) => {
+                                                    const isEditable = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(detail.status)
+                                                    const isLowOrZeroStock = (l.vintageAvailableStock ?? 0) < l.qtyTransferred
+
+                                                    return (
+                                                        <div key={l.id} className="p-3 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-[10px] font-bold text-slate-500 font-mono">#{idx + 1}</span>
+                                                                    <span className="text-xs font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                        {l.skuCode}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                                                                    VTG: {l.vintage || 'NV'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="font-bold text-slate-900 text-xs leading-snug">
+                                                                {l.productName}
+                                                            </p>
+                                                            <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
+                                                                <span className="text-slate-500">Số lượng chuyển:</span>
+                                                                <span className="font-mono font-bold text-amber-800 text-sm">
+                                                                    {l.qtyTransferred} chai
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs">
+                                                                <span className="text-slate-500">Đơn giá vốn:</span>
+                                                                <span className="font-mono text-slate-700">
+                                                                    {formatVND(l.unitCost)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 font-bold">
+                                                                <span className="text-slate-900">Thành tiền:</span>
+                                                                <span className="font-mono text-slate-900">
+                                                                    {formatVND(l.totalValue)}
+                                                                </span>
+                                                            </div>
+                                                            {isEditable && isLowOrZeroStock && (
+                                                                <div className="text-[10px] text-rose-600 bg-rose-50 p-1.5 rounded font-semibold border border-rose-200">
+                                                                    ⚠️ Cảnh báo tồn: Lô còn {l.vintageAvailableStock ?? 0} chai
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold">
+                                                    <span>Tổng cộng ({detail.lines.length} mặt hàng):</span>
+                                                    <span className="font-mono text-amber-800 text-sm">
+                                                        {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 

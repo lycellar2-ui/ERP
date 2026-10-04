@@ -405,40 +405,89 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                 </div>
             ) : (
                 <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                {['Lô Hàng', 'Sản Phẩm', 'SL', 'Vị Trí', 'Ngày Nhập', ''].map(h => (
-                                    <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lots.map((lot: any) => (
-                                <tr key={lot.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{lot.lotNo}</td>
-                                    <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
-                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
-                                    <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>
-                                    <td className="px-4 py-3 text-[#64748B]">{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex gap-2 justify-end">
-                                            <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
-                                                className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
-                                                style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
-                                                {processing === lot.id ? '...' : 'Khôi Phục'}
-                                            </button>
-                                            <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
-                                                className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
-                                                style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}>
-                                                <Trash2 size={11} className="inline mr-0.5" />Hủy Kho
-                                            </button>
-                                        </div>
-                                    </td>
+                    {/* Desktop Table View (>= 768px) */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                                    {['Lô Hàng', 'Sản Phẩm', 'SL', 'Vị Trí', 'Ngày Nhập', ''].map(h => (
+                                        <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {lots.map((lot: any) => (
+                                    <tr key={lot.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                        <td className="px-4 py-3 font-mono text-xs text-slate-600">{lot.lotNo}</td>
+                                        <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
+                                        <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
+                                        <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>
+                                        <td className="px-4 py-3 text-[#64748B]">{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex gap-2 justify-end">
+                                                <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
+                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
+                                                    style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
+                                                    {processing === lot.id ? '...' : 'Khôi Phục'}
+                                                </button>
+                                                <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
+                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
+                                                    style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}>
+                                                    <Trash2 size={11} className="inline mr-0.5" />Hủy Kho
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View (< 768px) */}
+                    <div className="block md:hidden p-3 space-y-3">
+                        {lots.map((lot: any) => (
+                            <div key={lot.id} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                        Lô: {lot.lotNo}
+                                    </span>
+                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                        📍 {lot.location?.locationCode || 'Chưa gán'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-slate-900 text-xs leading-snug">
+                                        {lot.product?.productName || lot.productId}
+                                    </p>
+                                    <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
+                                        <span>Ngày nhập: {new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</span>
+                                        <span className="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                            Cách ly: {Number(lot.qtyAvailable).toLocaleString()} chai
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                                    <button
+                                        onClick={() => handleRelease(lot.id, 'RESTORE')}
+                                        disabled={processing === lot.id}
+                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
+                                        style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}
+                                    >
+                                        {processing === lot.id ? '...' : 'Khôi Phục'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleRelease(lot.id, 'WRITE_OFF')}
+                                        disabled={processing === lot.id}
+                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
+                                        style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}
+                                    >
+                                        <Trash2 size={12} className="inline mr-1" />
+                                        Hủy Kho
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -833,7 +882,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-2 pr-6 py-1.5 rounded-xl text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
+                                className="appearance-none pl-2 pr-6 py-1.5 rounded-xl text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
                             >
                                 <option value="">🏢 Tất cả ({stats.warehouses})</option>
                                 {warehouses.map(w => (
@@ -964,7 +1013,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
+                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-base sm:text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
                             >
                                 <option value="">🏢 Tất cả các kho ({stats.warehouses})</option>
                                 {warehouses.map(w => (

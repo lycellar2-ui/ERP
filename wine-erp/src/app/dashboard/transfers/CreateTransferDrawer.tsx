@@ -134,7 +134,7 @@ function ProductCombobox({
     }, [products, query, selectedProduct, fromWarehouseId])
 
     return (
-        <div className="relative flex-1 min-w-[280px]" ref={containerRef}>
+        <div className="relative flex-1 min-w-0 sm:min-w-[280px] w-full" ref={containerRef}>
             <div className="relative">
                 <input
                     type="text"
@@ -148,10 +148,10 @@ function ProductCombobox({
                         setQuery(e.target.value)
                         setOpen(true)
                     }}
-                    className="w-full px-2.5 py-1.5 pr-8 text-xs rounded outline-none font-medium transition-colors"
+                    className="w-full px-2.5 py-2 pr-8 text-base sm:text-xs rounded-lg outline-none font-medium transition-colors"
                     style={{
                         ...inputStyle,
-                        borderColor: open ? '#87CBB9' : '#E2E8F0',
+                        borderColor: open ? '#0891B2' : '#E2E8F0',
                     }}
                 />
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
@@ -159,7 +159,7 @@ function ProductCombobox({
 
             {open && (
                 <div
-                    className="absolute left-0 top-full mt-1 w-full min-w-[420px] max-h-72 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-slate-200/40"
+                    className="absolute left-0 top-full mt-1 w-full sm:min-w-[420px] max-w-full max-h-72 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-slate-200/40"
                     style={{ background: '#FFFFFF', borderColor: '#0891B2' }}
                 >
                     {filtered.length === 0 ? (
@@ -445,7 +445,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     value={fromWarehouseId}
                                     onChange={e => setFromWarehouseId(e.target.value)}
                                     {...focusHandler}
-                                    className="w-full px-3 py-2 text-xs font-semibold outline-none rounded cursor-pointer"
+                                    className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded-lg cursor-pointer"
                                     style={{ ...inputStyle }}
                                 >
                                     <option value="">-- Chọn Kho Xuất --</option>
@@ -466,7 +466,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     value={toWarehouseId}
                                     onChange={e => setToWarehouseId(e.target.value)}
                                     {...focusHandler}
-                                    className="w-full px-3 py-2 text-xs font-semibold outline-none rounded cursor-pointer"
+                                    className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded-lg cursor-pointer"
                                     style={{ ...inputStyle }}
                                 >
                                     <option value="">-- Chọn Kho Nhận --</option>
@@ -491,7 +491,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                 value={transferDate}
                                 onChange={e => setTransferDate(e.target.value)}
                                 {...focusHandler}
-                                className="w-full px-3 py-2 font-mono font-semibold text-xs outline-none rounded"
+                                className="w-full px-3 py-2 font-mono font-semibold text-base sm:text-xs outline-none rounded-lg"
                                 style={{ ...inputStyle }}
                             />
                         </div>
@@ -504,7 +504,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                 value={reasonSelect}
                                 onChange={e => setReasonSelect(e.target.value)}
                                 {...focusHandler}
-                                className="w-full px-3 py-2 text-xs font-semibold outline-none rounded cursor-pointer"
+                                className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded-lg cursor-pointer"
                                 style={{ ...inputStyle }}
                             >
                                 {TRANSFER_REASONS.map(r => (
@@ -524,7 +524,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             onChange={e => setCustomNotes(e.target.value)}
                             {...focusHandler}
                             placeholder="Ví dụ: Chuyển 24 chai Chateau Margaux theo đề xuất SO-2608-0015..."
-                            className="w-full px-3 py-2 text-xs outline-none rounded"
+                            className="w-full px-3 py-2 text-base sm:text-xs outline-none rounded-lg"
                             style={{ ...inputStyle }}
                         />
                     </div>
@@ -681,27 +681,145 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                         </tbody>
                                     </table>
                                 </div>
+
+                                {/* 📱 MOBILE VIEW (< sm) - Card List for Phones */}
+                                <div className="block sm:hidden space-y-3">
+                                    {lines.map((line, idx) => {
+                                        const p = products.find(prod => prod.id === line.productId)
+                                        const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+                                        const whVintages = whStock?.vintages || []
+                                        const totalWhAvail = whStock?.totalAvailable ?? 0
+
+                                        let selectedVintageQty = 0
+                                        if (whStock) {
+                                            const match = whVintages.find(v => v.vintage === line.vintage)
+                                            selectedVintageQty = match ? match.qtyAvailable : 0
+                                        }
+
+                                        const allProductVintages = p?.vintages || []
+                                        const isZeroStock = Boolean(fromWarehouseId && line.productId && selectedVintageQty === 0)
+                                        const isOverStock = Boolean(fromWarehouseId && line.productId && line.qtyTransferred > selectedVintageQty && selectedVintageQty > 0)
+
+                                        return (
+                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3">
+                                                {/* Header: STT + Delete Button */}
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                        Mặt hàng #{idx + 1}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveLine(idx)}
+                                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                        title="Xóa mặt hàng này"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Product Combobox */}
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block">
+                                                        Sản Phẩm Rượu Vang *
+                                                    </label>
+                                                    <ProductCombobox
+                                                        products={products}
+                                                        selectedProductId={line.productId}
+                                                        fromWarehouseId={fromWarehouseId}
+                                                        onChange={id => handleLineProductChange(idx, id)}
+                                                    />
+                                                    {fromWarehouseId && line.productId && (
+                                                        <div className="flex items-center gap-1.5 text-[11px] pt-0.5">
+                                                            <span className="text-slate-500">Tồn kho xuất:</span>
+                                                            <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'}`}>
+                                                                {totalWhAvail} chai
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Vintage Selector & Qty Input */}
+                                                <div className="grid grid-cols-2 gap-2.5">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
+                                                            Niên Vụ (Vintage) *
+                                                        </label>
+                                                        <select
+                                                            value={line.vintage ?? ''}
+                                                            onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
+                                                            {...focusHandler}
+                                                            className={`w-full px-2.5 py-2 rounded-lg font-mono font-bold text-base sm:text-xs outline-none cursor-pointer ${isZeroStock ? 'text-rose-600' : 'text-slate-900'}`}
+                                                            style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#E2E8F0' }}
+                                                        >
+                                                            <option value="">
+                                                                NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
+                                                            </option>
+                                                            {whVintages.filter(v => v.vintage !== null).map(v => (
+                                                                <option key={v.vintage!} value={v.vintage!}>
+                                                                    {v.vintage} (Tồn: {v.qtyAvailable}c)
+                                                                </option>
+                                                            ))}
+                                                            {allProductVintages.filter(v => !whVintages.some(wv => wv.vintage === v)).map(v => (
+                                                                <option key={v} value={v}>
+                                                                    {v} (Tồn: 0c - Hết)
+                                                                </option>
+                                                            ))}
+                                                            {line.vintage && !allProductVintages.includes(line.vintage) && !whVintages.some(wv => wv.vintage === line.vintage) && (
+                                                                <option value={line.vintage}>{line.vintage} (Tồn: 0c)</option>
+                                                            )}
+                                                        </select>
+                                                        {fromWarehouseId && line.productId && (
+                                                            <span className={`text-[10px] mt-1 block font-semibold ${isZeroStock ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                                                {isZeroStock ? '⚠️ Hết tồn' : `Tồn: ${selectedVintageQty}c`}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
+                                                            Số Lượng Chuyển *
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            value={line.qtyTransferred}
+                                                            onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
+                                                            {...focusHandler}
+                                                            className={`w-full px-2.5 py-2 rounded-lg text-center font-mono font-bold text-base sm:text-xs outline-none ${isOverStock ? 'text-amber-700' : 'text-slate-900'}`}
+                                                            style={{ ...inputStyle, borderColor: isOverStock ? '#F59E0B' : '#E2E8F0' }}
+                                                        />
+                                                        {isOverStock && (
+                                                            <span className="text-[10px] mt-1 block font-bold text-amber-700">
+                                                                ⚠️ Vượt ({selectedVintageQty}c)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </>
                         )}
                     </div>
                 </div>
 
                 {/* Footer Bar */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
+                <div className="px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0 border-t border-slate-200 bg-white">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="w-full sm:w-auto px-4 py-2.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px]"
                     >
                         Hủy Bỏ
                     </button>
 
-                    <div className="flex items-center gap-2">
+                    <div className="w-full sm:w-auto flex items-center gap-2">
                         <button
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(false)}
-                            className="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[44px]"
                         >
                             <Save size={14} className="text-amber-500" /> Lưu Nháp
                         </button>
@@ -710,7 +828,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(true)}
-                            className="px-5 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                            className="flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 min-h-[44px]"
                         >
                             <Send size={14} /> Tạo & Gửi Duyệt
                         </button>

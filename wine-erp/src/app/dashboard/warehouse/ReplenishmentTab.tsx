@@ -151,7 +151,7 @@ export function ReplenishmentTab() {
     const totalSuggestedCases = suggestions.reduce((sum, s) => sum + s.suggestedCases, 0)
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-4 pb-20 md:pb-4">
             {/* Top Info Banner */}
             <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
                 style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
@@ -286,7 +286,7 @@ export function ReplenishmentTab() {
                             placeholder="Tìm theo SKU, tên rượu..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg outline-none font-medium text-slate-900 bg-white border border-slate-200 focus:border-[#87CBB9]"
+                            className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-lg outline-none font-medium text-slate-900 bg-white border border-slate-200 focus:border-[#0891B2]"
                         />
                     </form>
                 </div>
@@ -352,7 +352,7 @@ export function ReplenishmentTab() {
                         <select
                             value={wineType}
                             onChange={e => setWineType(e.target.value)}
-                            className="px-2.5 py-1 rounded text-xs outline-none bg-white border border-slate-200 text-slate-900 cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg text-base sm:text-xs outline-none bg-white border border-slate-200 text-slate-900 cursor-pointer"
                         >
                             <option value="">Tất cả loại vang</option>
                             {Object.entries(WINE_TYPE_LABELS).map(([k, v]) => (
@@ -376,7 +376,8 @@ export function ReplenishmentTab() {
                 </div>
             ) : (
                 <div className="rounded-xl border overflow-hidden bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table View (>= 768px) */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
@@ -412,7 +413,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* Vintage */}
-                                        <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-600 text-xs">
+                                        <td className="px-3.5 py-2.5 text-center font-mono font-bold text-slate-600 text-xs">
                                             {row.vintage ?? 'NV'}
                                         </td>
 
@@ -486,6 +487,76 @@ export function ReplenishmentTab() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card List View (< 768px) */}
+                    <div className="block md:hidden divide-y divide-slate-100 p-2.5 space-y-3">
+                        {suggestions.map((row) => (
+                            <div key={row.id} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3">
+                                {/* Header: SKU + Category Badge */}
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                                            {row.skuCode}
+                                        </span>
+                                        <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                            VTG: {row.vintage ?? 'NV'}
+                                        </span>
+                                    </div>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                        row.category === 'INTRA_TA'
+                                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                    }`}>
+                                        {row.categoryLabel}
+                                    </span>
+                                </div>
+
+                                {/* Product Name */}
+                                <p className="font-bold text-slate-900 text-xs leading-snug">
+                                    {row.productName}
+                                </p>
+
+                                {/* Warehouse Comparison */}
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div className="p-2 rounded-lg bg-rose-50/60 border border-rose-200/60 space-y-1">
+                                        <p className="text-[10px] font-bold text-rose-800 uppercase tracking-wide truncate">Kho Nhận (Đích)</p>
+                                        <p className="font-semibold text-slate-900 text-[11px] truncate">{row.targetWarehouseName}</p>
+                                        <p className="text-[11px] font-bold font-mono text-rose-700">⚠️ Còn {row.targetStockAvailable}c</p>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/60 space-y-1">
+                                        <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide truncate">Kho Xuất (Nguồn)</p>
+                                        <p className="font-semibold text-slate-900 text-[11px] truncate">{row.sourceWarehouseName}</p>
+                                        <p className="text-[11px] font-bold font-mono text-emerald-700">🟢 Sẵn {row.sourceStockAvailable}c</p>
+                                    </div>
+                                </div>
+
+                                {/* Suggested Qty & Reason */}
+                                <div className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+                                    <div className="text-[11px] text-slate-500 truncate mr-2">
+                                        {row.reason}
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <span className="font-black font-mono text-indigo-700 text-sm">
+                                            {row.suggestedQty} chai
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 block font-medium">
+                                            ({row.suggestedCases} thùng)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Action Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleCreateTransfer(row)}
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white min-h-[44px]"
+                                >
+                                    <Zap size={14} />
+                                    Tạo Lệnh Chuyển Ngay
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
