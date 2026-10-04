@@ -68,6 +68,7 @@
 59. [BUG-112: Tải Màn Hình Check-in Thị Trường Chậm (5-8s) — SSR Over-fetching, Duplicate Client Waterfall & GPS Blocking](#bug-112-tải-màn-hình-check-in-thị-trường-chậm-5-8s--ssr-over-fetching-duplicate-client-waterfall--gps-blocking)
 60. [BUG-113: Sai Lệch Giá Bán Buôn, Bán Lẻ & Cơ Chế Giá Đặc Biệt Vang Ý (Anselmi L10039 & Nhóm Vang Ý)](#bug-113-sai-lệch-giá-bán-buôn-bán-lẻ--cơ-chế-giá-đặc-biệt-vang-ý-anselmi-l10039--nhóm-vang-ý)
 61. [BUG-114: Dropdown Chọn Sản Phẩm Bị Xổ Lên Trên Và Bị Che Khuất Bởi Hàng Phía Trên (Smart Auto-Flip vs Stacking Context Z-Index Inversion)](#bug-114-dropdown-chọn-sản-phẩm-bị-xổ-lên-trên-và-bị-che-khuất-bởi-hàng-phía-trên-smart-auto-flip-vs-stacking-context-z-index-inversion)
+62. [BUG-115: CEO Dashboard — Lỗi Tính Khống Nợ Quá Hạn AR, Đứt Gãy Bộ Lọc Kỳ/Pháp Nhân & Thác Đổ Chi Phí Bị 0](#bug-115-ceo-dashboard--lỗi-tính-khống-nợ-quá-hạn-ar-đứt-gãy-bộ-lọc-kỳpháp-nhân--thác-đổ-chi-phí-bị-0)
 
 ---
 
@@ -3112,3 +3113,55 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 114: Trong các danh sách lặp (repeating rows) sử dụng z-index phân cấp giảm dần (`length - idx`), KHÔNG sử dụng logic tự động đảo hướng xổ lên trên (`dropUp`) trừ khi nâng động z-index của hàng đang active lên cao nhất (z-60+). Trong modal/drawer có thanh cuộn dọc `overflow-y-auto`, dropdown nên luôn xổ xuống dưới (`top-full`) để không bị cắt bởi clipping context phía trên.**
+
+---
+
+## BUG-115: CEO Dashboard — Lỗi Tính Khống Nợ Quá Hạn AR, Đứt Gãy Bộ Lọc Kỳ/Pháp Nhân & Thác Đổ Chi Phí Bị 0
+
+**Ngày:** 2026-10-04  
+**Người sửa:** AI Assistant  
+**Module:** DASH / CEO — Executive Dashboard (`src/app/dashboard/page.tsx`, `actions.ts`, `DailyRevenueChart.tsx`)  
+**Mức độ:** 🔴 Critical (Sai lệch nghiêm trọng số liệu nợ AR quá hạn trình CEO, bộ lọc không ăn vào báo cáo dòng tiền & thác đổ chi phí)
+
+### Mô tả lỗi
+1. **Lỗi tính khống nợ quá hạn trong Tuổi nợ AR (`getARAgingChart`):**
+   - Trước khi sửa: Hàm lấy `const amount = Number(inv.totalAmount)` mà không hề trừ đi `inv.paidAmount`.
+   - Hậu quả: Một hóa đơn bán hàng 100M khách đã thanh toán trước 90M (trạng thái `PARTIALLY_PAID`), hệ thống vẫn báo nợ quá hạn 100M! Dẫn đến CEO nhìn thấy nợ quá hạn của doanh nghiệp bị đội khống gấp nhiều lần thực tế.
+2. **Lỗi tính dòng tiền nợ phải thu trong `getCashPosition`:**
+   - Trước khi sửa: Biến `arOutstanding` truy vấn `prisma.invoice.aggregate({ _sum: { totalAmount: true } })` cho cả các hóa đơn `PARTIALLY_PAID`.
+   - Hậu quả: Khoản tiền đã thu vào tài khoản bị tính 2 lần (vừa nằm trong dòng tiền vào, vừa vẫn bị tính là nợ phải thu chưa thu).
+3. **Đứt gãy bộ lọc thời gian và pháp nhân (Filter Disconnect):**
+   - Trên đỉnh Dashboard CEO có thanh `DashboardFilterBar` cho phép chọn kỳ (Hôm nay, Tuần này, Tháng này, Tháng trước, Quý này...) và chọn Pháp nhân (Lycellar, Vang Trực Tuyến, Tất cả).
+   - Tuy nhiên, 3 hàm Server Actions gồm `getCashPosition`, `getARAgingChart`, `getCostWaterfall` bị hardcode lấy từ đầu tháng hiện tại `startOfMonth(now)` và không nhận tham số `legalEntityId`. Khi CEO lọc xem số liệu tháng trước hay lọc riêng một pháp nhân, các khối này hoàn toàn đứng yên không phản hồi.
+4. **Biểu đồ Thác Đổ Cấu Trúc Chi Phí (`getCostWaterfall`) bị trả về 0:**
+   - Hàm chỉ truy vấn các bản ghi `JournalLine` đã kết chuyển sổ cái kế toán. Vào các ngày trong tháng khi phòng kế toán chưa khóa sổ/chạy bút toán kết chuyển chi phí, biểu đồ thác đổ trả về toàn bộ 0 đ trong khi khối P&L bên cạnh vẫn có số liệu doanh thu từ đơn hàng.
+5. **Thẻ "CHỜ CEO DUYỆT" bị lệch số liệu phụ đề:**
+   - Thẻ hiển thị tổng số việc `totalPending` tính từ 3 nguồn: Tờ trình đề xuất, Đơn hàng SO chờ duyệt, và Yêu cầu phê duyệt nội bộ (`ApprovalRequest`). Nhưng dòng phụ đề bên dưới chỉ format `${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} SO`, khiến CEO thắc mắc tại sao tổng số là 5 mà phụ đề cộng lại chỉ có 3.
+6. **Lỗi giao diện biểu đồ doanh thu ngày (`DailyRevenueChart`):**
+   - Các cột ngày cuối tuần doanh thu = 0 sử dụng mã màu `#223847` (tàn dư của dark mode cũ), tạo ra các cột đen/xanh đậm bất thường trên nền dashboard sáng. Đồng thời thuật ngữ còn dùng từ ngữ AI cứng nhắc như "Doanh Số", "AOV", "Biến Động Doanh Số".
+
+### Cách khắc phục
+1. **Sửa dứt điểm công thức tính nợ AR:**
+   - Trong `getARAgingChart`, bổ sung `paidAmount` vào truy vấn và tính công thức chuẩn: `const remainingAmount = Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount ?? 0));`. Chỉ nợ thực tế còn lại mới được đưa vào phân nhóm tuổi nợ (0-30 ngày, 31-60 ngày...).
+   - Trong `getCashPosition`, duyệt chi tiết các hóa đơn chưa thu hết để trừ `paidAmount` tương ứng.
+2. **Đồng bộ tham số bộ lọc (`filterOptions`):**
+   - Bổ sung `options?: DashboardFilterOptions` vào signature của `getCashPosition`, `getARAgingChart`, và `getCostWaterfall`.
+   - Tại `page.tsx`, truyền đầy đủ `filterOptions` xuống cả 3 hàm server actions để đảm bảo khi CEO đổi kỳ hoặc chọn pháp nhân, toàn bộ dashboard phản hồi đồng bộ 100%.
+3. **Bổ sung cơ chế Fallback thông minh cho Thác Đổ Chi Phí:**
+   - Khi chưa có phát sinh `JournalLine` trong kỳ, hàm tự động fallback tính Giá vốn hàng bán (COGS) từ dòng đơn hàng `SalesOrder` và chi phí bán hàng/quản lý từ các phiếu chi `Expense` đã được duyệt.
+4. **Chuẩn hóa phụ đề thẻ Phê Duyệt:**
+   - Hiển thị linh hoạt danh sách các nguồn đang chờ theo đúng số lượng thực tế: `${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} đơn bán · ${pendingApprovalReqs.length} yêu cầu khác`.
+5. **Chuẩn hóa giao diện & từ ngữ thương mại rượu vang Việt Nam:**
+   - Chuyển màu cột ngày không phát sinh sang xám nhẹ `#F1F5F9` / viền `#E2E8F0`.
+   - Chuẩn hóa toàn bộ từ ngữ:
+     - "Vị Thế Tiền Mặt" → "Dòng Tiền & Cân Đối Thu - Chi"
+     - "Dòng Tiền Ròng Tháng" → "Dòng Tiền Ròng Trong Kỳ" (linh hoạt theo bộ lọc)
+     - "Thu AR" → "Thu nợ bán hàng (AR)", "Trả NCC" → "Trả nhà cung cấp (AP)"
+     - "AR chưa thu / AP chưa trả" → "Phải thu (AR) / Phải trả (AP)"
+     - "Top Bán Hàng Tháng Này" → "Top Bán Hàng Trong Kỳ"
+     - "Biến Động Doanh Số Theo Ngày" → "Doanh Thu Theo Từng Ngày"
+     - "Giá Trị TB / Đơn (AOV)" → "Giá Trị Đơn Trung Bình"
+
+### Bài học
+> ⚠️ **RULE 115: Số liệu công nợ phải thu (AR) và dòng tiền trên Dashboard CEO BẮT BUỘC phải tính trên dư nợ thực tế (`totalAmount - paidAmount`), TUYỆT ĐỐI KHÔNG dùng `totalAmount` đối với các chứng từ đã thanh toán một phần (`PARTIALLY_PAID`). Tất cả các widget phân tích trên Dashboard phải nhận và áp dụng đồng nhất bộ tham số lọc thời gian (`from`, `to`) và pháp nhân (`legalEntityId`) từ DashboardFilterBar.**
+
