@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter } from 'date-fns'
 import { revalidatePath } from 'next/cache'
+import { serialize } from '@/lib/serialize'
 
 export type DateRange = 'month' | 'quarter' | 'year'
 
@@ -1084,11 +1085,11 @@ export async function getTopCustomers(limit = 5, options?: DashboardFilterOption
             },
             select: {
                 totalAmount: true,
-                customer: { select: { id: true, name: true, channel: true } },
+                customer: { select: { id: true, code: true, name: true, channel: true } },
             },
         })
 
-        const map = new Map<string, { name: string; channel: string | null; revenue: number; orders: number }>()
+        const map = new Map<string, { id: string; code: string; name: string; channel: string | null; revenue: number; orders: number }>()
         for (const o of orders) {
             const cid = o.customer?.id ?? 'walk-in'
             const existing = map.get(cid)
@@ -1097,6 +1098,8 @@ export async function getTopCustomers(limit = 5, options?: DashboardFilterOption
                 existing.orders += 1
             } else {
                 map.set(cid, {
+                    id: o.customer?.id ?? '',
+                    code: o.customer?.code ?? '',
                     name: o.customer?.name ?? 'Khách Lẻ',
                     channel: (o.customer as any)?.channel ?? null,
                     revenue: Number(o.totalAmount),
@@ -1214,4 +1217,366 @@ export async function getRevenueByChannel(options?: DashboardFilterOptions) {
                 .sort((a, b) => b.revenue - a.revenue),
         }
     }, 60_000)
+}
+
+// ═══════════════════════════════════════════════════
+// CUSTOMER 360° PURCHASE HISTORY & SEARCH
+// ═══════════════════════════════════════════════════
+
+export interface DashboardCustomerSearchItem {
+    id: string
+    code: string
+    name: string
+    channel: string
+    entityType: string
+    salesRepName: string | null
+    parentName: string | null
+    orderCount: number
+}
+
+export async function searchCustomersForDashboard(query: string = ''): Promise<DashboardCustomerSearchItem[]> {
+    const q = query.trim()
+    const where: any = { deletedAt: null, status: 'ACTIVE' }
+    if (q) {
+        where.OR = [
+            { code: { contains: q, mode: 'insensitive' } },
+            { name: { contains: q, mode: 'insensitive' } },
+            { shortName: { contains: q, mode: 'insensitive' } },
+            { purchasingPhone: { contains: q } },
+            { receiverPhone: { contains: q } },
+        ]
+    }
+
+    const customers = await prisma.customer.findMany({
+        where,
+        take: 20,
+        orderBy: [{ salesOrders: { _count: 'desc' } }, { name: 'asc' }],
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            channel: true,
+            entityType: true,
+            salesRep: { select: { name: true } },
+            parent: { select: { name: true, code: true } },
+            _count: { select: { salesOrders: true } },
+        }
+    })
+
+    return customers.map(c => ({
+        id: c.id,
+        code: c.code,
+        name: c.name,
+        channel: c.channel,
+        entityType: c.entityType,
+        salesRepName: c.salesRep?.name ?? null,
+        parentName: c.parent ? `${c.parent.code} - ${c.parent.name}` : null,
+        orderCount: c._count.salesOrders,
+    }))
+}
+
+export interface CustomerHistorySOItem {
+    id: string
+    soNo: string
+    createdAt: string
+    totalAmount: number
+    status: string
+    deliveryStatus: string
+    salesRepName: string
+    branchName?: string | null
+    totalBottles: number
+    lineCount: number
+    deliveryOrders: Array<{ id: string; doNo: string; status: string }>
+    arInvoices: Array<{ id: string; invoiceNo: string; status: string; amount: number }>
+    lines: Array<{
+        id: string
+        skuCode: string
+        productName: string
+        wineType: string | null
+        qtyOrdered: number
+        unitPrice: number
+        lineDiscountPct: number
+        lineTotal: number
+    }>
+}
+
+export interface CustomerHistoryTopProduct {
+    productId: string
+    skuCode: string
+    name: string
+    wineType: string | null
+    originCountry: string | null
+    totalQty: number
+    totalSpend: number
+    lastUnitPrice: number
+    lastPurchasedAt: string
+}
+
+export interface CustomerHistoryMonthlyTrend {
+    month: string
+    label: string
+    revenue: number
+    bottles: number
+    orders: number
+}
+
+export interface CustomerPurchaseHistoryResult {
+    customer: {
+        id: string
+        code: string
+        name: string
+        channel: string
+        paymentTerm: string
+        creditLimit: number
+        entityType: string
+        status: string
+        salesRepName: string | null
+        parentName: string | null
+        childrenCount: number
+    }
+    kpis: {
+        totalRevenue: number
+        totalOrders: number
+        totalBottles: number
+        lastOrderDate: string | null
+        lastOrderNo: string | null
+        totalArDebt: number
+        overdueArDebt: number
+    }
+    orders: CustomerHistorySOItem[]
+    topProducts: CustomerHistoryTopProduct[]
+    monthlyTrend: CustomerHistoryMonthlyTrend[]
+}
+
+export async function getCustomerPurchaseHistory(
+    customerId: string,
+    timeRange: 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH' = 'ALL'
+): Promise<CustomerPurchaseHistoryResult | null> {
+    if (!customerId) return null
+
+    const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            channel: true,
+            paymentTerm: true,
+            creditLimit: true,
+            entityType: true,
+            status: true,
+            salesRep: { select: { id: true, name: true } },
+            parent: { select: { id: true, code: true, name: true } },
+            children: { select: { id: true, code: true, name: true } },
+        }
+    })
+
+    if (!customer) return null
+
+    const targetCustomerIds = [customer.id, ...customer.children.map(c => c.id)]
+
+    const now = new Date()
+    let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
+
+    if (timeRange === 'THIS_MONTH') {
+        dateFilter = { gte: startOfMonth(now), lte: endOfMonth(now) }
+    } else if (timeRange === 'LAST_6_MONTHS') {
+        dateFilter = { gte: subMonths(now, 6), lte: endOfMonth(now) }
+    } else if (timeRange === 'THIS_YEAR') {
+        dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
+    }
+
+    const orders = await prisma.salesOrder.findMany({
+        where: {
+            customerId: { in: targetCustomerIds },
+            status: { not: 'CANCELLED' },
+            ...(dateFilter ? { createdAt: dateFilter } : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+            customer: { select: { id: true, code: true, name: true } },
+            salesRep: { select: { name: true } },
+            lines: {
+                include: {
+                    product: {
+                        select: {
+                            id: true,
+                            skuCode: true,
+                            productName: true,
+                            wineType: true,
+                            country: true,
+                        }
+                    }
+                }
+            },
+            deliveryOrders: { select: { id: true, doNo: true, status: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
+        }
+    })
+
+    // Fetch AR debt across target customer IDs
+    const arInvoices = await prisma.aRInvoice.findMany({
+        where: {
+            customerId: { in: targetCustomerIds },
+            status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] }
+        },
+        select: {
+            amount: true,
+            paidAmount: true,
+            status: true,
+            dueDate: true,
+        }
+    })
+
+    let totalArDebt = 0
+    let overdueArDebt = 0
+    for (const inv of arInvoices) {
+        const unpaid = Number(inv.amount) - Number(inv.paidAmount ?? 0)
+        if (unpaid > 0) {
+            totalArDebt += unpaid
+            if (inv.dueDate && new Date(inv.dueDate) < now) {
+                overdueArDebt += unpaid
+            }
+        }
+    }
+
+    let totalRevenue = 0
+    let totalBottles = 0
+    const productMap = new Map<string, {
+        productId: string
+        skuCode: string
+        name: string
+        wineType: string | null
+        originCountry: string | null
+        totalQty: number
+        totalSpend: number
+        lastUnitPrice: number
+        lastPurchasedAt: Date
+    }>()
+
+    const monthlyMap = new Map<string, { month: string; label: string; revenue: number; bottles: number; orders: number }>()
+
+    for (const so of orders) {
+        const amt = Number(so.totalAmount)
+        totalRevenue += amt
+
+        const orderDate = new Date(so.createdAt)
+        const mKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`
+        const mLabel = `T${orderDate.getMonth() + 1}/${String(orderDate.getFullYear()).slice(-2)}`
+        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, orders: 0 }
+        mCurr.revenue += amt
+        mCurr.orders += 1
+
+        for (const l of so.lines) {
+            const qty = Number(l.qtyOrdered)
+            const price = Number(l.unitPrice)
+            const lineSpend = qty * price * (1 - (Number(l.lineDiscountPct ?? 0) / 100))
+            totalBottles += qty
+            mCurr.bottles += qty
+
+            if (l.product) {
+                const pid = l.product.id
+                const pCurr = productMap.get(pid)
+                if (pCurr) {
+                    pCurr.totalQty += qty
+                    pCurr.totalSpend += lineSpend
+                    if (new Date(so.createdAt) > new Date(pCurr.lastPurchasedAt)) {
+                        pCurr.lastUnitPrice = price
+                        pCurr.lastPurchasedAt = so.createdAt
+                    }
+                } else {
+                    productMap.set(pid, {
+                        productId: pid,
+                        skuCode: l.product.skuCode,
+                        name: l.product.productName,
+                        wineType: l.product.wineType,
+                        originCountry: l.product.country,
+                        totalQty: qty,
+                        totalSpend: lineSpend,
+                        lastUnitPrice: price,
+                        lastPurchasedAt: so.createdAt,
+                    })
+                }
+            }
+        }
+        monthlyMap.set(mKey, mCurr)
+    }
+
+    const topProducts = Array.from(productMap.values())
+        .sort((a, b) => b.totalQty - a.totalQty)
+
+    const monthlyTrend = Array.from(monthlyMap.values())
+        .sort((a, b) => a.month.localeCompare(b.month))
+
+    const formattedOrders: CustomerHistorySOItem[] = orders.map(o => {
+        let deliveryStatus = 'UNDELIVERED'
+        if (o.status === 'DELIVERED' || o.deliveryOrders.some(d => d.status === 'DELIVERED')) {
+            deliveryStatus = 'DELIVERED'
+        } else if (o.deliveryOrders.some(d => d.status === 'PICKING' || d.status === 'PACKED')) {
+            deliveryStatus = 'PREPARING'
+        } else if (o.deliveryOrders.length > 0) {
+            deliveryStatus = 'PREPARING'
+        }
+
+        return {
+            id: o.id,
+            soNo: o.soNo,
+            createdAt: o.createdAt.toISOString(),
+            totalAmount: Number(o.totalAmount),
+            status: o.status,
+            deliveryStatus,
+            salesRepName: o.salesRep?.name ?? '—',
+            branchName: o.customer.id !== customer.id ? `${o.customer.code} - ${o.customer.name}` : null,
+            totalBottles: o.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
+            lineCount: o.lines.length,
+            deliveryOrders: o.deliveryOrders.map(d => ({ id: d.id, doNo: d.doNo, status: d.status })),
+            arInvoices: o.arInvoices.map(i => ({ id: i.id, invoiceNo: i.invoiceNo, status: i.status, amount: Number(i.amount) })),
+            lines: o.lines.map(l => {
+                const qty = Number(l.qtyOrdered)
+                const price = Number(l.unitPrice)
+                const disc = Number(l.lineDiscountPct ?? 0)
+                return {
+                    id: l.id,
+                    skuCode: l.product?.skuCode ?? '',
+                    productName: l.product?.productName ?? '',
+                    wineType: l.product?.wineType ?? null,
+                    qtyOrdered: qty,
+                    unitPrice: price,
+                    lineDiscountPct: disc,
+                    lineTotal: qty * price * (1 - (disc / 100)),
+                }
+            }),
+        }
+    })
+
+    return serialize({
+        customer: {
+            id: customer.id,
+            code: customer.code,
+            name: customer.name,
+            channel: customer.channel,
+            paymentTerm: customer.paymentTerm,
+            creditLimit: Number(customer.creditLimit),
+            entityType: customer.entityType,
+            status: customer.status,
+            salesRepName: customer.salesRep?.name ?? null,
+            parentName: customer.parent ? `${customer.parent.code} - ${customer.parent.name}` : null,
+            childrenCount: customer.children.length,
+        },
+        kpis: {
+            totalRevenue,
+            totalOrders: orders.length,
+            totalBottles,
+            lastOrderDate: orders[0]?.createdAt.toISOString() ?? null,
+            lastOrderNo: orders[0]?.soNo ?? null,
+            totalArDebt,
+            overdueArDebt,
+        },
+        orders: formattedOrders,
+        topProducts: topProducts.map(p => ({
+            ...p,
+            lastPurchasedAt: p.lastPurchasedAt.toISOString(),
+        })),
+        monthlyTrend,
+    })
 }

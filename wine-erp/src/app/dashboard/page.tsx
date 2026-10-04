@@ -10,6 +10,7 @@ import {
 } from './actions'
 import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
 import { DailyRevenueChart } from './DailyRevenueChart'
+import { CustomerOrderHistoryWidget } from './CustomerOrderHistoryWidget'
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { formatDate } from '@/lib/utils'
 import { getComplianceWarnings } from './contracts/reg-doc-actions'
@@ -443,6 +444,9 @@ export default async function DashboardPage(props: PageProps) {
                     )}
                 </div>
             </div>
+
+            {/* ═══ CUSTOMER 360° PURCHASE HISTORY ═══ */}
+            <CustomerOrderHistoryWidget topCustomers={topCustomers} />
 
             {/* ═══ LAYER 4 — CEO ACTION HUB ═══ */}
             <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>

@@ -383,3 +383,42 @@ Bổ sung tính năng phân tích đa chiều theo thời gian thực cho CEO:
 - `getDailyRevenueChart(options)`: Tổng hợp doanh số từng ngày và ngày đỉnh.
 - `getDashboardStats`, `getPLSummary`, `getTopCustomers`, `getTopProducts`, `getRevenueByChannel`: Nhận tham số lọc linh hoạt theo kỳ và theo pháp nhân.
 
+---
+
+## Tính Năng v4 — "Customer 360° Purchase History & Search" (04/10/2026)
+
+Tích hợp trực tiếp widget tra cứu và phân tích lịch sử nhập hàng của từng khách hàng ngay trên tab Dashboard chính (`/dashboard`):
+
+### 1. Widget Tra Cứu Khách Hàng 360° (`CustomerOrderHistoryWidget.tsx`)
+- **Vị trí**: Đặt trực tiếp dưới Layer 3 (Operations & Top Khách Hàng).
+- **Thanh tìm kiếm khách hàng nhanh (Search Autocomplete)**: Tìm kiếm tức thì theo tên, mã khách hàng (`KH-...`), hoặc số điện thoại.
+- **Thanh nút bấm chọn nhanh Top Khách Hàng (Quick Pills)**: 1 chạm để chuyển ngay qua hồ sơ mua sắm của các khách hàng có doanh số cao nhất kỳ.
+- **Hỗ trợ cơ cấu Công ty Mẹ - Chi nhánh con**: Khi chọn công ty Mẹ (Holding), tự động tổng hợp toàn bộ lịch sử đơn hàng của các nhà hàng/chi nhánh con và ghi chú rõ chi nhánh phát sinh đơn.
+
+### 2. Hồ Sơ Khách Hàng & 4 Thẻ Chỉ Số Trực Quan
+- **Khung thông tin khách hàng**: Mã khách, Tên đầy đủ, Kênh bán hàng (HORECA, WHOLESALE,...), Nhân viên phụ trách (Sales Rep), Thuộc công ty mẹ nào, Điều khoản thanh toán (NET30, NET60) & Hạn mức tín dụng.
+- **Bộ lọc thời gian riêng cho khách hàng**: Tất cả (All-time), Năm nay, 6 tháng qua, Tháng này.
+- **4 Thẻ KPIs**:
+  1. *Tổng tiền đã nhập*: Doanh thu tích lũy (VND).
+  2. *Đơn hàng & Sản lượng*: Tổng số đơn SO và tổng số chai đã mua, trung bình chai/đơn.
+  3. *Lần mua gần nhất*: Ngày đặt đơn gần nhất và mã đơn SO tương ứng.
+  4. *Dư nợ phải thu (AR)*: Công nợ hiện tại kèm cảnh báo nếu có nợ quá hạn.
+
+### 3. Cấu Trúc 3 Tabs Chuyên Sâu
+- **Tab 1: Lịch Sử Đơn Hàng (Sales Orders)**:
+  - Bảng danh sách các đơn hàng đã đặt: Mã SO, Ngày đặt, Chi nhánh, Sale phụ trách, Số lượng chai & SKU, Tổng tiền, Trạng thái SO, Trạng thái giao hàng DO, Mã hóa đơn VAT.
+  - Nút mũi tên mở rộng chi tiết (Expandable row): Xem ngay bảng danh sách các chai rượu, số lượng, đơn giá, chiết khấu và thành tiền trong đơn mà không cần rời Dashboard.
+  - Bộ lọc trạng thái đơn: Tất cả, Đã giao đủ, Đã thanh toán, Chờ xử lý.
+- **Tab 2: Rượu Đã Từng Mua (Wine Profile)**:
+  - Bảng danh mục toàn bộ các dòng rượu/SKU khách từng nhập.
+  - Ô tìm kiếm/lọc nhanh tên rượu, SKU, xuất xứ.
+  - Thông tin: Mã SKU, Tên vang, Loại vang, Xuất xứ/quốc gia, Tổng chai đã mua, Đơn giá mua lần cuối, Tổng tiền đã chi, Lần mua gần nhất.
+- **Tab 3: Xu Hướng Nhập Hàng (Monthly Trend)**:
+  - Biểu đồ thanh doanh thu và sản lượng chai qua từng tháng, giúp CEO và Sales đánh giá mức độ tăng trưởng hoặc giảm sút đơn hàng của khách.
+
+### 4. Backend Actions Bổ Sung (`src/app/dashboard/actions.ts`)
+- `searchCustomersForDashboard(query: string)`: Tìm kiếm top 20 khách hàng active phù hợp.
+- `getCustomerPurchaseHistory(customerId: string, timeRange?: 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH')`: Tính toán toàn bộ KPIs, gom nhóm SKU, tổng hợp công nợ AR và biểu đồ xu hướng theo tháng.
+- `getTopCustomers(limit, options)`: Bổ sung `id` và `code` để liên kết trực tiếp với widget Customer 360.
+
+
