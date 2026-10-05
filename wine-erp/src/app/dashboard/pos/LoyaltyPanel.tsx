@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, Gift, Crown, Loader2, Search, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { Star, Loader2, Search, ArrowUpRight, ArrowDownLeft, ArrowLeft } from 'lucide-react'
 import { getLoyaltyInfo, type LoyaltyInfo } from './actions'
 import { formatVND } from '@/lib/utils'
+import { Button, Card, Badge, PageHeader } from '@/components/ui'
+import Link from 'next/link'
+import type { Tone } from '@/lib/ui/status'
 
-const TIER_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    PLATINUM: { label: 'Platinum', color: '#0F172A', bg: 'rgba(232,241,242,0.12)', icon: '💎' },
-    GOLD: { label: 'Gold', color: '#B45309', bg: 'rgba(180,83,9,0.12)', icon: '👑' },
-    SILVER: { label: 'Silver', color: '#475569', bg: 'rgba(100,116,139,0.12)', icon: '🥈' },
-    BRONZE: { label: 'Bronze', color: '#C07434', bg: 'rgba(192,116,52,0.12)', icon: '🥉' },
+const TIER_CFG: Record<string, { label: string; tone: Tone; icon: string }> = {
+    PLATINUM: { label: 'Platinum', tone: 'neutral', icon: '💎' },
+    GOLD: { label: 'Gold', tone: 'warning', icon: '👑' },
+    SILVER: { label: 'Silver', tone: 'info', icon: '🥈' },
+    BRONZE: { label: 'Bronze', tone: 'brand', icon: '🥉' },
 }
 
 export function LoyaltyPanel() {
@@ -31,96 +34,95 @@ export function LoyaltyPanel() {
     const tierCfg = info ? (TIER_CFG[info.tier] ?? TIER_CFG.BRONZE) : null
 
     return (
-        <div className="space-y-4">
-            {/* Search */}
-            <div className="flex items-center gap-2">
-                <Star size={18} style={{ color: '#B45309' }} />
-                <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
-                    Chương Trình Loyalty
-                </h3>
-            </div>
+        <div className="space-y-4 max-w-screen-lg">
+            <PageHeader
+                description="Tra cứu điểm thưởng, lịch sử quy đổi và cấp bậc loyalty của khách hàng"
+                actions={
+                    <Link href="/dashboard/pos">
+                        <Button variant="secondary" size="sm">
+                            <ArrowLeft size={14} aria-hidden /> Về POS Bán Hàng
+                        </Button>
+                    </Link>
+                }
+            />
 
+            {/* Search Input */}
             <div className="flex gap-2">
                 <div className="relative flex-1">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                    <input className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                        placeholder="Nhập Customer ID..."
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
+                    <input
+                        className="w-full pl-9 pr-3 py-2 rounded-md text-sm outline-none bg-white border border-lys-border-strong text-lys-primary focus:ring-1 focus:ring-lys-teal focus:border-lys-teal shadow-xs"
+                        placeholder="Nhập Mã hoặc Tên Khách Hàng..."
                         value={customerId}
                         onChange={e => setCustomerId(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && lookup()} />
+                        onKeyDown={e => e.key === 'Enter' && lookup()}
+                    />
                 </div>
-                <button onClick={lookup} disabled={loading || !customerId.trim()}
-                    className="px-4 py-2.5 rounded-lg text-xs font-semibold disabled:opacity-50"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : 'Tra Cứu'}
-                </button>
+                <Button onClick={lookup} disabled={loading || !customerId.trim()} loading={loading}>
+                    Tra Cứu
+                </Button>
             </div>
 
-            {error && <p className="text-xs" style={{ color: '#B91C1C' }}>{error}</p>}
+            {error && <p className="type-caption text-tone-danger-fg">{error}</p>}
 
-            {/* Loyalty Card */}
+            {/* Loyalty Card Info */}
             {info && tierCfg && (
-                <div className="space-y-4">
+                <div className="space-y-4 animate-fade-in">
                     {/* Main card */}
-                    <div className="p-5 rounded-lg" style={{
-                        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)',
-                        border: `1px solid ${tierCfg.color}30`,
-                    }}>
+                    <Card className="p-5">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{info.customerName}</p>
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full mt-1 inline-block"
-                                    style={{ color: tierCfg.color, background: tierCfg.bg }}>
+                                <p className="text-base font-bold text-lys-primary">{info.customerName}</p>
+                                <Badge tone={tierCfg.tone} className="mt-1">
                                     {tierCfg.icon} {tierCfg.label}
-                                </span>
+                                </Badge>
                             </div>
                             <div className="text-right">
-                                <p className="text-2xl font-bold" style={{ color: '#B45309' }}>
+                                <p className="type-number text-2xl font-black text-lys-teal-strong">
                                     {info.pointsBalance.toLocaleString('vi-VN')}
                                 </p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>điểm khả dụng</p>
+                                <p className="type-caption">điểm khả dụng</p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { label: 'Tổng Tích', value: info.totalEarned.toLocaleString('vi-VN'), color: '#15803D' },
-                                { label: 'Đã Đổi', value: info.totalRedeemed.toLocaleString('vi-VN'), color: '#C07434' },
-                                { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), color: '#0891B2' },
+                                { label: 'Tổng Tích', value: info.totalEarned.toLocaleString('vi-VN'), colorClass: 'text-tone-success-fg' },
+                                { label: 'Đã Đổi', value: info.totalRedeemed.toLocaleString('vi-VN'), colorClass: 'text-tone-warning-fg' },
+                                { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), colorClass: 'text-lys-teal-strong' },
                             ].map(s => (
-                                <div key={s.label} className="text-center p-2 rounded" style={{ background: '#F8FAFC' }}>
-                                    <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
-                                    <p className="text-xs" style={{ color: '#64748B' }}>{s.label}</p>
+                                <div key={s.label} className="text-center p-3 rounded-md bg-lys-subtle border border-lys-border">
+                                    <p className={`type-number text-base font-bold ${s.colorClass}`}>{s.value}</p>
+                                    <p className="type-caption mt-0.5">{s.label}</p>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </Card>
 
                     {/* History */}
-                    <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
+                    <Card className="p-4">
+                        <h4 className="type-section-title text-lys-secondary mb-3">
                             Lịch Sử Giao Dịch
-                        </p>
-                        <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                        </h4>
+                        <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
                             {info.history.length === 0 ? (
-                                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có giao dịch</p>
+                                <p className="type-caption text-center py-6">Chưa có giao dịch tích/đổi điểm nào</p>
                             ) : (
                                 info.history.map((h, i) => (
-                                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded-md bg-lys-subtle/60 border border-lys-border">
                                         <div className="flex items-center gap-2">
                                             {h.type === 'EARN' ? (
-                                                <ArrowUpRight size={12} style={{ color: '#15803D' }} />
+                                                <ArrowUpRight size={14} className="text-tone-success-fg" aria-hidden />
                                             ) : (
-                                                <ArrowDownLeft size={12} style={{ color: '#C07434' }} />
+                                                <ArrowDownLeft size={14} className="text-tone-warning-fg" aria-hidden />
                                             )}
-                                            <span className="text-xs" style={{ color: '#0F172A' }}>{h.description}</span>
+                                            <span className="text-xs font-medium text-lys-primary">{h.description}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-bold" style={{ color: h.type === 'EARN' ? '#15803D' : '#C07434' }}>
+                                            <span className={`type-number text-xs font-bold ${h.type === 'EARN' ? 'text-tone-success-fg' : 'text-tone-warning-fg'}`}>
                                                 {h.type === 'EARN' ? '+' : ''}{h.points}
                                             </span>
-                                            <span className="text-xs" style={{ color: '#64748B' }}>
+                                            <span className="type-caption">
                                                 {new Date(h.date).toLocaleDateString('vi-VN')}
                                             </span>
                                         </div>
@@ -128,31 +130,31 @@ export function LoyaltyPanel() {
                                 ))
                             )}
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
 
             {/* Tier Info */}
             {!info && !loading && (
-                <div className="p-5 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
+                <Card className="p-5">
+                    <h4 className="type-section-title text-lys-secondary mb-3">
                         Cấp Bậc Loyalty
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {Object.entries(TIER_CFG).map(([key, cfg]) => (
-                            <div key={key} className="text-center p-3 rounded" style={{ background: '#FFFFFF' }}>
-                                <p className="text-lg">{cfg.icon}</p>
-                                <p className="text-xs font-semibold mt-1" style={{ color: cfg.color }}>{cfg.label}</p>
-                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                                    {key === 'PLATINUM' ? '≥5000' : key === 'GOLD' ? '≥2000' : key === 'SILVER' ? '≥500' : '<500'}
+                            <div key={key} className="text-center p-3 rounded-md bg-lys-subtle border border-lys-border">
+                                <p className="text-xl mb-1">{cfg.icon}</p>
+                                <Badge tone={cfg.tone} className="font-bold">{cfg.label}</Badge>
+                                <p className="type-caption mt-1.5">
+                                    {key === 'PLATINUM' ? '≥ 5,000 đ' : key === 'GOLD' ? '≥ 2,000 đ' : key === 'SILVER' ? '≥ 500 đ' : '< 500 đ'}
                                 </p>
                             </div>
                         ))}
                     </div>
-                    <p className="text-xs mt-3" style={{ color: '#64748B' }}>
-                        Mỗi 10,000₫ đơn hàng = 1 điểm. 1 điểm = 1,000₫ giảm giá khi đổi.
+                    <p className="type-caption mt-4 text-center">
+                        Mỗi 10,000₫ đơn hàng = 1 điểm. 1 điểm = 1,000₫ giảm giá khi thanh toán đổi điểm.
                     </p>
-                </div>
+                </Card>
             )}
         </div>
     )

@@ -18,6 +18,7 @@ import { WeeklyVisitPlannerPanel } from './WeeklyVisitPlannerPanel'
 import { PipelinePanel } from './PipelinePanel'
 import { TelesalesProspectingPanel } from './TelesalesProspectingPanel'
 import { formatVND, formatDate } from '@/lib/utils'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
     HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
@@ -254,66 +255,69 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        CRM – Quan Hệ Khách Hàng
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        360° Customer View – Lịch sử, tương tác, cơ hội bán hàng
-                    </p>
-                </div>
-                <button onClick={async () => {
-                    setTierRecalcing(true)
-                    toast.promise(
-                        recalcAllCustomerTiers().then((res: any) => {
-                            if (!res.success) throw new Error('Có lỗi xảy ra')
-                            return res
-                        }),
-                        {
-                            loading: 'Đang tính toán tier...',
-                            success: (res: any) => `✅ Đã cập nhật ${res.updated} khách hàng`,
-                            error: 'Lỗi tính toán',
-                            finally: () => setTierRecalcing(false)
-                        }
-                    )
-                }} disabled={tierRecalcing}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-all"
-                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
-                    {tierRecalcing ? <Loader2 size={12} className="animate-spin" /> : <Crown size={12} />}
-                    {tierRecalcing ? 'Đang tính...' : 'Recalc Tiers'}
-                </button>
-            </div>
+            <PageHeader
+                title="CRM – Quan Hệ Khách Hàng"
+                description="360° Customer View – Lịch sử giao dịch, tương tác, cơ hội bán hàng & chăm sóc khách hàng"
+                actions={
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                            setTierRecalcing(true)
+                            toast.promise(
+                                recalcAllCustomerTiers().then((res: any) => {
+                                    if (!res.success) throw new Error('Có lỗi xảy ra')
+                                    return res
+                                }),
+                                {
+                                    loading: 'Đang tính toán tier...',
+                                    success: (res: any) => `✅ Đã cập nhật ${res.updated} khách hàng`,
+                                    error: 'Lỗi tính toán',
+                                    finally: () => setTierRecalcing(false)
+                                }
+                            )
+                        }}
+                        disabled={tierRecalcing}
+                        loading={tierRecalcing}
+                    >
+                        <Crown size={14} className="text-amber-600" />
+                        Recalc Tiers
+                    </Button>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Khách Hàng Đang Hoạt Động', value: stats.total, icon: Users, accent: '#0E7490' },
-                    { label: 'HORECA Partners', value: stats.horeca, icon: Wine, accent: '#15803D' },
-                    { label: 'Cơ Hội Đang Theo Dõi', value: stats.openOpps, icon: TrendingUp, accent: '#B45309' },
-                    { label: 'Khiếu Nại Chưa Xử Lý', value: stats.openTickets, icon: AlertCircle, accent: '#B91C1C' },
-                ].map(s => {
-                    const Icon = s.icon
-                    return (
-                        <div key={s.label} className="p-4 rounded-md flex items-center gap-4"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
-                                style={{ background: `${s.accent}18` }}>
-                                <Icon size={20} style={{ color: s.accent }} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard
+                    label="Khách Hàng Đang Hoạt Động"
+                    value={stats.total}
+                    icon={Users}
+                    tone="brand"
+                />
+                <StatCard
+                    label="HORECA Partners"
+                    value={stats.horeca}
+                    icon={Wine}
+                    tone="success"
+                />
+                <StatCard
+                    label="Cơ Hội Đang Theo Dõi"
+                    value={stats.openOpps}
+                    icon={TrendingUp}
+                    tone="warning"
+                />
+                <StatCard
+                    label="Khiếu Nại Chưa Xử Lý"
+                    value={stats.openTickets}
+                    icon={AlertCircle}
+                    tone="danger"
+                />
+            </StatGrid>
 
             {/* CRM Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
+            <div className="flex gap-1 p-1 bg-white rounded-lg border border-lys-border w-fit overflow-x-auto max-w-full">
                 {([
                     { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
                     { key: 'calls' as const, label: 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
@@ -322,13 +326,15 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Wine },
                     { key: 'complaints' as const, label: 'Phiếu Khiếu Nại', icon: AlertTriangle },
                 ]).map(tab => (
-                    <button key={tab.key} onClick={() => setCrmTab(tab.key)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
-                        style={{
-                            background: crmTab === tab.key ? '#FFFFFF' : 'transparent',
-                            color: crmTab === tab.key ? '#0E7490' : '#64748B',
-                            border: crmTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
-                        }}>
+                    <button
+                        key={tab.key}
+                        onClick={() => setCrmTab(tab.key)}
+                        className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
+                            crmTab === tab.key
+                                ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary font-bold'
+                                : 'text-lys-muted hover:text-lys-title hover:bg-lys-bg'
+                        }`}
+                    >
                         <tab.icon size={13} /> {tab.label}
                     </button>
                 ))}

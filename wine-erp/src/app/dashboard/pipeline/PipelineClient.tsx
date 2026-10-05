@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import {
-    Plus, Loader2, X, Target, TrendingUp, DollarSign, Percent,
-    Trash2, MoveRight, Clock, Calendar, User, FileText, ChevronDown,
+    Plus, Target, TrendingUp, DollarSign, Percent,
+    Trash2, MoveRight, Clock, Calendar, User, FileText,
     Filter, Edit3, Save, XCircle, AlertTriangle, ArrowRight
 } from 'lucide-react'
 import {
@@ -12,15 +12,20 @@ import {
     updateOpportunity, OpportunityDetail
 } from './actions'
 import { getCustomersForSO, getSalesReps } from '../sales/actions'
-import { formatVND } from '@/lib/utils'
+import { formatVND, cn } from '@/lib/utils'
+import {
+    Button, PageHeader, StatCard, StatGrid, Drawer, Modal,
+    Field, Input, Select, Textarea, Toolbar
+} from '@/components/ui'
+import type { Tone } from '@/lib/ui/status'
 
-const STAGES: { key: OppStage; label: string; color: string; bg: string; probability: number }[] = [
-    { key: 'LEAD', label: 'Lead', color: '#475569', bg: 'rgba(100,116,139,0.08)', probability: 10 },
-    { key: 'QUALIFIED', label: 'Qualified', color: '#B45309', bg: 'rgba(180,83,9,0.08)', probability: 30 },
-    { key: 'PROPOSAL', label: 'Proposal', color: '#0891B2', bg: 'rgba(8,145,178,0.08)', probability: 50 },
-    { key: 'NEGOTIATION', label: 'Negotiation', color: '#D97706', bg: 'rgba(217,119,6,0.08)', probability: 70 },
-    { key: 'WON', label: 'Won ✓', color: '#15803D', bg: 'rgba(21,128,61,0.1)', probability: 100 },
-    { key: 'LOST', label: 'Lost ✗', color: '#B91C1C', bg: 'rgba(185,28,28,0.08)', probability: 0 },
+const STAGES: { key: OppStage; label: string; tone: Tone; color: string; border: string; bg: string; probability: number }[] = [
+    { key: 'LEAD', label: 'Lead', tone: 'neutral', color: '#475569', border: '#CBD5E1', bg: 'bg-slate-50', probability: 10 },
+    { key: 'QUALIFIED', label: 'Qualified', tone: 'warning', color: '#B45309', border: '#FDE68A', bg: 'bg-amber-50/50', probability: 30 },
+    { key: 'PROPOSAL', label: 'Proposal', tone: 'info', color: '#0891B2', border: '#A5F3FC', bg: 'bg-cyan-50/50', probability: 50 },
+    { key: 'NEGOTIATION', label: 'Negotiation', tone: 'warning', color: '#D97706', border: '#FED7AA', bg: 'bg-orange-50/50', probability: 70 },
+    { key: 'WON', label: 'Won ✓', tone: 'success', color: '#15803D', border: '#BBF7D0', bg: 'bg-emerald-50/50', probability: 100 },
+    { key: 'LOST', label: 'Lost ✗', tone: 'danger', color: '#B91C1C', border: '#FECACA', bg: 'bg-red-50/40', probability: 0 },
 ]
 
 interface Props {
@@ -110,7 +115,6 @@ export function PipelineClient({ initialRows, stats }: Props) {
         await moveOpportunityStage(id, stage)
         await reload()
         setActionLoading(null)
-        // Refresh detail if open
         if (detail?.id === id) openDetail(id)
     }
 
@@ -183,150 +187,183 @@ export function PipelineClient({ initialRows, stats }: Props) {
 
     const getStageConfig = (stage: OppStage) => STAGES.find(s => s.key === stage)
 
-    // Unique assignees for filter
     const assignees = Array.from(new Set(rows.map(r => r.assigneeName))).sort()
 
-    // Apply filters
     const filteredRows = rows.filter(r => {
         if (filterAssignee && r.assigneeName !== filterAssignee) return false
         return true
     })
 
-    // Compute stage stats from filtered rows
     const filteredStats = {
         totalPipelineValue: filteredRows.filter(r => !['WON', 'LOST'].includes(r.stage)).reduce((s, r) => s + r.expectedValue, 0),
         weightedValue: filteredRows.filter(r => !['WON', 'LOST'].includes(r.stage)).reduce((s, r) => s + r.expectedValue * r.probability / 100, 0),
     }
 
-    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }
-
     return (
-        <div className="space-y-5 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Sales Pipeline
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Lead → Qualified → Proposal → Negotiation → Won
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all"
-                        style={{
-                            background: showFilters || filterAssignee ? 'rgba(180,83,9,0.15)' : '#FFFFFF',
-                            color: showFilters || filterAssignee ? '#B45309' : '#475569',
-                            border: `1px solid ${showFilters || filterAssignee ? 'rgba(180,83,9,0.3)' : '#E2E8F0'}`,
-                            borderRadius: '6px',
-                        }}>
-                        <Filter size={14} />
-                        {filterAssignee ? `${filterAssignee}` : 'Filter'}
-                    </button>
-                    <button onClick={openCreate}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
-                        style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                        <Plus size={16} /> Thêm Cơ Hội
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                description="Lead → Qualified → Proposal → Negotiation → Won"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={showFilters || filterAssignee ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft' : undefined}
+                        >
+                            <Filter size={14} aria-hidden />
+                            {filterAssignee ? filterAssignee : 'Lọc Sales Rep'}
+                        </Button>
+                        <Button onClick={openCreate}>
+                            <Plus size={16} aria-hidden /> Thêm Cơ Hội
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* Filter Bar */}
             {showFilters && (
-                <div className="flex gap-3 items-center p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sales Rep:</span>
-                    <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}
-                        className="px-3 py-1.5 text-xs outline-none" style={inputStyle}>
-                        <option value="">Tất cả</option>
-                        {assignees.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                    {filterAssignee && (
-                        <button onClick={() => setFilterAssignee('')}
-                            className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
-                            Xóa filter
-                        </button>
-                    )}
-                </div>
+                <Toolbar
+                    left={
+                        <div className="flex items-center gap-2">
+                            <span className="type-caption font-semibold text-lys-secondary">Sales Rep:</span>
+                            <Select
+                                value={filterAssignee}
+                                onChange={e => setFilterAssignee(e.target.value)}
+                                className="w-48"
+                            >
+                                <option value="">Tất cả</option>
+                                {assignees.map(a => <option key={a} value={a}>{a}</option>)}
+                            </Select>
+                            {filterAssignee && (
+                                <Button size="sm" variant="ghost" onClick={() => setFilterAssignee('')}>
+                                    Xóa lọc
+                                </Button>
+                            )}
+                        </div>
+                    }
+                />
             )}
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Pipeline Value', value: formatVND(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue), icon: DollarSign, color: '#0891B2' },
-                    { label: 'Weighted Value', value: formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue), icon: TrendingUp, color: '#B45309' },
-                    { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: Percent, color: '#15803D' },
-                    { label: 'Tổng Cơ Hội', value: `${filterAssignee ? filteredRows.length : stats.total}`, icon: Target, color: '#475569' },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md flex items-center gap-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <div className="p-2 rounded-md" style={{ background: `${s.color}15` }}>
-                            <s.icon size={18} style={{ color: s.color }} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                            <p className="text-lg font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <StatGrid className="grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    icon={DollarSign}
+                    tone="brand"
+                    label="Pipeline Value"
+                    value={formatVND(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue)}
+                />
+                <StatCard
+                    icon={TrendingUp}
+                    tone="warning"
+                    label="Weighted Value"
+                    value={formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue)}
+                />
+                <StatCard
+                    icon={Percent}
+                    tone="success"
+                    label="Conversion Rate"
+                    value={`${stats.conversionRate}%`}
+                />
+                <StatCard
+                    icon={Target}
+                    tone="info"
+                    label="Tổng Cơ Hội"
+                    value={filterAssignee ? filteredRows.length : stats.total}
+                />
+            </StatGrid>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2" style={{ minHeight: '450px' }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 min-h-[480px]">
                 {STAGES.map(stage => {
                     const stageRows = filteredRows.filter(r => r.stage === stage.key)
                     const stageValue = stageRows.reduce((s, r) => s + r.expectedValue, 0)
                     return (
-                        <div key={stage.key} className="flex flex-col rounded-md overflow-hidden" style={{ background: stage.bg, border: '1px solid #E2E8F0' }}>
+                        <div
+                            key={stage.key}
+                            className={cn('flex flex-col rounded-lg border border-lys-border overflow-hidden shadow-2xs', stage.bg)}
+                        >
                             {/* Column header */}
-                            <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderBottom: `2px solid ${stage.color}30` }}>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ background: stage.color }} />
-                                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: stage.color }}>{stage.label}</span>
+                            <div
+                                className="px-3 py-2.5 flex items-center justify-between bg-white/80 border-b"
+                                style={{ borderBottomColor: stage.border }}
+                            >
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: stage.color }} />
+                                    <span className="text-xs font-bold uppercase tracking-wider truncate" style={{ color: stage.color }}>
+                                        {stage.label}
+                                    </span>
                                 </div>
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${stage.color}20`, color: stage.color }}>
+                                <span
+                                    className="type-number text-[11px] font-bold px-1.5 py-0.2 rounded shrink-0"
+                                    style={{ background: `${stage.color}15`, color: stage.color }}
+                                >
                                     {stageRows.length}
                                 </span>
                             </div>
-                            <div className="px-2 py-1">
-                                <p className="text-[10px] text-right" style={{ color: '#64748B' }}>
+                            <div className="px-3 py-1 bg-white/40 border-b border-lys-border">
+                                <p className="type-caption type-number text-right text-lys-muted font-medium">
                                     {formatVND(stageValue)}
                                 </p>
                             </div>
 
                             {/* Cards */}
-                            <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5">
+                            <div className="flex-1 overflow-y-auto p-2 space-y-2">
                                 {stageRows.map(row => {
                                     const next = getNextStage(row.stage)
+                                    const isSelected = detail?.id === row.id
                                     return (
-                                        <div key={row.id}
-                                            className="p-2.5 rounded-md transition-all hover:shadow-lg cursor-pointer group"
-                                            style={{ background: detail?.id === row.id ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF', border: `1px solid ${detail?.id === row.id ? '#0E7490' : '#E2E8F0'}` }}
-                                            onClick={() => openDetail(row.id)}>
-                                            <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{row.name}</p>
-                                            <p className="text-[10px] mt-0.5 truncate" style={{ color: '#64748B' }}>{row.customerName}</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: '#B45309' }}>
+                                        <div
+                                            key={row.id}
+                                            onClick={() => openDetail(row.id)}
+                                            className={cn(
+                                                'p-2.5 rounded-md border transition-all cursor-pointer bg-white shadow-2xs',
+                                                isSelected
+                                                    ? 'border-lys-teal ring-1 ring-lys-teal shadow-xs'
+                                                    : 'border-lys-border hover:border-lys-teal hover:shadow-xs'
+                                            )}
+                                        >
+                                            <p className="text-xs font-semibold text-lys-primary truncate leading-tight">{row.name}</p>
+                                            <p className="type-caption text-lys-muted mt-0.5 truncate">{row.customerName}</p>
+                                            <p className="type-number text-xs font-bold text-tone-warning-fg mt-1.5">
                                                 {formatVND(row.expectedValue)}
                                             </p>
-                                            <div className="flex items-center justify-between mt-2">
-                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{row.assigneeName}</span>
-                                                <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
+                                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-lys-border text-[11px]">
+                                                <span className="text-lys-secondary truncate max-w-[90px]">{row.assigneeName}</span>
+                                                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                                                     {next && (
-                                                        <button onClick={() => handleMove(row.id, next)} disabled={actionLoading === row.id}
-                                                            className="p-1 rounded transition" title={`→ ${next}`}
-                                                            style={{ background: `${stage.color}15` }}>
-                                                            {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" style={{ color: stage.color }} /> : <MoveRight size={10} style={{ color: stage.color }} />}
-                                                        </button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-6 w-6 p-0"
+                                                            onClick={() => handleMove(row.id, next)}
+                                                            loading={actionLoading === row.id}
+                                                            disabled={actionLoading === row.id}
+                                                            title={`Chuyển sang ${next}`}
+                                                        >
+                                                            <MoveRight size={11} style={{ color: stage.color }} aria-hidden />
+                                                        </Button>
                                                     )}
                                                     {!['WON', 'LOST'].includes(row.stage) && (
-                                                        <button onClick={() => handleMarkLost(row.id, row.name)} className="p-1 rounded transition"
-                                                            style={{ background: 'rgba(185,28,28,0.1)' }} title="Lost">
-                                                            <X size={10} style={{ color: '#B91C1C' }} />
-                                                        </button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-6 w-6 p-0 text-tone-danger-fg hover:bg-tone-danger-bg"
+                                                            onClick={() => handleMarkLost(row.id, row.name)}
+                                                            title="Đánh dấu Lost"
+                                                        >
+                                                            <XCircle size={11} aria-hidden />
+                                                        </Button>
                                                     )}
-                                                    <button onClick={() => handleDelete(row.id)} className="p-1 rounded transition"
-                                                        style={{ background: 'rgba(100,116,139,0.1)' }} title="Xóa">
-                                                        <Trash2 size={10} style={{ color: '#64748B' }} />
-                                                    </button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-6 w-6 p-0 text-lys-muted hover:text-tone-danger-fg"
+                                                        onClick={() => handleDelete(row.id)}
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 size={11} aria-hidden />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -339,272 +376,325 @@ export function PipelineClient({ initialRows, stats }: Props) {
             </div>
 
             {/* ═══ Detail Drawer ═══ */}
-            {(detail || detailLoading) && (
-                <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => { setDetail(null); setEditing(false) }} />
-                    <div className="fixed top-0 right-0 h-full z-50 w-full max-w-lg overflow-y-auto"
-                        style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', animation: 'slideInRight 0.2s ease-out' }}>
-                        {detailLoading ? (
-                            <div className="flex items-center justify-center h-full">
-                                <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
-                            </div>
-                        ) : detail && (
-                            <div className="p-6 space-y-5">
-                                {/* Drawer Header */}
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1 min-w-0">
-                                        {editing ? (
-                                            <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                                                className="w-full text-lg font-bold px-2 py-1 outline-none" style={{ ...inputStyle, fontFamily: '"Cormorant Garamond", serif', color: '#0F172A' }} />
-                                        ) : (
-                                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                                {detail.name}
-                                            </h3>
-                                        )}
-                                        <p className="text-xs mt-1" style={{ color: '#64748B' }}>{detail.customerName} · {detail.customerCode}</p>
-                                    </div>
-                                    <div className="flex gap-1.5">
-                                        {!editing ? (
-                                            <button onClick={startEdit} className="p-1.5 rounded transition" style={{ background: 'rgba(180,83,9,0.12)' }}>
-                                                <Edit3 size={14} style={{ color: '#B45309' }} />
-                                            </button>
-                                        ) : (
-                                            <>
-                                                <button onClick={saveEdit} disabled={editSaving} className="p-1.5 rounded transition" style={{ background: 'rgba(21,128,61,0.15)' }}>
-                                                    {editSaving ? <Loader2 size={14} className="animate-spin" style={{ color: '#15803D' }} /> : <Save size={14} style={{ color: '#15803D' }} />}
-                                                </button>
-                                                <button onClick={() => setEditing(false)} className="p-1.5 rounded transition" style={{ background: 'rgba(185,28,28,0.1)' }}>
-                                                    <XCircle size={14} style={{ color: '#B91C1C' }} />
-                                                </button>
-                                            </>
-                                        )}
-                                        <button onClick={() => { setDetail(null); setEditing(false) }} className="p-1.5" style={{ color: '#64748B' }}>
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Stage Badge + Progress */}
-                                <div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        {(() => {
-                                            const cfg = getStageConfig(detail.stage)
-                                            return cfg ? (
-                                                <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                                                    {cfg.label}
-                                                </span>
-                                            ) : null
-                                        })()}
-                                        {detail.previousStage && (
-                                            <span className="text-[10px] flex items-center gap-1" style={{ color: '#64748B' }}>
-                                                <ArrowRight size={10} /> từ {detail.previousStage}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {/* Stage progress bar */}
-                                    <div className="flex gap-1">
-                                        {['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].map(s => {
-                                            const idx = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].indexOf(detail.stage)
-                                            const sIdx = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].indexOf(s)
-                                            const isCompleted = detail.stage === 'LOST' ? false : sIdx <= idx
-                                            return (
-                                                <div key={s} className="flex-1 h-1.5 rounded-full transition-all" style={{
-                                                    background: isCompleted ? '#0E7490' : '#E2E8F0',
-                                                }} />
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* KPIs Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
-                                        {editing ? (
-                                            <input type="number" value={editForm.expectedValue} onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
-                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-sans)', color: '#B45309' }} />
-                                        ) : (
-                                            <p className="text-sm font-bold" style={{ color: '#B45309' }}>
-                                                {formatVND(detail.expectedValue)}
-                                            </p>
-                                        )}
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Giá Trị</p>
-                                    </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{detail.probability}%</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Xác suất</p>
-                                    </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#B91C1C' : '#475569' }}>
-                                            {detail.daysInStage}d
-                                        </p>
-                                        <p className="text-[10px] mt-0.5 flex items-center justify-center gap-1" style={{ color: '#64748B' }}>
-                                            {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={9} style={{ color: '#B91C1C' }} />}
-                                            Trong Stage
-                                        </p>
-                                    </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#475569' }}>{detail.totalAge}d</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Thời Gian</p>
-                                    </div>
-                                </div>
-
-                                {/* Details */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 py-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        <User size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs" style={{ color: '#64748B' }}>Sales Rep</span>
-                                        <span className="text-xs font-semibold ml-auto" style={{ color: '#0F172A' }}>
-                                            {editing ? (
-                                                <select value={editForm.assignedTo} onChange={e => setEditForm(f => ({ ...f, assignedTo: e.target.value }))}
-                                                    className="px-2 py-1 text-xs outline-none" style={inputStyle}>
-                                                    {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                                </select>
-                                            ) : detail.assigneeName}
+            <Drawer
+                open={Boolean(detail || detailLoading)}
+                onClose={() => { setDetail(null); setEditing(false) }}
+                title={detail ? (editing ? 'Chỉnh sửa cơ hội' : detail.name) : 'Đang tải cơ hội...'}
+                description={detail ? `${detail.customerName} · ${detail.customerCode}` : undefined}
+                size="md"
+                actions={
+                    detail && !editing && (
+                        <Button size="sm" variant="secondary" onClick={startEdit}>
+                            <Edit3 size={13} aria-hidden /> Sửa
+                        </Button>
+                    )
+                }
+                footer={
+                    detail && !['WON', 'LOST'].includes(detail.stage) ? (
+                        <div className="flex gap-2 w-full">
+                            {getNextStage(detail.stage) && (
+                                <Button
+                                    className="flex-1"
+                                    onClick={() => handleMove(detail.id, getNextStage(detail.stage)!)}
+                                    loading={actionLoading === detail.id}
+                                    disabled={actionLoading === detail.id}
+                                >
+                                    Chuyển sang {getNextStage(detail.stage)} <ArrowRight size={14} aria-hidden />
+                                </Button>
+                            )}
+                            <Button
+                                variant="danger-outline"
+                                onClick={() => handleMarkLost(detail.id, detail.name)}
+                            >
+                                Đánh dấu Lost
+                            </Button>
+                        </div>
+                    ) : undefined
+                }
+            >
+                {detailLoading ? (
+                    <div className="py-20 text-center type-caption">Đang tải chi tiết...</div>
+                ) : detail && (
+                    <div className="space-y-4">
+                        {/* Stage Badge + Progress */}
+                        <div className="p-3.5 bg-lys-subtle rounded-lg border border-lys-border space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                {(() => {
+                                    const cfg = getStageConfig(detail.stage)
+                                    return cfg ? (
+                                        <span
+                                            className="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                                            style={{ background: `${cfg.color}15`, color: cfg.color }}
+                                        >
+                                            {cfg.label}
                                         </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 py-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        <Calendar size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs" style={{ color: '#64748B' }}>Close Date</span>
-                                        {editing ? (
-                                            <input type="date" value={editForm.closeDate} onChange={e => setEditForm(f => ({ ...f, closeDate: e.target.value }))}
-                                                className="ml-auto px-2 py-1 text-xs outline-none" style={inputStyle} />
-                                        ) : (
-                                            <span className="text-xs font-semibold ml-auto" style={{ color: '#0F172A' }}>
-                                                {detail.closeDate ? new Date(detail.closeDate).toLocaleDateString('vi-VN') : '—'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2 py-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        <Clock size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs" style={{ color: '#64748B' }}>Ngày tạo</span>
-                                        <span className="text-xs ml-auto" style={{ color: '#475569' }}>
-                                            {new Date(detail.createdAt).toLocaleDateString('vi-VN')}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Notes */}
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FileText size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Ghi Chú</span>
-                                    </div>
-                                    {editing ? (
-                                        <textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
-                                            rows={3} className="w-full px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
-                                    ) : (
-                                        <p className="text-xs leading-relaxed p-3 rounded-md" style={{ background: '#FFFFFF', color: detail.notes ? '#475569' : '#64748B' }}>
-                                            {detail.notes || 'Chưa có ghi chú'}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Action Buttons */}
-                                {!['WON', 'LOST'].includes(detail.stage) && (
-                                    <div className="flex gap-2 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        {getNextStage(detail.stage) && (
-                                            <button onClick={() => handleMove(detail.id, getNextStage(detail.stage)!)}
-                                                disabled={actionLoading === detail.id}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-md transition-all"
-                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                                                {actionLoading === detail.id ? <Loader2 size={13} className="animate-spin" /> : <MoveRight size={13} />}
-                                                Chuyển → {getNextStage(detail.stage)}
-                                            </button>
-                                        )}
-                                        <button onClick={() => handleMarkLost(detail.id, detail.name)}
-                                            className="px-4 py-2.5 text-xs font-semibold rounded-md transition-all"
-                                            style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}>
-                                            Lost
-                                        </button>
-                                    </div>
+                                    ) : null
+                                })()}
+                                {detail.previousStage && (
+                                    <span className="type-caption flex items-center gap-1">
+                                        <ArrowRight size={10} /> từ {detail.previousStage}
+                                    </span>
                                 )}
+                            </div>
+                            <div className="flex gap-1.5">
+                                {['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].map(s => {
+                                    const idx = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].indexOf(detail.stage)
+                                    const sIdx = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'].indexOf(s)
+                                    const isCompleted = detail.stage === 'LOST' ? false : sIdx <= idx
+                                    return (
+                                        <div
+                                            key={s}
+                                            className={cn('flex-1 h-1.5 rounded-full transition-all', isCompleted ? 'bg-lys-teal-strong' : 'bg-lys-border-strong')}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* KPIs Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
+                                {editing ? (
+                                    <Input
+                                        type="number"
+                                        value={editForm.expectedValue}
+                                        onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
+                                        className="text-center font-bold"
+                                    />
+                                ) : (
+                                    <p className="type-number text-sm font-bold text-tone-warning-fg">
+                                        {formatVND(detail.expectedValue)}
+                                    </p>
+                                )}
+                                <p className="type-caption mt-0.5">Giá Trị Kỳ Vọng</p>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
+                                <p className="type-number text-sm font-bold text-lys-teal-strong">{detail.probability}%</p>
+                                <p className="type-caption mt-0.5">Xác suất thành công</p>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
+                                <p className={cn('type-number text-sm font-bold', detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'text-tone-danger-fg' : 'text-lys-primary')}>
+                                    {detail.daysInStage} ngày
+                                </p>
+                                <p className="type-caption mt-0.5 flex items-center justify-center gap-1">
+                                    {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={10} className="text-tone-danger-fg" />}
+                                    Trong Stage
+                                </p>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
+                                <p className="type-number text-sm font-bold text-lys-secondary">{detail.totalAge} ngày</p>
+                                <p className="type-caption mt-0.5">Tổng Thời Gian</p>
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between py-2 border-b border-lys-border">
+                                <span className="type-caption flex items-center gap-1.5"><User size={13} /> Sales Rep</span>
+                                {editing ? (
+                                    <Select
+                                        value={editForm.assignedTo}
+                                        onChange={e => setEditForm(f => ({ ...f, assignedTo: e.target.value }))}
+                                        className="w-48"
+                                    >
+                                        {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    </Select>
+                                ) : (
+                                    <span className="text-xs font-semibold text-lys-primary">{detail.assigneeName}</span>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-between py-2 border-b border-lys-border">
+                                <span className="type-caption flex items-center gap-1.5"><Calendar size={13} /> Close Date</span>
+                                {editing ? (
+                                    <Input
+                                        type="date"
+                                        value={editForm.closeDate}
+                                        onChange={e => setEditForm(f => ({ ...f, closeDate: e.target.value }))}
+                                        className="w-48"
+                                    />
+                                ) : (
+                                    <span className="type-number text-xs font-semibold text-lys-primary">
+                                        {detail.closeDate ? new Date(detail.closeDate).toLocaleDateString('vi-VN') : '—'}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-between py-2 border-b border-lys-border">
+                                <span className="type-caption flex items-center gap-1.5"><Clock size={13} /> Ngày tạo</span>
+                                <span className="type-caption">
+                                    {new Date(detail.createdAt).toLocaleDateString('vi-VN')}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <FileText size={13} className="text-lys-muted" />
+                                <span className="type-caption font-semibold">Ghi Chú</span>
+                            </div>
+                            {editing ? (
+                                <Textarea
+                                    value={editForm.notes}
+                                    onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                                    rows={3}
+                                />
+                            ) : (
+                                <p className="text-xs leading-relaxed p-3 rounded-md bg-lys-subtle border border-lys-border text-lys-secondary">
+                                    {detail.notes || 'Chưa có ghi chú'}
+                                </p>
+                            )}
+                        </div>
+
+                        {editing && (
+                            <div className="flex gap-2 pt-2">
+                                <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>
+                                    Hủy
+                                </Button>
+                                <Button className="flex-1" onClick={saveEdit} loading={editSaving}>
+                                    <Save size={14} aria-hidden /> Lưu thay đổi
+                                </Button>
                             </div>
                         )}
                     </div>
-                </>
-            )}
+                )}
+            </Drawer>
 
             {/* ═══ Lost Reason Modal ═══ */}
             {lostModal && (
-                <>
-                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setLostModal(null)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-sm p-6 rounded-lg"
-                        style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(185,28,28,0.15)' }}>
-                                <XCircle size={16} style={{ color: '#B91C1C' }} />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Đánh dấu Lost</h3>
-                                <p className="text-[10px]" style={{ color: '#64748B' }}>{lostModal.name}</p>
-                            </div>
-                        </div>
-                        <textarea value={lostReason} onChange={e => setLostReason(e.target.value)}
-                            rows={3} placeholder="Lý do lost? (VD: Giá cao hơn đối thủ, Khách cắt ngân sách...)"
-                            className="w-full px-3 py-2 text-sm outline-none resize-none mb-3" style={inputStyle}
-                            autoFocus />
-                        <div className="flex gap-2">
-                            <button onClick={() => setLostModal(null)} className="flex-1 py-2 text-xs font-semibold rounded-md"
-                                style={{ background: '#E2E8F0', color: '#475569' }}>
+                <Modal
+                    open={Boolean(lostModal)}
+                    onClose={() => setLostModal(null)}
+                    title="Đánh dấu thất bại (Lost)"
+                    className="max-w-sm"
+                    footer={
+                        <div className="flex gap-2 w-full justify-end">
+                            <Button variant="secondary" onClick={() => setLostModal(null)}>
                                 Hủy
-                            </button>
-                            <button onClick={confirmLost} className="flex-1 py-2 text-xs font-semibold rounded-md"
-                                style={{ background: '#B91C1C', color: '#0F172A' }}>
+                            </Button>
+                            <Button variant="danger" onClick={confirmLost}>
                                 Xác Nhận Lost
-                            </button>
+                            </Button>
                         </div>
+                    }
+                >
+                    <div className="space-y-3">
+                        <p className="type-caption">Cơ hội: <strong className="text-lys-primary">{lostModal.name}</strong></p>
+                        <Textarea
+                            value={lostReason}
+                            onChange={e => setLostReason(e.target.value)}
+                            rows={3}
+                            placeholder="Lý do lost? (VD: Giá cao hơn đối thủ, Khách cắt ngân sách...)"
+                            autoFocus
+                        />
                     </div>
-                </>
+                </Modal>
             )}
 
             {/* ═══ Create Modal ═══ */}
             {createOpen && (
-                <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setCreateOpen(false)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
-                        style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Thêm Cơ Hội Mới</h3>
-                            <button onClick={() => setCreateOpen(false)} className="p-1" style={{ color: '#64748B' }}><X size={16} /></button>
+                <Modal
+                    open={createOpen}
+                    onClose={() => setCreateOpen(false)}
+                    title="Thêm Cơ Hội Mới"
+                    className="max-w-md"
+                    footer={
+                        <div className="flex gap-2 w-full justify-end">
+                            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
+                                Hủy
+                            </Button>
+                            <Button
+                                onClick={handleCreate}
+                                loading={saving}
+                                disabled={saving || !formName || !formCustomerId || !formAssignee || !formValue}
+                            >
+                                Tạo Cơ Hội (→ Lead)
+                            </Button>
                         </div>
-                        <div className="space-y-3">
-                            <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Tên cơ hội (VD: Park Hyatt Wine Program)"
-                                className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
-                            <select value={formCustomerId} onChange={e => setFormCustomerId(e.target.value)}
-                                className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                <option value="">Chọn khách hàng...</option>
-                                {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                            <div className="grid grid-cols-2 gap-3">
-                                <select value={formAssignee} onChange={e => setFormAssignee(e.target.value)}
-                                    className="px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                    <option value="">Assigned To...</option>
-                                    {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </select>
-                                <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder="Giá trị kỳ vọng"
-                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#B45309', fontFamily: 'var(--font-sans)' }} />
-                            </div>
-                            <input type="date" value={formCloseDate} onChange={e => setFormCloseDate(e.target.value)}
-                                className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
-                            <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} placeholder="Ghi chú..."
-                                className="w-full px-3 py-2 text-sm outline-none resize-none" style={inputStyle} />
-                            <button onClick={handleCreate} disabled={saving || !formName || !formCustomerId || !formAssignee || !formValue}
-                                className="w-full py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
-                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Tạo Cơ Hội (→ Lead)'}
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
+                    }
+                >
+                    <div className="space-y-3">
+                        <Field label="Tên cơ hội" required>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    value={formName}
+                                    onChange={e => setFormName(e.target.value)}
+                                    placeholder="VD: Park Hyatt Wine Program"
+                                />
+                            )}
+                        </Field>
 
-            {/* Animation keyframe */}
-            <style>{`
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `}</style>
+                        <Field label="Khách hàng" required>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={formCustomerId}
+                                    onChange={e => setFormCustomerId(e.target.value)}
+                                >
+                                    <option value="">Chọn khách hàng...</option>
+                                    {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </Select>
+                            )}
+                        </Field>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Field label="Assigned To" required>
+                                {id => (
+                                    <Select
+                                        id={id}
+                                        value={formAssignee}
+                                        onChange={e => setFormAssignee(e.target.value)}
+                                    >
+                                        <option value="">Chọn Sales Rep...</option>
+                                        {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    </Select>
+                                )}
+                            </Field>
+
+                            <Field label="Giá trị kỳ vọng (VND)" required>
+                                {id => (
+                                    <Input
+                                        id={id}
+                                        type="number"
+                                        value={formValue}
+                                        onChange={e => setFormValue(e.target.value)}
+                                        placeholder="VD: 50000000"
+                                        className="type-number"
+                                    />
+                                )}
+                            </Field>
+                        </div>
+
+                        <Field label="Ngày dự kiến chốt">
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="date"
+                                    value={formCloseDate}
+                                    onChange={e => setFormCloseDate(e.target.value)}
+                                />
+                            )}
+                        </Field>
+
+                        <Field label="Ghi chú">
+                            {id => (
+                                <Textarea
+                                    id={id}
+                                    value={formNotes}
+                                    onChange={e => setFormNotes(e.target.value)}
+                                    rows={2}
+                                    placeholder="Ghi chú thêm..."
+                                />
+                            )}
+                        </Field>
+                    </div>
+                </Modal>
+            )}
         </div>
     )
 }

@@ -140,7 +140,7 @@ Cormorant Garamond **chỉ** dùng cho logo/brand.
 ### P4 — Nhân rộng (33 module còn lại, theo đợt)
 | Đợt | Module |
 |---|---|
-| 1 — Bán hàng | quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals — 🎨 codemod màu xong cả đợt; ✅ cấu trúc kit: returns, price-list, delivery |
+| 1 — Bán hàng | quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals — ✅ Hoàn tất 100% (cấu trúc UI kit đồng bộ Light theme, tsc 0 lỗi) |
 | 2 — Kho & Mua | warehouse, transfers, stock-count, allocation, procurement, suppliers, shipments, declarations, stamps, consignment |
 | 3 — Tài chính | finance, reconciliation, costing, margin, reports, kpi, market-price |
 | 4 — Khác | hr, settings, audit-log, media, qr-codes, agency, ai, dashboard (CEO) |

@@ -183,6 +183,7 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
+| **v3.3** | 2026-10-05 | Hoàn thành 100% Đợt 1 (Bán hàng): Chuyển cấu trúc toàn diện sang UI kit chuẩn cho POS, Pipeline, Contracts, CRM, Proposals, Quotations (`PageHeader`, `StatGrid`, `StatCard`, `Toolbar`, `Table`, `Drawer`, `Badge`). TypeScript type-checking 0 lỗi. |
 | **v3.2** | 2026-10-05 | Pilot được duyệt. Đợt 1: codemod màu cho 25 file (quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals); chuyển cấu trúc sang kit cho Returns, Price List, Delivery (kèm E-POD/Create drawer). Lưu ý: `Toolbar` nhận `left`/`right`, không nhận children; `TableMessageRow` có `p-0` → luôn bọc `EmptyState`/`TableSkeleton` bên trong. |
 | **v3.1** | 2026-10-05 | Pilot xong: Sales (list + 3 drawer), Products (list, bảng, 2 drawer), Customers (list + drawer), Sidebar/Header. Thêm `Drawer.actions`, `Pagination.onPageHover`, `WineTypeBadge` dùng chung (bỏ màu tím Fortified ở Margin). Script `ui-palette-codemod.mjs` + test. |
 | **v3.0** | 2026-10-05 | Viết lại tài liệu thành 1 bản Light duy nhất (bỏ spec Dark cũ & đoạn lặp). Tải Inter qua `next/font`, Toaster light. Thêm token `lys-teal-strong/hover/soft`, 6 tông trạng thái `tone-*`, token chuyển động, `type-caption`; `radius-lg` 10→8px. Tạo `src/components/ui` (11 nhóm component) + `src/lib/ui/status.ts`. |
@@ -197,7 +198,14 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | ✅ Đã chuẩn hóa | **Customers** — danh sách, CustomerDrawer (vỏ + footer; form bên trong còn style cũ đã Light) |
 | ✅ Đã chuẩn hóa | **Sidebar / Header** |
 | ✅ Đã chuẩn hóa | **Returns** — danh sách + drawer tạo đơn trả |
-| ✅ Đã chuẩn hóa | **Price List** — tab Bảng Giá Chung, drawer tạo, modal thêm SP (tab Customer Rules / Mapping mới codemod màu) |
-| ✅ Đã chuẩn hóa | **Delivery** — danh sách, E-POD drawer, Create Route drawer (Shipper view mới codemod màu) |
-| 🎨 Codemod màu | quotations, pos, pipeline, crm, contracts, proposals — còn chờ chuyển cấu trúc |
-| ⏳ Chờ | Đợt 2–4 (xem kế hoạch) |
+| ✅ Đã chuẩn hóa | **Price List** — tab Bảng Giá Chung, drawer tạo, modal thêm SP |
+| ✅ Đã chuẩn hóa | **Delivery** — danh sách, E-POD drawer, Create Route drawer |
+| ✅ Đã chuẩn hóa | **POS** — POSClient + LoyaltyPanel (Light tokens, Modal, Button) |
+| ✅ Đã chuẩn hóa | **Pipeline** — PipelineClient (PageHeader, StatGrid, Toolbar, Drawer, Modal) |
+| ✅ Đã chuẩn hóa | **Contracts** — ContractsPage + ContractsClient (PageHeader, StatGrid, Table, Drawer) |
+| ✅ Đã chuẩn hóa | **CRM** — CRMClient (PageHeader, StatGrid, StatCard, Tabs, Cards) |
+| ✅ Đã chuẩn hóa | **Quotations** — QuotationClient (Table, StatusBadge, Thumbnail Light, Mobile cards) |
+| ✅ Đã chuẩn hóa | **Proposals** — ProposalsClient (Header, StatCards, Filter bar, Action buttons) |
+| ⏳ Chờ | **Đợt 2: Kho & Mua hàng** (warehouse, transfers, stock-count, allocation, procurement, suppliers, shipments, declarations, stamps, consignment) |
+| ⏳ Chờ | **Đợt 3: Tài chính & Kế toán** (finance, reconciliation, costing, margin, reports, kpi, market-price) |
+| ⏳ Chờ | **Đợt 4: Khác** (hr, settings, audit-log, media, qr-codes, agency, ai, dashboard) |

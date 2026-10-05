@@ -946,7 +946,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 ) : (
                                                     <div className="flex gap-3">
                                                         {/* Horizontal Image thumbnail */}
-                                                        <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: '#091520', border: '1px solid #E2E8F0' }}>
+                                                        <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center bg-slate-50 border border-slate-200">
                                                             {prod?.primaryImageUrl ? (
                                                                 <img src={prod.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
                                                             ) : (
@@ -1262,7 +1262,7 @@ export function QuotationClient({ initialData }: Props) {
                                             />
 
                                             {/* Image - Horizontal */}
-                                            <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: '#091520', border: '1px solid #E2E8F0' }}>
+                                            <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center bg-slate-50 border border-slate-200">
                                                 {p.primaryImageUrl ? (
                                                     <img src={p.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
                                                 ) : (

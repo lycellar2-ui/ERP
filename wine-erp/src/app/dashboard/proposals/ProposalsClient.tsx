@@ -991,8 +991,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </div>
                 <button
                     onClick={() => setShowCreate(true)}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer hover:opacity-90 shadow-xs"
-                    style={{ background: 'rgba(21,128,61,0.18)', color: '#2E7D5B', border: '1px solid rgba(21,128,61,0.4)' }}
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer shadow-xs bg-[#0891B2] hover:bg-[#0E7490] text-white"
                 >
                     <Plus size={16} /> {t.header.createBtn}
                 </button>

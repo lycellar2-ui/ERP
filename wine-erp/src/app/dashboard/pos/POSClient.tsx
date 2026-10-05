@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getPOSProducts, getPOSCategories, processPOSSale, getPOSShiftSummary, lookupByBarcode, generatePOSVATInvoice } from './actions'
 import type { POSProduct, CartItem } from './actions'
-import { formatVND } from '@/lib/utils'
+import { formatVND, cn } from '@/lib/utils'
 import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote,
-    QrCode, Wine, Check, X, BarChart3, Receipt, ScanBarcode, FileText, Star
+    QrCode, Wine, Check, BarChart3, Receipt, ScanBarcode, FileText, Star, ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { Button, Modal, Badge } from '@/components/ui'
 
 export default function POSClient() {
     const [products, setProducts] = useState<POSProduct[]>([])
@@ -133,132 +134,134 @@ export default function POSClient() {
     }
 
     return (
-        <div style={{ display: 'flex', height: 'calc(100vh - 60px)', gap: 0, background: '#0B1A2B' }}>
-            {/* LEFT: Products */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px 20px', overflow: 'hidden' }}>
+        <div className="flex h-[calc(100vh-60px)] bg-lys-bg overflow-hidden -m-4 sm:-m-6">
+            {/* LEFT: Product Catalog */}
+            <div className="flex-1 flex flex-col p-4 sm:p-5 overflow-hidden">
                 {/* Shift Stats Bar */}
                 {shiftSummary && (
-                    <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                            <BarChart3 size={14} style={{ color: '#0891B2' }} />
-                            <span style={{ fontSize: '12px', color: '#475569' }}>Ca hôm nay:</span>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{shiftSummary.transactionCount} đơn</span>
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-md border border-lys-border shadow-xs">
+                            <BarChart3 size={14} className="text-lys-teal-strong" aria-hidden />
+                            <span className="type-caption text-lys-secondary">Ca hôm nay:</span>
+                            <span className="type-number font-bold text-lys-primary">{shiftSummary.transactionCount} đơn</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                            <Receipt size={14} style={{ color: '#15803D' }} />
-                            <span style={{ fontSize: '12px', color: '#475569' }}>Doanh thu:</span>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#15803D' }}>{formatVND(shiftSummary.totalRevenue)}</span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-md border border-lys-border shadow-xs">
+                            <Receipt size={14} className="text-tone-success-fg" aria-hidden />
+                            <span className="type-caption text-lys-secondary">Doanh thu:</span>
+                            <span className="type-number font-bold text-tone-success-fg">{formatVND(shiftSummary.totalRevenue)}</span>
                         </div>
-                        <Link href="/dashboard/pos/loyalty"
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: 'rgba(180,83,9,0.08)', borderRadius: '8px', border: '1px solid rgba(180,83,9,0.25)', textDecoration: 'none' }}>
-                            <Star size={14} style={{ color: '#B45309' }} />
-                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#B45309' }}>Loyalty</span>
+                        <Link
+                            href="/dashboard/pos/loyalty"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-tone-warning-bg rounded-md border border-tone-warning-border text-tone-warning-fg hover:bg-amber-100/60 transition-colors"
+                        >
+                            <Star size={14} aria-hidden />
+                            <span className="text-xs font-semibold">Loyalty</span>
                         </Link>
                     </div>
                 )}
 
-                {/* Barcode Scanner Input */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                        <ScanBarcode size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: '#B45309' }} />
+                {/* Barcode Scanner & Search Bar */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="relative">
+                        <ScanBarcode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tone-warning-fg" aria-hidden />
                         <input
-                            type="text" placeholder="Quét mã vạch hoặc nhập SKU..."
+                            type="text"
+                            placeholder="Quét mã vạch hoặc nhập SKU..."
                             value={barcodeInput}
                             onChange={e => { setBarcodeInput(e.target.value); setBarcodeError('') }}
                             onKeyDown={e => { if (e.key === 'Enter') handleBarcodeScan(barcodeInput) }}
-                            style={{
-                                width: '100%', padding: '8px 10px 8px 34px', borderRadius: '8px',
-                                background: '#FFFFFF', border: `1px solid ${barcodeError ? '#B91C1C' : '#E2E8F0'}`, color: '#0F172A',
-                                fontSize: '13px', outline: 'none', fontFamily: 'var(--font-sans)',
-                            }}
+                            className={cn(
+                                'w-full pl-9 pr-16 py-2 rounded-md bg-white border text-sm text-lys-primary outline-none focus:ring-1 focus:ring-lys-teal focus:border-lys-teal transition-all shadow-xs',
+                                barcodeError ? 'border-tone-danger-fg' : 'border-lys-border-strong'
+                            )}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleBarcodeScan(barcodeInput)}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-tone-warning-bg hover:bg-tone-warning-border text-tone-warning-fg font-semibold text-xs transition-colors"
+                        >
+                            Tìm
+                        </button>
+                    </div>
+
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
+                        <input
+                            type="text"
+                            placeholder="Tìm sản phẩm hoặc mã SKU..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 rounded-md bg-white border border-lys-border-strong text-sm text-lys-primary outline-none focus:ring-1 focus:ring-lys-teal focus:border-lys-teal transition-all shadow-xs"
                         />
                     </div>
-                    <button onClick={() => handleBarcodeScan(barcodeInput)}
-                        style={{
-                            padding: '8px 14px', borderRadius: '8px', border: 'none',
-                            background: '#B45309', color: '#0B1A2B', fontWeight: 700, fontSize: '12px',
-                            cursor: 'pointer',
-                        }}
-                    >Tìm</button>
                 </div>
                 {barcodeError && (
-                    <p style={{ fontSize: '11px', color: '#B91C1C', margin: '-8px 0 8px', padding: '0 4px' }}>{barcodeError}</p>
+                    <p className="type-caption text-tone-danger-fg -mt-2 mb-2 px-1">{barcodeError}</p>
                 )}
 
-                {/* Search & Filters */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                        <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: '#64748B' }} />
-                        <input
-                            type="text" placeholder="Tìm sản phẩm hoặc mã SKU..."
-                            value={search} onChange={e => setSearch(e.target.value)}
-                            style={{
-                                width: '100%', padding: '8px 10px 8px 34px', borderRadius: '8px',
-                                background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A',
-                                fontSize: '13px', outline: 'none',
-                            }}
-                        />
-                    </div>
-                </div>
-
                 {/* Category Pills */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <div className="flex gap-1.5 mb-3 flex-wrap">
                     <button
+                        type="button"
                         onClick={() => setActiveCategory('ALL')}
-                        style={{
-                            padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                            border: '1px solid', cursor: 'pointer',
-                            ...(activeCategory === 'ALL'
-                                ? { background: '#0E7490', color: '#0B1A2B', borderColor: '#0891B2' }
-                                : { background: 'transparent', color: '#475569', borderColor: '#E2E8F0' }),
-                        }}
-                    >Tất cả</button>
+                        className={cn(
+                            'px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                            activeCategory === 'ALL'
+                                ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-xs'
+                                : 'bg-white text-lys-secondary border-lys-border hover:bg-lys-subtle'
+                        )}
+                    >
+                        Tất cả
+                    </button>
                     {categories.map(cat => (
-                        <button key={cat.value}
+                        <button
+                            key={cat.value}
+                            type="button"
                             onClick={() => setActiveCategory(cat.value)}
-                            style={{
-                                padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                                border: '1px solid', cursor: 'pointer',
-                                ...(activeCategory === cat.value
-                                    ? { background: '#0E7490', color: '#0B1A2B', borderColor: '#0891B2' }
-                                    : { background: 'transparent', color: '#475569', borderColor: '#E2E8F0' }),
-                            }}
-                        >{cat.label} ({cat.count})</button>
+                            className={cn(
+                                'px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                                activeCategory === cat.value
+                                    ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-xs'
+                                    : 'bg-white text-lys-secondary border-lys-border hover:bg-lys-subtle'
+                            )}
+                        >
+                            {cat.label} ({cat.count})
+                        </button>
                     ))}
                 </div>
 
                 {/* Product Grid */}
-                <div style={{
-                    flex: 1, overflowY: 'auto',
-                    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                    gap: '10px', alignContent: 'start',
-                }}>
+                <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 align-start pr-1">
                     {products.map(p => (
-                        <button key={p.id}
+                        <button
+                            key={p.id}
+                            type="button"
                             onClick={() => addToCart(p)}
                             disabled={p.qtyAvailable <= 0}
-                            style={{
-                                padding: '14px 12px', borderRadius: '10px', cursor: p.qtyAvailable > 0 ? 'pointer' : 'not-allowed',
-                                background: '#FFFFFF', border: '1px solid #E2E8F0', textAlign: 'left',
-                                opacity: p.qtyAvailable <= 0 ? 0.4 : 1,
-                                transition: 'border-color 0.15s',
-                            }}
-                            onMouseEnter={e => { if (p.qtyAvailable > 0) e.currentTarget.style.borderColor = '#0891B2' }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E8F0' }}
+                            className={cn(
+                                'p-3.5 rounded-lg border text-left bg-white transition-all flex flex-col justify-between shadow-xs',
+                                p.qtyAvailable > 0
+                                    ? 'cursor-pointer border-lys-border hover:border-lys-teal hover:shadow-sm'
+                                    : 'cursor-not-allowed opacity-50 border-lys-border'
+                            )}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                                <Wine size={26} style={{ color: '#0891B2' }} />
+                            <div>
+                                <div className="flex justify-center my-1.5">
+                                    <div className="w-10 h-10 rounded-full bg-lys-teal-soft flex items-center justify-center">
+                                        <Wine size={20} className="text-lys-teal-strong" aria-hidden />
+                                    </div>
+                                </div>
+                                <p className="type-caption text-lys-muted mb-0.5">{p.skuCode}</p>
+                                <p className="text-xs font-semibold text-lys-primary line-clamp-2 min-h-[32px] leading-tight">
+                                    {p.productName}
+                                </p>
                             </div>
-                            <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '2px' }}>{p.skuCode}</p>
-                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', lineHeight: '1.3', minHeight: '32px' }}>
-                                {p.productName.length > 30 ? p.productName.slice(0, 30) + '…' : p.productName}
-                            </p>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0891B2' }}>
+                            <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-lys-border">
+                                <span className="type-number font-bold text-lys-teal-strong text-xs">
                                     {p.unitPrice > 0 ? formatVND(p.unitPrice) : '—'}
                                 </span>
-                                <span style={{ fontSize: '11px', color: p.qtyAvailable <= 5 ? '#B45309' : '#64748B' }}>
-                                    SL: {p.qtyAvailable}
+                                <span className={cn('type-caption', p.qtyAvailable <= 5 ? 'text-tone-warning-fg font-semibold' : 'text-lys-muted')}>
+                                    Kho: {p.qtyAvailable}
                                 </span>
                             </div>
                         </button>
@@ -266,194 +269,210 @@ export default function POSClient() {
                 </div>
             </div>
 
-            {/* RIGHT: Cart */}
-            <div style={{
-                width: '360px', background: '#101E2E', borderLeft: '1px solid #E2E8F0',
-                display: 'flex', flexDirection: 'column',
-            }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <ShoppingCart size={18} style={{ color: '#0891B2' }} />
-                        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                            Giỏ hàng <span style={{ color: '#64748B', fontWeight: 400 }}>({cart.length})</span>
+            {/* RIGHT: Cart Panel */}
+            <div className="w-80 lg:w-96 bg-white border-l border-lys-border flex flex-col shadow-sm">
+                <div className="p-4 border-b border-lys-border flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <ShoppingCart size={18} className="text-lys-teal-strong" aria-hidden />
+                        <h2 className="text-sm font-bold text-lys-primary">
+                            Giỏ hàng <span className="text-lys-muted font-normal">({cart.length})</span>
                         </h2>
                     </div>
+                    {cart.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setCart([])}
+                            className="type-caption text-tone-danger-fg hover:underline cursor-pointer"
+                        >
+                            Xóa hết
+                        </button>
+                    )}
                 </div>
 
                 {/* Cart Items */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {cart.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: '#64748B', marginTop: '40px', fontSize: '13px' }}>
-                            Chọn sản phẩm để thêm vào giỏ
-                        </p>
+                        <div className="text-center py-20">
+                            <ShoppingCart size={32} className="mx-auto mb-2 text-lys-border-strong" aria-hidden />
+                            <p className="type-caption">Chọn sản phẩm bên trái để thêm vào giỏ</p>
+                        </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {cart.map(item => (
-                                <div key={item.productId} style={{
-                                    padding: '10px', borderRadius: '8px', background: '#FFFFFF', border: '1px solid #E2E8F0',
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                        <div>
-                                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', margin: 0 }}>{item.productName.slice(0, 25)}</p>
-                                            <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>{item.skuCode}</p>
-                                        </div>
-                                        <button onClick={() => removeFromCart(item.productId)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
-                                            <Trash2 size={14} style={{ color: '#B91C1C' }} />
+                        cart.map(item => (
+                            <div key={item.productId} className="p-2.5 rounded-lg border border-lys-border bg-lys-subtle/50">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div>
+                                        <p className="text-xs font-semibold text-lys-primary leading-tight line-clamp-1">{item.productName}</p>
+                                        <p className="type-caption text-lys-muted">{item.skuCode}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeFromCart(item.productId)}
+                                        className="p-1 rounded text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg transition-colors cursor-pointer"
+                                        aria-label="Xóa"
+                                    >
+                                        <Trash2 size={13} aria-hidden />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 bg-white border border-lys-border rounded-md px-1 py-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => updateQty(item.productId, -1)}
+                                            className="w-5 h-5 rounded flex items-center justify-center text-lys-secondary hover:bg-lys-subtle cursor-pointer"
+                                            aria-label="Giảm"
+                                        >
+                                            <Minus size={11} aria-hidden />
+                                        </button>
+                                        <span className="type-number font-bold text-lys-primary min-w-[20px] text-center text-xs">
+                                            {item.qty}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateQty(item.productId, 1)}
+                                            className="w-5 h-5 rounded flex items-center justify-center text-lys-teal-strong hover:bg-lys-teal-soft cursor-pointer"
+                                            aria-label="Tăng"
+                                        >
+                                            <Plus size={11} aria-hidden />
                                         </button>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <button onClick={() => updateQty(item.productId, -1)}
-                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Minus size={12} style={{ color: '#475569' }} />
-                                            </button>
-                                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', minWidth: '24px', textAlign: 'center' }}>{item.qty}</span>
-                                            <button onClick={() => updateQty(item.productId, 1)}
-                                                style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0B1A2B', border: '1px solid #E2E8F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Plus size={12} style={{ color: '#0891B2' }} />
-                                            </button>
-                                        </div>
-                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#0891B2' }}>
-                                            {formatVND(item.qty * item.unitPrice)}
-                                        </span>
-                                    </div>
+                                    <span className="type-number font-bold text-xs text-lys-teal-strong">
+                                        {formatVND(item.qty * item.unitPrice)}
+                                    </span>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        ))
                     )}
                 </div>
 
                 {/* Cart Footer */}
-                <div style={{ borderTop: '1px solid #E2E8F0', padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span style={{ fontSize: '14px', color: '#475569' }}>Tổng cộng</span>
-                        <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>
+                <div className="border-t border-lys-border p-4 bg-lys-card">
+                    <div className="flex items-baseline justify-between mb-3">
+                        <span className="text-xs font-semibold text-lys-secondary">Tổng cộng</span>
+                        <span className="type-number text-lg font-extrabold text-lys-primary">
                             {formatVND(cartTotal)}
                         </span>
                     </div>
 
                     {!showPayment ? (
-                        <button
+                        <Button
+                            className="w-full"
                             onClick={() => setShowPayment(true)}
                             disabled={cart.length === 0}
-                            style={{
-                                width: '100%', padding: '12px', borderRadius: '8px', border: 'none',
-                                background: cart.length > 0 ? '#15803D' : '#E2E8F0',
-                                color: cart.length > 0 ? '#fff' : '#64748B',
-                                fontSize: '14px', fontWeight: 700, cursor: cart.length > 0 ? 'pointer' : 'not-allowed',
-                            }}
                         >
                             Thanh Toán
-                        </button>
+                        </Button>
                     ) : (
-                        <div>
-                            {/* Payment Method */}
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                        <div className="space-y-3 animate-fade-in">
+                            {/* Payment Method Selector */}
+                            <div className="grid grid-cols-3 gap-2">
                                 {[
                                     { method: 'CASH' as const, icon: Banknote, label: 'Tiền mặt' },
                                     { method: 'BANK_TRANSFER' as const, icon: CreditCard, label: 'Chuyển khoản' },
                                     { method: 'QR' as const, icon: QrCode, label: 'QR' },
                                 ].map(({ method, icon: Icon, label }) => (
-                                    <button key={method}
+                                    <button
+                                        key={method}
+                                        type="button"
                                         onClick={() => setPaymentMethod(method)}
-                                        style={{
-                                            flex: 1, padding: '8px 4px', borderRadius: '6px',
-                                            border: '1px solid',
-                                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                                            cursor: 'pointer', fontSize: '10px', fontWeight: 600,
-                                            ...(paymentMethod === method
-                                                ? { background: 'rgba(21,128,61,0.15)', borderColor: '#15803D', color: '#15803D' }
-                                                : { background: 'transparent', borderColor: '#E2E8F0', color: '#475569' }),
-                                        }}
+                                        className={cn(
+                                            'p-2 rounded-md border flex flex-col items-center gap-1 cursor-pointer transition-all text-[11px] font-semibold',
+                                            paymentMethod === method
+                                                ? 'bg-lys-teal-soft border-lys-teal text-lys-teal-strong shadow-xs'
+                                                : 'bg-white border-lys-border text-lys-secondary hover:bg-lys-subtle'
+                                        )}
                                     >
-                                        <Icon size={16} />
+                                        <Icon size={16} aria-hidden />
                                         {label}
                                     </button>
                                 ))}
                             </div>
 
                             {paymentMethod === 'CASH' && (
-                                <input
-                                    type="number" placeholder="Tiền khách đưa..."
-                                    value={cashReceived} onChange={e => setCashReceived(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px',
-                                        background: '#0B1A2B', border: '1px solid #E2E8F0', color: '#0F172A',
-                                        fontSize: '14px', fontWeight: 600, outline: 'none',
-                                    }}
-                                />
+                                <div>
+                                    <label className="type-caption text-lys-secondary block mb-1">Tiền khách đưa</label>
+                                    <input
+                                        type="number"
+                                        placeholder="Nhập số tiền..."
+                                        value={cashReceived}
+                                        onChange={e => setCashReceived(e.target.value)}
+                                        className="w-full px-3 py-2 rounded-md bg-white border border-lys-border-strong text-sm text-lys-primary font-semibold outline-none focus:ring-1 focus:ring-lys-teal focus:border-lys-teal"
+                                    />
+                                    {Number(cashReceived) > cartTotal && (
+                                        <p className="type-caption text-tone-success-fg mt-1">
+                                            Tiền thối: <strong className="type-number">{formatVND(Number(cashReceived) - cartTotal)}</strong>
+                                        </p>
+                                    )}
+                                </div>
                             )}
 
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setShowPayment(false)}
-                                    style={{ flex: 1, padding: '10px', borderRadius: '6px', background: '#E2E8F0', border: 'none', color: '#475569', cursor: 'pointer', fontWeight: 600 }}>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1"
+                                    onClick={() => setShowPayment(false)}
+                                >
                                     Huỷ
-                                </button>
-                                <button onClick={handleCheckout} disabled={loading}
-                                    style={{
-                                        flex: 2, padding: '10px', borderRadius: '6px', border: 'none',
-                                        background: '#15803D', color: '#fff', cursor: 'pointer',
-                                        fontWeight: 700, fontSize: '14px',
-                                    }}>
+                                </Button>
+                                <Button
+                                    className="flex-2"
+                                    onClick={handleCheckout}
+                                    loading={loading}
+                                    disabled={loading}
+                                >
                                     {loading ? 'Đang xử lý...' : 'Xác Nhận'}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Receipt Modal */}
-                {showReceipt && lastSale && (
-                    <div style={{
-                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-                    }}>
-                        <div style={{
-                            background: '#FFFFFF', borderRadius: '12px', padding: '32px',
-                            width: '360px', border: '1px solid #E2E8F0', textAlign: 'center',
-                        }}>
-                            <div style={{
-                                width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 16px',
-                                background: 'rgba(21,128,61,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                                <Check size={28} style={{ color: '#15803D' }} />
-                            </div>
-                            <h3 style={{ color: '#0F172A', margin: '0 0 8px', fontSize: '18px' }}>Thanh toán thành công!</h3>
-                            <p style={{ color: '#64748B', fontSize: '13px', margin: '0 0 16px' }}>Mã đơn: {lastSale.soNo}</p>
-                            <div style={{ padding: '12px', background: '#0B1A2B', borderRadius: '8px', marginBottom: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ color: '#475569', fontSize: '13px' }}>Tổng tiền</span>
-                                    <span style={{ color: '#0F172A', fontWeight: 700, fontSize: '16px' }}>{formatVND(lastSale.totalAmount)}</span>
-                                </div>
-                                {lastSale.change !== undefined && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ color: '#475569', fontSize: '13px' }}>Tiền thối</span>
-                                        <span style={{ color: '#B45309', fontWeight: 700, fontSize: '16px' }}>{formatVND(lastSale.change)}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <button onClick={() => setShowReceipt(false)}
-                                style={{
-                                    width: '100%', padding: '10px', borderRadius: '8px', border: 'none',
-                                    background: '#15803D', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '14px',
-                                }}>
+            {/* Receipt Modal */}
+            {showReceipt && lastSale && (
+                <Modal
+                    open={showReceipt}
+                    onClose={() => setShowReceipt(false)}
+                    title="Thanh toán thành công!"
+                    className="max-w-sm text-center"
+                    footer={
+                        <div className="flex flex-col gap-2 w-full">
+                            <Button className="w-full" onClick={() => setShowReceipt(false)}>
                                 Đơn mới
-                            </button>
-                            <button onClick={handleVATInvoice} disabled={vatLoading}
-                                style={{
-                                    width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #E2E8F0',
-                                    background: 'transparent', color: '#B45309', fontWeight: 700, cursor: 'pointer', fontSize: '13px',
-                                    marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                }}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                className="w-full"
+                                onClick={handleVATInvoice}
+                                loading={vatLoading}
+                                disabled={vatLoading}
                             >
-                                <FileText size={14} />
+                                <FileText size={14} aria-hidden />
                                 {vatLoading ? 'Đang xuất...' : 'Xuất Hóa Đơn VAT'}
-                            </button>
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-tone-success-bg text-tone-success-fg flex items-center justify-center mb-3">
+                            <Check size={24} aria-hidden />
+                        </div>
+                        <p className="type-caption text-lys-muted mb-4">Mã đơn: <strong className="text-lys-primary type-number">{lastSale.soNo}</strong></p>
+
+                        <div className="w-full p-3.5 bg-lys-subtle rounded-lg border border-lys-border space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-lys-secondary">Tổng tiền</span>
+                                <span className="type-number font-bold text-lys-primary text-sm">{formatVND(lastSale.totalAmount)}</span>
+                            </div>
+                            {lastSale.change !== undefined && (
+                                <div className="flex justify-between items-center text-xs pt-1.5 border-t border-lys-border">
+                                    <span className="text-lys-secondary">Tiền thối</span>
+                                    <span className="type-number font-bold text-tone-warning-fg">{formatVND(lastSale.change)}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
-            </div>
+                </Modal>
+            )}
         </div>
     )
 }

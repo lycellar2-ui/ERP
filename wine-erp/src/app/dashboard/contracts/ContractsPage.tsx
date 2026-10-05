@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { FileSignature, Shield, Scale } from 'lucide-react'
+import { PageHeader } from '@/components/ui'
 import { ContractsClient } from './ContractsClient'
 import { RegDocsTab } from './RegDocsTab'
 import type { ContractRow } from './actions'
@@ -39,22 +40,20 @@ export function ContractsPage({
         : null
 
     return (
-        <div className="space-y-5 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#0F172A' }}>
-                        <Scale size={24} style={{ color: '#0891B2' }} />
-                        Trung Tâm Pháp Lý & Tuân Thủ
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý hợp đồng, giấy phép, chứng nhận và chứng từ có thời hạn
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Trung Tâm Pháp Lý & Tuân Thủ"
+                description="Quản lý hợp đồng, giấy phép, chứng nhận và chứng từ có thời hạn"
+                actions={
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-lys-primary/10 text-lys-primary border border-lys-primary/20">
+                        <Scale size={14} /> Pháp lý & Tuân thủ
+                    </span>
+                }
+            />
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="flex gap-1 p-1 bg-white rounded-lg border border-lys-border w-fit">
                 {TABS.map(tab => {
                     const Icon = tab.icon
                     const isActive = activeTab === tab.key
@@ -63,26 +62,18 @@ export function ContractsPage({
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-all relative"
-                            style={{
-                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: isActive ? '#0E7490' : '#64748B',
-                                borderBottom: isActive ? '2px solid #0E7490' : '2px solid transparent',
-                            }}
-                            onMouseEnter={e => {
-                                if (!isActive) e.currentTarget.style.color = '#475569'
-                            }}
-                            onMouseLeave={e => {
-                                if (!isActive) e.currentTarget.style.color = '#64748B'
-                            }}>
-                            <Icon size={16} />
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+                                isActive
+                                    ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary'
+                                    : 'text-lys-muted hover:text-lys-title hover:bg-lys-bg'
+                            }`}
+                        >
+                            <Icon size={15} />
                             {tab.label}
                             {badge !== null && badge > 0 && (
-                                <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full"
-                                    style={{
-                                        background: tab.key === 'regdocs' ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)',
-                                        color: tab.key === 'regdocs' ? '#B91C1C' : '#B45309',
-                                    }}>
+                                <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
+                                    tab.key === 'regdocs' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                                }`}>
                                     {badge}
                                 </span>
                             )}

@@ -1,18 +1,33 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { FileSignature, AlertCircle, CheckCircle2, Clock, Search, Plus, X, Save, Loader2, UploadCloud, FileText } from 'lucide-react'
+import { FileSignature, AlertCircle, CheckCircle2, Clock, Search, Plus, Save, Loader2, UploadCloud, FileText } from 'lucide-react'
 import { ContractRow, getContracts, createContract, getCounterparties, getContractUtilization, uploadContractDocument, signContract } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { SignaturePad } from '@/components/SignaturePad'
 import { toast } from 'sonner'
+import {
+    Button,
+    Badge,
+    Drawer,
+    Toolbar,
+    StatGrid,
+    StatCard,
+    Table,
+    THead,
+    TBody,
+    Tr,
+    Td,
+    TableMessageRow,
+    EmptyState,
+} from '@/components/ui'
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
-    PENDING_SIGN: { label: 'Chờ Ký', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
-    ACTIVE: { label: 'Đang Hiệu Lực', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
-    TERMINATED: { label: 'Đã Chấm Dứt', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+const STATUS_CFG: Record<string, { label: string; tone: 'neutral' | 'warning' | 'success' | 'danger' }> = {
+    DRAFT: { label: 'Nháp', tone: 'neutral' },
+    PENDING_SIGN: { label: 'Chờ Ký', tone: 'warning' },
+    ACTIVE: { label: 'Đang Hiệu Lực', tone: 'success' },
+    EXPIRED: { label: 'Hết Hạn', tone: 'neutral' },
+    TERMINATED: { label: 'Đã Chấm Dứt', tone: 'danger' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -57,10 +72,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
         getCounterparties().then(setCounterparties)
     }
 
-    if (!open) return null
-
-    const inputCls = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none'
-    const baseStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
+    const inputCls = 'w-full px-3 py-2 rounded-md text-xs bg-white border border-lys-border text-lys-title focus:border-lys-primary focus:outline-none transition-colors'
 
     const handleSave = async () => {
         if (!form.value || Number(form.value) <= 0) return setError('Nhập giá trị hợp đồng')
@@ -68,6 +80,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
         if (form.counterpartyType === 'customer' && !form.customerId) return setError('Chọn khách hàng')
 
         setSaving(true)
+        setError('')
         const result = await createContract({
             contractNo: form.contractNo,
             type: form.type,
@@ -86,186 +99,209 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
         })
         setSaving(false)
 
-        if (result.success) { onCreated(); onClose() }
-        else setError(result.error ?? 'Lỗi tạo hợp đồng')
+        if (result.success) {
+            toast.success('Tạo hợp đồng thành công')
+            onCreated()
+            onClose()
+        } else {
+            setError(result.error ?? 'Lỗi tạo hợp đồng')
+        }
     }
 
     const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
         <div>
-            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{label}</label>
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-lys-muted block mb-1.5">{label}</label>
             {children}
         </div>
     )
 
     return (
-        <>
-            <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(500px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
-                            <FileSignature size={16} style={{ color: '#0891B2' }} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>Tạo Hợp Đồng Mới</h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Nhập thông tin hợp đồng</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} style={{ color: '#64748B' }}><X size={18} /></button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    {error && (
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
-                            <AlertCircle size={14} /> {error}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <Row label="Số Hợp Đồng *">
-                            <input className={inputCls} style={baseStyle} value={form.contractNo}
-                                onChange={e => setForm(f => ({ ...f, contractNo: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                        </Row>
-                        <Row label="Loại Hợp Đồng">
-                            <select className={inputCls} style={baseStyle} value={form.type}
-                                onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                            </select>
-                        </Row>
-                    </div>
-
-                    <Row label="Loại Đối Tác *">
-                        <div className="flex gap-2">
-                            {(['supplier', 'customer'] as const).map(t => (
-                                <button key={t} onClick={() => setForm(f => ({ ...f, counterpartyType: t, supplierId: '', customerId: '' }))}
-                                    className="flex-1 py-2 text-sm font-semibold rounded-lg"
-                                    style={{
-                                        background: form.counterpartyType === t ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                        border: `1px solid ${form.counterpartyType === t ? '#0E7490' : '#E2E8F0'}`,
-                                        color: form.counterpartyType === t ? '#0E7490' : '#64748B',
-                                    }}>
-                                    {t === 'supplier' ? '🏭 Nhà Cung Cấp' : '🏨 Khách Hàng'}
-                                </button>
-                            ))}
-                        </div>
-                    </Row>
-
-                    {!counterparties ? (
-                        <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
-                            <Loader2 size={12} className="animate-spin" /> Đang tải...
-                        </div>
-                    ) : form.counterpartyType === 'supplier' ? (
-                        <Row label="Nhà Cung Cấp *">
-                            <select className={inputCls} style={baseStyle} value={form.supplierId}
-                                onChange={e => setForm(f => ({ ...f, supplierId: e.target.value }))}>
-                                <option value="">— Chọn NCC —</option>
-                                {counterparties.suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
-                            </select>
-                        </Row>
-                    ) : (
-                        <Row label="Khách Hàng *">
-                            <select className={inputCls} style={baseStyle} value={form.customerId}
-                                onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}>
-                                <option value="">— Chọn KH —</option>
-                                {counterparties.customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
-                            </select>
-                        </Row>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <Row label="Giá Trị *">
-                            <input type="number" className={inputCls} style={baseStyle} value={form.value}
-                                onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} placeholder="0" />
-                        </Row>
-                        <Row label="Tiền Tệ">
-                            <select className={inputCls} style={baseStyle} value={form.currency}
-                                onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}>
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                                <option value="VND">VND</option>
-                            </select>
-                        </Row>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <Row label="Ngày Bắt Đầu">
-                            <input type="date" className={inputCls} style={baseStyle} value={form.startDate}
-                                onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
-                        </Row>
-                        <Row label="Ngày Hết Hạn">
-                            <input type="date" className={inputCls} style={baseStyle} value={form.endDate}
-                                onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
-                        </Row>
-                    </div>
-
-                    <Row label="Điều Khoản Thanh Toán">
-                        <input className={inputCls} style={baseStyle} value={form.paymentTerm}
-                            onChange={e => setForm(f => ({ ...f, paymentTerm: e.target.value }))}
-                            placeholder="VD: Net 30, 50% TT sau 60 ngày..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-
-                    <Row label="Điều Khoản Giá Cả (Price Term)">
-                        <input className={inputCls} style={baseStyle} value={form.priceTerm}
-                            onChange={e => setForm(f => ({ ...f, priceTerm: e.target.value }))}
-                            placeholder="VD: Giá CIF Hồ Chí Minh cố định..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-
-                    <Row label="Quy Định Giảm Giá (Discount)">
-                        <input className={inputCls} style={baseStyle} value={form.discountTerms}
-                            onChange={e => setForm(f => ({ ...f, discountTerms: e.target.value }))}
-                            placeholder="VD: Giảm 5% khi mua trên 500 chai..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-
-                    <Row label="Ngân Sách Marketing">
-                        <input className={inputCls} style={baseStyle} value={form.marketingBudget}
-                            onChange={e => setForm(f => ({ ...f, marketingBudget: e.target.value }))}
-                            placeholder="VD: NCC hỗ trợ $2,000 ngân sách chạy thử..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-
-                    <Row label="Kiểm Tra Khớp Dấu & Tên Hợp Đồng">
-                        <input className={inputCls} style={baseStyle} value={form.stampVerification}
-                            onChange={e => setForm(f => ({ ...f, stampVerification: e.target.value }))}
-                            placeholder="VD: Đã kiểm tra khớp 100%..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-
-                    <Row label="Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm">
-                        <input className={inputCls} style={baseStyle} value={form.archiveStatus}
-                            onChange={e => setForm(f => ({ ...f, archiveStatus: e.target.value }))}
-                            placeholder="VD: Bản mềm đã upload, bản cứng lưu tại Tủ 2..."
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                    </Row>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
-                    <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title="Tạo Hợp Đồng Mới"
+            description="Nhập thông tin hợp đồng pháp lý & thương mại"
+            size="md"
+            footer={
+                <div className="flex items-center justify-end gap-2 w-full">
+                    <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>Hủy</Button>
+                    <Button variant="primary" size="sm" onClick={handleSave} disabled={saving} loading={saving}>
+                        <Save size={14} />
                         {saving ? 'Đang tạo...' : 'Tạo Hợp Đồng'}
-                    </button>
+                    </Button>
                 </div>
+            }
+        >
+            <div className="space-y-4">
+                {error && (
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-md text-xs bg-red-50 border border-red-200 text-red-700">
+                        <AlertCircle size={14} className="shrink-0" /> {error}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Row label="Số Hợp Đồng *">
+                        <input
+                            className={inputCls}
+                            value={form.contractNo}
+                            onChange={e => setForm(f => ({ ...f, contractNo: e.target.value }))}
+                        />
+                    </Row>
+                    <Row label="Loại Hợp Đồng">
+                        <select
+                            className={inputCls}
+                            value={form.type}
+                            onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                        >
+                            {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                    </Row>
+                </div>
+
+                <Row label="Loại Đối Tác *">
+                    <div className="flex gap-2">
+                        {(['supplier', 'customer'] as const).map(t => (
+                            <button
+                                key={t}
+                                type="button"
+                                onClick={() => setForm(f => ({ ...f, counterpartyType: t, supplierId: '', customerId: '' }))}
+                                className={`flex-1 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
+                                    form.counterpartyType === t
+                                        ? 'bg-lys-primary/10 border-lys-primary text-lys-primary'
+                                        : 'bg-white border-lys-border text-lys-muted hover:border-lys-primary/40'
+                                }`}
+                            >
+                                {t === 'supplier' ? '🏭 Nhà Cung Cấp' : '🏨 Khách Hàng'}
+                            </button>
+                        ))}
+                    </div>
+                </Row>
+
+                {!counterparties ? (
+                    <div className="flex items-center gap-2 text-xs text-lys-muted py-2">
+                        <Loader2 size={12} className="animate-spin text-lys-primary" /> Đang tải danh sách đối tác...
+                    </div>
+                ) : form.counterpartyType === 'supplier' ? (
+                    <Row label="Nhà Cung Cấp *">
+                        <select
+                            className={inputCls}
+                            value={form.supplierId}
+                            onChange={e => setForm(f => ({ ...f, supplierId: e.target.value }))}
+                        >
+                            <option value="">— Chọn NCC —</option>
+                            {counterparties.suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+                        </select>
+                    </Row>
+                ) : (
+                    <Row label="Khách Hàng *">
+                        <select
+                            className={inputCls}
+                            value={form.customerId}
+                            onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}
+                        >
+                            <option value="">— Chọn KH —</option>
+                            {counterparties.customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                        </select>
+                    </Row>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Row label="Giá Trị *">
+                        <input
+                            type="number"
+                            className={inputCls}
+                            value={form.value}
+                            onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                            placeholder="0"
+                        />
+                    </Row>
+                    <Row label="Tiền Tệ">
+                        <select
+                            className={inputCls}
+                            value={form.currency}
+                            onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
+                        >
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="VND">VND</option>
+                        </select>
+                    </Row>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Row label="Ngày Bắt Đầu">
+                        <input
+                            type="date"
+                            className={inputCls}
+                            value={form.startDate}
+                            onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                        />
+                    </Row>
+                    <Row label="Ngày Hết Hạn">
+                        <input
+                            type="date"
+                            className={inputCls}
+                            value={form.endDate}
+                            onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                        />
+                    </Row>
+                </div>
+
+                <Row label="Điều Khoản Thanh Toán">
+                    <input
+                        className={inputCls}
+                        value={form.paymentTerm}
+                        onChange={e => setForm(f => ({ ...f, paymentTerm: e.target.value }))}
+                        placeholder="VD: Net 30, 50% TT sau 60 ngày..."
+                    />
+                </Row>
+
+                <Row label="Điều Khoản Giá Cả (Price Term)">
+                    <input
+                        className={inputCls}
+                        value={form.priceTerm}
+                        onChange={e => setForm(f => ({ ...f, priceTerm: e.target.value }))}
+                        placeholder="VD: Giá CIF Hồ Chí Minh cố định..."
+                    />
+                </Row>
+
+                <Row label="Quy Định Giảm Giá (Discount)">
+                    <input
+                        className={inputCls}
+                        value={form.discountTerms}
+                        onChange={e => setForm(f => ({ ...f, discountTerms: e.target.value }))}
+                        placeholder="VD: Giảm 5% khi mua trên 500 chai..."
+                    />
+                </Row>
+
+                <Row label="Ngân Sách Marketing">
+                    <input
+                        className={inputCls}
+                        value={form.marketingBudget}
+                        onChange={e => setForm(f => ({ ...f, marketingBudget: e.target.value }))}
+                        placeholder="VD: NCC hỗ trợ $2,000 ngân sách chạy thử..."
+                    />
+                </Row>
+
+                <Row label="Kiểm Tra Khớp Dấu & Tên Hợp Đồng">
+                    <input
+                        className={inputCls}
+                        value={form.stampVerification}
+                        onChange={e => setForm(f => ({ ...f, stampVerification: e.target.value }))}
+                        placeholder="VD: Đã kiểm tra khớp 100%..."
+                    />
+                </Row>
+
+                <Row label="Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm">
+                    <input
+                        className={inputCls}
+                        value={form.archiveStatus}
+                        onChange={e => setForm(f => ({ ...f, archiveStatus: e.target.value }))}
+                        placeholder="VD: Bản mềm đã upload, bản cứng lưu tại Tủ 2..."
+                    />
+                </Row>
             </div>
-        </>
+        </Drawer>
     )
 }
 
@@ -275,7 +311,7 @@ interface Props {
     stats: { total: number; active: number; expiringSoon: number; expired: number }
 }
 
-export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
+export function ContractsClient({ initialRows, initialTotal: _initialTotal, stats }: Props) {
     const [rows, setRows] = useState(initialRows)
     const [loading, setLoading] = useState(false)
     const [search, setSearch] = useState('')
@@ -289,6 +325,27 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
     // Signature
     const [savingSignature, setSavingSignature] = useState(false)
     const [currentSignatureUrl, setCurrentSignatureUrl] = useState('')
+
+    const reload = useCallback(async (s?: string, st?: string) => {
+        setLoading(true)
+        const { rows: updatedRows } = await getContracts({
+            search: (s ?? search) || undefined,
+            status: (st ?? statusFilter) || undefined,
+            pageSize: 20,
+        })
+        setRows(updatedRows)
+        setLoading(false)
+    }, [search, statusFilter])
+
+    const showUtilization = async (id: string, forceReload = false) => {
+        if (selectedId === id && !forceReload) { setSelectedId(null); return }
+        setSelectedId(id)
+        setUtilLoading(true)
+        setCurrentSignatureUrl('')
+        const data = await getContractUtilization(id)
+        setUtilization(data)
+        setUtilLoading(false)
+    }
 
     const handleSign = async (contractId: string) => {
         if (!currentSignatureUrl) return
@@ -323,284 +380,316 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
         }
     }
 
-    const reload = useCallback(async (s?: string, st?: string) => {
-        setLoading(true)
-        const { rows } = await getContracts({
-            search: (s ?? search) || undefined,
-            status: (st ?? statusFilter) || undefined,
-            pageSize: 20,
-        })
-        setRows(rows)
-        setLoading(false)
-    }, [search, statusFilter])
-
-    const showUtilization = async (id: string, forceReload = false) => {
-        if (selectedId === id && !forceReload) { setSelectedId(null); return }
-        setSelectedId(id); setUtilLoading(true)
-        setCurrentSignatureUrl('')
-        const data = await getContractUtilization(id)
-        setUtilization(data); setUtilLoading(false)
-    }
-
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-end">
-                <button onClick={() => setDrawerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
-                    <Plus size={16} /> Tạo Hợp Đồng
-                </button>
-            </div>
-
+        <div className="space-y-4">
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Tổng Hợp Đồng', value: stats.total, icon: FileSignature, accent: '#0E7490' },
-                    { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#15803D' },
-                    { label: 'Sắp Hết Hạn (30d)', value: stats.expiringSoon, icon: AlertCircle, accent: '#B45309' },
-                    { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#64748B' },
-                ].map(s => {
-                    const Icon = s.icon
-                    return (
-                        <div key={s.label} className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}>
-                            <Icon size={20} style={{ color: s.accent }} />
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard
+                    label="Tổng Hợp Đồng"
+                    value={stats.total}
+                    icon={FileSignature}
+                    tone="brand"
+                />
+                <StatCard
+                    label="Đang Hiệu Lực"
+                    value={stats.active}
+                    icon={CheckCircle2}
+                    tone="success"
+                />
+                <StatCard
+                    label="Sắp Hết Hạn (30d)"
+                    value={stats.expiringSoon}
+                    icon={AlertCircle}
+                    tone="warning"
+                />
+                <StatCard
+                    label="Đã Hết Hạn"
+                    value={stats.expired}
+                    icon={Clock}
+                    tone="neutral"
+                />
+            </StatGrid>
 
-            {/* Filters */}
-            <div className="flex gap-3">
-                <div className="relative flex-1 max-w-xs">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                    <input type="text" placeholder="Tìm số hợp đồng..."
-                        value={search}
-                        onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
-                        className="w-full pl-9 pr-3 py-2 text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                    />
-                </div>
-                <select value={statusFilter}
-                    onChange={e => { setStatusFilter(e.target.value); reload(undefined, e.target.value) }}
-                    className="px-3 py-2 text-sm outline-none"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
-                    <option value="">Tất cả trạng thái</option>
-                    {Object.entries(STATUS_CFG).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
-                    ))}
-                </select>
-            </div>
+            {/* Filters & Actions */}
+            <Toolbar
+                left={
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="relative w-64">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
+                            <input
+                                type="text"
+                                placeholder="Tìm số hợp đồng..."
+                                value={search}
+                                onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
+                                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-lys-border rounded-md text-lys-title focus:border-lys-primary focus:outline-none"
+                            />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); reload(undefined, e.target.value) }}
+                            className="px-2.5 py-1.5 text-xs bg-white border border-lys-border rounded-md text-lys-title focus:border-lys-primary focus:outline-none"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            {Object.entries(STATUS_CFG).map(([k, v]) => (
+                                <option key={k} value={k}>{v.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                }
+                right={
+                    <Button variant="primary" size="sm" onClick={() => setDrawerOpen(true)}>
+                        <Plus size={15} />
+                        Tạo Hợp Đồng
+                    </Button>
+                }
+            />
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                            {['Số Hợp Đồng', 'Loại', 'Đối Tác', 'Giá Trị', 'Sử Dụng', 'Hiệu Lực', 'Hết Hạn', 'Trạng Thái'].map(h => (
-                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                    style={{ color: '#64748B' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan={8} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>Đang tải...</td></tr>
-                        ) : rows.length === 0 ? (
-                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#64748B' }}>
-                                <FileSignature size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                <p>Chưa có hợp đồng nào</p>
-                            </td></tr>
-                        ) : rows.map(row => {
-                            const cfg = STATUS_CFG[row.status] ?? { label: row.status, color: '#475569', bg: 'transparent' }
-                            return (
-                                <React.Fragment key={row.id}>
-                                    <tr key={row.id}
-                                        style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = row.isExpiringSoon ? 'rgba(180,83,9,0.04)' : 'rgba(8,145,178,0.04)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                {row.isExpiringSoon && <AlertCircle size={12} style={{ color: '#B45309' }} />}
-                                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.contractNo}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-xs px-2 py-0.5 rounded-full"
-                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                                {TYPE_LABEL[row.type] ?? row.type}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.counterpartyName}</p>
-                                            <p className="text-xs" style={{ color: '#64748B' }}>
-                                                {row.counterpartyType === 'supplier' ? '🏭 NCC' : '🏨 KH'}
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>
-                                            {row.currency === 'VND' ? formatVND(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <button onClick={() => showUtilization(row.id)} className="text-xs px-2 py-1 rounded"
-                                                style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>Xem</button>
-                                        </td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{formatDate(row.startDate)}</td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: row.isExpiringSoon ? '#B45309' : '#475569' }}>
-                                            {formatDate(row.endDate)}
-                                            {row.isExpiringSoon && <p className="text-xs font-bold" style={{ color: '#B45309' }}>Sắp hết hạn!</p>}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                                                style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-                                        </td>
-                                    </tr>
-                                    {/* Utilization detail row */}
-                                    {
-                                        selectedId === row.id && (
-                                            <tr style={{ background: '#FFFFFF' }}>
-                                                <td colSpan={8} className="px-6 py-4">
-                                                    {utilLoading ? (
-                                                        <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
-                                                            <Loader2 size={12} className="animate-spin" /> Đang tải...
+            <Table>
+                <THead>
+                    <Tr>
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Số Hợp Đồng</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Loại</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Đối Tác</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Giá Trị</th>
+                        <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Sử Dụng</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Hiệu Lực</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Hết Hạn</th>
+                        <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Trạng Thái</th>
+                    </Tr>
+                </THead>
+                <TBody>
+                    {loading ? (
+                        <TableMessageRow colSpan={8}>
+                            <div className="py-12 flex items-center justify-center text-xs text-lys-muted gap-2">
+                                <Loader2 size={16} className="animate-spin text-lys-primary" /> Đang tải hợp đồng...
+                            </div>
+                        </TableMessageRow>
+                    ) : rows.length === 0 ? (
+                        <TableMessageRow colSpan={8}>
+                            <EmptyState
+                                title="Chưa có hợp đồng nào"
+                                description="Tạo hợp đồng mới để bắt đầu theo dõi hiệu lực và đối soát ngân sách."
+                                action={
+                                    <Button variant="secondary" size="sm" onClick={() => setDrawerOpen(true)}>
+                                        <Plus size={14} />
+                                        Tạo Hợp Đồng Mới
+                                    </Button>
+                                }
+                            />
+                        </TableMessageRow>
+                    ) : rows.map(row => {
+                        const cfg = STATUS_CFG[row.status] ?? { label: row.status, tone: 'neutral' as const }
+                        const isExpanded = selectedId === row.id
+                        return (
+                            <React.Fragment key={row.id}>
+                                <Tr className={`cursor-pointer transition-colors ${isExpanded ? 'bg-lys-primary/5' : ''}`}>
+                                    <Td className="font-semibold text-lys-primary">
+                                        <div className="flex items-center gap-2">
+                                            {row.isExpiringSoon && <AlertCircle size={14} className="text-amber-600 shrink-0" />}
+                                            <span>{row.contractNo}</span>
+                                        </div>
+                                    </Td>
+                                    <Td>
+                                        <span className="text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary">
+                                            {TYPE_LABEL[row.type] ?? row.type}
+                                        </span>
+                                    </Td>
+                                    <Td>
+                                        <p className="text-xs font-semibold text-lys-title">{row.counterpartyName}</p>
+                                        <p className="text-[10px] text-lys-muted">
+                                            {row.counterpartyType === 'supplier' ? '🏭 NCC' : '🏨 KH'}
+                                        </p>
+                                    </Td>
+                                    <Td align="right" className="font-semibold text-lys-title">
+                                        {row.currency === 'VND' ? formatVND(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
+                                    </Td>
+                                    <Td align="center">
+                                        <Button
+                                            variant={isExpanded ? 'primary' : 'ghost'}
+                                            size="sm"
+                                            onClick={() => showUtilization(row.id)}
+                                        >
+                                            {isExpanded ? 'Đóng' : 'Xem'}
+                                        </Button>
+                                    </Td>
+                                    <Td className="text-lys-muted text-xs">{formatDate(row.startDate)}</Td>
+                                    <Td className={`text-xs ${row.isExpiringSoon ? 'text-amber-700 font-semibold' : 'text-lys-muted'}`}>
+                                        {formatDate(row.endDate)}
+                                        {row.isExpiringSoon && <span className="block text-[10px] text-amber-600 font-medium">Sắp hết hạn!</span>}
+                                    </Td>
+                                    <Td align="center">
+                                        <Badge tone={cfg.tone}>{cfg.label}</Badge>
+                                    </Td>
+                                </Tr>
+
+                                {/* Utilization detail row */}
+                                {isExpanded && (
+                                    <Tr className="bg-lys-bg/50">
+                                        <Td colSpan={8} className="p-4">
+                                            {utilLoading ? (
+                                                <div className="flex items-center justify-center gap-2 text-xs text-lys-muted py-6">
+                                                    <Loader2 size={16} className="animate-spin text-lys-primary" /> Đang tải chi tiết hợp đồng...
+                                                </div>
+                                            ) : utilization ? (
+                                                <div className="space-y-4 bg-white p-4 rounded-lg border border-lys-border">
+                                                    <div className="flex items-center justify-between border-b border-lys-border pb-3">
+                                                        <h4 className="text-xs font-bold uppercase tracking-wider text-lys-primary">
+                                                            Mức Độ Sử Dụng & Đối Soát Hợp Đồng
+                                                        </h4>
+                                                        <div className="flex gap-4 text-xs text-lys-muted font-medium">
+                                                            <span>PO: <strong className="text-lys-title">{utilization.poCount}</strong> ({formatVND(utilization.poTotal)})</span>
+                                                            <span>SO: <strong className="text-lys-title">{utilization.soCount}</strong> ({formatVND(utilization.soTotal)})</span>
                                                         </div>
-                                                    ) : utilization ? (
-                                                        <div className="space-y-3">
-                                                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#B45309' }}>Utilization — Mức Sử Dụng</p>
-                                                            <div className="grid grid-cols-4 gap-3">
-                                                                {[
-                                                                    { l: 'Giá Trị HĐ', v: formatVND(utilization.contractValue) },
-                                                                    { l: 'Đã Sử Dụng', v: formatVND(utilization.utilizedValue) },
-                                                                    { l: 'Còn Lại', v: formatVND(utilization.remaining) },
-                                                                    { l: '% Sử Dụng', v: `${utilization.utilizationPct.toFixed(1)}%` },
-                                                                ].map(x => (
-                                                                    <div key={x.l}>
-                                                                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{x.l}</p>
-                                                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{x.v}</p>
-                                                                    </div>
+                                                    </div>
+
+                                                    {/* Utilization Stats */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        {[
+                                                            { l: 'Giá Trị HĐ', v: formatVND(utilization.contractValue) },
+                                                            { l: 'Đã Sử Dụng', v: formatVND(utilization.utilizedValue) },
+                                                            { l: 'Còn Lại', v: formatVND(utilization.remaining) },
+                                                            { l: '% Sử Dụng', v: `${utilization.utilizationPct.toFixed(1)}%` },
+                                                        ].map(x => (
+                                                            <div key={x.l} className="bg-lys-bg/50 p-2.5 rounded-md border border-lys-border">
+                                                                <p className="text-[10px] uppercase font-semibold text-lys-muted">{x.l}</p>
+                                                                <p className="text-sm font-bold text-lys-title mt-0.5">{x.v}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Progress bar */}
+                                                    <div>
+                                                        <div className="h-2 w-full bg-lys-border rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full rounded-full transition-all"
+                                                                style={{
+                                                                    width: `${Math.min(utilization.utilizationPct, 100)}%`,
+                                                                    background: utilization.utilizationPct > 90 ? '#DC2626' : utilization.utilizationPct > 60 ? '#D97706' : '#0891B2',
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Custom Fields Section */}
+                                                    <div className="pt-2">
+                                                        <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted mb-2.5">
+                                                            Thông Tin Điều Khoản & Lưu Trữ
+                                                        </p>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                                            <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
+                                                                <p className="text-[10px] uppercase font-bold text-lys-muted">Quy Định Giảm Giá (Discount)</p>
+                                                                <p className="mt-1 font-medium text-lys-title">{utilization.discountTerms || 'Chưa quy định chi tiết'}</p>
+                                                            </div>
+                                                            <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
+                                                                <p className="text-[10px] uppercase font-bold text-lys-muted">Ngân Sách Marketing</p>
+                                                                <p className="mt-1 font-medium text-lys-title">{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
+                                                            </div>
+                                                            <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
+                                                                <p className="text-[10px] uppercase font-bold text-lys-muted">Điều Khoản Giá Cả (Price Term)</p>
+                                                                <p className="mt-1 font-medium text-lys-title">{utilization.priceTerm || 'Chưa quy định chi tiết'}</p>
+                                                            </div>
+                                                            <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
+                                                                <p className="text-[10px] uppercase font-bold text-lys-muted">Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>
+                                                                <p className="mt-1 font-medium text-lys-title">{utilization.stampVerification || 'Chưa có ghi chú kiểm tra'}</p>
+                                                            </div>
+                                                            <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border md:col-span-2">
+                                                                <p className="text-[10px] uppercase font-bold text-lys-muted">Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm</p>
+                                                                <p className="mt-1 font-medium text-lys-title">{utilization.archiveStatus || 'Chưa có ghi chú lưu trữ'}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Documents Section */}
+                                                    <div className="pt-2 border-t border-lys-border">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted">
+                                                                Tài liệu đính kèm ({utilization.documents?.length || 0})
+                                                            </p>
+                                                            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30 hover:bg-lys-primary/15 transition-colors">
+                                                                {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                                <span>{uploadingDoc ? 'Đang tải...' : 'Upload File'}</span>
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    accept=".pdf,.doc,.docx,.jpg,.png"
+                                                                    onChange={(e) => handleUpload(row.id, e)}
+                                                                    disabled={uploadingDoc}
+                                                                />
+                                                            </label>
+                                                        </div>
+
+                                                        {utilization.documents?.length > 0 ? (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                                {utilization.documents.map((doc: any) => (
+                                                                    <a
+                                                                        key={doc.id}
+                                                                        href={doc.fileUrl}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="flex items-center gap-2.5 p-2.5 rounded-md bg-lys-bg/40 hover:bg-lys-primary/5 border border-lys-border transition-colors"
+                                                                    >
+                                                                        <FileText size={18} className="text-lys-primary shrink-0" />
+                                                                        <div className="overflow-hidden min-w-0">
+                                                                            <p className="text-xs font-semibold truncate text-lys-title">{doc.name}</p>
+                                                                            <p className="text-[10px] text-lys-muted">{formatDate(doc.uploadedAt)}</p>
+                                                                        </div>
+                                                                    </a>
                                                                 ))}
                                                             </div>
-                                                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
-                                                                <div className="h-full rounded-full" style={{
-                                                                    width: `${utilization.utilizationPct}%`,
-                                                                    background: utilization.utilizationPct > 90 ? '#B91C1C' : utilization.utilizationPct > 60 ? '#B45309' : '#0E7490',
-                                                                }} />
-                                                            </div>
-                                                            <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
-                                                                <span>PO: {utilization.poCount} ({formatVND(utilization.poTotal)})</span>
-                                                                <span>SO: {utilization.soCount} ({formatVND(utilization.soTotal)})</span>
-                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs italic text-lys-muted">Chưa có file đính kèm nào.</p>
+                                                        )}
+                                                    </div>
 
-                                                            {/* Custom Fields Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>Thông Tin Điều Khoản & Lưu Trữ</p>
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Quy Định Giảm Giá (Discount)</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.discountTerms || 'Chưa quy định chi tiết'}</p>
-                                                                    </div>
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Ngân Sách Marketing</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
-                                                                    </div>
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Điều Khoản Giá Cả (Price Term)</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.priceTerm || 'Chưa quy định chi tiết'}</p>
-                                                                    </div>
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.stampVerification || 'Chưa có ghi chú kiểm tra'}</p>
-                                                                    </div>
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#64748B' }}>Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm</p>
-                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#0F172A' }}>{utilization.archiveStatus || 'Chưa có ghi chú lưu trữ'}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Documents Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                                                <div className="flex items-center justify-between mb-3">
-                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>Tài liệu đính kèm ({utilization.documents?.length || 0})</p>
-                                                                    <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
-                                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                                                                        {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                                                                        {uploadingDoc ? 'Đang tải...' : 'Upload PDF'}
-                                                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
-                                                                            onChange={(e) => handleUpload(row.id, e)} disabled={uploadingDoc} />
-                                                                    </label>
-                                                                </div>
-
-                                                                {utilization.documents?.length > 0 ? (
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                                        {utilization.documents.map((doc: any) => (
-                                                                            <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
-                                                                                className="flex items-center gap-3 p-3 rounded bg-white hover:bg-[#E2E8F0] transition-colors"
-                                                                                style={{ border: '1px solid #E2E8F0' }}>
-                                                                                <FileText size={20} style={{ color: '#475569' }} />
-                                                                                <div className="overflow-hidden">
-                                                                                    <p className="text-sm font-medium truncate" style={{ color: '#0F172A' }}>{doc.name}</p>
-                                                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>{formatDate(doc.uploadedAt)}</p>
-                                                                                </div>
-                                                                            </a>
-                                                                        ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <p className="text-xs italic" style={{ color: '#64748B' }}>Chưa có file đính kèm nào.</p>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Signature Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>
-                                                                    Ký Điện Tử Khê Duyệt Nhanh
+                                                    {/* Signature Section */}
+                                                    <div className="pt-2 border-t border-lys-border">
+                                                        <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted mb-2">
+                                                            Ký Điện Tử Phê Duyệt Nhanh
+                                                        </p>
+                                                        {utilization.signatureUrl ? (
+                                                            <div className="p-3 rounded-md bg-emerald-50/50 border border-emerald-200 inline-block">
+                                                                <p className="text-xs text-emerald-700 font-semibold mb-1.5 flex items-center gap-1">
+                                                                    <CheckCircle2 size={13} /> Đã Ký Duyệt
                                                                 </p>
-                                                                {utilization.signatureUrl ? (
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(21,128,61,0.3)' }}>
-                                                                        <p className="text-xs text-[#15803D] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
-                                                                        <img src={utilization.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
-                                                                    </div>
+                                                                <img src={utilization.signatureUrl} alt="Signature" className="h-16 object-contain bg-white rounded border border-emerald-100 p-1" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                {row.status === 'DRAFT' ? (
+                                                                    <>
+                                                                        <SignaturePad onEnd={setCurrentSignatureUrl} />
+                                                                        <div className="flex justify-end">
+                                                                            <Button
+                                                                                variant="primary"
+                                                                                size="sm"
+                                                                                onClick={() => handleSign(row.id)}
+                                                                                disabled={!currentSignatureUrl || savingSignature}
+                                                                                loading={savingSignature}
+                                                                            >
+                                                                                <Save size={13} />
+                                                                                Lưu Chữ Ký & Hiệu Lực Hoá Hợp Đồng
+                                                                            </Button>
+                                                                        </div>
+                                                                    </>
                                                                 ) : (
-                                                                    <div className="space-y-3">
-                                                                        {row.status === 'DRAFT' ? (
-                                                                            <>
-                                                                                <SignaturePad onEnd={setCurrentSignatureUrl} />
-                                                                                <div className="flex justify-end">
-                                                                                    <button onClick={() => handleSign(row.id)} disabled={!currentSignatureUrl || savingSignature}
-                                                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50 transition-colors"
-                                                                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                                                                                        {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                                                                                        Lưu Chữ Ký & Hiệu Lực Hoá Hợp Đồng
-                                                                                    </button>
-                                                                                </div>
-                                                                            </>
-                                                                        ) : (
-                                                                            <p className="text-xs italic" style={{ color: '#64748B' }}>Chỉ hợp đồng nháp mới cần ký.</p>
-                                                                        )}
-                                                                    </div>
+                                                                    <p className="text-xs italic text-lys-muted">Chỉ hợp đồng ở trạng thái nháp mới cần ký duyệt.</p>
                                                                 )}
                                                             </div>
-
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>Không tìm thấy dữ liệu</p>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        )}
-                                </React.Fragment>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-lys-muted">Không tìm thấy dữ liệu chi tiết.</p>
+                                            )}
+                                        </Td>
+                                    </Tr>
+                                )}
+                            </React.Fragment>
+                        )
+                    })}
+                </TBody>
+            </Table>
 
             <CreateContractDrawer
                 open={drawerOpen}
