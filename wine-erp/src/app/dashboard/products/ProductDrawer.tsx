@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
-import { Button, Drawer } from '@/components/ui'
+import { Button, Drawer, useConfirmDialog } from '@/components/ui'
 import { compressImage } from '@/lib/compress-image'
 import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import { toast } from 'sonner'
@@ -149,6 +149,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
     const isEdit = !!editingId
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
     const [appellations, setAppellations] = useState<{ id: string; name: string; regionId: string; region?: { country: string; name: string } | null }[]>([])
@@ -333,7 +334,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
     }
 
     return (
-        <Drawer
+        <>
+            <Drawer
             open={open}
             onClose={onClose}
             size="md"
@@ -842,12 +844,23 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                         </button>
                                                     )}
                                                     <button
-                                                        onClick={async () => {
-                                                            if (!confirm('Xóa hình này?')) return
-                                                            const res = await deleteProductMedia(m.id)
-                                                            if (res.success) {
-                                                                setMediaList(prev => prev.filter(x => x.id !== m.id))
-                                                            }
+                                                        onClick={() => {
+                                                            confirm({
+                                                                title: 'Xóa Hình Ảnh',
+                                                                message: 'Bạn có chắc chắn muốn xóa hình ảnh này không?',
+                                                                confirmLabel: 'Xóa',
+                                                                cancelLabel: 'Bỏ qua',
+                                                                danger: true,
+                                                                onConfirm: async () => {
+                                                                    const res = await deleteProductMedia(m.id)
+                                                                    if (res.success) {
+                                                                        setMediaList(prev => prev.filter(x => x.id !== m.id))
+                                                                        toast.success('Đã xóa hình ảnh')
+                                                                    } else {
+                                                                        toast.error(res.error || 'Lỗi khi xóa hình')
+                                                                    }
+                                                                }
+                                                            })
                                                         }}
                                                         className="p-2 rounded-lg transition-colors"
                                                         style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}
@@ -1000,10 +1013,19 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     </p>
                                                 </div>
                                                 <button
-                                                    onClick={async () => {
-                                                        if (!confirm('Xóa giải thưởng này?')) return
-                                                        await deleteProductAward(aw.id)
-                                                        setAwards(prev => prev.filter(a => a.id !== aw.id))
+                                                    onClick={() => {
+                                                        confirm({
+                                                            title: 'Xóa Giải Thưởng',
+                                                            message: 'Bạn có chắc chắn muốn xóa giải thưởng này không?',
+                                                            confirmLabel: 'Xóa',
+                                                            cancelLabel: 'Bỏ qua',
+                                                            danger: true,
+                                                            onConfirm: async () => {
+                                                                await deleteProductAward(aw.id)
+                                                                setAwards(prev => prev.filter(a => a.id !== aw.id))
+                                                                toast.success('Đã xóa giải thưởng')
+                                                            }
+                                                        })
                                                     }}
                                                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded transition-all"
                                                     style={{ color: '#B91C1C' }}
@@ -1031,7 +1053,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     </div>
 
                 </div>
-        </Drawer>
+            </Drawer>
+            {confirmDialog}
+        </>
     )
 }
 

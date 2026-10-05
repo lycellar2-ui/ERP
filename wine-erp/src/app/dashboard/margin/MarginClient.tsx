@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { MarginProductRow, getMarginProducts, bulkImportMarginPrices } from './actions'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
+import { useConfirmDialog } from '@/components/ui'
 
 // Flag emoji dictionary
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -71,6 +72,7 @@ type ComputedRow = {
 }
 
 export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows: MarginProductRow[]; suppliers: { id: string; name: string }[]; isAdmin: boolean }) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [dbRows, setDbRows] = useState<MarginProductRow[]>(initialRows)
     const [loading, setLoading] = useState(false)
     const [importOpen, setImportOpen] = useState(false)
@@ -317,12 +319,17 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
     }
 
     // Clear all reporting items
-    const handleClearAll = () => {
+    const handleClearAll = async () => {
         if (addedProducts.length === 0) return
-        if (confirm('Bạn có chắc chắn muốn xóa sạch bảng check margin hiện tại không?')) {
-            setAddedProducts([])
-            toast.info('Đã làm trống bảng check margin')
-        }
+        const ok = await confirm({
+            title: 'Xóa bảng check margin',
+            message: 'Bạn có chắc chắn muốn xóa sạch bảng check margin hiện tại không?',
+            confirmLabel: 'Xóa tất cả',
+            variant: 'danger',
+        })
+        if (!ok) return
+        setAddedProducts([])
+        toast.info('Đã làm trống bảng check margin')
     }
 
     // Single simulated results for the live workbench
@@ -969,6 +976,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                     reloadData()
                 }}
             />
+            {confirmDialog}
         </div>
     )
 }

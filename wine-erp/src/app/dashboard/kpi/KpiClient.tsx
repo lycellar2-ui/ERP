@@ -6,7 +6,7 @@ import {
     Settings, Plus, Trash2, Save, X, Copy, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
 import type { KpiSummary, KpiTargetRow } from './actions'
 import {
     getKpiSummary, getKpiTargets, upsertKpiTarget, deleteKpiTarget,
@@ -36,6 +36,7 @@ interface Props {
 }
 
 export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [summaries, setSummaries] = useState(initialSummaries)
     const [tab, setTab] = useState<'dashboard' | 'setup'>('dashboard')
     const [targets, setTargets] = useState<KpiTargetRow[]>([])
@@ -79,7 +80,13 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Xóa chỉ tiêu này?')) return
+        const ok = await confirm({
+            title: 'Xóa chỉ tiêu',
+            message: 'Bạn có chắc chắn muốn xóa chỉ tiêu này?',
+            confirmLabel: 'Xóa chỉ tiêu',
+            variant: 'danger',
+        })
+        if (!ok) return
         const res = await deleteKpiTarget(id)
         if (res.success) {
             loadSetup()
@@ -348,6 +355,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }

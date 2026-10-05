@@ -21,6 +21,7 @@ import {
     Td,
     TableMessageRow,
     EmptyState,
+    useConfirmDialog,
 } from '@/components/ui'
 
 type SortField =
@@ -80,30 +81,45 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
         }
     }
 
-    const handleQuickApprove = async (id: string, e: React.MouseEvent) => {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
+    const handleQuickApprove = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm('Bạn có chắc chắn muốn phê duyệt Phiếu Chuyển Kho này?')) return
-        try {
-            const res = await accountingApproveTransfer(id)
-            if (!res.success) throw new Error(res.error)
-            toast.success('✅ Đã phê duyệt phiếu chuyển kho thành công!')
-            reload()
-        } catch (err: any) {
-            toast.error('Lỗi duyệt phiếu: ' + err.message)
-        }
+        confirm({
+            title: 'Phê duyệt chuyển kho',
+            message: 'Bạn có chắc chắn muốn phê duyệt Phiếu Chuyển Kho này? Trạng thái sẽ chuyển sang Đã duyệt.',
+            confirmLabel: 'Phê duyệt',
+            onConfirm: async () => {
+                try {
+                    const res = await accountingApproveTransfer(id)
+                    if (!res.success) throw new Error(res.error)
+                    toast.success('✅ Đã phê duyệt phiếu chuyển kho thành công!')
+                    reload()
+                } catch (err: any) {
+                    toast.error('Lỗi duyệt phiếu: ' + err.message)
+                }
+            }
+        })
     }
 
-    const handleCancel = async (id: string, e: React.MouseEvent) => {
+    const handleCancel = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm('Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này?')) return
-        try {
-            const res = await cancelTransferOrder(id)
-            if (!res.success) throw new Error(res.error)
-            toast.success('Đã hủy phiếu chuyển kho thành công')
-            reload()
-        } catch (err: any) {
-            toast.error('Lỗi hủy phiếu: ' + err.message)
-        }
+        confirm({
+            title: 'Hủy phiếu chuyển kho',
+            message: 'Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này? Thao tác này không thể hoàn tác.',
+            danger: true,
+            confirmLabel: 'Hủy phiếu',
+            onConfirm: async () => {
+                try {
+                    const res = await cancelTransferOrder(id)
+                    if (!res.success) throw new Error(res.error)
+                    toast.success('Đã hủy phiếu chuyển kho thành công')
+                    reload()
+                } catch (err: any) {
+                    toast.error('Lỗi hủy phiếu: ' + err.message)
+                }
+            }
+        })
     }
 
     const filteredRows = rows.filter(r => {
@@ -372,6 +388,8 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 onRefresh={reload}
                 currentUserRoles={currentUserRoles}
             />
+
+            {confirmDialog}
         </div>
     )
 }

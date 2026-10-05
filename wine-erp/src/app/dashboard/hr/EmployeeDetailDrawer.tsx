@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner'
 import { deleteEmployeeDocument } from './actions'
 import { DocumentUploadModal } from './DocumentUploadModal'
+import { useConfirmDialog } from '@/components/ui'
 
 interface Props {
     employee: any | null
@@ -28,6 +29,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 }
 
 export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefresh }: Props) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'WORK' | 'FINANCE' | 'DOCUMENTS'>('OVERVIEW')
     const [isUploadOpen, setIsUploadOpen] = useState(false)
     const [deletingDocId, setDeletingDocId] = useState<string | null>(null)
@@ -57,7 +59,13 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
     }
 
     const handleDeleteDoc = async (docId: string, title: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn xóa giấy tờ "${title}" không?`)) return
+        const ok = await confirm({
+            title: 'Xóa giấy tờ',
+            message: `Bạn có chắc chắn muốn xóa giấy tờ "${title}" không?`,
+            confirmLabel: 'Xóa giấy tờ',
+            variant: 'danger',
+        })
+        if (!ok) return
 
         setDeletingDocId(docId)
         try {
@@ -577,6 +585,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                 onClose={() => setIsUploadOpen(false)}
                 onSuccess={onRefresh}
             />
+            {confirmDialog}
         </div>
     )
 }

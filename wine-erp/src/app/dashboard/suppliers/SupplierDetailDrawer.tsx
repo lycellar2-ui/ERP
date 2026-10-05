@@ -14,6 +14,7 @@ import {
 import { getSupplierRegDocs } from '../contracts/reg-doc-xmodule'
 import { REG_DOC_TYPE_LABELS, REG_DOC_STATUS_LABELS } from '../contracts/reg-doc-constants'
 import { formatVND } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 import { toast } from 'sonner'
 
 const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
@@ -79,6 +80,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
     const [noteType, setNoteType] = useState('NOTE')
     const [savingNote, setSavingNote] = useState(false)
     const [regDocs, setRegDocs] = useState<any[] | null>(null)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // Secondary contacts state
     const [showContactForm, setShowContactForm] = useState(false)
@@ -123,22 +125,30 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
         }
     }
 
-    const handleDeleteContact = async (contactId: string, name: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn xóa liên hệ "${name}"?`)) return
-        try {
-            const res = await deleteSupplierContact(contactId)
-            if (res.success) {
-                toast.success(`Đã xóa liên hệ "${name}"`)
-                if (supplierId) {
-                    const freshDetail = await getSupplierDetail(supplierId)
-                    setDetail(freshDetail)
+    const handleDeleteContact = (contactId: string, name: string) => {
+        confirm({
+            title: 'Xóa Người Liên Hệ',
+            message: `Bạn có chắc chắn muốn xóa liên hệ "${name}" không?`,
+            confirmLabel: 'Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const res = await deleteSupplierContact(contactId)
+                    if (res.success) {
+                        toast.success(`Đã xóa liên hệ "${name}"`)
+                        if (supplierId) {
+                            const freshDetail = await getSupplierDetail(supplierId)
+                            setDetail(freshDetail)
+                        }
+                    } else {
+                        toast.error(res.error ?? 'Lỗi khi xóa liên hệ')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message ?? 'Lỗi hệ thống')
                 }
-            } else {
-                toast.error(res.error ?? 'Lỗi khi xóa liên hệ')
             }
-        } catch (err: any) {
-            toast.error(err.message ?? 'Lỗi hệ thống')
-        }
+        })
     }
 
     // Secondary addresses state
@@ -184,22 +194,30 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
         }
     }
 
-    const handleDeleteAddress = async (addressId: string, label: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn xóa địa chỉ "${label}"?`)) return
-        try {
-            const res = await deleteSupplierAddress(addressId)
-            if (res.success) {
-                toast.success(`Đã xóa địa chỉ "${label}"`)
-                if (supplierId) {
-                    const freshDetail = await getSupplierDetail(supplierId)
-                    setDetail(freshDetail)
+    const handleDeleteAddress = (addressId: string, label: string) => {
+        confirm({
+            title: 'Xóa Địa Chỉ',
+            message: `Bạn có chắc chắn muốn xóa địa chỉ "${label}" không?`,
+            confirmLabel: 'Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const res = await deleteSupplierAddress(addressId)
+                    if (res.success) {
+                        toast.success(`Đã xóa địa chỉ "${label}"`)
+                        if (supplierId) {
+                            const freshDetail = await getSupplierDetail(supplierId)
+                            setDetail(freshDetail)
+                        }
+                    } else {
+                        toast.error(res.error ?? 'Lỗi khi xóa địa chỉ')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message ?? 'Lỗi hệ thống')
                 }
-            } else {
-                toast.error(res.error ?? 'Lỗi khi xóa địa chỉ')
             }
-        } catch (err: any) {
-            toast.error(err.message ?? 'Lỗi hệ thống')
-        }
+        })
     }
 
     useEffect(() => {
@@ -802,6 +820,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                     )}
                 </div>
             </div>
+            {confirmDialog}
         </>
     )
 }

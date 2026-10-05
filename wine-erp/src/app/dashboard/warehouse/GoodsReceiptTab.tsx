@@ -14,6 +14,7 @@ import {
     getGRDetail, getLocations, exportGoodsReceiptsExcel,
 } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 // ── Types ──────────────────────────────────────────
 type POLineOption = {
@@ -268,43 +269,48 @@ export function GoodsReceiptTab({ warehouses }: {
         }
     }
 
-    const handleConfirm = async (id: string, grNo: string) => {
-        if (!confirm(`Xác nhận nhập kho phiếu ${grNo}? Tồn kho thực tế sẽ được cập nhật ngay lập tức.`)) return
-        toast.promise(
-            confirmGoodsReceipt(id).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi xác nhận GR')
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
+    const handleConfirm = (id: string, grNo: string) => {
+        confirm({
+            title: `Xác nhận nhập kho phiếu ${grNo}`,
+            message: `Xác nhận nhập kho phiếu ${grNo}? Tồn kho thực tế sẽ được cập nhật ngay lập tức vào kho hàng.`,
+            confirmLabel: 'Xác nhận nhập kho',
+            onConfirm: async () => {
+                const res = await confirmGoodsReceipt(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi xác nhận GR')
+                    return
+                }
+                toast.success(`Phiếu ${grNo} đã xác nhận — Tồn kho đã cập nhật!`)
                 await reload()
                 if (detailData && detailData.id === id) {
                     const refreshed = await getGRDetail(id)
                     setDetailData(refreshed)
                 }
-                return res
-            }),
-            {
-                loading: 'Đang xác nhận nhập kho...',
-                success: `Phiếu ${grNo} đã xác nhận — Tồn kho đã cập nhật!`,
-                error: (err: Error) => `Lỗi: ${err.message}`
             }
-        )
+        })
     }
 
-    const handleCancel = async (id: string, grNo: string) => {
-        if (!confirm(`Hủy và xóa phiếu nhập kho tạm ${grNo}? Toàn bộ số lượng nháp sẽ bị xóa bỏ.`)) return
-        toast.promise(
-            cancelGoodsReceipt(id).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi hủy phiếu GR')
+    const handleCancel = (id: string, grNo: string) => {
+        confirm({
+            title: `Hủy phiếu nhập kho tạm ${grNo}`,
+            message: `Hủy và xóa phiếu nhập kho tạm ${grNo}? Toàn bộ số lượng nháp của phiếu sẽ bị xóa bỏ.`,
+            danger: true,
+            confirmLabel: 'Hủy phiếu',
+            onConfirm: async () => {
+                const res = await cancelGoodsReceipt(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi hủy phiếu GR')
+                    return
+                }
+                toast.success(`Phiếu ${grNo} đã được hủy bỏ thành công!`)
                 await reload()
                 if (detailData && detailData.id === id) {
                     setDetailData(null)
                 }
-                return res
-            }),
-            {
-                loading: 'Đang hủy phiếu tạm...',
-                success: `Phiếu ${grNo} đã được hủy bỏ thành công!`,
-                error: (err: Error) => `Lỗi: ${err.message}`
             }
-        )
+        })
     }
 
     // Export Excel
@@ -1188,6 +1194,8 @@ export function GoodsReceiptTab({ warehouses }: {
                     }}
                 />
             )}
+
+            {confirmDialog}
         </div>
     )
 }

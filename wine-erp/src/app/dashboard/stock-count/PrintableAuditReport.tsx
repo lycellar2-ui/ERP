@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { Printer, ShieldCheck, X, CheckCircle2 } from 'lucide-react'
 import { approveAndCreateAdjustment } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useConfirmDialog } from '@/components/ui'
 
 type AuditLine = {
     id: string
@@ -58,22 +60,33 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
     const totalVarianceQty = detail.lines.filter(l => l.qtyActual !== null).reduce((sum, l) => sum + Number(l.variance ?? 0), 0)
     const totalVarianceValue = detail.lines.filter(l => l.qtyActual !== null).reduce((sum, l) => sum + Number(l.varianceValueVND || 0), 0)
 
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
     const handlePrint = () => {
         window.print()
     }
 
-    const handleApprove = async () => {
-        if (!confirm('Bạn có chắc chắn muốn Phê Duyệt phiên kiểm kê này? Hệ thống sẽ tự động cập nhật tồn kho gốc và tạo Phiếu Điều Chỉnh Kế Toán.')) return
-        setIsApproving(true)
-        const res = await approveAndCreateAdjustment(detail.id)
-        setIsApproving(false)
-        if (res.success) {
-            alert(`Duyệt thành công! Đã tạo Phiếu điều chỉnh mã ${res.adjustmentNo}`)
-            if (onRefreshed) onRefreshed()
-            onClose()
-        } else {
-            alert(res.error || 'Lỗi phê duyệt kiểm kê')
-        }
+    const handleApprove = () => {
+        confirm({
+            title: 'Phê duyệt phiên kiểm kê & Tạo phiếu điều chỉnh',
+            message: 'Bạn có chắc chắn muốn Phê Duyệt phiên kiểm kê này? Hệ thống sẽ tự động cập nhật tồn kho gốc và tạo Phiếu Điều Chỉnh Kế Toán tương ứng.',
+            confirmLabel: 'Phê duyệt & Điều chỉnh',
+            onConfirm: async () => {
+                setIsApproving(true)
+                try {
+                    const res = await approveAndCreateAdjustment(detail.id)
+                    if (res.success) {
+                        toast.success(`Duyệt thành công! Đã tạo Phiếu điều chỉnh mã ${res.adjustmentNo}`)
+                        if (onRefreshed) onRefreshed()
+                        onClose()
+                    } else {
+                        toast.error(res.error || 'Lỗi phê duyệt kiểm kê')
+                    }
+                } finally {
+                    setIsApproving(false)
+                }
+            }
+        })
     }
 
     const createdDateObj = new Date(detail.createdAt)
@@ -316,6 +329,8 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                     </div>
                 </div>
             </div>
+
+            {confirmDialog}
         </div>
     )
 }

@@ -14,7 +14,7 @@ import {
 import { EmployeeDetailDrawer } from './EmployeeDetailDrawer'
 import { EmployeeFormModal } from './EmployeeFormModal'
 import { DocumentUploadModal } from './DocumentUploadModal'
-import { PageHeader, Button } from '@/components/ui'
+import { PageHeader, Button, useConfirmDialog } from '@/components/ui'
 
 interface Props {
     initialEmployees: any[]
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export function HrClient({ initialEmployees, initialStats, departments, availableUsers }: Props) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [employees, setEmployees] = useState(initialEmployees)
     const [stats, setStats] = useState(initialStats)
 
@@ -100,9 +101,13 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
     }
 
     const handleDelete = async (emp: any) => {
-        if (!confirm(`Bạn có chắc chắn muốn chuyển trạng thái nhân viên "${emp.fullName}" sang "Đã nghỉ việc"?`)) {
-            return
-        }
+        const ok = await confirm({
+            title: 'Chuyển trạng thái nhân viên',
+            message: `Bạn có chắc chắn muốn chuyển trạng thái nhân viên "${emp.fullName}" sang "Đã nghỉ việc"?`,
+            confirmLabel: 'Xác nhận nghỉ việc',
+            variant: 'warning',
+        })
+        if (!ok) return
 
         try {
             const res = await deleteEmployee(emp.id)
@@ -569,6 +574,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     onSuccess={refreshCurrentView}
                 />
             )}
+            {confirmDialog}
         </div>
     )
 }

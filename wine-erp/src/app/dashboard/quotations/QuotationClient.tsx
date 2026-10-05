@@ -9,6 +9,7 @@ import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
+import { useConfirmDialog } from '@/components/ui'
 
 const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
@@ -57,6 +58,7 @@ export function QuotationClient({ initialData }: Props) {
     const [saving, setSaving] = useState(false)
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
     const [sendLoading, setSendLoading] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     const handleCloseCreateDrawer = () => {
         const hasContent = isNewCustomer 
@@ -64,9 +66,15 @@ export function QuotationClient({ initialData }: Props) {
             : !!(formData.customerId || formData.validUntil || formData.notes || formData.terms || formLines.length > 0);
 
         if (hasContent) {
-            if (window.confirm('Bạn có chắc chắn muốn đóng? Mọi thông tin báo giá đang nhập sẽ bị mất.')) {
-                setCreateOpen(false)
-            }
+            confirm({
+                title: 'Hủy thông tin báo giá đang nhập',
+                message: 'Bạn có chắc chắn muốn đóng? Mọi thông tin báo giá đang nhập sẽ bị mất.',
+                danger: true,
+                confirmLabel: 'Đóng và hủy nhập',
+                onConfirm: () => {
+                    setCreateOpen(false)
+                }
+            })
         } else {
             setCreateOpen(false)
         }
@@ -169,22 +177,26 @@ export function QuotationClient({ initialData }: Props) {
         }
     }
 
-    const handleConvert = async (id: string) => {
-        if (!confirm('Chuyển Quotation này thành Sales Order?')) return
-        setActionLoading(id)
-        toast.promise(
-            convertQuotationToSO(id).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi chuyển đổi thành SO')
-                reload().then(() => setDetailId(null))
-                return res
-            }),
-            {
-                loading: 'Đang chuyển đổi thành Đơn Hàng...',
-                success: (res: any) => `Đã tạo ${res.soNo} từ Quotation!`,
-                error: (err: any) => `Lỗi: ${err.message}`,
-                finally: () => setActionLoading(null)
+    const handleConvert = (id: string) => {
+        confirm({
+            title: 'Chuyển báo giá thành Đơn Bán Hàng',
+            message: 'Bạn có chắc chắn muốn chuyển Quotation này thành Sales Order (SO) chính thức không?',
+            confirmLabel: 'Tạo Sales Order',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    const res: any = await convertQuotationToSO(id)
+                    if (!res.success) throw new Error(res.error || 'Lỗi chuyển đổi thành SO')
+                    toast.success(`Đã tạo ${res.soNo} từ Quotation!`)
+                    await reload()
+                    setDetailId(null)
+                } catch (err: any) {
+                    toast.error(`Lỗi: ${err.message}`)
+                } finally {
+                    setActionLoading(null)
+                }
             }
-        )
+        })
     }
 
     const handleStatusChange = async (id: string, status: QuotationStatus) => {
@@ -1334,6 +1346,8 @@ export function QuotationClient({ initialData }: Props) {
                     </div>
                 </>
             )}
+
+            {confirmDialog}
         </div>
     )
 }

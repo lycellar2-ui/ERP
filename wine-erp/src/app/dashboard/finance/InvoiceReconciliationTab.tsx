@@ -18,6 +18,7 @@ import {
 import { syncVnptInvoiceForOrder, deleteDraftInvoiceFromVnpt } from '../sales/actions-vnpt'
 import { DataPagination } from '@/components/DataPagination'
 import { formatVND } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: string; badgeText: string; border: string }> = {
     MATCHED: {
@@ -53,6 +54,7 @@ const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: stri
 }
 
 export function InvoiceReconciliationTab() {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [period, setPeriod] = useState<ReconciliationFilters['period']>('this_month')
     const [customFrom, setCustomFrom] = useState('')
     const [customTo, setCustomTo] = useState('')
@@ -218,7 +220,13 @@ export function InvoiceReconciliationTab() {
     // Delete Draft Invoice
     const [deletingSoId, setDeletingSoId] = useState<string | null>(null)
     const handleDeleteDraft = async (soId: string, soNo: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn hủy bản nháp hóa đơn cho đơn hàng ${soNo}?`)) return
+        const ok = await confirm({
+            title: 'Hủy bản nháp hóa đơn',
+            message: `Bạn có chắc chắn muốn hủy bản nháp hóa đơn cho đơn hàng ${soNo}?`,
+            confirmLabel: 'Hủy bản nháp',
+            variant: 'danger',
+        })
+        if (!ok) return
         setDeletingSoId(soId)
         try {
             const res = await deleteDraftInvoiceFromVnpt(soId)
@@ -449,7 +457,13 @@ export function InvoiceReconciliationTab() {
     // Unlink VNPT
     const handleUnlinkVnpt = async (item: VnptInvoiceRegistryItem) => {
         if (!item.linkedSoId) return
-        if (!confirm(`Bạn có chắc muốn hủy gán hóa đơn #${item.invNo} khỏi đơn hàng ${item.linkedSoNo}?`)) return
+        const ok = await confirm({
+            title: 'Hủy gán hóa đơn',
+            message: `Bạn có chắc muốn hủy gán hóa đơn #${item.invNo} khỏi đơn hàng ${item.linkedSoNo}?`,
+            confirmLabel: 'Hủy gán',
+            variant: 'warning',
+        })
+        if (!ok) return
         setUnlinkingInvNo(item.invNo)
         try {
             const res = await unlinkVnptInvoiceFromOrder({
@@ -1751,6 +1765,7 @@ export function InvoiceReconciliationTab() {
             </div>
         </div>
     )}
+            {confirmDialog}
         </div>
     )
 }

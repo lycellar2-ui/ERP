@@ -13,6 +13,7 @@ import {
 } from '../pipeline/actions'
 import { getCustomersForSO, getSalesReps } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 const STAGES: { key: OppStage; label: string; color: string; bg: string; probability: number }[] = [
     { key: 'LEAD', label: 'Lead', color: '#475569', bg: 'rgba(100,116,139,0.08)', probability: 10 },
@@ -25,6 +26,7 @@ const STAGES: { key: OppStage; label: string; color: string; bg: string; probabi
 
 export function PipelinePanel() {
     const [rows, setRows] = useState<PipelineRow[]>([])
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [stats, setStats] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [createOpen, setCreateOpen] = useState(false)
@@ -127,11 +129,19 @@ export function PipelinePanel() {
         if (detail?.id === lostModal.id) openDetail(lostModal.id)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa cơ hội này?')) return
-        await deleteOpportunity(id)
-        if (detail?.id === id) setDetail(null)
-        await reload()
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Cơ Hội Kinh Doanh',
+            message: 'Bạn có chắc chắn muốn xóa cơ hội kinh doanh này không?',
+            confirmLabel: 'Xóa Cơ Hội',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                await deleteOpportunity(id)
+                if (detail?.id === id) setDetail(null)
+                await reload()
+            }
+        })
     }
 
     const openDetail = async (id: string) => {
@@ -610,6 +620,7 @@ export function PipelinePanel() {
                     to { transform: translateX(0); opacity: 1; }
                 }
             `}</style>
+            {confirmDialog}
         </div>
     )
 }

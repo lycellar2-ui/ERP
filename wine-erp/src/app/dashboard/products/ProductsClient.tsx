@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Plus, Upload, Download, SlidersHorizontal, X } from 'lucide-react'
-import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar } from '@/components/ui'
+import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar, useConfirmDialog } from '@/components/ui'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
 import dynamic from 'next/dynamic'
@@ -61,6 +61,7 @@ export function ProductsClient({
     const [producerFilter, setProducerFilter] = useState('')
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // TanStack Query — cache products page data, survive tab switches
     const { data: queryData, isLoading, isFetching } = useQuery({
@@ -165,15 +166,28 @@ export function ProductsClient({
         qc.invalidateQueries({ queryKey: ['products'] })
     }, [qc])
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Xóa sản phẩm "${name}"?\n\nSản phẩm sẽ bị ẩn khỏi danh sách (soft delete).`)) return
-        try {
-            await deleteProduct(id)
-            toast.success(`Đã xóa "${name}"`)
-            reloadPageData()
-        } catch {
-            toast.error('Không thể xóa sản phẩm')
-        }
+    const handleDelete = (id: string, name: string) => {
+        confirm({
+            title: `Xóa Sản Phẩm "${name}"`,
+            message: (
+                <div className="space-y-1">
+                    <p>Bạn có chắc chắn muốn xóa sản phẩm <strong>"{name}"</strong>?</p>
+                    <p className="text-xs text-slate-500">Sản phẩm sẽ bị ẩn khỏi danh sách (soft delete).</p>
+                </div>
+            ),
+            confirmLabel: 'Xác Nhận Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    await deleteProduct(id)
+                    toast.success(`Đã xóa "${name}"`)
+                    reloadPageData()
+                } catch {
+                    toast.error('Không thể xóa sản phẩm')
+                }
+            }
+        })
     }
 
     const handleExport = async () => {
@@ -408,6 +422,7 @@ export function ProductsClient({
                 onImport={bulkImportProducts}
                 onComplete={reloadPageData}
             />
+            {confirmDialog}
         </div>
     )
 }

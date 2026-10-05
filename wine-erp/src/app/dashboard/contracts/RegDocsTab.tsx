@@ -15,6 +15,7 @@ import {
     CATEGORY_TYPE_MAP,
 } from './reg-doc-constants'
 import { formatDate } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 import { toast } from 'sonner'
 
 // ═══════════════════════════════════════════════════
@@ -439,7 +440,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                                 <RefreshCw size={12} /> Gia Hạn
                             </button>
                         )}
-                        <button onClick={() => { if (confirm('Xác nhận xóa giấy tờ này?')) onDelete(doc.id) }}
+                        <button onClick={() => onDelete(doc.id)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
                             style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}>
                             <X size={12} /> Xóa
@@ -466,6 +467,7 @@ interface Props {
 
 export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
     const [rows, setRows] = useState(initialRows)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [loading, setLoading] = useState(false)
     const [search, setSearch] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('')
@@ -505,10 +507,19 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
         }
     }
 
-    const handleDelete = async (id: string) => {
-        const res = await deleteRegulatedDoc(id)
-        if (res.success) { toast.success('Đã xóa'); reload() }
-        else toast.error(res.error ?? 'Lỗi xóa')
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Giấy Tờ Pháp Lý',
+            message: 'Bạn có chắc chắn muốn xóa hồ sơ giấy tờ pháp lý này không?',
+            confirmLabel: 'Xóa Giấy Tờ',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                const res = await deleteRegulatedDoc(id)
+                if (res.success) { toast.success('Đã xóa'); reload() }
+                else toast.error(res.error ?? 'Lỗi xóa')
+            }
+        })
     }
 
     return (
@@ -670,6 +681,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                 onCreated={() => { setDrawerOpen(false); setRenewTarget(null); reload() }}
                 renewFrom={renewTarget}
             />
+            {confirmDialog}
         </div>
     )
 }

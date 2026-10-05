@@ -9,6 +9,7 @@ import {
     reverseDeliveryOrder, updateDeliveryOrderDate, getDODetail, getAvailableLotsForProduct, getWarehouses,
 } from './actions'
 import { formatDate } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 type SOOption = {
     id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string; legalEntityId?: string | null; legalEntityCode?: string | null
@@ -147,48 +148,74 @@ export function DeliveryOrderTab({ warehouses }: {
         }
     }
 
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
     const handleStartPicking = (soId: string) => {
         setPreselectedSOId(soId)
         setCreateOpen(true)
     }
 
-    const handleConfirm = async (id: string) => {
-        if (!confirm('Xác nhận Delivery Order? Hàng sẽ được xuất kho.')) return
-        toast.promise(
-            confirmDeliveryOrder(id).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi xác nhận DO')
+    const handleConfirm = (id: string) => {
+        confirm({
+            title: 'Xác nhận xuất kho (Delivery Order)',
+            message: 'Xác nhận Delivery Order? Hàng sẽ được trừ tồn kho thực tế và cập nhật trạng thái xuất kho.',
+            confirmLabel: 'Xác nhận xuất kho',
+            onConfirm: async () => {
+                const res = await confirmDeliveryOrder(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi xác nhận DO')
+                    return
+                }
+                toast.success('DO đã xác nhận — Hàng đã xuất kho!')
                 reload()
                 setDetailData(null)
-                return res
-            }),
-            { loading: 'Đang xác nhận...', success: 'DO đã xác nhận — Hàng đã xuất kho!', error: (err: Error) => `Lỗi: ${err.message}` }
-        )
+            }
+        })
     }
 
-    const handleMarkDelivered = async (id: string) => {
-        if (!confirm('Đánh dấu đơn hàng đã giao thành công?')) return
-        toast.promise(
-            markDODelivered(id).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật trạng thái')
+    const handleMarkDelivered = (id: string) => {
+        confirm({
+            title: 'Xác nhận đã giao hàng',
+            message: 'Đánh dấu đơn hàng này đã được giao thành công tới khách hàng?',
+            confirmLabel: 'Đã giao thành công',
+            onConfirm: async () => {
+                const res = await markDODelivered(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi cập nhật trạng thái')
+                    return
+                }
+                toast.success('✅ Đơn hàng đã giao thành công!')
                 reload()
                 setDetailData(null)
-                return res
-            }),
-            { loading: 'Đang cập nhật...', success: '✅ Đơn hàng đã giao thành công!', error: (err: Error) => `Lỗi: ${err.message}` }
-        )
+            }
+        })
     }
 
-    const handleReverse = async (id: string, doNo?: string) => {
-        if (!confirm(`⚠️ XÁC NHẬN REVERSE (HOÀN TÁC) PHIẾU ${doNo ?? id}?\n\n- Tồn kho sẽ được hoàn trả lại về các Lô tương ứng.\n- Đơn bán hàng (SO) sẽ được khôi phục về trạng thái Chờ xuất kho.`)) return
-        toast.promise(
-            reverseDeliveryOrder(id).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi hoàn tác xuất kho')
+    const handleReverse = (id: string, doNo?: string) => {
+        confirm({
+            title: `Hoàn tác (Reverse) phiếu xuất kho ${doNo ?? id}`,
+            message: (
+                <div className="space-y-2 text-xs">
+                    <p className="font-semibold text-slate-800">Bạn có chắc chắn muốn hoàn tác (Reverse) phiếu xuất kho này?</p>
+                    <ul className="list-disc pl-4 space-y-1 text-slate-600">
+                        <li>Tồn kho vật lý sẽ được hoàn trả lại về các Lô tương ứng.</li>
+                        <li>Đơn bán hàng (SO) sẽ được khôi phục về trạng thái Chờ xuất kho.</li>
+                    </ul>
+                </div>
+            ),
+            danger: true,
+            confirmLabel: 'Xác nhận hoàn tác',
+            onConfirm: async () => {
+                const res = await reverseDeliveryOrder(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi hoàn tác xuất kho')
+                    return
+                }
+                toast.success(`↺ Phiếu ${doNo ?? ''} đã Reverse & khôi phục tồn kho thành công!`)
                 reload()
                 setDetailData(null)
-                return res
-            }),
-            { loading: 'Đang xử lý Reverse phiếu...', success: `↺ Phiếu ${doNo ?? ''} đã Reverse & khôi phục tồn kho thành công!`, error: (err: Error) => `Lỗi: ${err.message}` }
-        )
+            }
+        })
     }
 
     return (
@@ -646,6 +673,8 @@ export function DeliveryOrderTab({ warehouses }: {
                     onCreated={() => { setCreateOpen(false); reload() }}
                 />
             )}
+
+            {confirmDialog}
         </div>
     )
 }

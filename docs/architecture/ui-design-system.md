@@ -34,7 +34,29 @@ Pagination
 
 - Bấm 1 dòng → **Drawer chi tiết** (phải, `lg` 720px).
 - Tạo/Sửa → **Drawer form** (phải, `md` 640px). Form rất dài (hợp đồng, tờ khai) → **trang riêng**.
-- **Modal** chỉ dùng cho xác nhận ngắn (`ConfirmDialog`) — không đặt form trong modal. Không dùng `window.confirm`.
+- **Modal** chỉ dùng cho xác nhận ngắn (`ConfirmDialog`) — không đặt form trong modal. Tuyệt đối không dùng `window.confirm`.
+- **Hộp thoại xác nhận (`useConfirmDialog`):** Cấm hoàn toàn `window.confirm()`. Toàn bộ 54 vị trí đã được chuẩn hóa qua hook `const { confirm, dialog } = useConfirmDialog()` từ `@/components/ui`:
+  ```tsx
+  // Cách 1: Async Promise (Khuyên dùng)
+  const ok = await confirm({
+    title: 'Xóa chỉ tiêu',
+    message: 'Bạn có chắc chắn muốn xóa chỉ tiêu này?',
+    confirmLabel: 'Xóa',
+    variant: 'danger', // hoặc warning
+  })
+  if (!ok) return
+  await deleteAction()
+
+  // Cách 2: Callback lifecycle với auto-loading spinner
+  confirm({
+    title: 'Hủy đơn',
+    message: 'Bạn có chắc muốn hủy đơn hàng này?',
+    danger: true,
+    confirmLabel: 'Hủy đơn',
+    onConfirm: async () => { await cancelMutation.mutateAsync(id) }
+  })
+  ```
+  *Lưu ý: Luôn render `{dialog}` trước thẻ đóng `</div>` hoặc Fragment của component/drawer.*
 - Module không có KPI/tab thì **bỏ block đó**, không tự chế block khác.
 
 ```tsx
@@ -183,7 +205,8 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
-| **v3.3** | 2026-10-05 | Hoàn thành 100% Đợt 1 (Bán hàng): Chuyển cấu trúc toàn diện sang UI kit chuẩn cho POS, Pipeline, Contracts, CRM, Proposals, Quotations (`PageHeader`, `StatGrid`, `StatCard`, `Toolbar`, `Table`, `Drawer`, `Badge`). TypeScript type-checking 0 lỗi. |
+| **v3.7** | 2026-10-06 | **Loại bỏ 100% `window.confirm()` trình duyệt toàn hệ thống**: Thay thế toàn bộ 54 lệnh confirm thô sơ bằng hook `useConfirmDialog` và component `<ConfirmDialog>` đồng bộ chuẩn Light UI (`#0891B2` cyan accent, async spinner loading, accessible keyboard & backdrop, zero purple/violet). Hỗ trợ cả 2 pattern: async promise (`const ok = await confirm(...)`) và callback lifecycle (`onConfirm`). |
+| **v3.6** | 2026-10-05 | Hoàn tất Đợt 4 (Toàn bộ 8 module còn lại): hr, settings, audit-log, media, qr-codes, agency, ai, dashboard (CEO Overview). Toàn bộ 34 module trong ERP đã chuẩn hóa 100% về Light Design System đồng nhất. |
 | **v3.2** | 2026-10-05 | Pilot được duyệt. Đợt 1: codemod màu cho 25 file (quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals); chuyển cấu trúc sang kit cho Returns, Price List, Delivery (kèm E-POD/Create drawer). Lưu ý: `Toolbar` nhận `left`/`right`, không nhận children; `TableMessageRow` có `p-0` → luôn bọc `EmptyState`/`TableSkeleton` bên trong. |
 | **v3.1** | 2026-10-05 | Pilot xong: Sales (list + 3 drawer), Products (list, bảng, 2 drawer), Customers (list + drawer), Sidebar/Header. Thêm `Drawer.actions`, `Pagination.onPageHover`, `WineTypeBadge` dùng chung (bỏ màu tím Fortified ở Margin). Script `ui-palette-codemod.mjs` + test. |
 | **v3.0** | 2026-10-05 | Viết lại tài liệu thành 1 bản Light duy nhất (bỏ spec Dark cũ & đoạn lặp). Tải Inter qua `next/font`, Toaster light. Thêm token `lys-teal-strong/hover/soft`, 6 tông trạng thái `tone-*`, token chuyển động, `type-caption`; `radius-lg` 10→8px. Tạo `src/components/ui` (11 nhóm component) + `src/lib/ui/status.ts`. |

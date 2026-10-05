@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Key, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, Zap, FileText, Activity } from 'lucide-react'
 import { type ApiKeyRow, type PromptTemplateRow, saveApiKey, toggleApiKey, deleteApiKey, testApiKey, createPromptTemplate, deletePromptTemplate } from './vault-actions'
+import { useConfirmDialog } from '@/components/ui'
 
 const PROVIDERS = [
     { value: 'gemini', label: 'Google Gemini', color: '#0891B2' },
@@ -12,6 +13,7 @@ const PROVIDERS = [
 ]
 
 export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [keys, setKeys] = useState(initialKeys)
     const [showAdd, setShowAdd] = useState(false)
     const [loading, setLoading] = useState('')
@@ -41,7 +43,17 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     }
 
     const handleToggle = async (id: string) => { await toggleApiKey(id); refresh() }
-    const handleDelete = async (id: string) => { if (confirm('Xóa API Key?')) { await deleteApiKey(id); refresh() } }
+    const handleDelete = async (id: string) => {
+        const ok = await confirm({
+            title: 'Xóa API Key',
+            message: 'Bạn có chắc chắn muốn xóa API Key này không?',
+            confirmLabel: 'Xóa Key',
+            variant: 'danger',
+        })
+        if (!ok) return
+        await deleteApiKey(id)
+        refresh()
+    }
     const handleTest = async (id: string) => {
         setLoading(id)
         setTestResult(null)
@@ -206,11 +218,13 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                     })}
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }
 
 export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTemplateRow[] }) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [templates, setTemplates] = useState(initialTemplates)
     const [showCreate, setShowCreate] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -239,7 +253,15 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
     }
 
     const handleDelete = async (id: string) => {
-        if (confirm('Xóa Prompt Template?')) { await deletePromptTemplate(id); refresh() }
+        const ok = await confirm({
+            title: 'Xóa Prompt Template',
+            message: 'Bạn có chắc chắn muốn xóa Prompt Template này không?',
+            confirmLabel: 'Xóa Template',
+            variant: 'danger',
+        })
+        if (!ok) return
+        await deletePromptTemplate(id)
+        refresh()
     }
 
     return (
@@ -360,6 +382,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                     ))}
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }

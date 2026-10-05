@@ -14,7 +14,7 @@ import {
 } from './actions'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { SupplierDetailDrawer } from './SupplierDetailDrawer'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
 import { toast } from 'sonner'
 
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
@@ -346,6 +346,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     const [scoreLoading, setScoreLoading] = useState(false)
     const [duplicates, setDuplicates] = useState<DuplicateCandidate[] | null>(null)
     const [dupLoading, setDupLoading] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number) => {
         setLoading(true)
@@ -358,13 +359,26 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
         } finally { setLoading(false) }
     }, [search, typeFilter, statusFilter, page])
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Xóa NCC "${name}"?\n\nNCC sẽ bị đánh dấu Tạm dừng. Nếu NCC đang có PO chưa hoàn tất sẽ không xóa được.`)) return
-        try {
-            const result = await deleteSupplier(id)
-            if (result.success) { toast.success(`Đã xóa "${name}"`); reload() }
-            else toast.error(result.error ?? 'Không thể xóa')
-        } catch { toast.error('Lỗi khi xóa NCC') }
+    const handleDelete = (id: string, name: string) => {
+        confirm({
+            title: `Xóa Nhà Cung Cấp "${name}"`,
+            message: (
+                <div className="space-y-1">
+                    <p>Bạn có chắc chắn muốn xóa NCC <strong>"{name}"</strong>?</p>
+                    <p className="text-xs text-slate-500">NCC sẽ bị đánh dấu Tạm dừng. Nếu NCC đang có PO chưa hoàn tất sẽ không xóa được.</p>
+                </div>
+            ),
+            confirmLabel: 'Xác Nhận Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const result = await deleteSupplier(id)
+                    if (result.success) { toast.success(`Đã xóa "${name}"`); reload() }
+                    else toast.error(result.error ?? 'Không thể xóa')
+                } catch { toast.error('Lỗi khi xóa NCC') }
+            }
+        })
     }
 
     const handleExport = async () => {
@@ -675,6 +689,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     { header: 'SĐT', sample: '+33 1 2345 6789' },
                 ]}
                 onImport={bulkImportSuppliers} onComplete={() => reload()} />
+            {confirmDialog}
         </div>
     )
 }

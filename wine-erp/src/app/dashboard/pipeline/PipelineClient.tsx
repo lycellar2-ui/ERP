@@ -15,7 +15,7 @@ import { getCustomersForSO, getSalesReps } from '../sales/actions'
 import { formatVND, cn } from '@/lib/utils'
 import {
     Button, PageHeader, StatCard, StatGrid, Drawer, Modal,
-    Field, Input, Select, Textarea, Toolbar
+    Field, Input, Select, Textarea, Toolbar, useConfirmDialog
 } from '@/components/ui'
 import type { Tone } from '@/lib/ui/status'
 
@@ -41,6 +41,7 @@ interface Props {
 
 export function PipelineClient({ initialRows, stats }: Props) {
     const [rows, setRows] = useState(initialRows)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [createOpen, setCreateOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -134,11 +135,19 @@ export function PipelineClient({ initialRows, stats }: Props) {
         if (detail?.id === lostModal.id) openDetail(lostModal.id)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa cơ hội này?')) return
-        await deleteOpportunity(id)
-        if (detail?.id === id) setDetail(null)
-        await reload()
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Cơ Hội Kinh Doanh',
+            message: 'Bạn có chắc chắn muốn xóa cơ hội kinh doanh này không?',
+            confirmLabel: 'Xóa Cơ Hội',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                await deleteOpportunity(id)
+                if (detail?.id === id) setDetail(null)
+                await reload()
+            }
+        })
     }
 
     const openDetail = async (id: string) => {
@@ -695,6 +704,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                     </div>
                 </Modal>
             )}
+            {confirmDialog}
         </div>
     )
 }

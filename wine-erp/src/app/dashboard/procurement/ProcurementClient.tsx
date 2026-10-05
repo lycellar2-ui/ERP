@@ -25,6 +25,7 @@ import { ShipmentDetailDrawer } from './ShipmentDetailDrawer'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { getSuppliers } from '@/app/dashboard/suppliers/actions'
 import { getProducts } from '@/app/dashboard/products/actions'
+import { useConfirmDialog } from '@/components/ui'
 import Link from 'next/link'
 
 // ── Country Flag Mapping ───────────────────────────
@@ -247,6 +248,7 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
     const [updating, setUpdating] = useState(false)
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
     const [reason, setReason] = useState('')
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     const handleSubmit = async () => {
         setUpdating(true)
@@ -304,116 +306,131 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
         )
     }
 
-    const handleRevert = async () => {
-        if (!confirm('Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?')) return
-        setUpdating(true)
-        toast.promise(
-            revertPOToDraft(poId).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
-                onUpdate()
-                return res
-            }),
-            {
-                loading: 'Đang thu hồi về Nháp...',
-                success: 'Đã thu hồi đơn về trạng thái Nháp thành công!',
-                error: (err: any) => `Lỗi: ${err.message}`,
-                finally: () => setUpdating(false)
+    const handleRevert = () => {
+        confirm({
+            title: 'Thu Hồi Đơn Mua Hàng',
+            message: 'Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?',
+            confirmLabel: 'Thu Hồi',
+            cancelLabel: 'Bỏ qua',
+            onConfirm: async () => {
+                setUpdating(true)
+                try {
+                    const res = await revertPOToDraft(poId)
+                    if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
+                    toast.success('Đã thu hồi đơn về trạng thái Nháp thành công!')
+                    onUpdate()
+                } catch (err: any) {
+                    toast.error(`Lỗi: ${err.message}`)
+                } finally {
+                    setUpdating(false)
+                }
             }
-        )
+        })
     }
 
-    const handleDeleteDraft = async () => {
-        if (!confirm('Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.')) return
-        setUpdating(true)
-        toast.promise(
-            deletePurchaseOrder(poId).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
-                onUpdate()
-                return res
-            }),
-            {
-                loading: 'Đang xoá đơn nháp...',
-                success: 'Đã xoá đơn mua hàng nháp thành công!',
-                error: (err: any) => `Lỗi: ${err.message}`,
-                finally: () => setUpdating(false)
+    const handleDeleteDraft = () => {
+        confirm({
+            title: 'Xóa Đơn Mua Hàng Nháp',
+            message: 'Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.',
+            confirmLabel: 'Xóa Đơn',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                setUpdating(true)
+                try {
+                    const res = await deletePurchaseOrder(poId)
+                    if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
+                    toast.success('Đã xoá đơn mua hàng nháp thành công!')
+                    onUpdate()
+                } catch (err: any) {
+                    toast.error(`Lỗi: ${err.message}`)
+                } finally {
+                    setUpdating(false)
+                }
             }
-        )
+        })
     }
 
     if (current === 'DRAFT') {
         return (
-            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                {onEdit && (
-                    <button onClick={() => onEdit(poId)} disabled={updating}
-                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-amber-500/20"
-                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                        title="Chỉnh sửa đơn mua hàng nháp">
-                        <Pencil size={11} /> Sửa
+            <>
+                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                    {onEdit && (
+                        <button onClick={() => onEdit(poId)} disabled={updating}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-amber-500/20"
+                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
+                            title="Chỉnh sửa đơn mua hàng nháp">
+                            <Pencil size={11} /> Sửa
+                        </button>
+                    )}
+                    <button onClick={handleSubmit} disabled={updating}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/20"
+                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
+                        title="Gửi duyệt PO">
+                        {updating ? <Loader2 size={10} className="animate-spin" /> : <><Send size={11} /> Gửi Duyệt</>}
                     </button>
-                )}
-                <button onClick={handleSubmit} disabled={updating}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/20"
-                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
-                    title="Gửi duyệt PO">
-                    {updating ? <Loader2 size={10} className="animate-spin" /> : <><Send size={11} /> Gửi Duyệt</>}
-                </button>
-                <button onClick={handleDeleteDraft} disabled={updating}
-                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                    style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
-                    title="Xoá đơn mua hàng nháp">
-                    <Trash2 size={11} />
-                </button>
-            </div>
+                    <button onClick={handleDeleteDraft} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
+                        style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
+                        title="Xoá đơn mua hàng nháp">
+                        <Trash2 size={11} />
+                    </button>
+                </div>
+                {confirmDialog}
+            </>
         )
     }
 
     if (current === 'PENDING_APPROVAL') {
         return (
-            <div className="flex items-center gap-1 relative" onClick={e => e.stopPropagation()}>
-                <button onClick={handleApprove} disabled={updating}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/25"
-                    style={{ background: 'rgba(21,128,61,0.2)', color: '#15803D', border: '1px solid rgba(21,128,61,0.4)' }}
-                    title="Duyệt PO">
-                    {updating ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
-                </button>
-                <button onClick={() => setRejectDialogOpen(true)} disabled={updating}
-                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                    style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.35)' }}
-                    title="Từ chối PO">
-                    {updating ? <Loader2 size={10} className="animate-spin" /> : <><X size={11} /> Từ Chối</>}
-                </button>
-                <button onClick={handleRevert} disabled={updating}
-                    className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-amber-500/20"
-                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                    title="Thu hồi về Nháp để chỉnh sửa">
-                    <RotateCcw size={10} /> Thu Hồi
-                </button>
+            <>
+                <div className="flex items-center gap-1 relative" onClick={e => e.stopPropagation()}>
+                    <button onClick={handleApprove} disabled={updating}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/25"
+                        style={{ background: 'rgba(21,128,61,0.2)', color: '#15803D', border: '1px solid rgba(21,128,61,0.4)' }}
+                        title="Duyệt PO">
+                        {updating ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
+                    </button>
+                    <button onClick={() => setRejectDialogOpen(true)} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
+                        style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.35)' }}
+                        title="Từ chối PO">
+                        {updating ? <Loader2 size={10} className="animate-spin" /> : <><X size={11} /> Từ Chối</>}
+                    </button>
+                    <button onClick={handleRevert} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-amber-500/20"
+                        style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
+                        title="Thu hồi về Nháp để chỉnh sửa">
+                        <RotateCcw size={10} /> Thu Hồi
+                    </button>
 
-                {rejectDialogOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" onClick={() => setRejectDialogOpen(false)}>
-                        <div className="w-full max-w-sm p-4 rounded-lg bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
-                            <h4 className="text-sm font-bold text-slate-900">Từ Chối Phê Duyệt PO</h4>
-                            <p className="text-xs text-slate-600">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
-                            <textarea
-                                value={reason}
-                                onChange={e => setReason(e.target.value)}
-                                placeholder="Nhập lý do từ chối (bắt buộc)..."
-                                rows={3}
-                                className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-slate-200 text-slate-900"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button onClick={() => setRejectDialogOpen(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-white rounded-lg">
-                                    Đóng
-                                </button>
-                                <button onClick={handleReject} disabled={updating || !reason.trim()}
-                                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#B91C1C] rounded-lg disabled:opacity-50">
-                                    Xác Nhận Từ Chối
-                                </button>
+                    {rejectDialogOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" onClick={() => setRejectDialogOpen(false)}>
+                            <div className="w-full max-w-sm p-4 rounded-lg bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+                                <h4 className="text-sm font-bold text-slate-900">Từ Chối Phê Duyệt PO</h4>
+                                <p className="text-xs text-slate-600">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
+                                <textarea
+                                    value={reason}
+                                    onChange={e => setReason(e.target.value)}
+                                    placeholder="Nhập lý do từ chối (bắt buộc)..."
+                                    rows={3}
+                                    className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-slate-200 text-slate-900"
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => setRejectDialogOpen(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-white rounded-lg">
+                                        Đóng
+                                    </button>
+                                    <button onClick={handleReject} disabled={updating || !reason.trim()}
+                                        className="px-3 py-1.5 text-xs font-bold text-white bg-[#B91C1C] rounded-lg disabled:opacity-50">
+                                        Xác Nhận Từ Chối
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+                {confirmDialog}
+            </>
         )
     }
 
@@ -1905,6 +1922,7 @@ interface Props {
 export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
@@ -2162,43 +2180,52 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         )
     }
 
-    const handleDrawerRevertToDraft = async (poId: string) => {
-        if (!confirm('Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?')) return
-        setApproving(true)
-        toast.promise(
-            revertPOToDraft(poId).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
-                refresh()
-                if (selectedId === poId) showDetail(poId, true)
-                return res
-            }),
-            {
-                loading: 'Đang thu hồi đơn về trạng thái Nháp...',
-                success: 'Đã thu hồi đơn về trạng thái Nháp để chỉnh sửa!',
-                error: (err: any) => `Lỗi: ${err.message}`,
-                finally: () => setApproving(false)
+    const handleDrawerRevertToDraft = (poId: string) => {
+        confirm({
+            title: 'Thu Hồi Đơn Mua Hàng',
+            message: 'Bạn có muốn thu hồi đơn này về trạng thái Nháp để chỉnh sửa không?',
+            confirmLabel: 'Thu Hồi',
+            cancelLabel: 'Bỏ qua',
+            onConfirm: async () => {
+                setApproving(true)
+                try {
+                    const res = await revertPOToDraft(poId)
+                    if (!res.success) throw new Error(res.error || 'Lỗi thu hồi PO')
+                    toast.success('Đã thu hồi đơn về trạng thái Nháp để chỉnh sửa!')
+                    refresh()
+                    if (selectedId === poId) showDetail(poId, true)
+                } catch (err: any) {
+                    toast.error(`Lỗi: ${err.message}`)
+                } finally {
+                    setApproving(false)
+                }
             }
-        )
+        })
     }
 
-    const handleDrawerDelete = async (poId: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.')) return
-        setApproving(true)
-        toast.promise(
-            deletePurchaseOrder(poId).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
-                setSelectedId(null)
-                setPoDetail(null)
-                refresh()
-                return res
-            }),
-            {
-                loading: 'Đang xoá đơn nháp...',
-                success: 'Đã xoá đơn mua hàng nháp thành công!',
-                error: (err: any) => `Lỗi: ${err.message}`,
-                finally: () => setApproving(false)
+    const handleDrawerDelete = (poId: string) => {
+        confirm({
+            title: 'Xóa Đơn Mua Hàng Nháp',
+            message: 'Bạn có chắc chắn muốn xoá đơn mua hàng nháp này không? Thao tác này không thể hoàn tác.',
+            confirmLabel: 'Xóa Đơn',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                setApproving(true)
+                try {
+                    const res = await deletePurchaseOrder(poId)
+                    if (!res.success) throw new Error(res.error || 'Lỗi xoá PO')
+                    toast.success('Đã xoá đơn mua hàng nháp thành công!')
+                    setSelectedId(null)
+                    setPoDetail(null)
+                    refresh()
+                } catch (err: any) {
+                    toast.error(`Lỗi: ${err.message}`)
+                } finally {
+                    setApproving(false)
+                }
             }
-        )
+        })
     }
 
     return (
@@ -3299,6 +3326,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 shipmentId={selectedShipmentId}
                 onClose={() => { setShipmentDrawerOpen(false); setSelectedShipmentId(null) }}
             />
+            {confirmDialog}
         </div>
     )
 }

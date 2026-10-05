@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, type ReactNode } from 'react'
+import { useRef, useState, useCallback, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -94,4 +94,77 @@ export function ConfirmDialog({
             </div>
         </Modal>
     )
+}
+
+export interface ConfirmConfig {
+    title: ReactNode
+    message: ReactNode
+    confirmLabel?: string
+    cancelLabel?: string
+    danger?: boolean
+    variant?: 'danger' | 'warning' | 'primary'
+    onConfirm?: () => void | Promise<void>
+}
+
+/**
+ * Hook providing a non-blocking, modern confirmation dialog.
+ * Replaces crude window.confirm() calls with unified Light Design System dialog.
+ * Supports both promise-based (`const ok = await confirm(...)`) and callback-based (`onConfirm: ...`).
+ */
+export function useConfirmDialog() {
+    const [config, setConfig] = useState<ConfirmConfig | null>(null)
+    const [resolver, setResolver] = useState<((value: boolean) => void) | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const confirm = useCallback((opts: ConfirmConfig): Promise<boolean> => {
+        return new Promise<boolean>((resolve) => {
+            setConfig(opts)
+            setResolver(() => resolve)
+        })
+    }, [])
+
+    const handleClose = () => {
+        if (!loading) {
+            setConfig(null)
+            if (resolver) {
+                resolver(false)
+                setResolver(null)
+            }
+        }
+    }
+
+    const handleConfirm = async () => {
+        if (!config) return
+        try {
+            setLoading(true)
+            if (config.onConfirm) {
+                await config.onConfirm()
+            }
+            if (resolver) {
+                resolver(true)
+                setResolver(null)
+            }
+            setConfig(null)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const isDanger = config?.danger || config?.variant === 'danger' || config?.variant === 'warning'
+
+    const dialog = config ? (
+        <ConfirmDialog
+            open={!!config}
+            onClose={handleClose}
+            onConfirm={handleConfirm}
+            title={config.title}
+            message={config.message}
+            confirmLabel={config.confirmLabel}
+            cancelLabel={config.cancelLabel}
+            danger={isDanger}
+            loading={loading}
+        />
+    ) : null
+
+    return { confirm, dialog }
 }

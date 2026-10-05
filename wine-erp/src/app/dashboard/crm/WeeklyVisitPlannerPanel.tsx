@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Calendar, Plus, Trash2, CheckCircle2, X, AlertCircle, Loader2, ArrowLeft, ArrowRight, Save, Download, Printer, User } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirmDialog } from '@/components/ui'
 import { getWeeklyPlan, createOrUpdateWeeklyPlan, updateVisitStatus, getSalesRepCustomers, getSalesRepsList, getCurrentUserProfile } from './actions'
 import { formatDate } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
 
 export function WeeklyVisitPlannerPanel() {
     const [weekOffset, setWeekOffset] = useState(0)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     
@@ -194,22 +196,30 @@ export function WeeklyVisitPlannerPanel() {
         }
     }
 
-    const handleCancelVisit = async (visitId: string) => {
-        if (!confirm('Bạn có chắc chắn muốn hủy lịch đi thăm này không?')) return
-        try {
-            const res = await updateVisitStatus({
-                visitId,
-                status: 'CANCELLED'
-            })
-            if (res.success) {
-                toast.success('Đã hủy lịch đi thăm!')
-                await load()
-            } else {
-                toast.error(res.error || 'Có lỗi xảy ra')
+    const handleCancelVisit = (visitId: string) => {
+        confirm({
+            title: 'Hủy Lịch Đi Thăm',
+            message: 'Bạn có chắc chắn muốn hủy lịch đi thăm này không?',
+            confirmLabel: 'Hủy Lịch',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const res = await updateVisitStatus({
+                        visitId,
+                        status: 'CANCELLED'
+                    })
+                    if (res.success) {
+                        toast.success('Đã hủy lịch đi thăm!')
+                        await load()
+                    } else {
+                        toast.error(res.error || 'Có lỗi xảy ra')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message)
+                }
             }
-        } catch (err: any) {
-            toast.error(err.message)
-        }
+        })
     }
 
     // Filter completed visits for reporting
@@ -666,6 +676,7 @@ export function WeeklyVisitPlannerPanel() {
                     </div>
                 </div>
             </div>
+            {confirmDialog}
         </div>
     )
 }

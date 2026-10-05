@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, FileText, X, Loader2, Download, ExternalLink } from 'lucide-react'
+import { useConfirmDialog } from './ui/Modal'
 
 interface DocumentItem {
     id?: string
@@ -34,6 +35,7 @@ export function DocumentUploader({
     accept = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg',
     maxSizeMB = 50,
 }: DocumentUploaderProps) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [uploading, setUploading] = useState(false)
     const [error, setError] = useState('')
     const inputRef = useRef<HTMLInputElement>(null)
@@ -66,7 +68,14 @@ export function DocumentUploader({
     }
 
     const handleDelete = async (id: string) => {
-        if (!onDelete || !confirm('Xóa tài liệu này?')) return
+        if (!onDelete) return
+        const ok = await confirm({
+            title: 'Xóa tài liệu',
+            message: 'Bạn có chắc chắn muốn xóa tài liệu này không?',
+            confirmLabel: 'Xóa tài liệu',
+            variant: 'danger',
+        })
+        if (!ok) return
         const result = await onDelete(id)
         if (!result.success) setError(result.error ?? 'Xóa thất bại')
     }
@@ -150,6 +159,7 @@ export function DocumentUploader({
             )}
 
             <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
+            {confirmDialog}
         </div>
     )
 }

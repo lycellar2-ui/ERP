@@ -13,6 +13,7 @@ import {
     Button, PageHeader, StatCard, StatGrid, StatusBadge, Drawer, EmptyState,
     Field, Input, Select, Textarea,
     Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    useConfirmDialog,
 } from '@/components/ui'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -35,6 +36,7 @@ export function ReturnsClient({ initialRows, stats }: {
     const [soLines, setSoLines] = useState<any[]>([])
     const [reason, setReason] = useState('')
     const [returnLines, setReturnLines] = useState<{ productId: string; qtyReturned: number; unitPrice: number; reason: string; condition: string }[]>([])
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     const reload = async () => {
         const data = await getReturnOrders()
@@ -79,20 +81,22 @@ export function ReturnsClient({ initialRows, stats }: {
         )
     }
 
-    const handleApprove = async (id: string) => {
-        if (!confirm('Duyệt đơn trả hàng này? Hệ thống sẽ tự tạo Credit Note.')) return
-        toast.promise(
-            approveReturnOrder(id).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi duyệt đơn đổi trả')
+    const handleApprove = (id: string) => {
+        confirm({
+            title: 'Duyệt Đơn Trả Hàng',
+            message: 'Duyệt đơn trả hàng này? Hệ thống sẽ tự tạo Credit Note ghi nhận công nợ.',
+            confirmLabel: 'Duyệt Đơn',
+            cancelLabel: 'Bỏ qua',
+            onConfirm: async () => {
+                const res = await approveReturnOrder(id)
+                if (!res.success) {
+                    toast.error(res.error || 'Lỗi duyệt đơn đổi trả')
+                    return
+                }
+                toast.success('Đã duyệt đơn trả hàng!')
                 reload()
-                return res
-            }),
-            {
-                loading: 'Đang duyệt đơn trả hàng...',
-                success: 'Đã duyệt đơn trả hàng!',
-                error: (err: any) => `Lỗi: ${err.message}`
             }
-        )
+        })
     }
 
     const updateLine = (i: number, patch: Partial<(typeof returnLines)[number]>) => {
@@ -240,6 +244,7 @@ export function ReturnsClient({ initialRows, stats }: {
                     )}
                 </div>
             </Drawer>
+            {confirmDialog}
         </div>
     )
 }

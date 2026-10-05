@@ -14,6 +14,7 @@ import {
 import { COST_CATEGORIES } from './shipment-constants'
 import { getShipmentDocChecklist, toggleShipmentDocRequired, activateShipmentDoc } from '../contracts/reg-doc-xmodule'
 import { REG_DOC_TYPE_LABELS } from '../contracts/reg-doc-constants'
+import { useConfirmDialog } from '@/components/ui'
 import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
@@ -108,6 +109,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
     const [adding, setAdding] = useState(false)
     const [form, setForm] = useState({ category: 'FREIGHT', description: '', amount: 0, currency: 'VND', exchangeRate: 1, paidTo: '', invoiceNo: '' })
     const [saving, setSaving] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const totalVND = items.reduce((s, c) => s + c.amountVND, 0)
 
     const handleAdd = async () => {
@@ -122,11 +124,19 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
         finally { setSaving(false) }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa chi phí này?')) return
-        await deleteCostItem(id)
-        toast.success('Đã xoá')
-        onRefresh()
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Chi Phí',
+            message: 'Bạn có chắc chắn muốn xóa mục chi phí này không?',
+            confirmLabel: 'Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                await deleteCostItem(id)
+                toast.success('Đã xoá chi phí')
+                onRefresh()
+            }
+        })
     }
 
     return (
@@ -196,6 +206,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                     <Plus size={12} /> Thêm chi phí
                 </button>
             )}
+            {confirmDialog}
         </div>
     )
 }

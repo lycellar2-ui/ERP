@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal } from 'lucide-react'
-import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr } from '@/components/ui'
+import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr, useConfirmDialog } from '@/components/ui'
 import { getStatusTone, type Tone } from '@/lib/ui/status'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
@@ -388,28 +388,36 @@ function SODetailDrawer({
     const [deletingVnpt, setDeletingVnpt] = useState(false)
     const [syncingVnpt, setSyncingVnpt] = useState(false)
     const [dateWarningModal, setDateWarningModal] = useState<InvoiceDateWarning | null>(null)
+    const { confirm: confirmDrawer, dialog: confirmDrawerDialog } = useConfirmDialog()
 
     const handleToggleExempt = async () => {
         if (!soId || !detail || togglingExempt) return
         if (detail.isInvoiceExempt) {
-            if (!window.confirm('Bạn có chắc chắn muốn hủy đánh dấu miễn hóa đơn? Kế toán sẽ có thể xuất hóa đơn VAT sau khi hủy.')) return
-            setTogglingExempt(true)
-            try {
-                const res = await toggleInvoiceExempt(soId, false)
-                if (res.success) {
-                    toast.success('Đã hủy miễn hóa đơn VAT cho đơn hàng!')
-                    const updated = await getSalesOrderDetail(soId)
-                    setDetail(updated)
-                    getSOTimeline(soId).then(setTimeline).catch(() => {})
-                    onReloadList?.()
-                } else {
-                    toast.error(res.error || 'Lỗi thao tác')
+            confirmDrawer({
+                title: isEn ? 'Cancel VAT Exemption' : 'Hủy đánh dấu miễn hóa đơn VAT',
+                message: isEn ? 'Are you sure you want to cancel the VAT exemption for this order? Accounting will be able to issue VAT invoices afterwards.' : 'Bạn có chắc chắn muốn hủy đánh dấu miễn hóa đơn? Kế toán sẽ có thể xuất hóa đơn VAT sau khi hủy.',
+                confirmLabel: isEn ? 'Cancel Exemption' : 'Hủy miễn hóa đơn',
+                onConfirm: async () => {
+                    setTogglingExempt(true)
+                    try {
+                        const res = await toggleInvoiceExempt(soId, false)
+                        if (res.success) {
+                            toast.success(isEn ? 'VAT exemption cancelled!' : 'Đã hủy miễn hóa đơn VAT cho đơn hàng!')
+                            const updated = await getSalesOrderDetail(soId)
+                            setDetail(updated)
+                            getSOTimeline(soId).then(setTimeline).catch(() => {})
+                            onReloadList?.()
+                        } else {
+                            toast.error(res.error || 'Lỗi thao tác')
+                        }
+                    } catch (err: any) {
+                        toast.error(err.message || 'Lỗi hệ thống')
+                    } finally {
+                        setTogglingExempt(false)
+                    }
                 }
-            } catch (err: any) {
-                toast.error(err.message || 'Lỗi hệ thống')
-            } finally {
-                setTogglingExempt(false)
-            }
+            })
+            return
         } else {
             const reason = window.prompt(
                 'Nhập lý do không xuất hóa đơn VAT (ví dụ: Khách lẻ không lấy HĐ, tiêu dùng nội bộ, quà biếu tặng...):',
@@ -436,27 +444,35 @@ function SODetailDrawer({
         }
     }
 
-    const handleMarkPaid = async () => {
+    const handleMarkPaid = () => {
         if (!soId || !detail || markingPaid) return
         const totalVatIncluded = Number(detail.totalAmount) + Number(detail.vatAmount ?? 0)
-        if (!window.confirm(`Xác nhận đã thu đủ tiền (${formatVND(totalVatIncluded)}) cho đơn hàng ${detail.soNo}? Đơn hàng sẽ chuyển sang trạng thái ĐÃ THU TIỀN (PAID).`)) return
-        setMarkingPaid(true)
-        try {
-            const res = await markSalesOrderPaid(soId)
-            if (res.success) {
-                toast.success('Đã xác nhận thu tiền cho đơn hàng!')
-                const updated = await getSalesOrderDetail(soId)
-                setDetail(updated)
-                getSOTimeline(soId).then(setTimeline).catch(() => {})
-                onReloadList?.()
-            } else {
-                toast.error(res.error || 'Lỗi xác nhận thu tiền')
+        confirmDrawer({
+            title: isEn ? 'Confirm Payment Collection' : 'Xác nhận đã thu tiền',
+            message: isEn
+                ? `Confirm full payment received (${formatVND(totalVatIncluded)}) for order ${detail.soNo}? Status will change to PAID.`
+                : `Xác nhận đã thu đủ tiền (${formatVND(totalVatIncluded)}) cho đơn hàng ${detail.soNo}? Đơn hàng sẽ chuyển sang trạng thái ĐÃ THU TIỀN (PAID).`,
+            confirmLabel: isEn ? 'Confirm PAID' : 'Xác nhận ĐÃ THU TIỀN',
+            onConfirm: async () => {
+                setMarkingPaid(true)
+                try {
+                    const res = await markSalesOrderPaid(soId)
+                    if (res.success) {
+                        toast.success(isEn ? 'Payment confirmed!' : 'Đã xác nhận thu tiền cho đơn hàng!')
+                        const updated = await getSalesOrderDetail(soId)
+                        setDetail(updated)
+                        getSOTimeline(soId).then(setTimeline).catch(() => {})
+                        onReloadList?.()
+                    } else {
+                        toast.error(res.error || 'Lỗi xác nhận thu tiền')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message || 'Lỗi hệ thống')
+                } finally {
+                    setMarkingPaid(false)
+                }
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Lỗi hệ thống')
-        } finally {
-            setMarkingPaid(false)
-        }
+        })
     }
 
     const handleCreateInvoice = async () => {
@@ -513,27 +529,33 @@ function SODetailDrawer({
         }
     }
 
-    const handleDeleteInvoice = async (invId: string, invNo: string) => {
-        if (!window.confirm(`Bạn có chắc chắn muốn gỡ bỏ hóa đơn ${invNo} khỏi đơn hàng này không? Trạng thái đơn hàng sẽ được hoàn trả lại.`)) {
-            return
-        }
-
-        setDeletingInvoiceId(invId)
-        try {
-            const res = await deleteARInvoice(invId)
-            if (res.success) {
-                toast.success(`Đã gỡ bỏ hóa đơn ${invNo} thành công!`)
-                const updated = await getSalesOrderDetail(soId)
-                setDetail(updated)
-                getSOTimeline(soId).then(setTimeline).catch(() => {})
-            } else {
-                toast.error(res.error || 'Lỗi gỡ hóa đơn')
+    const handleDeleteInvoice = (invId: string, invNo: string) => {
+        confirmDrawer({
+            title: isEn ? `Remove Invoice ${invNo}` : `Gỡ bỏ hóa đơn ${invNo}`,
+            message: isEn
+                ? `Are you sure you want to remove invoice ${invNo} from this sales order? Order status will be updated accordingly.`
+                : `Bạn có chắc chắn muốn gỡ bỏ hóa đơn ${invNo} khỏi đơn hàng này không? Trạng thái đơn hàng sẽ được hoàn trả lại.`,
+            danger: true,
+            confirmLabel: isEn ? 'Remove Invoice' : 'Gỡ hóa đơn',
+            onConfirm: async () => {
+                setDeletingInvoiceId(invId)
+                try {
+                    const res = await deleteARInvoice(invId)
+                    if (res.success) {
+                        toast.success(isEn ? `Invoice ${invNo} removed!` : `Đã gỡ bỏ hóa đơn ${invNo} thành công!`)
+                        const updated = await getSalesOrderDetail(soId)
+                        setDetail(updated)
+                        getSOTimeline(soId).then(setTimeline).catch(() => {})
+                    } else {
+                        toast.error(res.error || 'Lỗi gỡ hóa đơn')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message || 'Lỗi kết nối hệ thống')
+                } finally {
+                    setDeletingInvoiceId(null)
+                }
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối hệ thống')
-        } finally {
-            setDeletingInvoiceId(null)
-        }
+        })
     }
 
     const triggerUploadVnptDraft = () => {
@@ -568,28 +590,35 @@ function SODetailDrawer({
         }
     }
 
-    const handleDeleteVnptDraft = async () => {
+    const handleDeleteVnptDraft = () => {
         if (!soId || !detail || deletingVnpt) return
-        if (!window.confirm('Bạn có chắc chắn muốn xóa bản nháp hóa đơn này trên hệ thống VNPT không?')) {
-            return
-        }
-        setDeletingVnpt(true)
-        try {
-            const res = await deleteDraftInvoiceFromVnpt(soId)
-            if (res.success) {
-                toast.success(res.message || 'Đã xóa bản nháp VNPT thành công!')
-                const updated = await getSalesOrderDetail(soId)
-                setDetail(updated)
-                getSOTimeline(soId).then(setTimeline).catch(() => {})
-                onReloadList?.()
-            } else {
-                toast.error(res.error || 'Lỗi xóa bản nháp VNPT')
+        confirmDrawer({
+            title: isEn ? 'Delete VNPT Draft' : 'Xóa bản nháp hóa đơn VNPT',
+            message: isEn
+                ? 'Are you sure you want to delete this draft invoice from VNPT system?'
+                : 'Bạn có chắc chắn muốn xóa bản nháp hóa đơn này trên hệ thống VNPT không?',
+            danger: true,
+            confirmLabel: isEn ? 'Delete Draft' : 'Xóa bản nháp VNPT',
+            onConfirm: async () => {
+                setDeletingVnpt(true)
+                try {
+                    const res = await deleteDraftInvoiceFromVnpt(soId)
+                    if (res.success) {
+                        toast.success(res.message || 'Đã xóa bản nháp VNPT thành công!')
+                        const updated = await getSalesOrderDetail(soId)
+                        setDetail(updated)
+                        getSOTimeline(soId).then(setTimeline).catch(() => {})
+                        onReloadList?.()
+                    } else {
+                        toast.error(res.error || 'Lỗi khi xóa bản nháp trên VNPT')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message || 'Lỗi kết nối máy chủ VNPT')
+                } finally {
+                    setDeletingVnpt(false)
+                }
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối')
-        } finally {
-            setDeletingVnpt(false)
-        }
+        })
     }
 
     const handleSyncVnptInvoice = async () => {
@@ -1698,6 +1727,8 @@ function SODetailDrawer({
                     </div>
                 </div>
             )}
+
+            {confirmDrawerDialog}
         </>
     )
 }
@@ -2344,14 +2375,25 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         })
     }
 
-    const handleCancel = async (id: string) => {
-        if (!confirm('Huỷ đơn hàng này?')) return
-        setActionLoading(id)
-        toast.promise(cancelMutation.mutateAsync(id), {
-            loading: 'Đang huỷ...',
-            success: 'Đã huỷ đơn hàng (Cập nhật tức thì)!',
-            error: 'Không thể huỷ',
-            finally: () => setActionLoading(null),
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
+    const handleCancel = (id: string) => {
+        confirm({
+            title: isEn ? 'Cancel Sales Order' : 'Hủy đơn hàng',
+            message: isEn ? 'Are you sure you want to cancel this sales order?' : 'Bạn có chắc chắn muốn huỷ đơn hàng này không?',
+            danger: true,
+            confirmLabel: isEn ? 'Cancel Order' : 'Huỷ đơn',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    await cancelMutation.mutateAsync(id)
+                    toast.success(isEn ? 'Sales order cancelled!' : 'Đã huỷ đơn hàng (Cập nhật tức thì)!')
+                } catch (e: any) {
+                    toast.error(e.message || (isEn ? 'Failed to cancel' : 'Không thể huỷ'))
+                } finally {
+                    setActionLoading(null)
+                }
+            }
         })
     }
 
@@ -2359,63 +2401,111 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         setApprovalModalId(id)
     }
 
-    const handleReject = async (id: string) => {
-        if (!confirm('Từ chối đơn hàng này?')) return
-        setActionLoading(id)
-        toast.promise(rejectMutation.mutateAsync(id), {
-            loading: 'Đang từ chối...',
-            success: 'Đã từ chối (Cập nhật tức thì)!',
-            error: 'Không thể từ chối',
-            finally: () => setActionLoading(null),
-        })
-    }
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa vĩnh viễn đơn hàng nháp này?')) return
-        setActionLoading(id)
-        toast.promise(deleteMutation.mutateAsync(id), {
-            loading: 'Đang xóa đơn nháp...',
-            success: 'Đã xóa đơn hàng nháp thành công (Cập nhật tức thì)!',
-            error: (e: any) => `Không thể xóa: ${e.message}`,
-            finally: () => setActionLoading(null),
-        })
-    }
-
-    const handleClone = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn nhân bản đơn hàng này không?')) return
-        setActionLoading(id)
-        try {
-            const detail = await getSalesOrderDetail(id)
-            if (!detail) {
-                toast.error('Không tìm thấy thông tin đơn hàng để clone')
-                return
+    const handleReject = (id: string) => {
+        confirm({
+            title: isEn ? 'Reject Sales Order' : 'Từ chối đơn hàng',
+            message: isEn ? 'Are you sure you want to reject this sales order?' : 'Bạn có chắc chắn muốn từ chối đơn hàng này không?',
+            danger: true,
+            confirmLabel: isEn ? 'Reject' : 'Từ chối',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    await rejectMutation.mutateAsync(id)
+                    toast.success(isEn ? 'Order rejected!' : 'Đã từ chối (Cập nhật tức thì)!')
+                } catch (e: any) {
+                    toast.error(e.message || (isEn ? 'Failed to reject' : 'Không thể từ chối'))
+                } finally {
+                    setActionLoading(null)
+                }
             }
-            setCloneData({
-                customerId: detail.customerId,
-                channel: detail.channel as SalesChannel,
-                paymentTerm: detail.paymentTerm,
-                orderDiscount: Number(detail.orderDiscount),
-                legalEntityId: detail.legalEntityId,
-                shippingAddressId: detail.shippingAddressId || '',
-                notes: detail.notes ? `[Bản sao từ ${detail.soNo}] ${detail.notes}` : `Bản sao từ ${detail.soNo}`,
-                lines: detail.lines.map(l => ({
-                    productId: l.productId,
-                    productName: l.product.productName,
-                    skuCode: l.product.skuCode,
-                    qtyOrdered: Number(l.qtyOrdered),
-                    unitPrice: Number(l.unitPrice),
-                    lineDiscountPct: Number(l.lineDiscountPct),
-                    vatRate: Number(l.vatRate || 10),
-                    priceSource: l.priceSource,
-                    stock: (l.product as any).stock ?? 100,
-                })),
-            })
-            setCreateOpen(true)
-        } catch (err: any) {
-            toast.error('Lỗi khi tải thông tin đơn hàng: ' + err.message)
-        } finally {
-            setActionLoading(null)
-        }
+        })
+    }
+
+    const handleDelete = (id: string) => {
+        confirm({
+            title: isEn ? 'Delete Draft Order' : 'Xóa vĩnh viễn đơn hàng nháp',
+            message: isEn ? 'Are you sure you want to permanently delete this draft order? This action cannot be undone.' : 'Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng nháp này không? Thao tác này không thể hoàn tác.',
+            danger: true,
+            confirmLabel: isEn ? 'Delete' : 'Xóa đơn',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    await deleteMutation.mutateAsync(id)
+                    toast.success(isEn ? 'Draft order deleted!' : 'Đã xóa đơn hàng nháp thành công (Cập nhật tức thì)!')
+                } catch (e: any) {
+                    toast.error(`Không thể xóa: ${e.message}`)
+                } finally {
+                    setActionLoading(null)
+                }
+            }
+        })
+    }
+
+    const handleClone = (id: string) => {
+        confirm({
+            title: isEn ? 'Clone Sales Order' : 'Nhân bản đơn hàng',
+            message: isEn ? 'Are you sure you want to clone this sales order to a new draft?' : 'Bạn có chắc chắn muốn nhân bản đơn hàng này sang một đơn hàng mới không?',
+            confirmLabel: isEn ? 'Clone' : 'Nhân bản',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    const detail = await getSalesOrderDetail(id)
+                    if (!detail) {
+                        toast.error('Không tìm thấy thông tin đơn hàng để clone')
+                        return
+                    }
+                    setCloneData({
+                        customerId: detail.customerId,
+                        channel: detail.channel as SalesChannel,
+                        paymentTerm: detail.paymentTerm,
+                        orderDiscount: Number(detail.orderDiscount),
+                        legalEntityId: detail.legalEntityId,
+                        shippingAddressId: detail.shippingAddressId || '',
+                        notes: detail.notes ? `[Bản sao từ ${detail.soNo}] ${detail.notes}` : `Bản sao từ ${detail.soNo}`,
+                        lines: detail.lines.map(l => ({
+                            productId: l.productId,
+                            productName: l.product.productName,
+                            skuCode: l.product.skuCode,
+                            qtyOrdered: Number(l.qtyOrdered),
+                            unitPrice: Number(l.unitPrice),
+                            lineDiscountPct: Number(l.lineDiscountPct),
+                            vatRate: Number(l.vatRate || 10),
+                            priceSource: l.priceSource,
+                            stock: (l.product as any).stock ?? 100,
+                        })),
+                    })
+                    setCreateOpen(true)
+                } catch (err: any) {
+                    toast.error('Lỗi khi tải thông tin đơn hàng: ' + err.message)
+                } finally {
+                    setActionLoading(null)
+                }
+            }
+        })
+    }
+
+    const handleAcctReject = (id: string) => {
+        confirm({
+            title: isEn ? 'Return to DRAFT' : 'Trả đơn về DRAFT',
+            message: isEn
+                ? 'Are you sure you want to return this order back to DRAFT for sales to edit?'
+                : 'Bạn có chắc chắn muốn trả đơn về DRAFT cho nhân viên kinh doanh chỉnh sửa lại?',
+            danger: true,
+            confirmLabel: isEn ? 'Return to DRAFT' : 'Trả về DRAFT',
+            onConfirm: async () => {
+                setActionLoading(id)
+                try {
+                    await acctRejectMutation.mutateAsync({ id })
+                    if (detailId === id) setDetailId(null)
+                    reload()
+                    toast.success(isEn ? 'Order returned to DRAFT' : 'Đã trả về DRAFT thành công!')
+                } catch (e: any) {
+                    toast.error(`Lỗi: ${e.message}`)
+                } finally {
+                    setActionLoading(null)
+                }
+            }
+        })
     }
 
     const handleExport = async () => {
@@ -2917,16 +3007,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                     <CheckCircle2 size={12} /> KT Duyệt
                                                 </Button>
                                                 <Button size="sm" variant="danger-outline" className="h-7 px-2" disabled={actionLoading === row.id}
-                                                    onClick={async () => {
-                                                        if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
-                                                        setActionLoading(row.id)
-                                                        toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
-                                                             if (detailId === row.id) setDetailId(null)
-                                                            reload()
-                                                        }), {
-                                                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
-                                                        })
-                                                    }}>
+                                                    onClick={() => handleAcctReject(row.id)}>
                                                     <XCircle size={12} /> KT Trả Về
                                                 </Button>
                                             </>
@@ -2970,16 +3051,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             onEdit={() => setEditId(row.id)}
                             onDelete={() => handleDelete(row.id)}
                             onAcctApprove={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
-                            onAcctReject={async () => {
-                                if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
-                                setActionLoading(row.id)
-                                toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
-                                    if (detailId === row.id) setDetailId(null)
-                                    reload()
-                                }), {
-                                    loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
-                                })
-                            }}
+                            onAcctReject={() => handleAcctReject(row.id)}
                             onCancel={() => handleCancel(row.id)}
                             onClone={() => handleClone(row.id)}
                             canApprove={((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))}
@@ -3127,6 +3199,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
                 </>
             )}
+
+            {confirmDialog}
         </div>
     )
 }

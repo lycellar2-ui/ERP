@@ -7,6 +7,7 @@ import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from '.
 import { CreateTransferDrawer } from '../transfers/CreateTransferDrawer'
 import { TransferDetailDrawer } from '../transfers/TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 type SortField =
     | 'transferNo'
@@ -64,17 +65,26 @@ export function TransfersTab() {
 
     useEffect(() => { reload() }, [])
 
-    const handleCancel = async (id: string, e: React.MouseEvent) => {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
+
+    const handleCancel = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        if (!confirm('Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này?')) return
-        try {
-            const res = await cancelTransferOrder(id)
-            if (!res.success) throw new Error(res.error)
-            toast.success('Đã hủy phiếu chuyển kho thành công')
-            reload()
-        } catch (err: any) {
-            toast.error('Lỗi hủy phiếu: ' + err.message)
-        }
+        confirm({
+            title: 'Hủy phiếu chuyển kho',
+            message: 'Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này? Thao tác này sẽ chuyển trạng thái phiếu sang Đã hủy.',
+            danger: true,
+            confirmLabel: 'Hủy phiếu',
+            onConfirm: async () => {
+                try {
+                    const res = await cancelTransferOrder(id)
+                    if (!res.success) throw new Error(res.error)
+                    toast.success('Đã hủy phiếu chuyển kho thành công')
+                    reload()
+                } catch (err: any) {
+                    toast.error('Lỗi hủy phiếu: ' + err.message)
+                }
+            }
+        })
     }
 
     const filteredRows = rows.filter(r => {
@@ -375,6 +385,8 @@ export function TransfersTab() {
                 onClose={() => setSelectedId(null)}
                 onRefresh={reload}
             />
+
+            {confirmDialog}
         </div>
     )
 }

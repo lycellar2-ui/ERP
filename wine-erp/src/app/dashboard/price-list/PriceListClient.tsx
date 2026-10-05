@@ -7,7 +7,7 @@ import { formatVND, cn } from '@/lib/utils'
 import type { Tone } from '@/lib/ui/status'
 import {
     Badge, Button, PageHeader, StatCard, StatGrid, StatusTabs, Drawer, Modal, EmptyState, Skeleton,
-    Field, Input, Select, Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    Field, Input, Select, Table, THead, TBody, Tr, Th, Td, TableMessageRow, useConfirmDialog,
 } from '@/components/ui'
 
 const CHANNEL_CFG: Record<string, { label: string; tone: Tone }> = {
@@ -45,6 +45,7 @@ interface Props {
 export function PriceListClient({ initialLists, currentUser }: Props) {
     const [activeTab, setActiveTab] = useState<'general' | 'customer' | 'mapping'>('general')
     const [lists, setLists] = useState(initialLists)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [detail, setDetail] = useState<Awaited<ReturnType<typeof getPriceListDetail>>>(null)
     const [detailLoading, setDetailLoading] = useState(false)
@@ -112,17 +113,34 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
         setSaving(false)
     }
 
-    const handleRemoveLine = async (lineId: string) => {
-        if (!selectedId || !confirm('Xóa dòng giá này?')) return
-        await removePriceListLine(lineId)
-        await loadDetail(selectedId)
+    const handleRemoveLine = (lineId: string) => {
+        if (!selectedId) return
+        confirm({
+            title: 'Xóa Dòng Giá',
+            message: 'Bạn có chắc chắn muốn xóa dòng giá sản phẩm này khỏi bảng giá không?',
+            confirmLabel: 'Xóa Dòng',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                await removePriceListLine(lineId)
+                await loadDetail(selectedId)
+            }
+        })
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa bảng giá này và tất cả dòng giá?')) return
-        await deletePriceList(id)
-        if (selectedId === id) { setSelectedId(null); setDetail(null) }
-        await reload()
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Bảng Giá',
+            message: 'Bạn có chắc chắn muốn xóa bảng giá này và tất cả các dòng giá bên trong? Thao tác không thể hoàn tác.',
+            confirmLabel: 'Xóa Bảng Giá',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                await deletePriceList(id)
+                if (selectedId === id) { setSelectedId(null); setDetail(null) }
+                await reload()
+            }
+        })
     }
 
     const openAddProduct = async () => {
@@ -356,6 +374,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                     </Field>
                 </div>
             </Modal>
+            {confirmDialog}
         </div>
     )
 }

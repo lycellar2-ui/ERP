@@ -6,6 +6,7 @@ import {
     ChevronDown, ChevronUp, Loader2, CheckCircle, ToggleLeft, ToggleRight,
     Clock, BarChart3, MessageSquare, Wine, Users, TrendingUp
 } from 'lucide-react'
+import { useConfirmDialog } from '@/components/ui'
 
 const MODULE_OPTIONS = [
     { key: 'pipeline', label: 'Pipeline Analysis', icon: '📊', desc: 'Sales pipeline & velocity' },
@@ -139,6 +140,7 @@ interface AiReport {
 }
 
 export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] }) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [reports, setReports] = useState(initialReports)
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const [filter, setFilter] = useState<string>('all')
@@ -157,7 +159,13 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
     }
 
     async function handleDelete(id: string) {
-        if (!confirm('Xóa báo cáo này?')) return
+        const ok = await confirm({
+            title: 'Xóa báo cáo AI',
+            message: 'Bạn có chắc chắn muốn xóa báo cáo này không?',
+            confirmLabel: 'Xóa báo cáo',
+            variant: 'danger',
+        })
+        if (!ok) return
         await fetch(`/api/ai/reports/${id}`, { method: 'DELETE' })
         setReports(prev => prev.filter(r => r.id !== id))
     }
@@ -256,6 +264,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                     })}
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }

@@ -8,6 +8,7 @@ import {
     CalendarCheck, UserCheck, PhoneMissed, PhoneOff, MoreVertical
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirmDialog } from '@/components/ui'
 import {
     SalesCallPlanItem,
     getDailyCallPlanAction,
@@ -96,6 +97,7 @@ export function DailyCallPlannerView({
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'RESCHEDULED' | 'OVERDUE'>('ALL')
     const [selectedRepId, setSelectedRepId] = useState<string>('ALL')
     const [searchQuery, setSearchQuery] = useState('')
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // Data
     const [loading, setLoading] = useState(false)
@@ -359,19 +361,27 @@ export function DailyCallPlannerView({
     }
 
     // Delete Call Plan Item
-    const handleDeleteItem = async (planId: string, name: string) => {
-        if (!confirm(`Bạn có chắc muốn xóa khách hàng [${name}] khỏi kế hoạch gọi?`)) return
-        try {
-            const res = await deleteCallPlanItemAction(planId)
-            if (res.success) {
-                toast.success('Đã xóa khỏi kế hoạch')
-                loadPlans()
-            } else {
-                toast.error(res.error || 'Lỗi khi xóa')
+    const handleDeleteItem = (planId: string, name: string) => {
+        confirm({
+            title: 'Xóa Khỏi Kế Hoạch Gọi',
+            message: `Bạn có chắc muốn xóa khách hàng [${name}] khỏi kế hoạch gọi?`,
+            confirmLabel: 'Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const res = await deleteCallPlanItemAction(planId)
+                    if (res.success) {
+                        toast.success('Đã xóa khỏi kế hoạch')
+                        loadPlans()
+                    } else {
+                        toast.error(res.error || 'Lỗi khi xóa')
+                    }
+                } catch {
+                    toast.error('Lỗi kết nối máy chủ')
+                }
             }
-        } catch {
-            toast.error('Lỗi kết nối máy chủ')
-        }
+        })
     }
 
     // Export CSV Report
@@ -1404,6 +1414,7 @@ export function DailyCallPlannerView({
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }

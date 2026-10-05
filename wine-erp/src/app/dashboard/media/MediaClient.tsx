@@ -25,7 +25,7 @@ const MEDIA_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
     PRODUCER_WINERY: { label: 'Nhà máy', emoji: '🏰' },
 }
 
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
 
 interface MediaClientProps {
     initialItems: MediaItem[]
@@ -34,6 +34,7 @@ interface MediaClientProps {
 }
 
 export function MediaClient({ initialItems, initialTotal, stats }: MediaClientProps) {
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [items, setItems] = useState<MediaItem[]>(initialItems)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -77,7 +78,13 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Xóa ảnh này?')) return
+        const ok = await confirm({
+            title: 'Xóa ảnh',
+            message: 'Bạn có chắc chắn muốn xóa ảnh này?',
+            confirmLabel: 'Xóa ảnh',
+            variant: 'danger',
+        })
+        if (!ok) return
         const res = await deleteMedia(id)
         if (res.success) {
             setItems(prev => prev.filter(i => i.id !== id))
@@ -90,7 +97,13 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
 
     const handleBulkDelete = async () => {
         if (selected.size === 0) return
-        if (!confirm(`Xóa ${selected.size} ảnh đã chọn?`)) return
+        const ok = await confirm({
+            title: 'Xóa nhiều ảnh',
+            message: `Bạn có chắc chắn muốn xóa ${selected.size} ảnh đã chọn?`,
+            confirmLabel: `Xóa ${selected.size} ảnh`,
+            variant: 'danger',
+        })
+        if (!ok) return
         const res = await bulkDeleteMedia(Array.from(selected))
         if (res.success) {
             setItems(prev => prev.filter(i => !selected.has(i.id)))
@@ -309,6 +322,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
 
             {/* Upload Modal */}
             {showUpload && <UploadModal onClose={() => { setShowUpload(false); fetchMedia(page, search, typeFilter) }} />}
+            {confirmDialog}
         </div>
     )
 }

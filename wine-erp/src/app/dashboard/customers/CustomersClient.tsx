@@ -20,7 +20,7 @@ import { cn, formatVND } from '@/lib/utils'
 import type { Tone } from '@/lib/ui/status'
 import {
     Badge, Button, Drawer, EmptyState, PageHeader, Pagination, SearchInput, Select, Skeleton, StatCard, StatGrid, StatusBadge,
-    Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr,
+    Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr, useConfirmDialog,
 } from '@/components/ui'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
@@ -221,6 +221,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [exportingExcel, setExportingExcel] = useState(false)
+    const { confirm: confirmDrawer, dialog: confirmDrawerDialog } = useConfirmDialog()
 
     const [parentCandidates, setParentCandidates] = useState<{
         id: string
@@ -679,9 +680,16 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             })
         }
         if (isDirty) {
-            if (window.confirm('Bạn có thông tin chưa lưu. Bạn có chắc chắn muốn đóng?')) {
-                onClose()
-            }
+            confirmDrawer({
+                title: 'Thông Tin Chưa Lưu',
+                message: 'Bạn có thông tin chưa lưu trong form khách hàng. Bạn có chắc chắn muốn đóng mà không lưu?',
+                confirmLabel: 'Đóng Form',
+                cancelLabel: 'Tiếp tục sửa',
+                danger: true,
+                onConfirm: () => {
+                    onClose()
+                }
+            })
         } else {
             onClose()
         }
@@ -702,7 +710,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     }, [open, form, isEdit])
 
     return (
-        <Drawer
+        <>
+            <Drawer
             open={open}
             onClose={handleClose}
             size="md"
@@ -1331,7 +1340,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         </>
                     )}
                 </div>
-        </Drawer>
+            </Drawer>
+            {confirmDrawerDialog}
+        </>
     )
 }
 
@@ -1356,6 +1367,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const [editingId, setEditingId] = useState<string | null>(null)
     const [importOpen, setImportOpen] = useState(false)
     const [showStats, setShowStats] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
@@ -1420,19 +1432,32 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
         }
     }
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Xóa khách hàng "${name}"?\n\nKH sẽ bị đánh dấu Tạm dừng (soft delete). Nếu KH đang có đơn hàng chưa hoàn tất sẽ không xóa được.`)) return
-        try {
-            const result = await deleteCustomer(id)
-            if (result.success) {
-                toast.success(`Đã xóa "${name}"`)
-                reload()
-            } else {
-                toast.error(result.error ?? 'Không thể xóa')
+    const handleDelete = (id: string, name: string) => {
+        confirm({
+            title: `Xóa Khách Hàng "${name}"`,
+            message: (
+                <div className="space-y-1">
+                    <p>Bạn có chắc chắn muốn xóa khách hàng <strong>"{name}"</strong>?</p>
+                    <p className="text-xs text-slate-500">KH sẽ bị đánh dấu Tạm dừng (soft delete). Nếu KH đang có đơn hàng chưa hoàn tất sẽ không xóa được.</p>
+                </div>
+            ),
+            confirmLabel: 'Xác Nhận Xóa',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                try {
+                    const result = await deleteCustomer(id)
+                    if (result.success) {
+                        toast.success(`Đã xóa "${name}"`)
+                        reload()
+                    } else {
+                        toast.error(result.error ?? 'Không thể xóa')
+                    }
+                } catch {
+                    toast.error('Lỗi khi xóa khách hàng')
+                }
             }
-        } catch {
-            toast.error('Lỗi khi xóa khách hàng')
-        }
+        })
     }
 
     const handleExport = async () => {
@@ -1773,6 +1798,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 onImport={bulkImportCustomers}
                 onComplete={() => reload()}
             />
+            {confirmDialog}
         </div>
     )
 }

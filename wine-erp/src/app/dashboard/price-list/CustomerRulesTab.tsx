@@ -28,6 +28,8 @@ import {
 } from './customer-rules-actions'
 import { getProductsForPriceList } from './actions'
 import { formatVND } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useConfirmDialog } from '@/components/ui'
 
 const RULE_TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
     FIXED_DISCOUNT: { label: 'Chiết Khấu %', color: '#B45309', bg: 'rgba(217,119,6,0.12)' },
@@ -77,6 +79,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const [products, setProducts] = useState<{ id: string; skuCode: string; productName: string }[]>([])
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // Master Filters
     const [searchQuery, setSearchQuery] = useState('')
@@ -283,17 +286,29 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setLoading(false)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn chắc chắn muốn xóa chính sách giá này?')) return
-        setLoading(true)
-        const res = await deleteCustomerPriceRule(id)
-        if (res.success) {
-            await loadData()
-            if (drawerCustomer) await refreshDrawer()
-        } else {
-            alert('Lỗi: ' + res.error)
-        }
-        setLoading(false)
+    const handleDelete = (id: string) => {
+        confirm({
+            title: 'Xóa Chính Sách Giá',
+            message: 'Bạn chắc chắn muốn xóa chính sách giá này?',
+            confirmLabel: 'Xóa Chính Sách',
+            cancelLabel: 'Bỏ qua',
+            danger: true,
+            onConfirm: async () => {
+                setLoading(true)
+                try {
+                    const res = await deleteCustomerPriceRule(id)
+                    if (res.success) {
+                        toast.success('Đã xóa chính sách giá')
+                        await loadData()
+                        if (drawerCustomer) await refreshDrawer()
+                    } else {
+                        toast.error('Lỗi: ' + res.error)
+                    }
+                } finally {
+                    setLoading(false)
+                }
+            }
+        })
     }
 
     // Clone Modal helpers
@@ -1466,6 +1481,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     )
 }
