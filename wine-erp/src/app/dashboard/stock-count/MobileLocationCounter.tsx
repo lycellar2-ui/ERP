@@ -208,7 +208,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 <div className="flex items-center justify-between gap-2">
                     <button
                         onClick={onBack}
-                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl flex items-center gap-1 text-xs font-extrabold transition cursor-pointer shrink-0"
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-lg flex items-center gap-1 text-xs font-extrabold transition cursor-pointer shrink-0"
                     >
                         <ChevronLeft className="w-4 h-4" /> Thoát
                     </button>
@@ -224,7 +224,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <button
                         onClick={() => setIsBlind(!isBlind)}
-                        className={`p-2 rounded-xl text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer shrink-0 ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                        className={`p-2 rounded-lg text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer shrink-0 ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
                         title="Tắt/Bật giấu tồn sổ sách"
                     >
                         {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
@@ -236,14 +236,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     {onOpenTableModal && (
                         <button
                             onClick={onOpenTableModal}
-                            className="py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
+                            className="py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
                         >
                             📊 Bảng Điền Trực Tiếp
                         </button>
                     )}
                     <button
                         onClick={() => setShowAddUnlistedModal(true)}
-                        className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal ? 'col-span-2' : ''}`}
+                        className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal ? 'col-span-2' : ''}`}
                     >
                         ➕ Chèn Mã / Vintage Bổ Sung
                     </button>
@@ -256,12 +256,12 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         <span className="text-emerald-700 font-extrabold">{overallPercent}%</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200 p-0.5">
-                        <div className="bg-[#87CBB9] h-full rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
+                        <div className="bg-[#0E7490] h-full rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
                     </div>
                 </div>
 
                 {detail.status === 'DRAFT' && (
-                    <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs font-bold text-amber-900 shadow-2xs">
+                    <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-lg flex items-center justify-between gap-2 text-xs font-bold text-amber-900 shadow-2xs">
                         <span className="flex items-center gap-1.5 truncate">
                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                             Phiếu đang ở trạng thái Nháp
@@ -302,10 +302,10 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 setActiveIdx(0)
                                 setViewMode('FOCUS')
                             }}
-                            className="p-4 bg-white rounded-2xl border-2 border-emerald-400 hover:border-emerald-500 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2"
+                            className="p-4 bg-white rounded-lg border-2 border-emerald-400 hover:border-emerald-500 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2"
                         >
                             <div className="flex justify-between items-center">
-                                <span className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
+                                <span className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
                                     <MapPin className="w-5 h-5" />
                                 </span>
                                 <span className="text-[10px] font-mono font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -334,13 +334,13 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         setActiveIdx(0)
                                         setViewMode('FOCUS')
                                     }}
-                                    className={`p-4 rounded-2xl border-2 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2 ${
+                                    className={`p-4 rounded-lg border-2 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2 ${
                                         isDone ? 'bg-emerald-50/60 border-emerald-400' :
                                         zStats.hasDiff ? 'bg-amber-50/60 border-amber-300' : 'bg-white border-slate-200'
                                     }`}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <span className={`p-2 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                                        <span className={`p-2 rounded-lg ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
                                             <Grid className="w-4 h-4" />
                                         </span>
                                         {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
@@ -374,7 +374,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 setSearchTerm(e.target.value)
                                 setActiveIdx(0)
                             }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-xl pl-3 pr-10 py-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
+                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-lg pl-3 pr-10 py-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
                         />
                         {searchTerm && (
                             <button
@@ -399,7 +399,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     setSearchTerm('')
                                     setActiveIdx(0)
                                 }}
-                                className="px-4 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
+                                className="px-4 py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold text-xs rounded-lg shadow-xs cursor-pointer active:scale-95 transition"
                             >
                                 ↺ Xóa từ khóa để xem lại tất cả {lines.length} sản phẩm
                             </button>
@@ -407,7 +407,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     ) : (
                         <>
                             {/* Zone & Index Breadcrumb */}
-                            <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-2xs">
+                            <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200 text-xs shadow-2xs">
                                 <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
                                     <MapPin className="w-4 h-4 text-emerald-600" />
                                     <span>Vị trí: <strong className="text-emerald-800 font-mono font-extrabold">{currentItem.zone}</strong></span>
@@ -422,11 +422,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
                                 {/* SKU + Vintage Badges */}
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl whitespace-nowrap shrink-0">
+                                    <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg whitespace-nowrap shrink-0">
                                         {currentItem.skuCode}
                                     </span>
                                     
-                                    <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1 whitespace-nowrap shrink-0">
+                                    <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-lg flex items-center gap-1 whitespace-nowrap shrink-0">
                                         🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
                                     </span>
                                 </div>
@@ -447,7 +447,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     const currentLoose = total % upc
 
                                     return (
-                                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                                             <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
                                                 <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
                                                 {!isBlind && (
@@ -460,7 +460,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             {/* 2-Column Quantity Controls (Thùng + Chai) */}
                                             <div className="grid grid-cols-2 gap-3">
                                                 {/* Cases Box */}
-                                                <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                                <div className="bg-white border border-slate-300 rounded-lg p-3 text-center space-y-1 shadow-2xs">
                                                     <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
@@ -493,7 +493,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                 </div>
 
                                                 {/* Loose Bottles Box */}
-                                                <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                                <div className="bg-white border border-slate-300 rounded-lg p-3 text-center space-y-1 shadow-2xs">
                                                     <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
@@ -552,7 +552,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => saveCurrentLineAndNext(currentItem)}
                                     disabled={savingLineId === currentItem.id}
-                                    className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-slate-900 font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                                    className="w-full py-4 bg-[#0891B2] hover:bg-[#0E7490] active:scale-98 text-slate-900 font-black text-sm rounded-lg flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
                                 >
                                     {savingLineId === currentItem.id ? (
                                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -570,7 +570,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => handleFinishZone(selectedZone)}
                                     disabled={isCompletingZone}
-                                    className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
+                                    className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-lg flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
                                 >
                                     {isCompletingZone ? (
                                         <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
@@ -584,11 +584,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             </div>
 
                             {/* Prev / Next Slider Navigation */}
-                            <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
+                            <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
                                 <button
                                     disabled={activeIdx === 0}
                                     onClick={() => setActiveIdx(prev => Math.max(0, prev - 1))}
-                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-lg font-extrabold text-xs flex items-center gap-1 cursor-pointer"
                                 >
                                     ◄ Chai Trước
                                 </button>
@@ -598,7 +598,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     disabled={activeIdx >= filteredLines.length - 1}
                                     onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
-                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer"
                                 >
                                     Chai Sau ►
                                 </button>
@@ -616,7 +616,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         placeholder="Tìm SKU hoặc tên rượu..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-3 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 mb-2 shadow-2xs"
+                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-3 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 mb-2 shadow-2xs"
                     />
 
                     {filteredLines.map((line, idx) => (
@@ -626,7 +626,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 setActiveIdx(idx)
                                 setViewMode('FOCUS')
                             }}
-                            className={`p-3.5 rounded-2xl border transition cursor-pointer active:scale-98 ${line.qtyActual !== null ? 'bg-emerald-50/50 border-emerald-300' : 'bg-white border-slate-200'}`}
+                            className={`p-3.5 rounded-lg border transition cursor-pointer active:scale-98 ${line.qtyActual !== null ? 'bg-emerald-50/50 border-emerald-300' : 'bg-white border-slate-200'}`}
                         >
                             <div className="flex justify-between items-start">
                                 <div>
@@ -669,15 +669,15 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                         {/* KPI Summary Grid */}
                         <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center">
+                            <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-center">
                                 <span className="text-[10px] font-bold text-emerald-800 uppercase block">Khớp 100%</span>
                                 <strong className="text-lg font-black text-emerald-700 font-mono">{zoneReport.matchedCount}</strong>
                             </div>
-                            <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-center">
+                            <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-center">
                                 <span className="text-[10px] font-bold text-amber-800 uppercase block">Thừa (+)</span>
                                 <strong className="text-lg font-black text-amber-700 font-mono">{zoneReport.overCount}</strong>
                             </div>
-                            <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl text-center">
+                            <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-lg text-center">
                                 <span className="text-[10px] font-bold text-rose-800 uppercase block">Thiếu (-)</span>
                                 <strong className="text-lg font-black text-rose-700 font-mono">{zoneReport.underCount}</strong>
                             </div>
@@ -691,13 +691,13 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             </h4>
 
                             {zoneReport.varianceLines.length === 0 ? (
-                                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
+                                <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
                                     🎉 Tuyệt vời! Khu vực này đếm khớp 100%, không phát hiện chênh lệch.
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {zoneReport.varianceLines.map((vl: any) => (
-                                        <div key={vl.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                                        <div key={vl.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 text-xs">
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <span className="font-mono text-xs font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
@@ -735,7 +735,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                         <button
                             onClick={() => setShowZoneReportModal(false)}
-                            className="w-full py-3 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black text-xs rounded-2xl shadow-sm cursor-pointer"
+                            className="w-full py-3 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-lg shadow-sm cursor-pointer"
                         >
                             HOÀN TẤT VÀ TIẾP TỤC
                         </button>
@@ -761,7 +761,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
                     <button
                         onClick={() => setViewMode('ZONES')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Grid className="w-4 h-4" />
                         Vị Trí Kho
@@ -769,7 +769,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <button
                         onClick={() => setViewMode('FOCUS')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Sparkles className="w-4 h-4" />
                         Đếm Tập Trung
@@ -777,7 +777,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <button
                         onClick={() => setViewMode('LIST')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0891B2] text-white shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <ListFilter className="w-4 h-4" />
                         Danh Sách

@@ -89,14 +89,14 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
         return acc
     }, {})
 
-    const inputCls = "w-full px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="space-y-4 pb-20 md:pb-4">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
                         <MapPin size={20} />
                     </div>
                     <div>
@@ -107,11 +107,11 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => refresh()} className="text-xs px-3 py-2 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 shadow-2xs">
+                    <button onClick={() => refresh()} className="text-xs px-3 py-2 rounded-lg font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 shadow-2xs">
                         <RefreshCw size={13} /> Cập Nhật Heatmap
                     </button>
                     <button onClick={() => setShowCreate(!showCreate)}
-                        className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs active:scale-95">
+                        className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs active:scale-95">
                         <Plus size={15} /> Thêm Vị Trí
                     </button>
                 </div>
@@ -121,8 +121,8 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
             {heatmap.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                     {heatmap.map(h => (
-                        <div key={h.zone} className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs" style={{
-                            borderLeft: `4px solid ${h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981'}`,
+                        <div key={h.zone} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs" style={{
+                            borderLeft: `4px solid ${h.occupancyPct > 85 ? '#B91C1C' : h.occupancyPct > 60 ? '#F59E0B' : '#15803D'}`,
                         }}>
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-extrabold text-slate-900">Zone {h.zone}</span>
@@ -131,7 +131,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                             <div className="w-full h-2 rounded-full mb-1.5 bg-slate-100 overflow-hidden">
                                 <div className="h-full rounded-full transition-all" style={{
                                     width: `${Math.min(100, h.occupancyPct)}%`,
-                                    background: h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981',
+                                    background: h.occupancyPct > 85 ? '#B91C1C' : h.occupancyPct > 60 ? '#F59E0B' : '#15803D',
                                 }} />
                             </div>
                             <div className="flex justify-between font-mono text-[10px]">
@@ -139,7 +139,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                                     {h.usedLocations}/{h.totalLocations} vị trí
                                 </span>
                                 <span className="font-bold" style={{
-                                    color: h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981',
+                                    color: h.occupancyPct > 85 ? '#B91C1C' : h.occupancyPct > 60 ? '#F59E0B' : '#15803D',
                                 }}>
                                     {h.occupancyPct}%
                                 </span>
@@ -151,7 +151,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
 
             {/* Create Form Drawer */}
             {showCreate && (
-                <div className="p-4 sm:p-5 rounded-2xl space-y-3.5 bg-white border border-slate-200 shadow-sm">
+                <div className="p-4 sm:p-5 rounded-lg space-y-3.5 bg-white border border-slate-200 shadow-sm">
                     <h4 className="text-sm font-extrabold text-slate-900">Thêm Vị Trí Kho Mới</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {[
@@ -191,9 +191,9 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                         </div>
                     </div>
                     <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
-                        <button onClick={() => setShowCreate(false)} className="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 cursor-pointer">Hủy</button>
+                        <button onClick={() => setShowCreate(false)} className="text-xs font-bold px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer">Hủy</button>
                         <button onClick={handleCreate} disabled={!form.zone || loading}
-                            className="text-xs font-bold px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                            className="text-xs font-bold px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
                             {loading ? <Loader2 size={13} className="animate-spin" /> : 'Tạo Vị Trí'}
                         </button>
                     </div>
@@ -202,7 +202,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
 
             {/* Location Table by Zone */}
             {Object.entries(byZone).map(([zone, locs]) => (
-                <div key={zone} className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-2xs">
+                <div key={zone} className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-2xs">
                     <div className="px-4 py-3 flex items-center justify-between bg-slate-50 border-b border-slate-200">
                         <span className="text-xs font-extrabold text-emerald-700">Zone {zone}</span>
                         <span className="text-[10px] font-bold text-slate-500 font-mono">{locs.length} vị trí</span>
@@ -243,11 +243,11 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                                                 <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden">
                                                     <div className="h-full rounded-full" style={{
                                                         width: `${Math.min(100, usedPct)}%`,
-                                                        background: usedPct > 85 ? '#EF4444' : usedPct > 60 ? '#F59E0B' : '#10B981',
+                                                        background: usedPct > 85 ? '#B91C1C' : usedPct > 60 ? '#F59E0B' : '#15803D',
                                                     }} />
                                                 </div>
                                                 <span className="font-bold text-[10px]" style={{
-                                                    color: usedPct > 85 ? '#EF4444' : usedPct > 60 ? '#F59E0B' : '#10B981',
+                                                    color: usedPct > 85 ? '#B91C1C' : usedPct > 60 ? '#F59E0B' : '#15803D',
                                                 }}>
                                                     {usedPct}%
                                                 </span>
@@ -267,7 +267,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                     {/* Mobile Cards */}
                     <div className="block md:hidden p-3 space-y-3">
                         {locs.map(loc => (
-                            <div key={loc.id} className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-900 space-y-2 shadow-2xs">
+                            <div key={loc.id} className="p-4 rounded-lg bg-white border border-slate-200 text-slate-900 space-y-2 shadow-2xs">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200 whitespace-nowrap shrink-0">
                                         📍 {loc.code}

@@ -8,6 +8,7 @@ import {
     Calendar, RefreshCw, Send, Check, DollarSign, Search
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import PrintableConsignmentCount, { ConsignmentCountHeader } from './PrintableConsignmentCount'
 import PrintableConsignmentDispatch, { ConsignmentDispatchData } from './PrintableConsignmentDispatch'
 import type {
@@ -29,13 +30,13 @@ import {
 } from './actions'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Đang Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    TERMINATED: { label: 'Đã Kết Thúc', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
-    RECEIVED: { label: 'Đã Nhận Hàng', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    IN_TRANSIT: { label: 'Đang Vận Chuyển', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+    ACTIVE: { label: 'Đang Hoạt Động', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    EXPIRED: { label: 'Hết Hạn', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    TERMINATED: { label: 'Đã Kết Thúc', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
+    RECEIVED: { label: 'Đã Nhận Hàng', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    IN_TRANSIT: { label: 'Đang Vận Chuyển', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
     CONFIRMED: { label: 'Đã Duyệt Xuất', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    DRAFT: { label: 'Bản Nháp', color: '#475569', bg: 'rgba(138,174,187,0.15)' },
+    DRAFT: { label: 'Bản Nháp', color: '#475569', bg: 'rgba(100,116,139,0.15)' },
 }
 
 const FREQ_LABEL: Record<string, string> = {
@@ -130,10 +131,10 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
     const totalValueInConsignment = warehouses.reduce((sum, w) => sum + w.totalStockValue, 0)
 
     const statCards = [
-        { label: 'Kho Ký Gửi (Khách Hàng)', value: warehouses.length, icon: Building2, accent: '#87CBB9' },
-        { label: 'Tổng Chai Đang Ký Gửi', value: totalBottlesInConsignment.toLocaleString('vi-VN'), icon: Package, accent: '#D4A853' },
-        { label: 'Giá Trị Hàng Ký Gửi (Vốn)', value: totalValueInConsignment.toLocaleString('vi-VN') + ' ₫', icon: DollarSign, accent: '#5BA88A' },
-        { label: 'Đã Bán Tiêu Thụ', value: stats.totalSold.toLocaleString('vi-VN') + ' chai', icon: TrendingUp, accent: '#87CBB9' },
+        { label: 'Kho Ký Gửi (Khách Hàng)', value: warehouses.length, icon: Building2, accent: '#0E7490' },
+        { label: 'Tổng Chai Đang Ký Gửi', value: totalBottlesInConsignment.toLocaleString('vi-VN'), icon: Package, accent: '#B45309' },
+        { label: 'Giá Trị Hàng Ký Gửi (Vốn)', value: totalValueInConsignment.toLocaleString('vi-VN') + ' ₫', icon: DollarSign, accent: '#15803D' },
+        { label: 'Đã Bán Tiêu Thụ', value: stats.totalSold.toLocaleString('vi-VN') + ' chai', icon: TrendingUp, accent: '#0E7490' },
     ]
 
     const filteredWarehouses = warehouses.filter(w =>
@@ -145,55 +146,31 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Page Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Quản Lý Hàng Ký Gửi (Consignment Inventory)
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#475569' }}>
-                        Kho ký gửi theo từng khách hàng, xuất kho không hóa đơn, xuất bán trừ tồn, in biên bản kiểm kê A4
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        onClick={() => setCreateWHOpen(true)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    >
-                        <Plus size={15} /> Tạo Kho Ký Gửi Khách Hàng
-                    </button>
-                    <button
-                        onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
-                        style={{ background: '#D97706', color: '#FFFFFF' }}
-                    >
-                        <ArrowRightLeft size={15} /> Xuất Hàng Ký Gửi
-                    </button>
-                    <button
-                        onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
-                        style={{ background: '#5BA88A', color: '#0F172A' }}
-                    >
-                        <ShoppingCart size={15} /> Xuất Bán Từ Kho Ký Gửi
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                title="Quản Lý Hàng Ký Gửi (Consignment Inventory)"
+                description="Kho ký gửi theo từng khách hàng, xuất kho không hóa đơn, xuất bán trừ tồn, in biên bản kiểm kê A4"
+                actions={
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button variant="primary" size="sm" onClick={() => setCreateWHOpen(true)}>
+                            <Plus size={14} /> Tạo Kho Ký Gửi
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}>
+                            <ArrowRightLeft size={14} /> Xuất Hàng Ký Gửi
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}>
+                            <ShoppingCart size={14} /> Xuất Bán Ký Gửi
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {statCards.map(c => {
-                    const Icon = c.icon
-                    return (
-                        <div key={c.label} className="p-4 rounded-xl shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Icon size={16} style={{ color: c.accent }} />
-                                <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#475569' }}>{c.label}</span>
-                            </div>
-                            <p className="text-xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard label="Hợp Đồng Ký Gửi" value={stats.total} icon={FileText} />
+                <StatCard label="Hợp Đồng Hiệu Lực" value={stats.active} icon={CheckCircle2} />
+                <StatCard label="Đã Xuất Kho Ký Gửi" value={`${(stats.totalStockSent || 0).toLocaleString()} chai`} icon={Package} />
+                <StatCard label="Đã Xuất Bán" value={`${(stats.totalSold || 0).toLocaleString()} chai`} icon={TrendingUp} />
+            </StatGrid>
 
             {/* Main Tabs Navigation */}
             <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: '#E2E8F0' }}>
@@ -201,8 +178,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => setMainTab('warehouses')}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'warehouses' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'warehouses' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'warehouses' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'warehouses' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <WarehouseIcon size={14} /> Kho Ký Gửi Khách Hàng ({warehouses.length})
@@ -212,8 +189,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => setMainTab('transfers')}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'transfers' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'transfers' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'transfers' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'transfers' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <ArrowRightLeft size={14} /> Lịch Sử Xuất Kho Ký Gửi ({transfers.length})
@@ -223,8 +200,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => setMainTab('sales')}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'sales' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'sales' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'sales' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'sales' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <ShoppingCart size={14} /> Xuất Bán Từ Kho Ký Gửi
@@ -234,8 +211,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => setMainTab('stockCount')}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'stockCount' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'stockCount' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'stockCount' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'stockCount' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <Printer size={14} /> Kiểm Kê Kho Ký Gửi (In A4)
@@ -245,8 +222,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => setMainTab('agreements')}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'agreements' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'agreements' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'agreements' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'agreements' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <Handshake size={14} /> Hợp Đồng ({agreements.length})
@@ -256,8 +233,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClick={() => { setMainTab('stockMap'); loadStockMapData(); }}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     style={{
-                        color: mainTab === 'stockMap' ? '#87CBB9' : '#475569',
-                        borderBottom: mainTab === 'stockMap' ? '2px solid #87CBB9' : '2px solid transparent'
+                        color: mainTab === 'stockMap' ? '#0E7490' : '#475569',
+                        borderBottom: mainTab === 'stockMap' ? '2px solid #0E7490' : '2px solid transparent'
                     }}
                 >
                     <MapPin size={14} /> Bản Đồ Tồn Ký Gửi
@@ -284,7 +261,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         </div>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -304,7 +281,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                     </tr>
                                 ) : (
                                     filteredWarehouses.map(wh => (
-                                        <tr key={wh.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }} className="hover:bg-slate-800/20">
+                                        <tr key={wh.id} style={{ borderBottom: '1px solid #E2E8F0' }} className="hover:bg-slate-800/20">
                                             <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
                                                 {wh.code}
                                             </td>
@@ -316,10 +293,10 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                 <div className="font-semibold">{wh.customerName}</div>
                                                 <div className="text-[11px] text-slate-400">Mã KH: {wh.customerCode} {wh.customerPhone ? `| SĐT: ${wh.customerPhone}` : ''}</div>
                                             </td>
-                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#D4A853' }}>
+                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#B45309' }}>
                                                 {wh.skuCount} SKU
                                             </td>
-                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: wh.totalBottles > 0 ? '#5BA88A' : '#475569' }}>
+                                            <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: wh.totalBottles > 0 ? '#15803D' : '#475569' }}>
                                                 {wh.totalBottles.toLocaleString('vi-VN')} chai
                                             </td>
                                             <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
@@ -331,7 +308,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                         onClick={() => { setPreselectedWarehouseId(wh.id); setCreateTransferOpen(true); }}
                                                         title="Xuất hàng sang kho này"
                                                         className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition"
-                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }}
+                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}
                                                     >
                                                         <ArrowRightLeft size={12} /> Xuất Hàng
                                                     </button>
@@ -339,7 +316,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                         onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
                                                         title="Bán hàng từ kho ký gửi này"
                                                         className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition"
-                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#5BA88A' }}
+                                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#15803D' }}
                                                     >
                                                         <ShoppingCart size={12} /> Xuất Bán
                                                     </button>
@@ -378,7 +355,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         </button>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -393,7 +370,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 ) : transfers.map(trf => {
                                     const st = STATUS_MAP[trf.status] ?? STATUS_MAP.RECEIVED
                                     return (
-                                        <tr key={trf.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <tr key={trf.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
                                                 {trf.transferNo}
                                             </td>
@@ -420,7 +397,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                 <button
                                                     onClick={() => handleOpenPrintDispatch(trf.id)}
                                                     className="px-2.5 py-1 text-xs font-bold rounded flex items-center gap-1 cursor-pointer transition"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}
                                                 >
                                                     <Printer size={12} /> In Phiếu A4
                                                 </button>
@@ -437,7 +414,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
             {/* TAB 3: XUẤT BÁN TỪ KHO KÝ GỬI (SALES) */}
             {mainTab === 'sales' && (
                 <div className="space-y-4">
-                    <div className="p-5 rounded-xl border flex flex-wrap items-center justify-between gap-4" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                    <div className="p-5 rounded-lg border flex flex-wrap items-center justify-between gap-4" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                         <div>
                             <h3 className="text-base font-bold text-slate-900 mb-1">Nghiệp Vụ Xuất Bán Hàng Ký Gửi</h3>
                             <p className="text-xs text-slate-500">
@@ -447,13 +424,13 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         <button
                             onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}
                             className="px-4 py-2.5 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-md"
-                            style={{ background: '#5BA88A', color: '#0F172A' }}
+                            style={{ background: '#15803D', color: '#0F172A' }}
                         >
                             <ShoppingCart size={15} /> Tạo Đơn Xuất Bán Mới
                         </button>
                     </div>
 
-                    <div className="rounded-xl p-5 border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                    <div className="rounded-lg p-5 border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                         <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3">
                             Chọn nhanh kho ký gửi để lập đơn xuất bán:
                         </h4>
@@ -462,12 +439,12 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 <div
                                     key={wh.id}
                                     onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
-                                    className="p-3.5 rounded-lg border hover:border-[#5BA88A] cursor-pointer transition-all bg-white"
+                                    className="p-3.5 rounded-lg border hover:border-[#15803D] cursor-pointer transition-all bg-white"
                                     style={{ borderColor: '#E2E8F0' }}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="font-bold text-sm text-slate-900">{wh.name}</div>
-                                        <span className="text-[11px] px-2 py-0.5 rounded font-mono font-bold text-emerald-400 bg-emerald-950/40">
+                                        <span className="text-[11px] px-2 py-0.5 rounded font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
                                             {wh.totalBottles} chai
                                         </span>
                                     </div>
@@ -483,7 +460,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
             {/* TAB 4: KIỂM KÊ KHO KÝ GỬI (STOCK COUNT SHEET) */}
             {mainTab === 'stockCount' && (
                 <div className="space-y-4">
-                    <div className="p-5 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                    <div className="p-5 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 mb-1">In Biên Bản Kiểm Kê Hàng Hóa Ký Gửi (A4)</h3>
@@ -496,7 +473,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {warehouses.map(wh => (
-                            <div key={wh.id} className="p-4 rounded-xl border bg-white flex flex-col justify-between" style={{ borderColor: '#E2E8F0' }}>
+                            <div key={wh.id} className="p-4 rounded-lg border bg-white flex flex-col justify-between" style={{ borderColor: '#E2E8F0' }}>
                                 <div>
                                     <div className="flex items-start justify-between gap-2 mb-2">
                                         <div className="font-bold text-sm text-slate-900">{wh.name}</div>
@@ -510,11 +487,11 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                     <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded bg-white">
                                         <div>
                                             <div className="text-[10px] uppercase text-slate-400">Mặt hàng</div>
-                                            <div className="text-sm font-bold font-mono text-amber-400">{wh.skuCount} SKU</div>
+                                            <div className="text-sm font-bold font-mono text-amber-700">{wh.skuCount} SKU</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] uppercase text-slate-400">Tồn sổ sách</div>
-                                            <div className="text-sm font-bold font-mono text-emerald-400">{wh.totalBottles} chai</div>
+                                            <div className="text-sm font-bold font-mono text-emerald-700">{wh.totalBottles} chai</div>
                                         </div>
                                     </div>
                                 </div>
@@ -534,7 +511,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
 
             {/* TAB 5: HỢP ĐỒNG KÝ GỬI (AGREEMENTS) */}
             {mainTab === 'agreements' && (
-                <div className="rounded-xl overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                     <div className="p-3.5 bg-white border-b flex justify-between items-center" style={{ borderColor: '#E2E8F0' }}>
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Danh sách hợp đồng thỏa thuận ký gửi</span>
                         <button
@@ -577,7 +554,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
                                             {FREQ_LABEL[row.reportFrequency] ?? row.reportFrequency}
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#D4A853' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#B45309' }}>
                                             {row.stockCount}
                                         </td>
                                         <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>
@@ -601,10 +578,10 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
             {mainTab === 'stockMap' && (
                 <div className="space-y-4">
                     {alerts.length > 0 && (
-                        <div className="p-4 rounded-xl" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.2)' }}>
+                        <div className="p-4 rounded-lg" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.2)' }}>
                             <div className="flex items-center gap-2 mb-2">
-                                <AlertTriangle size={15} style={{ color: '#D4A853' }} />
-                                <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#D4A853' }}>
+                                <AlertTriangle size={15} style={{ color: '#B45309' }} />
+                                <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#B45309' }}>
                                     Cảnh báo cần bổ sung hàng ký gửi ({alerts.length} mục)
                                 </span>
                             </div>
@@ -615,14 +592,14 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                             <div className="font-semibold text-slate-900">{a.customerName}</div>
                                             <div className="text-[11px] text-[#0891B2] font-mono">{a.skuCode}</div>
                                         </div>
-                                        <span className="font-bold font-mono text-rose-400">Còn {a.qtyRemaining} chai</span>
+                                        <span className="font-bold font-mono text-rose-700">Còn {a.qtyRemaining} chai</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    <div className="rounded-xl overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -635,18 +612,18 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 {stockMap.length === 0 ? (
                                     <tr><td colSpan={7} className="text-center py-12 text-sm text-slate-400">Chưa có dữ liệu phân bổ hàng ký gửi</td></tr>
                                 ) : stockMap.map((row, i) => {
-                                    const barColor = row.pctSold >= 80 ? '#5BA88A' : row.pctSold >= 50 ? '#D4A853' : '#87CBB9'
+                                    const barColor = row.pctSold >= 80 ? '#15803D' : row.pctSold >= 50 ? '#B45309' : '#0E7490'
                                     const isLow = row.qtyRemaining <= 10
                                     return (
-                                        <tr key={i} style={{ borderBottom: '1px solid #E2E8F0', background: isLow ? 'rgba(139,26,46,0.04)' : 'transparent' }}>
+                                        <tr key={i} style={{ borderBottom: '1px solid #E2E8F0', background: isLow ? 'rgba(185,28,28,0.04)' : 'transparent' }}>
                                             <td className="px-3.5 py-2.5 text-xs font-semibold text-slate-900">{row.customerName}</td>
                                             <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#0891B2]">{row.skuCode}</td>
                                             <td className="px-3.5 py-2.5 text-xs text-slate-700">{row.productName}</td>
-                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#D4A853]">{row.qtyConsigned}</td>
-                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#5BA88A]">{row.qtySold}</td>
+                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#B45309]">{row.qtyConsigned}</td>
+                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#15803D]">{row.qtySold}</td>
                                             <td className="px-3.5 py-2.5 text-xs font-bold font-mono" style={{ color: isLow ? '#F43F5E' : '#0F172A' }}>
                                                 {row.qtyRemaining}
-                                                {isLow && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-sans font-bold bg-rose-950/60 text-rose-300 border border-rose-800/40">Thấp</span>}
+                                                {isLow && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-sans font-bold bg-rose-950/60 text-rose-700 border border-rose-800/40">Thấp</span>}
                                             </td>
                                             <td className="px-3.5 py-2.5">
                                                 <div className="flex items-center gap-2">
@@ -779,7 +756,7 @@ function CreateConsignmentWarehouseModal({ open, onClose, onSuccess }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div className="w-full max-w-lg rounded-xl overflow-hidden shadow-2xl bg-slate-50 border border-slate-200">
+            <div className="w-full max-w-lg rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
                     <div className="flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-[#0891B2]" />
@@ -846,7 +823,7 @@ function CreateConsignmentWarehouseModal({ open, onClose, onSuccess }: {
                             disabled={loading}
                             onClick={handleSubmit}
                             className="px-5 py-2 rounded-lg font-bold text-slate-900 cursor-pointer transition shadow-md"
-                            style={{ background: '#87CBB9' }}
+                            style={{ background: '#0E7490' }}
                         >
                             {loading ? 'Đang tạo...' : 'Tạo Kho Ký Gửi'}
                         </button>
@@ -951,10 +928,10 @@ function CreateConsignmentTransferModal({
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
                     <div className="flex items-center gap-2">
-                        <ArrowRightLeft className="w-5 h-5 text-[#D4A853]" />
+                        <ArrowRightLeft className="w-5 h-5 text-[#B45309]" />
                         <h3 className="text-base font-bold text-slate-900">Xuất Hàng Ký Gửi (Chuyển Kho Không Hóa Đơn)</h3>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 cursor-pointer"><X size={18} /></button>
@@ -1033,7 +1010,7 @@ function CreateConsignmentTransferModal({
                                                 />
                                                 <button
                                                     onClick={() => handleRemoveLine(idx)}
-                                                    className="p-1 hover:bg-rose-950 text-rose-400 rounded cursor-pointer"
+                                                    className="p-1 hover:bg-rose-950 text-rose-700 rounded cursor-pointer"
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -1083,7 +1060,7 @@ function CreateConsignmentTransferModal({
                             disabled={loading}
                             onClick={handleSubmit}
                             className="px-5 py-2 rounded-lg font-bold text-slate-900 cursor-pointer transition shadow-md"
-                            style={{ background: '#D4A853' }}
+                            style={{ background: '#B45309' }}
                         >
                             {loading ? 'Đang xuất kho...' : 'Xác Nhận Xuất Kho Ký Gửi'}
                         </button>
@@ -1195,10 +1172,10 @@ function CreateConsignmentSaleModal({
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
                     <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-5 h-5 text-[#5BA88A]" />
+                        <ShoppingCart className="w-5 h-5 text-[#15803D]" />
                         <h3 className="text-base font-bold text-slate-900">Xuất Bán Từ Kho Ký Gửi (Tạo SO & Hóa Đơn)</h3>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 cursor-pointer"><X size={18} /></button>
@@ -1280,7 +1257,7 @@ function CreateConsignmentSaleModal({
 
                                                 <button
                                                     onClick={() => handleRemoveSaleItem(idx)}
-                                                    className="p-1 mt-3 hover:bg-rose-950 text-rose-400 rounded cursor-pointer"
+                                                    className="p-1 mt-3 hover:bg-rose-950 text-rose-700 rounded cursor-pointer"
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -1327,7 +1304,7 @@ function CreateConsignmentSaleModal({
                     <div className="p-3 rounded-lg bg-white border border-slate-200 flex justify-between items-center">
                         <span className="text-slate-400 font-semibold uppercase text-[11px]">Tổng giá trị xuất bán:</span>
                         <div className="text-right">
-                            <div className="text-base font-bold font-mono text-[#5BA88A]">{totalAmount.toLocaleString('vi-VN')} ₫</div>
+                            <div className="text-base font-bold font-mono text-[#15803D]">{totalAmount.toLocaleString('vi-VN')} ₫</div>
                             <div className="text-[10px] text-slate-400">+ VAT 10%: {(totalAmount * 0.1).toLocaleString('vi-VN')} ₫</div>
                         </div>
                     </div>
@@ -1345,7 +1322,7 @@ function CreateConsignmentSaleModal({
                             disabled={loading}
                             onClick={handleSubmit}
                             className="px-5 py-2 rounded-lg font-bold text-slate-900 cursor-pointer transition shadow-md"
-                            style={{ background: '#5BA88A' }}
+                            style={{ background: '#15803D' }}
                         >
                             {loading ? 'Đang xuất bán...' : 'Xác Nhận Xuất Bán & Phát Hành Hóa Đơn'}
                         </button>
@@ -1443,7 +1420,7 @@ function CreateDrawer({ open, onClose, onCreated }: {
                         onClick={handleSubmit}
                         disabled={loading}
                         className="w-full py-2.5 font-bold rounded cursor-pointer transition-all mt-4 text-slate-900"
-                        style={{ background: loading ? '#E2E8F0' : '#87CBB9' }}
+                        style={{ background: loading ? '#E2E8F0' : '#0E7490' }}
                     >
                         {loading ? 'Đang tạo...' : 'Tạo Hợp Đồng'}
                     </button>

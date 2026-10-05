@@ -13,6 +13,7 @@ import {
 import { ShipmentDetailDrawer } from '../procurement/ShipmentDetailDrawer'
 import { getPurchaseOrders } from '../procurement/actions'
 import { getForwardersAndBrokers } from '../procurement/shipment-actions'
+import { PageHeader, Button } from '@/components/ui'
 import { toast } from 'sonner'
 
 const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -20,18 +21,18 @@ const fmtNum = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
     DRAFT: { label: 'Nháp', color: '#64748B' },
-    BOOKED: { label: 'Đã book', color: '#4A8FAB' },
+    BOOKED: { label: 'Đã book', color: '#1D4ED8' },
     DOCS_READY: { label: 'Docs sẵn', color: '#7AC4C4' },
     LOADED: { label: 'Đã xếp', color: '#0891B2' },
-    ON_VESSEL: { label: 'Trên tàu', color: '#5BA88A' },
-    ARRIVED_PORT: { label: 'Cập cảng', color: '#D4A853' },
+    ON_VESSEL: { label: 'Trên tàu', color: '#15803D' },
+    ARRIVED_PORT: { label: 'Cập cảng', color: '#B45309' },
     CUSTOMS_FILING: { label: 'Khai HQ', color: '#C07434' },
-    CUSTOMS_INSPECTING: { label: 'Giám định', color: '#D4A853' },
-    CUSTOMS_CLEARED: { label: 'Thông quan', color: '#5BA88A' },
+    CUSTOMS_INSPECTING: { label: 'Giám định', color: '#B45309' },
+    CUSTOMS_CLEARED: { label: 'Thông quan', color: '#15803D' },
     STAMPING: { label: 'Dán tem', color: '#0891B2' },
-    DELIVERED_TO_WAREHOUSE: { label: 'Nhập kho', color: '#5BA88A' },
-    COMPLETED: { label: 'Hoàn tất', color: '#5BA88A' },
-    CANCELLED: { label: 'Đã huỷ', color: '#8B1A2E' },
+    DELIVERED_TO_WAREHOUSE: { label: 'Nhập kho', color: '#15803D' },
+    COMPLETED: { label: 'Hoàn tất', color: '#15803D' },
+    CANCELLED: { label: 'Đã huỷ', color: '#B91C1C' },
 }
 
 // ═══════════════════════════════════════════════════
@@ -60,7 +61,7 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
     }, [open])
 
     const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
-    const inputCls = "w-full px-3 py-2 rounded-lg text-sm outline-none"
+    const inputCls = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
@@ -80,15 +81,15 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
     return (
         <>
             <div className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.75)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
+                style={{ background: 'rgba(15,23,42,0.4)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
                 onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
                 style={{ width: 'min(620px, 95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
 
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74,143,171,0.15)' }}>
-                            <Ship size={18} style={{ color: '#4A8FAB' }} />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(29,78,216,0.15)' }}>
+                            <Ship size={18} style={{ color: '#1D4ED8' }} />
                         </div>
                         <div>
                             <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>Tạo Lô Hàng Mới</h3>
@@ -199,10 +200,10 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
-            <div className="p-6 rounded-xl w-[640px] max-h-[80vh] overflow-auto" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 rounded-lg w-[640px] max-h-[80vh] overflow-auto" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-5">
                     <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A', fontSize: 18 }}>
-                        <BarChart3 size={18} style={{ color: '#D4A853' }} /> Phân Tích Giá Vốn Nhập Kho
+                        <BarChart3 size={18} style={{ color: '#B45309' }} /> Phân Tích Giá Vốn Nhập Kho
                     </h3>
                     <button onClick={onClose} style={{ color: '#64748B' }}><X size={16} /></button>
                 </div>
@@ -217,7 +218,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                         <div className="grid grid-cols-3 gap-3">
                             {[
                                 { label: 'Giá trị CIF (VND)', value: fmtNum(data.cifVND), color: '#0891B2' },
-                                { label: 'Tổng Chi Phí', value: fmtNum(data.totalCosts), color: '#D4A853' },
+                                { label: 'Tổng Chi Phí', value: fmtNum(data.totalCosts), color: '#B45309' },
                                 { label: 'TỔNG GIÁ VỐN', value: `${fmtNum(data.grandTotal)} ₫`, color: '#0F172A' },
                             ].map(c => (
                                 <div key={c.label} className="p-3 rounded-lg text-center" style={{ background: '#FFFFFF' }}>
@@ -229,7 +230,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
 
                         {/* Cost breakdown by category */}
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#D4A853' }}>Chi Phí Theo Loại</p>
+                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Chi Phí Theo Loại</p>
                             <div className="space-y-1">
                                 {data.costsByCategory.map((c: any) => (
                                     <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded" style={{ background: '#FFFFFF' }}>
@@ -242,7 +243,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
 
                         {/* Tax breakdown */}
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#D4A853' }}>Thuế</p>
+                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Thuế</p>
                             <div className="grid grid-cols-4 gap-2 text-center">
                                 {[
                                     { label: 'Thuế NK', value: data.taxBreakdown.importTax },
@@ -250,8 +251,8 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                     { label: 'VAT', value: data.taxBreakdown.vat },
                                     { label: 'TỔNG THUẾ', value: data.taxBreakdown.total },
                                 ].map(t => (
-                                    <div key={t.label} className="p-2 rounded" style={{ background: 'rgba(212,168,83,0.08)' }}>
-                                        <p className="text-[10px]" style={{ color: '#D4A853' }}>{t.label}</p>
+                                    <div key={t.label} className="p-2 rounded" style={{ background: 'rgba(180,83,9,0.08)' }}>
+                                        <p className="text-[10px]" style={{ color: '#B45309' }}>{t.label}</p>
                                         <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{fmtNum(t.value)}</p>
                                     </div>
                                 ))}
@@ -271,12 +272,12 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                 </thead>
                                 <tbody>
                                     {data.productBreakdown.map((p: any) => (
-                                        <tr key={p.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                        <tr key={p.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-2 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{p.skuCode}</td>
                                             <td className="px-2 py-2 text-xs truncate max-w-[140px]" style={{ color: '#0F172A' }}>{p.productName}</td>
                                             <td className="px-2 py-2 text-xs text-center" style={{ color: '#475569' }}>{p.qty}</td>
                                             <td className="px-2 py-2 text-xs text-right" style={{ color: '#475569' }}>{fmtNum(p.unitCIF)}</td>
-                                            <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#D4A853' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
+                                            <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#B45309' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -284,7 +285,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                         </div>
 
                         {/* Average */}
-                        <div className="flex justify-between items-center px-4 py-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                        <div className="flex justify-between items-center px-4 py-3 rounded-lg" style={{ background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                             <span className="text-sm font-semibold" style={{ color: '#0891B2' }}>Giá vốn BQ / chai</span>
                             <span className="text-lg font-bold" style={{ color: '#0F172A' }}>{fmtNum(data.avgLandedCostPerUnit)} ₫</span>
                         </div>
@@ -323,41 +324,33 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
     }
 
     const statCards = [
-        { label: 'Tổng Lô', value: stats.total, icon: Ship, accent: '#87CBB9' },
-        { label: 'Đã Book', value: stats.booked, icon: Package, accent: '#4A8FAB' },
-        { label: 'Trên Tàu', value: stats.onVessel, icon: Anchor, accent: '#5BA88A' },
-        { label: 'Cập Cảng', value: stats.atPort, icon: MapPin, accent: '#D4A853' },
+        { label: 'Tổng Lô', value: stats.total, icon: Ship, accent: '#0E7490' },
+        { label: 'Đã Book', value: stats.booked, icon: Package, accent: '#1D4ED8' },
+        { label: 'Trên Tàu', value: stats.onVessel, icon: Anchor, accent: '#15803D' },
+        { label: 'Cập Cảng', value: stats.atPort, icon: MapPin, accent: '#B45309' },
         { label: 'Hải Quan', value: stats.customsFiling, icon: FileCheck, accent: '#C07434' },
-        { label: 'Thông Quan', value: stats.cleared, icon: CheckCircle2, accent: '#5BA88A' },
-        { label: 'Nhập Kho', value: stats.delivered, icon: Truck, accent: '#87CBB9' },
+        { label: 'Thông Quan', value: stats.cleared, icon: CheckCircle2, accent: '#15803D' },
+        { label: 'Nhập Kho', value: stats.delivered, icon: Truck, accent: '#0E7490' },
     ]
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Quản Lý Lô Hàng
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Shipment Tracking — Theo dõi toàn bộ quy trình từ PO → Nhập kho
-                    </p>
-                </div>
-                <button onClick={() => setCreateOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Tạo Lô Hàng
-                </button>
-            </div>
+            <PageHeader
+                title="Quản Lý Lô Hàng"
+                description="Shipment Tracking — Theo dõi toàn bộ quy trình từ PO → Nhập kho"
+                actions={
+                    <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+                        <Plus size={14} /> Tạo Lô Hàng
+                    </Button>
+                }
+            />
 
             {/* Stats */}
             <div className="flex gap-2 overflow-x-auto pb-1">
                 {statCards.map(s => (
                     <button key={s.label} onClick={() => { /* could filter by status */ }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl flex-shrink-0 min-w-[130px]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg flex-shrink-0 min-w-[130px]"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <s.icon size={18} style={{ color: s.accent }} />
                         <div className="text-left">
@@ -371,22 +364,20 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
             {/* Filter */}
             <div className="flex gap-3">
                 <div className="relative flex-1 max-w-sm">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input placeholder="Tìm B/L, tàu, NCC..." value={search}
                         onChange={e => { setSearch(e.target.value); refresh() }}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
+                        className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
                 </div>
                 <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); refresh() }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
+                    className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -398,7 +389,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                     <tbody>
                         {loading ? (
                             Array.from({ length: 4 }).map((_, i) => (
-                                <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     {Array.from({ length: 10 }).map((_, j) => (
                                         <td key={j} className="px-3 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: '70%' }} /></td>
                                     ))}
@@ -418,9 +409,9 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                         ) : rows.map(row => {
                             const st = STATUS_CFG[row.status] ?? { label: row.status, color: '#64748B' }
                             return (
-                                <tr key={row.id} className="group"
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.3)')}
+                                <tr key={row.id} className="group transition-colors"
+                                    style={{ borderBottom: '1px solid #E2E8F0' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-3 py-3">
                                         <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
@@ -440,9 +431,9 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                                     <td className="px-3 py-3">
                                         <div className="flex items-center gap-2">
                                             <div className="w-14 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                                                <div className="h-full rounded-full transition-all" style={{ background: '#5BA88A', width: `${row.milestoneProgress}%` }} />
+                                                <div className="h-full rounded-full transition-all" style={{ background: '#15803D', width: `${row.milestoneProgress}%` }} />
                                             </div>
-                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A' }}>{row.milestoneProgress}%</span>
+                                            <span className="text-[10px] font-bold" style={{ color: '#15803D' }}>{row.milestoneProgress}%</span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-3">
@@ -453,10 +444,10 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
                                                 className="p-1 rounded" title="Chi tiết"
-                                                style={{ color: '#4A8FAB' }}><Eye size={14} /></button>
+                                                style={{ color: '#1D4ED8' }}><Eye size={14} /></button>
                                             <button onClick={() => setLandedCostId(row.id)}
                                                 className="p-1 rounded" title="Giá vốn"
-                                                style={{ color: '#D4A853' }}><BarChart3 size={14} /></button>
+                                                style={{ color: '#B45309' }}><BarChart3 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>

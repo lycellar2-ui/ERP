@@ -21,7 +21,7 @@ interface WarehouseOption {
 }
 
 const DOC_TYPE_CFG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-    GR: { label: 'Nhập Kho', color: '#059669', bg: '#ECFDF5', icon: ArrowDownCircle },
+    GR: { label: 'Nhập Kho', color: '#15803D', bg: '#ECFDF5', icon: ArrowDownCircle },
     DO: { label: 'Xuất Kho', color: '#E11D48', bg: '#FFF1F2', icon: ArrowUpCircle },
     ADJ: { label: 'Điều Chỉnh', color: '#D97706', bg: '#FEF3C7', icon: BarChart3 },
     TRANSFER_IN: { label: 'Chuyển Vào', color: '#0284C7', bg: '#F0F9FF', icon: ArrowDownCircle },
@@ -259,24 +259,24 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
         URL.revokeObjectURL(url)
     }
 
-    const inputCls = "px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="space-y-5 pb-20 md:pb-4">
             {/* ═════════════════════════════════════════════════════ */}
             {/* GLOBAL FILTER BAR (Light Theme)                      */}
             {/* ═════════════════════════════════════════════════════ */}
-            <div className="p-4 sm:p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
+            <div className="p-4 sm:p-5 rounded-lg space-y-4 bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                         {viewMode === 'DETAIL' ? (
                             <button onClick={() => setViewMode('SUMMARY')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer">
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer">
                                 <ArrowLeft size={14} /> Quay lại Bảng Tổng Hợp
                             </button>
                         ) : (
                             <>
-                                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
                                     <BarChart3 size={18} />
                                 </div>
                                 <h3 className="text-base font-extrabold text-slate-900">
@@ -297,7 +297,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                             <button
                                 key={p.id}
                                 onClick={() => applyDatePreset(p.id as any)}
-                                className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap text-xs font-bold cursor-pointer ${
+                                className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-xs font-bold cursor-pointer ${
                                     datePreset === p.id 
                                         ? 'bg-emerald-600 text-white shadow-xs' 
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
@@ -359,7 +359,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 else loadDetailReport()
                             }}
                             disabled={loadingSummary || loadingDetail}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
                             {(loadingSummary || loadingDetail) ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
                             Tra Cứu Báo Cáo
                         </button>
@@ -367,13 +367,13 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                         {viewMode === 'SUMMARY' ? (
                             <button onClick={exportSummaryCSV} disabled={summaryItems.length === 0}
                                 title="Xuất CSV báo cáo kho"
-                                className="px-3 py-2 rounded-xl flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
+                                className="px-3 py-2 rounded-lg flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
                                 <Download size={16} />
                             </button>
                         ) : (
                             <button onClick={exportDetailCSV} disabled={movements.length === 0}
                                 title="Xuất CSV sổ chi tiết mã"
-                                className="px-3 py-2 rounded-xl flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
+                                className="px-3 py-2 rounded-lg flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
                                 <Download size={16} />
                             </button>
                         )}
@@ -403,7 +403,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                     {/* KPI Cards for Warehouse Summary */}
                     {summaryStats && (
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tổng SKU</span>
                                     <Boxes size={14} className="text-emerald-600" />
@@ -412,7 +412,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <p className="text-[10px] text-slate-500 font-medium">Mặt hàng có dữ liệu</p>
                             </div>
 
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tồn Đầu Kỳ</span>
                                     <Package size={14} className="text-amber-600" />
@@ -421,7 +421,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Nhập Trong Kỳ</span>
                                     <ArrowDownCircle size={14} className="text-emerald-600" />
@@ -430,7 +430,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Xuất Trong Kỳ</span>
                                     <ArrowUpCircle size={14} className="text-rose-600" />
@@ -439,7 +439,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tồn Cuối Kỳ</span>
                                     <TrendingUp size={14} className="text-teal-600" />
@@ -451,7 +451,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                     )}
 
                     {/* Summary Data Table — Desktop View */}
-                    <div className="hidden md:block rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                    <div className="hidden md:block rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
                         {loadingSummary ? (
                             <div className="flex items-center justify-center py-20 gap-3">
                                 <Loader2 size={24} className="animate-spin text-emerald-600" />
@@ -601,11 +601,11 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                     {/* Summary Data Cards — Mobile View (< 768px) */}
                     <div className="block md:hidden space-y-3">
                         {loadingSummary ? (
-                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
+                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-lg">
                                 <Loader2 size={20} className="animate-spin inline text-emerald-600 mr-2" /> Đang tải báo cáo NXT...
                             </div>
                         ) : sortedSummaryItems.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
+                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-lg">
                                 Không tìm thấy dữ liệu NXT phù hợp
                             </div>
                         ) : (
@@ -613,7 +613,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <div
                                     key={item.productId}
                                     onClick={() => handleDrillDown(item)}
-                                    className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
+                                    className="p-4 bg-white border border-slate-200 rounded-lg text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -631,7 +631,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     </div>
 
                                     {/* 4 Metric Pills Grid */}
-                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center font-mono">
+                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center font-mono">
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Đầu kỳ</span>
                                             <span className="text-xs font-bold text-amber-700">{item.openingQty}</span>
@@ -667,9 +667,9 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
             {viewMode === 'DETAIL' && selectedProduct && (
                 <div className="space-y-5">
                     {/* Header Banner for Selected Product */}
-                    <div className="p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm">
+                    <div className="p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm">
                         <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold">
                                 <Package size={20} />
                             </div>
                             <div>
@@ -693,7 +693,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                             </select>
 
                             <button onClick={() => loadDetailReport()} disabled={loadingDetail}
-                                className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                                className="px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
                                 {loadingDetail ? <Loader2 size={13} className="animate-spin" /> : <Filter size={13} />} Lọc
                             </button>
                         </div>
@@ -702,23 +702,23 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                     {/* Detail Summary Cards */}
                     {detailSummary && (
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Đầu Kỳ ({formatDate(dateFrom)})</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-amber-600">{detailSummary.openingBalance.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Nhập Trong Kỳ</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-emerald-600">+{detailSummary.totalIn.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Xuất Trong Kỳ</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-rose-600">-{detailSummary.totalOut.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Cuối Kỳ ({formatDate(dateTo)})</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-teal-600">{detailSummary.closingBalance.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Giá Trị Tồn Cuối</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-teal-700">{formatVND(detailSummary.totalValue)}</p>
                             </div>
@@ -741,12 +741,12 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span className="text-xs font-semibold text-slate-600">Đang nạp sổ chi tiết...</span>
                                 </div>
                             ) : movements.length === 0 ? (
-                                <div className="flex flex-col items-center py-16 gap-3 rounded-2xl bg-white border border-dashed border-slate-300">
+                                <div className="flex flex-col items-center py-16 gap-3 rounded-lg bg-white border border-dashed border-slate-300">
                                     <FileText size={32} className="text-slate-300" />
                                     <p className="text-sm font-semibold text-slate-500">Không có phát sinh nhập/xuất nào trong khoảng thời gian này</p>
                                 </div>
                             ) : (
-                                <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                                <div className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
                                     <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                                         <table className="w-full text-left border-collapse">
                                             <thead>
@@ -821,14 +821,14 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 Phân Bổ Tồn Kho Thực Tế Theo Vị Trí
                             </h4>
                             {stockLocations.length === 0 ? (
-                                <div className="flex flex-col items-center py-8 gap-2 rounded-2xl bg-white border border-dashed border-slate-300">
+                                <div className="flex flex-col items-center py-8 gap-2 rounded-lg bg-white border border-dashed border-slate-300">
                                     <MapPin size={20} className="text-slate-300" />
                                     <p className="text-xs font-semibold text-slate-500">Không có lô hàng khả dụng trong kho</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2 max-h-[500px] overflow-y-auto">
                                     {stockLocations.map((loc: any, i: number) => (
-                                        <div key={i} className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+                                        <div key={i} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1.5">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                     📍 {loc.locationCode}

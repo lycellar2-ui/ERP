@@ -14,7 +14,7 @@ import {
 import { formatVND, formatDate } from '@/lib/utils'
 
 const ORIGIN_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    FORMAL: { label: 'Chính Ngạch', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+    FORMAL: { label: 'Chính Ngạch', color: '#15803D', bg: '#ECFDF5', border: '#A7F3D0' },
     INFORMAL: { label: 'Tiểu Ngạch / Xách Tay', color: '#D97706', bg: '#FEF3C7', border: '#FDE68A' },
 }
 
@@ -166,15 +166,15 @@ export function SampleInventoryTab() {
         setShowOutboundModal(true)
     }
 
-    const inputCls = "px-3 py-2.5 rounded-xl text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+    const inputCls = "px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="space-y-5 pb-20 md:pb-4">
             {/* TOP HEADER & ACTION BAR */}
-            <div className="p-4 sm:p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
+            <div className="p-4 sm:p-5 rounded-lg space-y-4 bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                             <Wine size={20} />
                         </div>
                         <div>
@@ -189,11 +189,11 @@ export function SampleInventoryTab() {
 
                     <div className="flex items-center gap-2">
                         <button onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
                             <Plus size={15} /> Khai Báo / Nhập Mẫu
                         </button>
                         <button onClick={() => { setSelectedProductForOutbound(null); setShowOutboundModal(true) }}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer active:scale-95">
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer active:scale-95">
                             <ArrowUpCircle size={15} /> Xuất Sử Dụng Mẫu
                         </button>
                     </div>
@@ -202,7 +202,7 @@ export function SampleInventoryTab() {
                 {/* KPI Stat Cards */}
                 {stats && (
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Mặt Hàng Mẫu</span>
                                 <Layers size={14} className="text-emerald-600" />
@@ -211,7 +211,7 @@ export function SampleInventoryTab() {
                             <p className="text-[10px] text-slate-500 font-medium">Tổng danh mục hàng mẫu</p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Chính Ngạch</span>
                                 <ShieldCheck size={14} className="text-emerald-600" />
@@ -220,7 +220,7 @@ export function SampleInventoryTab() {
                             <p className="text-[10px] text-slate-500 font-medium">Hàng mẫu chính ngạch</p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Tiểu Ngạch / Xách Tay</span>
                                 <AlertTriangle size={14} className="text-amber-600" />
@@ -229,7 +229,7 @@ export function SampleInventoryTab() {
                             <p className="text-[10px] text-slate-500 font-medium">Hàng mẫu tiểu ngạch</p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Giá Trị Ước Tính</span>
                                 <Tag size={14} className="text-teal-600" />
@@ -238,7 +238,7 @@ export function SampleInventoryTab() {
                             <p className="text-[10px] text-slate-500 font-medium">Tổng giá vốn ước tính</p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Xuất Tháng Này</span>
                                 <TrendingDown size={14} className="text-rose-600" />
@@ -252,7 +252,7 @@ export function SampleInventoryTab() {
 
             {/* Filter Tabs & Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
+                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200">
                     <button
                         onClick={() => setTab('ITEMS')}
                         className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -294,7 +294,7 @@ export function SampleInventoryTab() {
                         </select>
 
                         <button onClick={loadData} disabled={loading}
-                            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 cursor-pointer">
+                            className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 cursor-pointer">
                             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         </button>
                     </div>
@@ -303,7 +303,7 @@ export function SampleInventoryTab() {
 
             {/* TAB 1: DANH SÁCH HÀNG MẪU (ITEMS) */}
             {tab === 'ITEMS' && (
-                <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                <div className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
                     {loading ? (
                         <div className="flex items-center justify-center py-20 gap-3">
                             <RefreshCw size={20} className="animate-spin text-emerald-600" />
@@ -380,7 +380,7 @@ export function SampleInventoryTab() {
 
             {/* TAB 2: NHẬT KÝ GIAO DỊCH (TX_LOG) */}
             {tab === 'TX_LOG' && (
-                <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                <div className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
                     {transactions.length === 0 ? (
                         <div className="flex flex-col items-center py-16 gap-3">
                             <History size={36} className="text-slate-300" />
@@ -449,7 +449,7 @@ export function SampleInventoryTab() {
             {/* MODAL 1: KHAI BÁO / NHẬP HÀNG MẪU NGUYÊN LÔ */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg p-6 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-xl">
+                    <div className="w-full max-w-lg p-6 rounded-lg space-y-4 bg-white border border-slate-200 shadow-xl">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                                 <Plus size={18} className="text-emerald-600" /> Khai Báo / Nhập Hàng Mẫu Mới
@@ -527,11 +527,11 @@ export function SampleInventoryTab() {
 
                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                 <button type="button" onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+                                    className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
                                     Hủy Bỏ
                                 </button>
                                 <button type="submit" disabled={submittingAdd}
-                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                                    className="px-5 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
                                     {submittingAdd ? 'Đang lưu...' : 'Khai Báo Hàng Mẫu'}
                                 </button>
                             </div>
@@ -543,7 +543,7 @@ export function SampleInventoryTab() {
             {/* MODAL 2: XUẤT SỬ DỤNG HÀNG MẪU */}
             {showOutboundModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg p-6 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-xl">
+                    <div className="w-full max-w-lg p-6 rounded-lg space-y-4 bg-white border border-slate-200 shadow-xl">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                                 <ArrowUpCircle size={18} className="text-rose-600" /> Xuất Sử Dụng Hàng Mẫu (Sample Out)
@@ -557,7 +557,7 @@ export function SampleInventoryTab() {
                             <div>
                                 <label className="text-xs font-bold block mb-1 text-slate-700">Chọn Hàng Mẫu Xuất *</label>
                                 {selectedProductForOutbound ? (
-                                    <div className="p-3 rounded-xl flex items-center justify-between bg-slate-50 border border-slate-200">
+                                    <div className="p-3 rounded-lg flex items-center justify-between bg-slate-50 border border-slate-200">
                                         <div>
                                             <p className="text-xs font-bold text-slate-900">{selectedProductForOutbound.productName}</p>
                                             <p className="text-[10px] text-slate-500 font-medium">Tồn khả dụng: <span className="font-bold text-emerald-600">{selectedProductForOutbound.qtyOnHand} chai</span></p>
@@ -642,11 +642,11 @@ export function SampleInventoryTab() {
 
                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                 <button type="button" onClick={() => setShowOutboundModal(false)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+                                    className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
                                     Hủy Bỏ
                                 </button>
                                 <button type="submit" disabled={submittingOutbound}
-                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer shadow-xs">
+                                    className="px-5 py-2 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer shadow-xs">
                                     {submittingOutbound ? 'Đang tạo...' : 'Xác Nhận Xuất Mẫu'}
                                 </button>
                             </div>

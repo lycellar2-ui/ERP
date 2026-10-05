@@ -17,19 +17,19 @@ import { formatVND } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
-    DRAFT: { color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
-    CONFIRMED: { color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
-    SHIPPED: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    RECEIVED: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    CANCELLED: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    DRAFT: { color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
+    CONFIRMED: { color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
+    SHIPPED: { color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    RECEIVED: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    CANCELLED: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
-    A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    A: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
     B: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    C: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+    C: { color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
     D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
-    F: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    F: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 const ACTIVITY_ICONS: Record<string, string> = {
@@ -40,7 +40,7 @@ type Tab = 'overview' | 'orders' | 'finance' | 'contracts' | 'shipments' | 'docs
 
 function InfoRow({ label, value, accent }: { label: string; value: React.ReactNode; accent?: string }) {
     return (
-        <div className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
+        <div className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid #E2E8F0' }}>
             <span className="text-xs uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</span>
             <span className="text-sm font-semibold" style={{ color: accent ?? '#0F172A' }}>{value}</span>
         </div>
@@ -57,7 +57,7 @@ function MiniCard({ label, value, accent }: { label: string; value: string | num
 }
 
 function StatusBadge({ status }: { status: string }) {
-    const cfg = PO_STATUS_COLOR[status] ?? { color: '#64748B', bg: 'rgba(74,106,122,0.15)' }
+    const cfg = PO_STATUS_COLOR[status] ?? { color: '#64748B', bg: 'rgba(100,116,139,0.15)' }
     return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ color: cfg.color, background: cfg.bg }}>{status}</span>
 }
 
@@ -252,25 +252,25 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                 onClick={onClose}
             />
             <div
-                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
                 style={{ width: 'min(720px, 97vw)' }}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
                             <Building2 size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                            <h3 className="font-bold text-lg text-slate-900">
                                 {detail?.supplier.name ?? 'Đang tải...'}
                             </h3>
-                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                            <p className="text-xs font-mono text-slate-500">
                                 {detail?.supplier.code ?? ''}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
                         <X size={18} />
                     </button>
                 </div>
@@ -282,8 +282,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-t-lg transition-all whitespace-nowrap"
                             style={{
                                 background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                color: tab === t.key ? '#87CBB9' : '#64748B',
-                                borderBottom: tab === t.key ? '2px solid #87CBB9' : '2px solid transparent',
+                                color: tab === t.key ? '#0E7490' : '#64748B',
+                                borderBottom: tab === t.key ? '2px solid #0E7490' : '2px solid transparent',
                             }}>
                             <t.icon size={12} /> {t.label}
                         </button>
@@ -303,8 +303,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                 <div className="space-y-5">
                                     {/* Scorecard badge */}
                                     {scorecard && (
-                                        <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold"
+                                        <div className="flex items-center gap-4 p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                            <div className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold"
                                                 style={{ background: GRADE_COLOR[scorecard.grade]?.bg, color: GRADE_COLOR[scorecard.grade]?.color }}>
                                                 {scorecard.grade}
                                             </div>
@@ -312,7 +312,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>Supplier Scorecard</p>
                                                 <div className="flex gap-4 mt-1">
                                                     <span className="text-xs" style={{ color: '#475569' }}>Điểm: <b style={{ color: '#0F172A' }}>{scorecard.overallScore}/100</b></span>
-                                                    <span className="text-xs" style={{ color: '#475569' }}>Đúng hạn: <b style={{ color: '#5BA88A' }}>{scorecard.onTimeRate}%</b></span>
+                                                    <span className="text-xs" style={{ color: '#475569' }}>Đúng hạn: <b style={{ color: '#15803D' }}>{scorecard.onTimeRate}%</b></span>
                                                     <span className="text-xs" style={{ color: '#475569' }}>Chất lượng: <b style={{ color: '#0891B2' }}>{scorecard.qualityScore}/100</b></span>
                                                 </div>
                                             </div>
@@ -321,10 +321,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
 
                                     {/* Summary cards */}
                                     <div className="grid grid-cols-4 gap-3">
-                                        <MiniCard label="Đơn PO" value={detail.poSummary.total} accent="#87CBB9" />
-                                        <MiniCard label="Tổng PO" value={fmtCurrency(detail.poSummary.totalValue, detail.supplier.defaultCurrency)} accent="#5BA88A" />
-                                        <MiniCard label="Nợ phải trả" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
-                                        <MiniCard label="Sản phẩm" value={detail.productCount} accent="#4A8FAB" />
+                                        <MiniCard label="Đơn PO" value={detail.poSummary.total} accent="#0E7490" />
+                                        <MiniCard label="Tổng PO" value={fmtCurrency(detail.poSummary.totalValue, detail.supplier.defaultCurrency)} accent="#15803D" />
+                                        <MiniCard label="Nợ phải trả" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#B45309' : '#15803D'} />
+                                        <MiniCard label="Sản phẩm" value={detail.productCount} accent="#1D4ED8" />
                                     </div>
 
                                     {/* Info */}
@@ -333,7 +333,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#0891B2' }}>── Thương Mại</p>
                                             <InfoRow label="Loại" value={detail.supplier.type} />
                                             <InfoRow label="Quốc gia" value={detail.supplier.country} />
-                                            <InfoRow label="Hiệp định" value={detail.supplier.tradeAgreement ?? 'MFN'} accent={detail.supplier.tradeAgreement ? '#5BA88A' : '#64748B'} />
+                                            <InfoRow label="Hiệp định" value={detail.supplier.tradeAgreement ?? 'MFN'} accent={detail.supplier.tradeAgreement ? '#15803D' : '#64748B'} />
                                             <InfoRow label="C/O Form" value={detail.supplier.coFormType ?? '—'} />
                                             <InfoRow label="Incoterms" value={detail.supplier.incoterms ?? '—'} />
                                             <InfoRow label="Thanh toán" value={detail.supplier.paymentTerm ?? '—'} />
@@ -372,7 +372,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                                 placeholder="Email" className="w-full px-2 py-1.5 rounded bg-white border border-slate-200 text-xs text-slate-900 outline-none" />
                                                         </div>
                                                         <label className="flex items-center gap-2 cursor-pointer select-none">
-                                                            <input type="checkbox" checked={contactIsPrimary} onChange={e => setContactIsPrimary(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
+                                                            <input type="checkbox" checked={contactIsPrimary} onChange={e => setContactIsPrimary(e.target.checked)} className="w-3.5 h-3.5 accent-[#0E7490]" />
                                                             <span className="text-[10px]" style={{ color: '#475569' }}>Đặt làm liên hệ chính</span>
                                                         </label>
                                                         <div className="flex justify-end gap-2 pt-1">
@@ -391,13 +391,13 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{c.name}</span>
-                                                                {c.isPrimary && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
+                                                                {c.isPrimary && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Chính</span>}
                                                             </div>
                                                             {!c.isPrimary && (
                                                                 <button onClick={() => handleDeleteContact(c.id, c.name)}
                                                                     className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
                                                                     style={{ color: '#64748B' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#B91C1C'; e.currentTarget.style.background = 'rgba(185,28,28,0.12)' }}
                                                                     onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
                                                                     title="Xóa liên hệ">
                                                                     <Trash2 size={13} />
@@ -461,7 +461,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
 
                                                         {/* Default checkbox */}
                                                         <label className="flex items-center gap-2 cursor-pointer select-none">
-                                                            <input type="checkbox" checked={addressIsDefault} onChange={e => setAddressIsDefault(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
+                                                            <input type="checkbox" checked={addressIsDefault} onChange={e => setAddressIsDefault(e.target.checked)} className="w-3.5 h-3.5 accent-[#0E7490]" />
                                                             <span className="text-[10px]" style={{ color: '#475569' }}>Đặt làm địa chỉ mặc định</span>
                                                         </label>
 
@@ -482,13 +482,13 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-xs font-bold" style={{ color: '#475569' }}>{a.label}</span>
-                                                                {a.isDefault && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Mặc định</span>}
+                                                                {a.isDefault && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Mặc định</span>}
                                                             </div>
                                                             {!a.isDefault && (
                                                                 <button onClick={() => handleDeleteAddress(a.id, a.label)}
                                                                     className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
                                                                     style={{ color: '#64748B' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#B91C1C'; e.currentTarget.style.background = 'rgba(185,28,28,0.12)' }}
                                                                     onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
                                                                     title="Xóa địa chỉ">
                                                                     <Trash2 size={13} />
@@ -502,7 +502,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             </div>
                                             {detail.supplier.website && (
                                                 <a href={detail.supplier.website} target="_blank" rel="noopener noreferrer"
-                                                    className="flex items-center gap-1.5 text-xs" style={{ color: '#4A8FAB' }}>
+                                                    className="flex items-center gap-1.5 text-xs" style={{ color: '#1D4ED8' }}>
                                                     <ExternalLink size={11} /> {detail.supplier.website}
                                                 </a>
                                             )}
@@ -608,9 +608,9 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {tab === 'finance' && (
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniCard label="Tổng hoá đơn" value={detail.apSummary.totalInvoices} accent="#4A8FAB" />
-                                        <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount, detail.supplier.defaultCurrency)} accent="#87CBB9" />
-                                        <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
+                                        <MiniCard label="Tổng hoá đơn" value={detail.apSummary.totalInvoices} accent="#1D4ED8" />
+                                        <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount, detail.supplier.defaultCurrency)} accent="#0E7490" />
+                                        <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#B45309' : '#15803D'} />
                                     </div>
                                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Danh Sách AP Invoice</p>
                                     {!invoices ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /> :
@@ -690,7 +690,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Giấy Tờ Pháp Lý</p>
-                                        <a href={`/dashboard/contracts`} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                        <a href={`/dashboard/contracts`} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             Quản lý →
                                         </a>
                                     </div>
@@ -706,8 +706,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 {regDocs.map((d: any) => {
                                                     const isExpired = d.status === 'EXPIRED' || d.status === 'REVOKED'
                                                     const isExpiring = d.daysRemaining !== null && d.daysRemaining <= 30 && d.daysRemaining > 0
-                                                    const borderColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : '#E2E8F0'
-                                                    const statusColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : d.status === 'ACTIVE' ? '#5BA88A' : '#64748B'
+                                                    const borderColor = isExpired ? '#B91C1C' : isExpiring ? '#B45309' : '#E2E8F0'
+                                                    const statusColor = isExpired ? '#B91C1C' : isExpiring ? '#B45309' : d.status === 'ACTIVE' ? '#15803D' : '#64748B'
                                                     return (
                                                         <div key={d.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: `1px solid ${borderColor}` }}>
                                                             <div className="flex items-center justify-between mb-2">
@@ -736,7 +736,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             {d.latestFile && (
                                                                 <div className="mt-2">
                                                                     <a href={d.latestFile.fileUrl} target="_blank" rel="noopener noreferrer"
-                                                                        className="text-[10px] flex items-center gap-1" style={{ color: '#4A8FAB' }}>
+                                                                        className="text-[10px] flex items-center gap-1" style={{ color: '#1D4ED8' }}>
                                                                         <ExternalLink size={10} /> {d.latestFile.name}
                                                                     </a>
                                                                 </div>
@@ -753,10 +753,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {tab === 'notes' && (
                                 <div className="space-y-4">
                                     {/* Add note form */}
-                                    <div className="p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="flex items-center gap-2 mb-3">
                                             <select value={noteType} onChange={e => setNoteType(e.target.value)}
-                                                className="px-2 py-1.5 rounded-lg text-xs outline-none"
+                                                className="px-2 py-1.5 rounded-md text-xs outline-none"
                                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                                 <option value="NOTE">📝 Ghi chú</option>
                                                 <option value="CALL">📞 Cuộc gọi</option>
@@ -765,7 +765,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             </select>
                                         </div>
                                         <textarea value={newNote} onChange={e => setNewNote(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
+                                            className="w-full px-3 py-2.5 rounded-md text-sm outline-none resize-none"
                                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', minHeight: 80 }}
                                             placeholder="Thêm ghi chú về NCC..." />
                                         <div className="flex justify-end mt-2">

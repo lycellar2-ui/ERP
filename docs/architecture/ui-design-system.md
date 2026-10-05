@@ -187,6 +187,11 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | **v3.2** | 2026-10-05 | Pilot được duyệt. Đợt 1: codemod màu cho 25 file (quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals); chuyển cấu trúc sang kit cho Returns, Price List, Delivery (kèm E-POD/Create drawer). Lưu ý: `Toolbar` nhận `left`/`right`, không nhận children; `TableMessageRow` có `p-0` → luôn bọc `EmptyState`/`TableSkeleton` bên trong. |
 | **v3.1** | 2026-10-05 | Pilot xong: Sales (list + 3 drawer), Products (list, bảng, 2 drawer), Customers (list + drawer), Sidebar/Header. Thêm `Drawer.actions`, `Pagination.onPageHover`, `WineTypeBadge` dùng chung (bỏ màu tím Fortified ở Margin). Script `ui-palette-codemod.mjs` + test. |
 | **v3.0** | 2026-10-05 | Viết lại tài liệu thành 1 bản Light duy nhất (bỏ spec Dark cũ & đoạn lặp). Tải Inter qua `next/font`, Toaster light. Thêm token `lys-teal-strong/hover/soft`, 6 tông trạng thái `tone-*`, token chuyển động, `type-caption`; `radius-lg` 10→8px. Tạo `src/components/ui` (11 nhóm component) + `src/lib/ui/status.ts`. |
+| v3.4 | 2026-10-05 | Hoàn tất Đợt 2 (Kho & Mua hàng — 10 module): warehouse, transfers, stock-count, allocation, procurement, suppliers, shipments, declarations, stamps, consignment. Loại bỏ toàn bộ rounded-2xl/xl, chuẩn hóa PageHeader, StatGrid, Button, loại bỏ dark hover/tokens. |
+| v3.3 | 2026-10-05 | Hoàn tất Đợt 1 (Bán hàng — 9 module): quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals. |
+| v3.2 | 2026-10-05 | Pilot 3 module: Sales (full), Products (full), Customers (full). Duyệt trước/sau. |
+| v3.1 | 2026-10-05 | Triển khai UI kit `src/components/ui/` + `src/lib/ui/status.ts`. |
+| v3.0 | 2026-10-05 | Chuyển toàn bộ sang chuẩn Light duy nhất. Bỏ Dark theme. |
 | v2.2 | 2026-09-24 | Codemod 123 file từ hex Dark sang Light; xóa ~240 dòng CSS override `!important`. |
 | v1.x | — | Spec "Oceanic Cellar" Dark (đã ngừng dùng). |
 
@@ -206,6 +211,15 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | ✅ Đã chuẩn hóa | **CRM** — CRMClient (PageHeader, StatGrid, StatCard, Tabs, Cards) |
 | ✅ Đã chuẩn hóa | **Quotations** — QuotationClient (Table, StatusBadge, Thumbnail Light, Mobile cards) |
 | ✅ Đã chuẩn hóa | **Proposals** — ProposalsClient (Header, StatCards, Filter bar, Action buttons) |
-| ⏳ Chờ | **Đợt 2: Kho & Mua hàng** (warehouse, transfers, stock-count, allocation, procurement, suppliers, shipments, declarations, stamps, consignment) |
+| ✅ Đã chuẩn hóa | **Warehouse** — WarehouseClient + 8 tabs (chuyển rounded-2xl/xl sang rounded-lg/md, chuẩn hóa light tokens) |
+| ✅ Đã chuẩn hóa | **Transfers** — TransfersClient + CreateTransferDrawer + TransferDetailDrawer (PageHeader, Toolbar, Table, Drawer) |
+| ✅ Đã chuẩn hóa | **Stock Count** — StockCountClient + Modals (PageHeader, StatCard, loại bỏ mint hover #76BAA8, chuẩn hóa Button) |
+| ✅ Đã chuẩn hóa | **Allocation** — AllocationClient (PageHeader, StatGrid, StatCard, Button) |
+| ✅ Đã chuẩn hóa | **Procurement** — ProcurementClient + ShipmentDetailDrawer (High-density Light bar, Table, Drawer) |
+| ✅ Đã chuẩn hóa | **Suppliers** — SuppliersClient + SupplierDetailDrawer (PageHeader, StatGrid, Button, Table, Drawer) |
+| ✅ Đã chuẩn hóa | **Shipments** — ShipmentsClient (PageHeader, Button, Table hover Light) |
+| ✅ Đã chuẩn hóa | **Declarations** — declarations/page.tsx (PageHeader, StatGrid, Button, Table) |
+| ✅ Đã chuẩn hóa | **Stamps** — StampsClient (bỏ background #1A2F3F, PageHeader, Button, Table) |
+| ✅ Đã chuẩn hóa | **Consignment** — ConsignmentClient + Printable reports (PageHeader, StatGrid, Button) |
 | ⏳ Chờ | **Đợt 3: Tài chính & Kế toán** (finance, reconciliation, costing, margin, reports, kpi, market-price) |
 | ⏳ Chờ | **Đợt 4: Khác** (hr, settings, audit-log, media, qr-codes, agency, ai, dashboard) |

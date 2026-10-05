@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Stamp, Plus, AlertTriangle, CheckCircle, Package, Trash2, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { createStampPurchase, recordStampUsage, createStampDestruction, getStampAlerts, getStampDestructions } from './actions'
+import { PageHeader, Button } from '@/components/ui'
 import type { StampAlert, StampDestructionRecord } from './actions'
 
 interface StampPurchase {
@@ -42,14 +43,14 @@ interface Props {
 
 // Shared style tokens
 const card = {
-    background: '#1A2F3F',
+    background: '#FFFFFF',
     border: '1px solid #E2E8F0',
-    borderRadius: '12px',
+    borderRadius: '8px',
     padding: '24px',
 }
 
 const labelStyle: React.CSSProperties = {
-    color: '#6B8A99',
+    color: '#64748B',
     fontSize: '12px',
     fontWeight: 600,
     textTransform: 'uppercase' as const,
@@ -181,28 +182,15 @@ export default function StampsClient({ purchases, summary }: Props) {
     return (
         <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                <div>
-                    <h1 style={{ color: '#0F172A', fontSize: '28px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Stamp size={28} style={{ color: '#0891B2' }} />
-                        Quản Lý Tem Rượu Nhập Khẩu
-                    </h1>
-                    <p style={{ color: '#6B8A99', marginTop: '6px', fontSize: '14px' }}>
-                        Theo dõi phôi tem do Bộ Tài Chính / Tổng cục Hải quan cấp phát
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowAddForm(!showAddForm)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '10px 20px', borderRadius: '8px', border: 'none',
-                        background: '#87CBB9', color: '#F8FAFC', fontWeight: 600,
-                        cursor: 'pointer', fontSize: '14px',
-                    }}
-                >
-                    <Plus size={16} /> Nhập Lô Tem Mới
-                </button>
-            </div>
+            <PageHeader
+                title="Quản Lý Tem Rượu Nhập Khẩu"
+                description="Theo dõi phôi tem do Bộ Tài Chính / Tổng cục Hải quan cấp phát"
+                actions={
+                    <Button variant="primary" size="sm" onClick={() => setShowAddForm(!showAddForm)}>
+                        <Plus size={14} /> Nhập Lô Tem Mới
+                    </Button>
+                }
+            />
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
@@ -224,7 +212,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                         {/* Progress bar */}
                         <div style={{ background: '#F8FAFC', borderRadius: '6px', height: '8px', overflow: 'hidden' }}>
                             <div style={{
-                                background: pct(data.used, data.total) > 90 ? '#E85D5D' : color,
+                                background: pct(data.used, data.total) > 90 ? '#B91C1C' : color,
                                 width: `${pct(data.used, data.total)}%`,
                                 height: '100%',
                                 borderRadius: '6px',
@@ -241,9 +229,9 @@ export default function StampsClient({ purchases, summary }: Props) {
 
             {/* Overuse Alerts Banner */}
             {alerts.length > 0 && (
-                <div style={{ ...card, marginBottom: '24px', borderColor: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }}>
+                <div style={{ ...card, marginBottom: '24px', borderColor: alerts.some(a => a.severity === 'CRITICAL') ? '#B91C1C' : '#E8A87C' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <ShieldAlert size={18} style={{ color: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }} />
+                        <ShieldAlert size={18} style={{ color: alerts.some(a => a.severity === 'CRITICAL') ? '#B91C1C' : '#E8A87C' }} />
                         <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600 }}>
                             Cảnh Báo Tem ({alerts.length})
                         </h3>
@@ -256,14 +244,14 @@ export default function StampsClient({ purchases, summary }: Props) {
                                 background: a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.08)' : 'rgba(232,168,124,0.08)',
                                 border: `1px solid ${a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.25)' : 'rgba(232,168,124,0.25)'}`,
                             }}>
-                                <AlertTriangle size={14} style={{ color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C', flexShrink: 0 }} />
-                                <span style={{ color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C', fontSize: '13px', flex: 1 }}>
+                                <AlertTriangle size={14} style={{ color: a.severity === 'CRITICAL' ? '#B91C1C' : '#E8A87C', flexShrink: 0 }} />
+                                <span style={{ color: a.severity === 'CRITICAL' ? '#B91C1C' : '#E8A87C', fontSize: '13px', flex: 1 }}>
                                     {a.message}
                                 </span>
                                 <span style={{
                                     padding: '2px 8px', borderRadius: '10px', fontSize: '10px', fontWeight: 700,
                                     background: a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.2)' : 'rgba(232,168,124,0.2)',
-                                    color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C',
+                                    color: a.severity === 'CRITICAL' ? '#B91C1C' : '#E8A87C',
                                 }}>
                                     {a.severity}
                                 </span>
@@ -385,7 +373,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                 const isExhaust = remaining <= 0
 
                                 return (
-                                    <tr key={p.id} style={{ borderBottom: '1px solid #1E3344' }}>
+                                    <tr key={p.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         <td style={tdStyle}>
                                             {new Date(p.purchaseDate).toLocaleDateString('vi-VN')}
                                         </td>
@@ -393,7 +381,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
                                                 background: p.stampType === 'UNDER_20_ABV' ? 'rgba(8, 145, 178, 0.08)' : 'rgba(232,168,124,0.15)',
-                                                color: p.stampType === 'UNDER_20_ABV' ? '#87CBB9' : '#E8A87C',
+                                                color: p.stampType === 'UNDER_20_ABV' ? '#0E7490' : '#E8A87C',
                                             }}>
                                                 {p.stampType === 'UNDER_20_ABV' ? '< 20°' : '≥ 20°'}
                                             </span>
@@ -404,12 +392,12 @@ export default function StampsClient({ purchases, summary }: Props) {
                                         </td>
                                         <td style={{ ...tdStyle, textAlign: 'right' }}>{p.totalQty.toLocaleString()}</td>
                                         <td style={{ ...tdStyle, textAlign: 'right' }}>{p.usedQty.toLocaleString()}</td>
-                                        <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: isExhaust ? '#E85D5D' : isLow ? '#E8A87C' : '#87CBB9' }}>
+                                        <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: isExhaust ? '#B91C1C' : isLow ? '#E8A87C' : '#0E7490' }}>
                                             {remaining.toLocaleString()}
                                         </td>
                                         <td style={tdStyle}>
                                             {isExhaust ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#E85D5D', fontSize: '12px' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#B91C1C', fontSize: '12px' }}>
                                                     <AlertTriangle size={14} /> Hết tem
                                                 </span>
                                             ) : isLow ? (
@@ -440,7 +428,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                                         onClick={(e) => { e.stopPropagation(); setShowDestroyForm(showDestroyForm === p.id ? null : p.id) }}
                                                         style={{
                                                             padding: '5px 12px', borderRadius: '6px', border: '1px solid rgba(232,93,93,0.3)',
-                                                            background: 'transparent', color: '#E85D5D', cursor: 'pointer', fontSize: '12px',
+                                                            background: 'transparent', color: '#B91C1C', cursor: 'pointer', fontSize: '12px',
                                                             display: 'flex', alignItems: 'center', gap: '4px',
                                                         }}
                                                     >
@@ -460,7 +448,7 @@ export default function StampsClient({ purchases, summary }: Props) {
             {/* Usage Recording Modal */}
             {showUsageForm && (
                 <div style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                    position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
                 }}
                     onClick={() => setShowUsageForm(null)}
@@ -519,17 +507,17 @@ export default function StampsClient({ purchases, summary }: Props) {
             {/* Destruction Modal */}
             {showDestroyForm && (
                 <div style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                    position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
                 }}
                     onClick={() => setShowDestroyForm(null)}
                 >
                     <div
-                        style={{ ...card, width: '520px', borderColor: '#E85D5D' }}
+                        style={{ ...card, width: '520px', borderColor: '#B91C1C' }}
                         onClick={e => e.stopPropagation()}
                     >
                         <h3 style={{ color: '#0F172A', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Trash2 size={18} style={{ color: '#E85D5D' }} /> Biên Bản Hủy Tem
+                            <Trash2 size={18} style={{ color: '#B91C1C' }} /> Biên Bản Hủy Tem
                         </h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -586,7 +574,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                 <button
                                     onClick={() => handleDestruction(showDestroyForm)}
                                     disabled={loading}
-                                    style={{ ...btnPrimary, background: '#E85D5D' }}
+                                    style={{ ...btnPrimary, background: '#B91C1C' }}
                                 >
                                     {loading ? 'Đang xử lý...' : '🗑️ Xác Nhận Hủy Tem'}
                                 </button>
@@ -601,7 +589,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                 <div style={{ ...card, marginTop: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <h3 style={{ color: '#0F172A', margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Trash2 size={16} style={{ color: '#E85D5D' }} /> Lịch Sử Hủy Tem ({destructions.length})
+                            <Trash2 size={16} style={{ color: '#B91C1C' }} /> Lịch Sử Hủy Tem ({destructions.length})
                         </h3>
                         <button onClick={() => setShowDestroyHistory(!showDestroyHistory)}
                             style={{ ...btnSecondary, padding: '5px 12px', fontSize: '12px' }}>
@@ -619,10 +607,10 @@ export default function StampsClient({ purchases, summary }: Props) {
                             </thead>
                             <tbody>
                                 {destructions.map(d => (
-                                    <tr key={d.id} style={{ borderBottom: '1px solid #1E3344' }}>
+                                    <tr key={d.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
                                         <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{d.purchaseSymbol}</td>
-                                        <td style={{ ...tdStyle, textAlign: 'right', color: '#E85D5D', fontWeight: 600 }}>{d.qtyDestroyed.toLocaleString()}</td>
+                                        <td style={{ ...tdStyle, textAlign: 'right', color: '#B91C1C', fontWeight: 600 }}>{d.qtyDestroyed.toLocaleString()}</td>
                                         <td style={{ ...tdStyle, maxWidth: '200px' }}>{d.reason}</td>
                                         <td style={tdStyle}>{d.witnessName}</td>
                                     </tr>
@@ -639,31 +627,31 @@ export default function StampsClient({ purchases, summary }: Props) {
 // Shared inline styles
 const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '10px 12px',
-    borderRadius: '8px',
+    padding: '8px 12px',
+    borderRadius: '6px',
     border: '1px solid #E2E8F0',
-    background: '#F8FAFC',
+    background: '#FFFFFF',
     color: '#0F172A',
     fontSize: '14px',
     outline: 'none',
 }
 
 const btnPrimary: React.CSSProperties = {
-    padding: '10px 24px',
-    borderRadius: '8px',
+    padding: '8px 20px',
+    borderRadius: '6px',
     border: 'none',
-    background: '#87CBB9',
-    color: '#F8FAFC',
+    background: '#0891B2',
+    color: '#FFFFFF',
     fontWeight: 600,
     cursor: 'pointer',
     fontSize: '14px',
 }
 
 const btnSecondary: React.CSSProperties = {
-    padding: '10px 24px',
-    borderRadius: '8px',
+    padding: '8px 20px',
+    borderRadius: '6px',
     border: '1px solid #E2E8F0',
-    background: 'transparent',
+    background: '#FFFFFF',
     color: '#475569',
     cursor: 'pointer',
     fontSize: '14px',
@@ -672,7 +660,7 @@ const btnSecondary: React.CSSProperties = {
 const thStyle: React.CSSProperties = {
     textAlign: 'left',
     padding: '10px 12px',
-    color: '#6B8A99',
+    color: '#64748B',
     fontSize: '12px',
     fontWeight: 600,
     textTransform: 'uppercase',

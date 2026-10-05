@@ -54,7 +54,7 @@ const getLotStatusConfig = (status: string, locale: any) => {
         case 'RESERVED': return { label, color: '#2563EB' }
         case 'QUARANTINE': return { label, color: '#B47816' }
         case 'CONSUMED': return { label, color: '#64748B' }
-        case 'DAMAGED': return { label, color: '#DC2626' }
+        case 'DAMAGED': return { label, color: '#B91C1C' }
         default: return { label, color: '#64748B' }
     }
 }
@@ -87,7 +87,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: 'rgba(15, 23, 42, 0.4)' }} onClick={onClose}>
-            <div className="rounded-2xl p-6 space-y-5 w-full max-w-md shadow-2xl"
+            <div className="rounded-lg p-6 space-y-5 w-full max-w-md shadow-2xl"
                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                     <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
-                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>{error}</div>}
+                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>{error}</div>}
 
                 {[
                     { key: 'code', label: t.codeLabel, placeholder: t.codePlaceholder },
@@ -132,7 +132,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
 function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
     const { locale } = useAppLocale()
     const days = Math.floor((Date.now() - new Date(receivedDate).getTime()) / 86400000)
-    const color = days > 180 ? '#DC2626' : days > 90 ? '#B47816' : '#64748B'
+    const color = days > 180 ? '#B91C1C' : days > 90 ? '#B47816' : '#64748B'
     const suffix = WAREHOUSE_I18N[locale].table.daysSuffix
     return (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
@@ -153,7 +153,7 @@ function StockTable({ lots, sortConfig, onSort }: {
 
     if (lots.length === 0) {
         return (
-            <div className="flex flex-col items-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+            <div className="flex flex-col items-center py-16 gap-3 rounded-lg" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                 <Box size={32} style={{ color: '#94A3B8' }} />
                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.emptyTitle}</p>
                 <p className="text-xs" style={{ color: '#64748B' }}>{t.emptySubtitle}</p>
@@ -176,7 +176,7 @@ function StockTable({ lots, sortConfig, onSort }: {
     ]
 
     return (
-        <div className="rounded-2xl overflow-hidden shadow-xs border border-slate-200" style={{ background: '#FFFFFF' }}>
+        <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200" style={{ background: '#FFFFFF' }}>
             {/* Desktop Table View (Compact Row Height for Maximum Row Density) */}
             <div className="hidden md:block overflow-y-auto" style={{ maxHeight: 'calc(100vh - 290px)' }}>
                 <table className="w-full text-left border-collapse text-xs">
@@ -222,7 +222,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block" style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block" style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
                                                 {lot.vintage}
                                             </span>
                                         ) : (
@@ -268,7 +268,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         <div className="flex items-center gap-1.5 justify-center">
                                             <div className="text-center min-w-[45px]">
-                                                <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
+                                                <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#B91C1C' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
                                                     {lot.qtyAvailable.toLocaleString()}
                                                 </span>
                                                 {lot.qtyReserved > 0 && (
@@ -280,7 +280,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                             <div className="w-7 h-1.5 rounded-full overflow-hidden shrink-0" style={{ background: '#E2E8F0' }}>
                                                 <div className="h-full rounded-full" style={{
                                                     width: `${pctRemaining}%`,
-                                                    background: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A',
+                                                    background: pctRemaining < 20 ? '#B91C1C' : pctRemaining < 50 ? '#B47816' : '#16A34A',
                                                 }} />
                                             </div>
                                         </div>
@@ -318,7 +318,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                     const variance = lot.variance ?? (onHandQty - bookQty)
 
                     return (
-                        <div key={lot.id} className="p-4 rounded-2xl space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
+                        <div key={lot.id} className="p-4 rounded-lg space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
                                     {lot.lotNo}
@@ -392,16 +392,16 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
         setProcessing(null)
     }
 
-    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} /></div>
+    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#B45309' }} /></div>
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="flex items-center justify-between p-4 rounded-lg shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <ShieldAlert size={16} style={{ color: '#DC2626' }} /> {t.title}
+                    <ShieldAlert size={16} style={{ color: '#B91C1C' }} /> {t.title}
                     {lots.length > 0 && (
                         <span className="ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold"
-                            style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>
+                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
                             {t.lotsCount(lots.length)}
                         </span>
                     )}
@@ -413,12 +413,12 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
             </div>
 
             {lots.length === 0 ? (
-                <div className="flex flex-col items-center py-12 gap-2 rounded-xl shadow-xs" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                <div className="flex flex-col items-center py-12 gap-2 rounded-lg shadow-xs" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                     <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
                     <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{t.empty}</p>
                 </div>
             ) : (
-                <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     {/* Desktop Table View (>= 768px) */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
@@ -446,7 +446,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                                 </button>
                                                 <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
                                                     className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
-                                                    style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}>
+                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}>
                                                     <Trash2 size={11} className="inline mr-0.5" />{t.writeOff}
                                                 </button>
                                             </div>
@@ -460,7 +460,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                     {/* Mobile Card View (< 768px) */}
                     <div className="block md:hidden p-3 space-y-3">
                         {lots.map((lot: any) => (
-                            <div key={lot.id} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2.5">
+                            <div key={lot.id} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                                         {t.thLot}: {lot.lotNo}
@@ -493,7 +493,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         onClick={() => handleRelease(lot.id, 'WRITE_OFF')}
                                         disabled={processing === lot.id}
                                         className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
-                                        style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}
+                                        style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
                                     >
                                         <Trash2 size={12} className="inline mr-1" />
                                         {t.writeOff}
@@ -692,7 +692,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             subtitle: t.modules.do.subtitle,
             icon: Truck,
             color: '#B47816',
-            bg: 'rgba(212,168,83,0.15)',
+            bg: 'rgba(180,83,9,0.15)',
             description: t.modules.do.description,
             actionLabel: t.modules.do.actionLabel,
         },
@@ -751,8 +751,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             title: t.modules.quarantine.title,
             subtitle: t.modules.quarantine.subtitle,
             icon: ShieldAlert,
-            color: '#DC2626',
-            bg: 'rgba(220,38,38,0.1)',
+            color: '#B91C1C',
+            bg: 'rgba(185,28,28,0.1)',
             badge: stats.quarantinedCount,
             description: t.modules.quarantine.description,
             actionLabel: t.modules.quarantine.actionLabel,
@@ -762,7 +762,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             title: t.modules.nxt.title,
             subtitle: t.modules.nxt.subtitle,
             icon: BarChart3,
-            color: '#059669',
+            color: '#15803D',
             bg: 'rgba(5,150,105,0.1)',
             description: t.modules.nxt.description,
             actionLabel: t.modules.nxt.actionLabel,
@@ -772,8 +772,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             title: t.modules.sample.title,
             subtitle: t.modules.sample.subtitle,
             icon: Wine,
-            color: '#D4A853',
-            bg: 'rgba(212,168,83,0.1)',
+            color: '#B45309',
+            bg: 'rgba(180,83,9,0.1)',
             description: t.modules.sample.description,
             actionLabel: t.modules.sample.actionLabel,
         },
@@ -843,7 +843,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         { label: t.stats.inventoryValue, value: formatCurrency(stats.inventoryValue), accent: '#B47816', icon: DollarSign },
         { label: t.stats.reserved, value: `${stats.reservedBottles.toLocaleString()} ${t.bottlesUnit}`, accent: '#2563EB', icon: Box },
         { label: t.stats.lowStock, value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#B47816' : '#16A34A', icon: AlertTriangle },
-        { label: t.stats.slowMoving, value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#DC2626' : '#16A34A', icon: TrendingDown },
+        { label: t.stats.slowMoving, value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#B91C1C' : '#16A34A', icon: TrendingDown },
     ]
 
     const activeModule = wmsFeatureModules.find(m => m.key === activeTab)
@@ -851,12 +851,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* ═══ 📱 MOBILE TOP HEADER (< 768px) - CLEAN, UNCLUTTERED 1-ROW BAR ═══ */}
-            <div className="block md:hidden bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs space-y-2.5">
+            <div className="block md:hidden bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-2.5">
                 {/* Row 1: Title / Navigation & Compact Warehouse Selector */}
                 <div className="flex items-center justify-between gap-2">
                     {viewMode === 'grid' ? (
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
                                 <Warehouse size={18} className="text-amber-600" />
                             </div>
                             <div>
@@ -873,11 +873,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
                             >
                                 <ArrowLeft size={14} /> {t.mobileMenuBtn}
                             </button>
-                            <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl truncate">
+                            <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg truncate">
                                 {activeModule?.title}
                             </span>
                         </div>
@@ -898,7 +898,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-2 pr-6 py-1.5 rounded-xl text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
+                                className="appearance-none pl-2 pr-6 py-1.5 rounded-lg text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
                             >
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
@@ -914,7 +914,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         {viewMode === 'grid' && (
                             <button
                                 onClick={() => setShowMobileStats(!showMobileStats)}
-                                className={`p-1.5 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                                className={`p-1.5 rounded-lg border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
                                     showMobileStats
                                         ? 'bg-amber-50 border-amber-300 text-amber-700'
                                         : 'bg-slate-50 border-slate-200 text-slate-600'
@@ -931,7 +931,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 {viewMode === 'grid' && showMobileStats && (
                     <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                         {statCards.map(s => (
-                            <div key={s.label} className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
+                            <div key={s.label} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
                                 <div className="flex items-center gap-1 text-[9px] uppercase font-bold text-slate-500">
                                     <s.icon size={10} style={{ color: s.accent }} />
                                     <span className="truncate">{s.label}</span>
@@ -946,7 +946,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             </div>
 
             {/* ═══ 💻 DESKTOP TOP HEADER (>= 768px) ═══ */}
-            <div className="hidden md:block p-3.5 rounded-2xl shadow-2xs bg-white border border-slate-200">
+            <div className="hidden md:block p-3.5 rounded-lg shadow-2xs bg-white border border-slate-200">
                 <div className="flex flex-row items-center justify-between gap-3">
                     {/* Left: Title & Active Breadcrumb */}
                     <div className="flex items-center gap-2 shrink-0">
@@ -991,7 +991,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={toggleAudioNotify}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
                                 audioNotifyEnabled
                                     ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/20'
                                     : 'bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200'
@@ -1029,7 +1029,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-base sm:text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
+                                className="appearance-none pl-3 pr-8 py-2 rounded-lg text-base sm:text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
                             >
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
@@ -1042,7 +1042,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </div>
 
                         <button onClick={() => setCreateWHOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all hover:brightness-105 shrink-0 cursor-pointer bg-amber-500 text-slate-950">
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-2xs transition-all hover:brightness-105 shrink-0 cursor-pointer bg-amber-500 text-slate-950">
                             <Plus size={14} /> {t.createWarehouseBtn}
                         </button>
                     </div>
@@ -1071,10 +1071,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <button
                                         key={mod.key}
                                         onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
-                                        className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-2xs flex flex-col justify-between"
+                                        className="p-3.5 bg-white border border-slate-200 rounded-lg text-left active:scale-95 transition shadow-2xs flex flex-col justify-between"
                                     >
                                         <div className="flex items-start justify-between mb-2">
-                                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
+                                            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
                                                 <Icon size={18} />
                                             </div>
                                             {mod.badge !== undefined && mod.badge > 0 && (
@@ -1112,18 +1112,18 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         handleTabChange(mod.key)
                                         setViewMode('workspace')
                                     }}
-                                    className="p-4 sm:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group shadow-sm"
+                                    className="p-4 sm:p-5 rounded-lg flex flex-col justify-between cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group shadow-sm"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                                 >
                                     <div>
                                         <div className="flex items-start justify-between mb-3">
-                                            <div className="p-3 rounded-xl transition-transform group-hover:scale-105 shrink-0"
+                                            <div className="p-3 rounded-lg transition-transform group-hover:scale-105 shrink-0"
                                                 style={{ background: mod.bg, color: mod.color }}>
                                                 <Icon size={24} />
                                             </div>
                                             {mod.badge !== undefined && mod.badge > 0 && (
                                                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold shadow-xs"
-                                                    style={{ background: '#DC2626', color: '#FFFFFF' }}>
+                                                    style={{ background: '#B91C1C', color: '#FFFFFF' }}>
                                                     {t.modules.quarantine.badgeAlerts(mod.badge)}
                                                 </span>
                                             )}
@@ -1202,7 +1202,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     initialLocations={selectedLocations}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center py-20 gap-3 rounded-xl shadow-xs"
+                                <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs"
                                     style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                                     <MapPin size={36} style={{ color: '#94A3B8' }} />
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
@@ -1229,7 +1229,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                                     return (
                                         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0" style={{ color: '#B47816', background: 'rgba(180,83,9,0.15)' }}>
                                                 {t.lotsCount(filteredLots.length)}
                                             </span>
                                             <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0">
@@ -1319,12 +1319,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                             {lotsLoading ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} />
+                                    <Loader2 size={24} className="animate-spin" style={{ color: '#B45309' }} />
                                 </div>
                             ) : selectedWH ? (
                                 <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} />
                             ) : (
-                                <div className="flex flex-col items-center py-20 gap-3 rounded-xl shadow-xs"
+                                <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs"
                                     style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                                     <Warehouse size={36} style={{ color: '#94A3B8' }} />
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
@@ -1342,7 +1342,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <LayoutGrid size={16} />
                         {t.bottomNav.menu}
@@ -1353,7 +1353,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('inventory')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Package size={16} />
                         {t.bottomNav.inventory}
@@ -1364,7 +1364,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('do')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Truck size={16} />
                         {t.bottomNav.do}
@@ -1375,7 +1375,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('gr')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <PackagePlus size={16} />
                         {t.bottomNav.gr}
@@ -1386,7 +1386,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('stock-count')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <ClipboardList size={16} />
                         {t.bottomNav.stockCount}

@@ -94,9 +94,15 @@ export function transform(src) {
 function collect(target, files = []) {
     const st = fs.statSync(target)
     if (st.isDirectory()) {
-        for (const name of fs.readdirSync(target)) collect(path.join(target, name), files)
+        if (path.basename(target) === 'print') return files
+        for (const name of fs.readdirSync(target)) {
+            if (name === 'print') continue
+            collect(path.join(target, name), files)
+        }
     } else if (/\.(tsx|jsx)$/.test(target)) {
-        files.push(target)
+        if (!target.includes(`${path.sep}print${path.sep}`)) {
+            files.push(target)
+        }
     }
     return files
 }

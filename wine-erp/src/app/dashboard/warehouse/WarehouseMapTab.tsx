@@ -62,9 +62,9 @@ function occColor(pct: number) {
     }
     if (pct > 0) return {
         fill: '#ECFDF5',
-        border: '#10B981',
+        border: '#15803D',
         text: '#047857',
-        dot: '#10B981',
+        dot: '#15803D',
         badgeBg: '#D1FAE5',
         badgeText: '#065F46',
         label: 'Thấp (1-40%)'
@@ -83,9 +83,9 @@ function occColor(pct: number) {
 // Clean zone color palette conforming to design guidelines
 const ZONE_COLORS: Record<string, string> = {
     A: '#0284C7', // Sky Blue
-    B: '#059669', // Emerald Green
+    B: '#15803D', // Emerald Green
     C: '#D97706', // Amber Gold
-    D: '#DC2626', // Crimson Red
+    D: '#B91C1C', // Crimson Red
     E: '#2563EB', // Royal Blue
     F: '#DB2777', // Rose Pink
     G: '#0D9488', // Teal Green
@@ -493,7 +493,7 @@ export function WarehouseMapTab({
     // RENDER
     // ═══════════════════════════════════════════════════
     return (
-        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm bg-white border border-slate-200" style={{ height: 'calc(100vh - 160px)', minHeight: 560 }}>
+        <div className="flex flex-col gap-0 rounded-lg overflow-hidden shadow-sm bg-white border border-slate-200" style={{ height: 'calc(100vh - 160px)', minHeight: 560 }}>
             {/* ── Top Bar ─────────────────────────────── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:p-3.5 bg-slate-50 border-b border-slate-200">
                 {/* Left: Warehouse Title & View Mode Toggle */}
@@ -504,7 +504,7 @@ export function WarehouseMapTab({
                     </span>
 
                     {/* View Switcher (2D Map vs Card Grid) */}
-                    <div className="flex items-center p-0.5 rounded-xl bg-slate-200/80 border border-slate-300 shrink-0">
+                    <div className="flex items-center p-0.5 rounded-lg bg-slate-200/80 border border-slate-300 shrink-0">
                         <button
                             onClick={() => setDisplayView('map')}
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${displayView === 'map' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
@@ -534,13 +534,13 @@ export function WarehouseMapTab({
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSearch()}
                             placeholder="Tìm SKU, Pallet, rượu..."
-                            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-base sm:text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
+                            className="w-full pl-9 pr-3 py-1.5 rounded-lg text-base sm:text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
                         />
                     </div>
 
                     {/* 2D Zoom & Auto-Fit Controls (Only in Map view) */}
                     {displayView === 'map' && (
-                        <div className="flex items-center gap-1 px-1.5 py-1 rounded-xl bg-white border border-slate-300 shadow-2xs shrink-0">
+                        <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-white border border-slate-300 shadow-2xs shrink-0">
                             <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Thu nhỏ"><ZoomOut size={14} /></button>
                             <span className="text-[11px] font-mono font-bold w-9 text-center text-slate-800">{Math.round(zoom * 100)}%</span>
                             <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Phóng to"><ZoomIn size={14} /></button>
@@ -558,7 +558,7 @@ export function WarehouseMapTab({
                     {/* Mobile Legend Button */}
                     <button
                         onClick={() => setShowLegendDrawer(prev => !prev)}
-                        className="p-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 md:hidden cursor-pointer shrink-0 shadow-2xs"
+                        className="p-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 md:hidden cursor-pointer shrink-0 shadow-2xs"
                         title="Xem chú thích và thống kê"
                     >
                         <Info size={15} className="text-amber-600" />
@@ -569,7 +569,7 @@ export function WarehouseMapTab({
                         <div className="flex items-center gap-1.5 shrink-0">
                             {!editMode ? (
                                 <button onClick={() => { setEditMode(true); setDisplayView('map') }}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
                                     <Move size={13} />
                                     <span className="hidden sm:inline">Sắp Xếp Sơ Đồ</span>
                                     <span className="sm:hidden">Sửa</span>
@@ -577,17 +577,17 @@ export function WarehouseMapTab({
                             ) : (
                                 <>
                                     <button onClick={handleAutoLayout} disabled={saving}
-                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
                                         <Grid3x3 size={13} />
                                         <span className="hidden md:inline">Tự Động</span>
                                     </button>
                                     <button onClick={handleSaveAll} disabled={saving}
-                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
                                         {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                                         <span>Lưu</span>
                                     </button>
                                     <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
-                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs">
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs">
                                         <Eye size={13} />
                                         <span>Xong</span>
                                     </button>
@@ -610,7 +610,7 @@ export function WarehouseMapTab({
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
                             <button
                                 onClick={() => setSelectedZoneFilter('ALL')}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedZoneFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedZoneFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'}`}
                             >
                                 Tất Cả Vị Trí ({locations.length})
                             </button>
@@ -621,7 +621,7 @@ export function WarehouseMapTab({
                                     <button
                                         key={z}
                                         onClick={() => setSelectedZoneFilter(z)}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${selectedZoneFilter === z ? 'text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${selectedZoneFilter === z ? 'text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'}`}
                                         style={selectedZoneFilter === z ? { background: ZONE_COLORS[z] ?? '#0284C7' } : {}}
                                     >
                                         <Layers size={12} />
@@ -665,7 +665,7 @@ export function WarehouseMapTab({
                                                         setSelectedLocId(loc.id)
                                                         setShowLocModal(true)
                                                     }}
-                                                    className="p-3.5 rounded-2xl bg-white border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between gap-2.5 relative group"
+                                                    className="p-3.5 rounded-lg bg-white border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between gap-2.5 relative group"
                                                     style={{
                                                         borderColor: isSelected ? '#2563EB' : isHighlighted ? '#F59E0B' : oc.border,
                                                         boxShadow: isSelected ? '0 0 0 3px rgba(37,99,235,0.2)' : isHighlighted ? '0 0 0 3px rgba(245,158,11,0.25)' : 'none'
@@ -754,7 +754,7 @@ export function WarehouseMapTab({
                                 ]).map(t => (
                                     <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
                                         title={t.label}
-                                        className={`flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-white shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200'}`}>
+                                        className={`flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-white shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200'}`}>
                                         <t.icon size={16} />
                                         <span>{t.label}</span>
                                     </button>
@@ -788,7 +788,7 @@ export function WarehouseMapTab({
                         >
                             {loading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-xs z-50">
-                                    <div className="flex flex-col items-center gap-2 bg-white p-5 rounded-2xl border border-slate-200 text-amber-700 text-xs font-bold shadow-xl">
+                                    <div className="flex flex-col items-center gap-2 bg-white p-5 rounded-lg border border-slate-200 text-amber-700 text-xs font-bold shadow-xl">
                                         <Loader2 size={32} className="animate-spin text-amber-600" />
                                         <span>Đang tải dữ liệu sơ đồ kho...</span>
                                     </div>
@@ -973,11 +973,11 @@ export function WarehouseMapTab({
                     {/* Quick Warehouse Stats */}
                     {mapData && (
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2.5 rounded-xl text-center bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-2.5 rounded-lg text-center bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-base font-extrabold text-amber-600 font-mono">{locations.length}</p>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Vị Trí</p>
                             </div>
-                            <div className="p-2.5 rounded-xl text-center bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-2.5 rounded-lg text-center bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-base font-extrabold text-emerald-600 font-mono">{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Chai Tồn</p>
                             </div>
@@ -1019,7 +1019,7 @@ export function WarehouseMapTab({
                                     const zLocs = locations.filter(l => l.zone === z)
                                     const zQty = zLocs.reduce((s, l) => s + l.totalQty, 0)
                                     return (
-                                        <div key={z} className="p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs text-xs">
+                                        <div key={z} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between shadow-2xs text-xs">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="px-2 py-0.5 rounded text-[11px] font-extrabold text-white"
                                                     style={{ background: ZONE_COLORS[z] ?? '#0284C7' }}>
@@ -1042,11 +1042,11 @@ export function WarehouseMapTab({
             {/* ═══════════════════════════════════════════════════ */}
             {showLocModal && selectedLoc && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-3 sm:p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
+                    <div className="rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-50 border-b border-slate-200">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                                     <MapPin size={18} />
                                 </div>
                                 <div>
@@ -1060,7 +1060,7 @@ export function WarehouseMapTab({
                             </div>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
@@ -1068,11 +1068,11 @@ export function WarehouseMapTab({
 
                         {/* Metrics */}
                         <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border-b border-slate-200">
-                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Tồn</p>
                                 <p className="text-lg font-extrabold text-emerald-600 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
                             </div>
-                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                            <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] font-bold text-slate-500 uppercase">Lấp Đầy</p>
                                 <p className="text-lg font-extrabold font-mono mt-0.5" style={{ color: occColor(selectedLoc.occupancyPct).text }}>
                                     {selectedLoc.occupancyPct}% <span className="text-xs font-normal">({occColor(selectedLoc.occupancyPct).label})</span>
@@ -1087,14 +1087,14 @@ export function WarehouseMapTab({
                             </h4>
 
                             {selectedLoc.products.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-slate-400 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                                <div className="flex flex-col items-center justify-center py-8 text-slate-400 border border-dashed border-slate-300 rounded-lg bg-slate-50">
                                     <Box size={32} className="mb-1 text-slate-300" />
                                     <p className="text-xs font-semibold text-slate-500">Vị trí này hiện đang trống</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {selectedLoc.products.map((p, i) => (
-                                        <div key={p.id || i} className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
+                                        <div key={p.id || i} className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="font-mono font-extrabold text-xs text-amber-700">{p.skuCode}</span>
@@ -1120,7 +1120,7 @@ export function WarehouseMapTab({
                         <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white cursor-pointer shadow-xs"
+                                className="px-5 py-2 rounded-lg text-xs font-extrabold bg-slate-900 text-white cursor-pointer shadow-xs"
                             >
                                 Đóng
                             </button>
@@ -1131,9 +1131,9 @@ export function WarehouseMapTab({
 
             {/* Toast Notification */}
             {toast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] px-4 py-2.5 rounded-xl text-sm font-bold shadow-xl flex items-center gap-2"
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] px-4 py-2.5 rounded-lg text-sm font-bold shadow-xl flex items-center gap-2"
                     style={{
-                        background: toast.type === 'ok' ? '#10B981' : '#EF4444',
+                        background: toast.type === 'ok' ? '#15803D' : '#B91C1C',
                         color: '#FFFFFF',
                     }}>
                     <Sparkles size={16} />

@@ -8,6 +8,20 @@ import { type TransferOrderRow, getTransferOrders, cancelTransferOrder, accounti
 import { CreateTransferDrawer } from './CreateTransferDrawer'
 import { TransferDetailDrawer } from './TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
+import {
+    PageHeader,
+    Button,
+    Badge,
+    Toolbar,
+    Table,
+    THead,
+    TBody,
+    Tr,
+    Th,
+    Td,
+    TableMessageRow,
+    EmptyState,
+} from '@/components/ui'
 
 type SortField =
     | 'transferNo'
@@ -19,13 +33,13 @@ type SortField =
     | 'totalQty'
     | 'status'
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(212,168,83,0.15)', border: '#F59E0B' },
-    CONFIRMED: { label: 'Kế Toán Đã Duyệt', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
-    IN_TRANSIT: { label: 'Đang Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
-    RECEIVED: { label: 'Đã Nhận Hàng', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
-    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
+const STATUS_CFG: Record<string, { label: string; tone: 'neutral' | 'warning' | 'info' | 'brand' | 'success' | 'danger' }> = {
+    DRAFT: { label: 'Nháp', tone: 'neutral' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', tone: 'warning' },
+    CONFIRMED: { label: 'Kế Toán Đã Duyệt', tone: 'info' },
+    IN_TRANSIT: { label: 'Đang Chuyển', tone: 'brand' },
+    RECEIVED: { label: 'Đã Nhận Hàng', tone: 'success' },
+    CANCELLED: { label: 'Đã Hủy', tone: 'danger' },
 }
 
 export function TransfersClient({ initialRows, currentUserRoles = [] }: {
@@ -119,41 +133,35 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
             case 'toWarehouse':
                 return a.toWarehouse.localeCompare(b.toWarehouse, 'vi') * dir
             case 'requesterName':
-                return (a.requesterName || '').localeCompare(b.requesterName || '', 'vi') * dir
+                return a.requesterName.localeCompare(b.requesterName, 'vi') * dir
             case 'lineCount':
                 return (a.lineCount - b.lineCount) * dir
             case 'totalQty':
                 return (a.totalQty - b.totalQty) * dir
-            case 'status': {
-                const labelA = STATUS_CFG[a.status]?.label || a.status
-                const labelB = STATUS_CFG[b.status]?.label || b.status
-                return labelA.localeCompare(labelB, 'vi') * dir
-            }
+            case 'status':
+                return a.status.localeCompare(b.status) * dir
             default:
                 return 0
         }
     })
 
-    const renderSortHeader = (field: SortField, label: React.ReactNode, align: 'left' | 'center' | 'right' = 'left') => {
+    const renderSortHeader = (field: SortField, label: string, align: 'left' | 'center' | 'right' = 'left') => {
         const isActive = sortField === field
         return (
             <th
                 onClick={() => handleSort(field)}
-                className={`p-3 font-extrabold uppercase text-[11px] whitespace-nowrap cursor-pointer select-none transition-colors hover:bg-slate-200/80 group ${
-                    align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
-                } ${isActive ? 'text-amber-800 bg-amber-100/50 font-black' : 'text-slate-700'}`}
-                title={`Sắp xếp theo ${typeof label === 'string' ? label : field}`}
+                className={`px-3 py-2.5 font-semibold text-[11px] uppercase tracking-wider text-lys-muted cursor-pointer hover:text-lys-title select-none transition-colors ${align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}`}
             >
                 <div className={`inline-flex items-center gap-1.5 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
                     <span>{label}</span>
                     {isActive ? (
                         sortOrder === 'asc' ? (
-                            <ArrowUp size={13} className="text-amber-600 font-bold shrink-0" />
+                            <ArrowUp size={13} className="text-lys-primary font-bold shrink-0" />
                         ) : (
-                            <ArrowDown size={13} className="text-amber-600 font-bold shrink-0" />
+                            <ArrowDown size={13} className="text-lys-primary font-bold shrink-0" />
                         )
                     ) : (
-                        <ArrowUpDown size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <ArrowUpDown size={12} className="text-lys-muted opacity-40 hover:opacity-100 transition-opacity shrink-0" />
                     )}
                 </div>
             </th>
@@ -169,180 +177,186 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header Toolbar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
-                        <ArrowRightLeft size={20} />
+        <div className="space-y-4 max-w-screen-2xl">
+            {/* Header */}
+            <PageHeader
+                title="Chuyển Kho Nội Bộ (Phiếu Chuyển Kho)"
+                description="Quản lý phiếu luân chuyển hàng hóa giữa các kho, duyệt Kế toán & In chứng từ A4 ký 4 bên"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Link href="/dashboard/warehouse">
+                            <Button variant="secondary" size="sm">
+                                <Zap size={14} className="text-amber-600" />
+                                Gợi Ý Điều Chuyển
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={reload}
+                            disabled={loading}
+                            loading={loading}
+                            title="Tải lại danh sách"
+                        >
+                            <RefreshCw size={14} />
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setCreateOpen(true)}
+                        >
+                            <Plus size={15} />
+                            Lập Phiếu Chuyển Kho Mới
+                        </Button>
                     </div>
-                    <div>
-                        <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                            Chuyển Kho Nội Bộ (Phiếu Chuyển Kho)
-                        </h2>
-                        <p className="text-xs text-slate-500">
-                            Quản lý phiếu luân chuyển hàng hóa giữa các kho, duyệt Kế toán & In chứng từ A4 ký 4 bên
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Link
-                        href="/dashboard/warehouse"
-                        className="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs transition-colors flex items-center gap-1.5 border border-indigo-200"
-                    >
-                        <Zap size={15} /> Gợi Ý Điều Chuyển
-                    </Link>
-
-                    <button
-                        onClick={reload}
-                        className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                        title="Tải lại danh sách"
-                    >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    </button>
-
-                    <button
-                        onClick={() => setCreateOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
-                    >
-                        <Plus size={16} /> Lập Phiếu Chuyển Kho Mới
-                    </button>
-                </div>
-            </div>
+                }
+            />
 
             {/* Filter Tabs & Search */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                    {[
-                        { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
-                        { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING, badgeColor: 'bg-amber-500 text-white' },
-                        { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
-                        { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
-                        { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
-                    ].map(t => (
-                        <button
-                            key={t.key}
-                            onClick={() => setStatusTab(t.key)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0891B2] text-white font-extrabold shadow-2xs border border-[#76BAA8]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
-                        >
-                            <span>{t.label}</span>
-                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-slate-50/15 text-slate-900' : 'bg-slate-100 text-slate-700')}`}>
-                                {t.count}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
-                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
-                    />
-                </div>
-            </div>
+            <Toolbar
+                left={
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                        {[
+                            { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
+                            { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING },
+                            { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
+                            { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
+                            { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
+                        ].map(t => (
+                            <button
+                                key={t.key}
+                                type="button"
+                                onClick={() => setStatusTab(t.key)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                                    statusTab === t.key
+                                        ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary font-bold'
+                                        : 'bg-white text-lys-muted hover:text-lys-title hover:bg-lys-bg border border-lys-border'
+                                }`}
+                            >
+                                <span>{t.label}</span>
+                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                                    statusTab === t.key ? 'bg-lys-primary/15 text-lys-primary' : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                    {t.count}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                }
+                right={
+                    <div className="relative w-full sm:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
+                            className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-lys-border text-xs text-lys-title outline-none focus:border-lys-primary"
+                        />
+                    </div>
+                }
+            />
 
             {/* List Table */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                {renderSortHeader('transferNo', 'Mã Phiếu')}
-                                {renderSortHeader('fromWarehouse', '🔴 Kho Xuất (Đi)')}
-                                {renderSortHeader('toWarehouse', '🟢 Kho Nhận (Đến)')}
-                                {renderSortHeader('requesterName', 'Người Lập')}
-                                {renderSortHeader('transferDate', 'Ngày Chuyển')}
-                                {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
-                                {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
-                                {renderSortHeader('status', 'Trạng Thái', 'center')}
-                                <th className="p-3 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                            {sortedRows.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="p-12 text-center text-slate-400">
-                                        Không tìm thấy phiếu chuyển kho nào
-                                    </td>
-                                </tr>
-                            ) : (
-                                sortedRows.map(r => {
-                                    const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
-                                    return (
-                                        <tr
-                                            key={r.id}
-                                            onClick={() => setSelectedId(r.id)}
-                                            className="hover:bg-amber-50/40 transition-colors cursor-pointer"
-                                        >
-                                            <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
-                                                {r.transferNo}
-                                            </td>
-                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
-                                                [{r.fromWarehouseCode}] {r.fromWarehouse}
-                                            </td>
-                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
-                                                [{r.toWarehouseCode}] {r.toWarehouse}
-                                            </td>
-                                            <td className="p-3 text-slate-800 font-medium whitespace-nowrap">
-                                                {r.requesterName}
-                                            </td>
-                                            <td className="p-3 font-mono text-slate-600 whitespace-nowrap">
-                                                {formatDate(r.transferDate)}
-                                            </td>
-                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">
-                                                {r.lineCount} mã
-                                            </td>
-                                            <td className="p-3 text-center font-mono font-extrabold text-emerald-700 whitespace-nowrap">
-                                                {r.totalQty.toLocaleString()} chai
-                                            </td>
-                                            <td className="p-3 text-center whitespace-nowrap">
-                                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
-                                                    style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
-                                                    {st.label}
-                                                </span>
-                                            </td>
-                                            <td className="p-3 text-right whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5 justify-end">
-                                                    {r.status === 'PENDING_ACCOUNTING' && (
-                                                        <button
-                                                            onClick={e => handleQuickApprove(r.id, e)}
-                                                            className="px-2.5 py-1 rounded-lg text-emerald-950 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer shadow-2xs hover:opacity-90"
-                                                            style={{ background: '#87CBB9' }}
-                                                            title="Kế toán duyệt ngay phiếu chuyển kho này"
-                                                        >
-                                                            ✓ Duyệt
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
-                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
-                                                    >
-                                                        <Eye size={12} /> Xem Phiếu
-                                                    </button>
-                                                    {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
-                                                        <button
-                                                            onClick={e => handleCancel(r.id, e)}
-                                                            className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                                                            title="Hủy phiếu này"
-                                                        >
-                                                            <Ban size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <Table>
+                <THead>
+                    <Tr>
+                        {renderSortHeader('transferNo', 'Mã Phiếu')}
+                        {renderSortHeader('fromWarehouse', '🔴 Kho Xuất (Đi)')}
+                        {renderSortHeader('toWarehouse', '🟢 Kho Nhận (Đến)')}
+                        {renderSortHeader('requesterName', 'Người Lập')}
+                        {renderSortHeader('transferDate', 'Ngày Chuyển')}
+                        {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
+                        {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
+                        {renderSortHeader('status', 'Trạng Thái', 'center')}
+                        <th className="px-3 py-2.5 font-semibold uppercase text-[11px] text-right whitespace-nowrap text-lys-muted">Thao Tác</th>
+                    </Tr>
+                </THead>
+                <TBody>
+                    {sortedRows.length === 0 ? (
+                        <TableMessageRow colSpan={9}>
+                            <EmptyState
+                                icon={ArrowRightLeft}
+                                title="Không tìm thấy phiếu chuyển kho nào"
+                                description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
+                                action={
+                                    <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
+                                        <Plus size={14} /> Lập Phiếu Chuyển Kho
+                                    </Button>
+                                }
+                            />
+                        </TableMessageRow>
+                    ) : (
+                        sortedRows.map(r => {
+                            const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+                            return (
+                                <Tr
+                                    key={r.id}
+                                    onClick={() => setSelectedId(r.id)}
+                                    className="cursor-pointer"
+                                >
+                                    <Td className="font-mono font-bold text-lys-primary whitespace-nowrap">
+                                        {r.transferNo}
+                                    </Td>
+                                    <Td className="font-semibold text-lys-title whitespace-nowrap">
+                                        <span className="text-lys-muted mr-1">[{r.fromWarehouseCode}]</span> {r.fromWarehouse}
+                                    </Td>
+                                    <Td className="font-semibold text-lys-title whitespace-nowrap">
+                                        <span className="text-lys-muted mr-1">[{r.toWarehouseCode}]</span> {r.toWarehouse}
+                                    </Td>
+                                    <Td className="text-lys-title font-medium whitespace-nowrap">
+                                        {r.requesterName}
+                                    </Td>
+                                    <Td className="font-mono text-lys-muted whitespace-nowrap">
+                                        {formatDate(r.transferDate)}
+                                    </Td>
+                                    <Td align="center" className="font-mono font-bold text-lys-title whitespace-nowrap">
+                                        {r.lineCount} mã
+                                    </Td>
+                                    <Td align="center" className="font-mono font-bold text-emerald-700 whitespace-nowrap">
+                                        {r.totalQty.toLocaleString()} chai
+                                    </Td>
+                                    <Td align="center" className="whitespace-nowrap">
+                                        <Badge tone={st.tone}>{st.label}</Badge>
+                                    </Td>
+                                    <Td align="right" className="whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5 justify-end" onClick={e => e.stopPropagation()}>
+                                            {r.status === 'PENDING_ACCOUNTING' && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    onClick={e => handleQuickApprove(r.id, e)}
+                                                    title="Kế toán duyệt ngay phiếu chuyển kho này"
+                                                >
+                                                    Duyệt
+                                                </Button>
+                                            )}
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={() => setSelectedId(r.id)}
+                                            >
+                                                <Eye size={13} /> Xem
+                                            </Button>
+                                            {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={e => handleCancel(r.id, e)}
+                                                    title="Hủy phiếu này"
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <Ban size={14} />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </Td>
+                                </Tr>
+                            )
+                        })
+                    )}
+                </TBody>
+            </Table>
 
             {/* Create Drawer */}
             <CreateTransferDrawer

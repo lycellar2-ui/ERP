@@ -20,11 +20,11 @@ type SortField =
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
     DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(212,168,83,0.15)', border: '#F59E0B' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(180,83,9,0.15)', border: '#F59E0B' },
     CONFIRMED: { label: 'Kế Toán Đã Duyệt', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
     IN_TRANSIT: { label: 'Đang Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
     RECEIVED: { label: 'Đã Nhận Hàng', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
-    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
+    CANCELLED: { label: 'Đã Hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)', border: '#B91C1C' },
 }
 
 export function TransfersTab() {
@@ -156,9 +156,9 @@ export function TransfersTab() {
     return (
         <div className="space-y-4 pb-20 md:pb-4">
             {/* Top Toolbar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                         <ArrowRightLeft size={20} />
                     </div>
                     <div>
@@ -174,7 +174,7 @@ export function TransfersTab() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={reload}
-                        className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                         title="Tải lại danh sách"
                     >
                         <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -182,7 +182,7 @@ export function TransfersTab() {
 
                     <button
                         onClick={() => setCreateOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+                        className="px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
                     >
                         <Plus size={16} /> Lập Phiếu Chuyển Kho
                     </button>
@@ -202,7 +202,7 @@ export function TransfersTab() {
                         <button
                             key={t.key}
                             onClick={() => setStatusTab(t.key)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0891B2] text-white font-extrabold shadow-2xs border border-[#76BAA8]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0891B2] text-white font-extrabold shadow-2xs border border-[#0891B2]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
                         >
                             <span>{t.label}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-slate-50/15 text-slate-900' : 'bg-slate-100 text-slate-700')}`}>
@@ -219,13 +219,13 @@ export function TransfersTab() {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
-                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-base sm:text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg bg-white border border-slate-200 text-base sm:text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
                     />
                 </div>
             </div>
 
             {/* Desktop List Table */}
-            <div className="hidden md:block border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <div className="hidden md:block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                         <thead>
@@ -315,7 +315,7 @@ export function TransfersTab() {
             {/* Mobile Card List View (< 768px) */}
             <div className="block md:hidden space-y-3">
                 {sortedRows.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
+                    <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-lg">
                         Không tìm thấy phiếu chuyển kho nào
                     </div>
                 ) : (
@@ -325,7 +325,7 @@ export function TransfersTab() {
                             <div
                                 key={r.id}
                                 onClick={() => setSelectedId(r.id)}
-                                className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
+                                className="p-4 rounded-lg bg-white border border-slate-200 text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
                             >
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="font-mono text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200 whitespace-nowrap shrink-0">
@@ -338,7 +338,7 @@ export function TransfersTab() {
                                 </div>
 
                                 {/* Route indicator */}
-                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold gap-1">
+                                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between text-xs font-semibold gap-1">
                                     <span className="text-rose-700 font-bold truncate min-w-0 flex-1">🔴 {r.fromWarehouse}</span>
                                     <span className="text-slate-400 px-1 font-bold shrink-0">➔</span>
                                     <span className="text-emerald-700 font-bold truncate min-w-0 flex-1 text-right">🟢 {r.toWarehouse}</span>
@@ -351,7 +351,7 @@ export function TransfersTab() {
                                     </div>
                                     <button
                                         onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
-                                        className="px-3 py-1.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1 shadow-md"
+                                        className="px-3 py-1.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1 shadow-md"
                                     >
                                         <Eye size={12} /> Xem Chi Tiết
                                     </button>

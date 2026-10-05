@@ -277,7 +277,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         onClick={() => setShowStats(!showStats)}
                         className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
                             showStats
-                                ? 'bg-[#87CBB9]/15 text-slate-900 border-[#87CBB9]/40'
+                                ? 'bg-[#0E7490]/15 text-slate-900 border-[#0E7490]/40'
                                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                     >
@@ -291,7 +291,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     </button>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-900 bg-[#87CBB9] hover:bg-[#76BAA8] rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-900 bg-[#0891B2] hover:bg-[#0E7490] rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                     >
                         <Plus size={15} /> Tạo Phiếu Kiểm Kê
                     </button>
@@ -345,7 +345,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 onClick={() => setActiveTab(tab.key as any)}
                                 className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                                     isActive
-                                        ? 'bg-[#87CBB9]/25 text-slate-900 font-extrabold border border-[#87CBB9]/50 shadow-2xs'
+                                        ? 'bg-[#0E7490]/25 text-slate-900 font-extrabold border border-[#0E7490]/50 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold'
                                 }`}
                             >
@@ -366,7 +366,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         placeholder="Tìm số phiếu, kho, nhân viên..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#87CBB9] focus:ring-1 focus:ring-[#87CBB9] text-slate-900 placeholder-slate-400 shadow-2xs"
+                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] focus:ring-1 focus:ring-[#0E7490] text-slate-900 placeholder-slate-400 shadow-2xs"
                     />
                 </div>
             </div>
@@ -517,12 +517,12 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Sessions Cards — Mobile View (< 768px) */}
             <div className="block md:hidden space-y-3">
                 {filteredList.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl text-xs font-bold">
+                    <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-lg text-xs font-bold">
                         Không tìm thấy phiên kiểm kê nào.
                     </div>
                 ) : (
                     filteredList.map(row => (
-                        <div key={row.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+                        <div key={row.id} className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs space-y-3">
                             <div className="flex items-center justify-between gap-2">
                                 <span className="font-mono text-xs font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                     {row.sessionNo}
@@ -557,7 +557,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             {row.status === 'DRAFT' && (
                                 <button
                                     onClick={() => handleStartSession(row.id)}
-                                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <Zap className="w-4 h-4" /> ⚡ Bắt Đầu Kiểm Kê Ngay
                                 </button>
@@ -566,25 +566,25 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
                                     onClick={() => setTableModalSessionId(row.id)}
-                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <FileText className="w-3.5 h-3.5" /> Bảng Điền
                                 </button>
                                 <button
                                     onClick={() => handleOpenMobileView(row.id)}
-                                    className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <Smartphone className="w-3.5 h-3.5" /> Đếm ĐT
                                 </button>
                                 <button
                                     onClick={() => handleOpenAssignModal(row.id)}
-                                    className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                 >
                                     <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
                                 </button>
                                 <button
                                     onClick={() => handleOpenPrintView(row.id)}
-                                    className="py-2 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                 >
                                     <Printer className="w-3.5 h-3.5 text-amber-600" /> In Biên Bản
                                 </button>
@@ -597,7 +597,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Create Extended Session Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh]">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh]">
                         <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
                             <div>
                                 <h2 className="text-base font-extrabold text-slate-900">Khởi Tạo Phiếu Kiểm Kê Mới</h2>
@@ -607,7 +607,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         </div>
 
                         {createError && (
-                            <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl text-xs flex items-center gap-2">
+                            <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-lg text-xs flex items-center gap-2">
                                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                                 {createError}
                             </div>
@@ -628,7 +628,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             type="button"
                                             key={mode.key}
                                             onClick={() => setFormScopeType(mode.key as any)}
-                                            className={`p-3 rounded-xl text-left border transition cursor-pointer ${formScopeType === mode.key ? 'bg-teal-50 border-2 border-teal-500 text-teal-900 font-bold shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
+                                            className={`p-3 rounded-lg text-left border transition cursor-pointer ${formScopeType === mode.key ? 'bg-teal-50 border-2 border-teal-500 text-teal-900 font-bold shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
                                         >
                                             <div className="font-bold text-xs">{mode.title}</div>
                                             <div className="text-[10px] text-slate-500 mt-0.5">{mode.desc}</div>
@@ -646,7 +646,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         setFormWarehouseId(e.target.value)
                                         fetchLocationOptions(e.target.value)
                                     }}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
                                     required
                                 >
                                     {warehouses.map(w => (
@@ -663,13 +663,13 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     placeholder="vd: Kiểm kê định kỳ tháng 8, Kiểm kê đột xuất hầm rượu..."
                                     value={formTitle}
                                     onChange={e => setFormTitle(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
                                 />
                             </div>
 
                             {/* Scope-specific Options */}
                             {formScopeType === 'CYCLE_COUNT' && (
-                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
                                     <div>
                                         <label className="text-slate-700 font-bold block mb-1">Lọc theo Vị trí (Zone):</label>
                                         <select
@@ -687,7 +687,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             )}
 
                             {formScopeType === 'TRANSACTED_ITEMS' && (
-                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                                     <label className="text-slate-700 font-bold block mb-1">Phát sinh giao dịch trong (Ngày):</label>
                                     <input
                                         type="number"
@@ -699,7 +699,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             )}
 
                             {formScopeType === 'SPOT_COUNT' && (
-                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
                                     <div>
                                         <label className="text-slate-700 font-bold block mb-1">Nhập danh sách mã SKU cần đột xuất (cách nhau bởi dấu phẩy/xuống dòng):</label>
                                         <textarea
@@ -719,7 +719,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <select
                                     value={formAssignedToId}
                                     onChange={e => setFormAssignedToId(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
                                 >
                                     <option value="">-- Chưa phân công (Để tự do) --</option>
                                     {staffList.map(u => (
@@ -729,7 +729,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             </div>
 
                             {/* Blind Count Option Toggle */}
-                            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
                                 <input
                                     type="checkbox"
                                     id="blindToggle"
@@ -748,14 +748,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-xl cursor-pointer"
+                                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-lg cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold rounded-xl shadow-xs cursor-pointer"
+                                    className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs cursor-pointer"
                                 >
                                     {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu Kiểm Kê'}
                                 </button>
@@ -783,7 +783,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Modal Phân Công Vị Trí / Khu Vực Cho Nhân Sự */}
             {showAssignModal && assignSessionDetail && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="text-[10px] font-mono font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
@@ -797,7 +797,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                         <div className="space-y-3">
                             {Object.keys(zoneAssignments).length === 0 ? (
-                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+                                <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
                                     Phiếu này không chia theo khu vực cụ thể.
                                 </div>
                             ) : (
@@ -805,7 +805,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     const totalInZone = assignSessionDetail.lines.filter((l: any) => (l.zone || l.locationCode || 'Khu vực chung') === zoneName).length
 
                                     return (
-                                        <div key={zoneName} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                                        <div key={zoneName} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 text-xs">
                                             <div className="flex justify-between items-center font-bold">
                                                 <span className="text-slate-900 flex items-center gap-1.5">
                                                     <MapPin className="w-4 h-4 text-emerald-600" />
@@ -824,7 +824,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         const val = e.target.value
                                                         setZoneAssignments(prev => ({ ...prev, [zoneName]: val }))
                                                     }}
-                                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2 text-xs outline-none focus:border-cyan-500 font-semibold cursor-pointer"
+                                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none focus:border-cyan-500 font-semibold cursor-pointer"
                                                 >
                                                     <option value="">-- Chưa phân công --</option>
                                                     {staffList.map(st => (
@@ -844,7 +844,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <button
                                 type="button"
                                 onClick={() => setShowAssignModal(false)}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-200 cursor-pointer"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
                             >
                                 Hủy Bỏ
                             </button>
@@ -852,7 +852,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={handleSaveZoneAssignments}
                                 disabled={isSavingAssignments}
-                                className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-extrabold rounded-xl shadow-xs cursor-pointer"
+                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs cursor-pointer"
                             >
                                 {isSavingAssignments ? 'Đang lưu...' : 'Lưu Phân Công Vị Trí'}
                             </button>

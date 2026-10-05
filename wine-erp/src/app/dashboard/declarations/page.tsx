@@ -11,19 +11,20 @@ import {
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatDate } from '@/lib/utils'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { toast } from 'sonner'
 
 const TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
     IMPORT_CUSTOMS: { label: 'Tờ Khai NK', color: '#0891B2', icon: '📋' },
-    SCT_MONTHLY: { label: 'TTĐB Tháng', color: '#D4A853', icon: '🧾' },
-    SCT_QUARTERLY: { label: 'TTĐB Quý', color: '#D4A853', icon: '🧾' },
-    VAT_MONTHLY: { label: 'VAT Tháng', color: '#4A8FAB', icon: '📁' },
-    VAT_QUARTERLY: { label: 'VAT Quý', color: '#4A8FAB', icon: '📁' },
+    SCT_MONTHLY: { label: 'TTĐB Tháng', color: '#B45309', icon: '🧾' },
+    SCT_QUARTERLY: { label: 'TTĐB Quý', color: '#B45309', icon: '🧾' },
+    VAT_MONTHLY: { label: 'VAT Tháng', color: '#1D4ED8', icon: '📁' },
+    VAT_QUARTERLY: { label: 'VAT Quý', color: '#1D4ED8', icon: '📁' },
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.15)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.15)' },
+    APPROVED: { label: 'Đã Duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
     SUBMITTED: { label: 'Đã Nộp', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
 }
 
@@ -113,53 +114,41 @@ export default function DeclarationsPage() {
     }
 
     const statCards = [
-        { label: 'Tổng Tờ Khai', value: stats.total, icon: FileText, accent: '#87CBB9' },
+        { label: 'Tổng Tờ Khai', value: stats.total, icon: FileText, accent: '#0E7490' },
         { label: 'Nháp', value: stats.draft, icon: Clock, accent: '#475569' },
-        { label: 'Đã Duyệt', value: stats.approved, icon: CheckCircle2, accent: '#5BA88A' },
-        { label: 'Đã Nộp', value: stats.submitted, icon: Send, accent: '#D4A853' },
+        { label: 'Đã Duyệt', value: stats.approved, icon: CheckCircle2, accent: '#15803D' },
+        { label: 'Đã Nộp', value: stats.submitted, icon: Send, accent: '#B45309' },
     ]
 
     const now = new Date()
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Tờ Khai Thuế & Hải Quan (DCL)
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý tờ khai NK, thuế TTĐB, VAT — Xuất Excel chuẩn Bộ Tài Chính
-                    </p>
-                </div>
-                <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                    <Plus size={16} /> Tạo Tờ Khai
-                </button>
-            </div>
+            {/* Header */}
+            <PageHeader
+                title="Tờ Khai Thuế & Hải Quan (DCL)"
+                description="Quản lý tờ khai NK, thuế TTĐB, VAT — Xuất Excel chuẩn Bộ Tài Chính"
+                actions={
+                    <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+                        <Plus size={14} /> Tạo Tờ Khai
+                    </Button>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
-                {statCards.map(c => {
-                    const Icon = c.icon
-                    return (
-                        <div key={c.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Icon size={16} style={{ color: c.accent }} />
-                                <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{c.label}</span>
-                            </div>
-                            <p className="text-xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard label="Tổng Tờ Khai" value={stats.total} icon={FileText} />
+                <StatCard label="Bản Nháp" value={stats.draft} icon={Clock} />
+                <StatCard label="Đã Duyệt" value={stats.approved} icon={CheckCircle2} />
+                <StatCard label="Đã Nộp CQ Thuế" value={stats.submitted} icon={Send} />
+            </StatGrid>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-4">
                 {[
                     { title: 'Tờ Khai NK Tháng Này', desc: 'Tổng hợp thuế NK + TTĐB từ các lô nhập', icon: '📋', color: '#0891B2', type: 'IMPORT_CUSTOMS' },
-                    { title: 'Báo Cáo Thuế GTGT', desc: 'VAT đầu vào/đầu ra theo kỳ khai', icon: '🧾', color: '#D4A853', type: 'VAT_MONTHLY' },
-                    { title: 'Báo Cáo TTĐB Quý', desc: 'Thuế TTĐB theo quý cho cơ quan thuế', icon: '📁', color: '#4A8FAB', type: 'SCT_QUARTERLY' },
+                    { title: 'Báo Cáo Thuế GTGT', desc: 'VAT đầu vào/đầu ra theo kỳ khai', icon: '🧾', color: '#B45309', type: 'VAT_MONTHLY' },
+                    { title: 'Báo Cáo TTĐB Quý', desc: 'Thuế TTĐB theo quý cho cơ quan thuế', icon: '📁', color: '#1D4ED8', type: 'SCT_QUARTERLY' },
                 ].map(item => (
                     <div key={item.title} className="p-5 rounded-md cursor-pointer transition-all"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
@@ -185,8 +174,8 @@ export default function DeclarationsPage() {
                         className="text-xs px-3 py-1 rounded font-semibold transition-all"
                         style={{
                             background: filterType === f.k ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            color: filterType === f.k ? '#87CBB9' : '#64748B',
-                            border: `1px solid ${filterType === f.k ? '#87CBB940' : '#E2E8F0'}`,
+                            color: filterType === f.k ? '#0E7490' : '#64748B',
+                            border: `1px solid ${filterType === f.k ? 'rgba(8, 145, 178, 0.3)' : '#E2E8F0'}`,
                         }}>
                         {f.l}
                     </button>
@@ -215,9 +204,9 @@ export default function DeclarationsPage() {
                             const tp = TYPE_MAP[row.type] ?? { label: row.type, color: '#475569', icon: '📄' }
                             const st = STATUS_MAP[row.status] ?? STATUS_MAP.DRAFT
                             return (
-                                <tr key={row.id} className="cursor-pointer" style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                <tr key={row.id} className="cursor-pointer" style={{ borderBottom: '1px solid #E2E8F0' }}
                                     onClick={() => handleViewDetail(row)}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-3 py-2.5">
                                         <span className="text-xs font-bold" style={{ color: tp.color }}>{tp.icon} {tp.label}</span>
@@ -268,7 +257,7 @@ export default function DeclarationsPage() {
                                 <div className="flex gap-2">
                                     <button onClick={() => handleStatusChange(detailRow.id, 'APPROVED')}
                                         className="flex-1 py-2 text-xs font-bold rounded"
-                                        style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>
+                                        style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D' }}>
                                         ✓ Duyệt Tờ Khai
                                     </button>
                                 </div>
@@ -291,7 +280,7 @@ export default function DeclarationsPage() {
                                         </div>
                                         <div className="p-3 rounded" style={{ background: '#FFFFFF' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Tổng Tiền</p>
-                                            <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                                            <p className="text-sm font-bold" style={{ color: '#B45309' }}>
                                                 {detailData.totalAmount?.toLocaleString('vi-VN')} ₫
                                             </p>
                                         </div>
@@ -306,8 +295,8 @@ export default function DeclarationsPage() {
                                         <div key={inv.invoiceNo} className="flex justify-between text-xs p-2 rounded"
                                             style={{ background: '#FFFFFF' }}>
                                             <span style={{ color: '#0891B2' }}>{inv.invoiceNo}</span>
-                                            <span style={{ color: '#D4A853' }}>{inv.amount?.toLocaleString('vi-VN')} ₫</span>
-                                            <span style={{ color: '#5BA88A' }}>VAT: {inv.vatAmount?.toLocaleString('vi-VN')} ₫</span>
+                                            <span style={{ color: '#B45309' }}>{inv.amount?.toLocaleString('vi-VN')} ₫</span>
+                                            <span style={{ color: '#15803D' }}>VAT: {inv.vatAmount?.toLocaleString('vi-VN')} ₫</span>
                                         </div>
                                     ))}
                                 </div>
@@ -315,7 +304,7 @@ export default function DeclarationsPage() {
 
                             {detailData?.type === 'SCT' && (
                                 <div className="space-y-4">
-                                    <p className="text-xs font-bold" style={{ color: '#D4A853' }}>
+                                    <p className="text-xs font-bold" style={{ color: '#B45309' }}>
                                         {detailData.lotCount} lô hàng chịu TTĐB
                                     </p>
 
@@ -327,32 +316,32 @@ export default function DeclarationsPage() {
                                     ) : sctReport ? (
                                         <div className="space-y-4">
                                             {/* Header */}
-                                            <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(212,168,83,0.08) 0%, rgba(135,203,185,0.05) 100%)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                                                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#D4A853' }}>
+                                            <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(180,83,9,0.08) 0%, rgba(8,145,178,0.05) 100%)', border: '1px solid rgba(180,83,9,0.2)' }}>
+                                                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#B45309' }}>
                                                     📊 Bảng Kê Thuế TTĐB — Kỳ {sctReport.period.month ? `T${sctReport.period.month}/${sctReport.period.year}` : sctReport.period.year}
                                                 </p>
 
                                                 {/* 3-column summary: Input | Output | Net */}
                                                 <div className="grid grid-cols-3 gap-3">
                                                     <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#4A8FAB' }}>⬇ Đầu Vào (Nhập)</p>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#1D4ED8' }}>⬇ Đầu Vào (Nhập)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.inputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>GT: <b>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
-                                                        <p className="text-sm font-bold mt-1" style={{ color: '#4A8FAB' }}>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#1D4ED8' }}>
                                                             TTĐB: {sctReport.inputSummary.totalSCT.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                     </div>
                                                     <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#D4A853' }}>⬆ Đầu Ra (Bán)</p>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#B45309' }}>⬆ Đầu Ra (Bán)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.outputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>DT: <b>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
-                                                        <p className="text-sm font-bold mt-1" style={{ color: '#D4A853' }}>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#B45309' }}>
                                                             TTĐB: {sctReport.outputSummary.totalSCT.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg" style={{ background: sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.08)' : 'rgba(91,168,138,0.08)', border: `1px solid ${sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.3)' : 'rgba(91,168,138,0.3)'}` }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A' }}>💰 Thuế Phải Nộp</p>
-                                                        <p className="text-lg font-bold mt-2 font-mono" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A' }}>
+                                                    <div className="p-3 rounded-lg" style={{ background: sctReport.netSCTPayable > 0 ? 'rgba(185,28,28,0.08)' : 'rgba(21,128,61,0.08)', border: `1px solid ${sctReport.netSCTPayable > 0 ? 'rgba(185,28,28,0.3)' : 'rgba(21,128,61,0.3)'}` }}>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#15803D' }}>💰 Thuế Phải Nộp</p>
+                                                        <p className="text-lg font-bold mt-2 font-mono" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#15803D' }}>
                                                             {sctReport.netSCTPayable.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                         <p className="text-xs mt-1" style={{ color: '#64748B' }}>= Đầu ra − Đầu vào</p>
@@ -376,21 +365,21 @@ export default function DeclarationsPage() {
                                                         </thead>
                                                         <tbody>
                                                             {sctReport.lines.map(line => (
-                                                                <tr key={line.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                                                <tr key={line.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                                     <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#0891B2' }}>{line.skuCode}</td>
                                                                     <td className="px-2 py-1.5 text-[10px] truncate max-w-[100px]" style={{ color: '#0F172A' }}>{line.productName}</td>
                                                                     <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#475569' }}>{line.abvPercent}%</td>
                                                                     <td className="px-2 py-1.5">
                                                                         <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{
-                                                                            background: line.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
-                                                                            color: line.sctRate === 65 ? '#C04E65' : '#D4A853',
+                                                                            background: line.sctRate === 65 ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)',
+                                                                            color: line.sctRate === 65 ? '#C04E65' : '#B45309',
                                                                         }}>{line.sctRate}%</span>
                                                                     </td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB' }}>{line.inputQty}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB' }}>{line.inputSCT.toLocaleString('vi-VN')}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853' }}>{line.outputQty}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853' }}>{line.outputSCT.toLocaleString('vi-VN')}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: line.netSCT > 0 ? '#C04E65' : '#5BA88A' }}>{line.netSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#1D4ED8' }}>{line.inputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#1D4ED8' }}>{line.inputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#B45309' }}>{line.outputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#B45309' }}>{line.outputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: line.netSCT > 0 ? '#C04E65' : '#15803D' }}>{line.netSCT.toLocaleString('vi-VN')}</td>
                                                                 </tr>
                                                             ))}
                                                             {sctReport.lines.length === 0 && (
@@ -411,8 +400,8 @@ export default function DeclarationsPage() {
                                                     <div className="flex justify-between">
                                                         <span style={{ color: '#0891B2' }}>{lot.lotNo}</span>
                                                         <span className="px-2 py-0.5 rounded" style={{
-                                                            background: lot.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
-                                                            color: lot.sctRate === 65 ? '#C04E65' : '#D4A853',
+                                                            background: lot.sctRate === 65 ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)',
+                                                            color: lot.sctRate === 65 ? '#C04E65' : '#B45309',
                                                         }}>TTĐB {lot.sctRate}%</span>
                                                     </div>
                                                     <div className="mt-1" style={{ color: '#475569' }}>
@@ -456,8 +445,8 @@ export default function DeclarationsPage() {
                                     <div>
                                         <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#475569' }}>Ký Điện Tử Phê Duyệt</p>
                                         {detailRow.signatureUrl ? (
-                                            <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
-                                                <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                            <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(21,128,61,0.3)' }}>
+                                                <p className="text-xs text-[#15803D] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
                                                 <img src={detailRow.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
                                             </div>
                                         ) : (

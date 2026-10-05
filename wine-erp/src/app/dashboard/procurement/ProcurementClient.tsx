@@ -39,21 +39,21 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 // ── Incoterms Config ───────────────────────────────
 const INCOTERMS_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    EXW: { label: 'EXW', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' },
-    FOB: { label: 'FOB', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' },
-    CIF: { label: 'CIF', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' },
+    EXW: { label: 'EXW', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' },
+    FOB: { label: 'FOB', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' },
+    CIF: { label: 'CIF', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' },
     DDP: { label: 'DDP', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' },
 }
 
 // ── Status config ─────────────────────────────────
 const PO_STATUS: Record<string, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: FileText },
-    PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
-    APPROVED: { label: 'Đã duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
-    IN_TRANSIT: { label: 'Đang trên tàu', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Ship },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)', icon: FileText },
+    PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#B45309', bg: 'rgba(180,83,9,0.15)', icon: Clock },
+    APPROVED: { label: 'Đã duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.15)', icon: CheckCircle2 },
+    IN_TRANSIT: { label: 'Đang trên tàu', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)', icon: Ship },
     PARTIALLY_RECEIVED: { label: 'Nhận 1 phần', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', icon: Package },
-    RECEIVED: { label: 'Đã nhận đủ', color: '#5BA88A', bg: 'rgba(91,168,138,0.25)', icon: CheckCircle2 },
-    CANCELLED: { label: 'Đã huỷ', color: '#E85D5D', bg: 'rgba(232,93,93,0.12)', icon: X },
+    RECEIVED: { label: 'Đã nhận đủ', color: '#15803D', bg: 'rgba(21,128,61,0.25)', icon: CheckCircle2 },
+    CANCELLED: { label: 'Đã huỷ', color: '#B91C1C', bg: 'rgba(232,93,93,0.12)', icon: X },
 }
 
 export type DatePresetKey = 
@@ -200,14 +200,14 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0"
                         style={{
                             background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            color: isActive ? '#87CBB9' : '#64748B',
+                            color: isActive ? '#0E7490' : '#64748B',
                             border: `1px solid ${isActive ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
                         }}
-                        onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(135,203,185,0.06)')}
+                        onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(8,145,178,0.06)')}
                         onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
                         {TAB_LABELS[tab]}
                         <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
-                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#64748B' }}>
+                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(100,116,139,0.15)', color: isActive ? '#0E7490' : '#64748B' }}>
                             {count}
                         </span>
                     </button>
@@ -221,7 +221,7 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
     const isActive = current === field
     return (
         <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#475569', ...style }}
+            style={{ color: isActive ? '#0E7490' : '#475569', ...style }}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
@@ -346,7 +346,7 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
                 {onEdit && (
                     <button onClick={() => onEdit(poId)} disabled={updating}
                         className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-amber-500/20"
-                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                         title="Chỉnh sửa đơn mua hàng nháp">
                         <Pencil size={11} /> Sửa
                     </button>
@@ -359,7 +359,7 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
                 </button>
                 <button onClick={handleDeleteDraft} disabled={updating}
                     className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                    style={{ background: 'rgba(139,26,46,0.1)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.25)' }}
+                    style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
                     title="Xoá đơn mua hàng nháp">
                     <Trash2 size={11} />
                 </button>
@@ -372,26 +372,26 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
             <div className="flex items-center gap-1 relative" onClick={e => e.stopPropagation()}>
                 <button onClick={handleApprove} disabled={updating}
                     className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/25"
-                    style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}
+                    style={{ background: 'rgba(21,128,61,0.2)', color: '#15803D', border: '1px solid rgba(21,128,61,0.4)' }}
                     title="Duyệt PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
                 </button>
                 <button onClick={() => setRejectDialogOpen(true)} disabled={updating}
                     className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                    style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)' }}
+                    style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.35)' }}
                     title="Từ chối PO">
                     {updating ? <Loader2 size={10} className="animate-spin" /> : <><X size={11} /> Từ Chối</>}
                 </button>
                 <button onClick={handleRevert} disabled={updating}
                     className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-amber-500/20"
-                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                     title="Thu hồi về Nháp để chỉnh sửa">
                     <RotateCcw size={10} /> Thu Hồi
                 </button>
 
                 {rejectDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" onClick={() => setRejectDialogOpen(false)}>
-                        <div className="w-full max-w-sm p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="w-full max-w-sm p-4 rounded-lg bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
                             <h4 className="text-sm font-bold text-slate-900">Từ Chối Phê Duyệt PO</h4>
                             <p className="text-xs text-slate-600">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
                             <textarea
@@ -406,7 +406,7 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
                                     Đóng
                                 </button>
                                 <button onClick={handleReject} disabled={updating || !reason.trim()}
-                                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#E85D5D] rounded-lg disabled:opacity-50">
+                                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#B91C1C] rounded-lg disabled:opacity-50">
                                     Xác Nhận Từ Chối
                                 </button>
                             </div>
@@ -502,7 +502,7 @@ function PODiscountSection({
         : 0
 
     return (
-        <div className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+        <div className="p-3.5 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-slate-900">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
@@ -531,8 +531,8 @@ function PODiscountSection({
                         onClick={() => onChangeType('PERCENT')}
                         className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
                         style={{
-                            background: discountType === 'PERCENT' ? 'rgba(212,168,83,0.25)' : 'transparent',
-                            color: discountType === 'PERCENT' ? '#D4A853' : '#475569',
+                            background: discountType === 'PERCENT' ? 'rgba(180,83,9,0.25)' : 'transparent',
+                            color: discountType === 'PERCENT' ? '#B45309' : '#475569',
                         }}
                     >
                         % Chiết khấu
@@ -542,8 +542,8 @@ function PODiscountSection({
                         onClick={() => onChangeType('AMOUNT')}
                         className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors"
                         style={{
-                            background: discountType === 'AMOUNT' ? 'rgba(212,168,83,0.25)' : 'transparent',
-                            color: discountType === 'AMOUNT' ? '#D4A853' : '#475569',
+                            background: discountType === 'AMOUNT' ? 'rgba(180,83,9,0.25)' : 'transparent',
+                            color: discountType === 'AMOUNT' ? '#B45309' : '#475569',
                         }}
                     >
                         Số tiền cố định
@@ -807,13 +807,13 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
                             <ShoppingCart size={18} style={{ color: '#0891B2' }} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>Tạo Đơn Mua Hàng (PO)</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#B45309] border border-amber-500/30">
                                     Bản Nháp (Draft)
                                 </span>
                             </div>
@@ -886,7 +886,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                     <div className="flex items-center justify-between pt-2">
                         <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Danh Sách Sản Phẩm</p>
                         <button onClick={addLine} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold"
-                            style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', background: 'rgba(135,203,185,0.1)' }}>
+                            style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', background: 'rgba(8,145,178,0.1)' }}>
                             <Plus size={12} /> Thêm Sản Phẩm
                         </button>
                     </div>
@@ -896,7 +896,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             const calc = getLineCalculations(line)
 
                             return (
-                                <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #E2E8F0' }}>
+                                <div key={i} className="p-3.5 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(180,83,9,0.4)' : '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
@@ -908,9 +908,9 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             {/* FOC Checkbox */}
                                             <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
                                                 style={{
-                                                    background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
-                                                    borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0',
-                                                    color: line.isFoc ? '#D4A853' : '#475569'
+                                                    background: line.isFoc ? 'rgba(180,83,9,0.15)' : 'rgba(100,116,139,0.06)',
+                                                    borderColor: line.isFoc ? 'rgba(180,83,9,0.4)' : '#E2E8F0',
+                                                    color: line.isFoc ? '#B45309' : '#475569'
                                                 }}>
                                                 <input
                                                     type="checkbox"
@@ -928,7 +928,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             </label>
                                         </div>
                                         {lines.length > 1 && (
-                                            <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-white">
+                                            <button onClick={() => removeLine(i)} className="p-1 rounded text-[#B91C1C] hover:bg-white">
                                                 <Trash2 size={13} />
                                             </button>
                                         )}
@@ -937,7 +937,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     {/* FOC Note Input (If line is FOC) */}
                                     {line.isFoc && (
                                         <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
-                                            <span className="text-amber-400 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
+                                            <span className="text-amber-700 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
                                             <input
                                                 type="text"
                                                 placeholder="Vd: Chai thử nếm (Tasting samples), Khuyến mãi Winery, Bù hao vỡ mẻ trước..."
@@ -982,7 +982,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         />
 
                                         {activeDropdownIndex === i && (
-                                            <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-white border border-slate-200 w-full shadow-2xl p-1">
+                                            <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-lg bg-white border border-slate-200 w-full shadow-2xl p-1">
                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                     <div className="px-3 py-2 text-xs text-slate-500 italic text-center">
                                                         Không tìm thấy sản phẩm nào
@@ -1091,12 +1091,12 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                 min={0}
                                                 step={0.01}
                                                 className={inputCls}
-                                                style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0' }}
+                                                style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(180,83,9,0.4)' : '#E2E8F0' }}
                                                 value={line.priceInput}
                                                 onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                             />
                                             {line.isFoc ? (
-                                                <span className="text-[10px] font-mono text-amber-400/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                <span className="text-[10px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
                                                     (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                 </span>
                                             ) : calc.isCase && (
@@ -1128,7 +1128,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         <span className="font-mono font-bold text-slate-900">
                                             {line.isFoc ? (
                                                 <>
-                                                    <span className="text-amber-400 mr-2">0.00 {currency}</span>
+                                                    <span className="text-amber-700 mr-2">0.00 {currency}</span>
                                                     <span className="text-[10px] text-slate-600 font-normal">
                                                         (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                     </span>
@@ -1186,7 +1186,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </div>
                         <div>
                             <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
-                            <p className="font-mono font-bold text-amber-400 text-sm">
+                            <p className="font-mono font-bold text-amber-700 text-sm">
                                 {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                             </p>
                         </div>
@@ -1202,18 +1202,18 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                     </div>
                     <div className="flex items-center gap-2.5">
                         <button type="button" onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
+                            className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
                             Huỷ
                         </button>
                         <button type="button" onClick={() => handleSave(false)} disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:bg-amber-500/25"
-                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:bg-amber-500/25"
+                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                             title="Lưu bản nháp để có thể xem lại và chỉnh sửa tiếp">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                             Lưu Bản Nháp
                         </button>
                         <button type="button" onClick={() => handleSave(true)} disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
                             style={{ background: '#0891B2', color: '#FFFFFF' }}
                             title="Tạo đơn và gửi trình duyệt ngay">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -1443,15 +1443,15 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
-                            <Pencil size={18} style={{ color: '#D4A853' }} />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.15)' }}>
+                            <Pencil size={18} style={{ color: '#B45309' }} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>
                                     Chỉnh Sửa Đơn Nháp: <span className="font-mono text-[#0891B2]">{poNo}</span>
                                 </h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#D4A853] border border-amber-500/30">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#B45309] border border-amber-500/30">
                                     Bản Nháp
                                 </span>
                             </div>
@@ -1567,7 +1567,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     const calc = getLineCalculations(line)
 
                                     return (
-                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(212,168,83,0.4)' : '1px solid #E2E8F0' }}>
+                                        <div key={i} className="p-3.5 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: line.isFoc ? '1px solid rgba(180,83,9,0.4)' : '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
@@ -1579,9 +1579,9 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     {/* FOC Checkbox */}
                                                     <label className="flex items-center gap-1.5 cursor-pointer text-xs select-none px-2 py-0.5 rounded-lg border transition-colors"
                                                         style={{
-                                                            background: line.isFoc ? 'rgba(212,168,83,0.15)' : 'rgba(138,174,187,0.06)',
-                                                            borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0',
-                                                            color: line.isFoc ? '#D4A853' : '#475569'
+                                                            background: line.isFoc ? 'rgba(180,83,9,0.15)' : 'rgba(100,116,139,0.06)',
+                                                            borderColor: line.isFoc ? 'rgba(180,83,9,0.4)' : '#E2E8F0',
+                                                            color: line.isFoc ? '#B45309' : '#475569'
                                                         }}>
                                                         <input
                                                             type="checkbox"
@@ -1599,7 +1599,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     </label>
                                                 </div>
                                                 {lines.length > 1 && (
-                                                    <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-white">
+                                                    <button onClick={() => removeLine(i)} className="p-1 rounded text-[#B91C1C] hover:bg-white">
                                                         <Trash2 size={13} />
                                                     </button>
                                                 )}
@@ -1608,7 +1608,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             {/* FOC Note Input (If line is FOC) */}
                                             {line.isFoc && (
                                                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
-                                                    <span className="text-amber-400 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
+                                                    <span className="text-amber-700 font-bold shrink-0 text-[11px]">Lý do FOC:</span>
                                                     <input
                                                         type="text"
                                                         placeholder="Vd: Chai thử nếm (Tasting samples), Khuyến mãi Winery, Bù hao vỡ mẻ trước..."
@@ -1653,7 +1653,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 />
 
                                                 {activeDropdownIndex === i && (
-                                                    <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-white border border-slate-200 w-full shadow-2xl p-1">
+                                                    <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-lg bg-white border border-slate-200 w-full shadow-2xl p-1">
                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                             <div className="px-3 py-2 text-xs text-slate-500 italic text-center">
                                                                 Không tìm thấy sản phẩm nào
@@ -1758,12 +1758,12 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                         min={0}
                                                         step={0.01}
                                                         className={inputCls}
-                                                        style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(212,168,83,0.4)' : '#E2E8F0' }}
+                                                        style={{ ...inputStyle, borderColor: line.isFoc ? 'rgba(180,83,9,0.4)' : '#E2E8F0' }}
                                                         value={line.priceInput}
                                                         onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                                     />
                                                     {line.isFoc ? (
-                                                        <span className="text-[10px] font-mono text-amber-400/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                        <span className="text-[10px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
                                                             (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                         </span>
                                                     ) : calc.isCase && (
@@ -1795,7 +1795,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 <span className="font-mono font-bold text-slate-900">
                                                     {line.isFoc ? (
                                                         <>
-                                                            <span className="text-amber-400 mr-2">0.00 {currency}</span>
+                                                            <span className="text-amber-700 mr-2">0.00 {currency}</span>
                                                             <span className="text-[10px] text-slate-600 font-normal">
                                                                 (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                             </span>
@@ -1853,7 +1853,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
-                                    <p className="font-mono font-bold text-amber-400 text-sm">
+                                    <p className="font-mono font-bold text-amber-700 text-sm">
                                         {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
                                     </p>
                                 </div>
@@ -1869,18 +1869,18 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                             </div>
                             <div className="flex gap-2.5">
                                 <button type="button" onClick={onClose}
-                                    className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
+                                    className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
                                     Đóng
                                 </button>
                                 <button type="button" onClick={() => handleSave(false)} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all hover:bg-amber-500/25"
-                                    style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:bg-amber-500/25"
+                                    style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                                     title="Lưu các thay đổi và tiếp tục giữ ở trạng thái Nháp">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                     Lưu Bản Nháp
                                 </button>
                                 <button type="button" onClick={() => handleSave(true)} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
                                     style={{ background: '#0891B2', color: '#FFFFFF' }}
                                     title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -2212,16 +2212,16 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Bản nháp: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
+                            Bản nháp: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
                             Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.approved}</strong>
+                            Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.approved}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Đang trên tàu: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.inTransit}</strong>
+                            Đang trên tàu: <strong className="font-mono text-sm ml-1" style={{ color: '#1D4ED8' }}>{stats.inTransit}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
                             Đã nhập đủ: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{statusCounts.RECEIVED ?? 0}</strong>
@@ -2233,12 +2233,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <button onClick={() => setShowStats(!showStats)}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
                         style={{ 
-                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(138,174,187,0.1)', 
-                            color: showStats ? '#87CBB9' : '#475569', 
-                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(138,174,187,0.25)'}` 
+                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(100,116,139,0.1)', 
+                            color: showStats ? '#0E7490' : '#475569', 
+                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(100,116,139,0.25)'}` 
                         }}
-                        onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)' }}
-                        onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)' }}>
+                        onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)' }}
+                        onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)' }}>
                         📊 Thống Kê
                     </button>
 
@@ -2252,25 +2252,25 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         } 
                     }}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.1)')}>
+                        style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.1)')}>
                         <Globe size={14} /> Tỷ Giá Ngoại Tệ
                     </button>
 
                     <button onClick={handleExportExcel}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
+                        style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', border: '1px solid rgba(100,116,139,0.25)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(100,116,139,0.2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(100,116,139,0.1)')}>
                         <Download size={14} /> Excel
                     </button>
 
                     <button onClick={() => setDrawerOpen(true)}
                         className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
                         style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                         <Plus size={16} /> Tạo PO Mới
                     </button>
                 </div>
@@ -2286,10 +2286,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         </button>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <POStatCard label="Tổng Số PO" value={stats.total} accent="#87CBB9" />
-                        <POStatCard label="Nháp & Chờ Duyệt" value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#D4A853" />
-                        <POStatCard label="Đã Phê Duyệt" value={stats.approved} accent="#5BA88A" />
-                        <POStatCard label="Đang Vận Chuyển" value={stats.inTransit} accent="#4A8FAB" />
+                        <POStatCard label="Tổng Số PO" value={stats.total} accent="#0E7490" />
+                        <POStatCard label="Nháp & Chờ Duyệt" value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#B45309" />
+                        <POStatCard label="Đã Phê Duyệt" value={stats.approved} accent="#15803D" />
+                        <POStatCard label="Đang Vận Chuyển" value={stats.inTransit} accent="#1D4ED8" />
                     </div>
                 </div>
             )}
@@ -2321,12 +2321,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                     {/* MISA-style Date Period Preset Dropdown */}
                     <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 border border-slate-200 rounded-[4px]">
-                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#64748B' }} />
+                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#0E7490' : '#64748B' }} />
                         <select
                             value={datePreset}
                             onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
                             className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
-                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#0F172A' }}
+                            style={{ color: datePreset !== 'ALL' ? '#0E7490' : '#0F172A' }}
                         >
                             {DATE_PRESET_OPTIONS.map(opt => (
                                 <option key={opt.key} value={opt.key} className="bg-slate-50 text-slate-900">
@@ -2359,14 +2359,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
                         style={{
                             background: (showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                            color: (showFilters || hasActiveFilters) ? '#87CBB9' : '#475569',
+                            color: (showFilters || hasActiveFilters) ? '#0E7490' : '#475569',
                             border: `1px solid ${(showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
                         }}
                     >
                         <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
                         Bộ lọc
                         {hasActiveFilters && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0E7490]" />
                         )}
                     </button>
                 </div>
@@ -2422,7 +2422,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         {hasActiveFilters && (
                             <button onClick={handleClearFilters}
                                 className="w-full py-1.5 text-xs font-semibold rounded transition-all border"
-                                style={{ background: 'rgba(232,93,93,0.1)', color: '#E85D5D', borderColor: 'rgba(232,93,93,0.25)' }}>
+                                style={{ background: 'rgba(232,93,93,0.1)', color: '#B91C1C', borderColor: 'rgba(232,93,93,0.25)' }}>
                                 Xoá Bộ Lọc
                             </button>
                         )}
@@ -2431,7 +2431,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             )}
 
             {/* Desktop Table — Multi-Line Compact ERP Layout */}
-            <div className="hidden md:block rounded-2xl overflow-hidden shadow-sm"
+            <div className="hidden md:block rounded-lg overflow-hidden shadow-sm"
                 style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
@@ -2470,7 +2470,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         </p>
                                         {hasActiveFilters && (
                                             <button onClick={handleClearFilters}
-                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-slate-900 bg-[#87CBB9]">
+                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-slate-900 bg-[#0E7490]">
                                                 Xoá Bộ Lọc
                                             </button>
                                         )}
@@ -2486,8 +2486,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <tr key={row.id}
                                         onClick={() => showDetail(row.id)}
                                         className="transition-colors cursor-pointer group"
-                                        style={{ background: isSelected ? 'rgba(135,203,185,0.06)' : 'transparent' }}
-                                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(135,203,185,0.03)' }}
+                                        style={{ background: isSelected ? 'rgba(8,145,178,0.06)' : 'transparent' }}
+                                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(8,145,178,0.03)' }}
                                         onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
                                         
                                         {/* Col 1: PO No & Shipping info */}
@@ -2506,8 +2506,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             {row.latestShipment ? (
                                                 <div className="mt-1 space-y-0.5">
                                                     <div className="flex items-center gap-1.5 text-xs text-slate-900">
-                                                        <Ship size={11} className="text-[#4A8FAB] shrink-0" />
-                                                        <span className="font-mono font-bold text-[#4A8FAB] text-[11px] truncate max-w-[170px]"
+                                                        <Ship size={11} className="text-[#1D4ED8] shrink-0" />
+                                                        <span className="font-mono font-bold text-[#1D4ED8] text-[11px] truncate max-w-[170px]"
                                                             title={`Vận đơn B/L: ${row.latestShipment.billOfLading}`}>
                                                             {row.latestShipment.billOfLading}
                                                         </span>
@@ -2538,8 +2538,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {row.legalEntityCode && (
                                                     <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded"
                                                         style={{ 
-                                                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.15)' : 'rgba(8, 145, 178, 0.08)', 
-                                                            color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' 
+                                                            background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.15)' : 'rgba(8, 145, 178, 0.08)', 
+                                                            color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
                                                         }}>
                                                         {row.legalEntityCode}
                                                     </span>
@@ -2575,7 +2575,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="h-full rounded-full transition-all"
                                                         style={{ 
                                                             width: `${row.receivedPercentage}%`, 
-                                                            background: row.receivedPercentage >= 100 ? '#5BA88A' : (row.receivedPercentage > 0 ? '#87CBB9' : '#E2E8F0') 
+                                                            background: row.receivedPercentage >= 100 ? '#15803D' : (row.receivedPercentage > 0 ? '#0E7490' : '#E2E8F0') 
                                                         }} />
                                                 </div>
                                             </div>
@@ -2587,7 +2587,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
                                             </p>
                                             {row.discountAmount && row.discountAmount > 0 ? (
-                                                <p className="text-[10px] text-amber-400 font-mono">
+                                                <p className="text-[10px] text-amber-700 font-mono">
                                                     🏷️ -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
                                                 </p>
                                             ) : null}
@@ -2659,7 +2659,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         <Loader2 size={20} className="animate-spin inline text-[#0891B2] mr-2" /> Đang tải PO...
                     </div>
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-12 text-xs text-slate-500 rounded-2xl border border-slate-200 bg-slate-50">
+                    <div className="text-center py-12 text-xs text-slate-500 rounded-lg border border-slate-200 bg-slate-50">
                         Chưa có đơn mua hàng nào
                     </div>
                 ) : rows.map(row => {
@@ -2668,7 +2668,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                     return (
                         <div key={row.id} onClick={() => showDetail(row.id)}
-                            className="p-3.5 rounded-2xl space-y-2.5 cursor-pointer transition-all active:scale-[0.99]"
+                            className="p-3.5 rounded-lg space-y-2.5 cursor-pointer transition-all active:scale-[0.99]"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             
                             <div className="flex items-center justify-between gap-2">
@@ -2689,7 +2689,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <span className="mr-1">{flag}</span>{row.supplierName}
                                 </p>
                                 {row.latestShipment && (
-                                    <p className="text-[11px] text-[#4A8FAB] font-mono mt-0.5 flex items-center gap-1">
+                                    <p className="text-[11px] text-[#1D4ED8] font-mono mt-0.5 flex items-center gap-1">
                                         <Ship size={10} /> B/L: {row.latestShipment.billOfLading} {row.latestShipment.vesselName ? `· ${row.latestShipment.vesselName}` : ''}
                                     </p>
                                 )}
@@ -2708,7 +2708,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <span className="text-[10px] text-slate-500 block">Giá trị:</span>
                                     <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
-                                        <span className="text-[10px] text-amber-400 block font-mono">
+                                        <span className="text-[10px] text-amber-700 block font-mono">
                                             🏷️ Giảm {row.discountAmount.toLocaleString()} {row.currency}
                                         </span>
                                     )}
@@ -2755,7 +2755,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 {poDetail && poDetail.status === 'DRAFT' && (
                                     <button onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true); }}
                                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                                         title="Chỉnh sửa PO Nháp">
                                         <Pencil size={13} /> Sửa Đơn Nháp
                                     </button>
@@ -2763,7 +2763,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
                                     <button onClick={() => handleDrawerRevertToDraft(selectedId!)}
                                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                                         title="Thu hồi về trạng thái Nháp để chỉnh sửa">
                                         <RotateCcw size={12} /> Thu Hồi Về Nháp
                                     </button>
@@ -2794,7 +2794,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">Giá Ngoại Tệ</span>
                                         <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
                                         {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
-                                            <span className="text-[10px] text-amber-400 block font-mono">
+                                            <span className="text-[10px] text-amber-700 block font-mono">
                                                 (Đã giảm {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
                                             </span>
                                         )}
@@ -2816,8 +2816,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <button key={t.key} onClick={() => setDetailTab(t.key as any)}
                                             className="px-3 py-2.5 text-xs font-bold border-b-2 transition-all"
                                             style={{
-                                                borderColor: detailTab === t.key ? '#87CBB9' : 'transparent',
-                                                color: detailTab === t.key ? '#87CBB9' : '#64748B',
+                                                borderColor: detailTab === t.key ? '#0E7490' : 'transparent',
+                                                color: detailTab === t.key ? '#0E7490' : '#64748B',
                                             }}>
                                             {t.label}
                                         </button>
@@ -2841,8 +2841,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         : `${line.qtyOrdered} chai`
 
                                                     return (
-                                                        <div key={line.id} className="p-3 rounded-xl bg-white border border-slate-200 flex justify-between items-start text-xs gap-3"
-                                                            style={{ borderColor: line.isFoc ? 'rgba(212,168,83,0.35)' : '#E2E8F0' }}>
+                                                        <div key={line.id} className="p-3 rounded-lg bg-white border border-slate-200 flex justify-between items-start text-xs gap-3"
+                                                            style={{ borderColor: line.isFoc ? 'rgba(180,83,9,0.35)' : '#E2E8F0' }}>
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <p className="font-extrabold text-slate-900">{line.productName}</p>
@@ -2854,7 +2854,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 </div>
                                                                 <p className="text-[10px] text-slate-500 font-mono mt-0.5">{line.skuCode}</p>
                                                                 {line.isFoc && line.focNote && (
-                                                                    <p className="text-[10px] text-amber-400/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block">
+                                                                    <p className="text-[10px] text-amber-700/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block">
                                                                         Lý do FOC: {line.focNote}
                                                                     </p>
                                                                 )}
@@ -2863,7 +2863,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <p className="font-mono font-bold text-[#0891B2]">{uomLabel}</p>
                                                                 {line.isFoc ? (
                                                                     <>
-                                                                        <p className="text-[11px] font-bold text-amber-400 font-mono">
+                                                                        <p className="text-[11px] font-bold text-amber-700 font-mono">
                                                                             0.00 {poDetail.currency} (Miễn phí)
                                                                         </p>
                                                                         {line.declaredPrice ? (
@@ -2889,7 +2889,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
 
                                             {/* Financial Summary Card */}
-                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                                            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2 text-xs">
                                                 <div className="flex justify-between items-center text-slate-600">
                                                     <span>Tổng tiền hàng (Subtotal):</span>
                                                     <span className="font-mono font-bold text-slate-900">
@@ -2897,7 +2897,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     </span>
                                                 </div>
                                                 {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
-                                                    <div className="flex justify-between items-center text-amber-400">
+                                                    <div className="flex justify-between items-center text-amber-700">
                                                         <span>
                                                             Chiết khấu / Giảm giá {poDetail.discountPct ? `(${poDetail.discountPct}%)` : ''}:
                                                         </span>
@@ -2933,10 +2933,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             ) : (
                                                 poDetail.shipments.map(s => (
                                                     <div key={s.id} onClick={() => { setSelectedShipmentId(s.id); setShipmentDrawerOpen(true) }}
-                                                        className="p-3.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-emerald-500/40 transition-all space-y-2">
+                                                        className="p-3.5 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-emerald-500/40 transition-all space-y-2">
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-xs font-bold font-mono text-[#0891B2]">B/L: {s.billOfLading}</span>
-                                                            <span className="text-[10px] font-extrabold text-[#5BA88A]">{s.milestoneProgress}%</span>
+                                                            <span className="text-[10px] font-extrabold text-[#15803D]">{s.milestoneProgress}%</span>
                                                         </div>
                                                         <div className="text-xs text-slate-600">
                                                             <p>Tàu: {s.vesselName || 'TBC'} {s.voyageNo ? `(${s.voyageNo})` : ''}</p>
@@ -2978,7 +2978,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     {detailTab === 'APPROVAL' && (
                                         <div className="space-y-4">
                                             {/* Step-by-step Visual Workflow Banner */}
-                                            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
+                                            <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                                                         <ShieldCheck size={14} className="text-[#0891B2]" /> Quy Trình Phê Duyệt PO
@@ -3016,11 +3016,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         
                                                         let bgClass = 'bg-white border-slate-200 text-slate-500'
                                                         if (isCompletedStep) {
-                                                            bgClass = 'bg-emerald-500/10 border-emerald-500/30 text-[#5BA88A]'
+                                                            bgClass = 'bg-emerald-500/10 border-emerald-500/30 text-[#15803D]'
                                                         } else if (isActiveStep) {
-                                                            bgClass = 'bg-amber-500/10 border-amber-500/30 text-[#D4A853] animate-pulse font-bold'
+                                                            bgClass = 'bg-amber-500/10 border-amber-500/30 text-[#B45309] animate-pulse font-bold'
                                                         } else if (isCancelled) {
-                                                            bgClass = 'bg-red-500/10 border-red-500/30 text-[#E85D5D]'
+                                                            bgClass = 'bg-red-500/10 border-red-500/30 text-[#B91C1C]'
                                                         }
 
                                                         return (
@@ -3040,9 +3040,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                                             {/* Action Boxes depending on status */}
                                             {poDetail.status === 'DRAFT' && (
-                                                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+                                                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-2.5">
                                                     <div className="flex items-start gap-2">
-                                                        <AlertCircle size={16} className="text-[#D4A853] flex-shrink-0 mt-0.5" />
+                                                        <AlertCircle size={16} className="text-[#B45309] flex-shrink-0 mt-0.5" />
                                                         <div>
                                                             <h4 className="text-xs font-bold text-slate-900">Đơn hàng đang ở trạng thái Nháp (DRAFT)</h4>
                                                             <p className="text-[11px] text-slate-600 mt-0.5">
@@ -3051,7 +3051,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         </div>
                                                     </div>
                                                     <button onClick={() => handleDrawerSubmit(poDetail.id)} disabled={approving}
-                                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-slate-900 bg-[#87CBB9] hover:bg-[#72b6a5] transition-all disabled:opacity-50">
+                                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold text-slate-900 bg-[#0E7490] hover:bg-[#72b6a5] transition-all disabled:opacity-50">
                                                         {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                                                         Gửi Trình Phê Duyệt PO (Bắt đầu Cấp 1)
                                                     </button>
@@ -3059,8 +3059,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             )}
 
                                             {poDetail.status === 'PENDING_APPROVAL' && (
-                                                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
-                                                    <div className="flex items-center justify-between text-xs font-bold text-[#D4A853]">
+                                                <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
+                                                    <div className="flex items-center justify-between text-xs font-bold text-[#B45309]">
                                                         <span className="flex items-center gap-2">
                                                             <Clock size={15} /> Đang Chờ Duyệt Cấp {poDetail.currentApprovalStep || 1} / {poDetail.totalApprovalSteps || 3}
                                                         </span>
@@ -3083,18 +3083,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                             </div>
                                                             <div className="flex gap-2">
                                                                 <button onClick={() => setShowRejectForm(true)} disabled={approving}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-semibold text-[#E85D5D] bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all disabled:opacity-50">
+                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-semibold text-[#B91C1C] bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all disabled:opacity-50">
                                                                     <XCircle size={13} /> Từ Chối PO
                                                                 </button>
                                                                 <button onClick={() => handleDrawerApprove(poDetail.id)} disabled={approving}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-slate-900 bg-[#5BA88A] hover:bg-[#4d977b] transition-all disabled:opacity-50">
+                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-bold text-slate-900 bg-[#15803D] hover:bg-[#4d977b] transition-all disabled:opacity-50">
                                                                     {approving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Phê Duyệt PO
                                                                 </button>
                                                             </div>
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-2.5 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                                                            <label className="text-[11px] text-[#E85D5D] font-bold block">Nhập lý do từ chối (bắt buộc):</label>
+                                                            <label className="text-[11px] text-[#B91C1C] font-bold block">Nhập lý do từ chối (bắt buộc):</label>
                                                             <textarea
                                                                 value={rejectReason}
                                                                 onChange={e => setRejectReason(e.target.value)}
@@ -3107,7 +3107,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                     Huỷ
                                                                 </button>
                                                                 <button onClick={() => handleDrawerReject(poDetail.id)} disabled={approving || !rejectReason.trim()}
-                                                                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#E85D5D] rounded-lg disabled:opacity-50 flex items-center gap-1">
+                                                                    className="px-3 py-1.5 text-xs font-bold text-white bg-[#B91C1C] rounded-lg disabled:opacity-50 flex items-center gap-1">
                                                                     {approving ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />} Xác Nhận Từ Chối
                                                                 </button>
                                                             </div>
@@ -3117,10 +3117,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             )}
 
                                             {poDetail.status === 'APPROVED' && (
-                                                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
-                                                    <CheckCircle2 size={24} className="text-[#5BA88A] flex-shrink-0" />
+                                                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
+                                                    <CheckCircle2 size={24} className="text-[#15803D] flex-shrink-0" />
                                                     <div className="text-xs">
-                                                        <p className="font-bold text-[#5BA88A]">Đơn mua hàng đã được Phê Duyệt chính thức</p>
+                                                        <p className="font-bold text-[#15803D]">Đơn mua hàng đã được Phê Duyệt chính thức</p>
                                                         <p className="text-slate-600 text-[11px] mt-0.5">
                                                             PO đã sẵn sàng để tạo lô vận tải quốc tế (Shipment / B/L) hoặc thực hiện nhận hàng vào kho.
                                                         </p>
@@ -3141,11 +3141,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                             const isSubmit = item.action === 'SUBMIT_APPROVAL' || item.action === 'CREATE'
                                                             
                                                             return (
-                                                                <div key={item.id || idx} className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
+                                                                <div key={item.id || idx} className="p-3 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
                                                                     <div className="flex justify-between items-center">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                                                                isApprove ? 'bg-emerald-500/20 text-[#5BA88A]' : (isReject ? 'bg-red-500/20 text-[#E85D5D]' : 'bg-blue-500/20 text-[#4A8FAB]')
+                                                                                isApprove ? 'bg-emerald-500/20 text-[#15803D]' : (isReject ? 'bg-red-500/20 text-[#B91C1C]' : 'bg-blue-500/20 text-[#1D4ED8]')
                                                                             }`}>
                                                                                 {isApprove ? '✅ Đã Phê Duyệt' : (isReject ? '❌ Đã Từ Chối' : (isSubmit ? '🚀 Gửi Duyệt' : item.action))}
                                                                             </span>
@@ -3163,7 +3163,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         })}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-4 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 italic">
+                                                    <div className="p-4 rounded-lg bg-white border border-slate-200 text-center text-xs text-slate-500 italic">
                                                         Chưa có nhật ký phê duyệt được ghi nhận cho đơn hàng này.
                                                     </div>
                                                 )}
@@ -3188,21 +3188,21 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <button 
                                         onClick={() => handleDrawerDelete(poDetail.id)}
                                         disabled={approving}
-                                        className="flex items-center gap-1 px-2.5 py-2 text-xs font-semibold rounded-xl text-rose-400 hover:bg-rose-900/30 border border-rose-500/20 transition-all"
+                                        className="flex items-center gap-1 px-2.5 py-2 text-xs font-semibold rounded-lg text-rose-700 hover:bg-rose-900/30 border border-rose-500/20 transition-all"
                                         title="Xoá đơn mua hàng nháp">
                                         <Trash2 size={13} /> Xoá Đơn
                                     </button>
                                     <button 
                                         onClick={() => { setEditPoId(poDetail.id); setEditDrawerOpen(true); }}
-                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
+                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}>
                                         <Pencil size={13} /> Sửa Đơn Nháp
                                     </button>
                                     <button 
                                         onClick={() => handleDrawerSubmit(poDetail.id)}
                                         disabled={approving}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-slate-900 transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-                                        style={{ background: '#87CBB9' }}>
+                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg text-slate-900 transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
+                                        style={{ background: '#0E7490' }}>
                                         {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                                         Gửi Trình Duyệt
                                     </button>
@@ -3214,7 +3214,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
                             <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
                                 <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-[#D4A853]" />
+                                    <Clock size={16} className="text-[#B45309]" />
                                     <div>
                                         <p className="text-xs font-bold text-amber-800">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
                                         <p className="text-[10px] text-slate-600">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
@@ -3224,8 +3224,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <button 
                                         onClick={() => handleDrawerRevertToDraft(poDetail.id)}
                                         disabled={approving}
-                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
+                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
                                         title="Thu hồi về Nháp để chỉnh sửa">
                                         <RotateCcw size={13} /> Thu Hồi Về Nháp
                                     </button>
@@ -3265,10 +3265,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* FX Summary Panel */}
             {showFxPanel && (
-                <div className="rounded-2xl p-5 space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg p-5 space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Globe size={18} style={{ color: '#D4A853' }} />
+                            <Globe size={18} style={{ color: '#B45309' }} />
                             <h3 className="font-bold text-sm" style={{ color: '#0F172A' }}>Tổng Quan Tỷ Giá Ngoại Tệ & Quy Đổi VNĐ</h3>
                         </div>
                         <button onClick={() => setShowFxPanel(false)} className="text-slate-600 hover:text-white"><X size={16} /></button>
@@ -3278,10 +3278,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {fxSummary.map(fx => (
-                                <div key={fx.currency} className="p-3.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5">
+                                <div key={fx.currency} className="p-3.5 rounded-lg bg-white border border-slate-200 text-xs space-y-1.5">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="font-bold text-slate-900">{fx.currency}</span>
-                                        <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#D4A853]">{fx.poCount} PO</span>
+                                        <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#B45309]">{fx.poCount} PO</span>
                                     </div>
                                     <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-[#0891B2] font-mono">{fx.avgRate.toLocaleString()}</strong></div>
                                     <div className="flex justify-between text-slate-500"><span>Tổng ngoại tệ:</span><strong className="text-slate-900 font-mono">{fx.totalForeignValue.toLocaleString()} {fx.currency}</strong></div>

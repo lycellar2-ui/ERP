@@ -18,18 +18,18 @@ import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
     DRAFT: { label: 'Nháp', color: '#64748B' },
-    BOOKED: { label: 'Đã book', color: '#4A8FAB' },
+    BOOKED: { label: 'Đã book', color: '#1D4ED8' },
     DOCS_READY: { label: 'Docs sẵn', color: '#7AC4C4' },
     LOADED: { label: 'Đã xếp hàng', color: '#0891B2' },
-    ON_VESSEL: { label: 'Trên tàu', color: '#5BA88A' },
-    ARRIVED_PORT: { label: 'Cập cảng', color: '#D4A853' },
+    ON_VESSEL: { label: 'Trên tàu', color: '#15803D' },
+    ARRIVED_PORT: { label: 'Cập cảng', color: '#B45309' },
     CUSTOMS_FILING: { label: 'Khai HQ', color: '#C07434' },
-    CUSTOMS_INSPECTING: { label: 'Giám định', color: '#D4A853' },
-    CUSTOMS_CLEARED: { label: 'Thông quan', color: '#5BA88A' },
+    CUSTOMS_INSPECTING: { label: 'Giám định', color: '#B45309' },
+    CUSTOMS_CLEARED: { label: 'Thông quan', color: '#15803D' },
     STAMPING: { label: 'Dán tem', color: '#0891B2' },
-    DELIVERED_TO_WAREHOUSE: { label: 'Nhập kho', color: '#5BA88A' },
-    COMPLETED: { label: 'Hoàn tất', color: '#5BA88A' },
-    CANCELLED: { label: 'Đã huỷ', color: '#8B1A2E' },
+    DELIVERED_TO_WAREHOUSE: { label: 'Nhập kho', color: '#15803D' },
+    COMPLETED: { label: 'Hoàn tất', color: '#15803D' },
+    CANCELLED: { label: 'Đã huỷ', color: '#B91C1C' },
 }
 
 const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -59,19 +59,19 @@ function MilestoneTimeline({ milestones, onComplete, onUncomplete, onAddCustom }
                                 onClick={() => done ? onUncomplete(m.id) : onComplete(m.id)}
                                 className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
                                 style={{
-                                    background: done ? '#5BA88A' : isNext ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
-                                    border: `2px solid ${done ? '#5BA88A' : isNext ? '#87CBB9' : '#E2E8F0'}`,
+                                    background: done ? '#15803D' : isNext ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
+                                    border: `2px solid ${done ? '#15803D' : isNext ? '#0E7490' : '#E2E8F0'}`,
                                 }}
                                 title={done ? 'Bỏ hoàn thành' : 'Đánh dấu hoàn thành'}
                             >
-                                {done ? <CheckCircle2 size={14} style={{ color: '#fff' }} /> : <Circle size={10} style={{ color: isNext ? '#87CBB9' : '#64748B' }} />}
+                                {done ? <CheckCircle2 size={14} style={{ color: '#fff' }} /> : <Circle size={10} style={{ color: isNext ? '#0E7490' : '#64748B' }} />}
                             </button>
                             {i < milestones.length - 1 && (
-                                <div className="w-0.5 h-6" style={{ background: done ? '#5BA88A' : '#E2E8F0' }} />
+                                <div className="w-0.5 h-6" style={{ background: done ? '#15803D' : '#E2E8F0' }} />
                             )}
                         </div>
                         <div className="flex-1 pb-2">
-                            <p className="text-sm font-medium" style={{ color: done ? '#87CBB9' : isNext ? '#0F172A' : '#64748B', textDecoration: done ? 'none' : 'none' }}>
+                            <p className="text-sm font-medium" style={{ color: done ? '#0E7490' : isNext ? '#0F172A' : '#64748B', textDecoration: done ? 'none' : 'none' }}>
                                 {m.label}
                             </p>
                             {done && m.completedAt && (
@@ -91,7 +91,7 @@ function MilestoneTimeline({ milestones, onComplete, onUncomplete, onAddCustom }
                     <button onClick={() => setAdding(false)} className="text-xs" style={{ color: '#64748B' }}>Huỷ</button>
                 </div>
             ) : (
-                <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 pl-9 text-xs" style={{ color: '#4A8FAB' }}>
+                <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 pl-9 text-xs" style={{ color: '#1D4ED8' }}>
                     <Plus size={12} /> Thêm milestone
                 </button>
             )}
@@ -141,7 +141,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                         <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-lg group" style={{ background: '#FFFFFF' }}>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] uppercase px-1.5 py-0.5 rounded font-bold" style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
+                                    <span className="text-[10px] uppercase px-1.5 py-0.5 rounded font-bold" style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
                                         {COST_CATEGORIES.find(cc => cc.key === c.category)?.label ?? c.category}
                                     </span>
                                     {c.paidTo && <span className="text-[10px]" style={{ color: '#64748B' }}>→ {c.paidTo}</span>}
@@ -155,7 +155,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                                     </p>
                                     {c.currency !== 'VND' && <p className="text-[10px]" style={{ color: '#64748B' }}>≈ {fmtNum(c.amountVND)} ₫</p>}
                                 </div>
-                                <button onClick={() => handleDelete(c.id)} className="opacity-0 group-hover:opacity-100 p-1" style={{ color: '#8B1A2E' }}><Trash2 size={12} /></button>
+                                <button onClick={() => handleDelete(c.id)} className="opacity-0 group-hover:opacity-100 p-1" style={{ color: '#B91C1C' }}><Trash2 size={12} /></button>
                             </div>
                         </div>
                     ))}
@@ -192,7 +192,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                     </div>
                 </div>
             ) : (
-                <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: '#4A8FAB' }}>
+                <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: '#1D4ED8' }}>
                     <Plus size={12} /> Thêm chi phí
                 </button>
             )}
@@ -230,8 +230,8 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
         return (
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#D4A853' }}>── Hải Quan</p>
-                    <button onClick={() => setEditing(true)} className="text-xs font-semibold" style={{ color: '#4A8FAB' }}>
+                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#B45309' }}>── Hải Quan</p>
+                    <button onClick={() => setEditing(true)} className="text-xs font-semibold" style={{ color: '#1D4ED8' }}>
                         {customs ? 'Chỉnh sửa' : '+ Nhập dữ liệu HQ'}
                     </button>
                 </div>
@@ -251,7 +251,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                             </div>
                         ))}
                         {customs.totalTax != null && (
-                            <div className="col-span-2 p-3 rounded-lg" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.2)' }}>
+                            <div className="col-span-2 p-3 rounded-lg" style={{ background: 'rgba(180,83,9,0.1)', border: '1px solid rgba(180,83,9,0.2)' }}>
                                 <div className="grid grid-cols-4 gap-3 text-center">
                                     {[
                                         { label: 'Thuế NK', value: customs.importTaxAmount, rate: customs.importTaxRate },
@@ -260,7 +260,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                                         { label: 'TỔNG THUẾ', value: customs.totalTax },
                                     ].map(t => (
                                         <div key={t.label}>
-                                            <p className="text-[10px] uppercase" style={{ color: '#D4A853' }}>{t.label}{(t as any).rate != null ? ` (${(t as any).rate}%)` : ''}</p>
+                                            <p className="text-[10px] uppercase" style={{ color: '#B45309' }}>{t.label}{(t as any).rate != null ? ` (${(t as any).rate}%)` : ''}</p>
                                             <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{t.value != null ? fmtNum(t.value) : '—'}</p>
                                         </div>
                                     ))}
@@ -268,8 +268,8 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                             </div>
                         )}
                         {customs.inspectionBody && (
-                            <div className="col-span-2 flex items-center gap-2 px-3 py-2 rounded" style={{ background: customs.inspectionResult === 'PASSED' ? 'rgba(91,168,138,0.1)' : 'rgba(212,168,83,0.1)' }}>
-                                <ClipboardCheck size={14} style={{ color: customs.inspectionResult === 'PASSED' ? '#5BA88A' : '#D4A853' }} />
+                            <div className="col-span-2 flex items-center gap-2 px-3 py-2 rounded" style={{ background: customs.inspectionResult === 'PASSED' ? 'rgba(21,128,61,0.1)' : 'rgba(180,83,9,0.1)' }}>
+                                <ClipboardCheck size={14} style={{ color: customs.inspectionResult === 'PASSED' ? '#15803D' : '#B45309' }} />
                                 <span className="text-xs" style={{ color: '#0F172A' }}>
                                     {customs.inspectionBody} — {customs.inspectionResult === 'PASSED' ? '✅ Đạt' : customs.inspectionResult === 'FAILED' ? '❌ Không đạt' : '⏳ Đang giám định'}
                                     {customs.inspectionDate && ` (${fmtDate(customs.inspectionDate)})`}
@@ -286,7 +286,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
 
     return (
         <div className="space-y-3">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#D4A853' }}>── Nhập Dữ Liệu Hải Quan</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#B45309' }}>── Nhập Dữ Liệu Hải Quan</p>
             <div className="grid grid-cols-2 gap-2">
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Số tờ khai</label><input className={inputCls} style={inputStyle} value={form.declarationNo ?? ''} onChange={e => set('declarationNo', e.target.value)} placeholder="305xxxxx/NKD/HQ" /></div>
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Loại hình</label><select className={inputCls} style={inputStyle} value={form.declarationType ?? ''} onChange={e => set('declarationType', e.target.value)}>
@@ -299,7 +299,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                 </select></div>
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Số C/O</label><input className={inputCls} style={inputStyle} value={form.coNumber ?? ''} onChange={e => set('coNumber', e.target.value)} /></div>
             </div>
-            <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#D4A853' }}>Thuế</p>
+            <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#B45309' }}>Thuế</p>
             <div className="grid grid-cols-3 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Thuế NK %</label><input type="number" className={inputCls} style={inputStyle} value={form.importTaxRate ?? ''} onChange={e => set('importTaxRate', Number(e.target.value))} /></div>
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tiền NK</label><input type="number" className={inputCls} style={inputStyle} value={form.importTaxAmount ?? ''} onChange={e => set('importTaxAmount', Number(e.target.value))} /></div>
@@ -309,7 +309,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tiền VAT</label><input type="number" className={inputCls} style={inputStyle} value={form.vatAmount ?? ''} onChange={e => set('vatAmount', Number(e.target.value))} /></div>
             </div>
             <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tổng thuế</label><input type="number" className={inputCls} style={inputStyle} value={form.totalTax ?? ''} onChange={e => set('totalTax', Number(e.target.value))} /></div>
-            <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#D4A853' }}>Giám Định</p>
+            <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#B45309' }}>Giám Định</p>
             <div className="grid grid-cols-3 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Đơn vị</label><select className={inputCls} style={inputStyle} value={form.inspectionBody ?? ''} onChange={e => set('inspectionBody', e.target.value)}>
                     <option value="">Chưa chọn</option><option value="VNATEST">VNATEST</option><option value="Quatest 3">Quatest 3</option><option value="Vinacontrol">Vinacontrol</option><option value="SGS">SGS</option>
@@ -360,8 +360,8 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
         return (
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A8FAB' }}>── Bảo Hiểm</p>
-                    <button onClick={() => setEditing(true)} className="text-xs font-semibold" style={{ color: '#4A8FAB' }}>
+                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#1D4ED8' }}>── Bảo Hiểm</p>
+                    <button onClick={() => setEditing(true)} className="text-xs font-semibold" style={{ color: '#1D4ED8' }}>
                         {insurance ? 'Chỉnh sửa' : '+ Thêm bảo hiểm'}
                     </button>
                 </div>
@@ -388,7 +388,7 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
 
     return (
         <div className="space-y-3">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A8FAB' }}>── Nhập Bảo Hiểm</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#1D4ED8' }}>── Nhập Bảo Hiểm</p>
             <div className="grid grid-cols-2 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Số HĐ</label><input className={inputCls} style={inputStyle} value={form.policyNo ?? ''} onChange={e => set('policyNo', e.target.value)} /></div>
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Công ty BH</label><select className={inputCls} style={inputStyle} value={form.insurer ?? ''} onChange={e => set('insurer', e.target.value)}>
@@ -406,7 +406,7 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
             <div className="flex justify-end gap-2 pt-1">
                 <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
                 <button onClick={handleSave} disabled={saving} className="px-4 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
-                    style={{ background: '#4A8FAB', color: '#fff' }}>
+                    style={{ background: '#1D4ED8', color: '#fff' }}>
                     {saving ? <Loader2 size={12} className="animate-spin" /> : <Shield size={12} />} Lưu BH
                 </button>
             </div>
@@ -455,7 +455,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Bộ Chứng Từ NK</p>
-                <span className="text-xs font-bold" style={{ color: uploaded === required && required > 0 ? '#5BA88A' : '#D4A853' }}>
+                <span className="text-xs font-bold" style={{ color: uploaded === required && required > 0 ? '#15803D' : '#B45309' }}>
                     {uploaded}/{required} hoàn tất
                 </span>
             </div>
@@ -463,7 +463,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
             {/* Progress bar */}
             {required > 0 && (
                 <div className="h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                    <div className="h-full rounded-full transition-all" style={{ background: uploaded === required ? '#5BA88A' : '#D4A853', width: `${(uploaded / required) * 100}%` }} />
+                    <div className="h-full rounded-full transition-all" style={{ background: uploaded === required ? '#15803D' : '#B45309', width: `${(uploaded / required) * 100}%` }} />
                 </div>
             )}
             <div className="space-y-2">
@@ -480,28 +480,28 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                                 <button onClick={() => handleToggle(item.type, !item.checked)} disabled={isActive}
                                     className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
                                     style={{
-                                        background: isActive ? '#5BA88A' : item.checked ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
-                                        border: `2px solid ${isActive ? '#5BA88A' : item.checked ? '#87CBB9' : '#E2E8F0'}`,
+                                        background: isActive ? '#15803D' : item.checked ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
+                                        border: `2px solid ${isActive ? '#15803D' : item.checked ? '#0E7490' : '#E2E8F0'}`,
                                         cursor: isActive ? 'default' : 'pointer',
                                     }}>
                                     {isActive && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
-                                    {isDraft && <div className="w-2 h-2 rounded-sm" style={{ background: '#87CBB9' }} />}
+                                    {isDraft && <div className="w-2 h-2 rounded-sm" style={{ background: '#0E7490' }} />}
                                 </button>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm" style={{ color: item.checked ? '#0F172A' : '#64748B' }}>{label}</p>
                                     {isActive && item.name && (
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#5BA88A' }}>✓ {item.name} {item.docNo && `— ${item.docNo}`}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#15803D' }}>✓ {item.name} {item.docNo && `— ${item.docNo}`}</p>
                                     )}
                                 </div>
                                 {isDraft && !isEditing && (
                                     <button onClick={() => { setEditingDoc(item.docId); setForm({ name: label }) }}
-                                        className="text-[10px] px-2 py-1 rounded font-semibold" style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
+                                        className="text-[10px] px-2 py-1 rounded font-semibold" style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309' }}>
                                         Điền thông tin
                                     </button>
                                 )}
                                 {isActive && item.latestFile && (
                                     <a href={item.latestFile.fileUrl} target="_blank" rel="noopener noreferrer"
-                                        className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                        className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                         📄 File
                                     </a>
                                 )}
@@ -535,7 +535,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                                         <button onClick={() => { setEditingDoc(null); setForm({}) }} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
                                         <button onClick={() => handleActivate(item.docId!)} disabled={saving}
                                             className="px-3 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
-                                            style={{ background: '#5BA88A', color: '#fff' }}>
+                                            style={{ background: '#15803D', color: '#fff' }}>
                                             {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />} Kích hoạt
                                         </button>
                                     </div>
@@ -584,7 +584,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
     return (
         <>
             <div className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
+                style={{ background: 'rgba(15,23,42,0.4)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
                 onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
                 style={{ width: 'min(620px, 95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
@@ -592,8 +592,8 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74,143,171,0.15)' }}>
-                            <Ship size={18} style={{ color: '#4A8FAB' }} />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(29,78,216,0.15)' }}>
+                            <Ship size={18} style={{ color: '#1D4ED8' }} />
                         </div>
                         <div>
                             <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
@@ -621,8 +621,8 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all"
                             style={{
                                 background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                color: tab === t.key ? '#87CBB9' : '#64748B',
-                                borderBottom: tab === t.key ? '2px solid #87CBB9' : '2px solid transparent',
+                                color: tab === t.key ? '#0E7490' : '#64748B',
+                                borderBottom: tab === t.key ? '2px solid #0E7490' : '2px solid transparent',
                             }}>
                             <t.icon size={13} /> {t.label}
                         </button>
@@ -646,7 +646,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         { icon: Globe, label: 'Incoterms', value: data.incoterms ?? '—' },
                                     ].map(c => (
                                         <div key={c.label} className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                            <c.icon size={14} style={{ color: '#4A8FAB' }} />
+                                            <c.icon size={14} style={{ color: '#1D4ED8' }} />
                                             <p className="text-[10px] uppercase mt-1" style={{ color: '#64748B' }}>{c.label}</p>
                                             <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.value}</p>
                                         </div>
@@ -674,9 +674,9 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Tiến độ</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className="flex-1 h-2 rounded-full" style={{ background: '#E2E8F0' }}>
-                                                <div className="h-full rounded-full transition-all" style={{ background: '#5BA88A', width: `${data.milestoneProgress}%` }} />
+                                                <div className="h-full rounded-full transition-all" style={{ background: '#15803D', width: `${data.milestoneProgress}%` }} />
                                             </div>
-                                            <span className="text-sm font-bold" style={{ color: '#5BA88A' }}>{data.milestoneProgress}%</span>
+                                            <span className="text-sm font-bold" style={{ color: '#15803D' }}>{data.milestoneProgress}%</span>
                                         </div>
                                     </div>
                                 </div>

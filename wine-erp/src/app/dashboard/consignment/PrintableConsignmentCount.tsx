@@ -69,11 +69,11 @@ export default function PrintableConsignmentCount({ data, onClose }: Props) {
             `}</style>
 
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
+            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -90,7 +90,7 @@ export default function PrintableConsignmentCount({ data, onClose }: Props) {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-lg flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
                     >
                         <Printer className="w-4 h-4" />
                         In Biên Bản Kiểm Kê (A4)

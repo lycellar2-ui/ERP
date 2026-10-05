@@ -4,10 +4,10 @@ export default function ShipmentsLoading() {
             <div className="h-8 w-48 rounded" style={{ background: '#FFFFFF' }} />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-20 rounded-xl" style={{ background: '#FFFFFF' }} />
+                    <div key={i} className="h-20 rounded-lg" style={{ background: '#FFFFFF' }} />
                 ))}
             </div>
-            <div className="h-[400px] rounded-2xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
+            <div className="h-[400px] rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }} />
         </div>
     )
 }

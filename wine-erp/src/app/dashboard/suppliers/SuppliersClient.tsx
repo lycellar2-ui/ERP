@@ -14,14 +14,15 @@ import {
 } from './actions'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { SupplierDetailDrawer } from './SupplierDetailDrawer'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { toast } from 'sonner'
 
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
     WINERY: { label: 'Winery', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     NEGOCIANT: { label: 'Négociant', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
-    DISTRIBUTOR: { label: 'Distributor', color: '#5BA88A', bg: 'rgba(74,124,89,0.12)' },
+    DISTRIBUTOR: { label: 'Distributor', color: '#15803D', bg: 'rgba(74,124,89,0.12)' },
     LOGISTICS: { label: 'Logistics', color: '#0891B2', bg: 'rgba(168,130,204,0.12)' },
-    FORWARDER: { label: 'Forwarder', color: '#4A8FAB', bg: 'rgba(46,91,122,0.15)' },
+    FORWARDER: { label: 'Forwarder', color: '#1D4ED8', bg: 'rgba(46,91,122,0.15)' },
     CUSTOMS_BROKER: { label: 'Customs Broker', color: '#475569', bg: 'rgba(168,152,128,0.12)' },
 }
 
@@ -36,7 +37,7 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function StatusDot({ status }: { status: string }) {
-    const color = status === 'ACTIVE' ? '#5BA88A' : status === 'BLACKLISTED' ? '#8B1A2E' : '#64748B'
+    const color = status === 'ACTIVE' ? '#15803D' : status === 'BLACKLISTED' ? '#B91C1C' : '#64748B'
     const label = status === 'ACTIVE' ? 'Hoạt động' : status === 'BLACKLISTED' ? 'Blacklist' : 'Tạm dừng'
     return <span className="flex items-center gap-1.5 text-xs" style={{ color }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />{label}</span>
 }
@@ -78,7 +79,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
     }, [open, editingId])
 
     const set = (k: keyof SupplierInput, v: any) => setForm(f => ({ ...f, [k]: v }))
-    const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+    const inputCls = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
@@ -123,24 +124,24 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                 onClick={onClose}
             />
             <div
-                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
                 style={{ width: 'min(560px, 95vw)' }}
             >
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
                             <Building2 size={16} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg">
+                            <h3 className="font-bold text-slate-900 text-lg">
                                 {isEdit ? 'Chỉnh Sửa NCC' : 'Thêm Nhà Cung Cấp'}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-500">
                                 {isEdit ? 'Cập nhật thông tin nhà cung cấp' : 'Winery, Négociant, Distributor, Forwarder'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
                         <X size={18} />
                     </button>
                 </div>
@@ -151,7 +152,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                     ) : (<>
                         {errors._global && (
                             <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                                style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
+                                style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
                                 <AlertCircle size={14} /> {errors._global}
                             </div>
                         )}
@@ -159,10 +160,10 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã NCC <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.code ?? ''} disabled={isEdit}
                                     onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SUP-LVMH" />
-                                {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
+                                {errors.code && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.code}</p>}
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại NCC</label>
@@ -174,20 +175,20 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên NCC <span style={{ color: '#8B1A2E' }}>*</span></label>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên NCC <span style={{ color: '#B91C1C' }}>*</span></label>
                             <input className={inputCls} style={inputStyle} value={form.name ?? ''} onChange={e => set('name', e.target.value)} placeholder="LVMH Wines & Spirits" />
-                            {errors.name && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.name}</p>}
+                            {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quốc gia <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quốc gia <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <select className={inputCls} style={inputStyle} value={form.country ?? ''} onChange={e => set('country', e.target.value)}>
                                     <option value="">Chọn...</option>
                                     <option value="FR">🇫🇷 Pháp</option><option value="IT">🇮🇹 Ý</option><option value="ES">🇪🇸 TBN</option>
                                     <option value="US">🇺🇸 Mỹ</option><option value="AU">🇦🇺 Úc</option><option value="NZ">🇳🇿 NZ</option>
                                     <option value="DE">🇩🇪 Đức</option><option value="PT">🇵🇹 BĐN</option><option value="AR">🇦🇷 Argentina</option><option value="CL">🇨🇱 Chile</option>
                                 </select>
-                                {errors.country && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.country}</p>}
+                                {errors.country && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.country}</p>}
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã thuế</label>
@@ -406,57 +407,39 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     }
 
     const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
-        A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' }, B: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-        C: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' }, D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
-        F: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+        A: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' }, B: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+        C: { color: '#B45309', bg: 'rgba(180,83,9,0.15)' }, D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
+        F: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
     }
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>Nhà Cung Cấp</h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>Winery, Négociant, Distributor, Forwarder — {stats.total} đối tác</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={handleExport} disabled={exporting}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}>
-                        <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
-                    </button>
-                    <button onClick={() => setImportOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                        style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}>
-                        <Upload size={16} /> Import Excel
-                    </button>
-                    <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                        <Plus size={16} /> Thêm NCC
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                title="Nhà Cung Cấp"
+                description={`Winery, Négociant, Distributor, Forwarder — ${stats.total} đối tác`}
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={handleExport} disabled={exporting}>
+                            <Download size={14} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
+                            <Upload size={14} /> Import Excel
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
+                            <Plus size={14} /> Thêm NCC
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Tổng NCC', value: stats.total, icon: Building2, accent: '#87CBB9' },
-                    { label: 'Hoạt động', value: stats.active, icon: Globe, accent: '#5BA88A' },
-                    { label: 'Quốc gia', value: stats.countries, icon: Globe, accent: '#4A8FAB' },
-                    { label: 'Avg Lead Time', value: `${stats.avgLeadTime} ngày`, icon: Clock, accent: '#87CBB9' },
-                ].map(s => (
-                    <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.accent}20` }}>
-                            <s.icon size={20} style={{ color: s.accent }} />
-                        </div>
-                        <div>
-                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                            <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <StatGrid>
+                <StatCard label="Tổng NCC" value={stats.total} icon={Building2} />
+                <StatCard label="Hoạt động" value={stats.active} icon={Globe} />
+                <StatCard label="Quốc gia" value={stats.countries} icon={Globe} />
+                <StatCard label="Avg Lead Time" value={`${stats.avgLeadTime} ngày`} icon={Clock} />
+            </StatGrid>
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
@@ -470,7 +453,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                         style={{
                             background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
-                            color: activeTab === tab.key ? '#87CBB9' : '#64748B',
+                            color: activeTab === tab.key ? '#0E7490' : '#64748B',
                             border: activeTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
                         }}>
                         <tab.icon size={13} /> {tab.label}
@@ -483,32 +466,29 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[200px]">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" placeholder="Tìm NCC (tên, mã, MST, email)..."
                             value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
+                            className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
                     </div>
                     <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
-                        className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
+                        className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
                         <option value="">Tất cả loại</option>
                         {Object.entries(SUPPLIER_TYPE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                     <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
-                        className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
+                        className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
                         <option value="">Trạng thái</option>
                         <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Tạm dừng</option><option value="BLACKLISTED">Blacklist</option>
                     </select>
                     {(search || typeFilter || statusFilter) && (
                         <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setPage(1); reload('', '', '', 1) }}
-                            className="px-3 py-2.5 rounded-lg text-sm" style={{ color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>Xóa filter</button>
+                            className="px-3 py-2 rounded-md text-sm text-red-600 border border-red-200 hover:bg-red-50 transition-colors">Xóa filter</button>
                     )}
                 </div>
 
                 {/* Table */}
-                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
@@ -520,7 +500,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                             </thead>
                             <tbody>
                                 {loading ? Array.from({ length: 5 }).map((_, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
+                                    <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         {Array.from({ length: 9 }).map((_, j) => <td key={j} className="px-4 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} /></td>)}
                                     </tr>
                                 )) : rows.length === 0 ? (
@@ -532,31 +512,31 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                     </td></tr>
                                 ) : rows.map(row => (
                                     <tr key={row.id} className="group transition-colors duration-100 cursor-pointer"
-                                        style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(27,46,61,0.5)')}
+                                        style={{ borderBottom: '1px solid #E2E8F0' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
                                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                                         onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
                                         <td className="px-4 py-3">
                                             <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>
                                             <p className="text-xs mt-0.5 font-mono" style={{ color: '#64748B' }}>{row.code}</p>
-                                            {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#4A8FAB' }}>👤 {row.contactName}</p>}
+                                            {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#1D4ED8' }}>👤 {row.contactName}</p>}
                                         </td>
                                         <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
                                         <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>{COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}</td>
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#E2E8F0' }}>{row.tradeAgreement ?? 'MFN'}</p>
+                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#15803D' : '#E2E8F0' }}>{row.tradeAgreement ?? 'MFN'}</p>
                                             <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{row.coFormType ?? '—'}</p>
                                         </td>
                                         <td className="px-4 py-3 text-xs font-mono" style={{ color: '#475569' }}>{row.paymentTerm ?? '—'}</td>
                                         <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#475569' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#87CBB9' : '#E2E8F0' }}>{row.poCount}</span>
+                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#0E7490' : '#E2E8F0' }}>{row.poCount}</span>
                                         </td>
                                         <td className="px-4 py-3"><StatusDot status={row.status} /></td>
                                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                                                 <button onClick={() => { setDetailId(row.id); setDetailOpen(true) }}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#4A8FAB' }} title="Chi tiết 360°">
+                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#1D4ED8' }} title="Chi tiết 360°">
                                                     <Eye size={14} />
                                                 </button>
                                                 <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
@@ -584,7 +564,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
                                     <button key={i} onClick={() => { setPage(i + 1); reload(undefined, undefined, undefined, i + 1) }}
                                         className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                        style={{ background: page === i + 1 ? '#87CBB9' : 'transparent', color: page === i + 1 ? '#F8FAFC' : '#475569' }}>
+                                        style={{ background: page === i + 1 ? '#0E7490' : 'transparent', color: page === i + 1 ? '#F8FAFC' : '#475569' }}>
                                         {i + 1}
                                     </button>
                                 ))}
@@ -596,7 +576,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
 
             {/* Tab: Scorecard */}
             {activeTab === 'scorecard' && (
-                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                     {scoreLoading ? (
                         <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang tính Scorecard...</span></div>
                     ) : scorecards && scorecards.length > 0 ? (
@@ -612,17 +592,17 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 {scorecards.map(sc => {
                                     const gc = GRADE_COLOR[sc.grade] ?? GRADE_COLOR.C
                                     return (
-                                        <tr key={sc.supplierId} style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
+                                        <tr key={sc.supplierId} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-4 py-3"><p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{sc.supplierName}</p></td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-16 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                                                        <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
+                                                        <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
                                                     </div>
-                                                    <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E' }}>{sc.onTimeRate.toFixed(0)}%</span>
+                                                    <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C' }}>{sc.onTimeRate.toFixed(0)}%</span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#5BA88A' : '#D4A853' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
+                                            <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#15803D' : '#B45309' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
                                             <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
                                             <td className="px-4 py-3 text-xs text-center" style={{ color: '#0891B2' }}>{sc.totalPOs}</td>
                                             <td className="px-4 py-3"><span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold" style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span></td>
@@ -639,15 +619,15 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             {activeTab === 'duplicates' && (
                 <div className="space-y-3">
                     {dupLoading ? (
-                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang quét trùng...</span></div>
+                        <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#B45309' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang quét trùng...</span></div>
                     ) : duplicates && duplicates.length > 0 ? (
                         duplicates.map((dup, i) => (
-                            <div key={i} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid rgba(212,168,83,0.3)' }}>
+                            <div key={i} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid rgba(180,83,9,0.3)' }}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full" style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
+                                    <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full" style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                                         {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
                                     </span>
-                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{dup.similarity}% giống</span>
+                                    <span className="text-xs font-bold" style={{ color: '#B45309' }}>{dup.similarity}% giống</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-2 rounded" style={{ background: '#FFFFFF' }}>
@@ -664,7 +644,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     ) : (
                         <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <span className="text-3xl">✅</span>
-                            <p className="text-sm mt-3" style={{ color: '#5BA88A' }}>Không phát hiện dữ liệu trùng lặp</p>
+                            <p className="text-sm mt-3" style={{ color: '#15803D' }}>Không phát hiện dữ liệu trùng lặp</p>
                         </div>
                     )}
                 </div>

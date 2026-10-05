@@ -178,11 +178,11 @@ function ProductCombobox({
                                         setOpen(false)
                                         setQuery(`[${p.skuCode}] ${p.productName}`)
                                     }}
-                                    className={`p-2.5 text-xs cursor-pointer transition-colors flex items-center justify-between gap-3 ${isSelected ? 'bg-[#87CBB9]/20 text-[#0891B2]' : 'hover:bg-white text-slate-900'}`}
+                                    className={`p-2.5 text-xs cursor-pointer transition-colors flex items-center justify-between gap-3 ${isSelected ? 'bg-[#0E7490]/20 text-[#0891B2]' : 'hover:bg-white text-slate-900'}`}
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div className="truncate font-medium">
-                                            <span className="font-mono font-bold text-[#D4A853] mr-1 text-[11px]">[{p.skuCode}]</span>
+                                            <span className="font-mono font-bold text-[#B45309] mr-1 text-[11px]">[{p.skuCode}]</span>
                                             <span>{p.productName}</span>
                                         </div>
                                         {fromWarehouseId && whStock && whStock.vintages.length > 0 ? (
@@ -190,7 +190,7 @@ function ProductCombobox({
                                                 {whStock.vintages.map(v => (
                                                     <span
                                                         key={String(v.vintage)}
-                                                        className={`px-1.5 py-0.5 rounded font-mono font-bold ${v.qtyAvailable > 0 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50' : 'bg-slate-800 text-slate-500'}`}
+                                                        className={`px-1.5 py-0.5 rounded font-mono font-bold ${v.qtyAvailable > 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
                                                     >
                                                         {v.vintage ? `NV ${v.vintage}` : 'NV (K.Năm)'}: {v.qtyAvailable} chai
                                                     </span>
@@ -206,7 +206,7 @@ function ProductCombobox({
                                     </div>
                                     <div className="shrink-0 text-right">
                                         {fromWarehouseId ? (
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block ${whTotal > 0 ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40' : 'bg-red-950/40 text-red-400 border-red-900/40'}`}>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block ${whTotal > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
                                                 Tồn kho xuất: {whTotal}c
                                             </span>
                                         ) : (
@@ -402,26 +402,26 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
+            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white border-l border-slate-200">
                 
                 {/* Header (Matching CreateSODrawer) */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
+                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
                             <ArrowRightLeft size={20} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                            <h3 className="text-base font-bold text-slate-900">
                                 Lập Phiếu Chuyển Kho Nội Bộ
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5">
                                 Tạo phiếu điều chuyển rượu giữa các kho & gửi Kế toán phê duyệt
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                         <X size={20} />
                     </button>
@@ -431,8 +431,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {/* Warehouse Route Card */}
                     <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#D4A853' }}>
-                            <Building2 size={15} style={{ color: '#D4A853' }} /> Tuyến Đường Chuyển Kho
+                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#B45309' }}>
+                            <Building2 size={15} style={{ color: '#B45309' }} /> Tuyến Đường Chuyển Kho
                         </h4>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -584,7 +584,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 const isOverStock = Boolean(fromWarehouseId && line.productId && line.qtyTransferred > selectedVintageQty && selectedVintageQty > 0)
 
                                                 return (
-                                                    <tr key={idx} className={`hover:bg-white/30 transition-colors ${isZeroStock ? 'bg-red-950/20' : ''}`}>
+                                                    <tr key={idx} className={`hover:bg-slate-50 transition-colors ${isZeroStock ? 'bg-red-50/50' : ''}`}>
                                                         <td className="px-3 py-2.5 text-center font-bold align-top" style={{ color: '#475569' }}>{idx + 1}</td>
                                                         <td className="px-3 py-2.5 align-top">
                                                             <ProductCombobox
@@ -596,7 +596,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center gap-2 text-[11px]">
                                                                     <span className="text-slate-400">Tồn kho xuất:</span>
-                                                                    <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-800/40' : 'text-red-400 bg-red-950/40 border border-red-900/40'}`}>
+                                                                    <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-800 bg-emerald-50 border border-emerald-200' : 'text-red-800 bg-red-50 border border-red-200'}`}>
                                                                         {totalWhAvail} chai
                                                                     </span>
                                                                 </div>
@@ -607,8 +607,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 value={line.vintage ?? ''}
                                                                 onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
                                                                 {...focusHandler}
-                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer ${isZeroStock ? 'text-red-400' : ''}`}
-                                                                style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#E2E8F0' }}
+                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer ${isZeroStock ? 'text-red-700' : ''}`}
+                                                                style={{ ...inputStyle, borderColor: isZeroStock ? '#B91C1C' : '#E2E8F0' }}
                                                             >
                                                                 <option value="">
                                                                     NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
@@ -631,11 +631,11 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isZeroStock ? (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/60 px-1.5 py-0.5 rounded border border-red-800/50">
-                                                                            <AlertCircle size={11} className="text-red-400" /> Tồn = 0 chai
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
+                                                                            <AlertCircle size={11} className="text-red-700" /> Tồn = 0 chai
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="text-[10px] font-semibold text-emerald-400">
+                                                                        <span className="text-[10px] font-semibold text-emerald-700">
                                                                             Tồn: <strong className="font-mono font-bold">{selectedVintageQty}</strong> chai
                                                                         </span>
                                                                     )}
@@ -670,7 +670,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleRemoveLine(idx)}
-                                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors cursor-pointer mt-1"
+                                                                className="p-1 text-red-700 hover:text-red-800 hover:bg-red-50 rounded transition-colors cursor-pointer mt-1"
                                                             >
                                                                 <Trash2 size={15} />
                                                             </button>
@@ -701,7 +701,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                         const isOverStock = Boolean(fromWarehouseId && line.productId && line.qtyTransferred > selectedVintageQty && selectedVintageQty > 0)
 
                                         return (
-                                            <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3">
+                                            <div key={idx} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-3">
                                                 {/* Header: STT + Delete Button */}
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
@@ -749,7 +749,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
                                                             {...focusHandler}
                                                             className={`w-full px-2.5 py-2 rounded-lg font-mono font-bold text-base sm:text-xs outline-none cursor-pointer ${isZeroStock ? 'text-rose-600' : 'text-slate-900'}`}
-                                                            style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#E2E8F0' }}
+                                                            style={{ ...inputStyle, borderColor: isZeroStock ? '#B91C1C' : '#E2E8F0' }}
                                                         >
                                                             <option value="">
                                                                 NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}

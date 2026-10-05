@@ -28,11 +28,11 @@ interface TransferDetailDrawerProps {
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
     DRAFT: { label: 'Nháp (Chưa gửi)', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(212,168,83,0.15)', border: '#F59E0B' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(180,83,9,0.15)', border: '#F59E0B' },
     CONFIRMED: { label: 'Kế Toán Đã Duyệt (Sẵn sàng)', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
     IN_TRANSIT: { label: 'Đang Vận Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
     RECEIVED: { label: 'Đã Nhận Hàng (Hoàn tất)', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
-    CANCELLED: { label: 'Đã Hủy / Từ Chối', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
+    CANCELLED: { label: 'Đã Hủy / Từ Chối', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)', border: '#B91C1C' },
 }
 
 export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUserRoles = [] }: TransferDetailDrawerProps) {
@@ -287,7 +287,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between shrink-0" style={{ background: '#FFFFFF' }}>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0F172A', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0F172A', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                 <ArrowRightLeft size={18} style={{ color: '#0F172A' }} />
                             </div>
                             <div>
@@ -307,7 +307,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             {detail && (
                                 <button
                                     onClick={() => { setPrintDocType('VOUCHER'); setPrintModalOpen(true) }}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700"
+                                    className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700"
                                     title="In phiếu chuyển kho ra giấy A4 để ký tên 4 bên"
                                 >
                                     <Printer size={15} /> In Phiếu (A4)
@@ -315,7 +315,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             )}
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
@@ -332,7 +332,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         ) : detail ? (
                             <>
                                 {/* Status Timeline Bar */}
-                                <div className="p-4 rounded-xl space-y-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                <div className="p-4 rounded-lg space-y-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Tiến Trình Phiếu Chuyển Kho</h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                                         <div className={`p-2 rounded-lg border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
@@ -352,7 +352,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Dynamic Action Box Based on Status & User Role */}
                                 {detail.status === 'DRAFT' && (
-                                    <div className="p-4 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <div className="p-4 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <div>
                                             <p className="text-xs font-bold" style={{ color: '#0F172A' }}>Phiếu đang ở trạng thái Nháp</p>
                                             <p className="text-[11px]" style={{ color: '#64748B' }}>Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
@@ -369,7 +369,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'PENDING_ACCOUNTING' && (
-                                    <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                    <div className="p-4 rounded-lg space-y-3" style={{ background: 'rgba(180,83,9,0.1)', border: '1px solid rgba(180,83,9,0.3)' }}>
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                             <div>
                                                 <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#B47816' }}>
@@ -418,7 +418,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'CONFIRMED' && (
-                                    <div className="p-4 rounded-xl bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-lg bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
                                                 <CheckCircle2 size={16} className="text-sky-600" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
@@ -438,7 +438,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'IN_TRANSIT' && (
-                                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-lg bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
                                                 <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
@@ -460,7 +460,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {/* Overview Metadata Summary Card - Sleek & Compact */}
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
                                         <div className="flex items-center gap-2 font-semibold">
                                             <span className="text-rose-700 font-bold">🔴 {detail.fromWarehouse}</span>
@@ -542,7 +542,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     <div className="space-y-4">
                                         {/* Vintage Mismatch Warning Banner */}
                                         {hasVintageMismatch && (
-                                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                                            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
                                                 <div className="flex items-start gap-2.5 text-amber-900">
                                                     <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                                                     <div>
@@ -567,7 +567,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         )}
 
                                         {/* Line Items Table */}
-                                        <div className="rounded-xl overflow-hidden shadow-2xs border border-slate-200 bg-white">
+                                        <div className="rounded-lg overflow-hidden shadow-2xs border border-slate-200 bg-white">
                                             {/* Desktop Table View (>= 768px) */}
                                             <div className="hidden md:block overflow-x-auto">
                                                 <table className="w-full text-left text-xs border-collapse">
@@ -631,7 +631,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                         ) : (
                                                                             <div className="flex flex-col items-center gap-0.5">
                                                                                 <div className="flex items-center gap-1.5 font-bold">
-                                                                                    <span style={{ color: isEditable && isLowOrZeroStock ? '#DC2626' : '#475569' }}>
+                                                                                    <span style={{ color: isEditable && isLowOrZeroStock ? '#B91C1C' : '#475569' }}>
                                                                                         {l.vintage || 'NV'}
                                                                                     </span>
                                                                                     {isEditable && (
@@ -692,7 +692,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     const isLowOrZeroStock = (l.vintageAvailableStock ?? 0) < l.qtyTransferred
 
                                                     return (
-                                                        <div key={l.id} className="p-3 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2">
+                                                        <div key={l.id} className="p-3 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <span className="text-[10px] font-bold text-slate-500 font-mono">#{idx + 1}</span>
@@ -733,7 +733,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         </div>
                                                     )
                                                 })}
-                                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold">
+                                                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold">
                                                     <span>Tổng cộng ({detail.lines.length} mặt hàng):</span>
                                                     <span className="font-mono text-amber-800 text-sm">
                                                         {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai
@@ -743,7 +743,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
 
                                         {/* Quick link to Picking tab */}
-                                        <div className="flex items-center justify-between p-3 rounded-xl bg-sky-50/70 border border-sky-200 text-xs">
+                                        <div className="flex items-center justify-between p-3 rounded-lg bg-sky-50/70 border border-sky-200 text-xs">
                                             <div className="flex items-center gap-2 text-sky-900">
                                                 <MapPin size={15} className="text-sky-600 shrink-0" />
                                                 <span>Cần kiểm tra vị trí kệ/pallet nhặt hàng tại kho xuất?</span>
@@ -770,7 +770,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                             if (isCancelled) {
                                                 return (
-                                                    <div className="p-4 rounded-xl space-y-2 bg-rose-50 border border-rose-200">
+                                                    <div className="p-4 rounded-lg space-y-2 bg-rose-50 border border-rose-200">
                                                         <div className="flex items-center gap-2 text-rose-800">
                                                             <ShieldAlert size={16} className="text-rose-600" />
                                                             <h4 className="text-xs font-extrabold uppercase tracking-wide">
@@ -786,7 +786,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                             return (
                                                 <div
-                                                    className="p-4 rounded-xl space-y-3"
+                                                    className="p-4 rounded-lg space-y-3"
                                                     style={
                                                         isReceived
                                                             ? { background: '#F0FDF4', border: '1px solid #BBF7D0' }
@@ -974,7 +974,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING & PICKING */}
             {printModalOpen && detail && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-white border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar (Non-printable) */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-3">
@@ -1243,7 +1243,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             {/* Modal Kiểm Đếm Thực Nhận & Chọn Vị Trí Kệ */}
             {showReceiveModal && detail && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
                         {/* Header */}
                         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
                             <div>
@@ -1393,7 +1393,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             </table>
 
                             {/* Receipt Notes / Damage Report */}
-                            <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
                                 <label className="block text-xs font-bold text-slate-800">
                                     📝 Ghi Chú Kiểm Đếm / Biên Bản Hao Hụt (nếu có chênh lệch hoặc vỡ hỏng):
                                 </label>

@@ -7,13 +7,14 @@ import {
     getAllocCampaigns, getAllocQuotas, getAllocStats,
     createAllocCampaign, addAllocQuota, getAllocOptions,
 } from './actions'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { toast } from 'sonner'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    PAUSED: { label: 'Tạm Dừng', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+    ACTIVE: { label: 'Hoạt Động', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    PAUSED: { label: 'Tạm Dừng', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
     COMPLETED: { label: 'Hoàn Tất', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    CANCELLED: { label: 'Hủy', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    CANCELLED: { label: 'Hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 export function AllocationClient({ initialCampaigns, stats }: {
@@ -74,34 +75,23 @@ export function AllocationClient({ initialCampaigns, stats }: {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Allocation Engine
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý hạn mức phân bổ sản phẩm theo Sales Rep / Khách hàng / Kênh
-                    </p>
-                </div>
-                <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                    <Plus size={16} /> Tạo Campaign
-                </button>
-            </div>
+            {/* Header */}
+            <PageHeader
+                title="Allocation Engine"
+                description="Quản lý hạn mức phân bổ sản phẩm theo Sales Rep / Khách hàng / Kênh"
+                actions={
+                    <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+                        <Plus size={14} /> Tạo Campaign
+                    </Button>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                {[
-                    { label: 'Tổng Campaign', value: stats.total, accent: '#87CBB9' },
-                    { label: 'Đang Active', value: stats.active, accent: '#5BA88A' },
-                    { label: 'Campaigns List', value: campaigns.length, accent: '#D4A853' },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
-                    </div>
-                ))}
-            </div>
+            <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+                <StatCard label="Tổng Campaign" value={stats.total} icon={Target} />
+                <StatCard label="Đang Active" value={stats.active} icon={BarChart3} />
+                <StatCard label="Campaigns List" value={campaigns.length} icon={Target} />
+            </StatGrid>
 
             {/* Main layout */}
             <div className="grid grid-cols-12 gap-5">
@@ -114,16 +104,16 @@ export function AllocationClient({ initialCampaigns, stats }: {
                         ) : campaigns.map(c => {
                             const st = STATUS_MAP[c.status] ?? STATUS_MAP.ACTIVE
                             const pct = c.totalQty > 0 ? (c.soldQty / c.totalQty) * 100 : 0
-                            const barColor = pct >= 90 ? '#8B1A2E' : pct >= 70 ? '#D4A853' : '#87CBB9'
+                            const barColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#0E7490'
                             const statusLabel = pct >= 100 ? '🔴 Đã hết' : pct >= 90 ? '🟡 Gần hết' : pct >= 70 ? '⚠ Sắp hết' : '✅ Còn nhiều'
-                            const statusColor = pct >= 90 ? '#8B1A2E' : pct >= 70 ? '#D4A853' : '#5BA88A'
+                            const statusColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#15803D'
                             return (
                                 <button key={c.id} onClick={() => handleSelectCampaign(c)}
                                     className="w-full text-left p-4 rounded-md transition-all"
                                     style={{
-                                        background: selected?.id === c.id ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
-                                        border: `1px solid ${selected?.id === c.id ? '#87CBB9' : '#E2E8F0'}`,
-                                        borderLeft: `3px solid ${selected?.id === c.id ? '#87CBB9' : 'transparent'}`,
+                                        background: selected?.id === c.id ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
+                                        border: `1px solid ${selected?.id === c.id ? '#0E7490' : '#E2E8F0'}`,
+                                        borderLeft: `3px solid ${selected?.id === c.id ? '#0E7490' : 'transparent'}`,
                                     }}>
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
@@ -157,7 +147,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                         </div>
                     ) : (
                         <>
-                            <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
+                            <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #0E7490' }}>
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
                                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -180,11 +170,11 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Tổng {selected.unit}</p>
                                     </div>
                                     <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#D4A853' }}>{selected.allocatedQty}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#B45309' }}>{selected.allocatedQty}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Đã phân bổ</p>
                                     </div>
                                     <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#5BA88A' }}>{selected.soldQty}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#15803D' }}>{selected.soldQty}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Đã bán</p>
                                     </div>
                                 </div>
@@ -206,27 +196,27 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                 Chưa có quota — Nhấn "Thêm Quota" để phân bổ
                                             </td></tr>
                                         ) : quotas.map(q => (
-                                            <tr key={q.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                            <tr key={q.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>{q.targetName}</td>
                                                 <td className="px-3 py-2.5">
                                                     <span className="text-xs px-2 py-0.5 rounded" style={{
-                                                        background: q.targetType === 'SALES_REP' ? 'rgba(74,143,171,0.15)' : 'rgba(8, 145, 178, 0.08)',
-                                                        color: q.targetType === 'SALES_REP' ? '#4A8FAB' : '#87CBB9',
+                                                        background: q.targetType === 'SALES_REP' ? 'rgba(29,78,216,0.15)' : 'rgba(8, 145, 178, 0.08)',
+                                                        color: q.targetType === 'SALES_REP' ? '#1D4ED8' : '#0E7490',
                                                     }}>{q.targetType === 'SALES_REP' ? 'Sales Rep' : q.targetType === 'CUSTOMER' ? 'Khách hàng' : 'Kênh'}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{q.qtyAllocated}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#5BA88A' }}>{q.qtySold}</td>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>{q.qtyAllocated}</td>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#15803D' }}>{q.qtySold}</td>
                                                 <td className="px-3 py-2.5 text-xs font-bold">
-                                                    <span style={{ color: q.remaining <= 0 ? '#8B1A2E' : q.pctUsed > 70 ? '#D4A853' : '#5BA88A' }}>
+                                                    <span style={{ color: q.remaining <= 0 ? '#B91C1C' : q.pctUsed > 70 ? '#B45309' : '#15803D' }}>
                                                         {q.remaining}
                                                     </span>
                                                     {' '}
                                                     <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{
                                                         ...(q.remaining <= 0
-                                                            ? { color: '#8B1A2E', background: 'rgba(139,26,46,0.15)' }
+                                                            ? { color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }
                                                             : q.pctUsed > 70
-                                                                ? { color: '#D4A853', background: 'rgba(212,168,83,0.15)' }
-                                                                : { color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }),
+                                                                ? { color: '#B45309', background: 'rgba(180,83,9,0.15)' }
+                                                                : { color: '#15803D', background: 'rgba(21,128,61,0.15)' }),
                                                     }}>
                                                         {q.remaining <= 0 ? '🔴 Hết' : q.pctUsed > 70 ? '⚠ Sắp hết' : '✅ Còn nhiều'}
                                                     </span>
@@ -236,7 +226,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                         <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                             <div className="h-full rounded-full" style={{
                                                                 width: `${Math.min(q.pctUsed, 100)}%`,
-                                                                background: q.pctUsed > 90 ? '#8B1A2E' : q.pctUsed > 70 ? '#D4A853' : '#87CBB9',
+                                                                background: q.pctUsed > 90 ? '#B91C1C' : q.pctUsed > 70 ? '#B45309' : '#0E7490',
                                                             }} />
                                                         </div>
                                                         <span className="text-xs font-bold" style={{ color: '#475569' }}>{q.pctUsed.toFixed(0)}%</span>
@@ -334,7 +324,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Hạn Mức ({selected.unit})</label>
                                 <input type="number" value={quotaForm.qtyAllocated}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, qtyAllocated: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }} />
+                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }} />
                             </div>
                             <button onClick={handleAddQuota} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
                                 style={{ background: '#0891B2', color: '#FFFFFF' }}>

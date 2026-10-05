@@ -153,11 +153,11 @@ export function ReplenishmentTab() {
     return (
         <div className="w-full space-y-4 pb-20 md:pb-4">
             {/* Top Info Banner */}
-            <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
+            <div className="p-4 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
                 style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20 text-indigo-400">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20 text-indigo-700">
                             <ArrowRightLeft size={18} />
                         </div>
                         <div>
@@ -195,7 +195,7 @@ export function ReplenishmentTab() {
 
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
+                <div className="p-3.5 rounded-lg border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
                         <span>Tổng SKU Cần Chuyển</span>
                         <AlertTriangle size={15} className="text-amber-500" />
@@ -208,7 +208,7 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
+                <div className="p-3.5 rounded-lg border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
                         <span>Bổ Sung Kho GVM (TA)</span>
                         <Building2 size={15} className="text-blue-600" />
@@ -221,7 +221,7 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
+                <div className="p-3.5 rounded-lg border bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
                         <span>Cấp Hàng Showroom</span>
                         <Wine size={15} className="text-emerald-600" />
@@ -234,7 +234,7 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl border bg-indigo-50/60 border-indigo-200 shadow-xs">
+                <div className="p-3.5 rounded-lg border bg-indigo-50/60 border-indigo-200 shadow-xs">
                     <div className="flex items-center justify-between text-xs font-semibold text-indigo-900 mb-1">
                         <span>Quy Cách Điều Chuyển</span>
                         <Boxes size={15} className="text-indigo-600" />
@@ -249,7 +249,7 @@ export function ReplenishmentTab() {
             </div>
 
             {/* Filter & Threshold Selector Bar */}
-            <div className="p-4 rounded-xl border space-y-3 shadow-xs"
+            <div className="p-4 rounded-lg border space-y-3 shadow-xs"
                 style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     {/* Category Navigation Pills */}
@@ -365,7 +365,7 @@ export function ReplenishmentTab() {
 
             {/* Suggestions Table / Cards */}
             {suggestions.length === 0 ? (
-                <div className="py-16 rounded-xl border text-center space-y-3 bg-white" style={{ borderColor: '#E2E8F0' }}>
+                <div className="py-16 rounded-lg border text-center space-y-3 bg-white" style={{ borderColor: '#E2E8F0' }}>
                     <CheckCircle2 size={40} className="mx-auto text-emerald-500" />
                     <div className="space-y-1">
                         <h3 className="text-base font-bold text-slate-800">Không có cảnh báo lệch tồn kho nào</h3>
@@ -375,7 +375,7 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
             ) : (
-                <div className="rounded-xl border overflow-hidden bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
+                <div className="rounded-lg border overflow-hidden bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
                     {/* Desktop Table View (>= 768px) */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
@@ -492,7 +492,7 @@ export function ReplenishmentTab() {
                     {/* Mobile Card List View (< 768px) */}
                     <div className="block md:hidden divide-y divide-slate-100 p-2.5 space-y-3">
                         {suggestions.map((row) => (
-                            <div key={row.id} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3">
+                            <div key={row.id} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-3">
                                 {/* Header: SKU + Category Badge */}
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -550,7 +550,7 @@ export function ReplenishmentTab() {
                                 <button
                                     type="button"
                                     onClick={() => handleCreateTransfer(row)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white min-h-[44px]"
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white min-h-[44px]"
                                 >
                                     <Zap size={14} />
                                     Tạo Lệnh Chuyển Ngay

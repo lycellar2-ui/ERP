@@ -22,10 +22,10 @@ type AvailableLot = {
 
 const DO_STATUS: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9' },
-    CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(212,168,83,0.15)' },
+    CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(180,83,9,0.15)' },
     SHIPPED: { label: 'Đã Giao', color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
-    REVERSED: { label: 'Đã Reverse', color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
-    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
+    REVERSED: { label: 'Đã Reverse', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+    CANCELLED: { label: 'Đã Hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 type DODetail = Awaited<ReturnType<typeof getDODetail>>
@@ -197,7 +197,7 @@ export function DeliveryOrderTab({ warehouses }: {
             <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5" style={{ color: '#0F172A' }}>
-                        <Truck size={16} style={{ color: '#D4A853' }} /> Xuất Kho (DO)
+                        <Truck size={16} style={{ color: '#B45309' }} /> Xuất Kho (DO)
                     </h3>
                     <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
                         className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 shrink-0"
@@ -207,7 +207,7 @@ export function DeliveryOrderTab({ warehouses }: {
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex p-1 rounded-xl overflow-x-auto no-scrollbar" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
+                <div className="flex p-1 rounded-lg overflow-x-auto no-scrollbar" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
                     <button
                         onClick={() => setActiveSubTab('pending')}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold rounded-lg transition-all shrink-0 shadow-xs"
@@ -221,7 +221,7 @@ export function DeliveryOrderTab({ warehouses }: {
                         {pendingSOs.length > 0 && (
                             <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full"
                                 style={{
-                                    background: activeSubTab === 'pending' ? 'rgba(212,168,83,0.2)' : '#CBD5E1',
+                                    background: activeSubTab === 'pending' ? 'rgba(180,83,9,0.2)' : '#CBD5E1',
                                     color: activeSubTab === 'pending' ? '#B47816' : '#475569'
                                 }}>
                                 {pendingSOs.length}
@@ -264,10 +264,10 @@ export function DeliveryOrderTab({ warehouses }: {
 
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 size={20} className="animate-spin" style={{ color: '#D4A853' }} />
+                            <Loader2 size={20} className="animate-spin" style={{ color: '#B45309' }} />
                         </div>
                     ) : filteredPendingSOs.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-lg" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
                             <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
                             <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>
                                 {searchQuery ? 'Không tìm thấy đơn hàng' : 'Không có đơn chờ xuất'}
@@ -282,7 +282,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 return (
                                     <div
                                         key={so.id}
-                                        className="p-3.5 sm:p-4 rounded-xl flex flex-col justify-between transition-all shadow-sm hover:shadow-md"
+                                        className="p-3.5 sm:p-4 rounded-lg flex flex-col justify-between transition-all shadow-sm hover:shadow-md"
                                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                                     >
                                         <div>
@@ -290,7 +290,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="px-2 py-0.5 text-[11px] font-extrabold font-mono rounded"
-                                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
+                                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
                                                         {so.soNo}
                                                     </span>
                                                     <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
@@ -361,7 +361,7 @@ export function DeliveryOrderTab({ warehouses }: {
 
             {/* TAB 2: PROCESSED DELIVERY ORDERS HISTORY */}
             {activeSubTab === 'history' && (
-                <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     {/* Desktop Table (>= 768px) */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
@@ -375,7 +375,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             <tbody>
                                 {loading ? (
                                     <tr><td colSpan={10} className="text-center py-10">
-                                        <Loader2 size={18} className="animate-spin inline" style={{ color: '#D4A853' }} />
+                                        <Loader2 size={18} className="animate-spin inline" style={{ color: '#B45309' }} />
                                     </td></tr>
                                 ) : rows.length === 0 ? (
                                     <tr><td colSpan={10} className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</td></tr>
@@ -409,13 +409,13 @@ export function DeliveryOrderTab({ warehouses }: {
                                                 <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                                                     <button onClick={() => openDetail(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
                                                         title="Xem chi tiết"
-                                                        style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                                        style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                                         <Eye size={13} />
                                                     </button>
                                                     {d.status === 'DRAFT' && (
                                                         <button onClick={() => handleConfirm(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
                                                             title="Xác nhận"
-                                                            style={{ background: 'rgba(91,168,138,0.1)', color: '#5BA88A' }}>
+                                                            style={{ background: 'rgba(21,128,61,0.1)', color: '#15803D' }}>
                                                             <CheckCircle2 size={13} />
                                                         </button>
                                                     )}
@@ -423,7 +423,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                         <button onClick={() => handleReverse(d.id, d.doNo)}
                                                             title="Reverse (Hoàn Tác Xuất Kho — Chỉ Admin)"
                                                             className="px-2 py-1 text-[10px] font-bold rounded-md flex items-center gap-1 transition-all hover:brightness-105"
-                                                            style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)' }}>
+                                                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                                             <RotateCcw size={11} /> Reverse
                                                         </button>
                                                     )}
@@ -439,7 +439,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     {/* Mobile Cards (< 768px) */}
                     <div className="block md:hidden p-2.5 space-y-2">
                         {loading ? (
-                            <div className="text-center py-10"><Loader2 size={18} className="animate-spin inline" style={{ color: '#D4A853' }} /></div>
+                            <div className="text-center py-10"><Loader2 size={18} className="animate-spin inline" style={{ color: '#B45309' }} /></div>
                         ) : rows.length === 0 ? (
                             <div className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</div>
                         ) : rows.map(d => {
@@ -447,7 +447,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             const canReverse = d.status !== 'REVERSED' && d.status !== 'CANCELLED'
                             return (
                                 <div key={d.id} onClick={() => openDetail(d.id)}
-                                    className="p-3 rounded-xl space-y-2 cursor-pointer transition-all active:scale-[0.99] shadow-sm"
+                                    className="p-3 rounded-lg space-y-2 cursor-pointer transition-all active:scale-[0.99] shadow-sm"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[11px] font-bold font-mono" style={{ color: '#B47816' }}>
@@ -470,7 +470,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <div className="pt-1.5 flex justify-end" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => handleReverse(d.id, d.doNo)}
                                                 className="px-2.5 py-1 text-[10px] font-bold rounded-md flex items-center gap-1"
-                                                style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)' }}>
+                                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                                 <RotateCcw size={11} /> Reverse (Admin)
                                             </button>
                                         </div>
@@ -515,7 +515,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             <button onClick={() => setDetailData(null)} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         {detailLoading ? (
-                            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} /></div>
+                            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin" style={{ color: '#B45309' }} /></div>
                         ) : detailData && (
                             <div className="p-5 space-y-4 flex-1 overflow-y-auto">
                                 <div className="grid grid-cols-2 gap-3">
@@ -524,7 +524,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 </div>
 
                                 {/* Custom Date Editor for backdating/editing data */}
-                                <div className="px-3.5 py-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                <div className="px-3.5 py-2.5 rounded-lg flex flex-wrap items-center justify-between gap-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <div>
                                         <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>📅 Ngày Xuất Hàng (Chỉnh sửa dữ liệu)</p>
                                         <p className="text-xs font-bold mt-0.5" style={{ color: '#0F172A' }}>{formatDate(detailData.createdAt)}</p>
@@ -552,7 +552,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 <div className="flex flex-wrap gap-2">
                                     <button
                                         onClick={() => window.open(`/dashboard/warehouse/print?id=${detailData.id}`, '_blank')}
-                                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105 shadow-sm"
+                                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all hover:brightness-105 shadow-sm"
                                         style={{ background: '#D97706', color: '#FFFFFF' }}
                                     >
                                         <Printer size={14} /> In Phiếu Xuất Kho
@@ -560,8 +560,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                     {detailData.status === 'DRAFT' && (
                                         <button
                                             onClick={() => handleConfirm(detailData.id)}
-                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105"
-                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#16A34A', border: '1px solid rgba(91,168,138,0.3)' }}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all hover:brightness-105"
+                                            style={{ background: 'rgba(21,128,61,0.15)', color: '#16A34A', border: '1px solid rgba(21,128,61,0.3)' }}
                                         >
                                             <CheckCircle2 size={14} /> Xác Nhận Xuất Kho
                                         </button>
@@ -569,8 +569,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                     {(detailData.status === 'DRAFT' || detailData.status === 'PICKING' || detailData.status === 'PACKED' || detailData.status === 'SHIPPED') && (
                                         <button
                                             onClick={() => handleMarkDelivered(detailData.id)}
-                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105"
-                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#2563EB', border: '1px solid rgba(74,143,171,0.3)' }}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all hover:brightness-105"
+                                            style={{ background: 'rgba(29,78,216,0.15)', color: '#2563EB', border: '1px solid rgba(29,78,216,0.3)' }}
                                         >
                                             <Truck size={14} /> Đã Giao Hàng
                                         </button>
@@ -578,8 +578,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                     {detailData.status !== 'CANCELLED' && (
                                         <button
                                             onClick={() => handleReverse(detailData.id, detailData.doNo)}
-                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105"
-                                            style={{ background: 'rgba(220,38,38,0.15)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.3)' }}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all hover:brightness-105"
+                                            style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}
                                         >
                                             <RotateCcw size={14} /> Reverse Phiếu (Admin)
                                         </button>
@@ -587,7 +587,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 </div>
 
                                 {/* Detail Lines — Desktop Table */}
-                                <div className="rounded-xl overflow-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
+                                <div className="rounded-lg overflow-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
@@ -615,7 +615,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 {/* Detail Lines — Mobile Cards */}
                                 <div className="block sm:hidden space-y-2">
                                     {detailData.lines.map(l => (
-                                        <div key={l.id} className="p-3 rounded-xl space-y-1.5 shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <div key={l.id} className="p-3 rounded-lg space-y-1.5 shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</span>
                                                 <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">🍇 Vintage: {(l as any).vintage ?? 'NV'}</span>
@@ -911,7 +911,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-4 rounded-xl space-y-3 border border-slate-200 bg-white shadow-xs">
+                        <div key={sol.productId} className="p-4 rounded-lg space-y-3 border border-slate-200 bg-white shadow-xs">
                             {/* Product Header: Name + Badges */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                 <div className="space-y-1">
@@ -939,7 +939,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                 ? { background: 'rgba(22,163,74,0.1)', color: '#15803D', border: '1px solid rgba(22,163,74,0.3)' }
                                                 : isOverPicked
                                                 ? { background: 'rgba(217,119,6,0.1)', color: '#B45309', border: '1px solid rgba(217,119,6,0.3)' }
-                                                : { background: 'rgba(220,38,38,0.1)', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.3)' }
+                                                : { background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }
                                         }>
                                         {isSufficient ? (
                                             <>
@@ -966,7 +966,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
                                     return (
                                         <div key={pick.globalIdx} className="p-3 rounded-lg border bg-slate-50 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start"
-                                            style={{ borderColor: isLocInsufficient ? '#FCA5A5' : '#E2E8F0' }}>
+                                            style={{ borderColor: isLocInsufficient ? '#B91C1C' : '#E2E8F0' }}>
                                             {/* Col 1: Location selection */}
                                             <div className="sm:col-span-8 space-y-1.5">
                                                 <label className="text-[10px] font-bold uppercase tracking-wider block text-slate-700">
@@ -1028,8 +1028,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         }}
                                                         className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm font-mono font-bold text-center outline-none bg-white border"
                                                         style={{
-                                                            borderColor: isLocInsufficient ? '#EF4444' : '#CBD5E1',
-                                                            color: isLocInsufficient ? '#DC2626' : '#16A34A'
+                                                            borderColor: isLocInsufficient ? '#B91C1C' : '#CBD5E1',
+                                                            color: isLocInsufficient ? '#B91C1C' : '#16A34A'
                                                         }}
                                                     />
                                                 </div>
@@ -1075,7 +1075,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <button
                 onClick={() => handleSave(false)}
                 disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
                 style={{ minHeight: '46px' }}
             >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -1085,7 +1085,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <button
                 onClick={() => handleSave(true)}
                 disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
                 style={{ background: '#D97706', color: '#FFFFFF', minHeight: '46px' }}
             >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
@@ -1138,14 +1138,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 }}
                                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
                                 style={{
-                                    background: mobileStep === s.step ? '#D4A853' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
+                                    background: mobileStep === s.step ? '#B45309' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
                                     color: mobileStep === s.step ? '#F8FAFC' : mobileStep > s.step ? '#15803D' : '#64748B',
                                 }}
                             >
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
                                     style={{
                                         background: mobileStep === s.step ? '#F8FAFC' : 'transparent',
-                                        color: mobileStep === s.step ? '#D4A853' : 'inherit',
+                                        color: mobileStep === s.step ? '#B45309' : 'inherit',
                                         border: mobileStep === s.step ? 'none' : '1px solid currentColor',
                                     }}>
                                     {mobileStep > s.step ? '✓' : s.step}
@@ -1163,7 +1163,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     <div className="hidden sm:block p-5 space-y-4">
                         {selectedSO ? (
                             <div className="space-y-3">
-                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
                                     <div>
                                         <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
                                             Đơn Hàng Bán Ra
@@ -1202,7 +1202,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 1 */}
                         {mobileStep === 1 && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
                                     <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
                                         Bước 1: Chọn Đơn Hàng, Kho & Ngày Xuất
                                     </p>
@@ -1213,7 +1213,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     </div>
                                 </div>
                                 {selectedSO && (
-                                    <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
                                         <p className="text-xs font-semibold text-slate-600">Sản phẩm trong đơn:</p>
                                         {selectedSO.lines.map(l => (
                                             <div key={l.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
@@ -1226,9 +1226,9 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 <button
                                     onClick={() => setMobileStep(2)}
                                     disabled={!canGoStep2}
-                                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-xl transition-all disabled:opacity-50"
+                                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all disabled:opacity-50"
                                     style={{
-                                        background: canGoStep2 ? '#D4A853' : '#F1F5F9',
+                                        background: canGoStep2 ? '#B45309' : '#F1F5F9',
                                         color: canGoStep2 ? '#F8FAFC' : '#94A3B8',
                                         minHeight: '46px',
                                     }}>
@@ -1244,16 +1244,16 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setMobileStep(1)}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl border border-slate-300 bg-slate-100 text-slate-700"
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg border border-slate-300 bg-slate-100 text-slate-700"
                                         style={{ minHeight: '46px' }}>
                                         ← Quay Lại
                                     </button>
                                     <button
                                         onClick={() => setMobileStep(3)}
                                         disabled={validLinesCount === 0}
-                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl disabled:opacity-50"
+                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg disabled:opacity-50"
                                         style={{
-                                            background: validLinesCount > 0 ? '#D4A853' : '#F1F5F9',
+                                            background: validLinesCount > 0 ? '#B45309' : '#F1F5F9',
                                             color: validLinesCount > 0 ? '#F8FAFC' : '#94A3B8',
                                             minHeight: '46px',
                                         }}>
@@ -1266,7 +1266,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 3 */}
                         {mobileStep === 3 && selectedSO && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
                                     <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
                                         Bước 3: Xác Nhận Xuất Kho
                                     </p>
@@ -1312,7 +1312,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 </div>
                                 <button
                                     onClick={() => setMobileStep(2)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 bg-white text-slate-700"
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700"
                                 >
                                     ← Sửa Lại Nhặt Hàng
                                 </button>

@@ -105,7 +105,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                 </div>
 
                 {errorMsg && (
-                    <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl text-xs flex items-center gap-2">
+                    <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-lg text-xs flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                         {errorMsg}
                     </div>
@@ -125,11 +125,11 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                     setSearchQuery(e.target.value)
                                     handleSearchProducts(e.target.value)
                                 }}
-                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 font-semibold"
+                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 font-semibold"
                             />
                         </div>
 
-                        <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+                        <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100 bg-white">
                             {isSearching ? (
                                 <div className="p-3 text-center text-slate-400 flex items-center justify-center gap-1">
                                     <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang tìm sản phẩm...
@@ -155,7 +155,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                             )}
                         </div>
                         {selectedProduct && (
-                            <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-extrabold flex items-center justify-between">
+                            <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-extrabold flex items-center justify-between">
                                 <span>✓ Đã chọn: {selectedProduct.productName} ({selectedProduct.skuCode})</span>
                                 <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900">UPC: {selectedProduct.unitsPerCase || 6}</span>
                             </div>
@@ -171,7 +171,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 placeholder="VD: 2020 (Bỏ trống nếu NV)"
                                 value={vintage}
                                 onChange={e => setVintage(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] font-mono font-bold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] font-mono font-bold"
                             />
                         </div>
 
@@ -182,7 +182,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 placeholder="VD: Khu A - Kệ 02"
                                 value={locationCode}
                                 onChange={e => setLocationCode(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] font-extrabold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] font-extrabold"
                             />
                         </div>
                     </div>
@@ -190,8 +190,8 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                     {/* Step 3: Quantity found */}
                     <div>
                         <label className="text-slate-700 font-bold block mb-1">4. SỐ LƯỢNG ĐẾM THỰC TẾ TRÊN KỆ:</label>
-                        <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                            <div className="bg-white border border-slate-300 rounded-xl p-2 text-center">
+                        <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <div className="bg-white border border-slate-300 rounded-lg p-2 text-center">
                                 <span className="text-[10px] font-extrabold text-slate-500 block mb-1">📦 SỐ THÙNG</span>
                                 <input
                                     type="number"
@@ -202,7 +202,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 />
                             </div>
 
-                            <div className="bg-white border border-slate-300 rounded-xl p-2 text-center">
+                            <div className="bg-white border border-slate-300 rounded-lg p-2 text-center">
                                 <span className="text-[10px] font-extrabold text-slate-500 block mb-1">🍾 CHAI LẺ</span>
                                 <input
                                     type="number"
@@ -225,7 +225,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                             <select
                                 value={varianceReason}
                                 onChange={e => setVarianceReason(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2 text-xs outline-none font-semibold cursor-pointer"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none font-semibold cursor-pointer"
                             >
                                 <option value="UNRECORDED_GR">Chưa ghi nhận phiếu nhập GR</option>
                                 <option value="WRONG_LOCATION">Xếp sai vị trí kệ kho</option>
@@ -240,7 +240,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 type="text"
                                 value={notes}
                                 onChange={e => setNotes(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2 text-xs outline-none font-semibold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none font-semibold"
                             />
                         </div>
                     </div>
@@ -250,14 +250,14 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-200 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
                         >
                             Hủy Bỏ
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting || !selectedProduct}
-                            className="px-5 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 font-black rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-5 py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <RefreshCw className="w-4 h-4 animate-spin" />

@@ -103,9 +103,9 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
             `}</style>
 
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
+            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
                 <div className="flex items-center gap-3">
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors cursor-pointer">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                     <div>
@@ -119,7 +119,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         <button
                             onClick={handleApprove}
                             disabled={isApproving}
-                            className="px-4 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-slate-900 text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                            className="px-4 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white text-xs font-black rounded-lg flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
                         >
                             <ShieldCheck className="w-4 h-4" />
                             {isApproving ? 'Đang duyệt...' : 'Duyệt & Tạo Bút Toán ADJ'}
@@ -128,7 +128,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
 
                     <button
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-lg flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
                     >
                         <Printer className="w-4 h-4" />
                         In Biên Bản (A4)

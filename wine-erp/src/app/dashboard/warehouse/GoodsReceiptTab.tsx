@@ -42,16 +42,16 @@ type GRDetail = Awaited<ReturnType<typeof getGRDetail>>
 const GR_STATUS: Record<string, { label: string; color: string; bg: string; border: string; icon: React.FC<any> }> = {
     DRAFT: {
         label: 'Nháp / Chờ Nhập',
-        color: '#D4A853',
-        bg: 'rgba(212,168,83,0.15)',
-        border: 'rgba(212,168,83,0.3)',
+        color: '#B45309',
+        bg: 'rgba(180,83,9,0.15)',
+        border: 'rgba(180,83,9,0.3)',
         icon: Clock,
     },
     CONFIRMED: {
         label: 'Đã Xác Nhận Vào Kho',
-        color: '#5BA88A',
-        bg: 'rgba(91,168,138,0.15)',
-        border: 'rgba(91,168,138,0.3)',
+        color: '#15803D',
+        bg: 'rgba(21,128,61,0.15)',
+        border: 'rgba(21,128,61,0.3)',
         icon: CheckCircle2,
     },
 }
@@ -162,7 +162,7 @@ export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; d
 // ── Stat Card Component ────────────────────────────
 function GRStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
     return (
-        <div className="p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01]"
+        <div className="p-4 rounded-lg flex items-center gap-4 transition-all hover:scale-[1.01]"
             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ background: `${accent}20` }}>
@@ -417,11 +417,11 @@ export function GoodsReceiptTab({ warehouses }: {
     return (
         <div className="space-y-4 pb-20 md:pb-4">
             {/* ── 1. Header with Inline Metrics & Quick Actions (Sales/Procurement Style) ── */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-xl border shadow-sm"
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-lg border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
-                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.35)' }}>
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
+                        style={{ background: 'rgba(21,128,61,0.2)', color: '#15803D', border: '1px solid rgba(21,128,61,0.35)' }}>
                         <PackagePlus size={24} />
                     </div>
                     <div>
@@ -445,16 +445,16 @@ export function GoodsReceiptTab({ warehouses }: {
                                 Tổng GR: <strong className="font-mono" style={{ color: '#0F172A' }}>{rows.length}</strong>
                             </span>
                             <span style={{ color: '#E2E8F0' }}>·</span>
-                            <span className="font-semibold" style={{ color: '#D4A853' }}>
+                            <span className="font-semibold" style={{ color: '#B45309' }}>
                                 Chờ xác nhận: <strong className="font-mono">{statusCounts.DRAFT ?? 0}</strong>
                             </span>
                             <span style={{ color: '#E2E8F0' }}>·</span>
-                            <span className="font-semibold" style={{ color: '#5BA88A' }}>
+                            <span className="font-semibold" style={{ color: '#15803D' }}>
                                 Đã nhập kho: <strong className="font-mono">{statusCounts.CONFIRMED ?? 0}</strong>
                             </span>
                             <span style={{ color: '#E2E8F0' }}>·</span>
-                            <span className="font-semibold" style={{ color: '#4A8FAB' }}>
-                                Tổng nhận: <strong className="font-mono text-emerald-400">
+                            <span className="font-semibold" style={{ color: '#1D4ED8' }}>
+                                Tổng nhận: <strong className="font-mono text-emerald-700">
                                     {Math.round(rows.reduce((s, r) => s + (r.totalCases || r.totalQtyReceived / 6), 0) * 10) / 10} thùng
                                 </strong> ({rows.reduce((s, r) => s + r.totalQtyReceived, 0).toLocaleString()} chai)
                             </span>
@@ -481,7 +481,7 @@ export function GoodsReceiptTab({ warehouses }: {
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}
                         title="Làm mới dữ liệu"
                     >
-                        <RefreshCw size={14} className={loading ? "animate-spin text-emerald-400" : ""} />
+                        <RefreshCw size={14} className={loading ? "animate-spin text-emerald-700" : ""} />
                         <span>Làm mới</span>
                     </button>
 
@@ -498,7 +498,7 @@ export function GoodsReceiptTab({ warehouses }: {
                     <button
                         onClick={() => setCreateOpen(true)}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-sm cursor-pointer hover:opacity-90 active:scale-95"
-                        style={{ background: '#5BA88A', color: '#FFFFFF' }}
+                        style={{ background: '#15803D', color: '#FFFFFF' }}
                     >
                         <Plus size={15} />
                         <span>Tạo Phiếu GR</span>
@@ -513,31 +513,31 @@ export function GoodsReceiptTab({ warehouses }: {
                         label="Tổng Phiếu GR"
                         value={filteredRows.length}
                         sub={`Trong bộ lọc hiện tại`}
-                        accent="#87CBB9"
+                        accent="#0E7490"
                     />
                     <GRStatCard
                         label="Chờ Xác Nhận (Nháp)"
                         value={filteredRows.filter(r => r.status === 'DRAFT').length}
                         sub="Chưa cập nhật tồn kho"
-                        accent="#D4A853"
+                        accent="#B45309"
                     />
                     <GRStatCard
                         label="Đã Nhập Kho Thực Tế"
                         value={filteredRows.filter(r => r.status === 'CONFIRMED').length}
                         sub="Tồn kho đã ghi nhận"
-                        accent="#5BA88A"
+                        accent="#15803D"
                     />
                     <GRStatCard
                         label="Tổng Thùng / Chai Nhận"
                         value={`${Math.round(totalCasesFiltered * 10) / 10} thùng`}
                         sub={`${totalBottlesFiltered.toLocaleString()} chai thực nhận`}
-                        accent="#4A8FAB"
+                        accent="#1D4ED8"
                     />
                 </div>
             )}
 
             {/* ── 3. Single-Row MISA Filter & Preset Toolbar ── */}
-            <div className="p-4 rounded-xl border space-y-3"
+            <div className="p-4 rounded-lg border space-y-3"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 {/* Filter Tabs */}
                 <div className="border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
@@ -654,7 +654,7 @@ export function GoodsReceiptTab({ warehouses }: {
             </div>
 
             {/* ── 4. Desktop Table View (Sales/Procurement Matching Style) ── */}
-            <div className="rounded-xl overflow-hidden hidden md:block border shadow-sm"
+            <div className="rounded-lg overflow-hidden hidden md:block border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 <table className="w-full text-left border-collapse">
                     <thead>
@@ -675,7 +675,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             <tr>
                                 <td colSpan={9} className="text-center py-16">
                                     <div className="flex flex-col items-center justify-center gap-2">
-                                        <Loader2 size={24} className="animate-spin text-emerald-400" />
+                                        <Loader2 size={24} className="animate-spin text-emerald-700" />
                                         <span className="text-xs" style={{ color: '#475569' }}>Đang tải danh sách phiếu nhập kho...</span>
                                     </div>
                                 </td>
@@ -718,9 +718,9 @@ export function GoodsReceiptTab({ warehouses }: {
                                             <span
                                                 className="text-xs font-mono font-bold px-2 py-0.5 rounded inline-block"
                                                 style={{
-                                                    background: 'rgba(212,168,83,0.12)',
-                                                    color: '#D4A853',
-                                                    border: '1px solid rgba(212,168,83,0.25)',
+                                                    background: 'rgba(180,83,9,0.12)',
+                                                    color: '#B45309',
+                                                    border: '1px solid rgba(180,83,9,0.25)',
                                                 }}
                                             >
                                                 {gr.poNo}
@@ -730,7 +730,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         {/* Warehouse */}
                                         <td className="px-4 py-3.5 text-xs font-medium" style={{ color: '#0F172A' }}>
                                             <div className="flex items-center gap-1.5">
-                                                <MapPin size={13} style={{ color: '#4A8FAB' }} />
+                                                <MapPin size={13} style={{ color: '#1D4ED8' }} />
                                                 <span>{gr.warehouseName}</span>
                                             </div>
                                         </td>
@@ -799,14 +799,14 @@ export function GoodsReceiptTab({ warehouses }: {
                                                         <button
                                                             onClick={() => handleConfirm(gr.id, gr.grNo)}
                                                             className="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
-                                                            style={{ background: '#5BA88A', color: '#FFFFFF' }}
+                                                            style={{ background: '#15803D', color: '#FFFFFF' }}
                                                             title="Xác nhận nhập kho ngay"
                                                         >
                                                             Xác Nhận
                                                         </button>
                                                         <button
                                                             onClick={() => handleCancel(gr.id, gr.grNo)}
-                                                            className="px-2 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-400 border border-rose-800/40"
+                                                            className="px-2 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-700 border border-rose-800/40"
                                                             title="Hủy phiếu tạm và xóa lô nháp"
                                                         >
                                                             Hủy
@@ -842,10 +842,10 @@ export function GoodsReceiptTab({ warehouses }: {
             <div className="block md:hidden space-y-2.5">
                 {loading ? (
                     <div className="text-center py-12">
-                        <Loader2 size={24} className="animate-spin inline text-emerald-400" />
+                        <Loader2 size={24} className="animate-spin inline text-emerald-700" />
                     </div>
                 ) : filteredRows.length === 0 ? (
-                    <div className="text-center py-12 text-xs rounded-xl border p-4"
+                    <div className="text-center py-12 text-xs rounded-lg border p-4"
                         style={{ background: '#FFFFFF', borderColor: '#E2E8F0', color: '#64748B' }}>
                         Không có phiếu nhập kho nào
                     </div>
@@ -858,7 +858,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             <div
                                 key={gr.id}
                                 onClick={() => openDetail(gr.id)}
-                                className="p-4 rounded-xl space-y-2.5 cursor-pointer transition-all active:scale-[0.99] border shadow-sm"
+                                className="p-4 rounded-lg space-y-2.5 cursor-pointer transition-all active:scale-[0.99] border shadow-sm"
                                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}
                             >
                                 <div className="flex items-center justify-between gap-2">
@@ -879,7 +879,7 @@ export function GoodsReceiptTab({ warehouses }: {
 
                                 <div className="flex items-center justify-between text-xs">
                                     <span style={{ color: '#475569' }}>
-                                        PO: <strong className="font-mono" style={{ color: '#D4A853' }}>{gr.poNo}</strong>
+                                        PO: <strong className="font-mono" style={{ color: '#B45309' }}>{gr.poNo}</strong>
                                     </span>
                                     <span className="font-medium" style={{ color: '#0F172A' }}>
                                         Kho: {gr.warehouseName}
@@ -889,7 +889,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                 <div className="flex items-center justify-between pt-2 text-xs border-t"
                                     style={{ borderColor: '#E2E8F0' }}>
                                     <span style={{ color: '#475569' }}>
-                                        {gr.lineCount} sản phẩm · <strong className="font-mono text-emerald-400">{cases} thùng</strong> ({gr.totalQtyReceived.toLocaleString()} chai)
+                                        {gr.lineCount} sản phẩm · <strong className="font-mono text-emerald-700">{cases} thùng</strong> ({gr.totalQtyReceived.toLocaleString()} chai)
                                     </span>
                                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                         <button
@@ -903,7 +903,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                             <button
                                                 onClick={() => handleConfirm(gr.id, gr.grNo)}
                                                 className="px-2.5 py-1 text-xs font-bold rounded-lg"
-                                                style={{ background: '#5BA88A', color: '#FFFFFF' }}
+                                                style={{ background: '#15803D', color: '#FFFFFF' }}
                                             >
                                                 Xác Nhận
                                             </button>
@@ -919,12 +919,12 @@ export function GoodsReceiptTab({ warehouses }: {
             {/* ── 6. Detail Slide-over Drawer (Matching Sales/Procurement) ── */}
             {(detailData || detailLoading) && (
                 <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-                    <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l border-slate-200 dark:border-slate-200 bg-white dark:bg-slate-50 shadow-2xl flex flex-col">
+                    <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l border-slate-200 bg-white shadow-2xl flex flex-col">
                         {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50 flex-shrink-0">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50/50 flex-shrink-0">
                             <div>
                                 <div className="flex items-center gap-2.5 flex-wrap">
-                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    <h3 className="text-base font-bold text-slate-900">
                                         Phiếu Nhập Kho {detailData?.grNo ?? '...'}
                                     </h3>
                                     {detailData && (
@@ -942,7 +942,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                 </div>
                                 {detailData && (
                                     <p className="text-xs mt-1" style={{ color: '#475569' }}>
-                                        Đơn Mua: <strong className="font-mono text-[#D4A853]">{detailData.poNo}</strong> · NCC: <strong className="text-slate-900">{detailData.supplierName}</strong>
+                                        Đơn Mua: <strong className="font-mono text-[#B45309]">{detailData.poNo}</strong> · NCC: <strong className="text-slate-900">{detailData.supplierName}</strong>
                                     </p>
                                 )}
                             </div>
@@ -953,13 +953,13 @@ export function GoodsReceiptTab({ warehouses }: {
                                         <button
                                             onClick={() => handleConfirm(detailData.id, detailData.grNo)}
                                             className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs"
-                                            style={{ background: '#5BA88A', color: '#FFFFFF' }}
+                                            style={{ background: '#15803D', color: '#FFFFFF' }}
                                         >
                                             Xác Nhận GR
                                         </button>
                                         <button
                                             onClick={() => handleCancel(detailData.id, detailData.grNo)}
-                                            className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-400 border border-rose-800/40"
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-rose-950/40 text-rose-700 border border-rose-800/40"
                                         >
                                             Hủy Phiếu
                                         </button>
@@ -977,26 +977,26 @@ export function GoodsReceiptTab({ warehouses }: {
                         {/* Drawer Body */}
                         {detailLoading ? (
                             <div className="flex flex-col items-center justify-center py-24 flex-1">
-                                <Loader2 size={32} className="animate-spin text-emerald-400" />
+                                <Loader2 size={32} className="animate-spin text-emerald-700" />
                                 <p className="text-xs mt-2" style={{ color: '#475569' }}>Đang nạp chi tiết phiếu nhập kho...</p>
                             </div>
                         ) : detailData && (
                             <div className="p-5 space-y-5 flex-1 overflow-y-auto">
                                 {/* Info Cards 4-grid */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <div className="p-3 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                                    <div className="p-3 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Kho Nhận</p>
                                         <p className="text-xs font-bold mt-1 truncate" style={{ color: '#0F172A' }}>{detailData.warehouseName}</p>
                                     </div>
-                                    <div className="p-3 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                                    <div className="p-3 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Ngày Lập</p>
                                         <p className="text-xs font-bold mt-1 font-mono" style={{ color: '#0F172A' }}>{formatDate(detailData.createdAt)}</p>
                                     </div>
-                                    <div className="p-3 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                                    <div className="p-3 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Người Xác Nhận</p>
                                         <p className="text-xs font-bold mt-1 truncate" style={{ color: '#0F172A' }}>{detailData.confirmedBy ?? 'Chưa xác nhận'}</p>
                                     </div>
-                                    <div className="p-3 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                                    <div className="p-3 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Ngày Xác Nhận</p>
                                         <p className="text-xs font-bold mt-1 font-mono" style={{ color: '#0F172A' }}>
                                             {detailData.confirmedAt ? formatDate(detailData.confirmedAt) : '—'}
@@ -1005,29 +1005,29 @@ export function GoodsReceiptTab({ warehouses }: {
                                 </div>
 
                                 {/* Step Workflow Indicator */}
-                                <div className="p-3.5 rounded-xl border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                                <div className="p-3.5 rounded-lg border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                     <p className="text-[10px] uppercase font-bold tracking-wider mb-2.5" style={{ color: '#475569' }}>
                                         Tiến Trình Nhập Kho
                                     </p>
                                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                                        <div className="p-2 rounded-lg" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                        <div className="p-2 rounded-lg" style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                             <p className="font-bold">1. Tạo GR</p>
                                             <p className="text-[10px] opacity-80">{formatDate(detailData.createdAt)}</p>
                                         </div>
-                                        <div className="p-2 rounded-lg" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                        <div className="p-2 rounded-lg" style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                             <p className="font-bold">2. Kiểm Đếm & Vị Trí</p>
                                             <p className="text-[10px] opacity-80">{detailData.lines.length} mặt hàng</p>
                                         </div>
                                         <div
                                             className="p-2 rounded-lg"
                                             style={detailData.status === 'CONFIRMED' ? {
-                                                background: 'rgba(91,168,138,0.15)',
-                                                color: '#5BA88A',
-                                                border: '1px solid rgba(91,168,138,0.3)',
+                                                background: 'rgba(21,128,61,0.15)',
+                                                color: '#15803D',
+                                                border: '1px solid rgba(21,128,61,0.3)',
                                             } : {
-                                                background: 'rgba(212,168,83,0.12)',
-                                                color: '#D4A853',
-                                                border: '1px solid rgba(212,168,83,0.25)',
+                                                background: 'rgba(180,83,9,0.12)',
+                                                color: '#B45309',
+                                                border: '1px solid rgba(180,83,9,0.25)',
                                             }}
                                         >
                                             <p className="font-bold">3. Nhập Tồn Kho</p>
@@ -1045,7 +1045,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                             Chi Tiết Sản Phẩm Nhập Kho ({detailData.lines.length} dòng)
                                         </h4>
                                         <span className="text-xs" style={{ color: '#475569' }}>
-                                            Tổng nhận: <strong className="font-mono text-emerald-400" style={{ color: '#0891B2' }}>
+                                            Tổng nhận: <strong className="font-mono text-emerald-700" style={{ color: '#0891B2' }}>
                                                 {Math.round(detailData.lines.reduce((s, l) => s + (l.casesReceived || (l.qtyReceived / (l.unitsPerCase || 6))), 0) * 10) / 10} thùng
                                             </strong> ({detailData.lines.reduce((s, l) => s + l.qtyReceived, 0).toLocaleString()} chai)
                                         </span>
@@ -1054,7 +1054,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                     {/* Mobile Product Cards (< 768px) */}
                                     <div className="block md:hidden space-y-2.5">
                                         {detailData.lines.map(l => (
-                                            <div key={l.id} className="p-3.5 rounded-xl space-y-2 border border-slate-200 bg-white shadow-2xs">
+                                            <div key={l.id} className="p-3.5 rounded-lg space-y-2 border border-slate-200 bg-white shadow-2xs">
                                                 <div className="flex items-center justify-between gap-1.5">
                                                     <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
                                                         {l.skuCode}
@@ -1103,7 +1103,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                     </div>
 
                                     {/* Desktop Table View (>= 768px) */}
-                                    <div className="hidden md:block rounded-xl overflow-hidden border shadow-sm"
+                                    <div className="hidden md:block rounded-lg overflow-hidden border shadow-sm"
                                         style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse text-xs">
@@ -1132,13 +1132,13 @@ export function GoodsReceiptTab({ warehouses }: {
                                                             <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#475569' }}>
                                                                 {l.unitsPerCase || 6} chai/thùng
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#D4A853' }}>
+                                                            <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#B45309' }}>
                                                                 {l.vintage ? l.vintage : '—'}
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#475569' }}>
                                                                 {l.lotNo}
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono font-medium" style={{ color: '#4A8FAB' }}>
+                                                            <td className="px-3 py-2.5 font-mono font-medium" style={{ color: '#1D4ED8' }}>
                                                                 {l.locationCode}
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#475569' }}>
@@ -1147,7 +1147,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                                     <p className="text-[10px] opacity-75">{l.qtyExpected} chai</p>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#5BA88A' }}>
+                                                            <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#15803D' }}>
                                                                 <div>
                                                                     <strong>{l.casesReceived ?? Math.round((l.qtyReceived / (l.unitsPerCase || 6)) * 10) / 10} thg</strong>
                                                                     <p className="text-[10px] opacity-75">{l.qtyReceived} chai</p>
@@ -1155,7 +1155,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold text-right"
                                                                 style={{
-                                                                    color: l.variance > 0 ? '#5BA88A' : (l.variance < 0 ? '#E85D5D' : '#475569')
+                                                                    color: l.variance > 0 ? '#15803D' : (l.variance < 0 ? '#B91C1C' : '#475569')
                                                                 }}>
                                                                 {l.variance === 0 ? '—' : (
                                                                     <div>
@@ -1393,8 +1393,8 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                     return (
                                         <div
                                             key={pol.id || `${pol.productId}-${i}`}
-                                            className="p-4 rounded-xl border space-y-3 shadow-sm"
-                                            style={{ background: '#FFFFFF', borderColor: pol.isFoc ? 'rgba(212,168,83,0.35)' : '#E2E8F0' }}
+                                            className="p-4 rounded-lg border space-y-3 shadow-sm"
+                                            style={{ background: '#FFFFFF', borderColor: pol.isFoc ? 'rgba(180,83,9,0.35)' : '#E2E8F0' }}
                                         >
                                             {/* Product Title & Badges */}
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1454,9 +1454,9 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                     <span
                                                         className="text-xs font-mono font-bold px-2.5 py-1 rounded-md shrink-0"
                                                         style={{
-                                                            background: 'rgba(212,168,83,0.15)',
-                                                            color: '#D4A853',
-                                                            border: '1px solid rgba(212,168,83,0.3)',
+                                                            background: 'rgba(180,83,9,0.15)',
+                                                            color: '#B45309',
+                                                            border: '1px solid rgba(180,83,9,0.3)',
                                                         }}
                                                     >
                                                         PO: {pol.casesOrdered ?? Math.round((pol.qtyOrdered / lineUpc) * 10) / 10} thùng ({pol.qtyOrdered} chai)
@@ -1531,7 +1531,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                 {/* Vị Trí Kho */}
                                                 <div>
                                                     <label className="text-[10px] font-bold block mb-1" style={{ color: '#475569' }}>
-                                                        Vị Trí Kho * {loadingLocations && <Loader2 size={10} className="animate-spin inline ml-1 text-emerald-400" />}
+                                                        Vị Trí Kho * {loadingLocations && <Loader2 size={10} className="animate-spin inline ml-1 text-emerald-700" />}
                                                     </label>
                                                     {locations.length > 0 ? (
                                                         <select
@@ -1581,7 +1581,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     <button
                         onClick={() => handleSave(false)}
                         disabled={saving || !selectedPO}
-                        className="px-4 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all border cursor-pointer disabled:opacity-50 hover:bg-slate-50 flex items-center justify-center shrink-0"
+                        className="px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all border cursor-pointer disabled:opacity-50 hover:bg-slate-50 flex items-center justify-center shrink-0"
                         style={{ color: '#475569', borderColor: '#CBD5E1', minHeight: '44px' }}
                         title="Lưu phiếu GR ở trạng thái Nháp (chưa ghi nhận tồn kho)"
                     >
@@ -1592,7 +1592,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     <button
                         onClick={() => handleSave(true)}
                         disabled={saving || !selectedPO}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 text-xs sm:text-sm font-extrabold rounded-lg transition-all shadow-md cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
                         style={{ background: '#0891B2', color: '#FFFFFF', minHeight: '44px' }}
                         title="Tạo phiếu và ghi nhận tồn kho vào kho thực tế ngay lập tức"
                     >

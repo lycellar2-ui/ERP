@@ -41,8 +41,8 @@ export function AIPurchaseSuggestion() {
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(74,143,171,0.2), rgba(212,168,83,0.2))' }}>
-                        <Package size={14} style={{ color: '#4A8FAB' }} />
+                        style={{ background: 'linear-gradient(135deg, rgba(29,78,216,0.2), rgba(180,83,9,0.2))' }}>
+                        <Package size={14} style={{ color: '#1D4ED8' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Gợi Ý Nhập Hàng</h3>
@@ -54,9 +54,9 @@ export function AIPurchaseSuggestion() {
                     disabled={loading}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
                     style={{
-                        background: loading ? 'rgba(74,143,171,0.08)' : 'linear-gradient(135deg, rgba(74,143,171,0.2), rgba(8, 145, 178, 0.08))',
-                        color: loading ? '#64748B' : '#4A8FAB',
-                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(74,143,171,0.3)'}`,
+                        background: loading ? 'rgba(29,78,216,0.08)' : 'linear-gradient(135deg, rgba(29,78,216,0.2), rgba(8, 145, 178, 0.08))',
+                        color: loading ? '#64748B' : '#1D4ED8',
+                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(29,78,216,0.3)'}`,
                     }}
                 >
                     {loading ? (
@@ -76,16 +76,16 @@ export function AIPurchaseSuggestion() {
                         <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
                         <p className="text-[10px]" style={{ color: '#64748B' }}>Sản phẩm</p>
                     </div>
-                    <div className="text-center p-2 rounded" style={{ background: 'rgba(224,82,82,0.06)', border: stats.urgentReorder > 0 ? '1px solid rgba(224,82,82,0.2)' : 'none' }}>
-                        <p className="text-lg font-bold" style={{ color: '#E05252' }}>{stats.urgentReorder}</p>
+                    <div className="text-center p-2 rounded" style={{ background: 'rgba(185,28,28,0.06)', border: stats.urgentReorder > 0 ? '1px solid rgba(185,28,28,0.2)' : 'none' }}>
+                        <p className="text-lg font-bold" style={{ color: '#B91C1C' }}>{stats.urgentReorder}</p>
                         <p className="text-[10px]" style={{ color: '#64748B' }}>Cần nhập gấp</p>
                     </div>
-                    <div className="text-center p-2 rounded" style={{ background: 'rgba(212,168,83,0.06)' }}>
-                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{stats.lowStock}</p>
+                    <div className="text-center p-2 rounded" style={{ background: 'rgba(180,83,9,0.06)' }}>
+                        <p className="text-lg font-bold" style={{ color: '#B45309' }}>{stats.lowStock}</p>
                         <p className="text-[10px]" style={{ color: '#64748B' }}>Sắp hết</p>
                     </div>
-                    <div className="text-center p-2 rounded" style={{ background: 'rgba(74,143,171,0.06)' }}>
-                        <p className="text-lg font-bold" style={{ color: '#4A8FAB' }}>{stats.overstock}</p>
+                    <div className="text-center p-2 rounded" style={{ background: 'rgba(29,78,216,0.06)' }}>
+                        <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{stats.overstock}</p>
                         <p className="text-[10px]" style={{ color: '#64748B' }}>Tồn cao</p>
                     </div>
                 </div>
@@ -96,7 +96,7 @@ export function AIPurchaseSuggestion() {
                 <div className="px-5 py-8 flex flex-col items-center gap-3">
                     <div className="relative">
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                            style={{ borderColor: '#E2E8F0', borderTopColor: '#4A8FAB' }} />
+                            style={{ borderColor: '#E2E8F0', borderTopColor: '#1D4ED8' }} />
                     </div>
                     <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
                         AI đang phân tích tồn kho, doanh số 3 tháng, trend bán...
@@ -107,8 +107,8 @@ export function AIPurchaseSuggestion() {
             {/* Error */}
             {error && !loading && (
                 <div className="px-5 py-4">
-                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
-                        <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                        <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
                     </div>
                 </div>
             )}
@@ -127,10 +127,10 @@ export function AIPurchaseSuggestion() {
 
                             let color = '#475569'
                             if (isHeading || isSummary) color = '#0F172A'
-                            if (isUrgent) color = '#E05252'
-                            if (isWarning) color = '#D4A853'
-                            if (isOk) color = '#5BA88A'
-                            if (isOverstock) color = '#4A8FAB'
+                            if (isUrgent) color = '#B91C1C'
+                            if (isWarning) color = '#B45309'
+                            if (isOk) color = '#15803D'
+                            if (isOverstock) color = '#1D4ED8'
 
                             return (
                                 <p key={i} className="text-[13px] leading-relaxed" style={{
