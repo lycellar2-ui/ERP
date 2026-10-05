@@ -16,6 +16,7 @@ import {
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 
 // ── Shared Style Tokens ──────────────────────────
 const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
@@ -61,9 +62,9 @@ const focusHandler = {
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    INACTIVE: { label: 'Ngưng', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
-    SUSPENDED: { label: 'Khoá', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    ACTIVE: { label: 'Hoạt Động', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    INACTIVE: { label: 'Ngưng', color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
+    SUSPENDED: { label: 'Khoá', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities'
@@ -115,7 +116,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Người Dùng</h3>
                     <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
@@ -123,7 +124,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
                 {error && (
                     <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                        style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
+                        style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                         <AlertCircle size={14} /> {error}
                     </div>
                 )}
@@ -152,8 +153,8 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
                                     className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
                                     style={{
                                         background: form.roleIds.includes(r.id) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                        border: form.roleIds.includes(r.id) ? '1px solid #87CBB9' : '1px solid #E2E8F0',
-                                        color: form.roleIds.includes(r.id) ? '#87CBB9' : '#475569',
+                                        border: form.roleIds.includes(r.id) ? '1px solid #0E7490' : '1px solid #E2E8F0',
+                                        color: form.roleIds.includes(r.id) ? '#0E7490' : '#475569',
                                     }}>
                                     {form.roleIds.includes(r.id) && <CheckCircle2 size={12} className="inline mr-1" />}
                                     {r.name}
@@ -209,7 +210,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Vai Trò</h3>
                     <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
@@ -232,7 +233,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                                     <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <button onClick={() => toggleModule(mod)}
                                             className="flex items-center justify-between w-full text-left">
-                                            <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#0F172A' }}>
+                                            <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#0E7490' : '#0F172A' }}>
                                                 {MODULE_NAMES[mod] ?? mod}
                                             </span>
                                             <span className="text-xs" style={{ color: '#64748B' }}>
@@ -247,9 +248,9 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                                                     )}
                                                     className="text-xs px-2 py-0.5 rounded transition-all"
                                                     style={{
-                                                        background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : 'rgba(42,67,85,0.5)',
-                                                        color: selectedPerms.includes(p.id) ? '#87CBB9' : '#64748B',
-                                                        border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
+                                                        background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : '#E2E8F0',
+                                                        color: selectedPerms.includes(p.id) ? '#0E7490' : '#64748B',
+                                                        border: selectedPerms.includes(p.id) ? '1px solid rgba(8,145,178,0.4)' : '1px solid transparent',
                                                     }}>
                                                     {ACTION_LABELS[p.action] ?? p.action}
                                                 </button>
@@ -264,7 +265,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
 
                 <button onClick={handleSave} disabled={saving || !name}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md"
-                    style={{ background: name ? '#87CBB9' : '#E2E8F0', color: name ? '#F8FAFC' : '#64748B' }}>
+                    style={{ background: name ? '#0E7490' : '#E2E8F0', color: name ? '#F8FAFC' : '#64748B' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : `Tạo Vai Trò (${selectedPerms.length} quyền)`}
                 </button>
@@ -331,7 +332,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -360,7 +361,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                                         <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             <button onClick={() => toggleModule(mod)}
                                                 className="flex items-center justify-between w-full text-left">
-                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#0F172A' }}>
+                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#0E7490' : '#0F172A' }}>
                                                     {MODULE_NAMES[mod] ?? mod}
                                                 </span>
                                                 <span className="text-xs" style={{ color: '#64748B' }}>
@@ -375,9 +376,9 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                                                         )}
                                                         className="text-xs px-2 py-0.5 rounded transition-all"
                                                         style={{
-                                                            background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : 'rgba(42,67,85,0.5)',
-                                                            color: selectedPerms.includes(p.id) ? '#87CBB9' : '#64748B',
-                                                            border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
+                                                            background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : '#E2E8F0',
+                                                            color: selectedPerms.includes(p.id) ? '#0E7490' : '#64748B',
+                                                            border: selectedPerms.includes(p.id) ? '1px solid rgba(8,145,178,0.4)' : '1px solid transparent',
                                                         }}>
                                                         {ACTION_LABELS[p.action] ?? p.action}
                                                     </button>
@@ -486,7 +487,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white border-l border-slate-200">
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>
                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -497,7 +498,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
                     {error && (
                         <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
+                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                             <AlertCircle size={14} /> {error}
                         </div>
                     )}
@@ -552,8 +553,8 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                                 className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
                                                 style={{
                                                     background: selected ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                                    border: selected ? '1px solid #87CBB9' : '1px solid #E2E8F0',
-                                                    color: selected ? '#87CBB9' : '#475569',
+                                                    border: selected ? '1px solid #0E7490' : '1px solid #E2E8F0',
+                                                    color: selected ? '#0E7490' : '#475569',
                                                 }}>
                                                 {selected && <CheckCircle2 size={12} className="inline mr-1" />}
                                                 {r.name}
@@ -565,7 +566,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                 <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     {user.roles.map(r => (
                                         <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             {r}
                                         </span>
                                     ))}
@@ -718,10 +719,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
     )
 
     const statCards = [
-        { label: 'Người Dùng', value: stats.users, icon: Users, accent: '#87CBB9' },
-        { label: 'Đang Hoạt Động', value: stats.activeUsers, icon: CheckCircle2, accent: '#5BA88A' },
-        { label: 'Vai Trò', value: stats.roles, icon: Shield, accent: '#D4A853' },
-        { label: 'Chờ Duyệt', value: stats.pendingApprovals, icon: Bell, accent: '#4A8FAB' },
+        { label: 'Người Dùng', value: stats.users, icon: Users, accent: '#0E7490' },
+        { label: 'Đang Hoạt Động', value: stats.activeUsers, icon: CheckCircle2, accent: '#15803D' },
+        { label: 'Vai Trò', value: stats.roles, icon: Shield, accent: '#B45309' },
+        { label: 'Chờ Duyệt', value: stats.pendingApprovals, icon: Bell, accent: '#1D4ED8' },
     ]
 
     const tabs: { key: Tab; label: string; icon: React.FC<any> }[] = [
@@ -734,68 +735,46 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Cài Đặt & Phân Quyền (SYS/RBAC)
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý tài khoản, vai trò, quyền hạn — Dữ liệu thực từ DB
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <a href="/dashboard/settings/approval-matrix"
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all hover:bg-white/10"
-                        style={{
-                            background: 'rgba(212,168,83,0.15)',
-                            color: '#D4A853',
-                            border: '1px solid rgba(212,168,83,0.3)',
-                            textDecoration: 'none',
-                        }}>
-                        🛡️ Ma Trận Phân Quyền
-                    </a>
-                    <a href="/dashboard/settings/telegram"
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all hover:bg-white/10"
-                        style={{
-                            background: 'rgba(74,143,171,0.15)',
-                            color: '#4A8FAB',
-                            border: '1px solid rgba(74,143,171,0.3)',
-                            textDecoration: 'none',
-                        }}>
-                        🤖 Telegram Bot
-                    </a>
-                </div>
-            </div>
+            <PageHeader
+                title="Cài Đặt & Phân Quyền (SYS/RBAC)"
+                description="Quản lý tài khoản, vai trò, quyền hạn — Dữ liệu thực từ DB"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <a href="/dashboard/settings/approval-matrix"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            style={{ textDecoration: 'none' }}>
+                            🛡️ Ma Trận Phân Quyền
+                        </a>
+                        <a href="/dashboard/settings/telegram"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100"
+                            style={{ textDecoration: 'none' }}>
+                            🤖 Telegram Bot
+                        </a>
+                    </div>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
-                {statCards.map(c => {
-                    const Icon = c.icon
-                    return (
-                        <div key={c.label} className="p-4 rounded-md" style={card}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Icon size={16} style={{ color: c.accent }} />
-                                <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{c.label}</span>
-                            </div>
-                            <p className="text-2xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard label="Người Dùng" value={stats.users} icon={Users} />
+                <StatCard label="Đang Hoạt Động" value={stats.activeUsers} icon={CheckCircle2} tone="success" />
+                <StatCard label="Vai Trò" value={stats.roles} icon={Shield} />
+                <StatCard label="Chờ Duyệt" value={stats.pendingApprovals} icon={Bell} tone={stats.pendingApprovals > 0 ? 'warning' : undefined} />
+            </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-md" style={{ background: '#FFFFFF' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {tabs.map(t => {
                     const Icon = t.icon
                     const active = tab === t.key
                     return (
                         <button key={t.key}
                             onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals(); if (t.key === 'entities' && !entitiesLoaded) loadEntities() }}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded transition-all"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
                             style={{
-                                background: active ? '#FFFFFF' : 'transparent',
-                                color: active ? '#87CBB9' : '#64748B',
-                                border: active ? '1px solid #E2E8F0' : '1px solid transparent',
+                                background: active ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                color: active ? '#0891B2' : '#64748B',
+                                border: active ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
                             }}>
                             <Icon size={14} /> {t.label}
                         </button>
@@ -839,8 +818,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 ) : filteredUsers.map(u => {
                                     const st = STATUS_CFG[u.status] ?? STATUS_CFG.ACTIVE
                                     return (
-                                        <tr key={u.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                        <tr key={u.id} style={{ borderBottom: '1px solid #E2E8F0' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                             <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#0891B2] transition-all"
                                                 style={{ color: '#0F172A' }}
@@ -854,7 +833,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <div className="flex flex-wrap gap-1">
                                                     {u.roles.map(r => (
                                                         <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
-                                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                             {r}
                                                         </span>
                                                     ))}
@@ -906,7 +885,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         {roles.map(r => (
-                            <div key={r.id} className="p-5 rounded-md cursor-pointer border border-transparent hover:border-[#87CBB9]/45 hover:bg-[#1C3245] transition-all" 
+                            <div key={r.id} className="p-5 rounded-md cursor-pointer border border-transparent hover:border-[#0E7490]/45 hover:bg-[#1C3245] transition-all" 
                                 style={card}
                                 onClick={() => {
                                     setSelectedRole(r)
@@ -916,11 +895,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <h4 className="font-bold" style={{ color: '#0F172A' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs px-2 py-0.5 rounded"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             {r.permissionCount} quyền
                                         </span>
                                         <span className="text-xs px-2 py-0.5 rounded"
-                                            style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>
+                                            style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
                                             {r.userCount} user
                                         </span>
                                     </div>
@@ -935,7 +914,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <div className="h-full rounded-full transition-all"
                                         style={{
                                             width: `${Math.min((r.permissionCount / permissions.length) * 100, 100)}%`,
-                                            background: r.permissionCount === permissions.length ? '#87CBB9' : '#D4A853',
+                                            background: r.permissionCount === permissions.length ? '#0E7490' : '#B45309',
                                         }} />
                                 </div>
                                 <p className="text-xs mt-1.5" style={{ color: '#64748B' }}>
@@ -957,7 +936,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                         ) : pendingApprovals.length === 0 ? (
                             <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
-                                <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
+                                <CheckCircle2 size={24} style={{ color: '#15803D' }} />
                                 <p className="text-sm" style={{ color: '#64748B' }}>Không có yêu cầu nào chờ duyệt</p>
                             </div>
                         ) : (
@@ -965,22 +944,22 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 {pendingApprovals.map((req: any) => (
                                     <div key={req.id} className="flex items-center justify-between p-4 rounded-md" style={card}>
                                         <div className="flex items-center gap-3">
-                                            <ClipboardCheck size={16} style={{ color: '#D4A853' }} />
+                                            <ClipboardCheck size={16} style={{ color: '#B45309' }} />
                                             <div>
                                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{req.templateName || req.docType}</p>
                                                 <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Bước {req.currentStep} • Bởi {req.requestedByName || req.requestedBy}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{req.docType}</span>
+                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{req.docType}</span>
                                             <button onClick={() => handleApproval(req.id, 'APPROVE')} disabled={processingId === req.id}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                                 {processingId === req.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Duyệt
                                             </button>
                                             <button onClick={() => handleApproval(req.id, 'REJECT')} disabled={processingId === req.id}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)' }}>
+                                                style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}>
                                                 <XCircle size={12} /> Từ Chối
                                             </button>
                                         </div>
@@ -1005,7 +984,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         <div className="flex items-center justify-between mb-2">
                                             <h4 className="text-sm font-bold" style={{ color: '#0F172A' }}>{tpl.name}</h4>
                                             <span className="text-xs px-2 py-0.5 rounded font-bold"
-                                                style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>{tpl.docType}</span>
+                                                style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>{tpl.docType}</span>
                                         </div>
                                         <div className="space-y-1">
                                             {(tpl.steps || []).map((step: any, i: number) => (
@@ -1045,7 +1024,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     </td></tr>
                                 ) : auditLogs.map((log: any) => (
                                     <React.Fragment key={log.id}>
-                                        <tr style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', cursor: 'pointer' }}
+                                        <tr style={{ borderBottom: '1px solid #E2E8F0', cursor: 'pointer' }}
                                             onClick={async () => {
                                                 if (expandedLogId === log.id) { setExpandedLogId(null); return }
                                                 setExpandedLogId(log.id)
@@ -1066,8 +1045,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
-                                                    color: log.action === 'DELETE' ? '#8B1A2E' : log.action === 'CREATE' ? '#5BA88A' : '#D4A853',
-                                                    background: log.action === 'DELETE' ? 'rgba(139,26,46,0.15)' : log.action === 'CREATE' ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)',
+                                                    color: log.action === 'DELETE' ? '#B91C1C' : log.action === 'CREATE' ? '#15803D' : '#B45309',
+                                                    background: log.action === 'DELETE' ? 'rgba(185,28,28,0.15)' : log.action === 'CREATE' ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)',
                                                 }}>
                                                     {log.action}
                                                 </span>
@@ -1079,7 +1058,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 {log.entityId?.slice(-8) || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="text-xs" style={{ color: expandedLogId === log.id ? '#87CBB9' : '#64748B' }}>
+                                                <span className="text-xs" style={{ color: expandedLogId === log.id ? '#0E7490' : '#64748B' }}>
                                                     {expandedLogId === log.id ? '▼' : '▶'}
                                                 </span>
                                             </td>
@@ -1095,13 +1074,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     <p className="text-xs py-2" style={{ color: '#64748B' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
                                                 ) : (
                                                     <div className="space-y-1">
-                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#D4A853' }}>📋 Lịch Sử Thay Đổi Theo Trường</p>
+                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>📋 Lịch Sử Thay Đổi Theo Trường</p>
                                                         {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
-                                                            <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                                            <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                                 <span className="text-xs font-bold shrink-0" style={{ color: '#0891B2', minWidth: '100px' }}>{fc.field}</span>
-                                                                <span className="text-xs" style={{ color: '#E85D5D' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs" style={{ color: '#B91C1C' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
                                                                 <span className="text-xs" style={{ color: '#64748B' }}>→</span>
-                                                                <span className="text-xs" style={{ color: '#5BA88A' }}>{String(fc.newValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs" style={{ color: '#15803D' }}>{String(fc.newValue ?? '(trống)').slice(0, 40)}</span>
                                                                 <span className="text-xs ml-auto shrink-0" style={{ color: '#64748B' }}>
                                                                     {new Date(fc.changedAt).toLocaleString('vi-VN')}
                                                                 </span>
@@ -1124,7 +1103,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Legal Entities Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Danh Sách Pháp Nhân</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Danh Sách Pháp Nhân</h3>
                             <div className="space-y-4">
                                 {entities.map(ent => (
                                     <div key={ent.id} className="p-5 rounded-lg flex flex-col justify-between" style={{ ...card, background: '#FFFFFF' }}>
@@ -1173,7 +1152,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
                         {/* Warehouses Mapping & RBAC Configuration Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#D4A853' }}>
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#B45309' }}>
                                 <Shield size={16} /> Cấu Hình & Phân Quyền Kho Hàng (RBAC System Admin)
                             </h3>
                             <div className="p-5 rounded-lg space-y-4" style={card}>
@@ -1318,7 +1297,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
     if (!open || !entity) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl">
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white border-l border-slate-200 shadow-2xl">
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Cấu Hình Pháp Nhân</h3>
@@ -1349,7 +1328,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
                             </div>
                         </div>
                         <div className="pt-4 border-t border-slate-200">
-                            <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#D4A853' }}>
+                            <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#B45309' }}>
                                 <CreditCard size={12} /> Tài khoản thanh toán
                             </p>
                             <div className="space-y-4">

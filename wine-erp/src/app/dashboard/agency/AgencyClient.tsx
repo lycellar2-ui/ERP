@@ -14,6 +14,7 @@ import {
 } from './actions'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 
 const card: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
 const inputStyle: React.CSSProperties = {
@@ -21,14 +22,14 @@ const inputStyle: React.CSSProperties = {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    PENDING_REVIEW: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)' },
-    REJECTED: { label: 'Từ Chối', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
+    PENDING_REVIEW: { label: 'Chờ Duyệt', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    APPROVED: { label: 'Đã Duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
+    REJECTED: { label: 'Từ Chối', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 const PARTNER_TYPE_MAP: Record<string, { label: string; color: string }> = {
-    CUSTOMS_BROKER: { label: 'ĐL Hải Quan', color: '#D4A853' },
-    FORWARDER: { label: 'Forwarding', color: '#4A8FAB' },
+    CUSTOMS_BROKER: { label: 'ĐL Hải Quan', color: '#B45309' },
+    FORWARDER: { label: 'Forwarding', color: '#1D4ED8' },
     SURVEYOR: { label: 'Giám Định', color: '#0891B2' },
 }
 
@@ -212,49 +213,31 @@ export function AgencyClient() {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                    Import Agency Portal (AGN)
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                    Cổng đối tác hải quan – Quản lý partners, submissions, review & confirm
-                </p>
-            </div>
+            <PageHeader
+                title="Import Agency Portal (AGN)"
+                description="Cổng đối tác hải quan – Quản lý partners, submissions, review & confirm"
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { icon: Users, label: 'Đối Tác', value: stats?.totalPartners ?? 0, color: '#0891B2' },
-                    { icon: Clock, label: 'Chờ Duyệt', value: stats?.pendingSubmissions ?? 0, color: '#D4A853' },
-                    { icon: CheckCircle2, label: 'Đã Duyệt Tháng Này', value: stats?.approvedThisMonth ?? 0, color: '#5BA88A' },
-                    { icon: Ship, label: 'Lô Hàng Active', value: stats?.activeShipments ?? 0, color: '#4A8FAB' },
-                ].map(s => {
-                    const Icon = s.icon
-                    return (
-                        <div key={s.label} className="p-4 rounded-md flex items-center gap-4"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.color}` }}>
-                            <Icon size={20} style={{ color: s.color }} />
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: '#0F172A' }}>{s.value}</p>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid>
+                <StatCard icon={Users} label="Đối Tác" value={stats?.totalPartners ?? 0} />
+                <StatCard icon={Clock} label="Chờ Duyệt" value={stats?.pendingSubmissions ?? 0} tone={(stats?.pendingSubmissions ?? 0) > 0 ? 'warning' : undefined} />
+                <StatCard icon={CheckCircle2} label="Đã Duyệt Tháng Này" value={stats?.approvedThisMonth ?? 0} tone="success" />
+                <StatCard icon={Ship} label="Lô Hàng Active" value={stats?.activeShipments ?? 0} />
+            </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {TABS.map(t => {
                     const Icon = t.icon
                     const isActive = tab === t.key
                     return (
                         <button key={t.key} onClick={() => setTab(t.key)}
-                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
                             style={{
-                                background: isActive ? '#FFFFFF' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#64748B',
-                                border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
+                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                color: isActive ? '#0891B2' : '#64748B',
+                                border: isActive ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
                             }}>
                             <Icon size={14} />
                             {t.label}
@@ -303,7 +286,7 @@ export function AgencyClient() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
-                                            Đối tác <span style={{ color: '#8B1A2E' }}>*</span>
+                                            Đối tác <span style={{ color: '#B91C1C' }}>*</span>
                                         </label>
                                         <select value={subForm.partnerId} onChange={e => setSubForm(f => ({ ...f, partnerId: e.target.value }))}
                                             className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
@@ -313,7 +296,7 @@ export function AgencyClient() {
                                     </div>
                                     <div>
                                         <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
-                                            Lô hàng <span style={{ color: '#8B1A2E' }}>*</span>
+                                            Lô hàng <span style={{ color: '#B91C1C' }}>*</span>
                                         </label>
                                         <select value={subForm.shipmentId} onChange={e => setSubForm(f => ({ ...f, shipmentId: e.target.value }))}
                                             className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
@@ -362,7 +345,7 @@ export function AgencyClient() {
                             )}
 
                             {subError && (
-                                <p className="text-xs flex items-center gap-1" style={{ color: '#E05252' }}>
+                                <p className="text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
                                     <AlertTriangle size={12} /> {subError}
                                 </p>
                             )}
@@ -408,9 +391,9 @@ export function AgencyClient() {
                                         <React.Fragment key={sub.id}>
                                             <tr
                                                 className="cursor-pointer"
-                                                style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                                style={{ borderBottom: '1px solid #E2E8F0' }}
                                                 onClick={() => toggleExpand(sub.id)}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                 <td className="px-3 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>{sub.partnerName}</td>
                                                 <td className="px-3 py-3">
@@ -423,7 +406,7 @@ export function AgencyClient() {
                                                 <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>
                                                     {sub.declarationNo || '—'}
                                                 </td>
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#5BA88A' : '#64748B' }}>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#15803D' : '#64748B' }}>
                                                     {sub.documentCount} file
                                                 </td>
                                                 <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>
@@ -439,7 +422,7 @@ export function AgencyClient() {
                                                             <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'APPROVED') }}
                                                                 disabled={isReviewing}
                                                                 className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                                style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.25)' }}>
+                                                                style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.25)' }}>
                                                                 {isReviewing && reviewAction === 'APPROVED'
                                                                     ? <Loader2 size={10} className="animate-spin" />
                                                                     : <Check size={10} />}
@@ -448,7 +431,7 @@ export function AgencyClient() {
                                                             <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'REJECTED') }}
                                                                 disabled={isReviewing}
                                                                 className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                                style={{ background: 'rgba(224,82,82,0.1)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+                                                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                                                 {isReviewing && reviewAction === 'REJECTED'
                                                                     ? <Loader2 size={10} className="animate-spin" />
                                                                     : <XCircle size={10} />}
@@ -475,8 +458,8 @@ export function AgencyClient() {
                                                             <div className="space-y-3">
                                                                 {/* ── Tracking Milestones ── */}
                                                                 {sub.shipmentStatus && (
-                                                                    <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#D4A853' }}>
+                                                                    <div className="mb-4 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#B45309' }}>
                                                                             Tracking Lô Hàng {sub.vesselName && `— ${sub.vesselName}`}
                                                                             {sub.shipmentEta && <span style={{ color: '#64748B' }}> · ETA: {formatDate(sub.shipmentEta)}</span>}
                                                                         </p>
@@ -490,20 +473,20 @@ export function AgencyClient() {
                                                                                         <div className="flex flex-col items-center" style={{ minWidth: 70 }}>
                                                                                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 transition-all"
                                                                                                 style={{
-                                                                                                    background: isDone ? (isCurrent ? 'rgba(8, 145, 178, 0.15)' : 'rgba(91,168,138,0.15)') : '#FFFFFF',
-                                                                                                    border: `2px solid ${isDone ? (isCurrent ? '#87CBB9' : '#5BA88A') : '#E2E8F0'}`,
+                                                                                                    background: isDone ? (isCurrent ? 'rgba(8, 145, 178, 0.15)' : 'rgba(21,128,61,0.15)') : '#FFFFFF',
+                                                                                                    border: `2px solid ${isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#E2E8F0'}`,
                                                                                                     boxShadow: isCurrent ? '0 0 12px rgba(8, 145, 178, 0.25)' : 'none',
                                                                                                 }}>
                                                                                                 {m.icon}
                                                                                             </div>
                                                                                             <span className="text-[10px] font-semibold text-center leading-tight"
-                                                                                                style={{ color: isDone ? (isCurrent ? '#87CBB9' : '#5BA88A') : '#64748B' }}>
+                                                                                                style={{ color: isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#64748B' }}>
                                                                                                 {m.label}
                                                                                             </span>
                                                                                         </div>
                                                                                         {i < SHIPMENT_MILESTONES.length - 1 && (
                                                                                             <div className="flex-1 h-0.5 -mt-4" style={{
-                                                                                                background: i < currentIdx ? '#5BA88A' : '#E2E8F0',
+                                                                                                background: i < currentIdx ? '#15803D' : '#E2E8F0',
                                                                                                 minWidth: 16,
                                                                                             }} />
                                                                                         )}
@@ -552,7 +535,7 @@ export function AgencyClient() {
                                                                                 onMouseLeave={e => e.currentTarget.style.background = '#FFFFFF'}>
                                                                                 <FileText size={18} style={{ color: '#475569', flexShrink: 0 }} />
                                                                                 <div className="overflow-hidden flex-1">
-                                                                                    <p className="text-xs font-semibold" style={{ color: '#D4A853' }}>{doc.typeLabel}</p>
+                                                                                    <p className="text-xs font-semibold" style={{ color: '#B45309' }}>{doc.typeLabel}</p>
                                                                                     <p className="text-[10px] truncate" style={{ color: '#64748B' }}>{formatDate(doc.uploadedAt)}</p>
                                                                                 </div>
                                                                             </a>
@@ -563,7 +546,7 @@ export function AgencyClient() {
                                                                 )}
 
                                                                 {sub.notes && (
-                                                                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                                                                         <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: '#64748B' }}>Ghi chú</p>
                                                                         <p className="text-xs" style={{ color: '#475569' }}>{sub.notes}</p>
                                                                     </div>
@@ -591,7 +574,7 @@ export function AgencyClient() {
                             <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Chọn lô hàng → Chọn đối tác → Gán vai trò</p>
                         </div>
                         <button onClick={async () => { setAssignLoading(true); const d = await getActiveShipments(); setAssignShipments(d); setAssignLoading(false) }}
-                            className="px-3 py-2 text-xs font-semibold rounded-md" style={{ color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                            className="px-3 py-2 text-xs font-semibold rounded-md" style={{ color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.3)' }}>
                             {assignLoading ? <Loader2 size={12} className="animate-spin" /> : 'Tải danh sách lô hàng'}
                         </button>
                     </div>
@@ -654,12 +637,12 @@ export function AgencyClient() {
                                 </thead>
                                 <tbody>
                                     {assignShipments.map(s => (
-                                        <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <tr key={s.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</td>
                                             <td className="px-3 py-3 text-xs" style={{ color: '#0F172A' }}>{s.vesselName ?? '—'}</td>
                                             <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{s.eta ? formatDate(s.eta) : '—'}</td>
                                             <td className="px-3 py-3">
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#4A8FAB', background: 'rgba(74,143,171,0.12)' }}>{s.status}</span>
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#1D4ED8', background: 'rgba(29,78,216,0.12)' }}>{s.status}</span>
                                             </td>
                                         </tr>
                                     ))}
@@ -694,7 +677,7 @@ export function AgencyClient() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Mã <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Mã <span style={{ color: '#B91C1C' }}>*</span></label>
                                     <input type="text" value={partnerForm.code}
                                         onChange={e => setPartnerForm(f => ({ ...f, code: e.target.value }))}
                                         placeholder="VD: AGN-001" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
@@ -702,7 +685,7 @@ export function AgencyClient() {
                                         onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tên <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tên <span style={{ color: '#B91C1C' }}>*</span></label>
                                     <input type="text" value={partnerForm.name}
                                         onChange={e => setPartnerForm(f => ({ ...f, name: e.target.value }))}
                                         placeholder="Tên đối tác" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
@@ -720,7 +703,7 @@ export function AgencyClient() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Email <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Email <span style={{ color: '#B91C1C' }}>*</span></label>
                                     <input type="email" value={partnerForm.email}
                                         onChange={e => setPartnerForm(f => ({ ...f, email: e.target.value }))}
                                         placeholder="email@partner.com" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
@@ -729,7 +712,7 @@ export function AgencyClient() {
                                 </div>
                             </div>
                             {partnerError && (
-                                <p className="text-xs flex items-center gap-1" style={{ color: '#E05252' }}>
+                                <p className="text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
                                     <AlertTriangle size={12} /> {partnerError}
                                 </p>
                             )}
@@ -775,17 +758,17 @@ export function AgencyClient() {
                                                 </span>
                                                 {p.pendingCount > 0 && (
                                                     <span className="text-xs font-bold px-1.5 py-0.5 rounded"
-                                                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
+                                                        style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                                                         {p.pendingCount} chờ duyệt
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <div className="mt-3 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
                                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                                                 style={{
-                                                    color: p.status === 'ACTIVE' ? '#5BA88A' : '#D4A853',
-                                                    background: p.status === 'ACTIVE' ? 'rgba(91,168,138,0.12)' : 'rgba(212,168,83,0.12)',
+                                                    color: p.status === 'ACTIVE' ? '#15803D' : '#B45309',
+                                                    background: p.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(180,83,9,0.12)',
                                                 }}>
                                                 {p.status === 'ACTIVE' ? 'Active' : p.status}
                                             </span>

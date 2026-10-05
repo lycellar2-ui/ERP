@@ -32,8 +32,8 @@ export function AICeoSummary() {
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(212,168,83,0.2))' }}>
-                        <Sparkles size={14} style={{ color: '#D4A853' }} />
+                        style={{ background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(180,83,9,0.2))' }}>
+                        <Sparkles size={14} style={{ color: '#B45309' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Briefing cho CEO</h3>
@@ -45,9 +45,9 @@ export function AICeoSummary() {
                     disabled={loading}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
                     style={{
-                        background: loading ? 'rgba(135,203,185,0.08)' : 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(212,168,83,0.15))',
-                        color: loading ? '#64748B' : '#D4A853',
-                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(212,168,83,0.3)'}`,
+                        background: loading ? 'rgba(8,145,178,0.08)' : 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(180,83,9,0.15))',
+                        color: loading ? '#64748B' : '#B45309',
+                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(180,83,9,0.3)'}`,
                     }}
                 >
                     {loading ? (
@@ -65,7 +65,7 @@ export function AICeoSummary() {
                 <div className="px-5 py-8 flex flex-col items-center gap-3">
                     <div className="relative">
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                            style={{ borderColor: '#E2E8F0', borderTopColor: '#D4A853' }} />
+                            style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                     </div>
                     <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
                         AI đang phân tích doanh thu, công nợ, tồn kho...
@@ -75,8 +75,8 @@ export function AICeoSummary() {
 
             {error && !loading && (
                 <div className="px-5 py-4">
-                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
-                        <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                        <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
                     </div>
                 </div>
             )}
@@ -89,11 +89,11 @@ export function AICeoSummary() {
                                 color: line.startsWith('##') || line.startsWith('**')
                                     ? '#0F172A'
                                     : line.startsWith('- 🔴') || line.startsWith('- ⚠')
-                                        ? '#E05252'
+                                        ? '#B91C1C'
                                         : line.startsWith('- 🟢') || line.startsWith('- ✅')
-                                            ? '#5BA88A'
+                                            ? '#15803D'
                                             : line.startsWith('- 🟡')
-                                                ? '#D4A853'
+                                                ? '#B45309'
                                                 : '#475569',
                                 fontWeight: line.startsWith('##') || line.startsWith('**') ? 700 : 400,
                                 fontSize: line.startsWith('##') ? '14px' : '13px',

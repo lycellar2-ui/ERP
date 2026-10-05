@@ -153,7 +153,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center"
                         style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                         <Shield size={24} style={{ color: '#0891B2' }} />
                     </div>
@@ -169,7 +169,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 1: Proposal Routing Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+            <div className="rounded-lg overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 {/* Section header */}
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -235,7 +235,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                         {/* Number of steps */}
                                         <td className="px-4 py-3.5 text-center">
                                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
-                                                style={{ background: 'rgba(212,168,83,0.12)', color: '#B45309', border: '1px solid rgba(212,168,83,0.35)' }}>
+                                                style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.35)' }}>
                                                 <Layers size={12} /> {steps.length} cấp
                                             </span>
                                         </td>
@@ -264,7 +264,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         ? { bg: 'rgba(225,29,72,0.08)', color: '#BE123C', border: 'rgba(225,29,72,0.25)' }
                                                         : i === 0
                                                         ? { bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.25)' }
-                                                        : { bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.3)' }
+                                                        : { bg: 'rgba(180,83,9,0.12)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
                                                     return (
                                                         <span key={i} className="flex items-center gap-1">
                                                             <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
@@ -305,7 +305,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 2: PO Approval Matrix ═══ */}
-            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+            <div className="rounded-lg overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
@@ -320,7 +320,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         disabled={!dirty.po || savingPoRoute}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer shadow-xs hover:opacity-90"
                         style={{
-                            background: dirty.po ? '#B45309' : 'rgba(212,168,83,0.15)',
+                            background: dirty.po ? '#B45309' : 'rgba(180,83,9,0.15)',
                             color: dirty.po ? '#FFFFFF' : '#64748B',
                         }}
                     >
@@ -356,7 +356,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <td className="px-4 py-3.5 text-center">
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
-                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#B45309', border: '1px solid rgba(212,168,83,0.35)' }}>
+                                        style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.35)' }}>
                                         <Layers size={12} /> {poRoute.steps.length} cấp
                                     </span>
                                 </td>
@@ -383,7 +383,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 ? { bg: 'rgba(225,29,72,0.08)', color: '#BE123C', border: 'rgba(225,29,72,0.25)' }
                                                 : i === 0
                                                 ? { bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.25)' }
-                                                : { bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.3)' }
+                                                : { bg: 'rgba(180,83,9,0.12)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
                                             return (
                                                 <span key={i} className="flex items-center gap-1">
                                                     <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
@@ -421,7 +421,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             </div>
 
             {/* ═══ Section 3: Threshold Configuration ═══ */}
-            <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+            <div className="rounded-lg overflow-hidden shadow-2xs" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
@@ -436,7 +436,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         disabled={!dirty.thresholds || savingThresholds}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 cursor-pointer shadow-xs hover:opacity-90"
                         style={{
-                            background: dirty.thresholds ? '#B45309' : 'rgba(212,168,83,0.15)',
+                            background: dirty.thresholds ? '#B45309' : 'rgba(180,83,9,0.15)',
                             color: dirty.thresholds ? '#FFFFFF' : '#64748B',
                         }}
                     >
@@ -457,7 +457,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                     borderRight: idx % 2 === 0 ? '1px solid #E2E8F0' : 'none',
                                 }}>
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                    style={{ background: isPercent ? 'rgba(8, 145, 178, 0.08)' : 'rgba(212, 168, 83, 0.12)', border: `1px solid ${isPercent ? 'rgba(8, 145, 178, 0.25)' : 'rgba(212, 168, 83, 0.3)'}` }}>
+                                    style={{ background: isPercent ? 'rgba(8, 145, 178, 0.08)' : 'rgba(180,83,9, 0.12)', border: `1px solid ${isPercent ? 'rgba(8, 145, 178, 0.25)' : 'rgba(180,83,9, 0.3)'}` }}>
                                     <Icon size={18} style={{ color: isPercent ? '#0891B2' : '#B45309' }} />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -492,7 +492,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             {/* ═══ Edit Route Modal ═══ */}
             {editDraft && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-                    <div className="w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
+                    <div className="w-full max-w-2xl rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">
                             <div>
@@ -570,7 +570,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {editDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-200 bg-slate-50/60">
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 bg-amber-100/80 text-amber-800 border border-amber-300/60">
                                                 {idx + 1}
                                             </div>
@@ -644,7 +644,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
             {/* ═══ Edit PO Route Modal ═══ */}
             {editingPoModal && poDraft && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-                    <div className="w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
+                    <div className="w-full max-w-2xl rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">
                             <div>
@@ -723,7 +723,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                 <div className="space-y-3">
                                     {poDraft.steps.map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                                        <div key={idx} className="flex items-center gap-3 p-3.5 rounded-lg border border-slate-200 bg-slate-50/60">
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 bg-amber-100/80 text-amber-800 border border-amber-300/60">
                                                 {idx + 1}
                                             </div>

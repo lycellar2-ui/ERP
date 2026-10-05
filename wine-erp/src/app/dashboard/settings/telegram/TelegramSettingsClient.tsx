@@ -89,8 +89,8 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             width: '10px',
                             height: '10px',
                             borderRadius: '50%',
-                            background: status.configured ? '#5BA88A' : '#E05252',
-                            boxShadow: `0 0 8px ${status.configured ? '#5BA88A' : '#E05252'}`,
+                            background: status.configured ? '#15803D' : '#B91C1C',
+                            boxShadow: `0 0 8px ${status.configured ? '#15803D' : '#B91C1C'}`,
                         }} />
                         <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>BOT TOKEN</span>
                     </div>
@@ -116,8 +116,8 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             width: '10px',
                             height: '10px',
                             borderRadius: '50%',
-                            background: status.webhookActive ? '#5BA88A' : '#D4A853',
-                            boxShadow: `0 0 8px ${status.webhookActive ? '#5BA88A' : '#D4A853'}`,
+                            background: status.webhookActive ? '#15803D' : '#B45309',
+                            boxShadow: `0 0 8px ${status.webhookActive ? '#15803D' : '#B45309'}`,
                         }} />
                         <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>WEBHOOK</span>
                     </div>
@@ -153,8 +153,8 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                             width: '10px',
                             height: '10px',
                             borderRadius: '50%',
-                            background: status.ceoChatId ? '#5BA88A' : '#E05252',
-                            boxShadow: `0 0 8px ${status.ceoChatId ? '#5BA88A' : '#E05252'}`,
+                            background: status.ceoChatId ? '#15803D' : '#B91C1C',
+                            boxShadow: `0 0 8px ${status.ceoChatId ? '#15803D' : '#B91C1C'}`,
                         }} />
                         <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>CEO CHAT ID</span>
                     </div>
@@ -172,7 +172,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                     borderRadius: '12px',
                     padding: '16px 20px',
                     marginBottom: '24px',
-                    color: '#FCA5A5',
+                    color: '#B91C1C',
                     fontSize: '14px',
                 }}>
                     ⚠️ <strong>Lỗi gần nhất:</strong> {status.lastError}
@@ -262,7 +262,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                                 padding: '4px 10px',
                                 borderRadius: '12px',
                                 background: n.active ? '#5BA88A22' : '#E0525222',
-                                color: n.active ? '#5BA88A' : '#E05252',
+                                color: n.active ? '#15803D' : '#B91C1C',
                                 fontWeight: 600,
                             }}>
                                 {n.active ? 'Bật' : 'Tắt'}
@@ -287,7 +287,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                         onClick={handleTestNotification}
                         disabled={testing || !status.configured}
                         style={{
-                            background: testing ? '#5BA88A66' : '#5BA88A',
+                            background: testing ? '#5BA88A66' : '#15803D',
                             color: '#0F172A',
                             border: 'none',
                             borderRadius: '8px',
@@ -307,7 +307,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                         padding: '10px 16px',
                         borderRadius: '8px',
                         background: testResult.startsWith('✅') ? '#5BA88A15' : '#E0525215',
-                        color: testResult.startsWith('✅') ? '#5BA88A' : '#FCA5A5',
+                        color: testResult.startsWith('✅') ? '#15803D' : '#B91C1C',
                         fontSize: '14px',
                     }}>
                         {testResult}

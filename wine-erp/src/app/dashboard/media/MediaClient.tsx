@@ -25,23 +25,7 @@ const MEDIA_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
     PRODUCER_WINERY: { label: 'Nhà máy', emoji: '🏰' },
 }
 
-function StatCard({ label, value, icon: Icon, accent }: {
-    label: string; value: string | number; icon: React.FC<any>; accent: string
-}) {
-    return (
-        <div className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
-                style={{ background: `${accent}20` }}>
-                <Icon size={20} style={{ color: accent }} />
-            </div>
-            <div>
-                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
-            </div>
-        </div>
-    )
-}
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 
 interface MediaClientProps {
     initialItems: MediaItem[]
@@ -123,29 +107,23 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Thư Viện Ảnh
-                    </h1>
-                    <p className="text-sm mt-1" style={{ color: '#64748B' }}>
-                        Quản lý tất cả hình ảnh sản phẩm — Marketing Module
-                    </p>
-                </div>
-                <button onClick={() => setShowUpload(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                    <Upload size={16} /> Upload ảnh
-                </button>
-            </div>
+            <PageHeader
+                title="Thư Viện Ảnh"
+                description="Quản lý tất cả hình ảnh sản phẩm — Marketing Module"
+                actions={
+                    <Button variant="primary" size="sm" onClick={() => setShowUpload(true)}>
+                        <Upload size={14} className="mr-1.5" /> Upload ảnh
+                    </Button>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
-                <StatCard label="Tổng ảnh" value={stats.total} icon={ImageIcon} accent="#87CBB9" />
-                <StatCard label="SP có ảnh" value={stats.productsWithMedia} icon={Package} accent="#5BA88A" />
-                <StatCard label="SP chưa có ảnh" value={stats.productsWithoutMedia} icon={Package} accent="#E05252" />
-                <StatCard label="Loại ảnh" value={Object.keys(stats.byType).length} icon={LayoutGrid} accent="#D4A853" />
-            </div>
+            <StatGrid>
+                <StatCard label="Tổng ảnh" value={stats.total} icon={ImageIcon} />
+                <StatCard label="SP có ảnh" value={stats.productsWithMedia} icon={Package} tone="success" />
+                <StatCard label="SP chưa có ảnh" value={stats.productsWithoutMedia} icon={Package} tone={stats.productsWithoutMedia > 0 ? 'danger' : undefined} />
+                <StatCard label="Loại ảnh" value={Object.keys(stats.byType).length} icon={LayoutGrid} />
+            </StatGrid>
 
             {/* Filters */}
             <div className="flex items-center gap-3 flex-wrap">
@@ -173,7 +151,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                 {selected.size > 0 && (
                     <button onClick={handleBulkDelete}
                         className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                        style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#E05252' }}>
+                        style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                         <Trash2 size={14} /> Xóa {selected.size} ảnh
                     </button>
                 )}
@@ -203,9 +181,9 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {items.map(item => (
                         <div key={item.id}
-                            className="group relative rounded-xl overflow-hidden cursor-pointer transition-all"
+                            className="group relative rounded-lg overflow-hidden cursor-pointer transition-all"
                             style={{
-                                border: selected.has(item.id) ? '2px solid #87CBB9' : '1px solid #E2E8F0',
+                                border: selected.has(item.id) ? '2px solid #0E7490' : '1px solid #E2E8F0',
                                 background: '#FFFFFF',
                                 aspectRatio: '1',
                             }}>
@@ -216,7 +194,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                             {/* Primary badge */}
                             {item.isPrimary && (
                                 <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
-                                    style={{ background: 'rgba(135,203,185,0.9)', color: '#0F172A' }}>
+                                    style={{ background: 'rgba(8,145,178,0.9)', color: '#0F172A' }}>
                                     <Star size={8} /> Chính
                                 </div>
                             )}
@@ -230,7 +208,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                             {/* Select checkbox */}
                             <button onClick={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
                                 className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                style={{ color: selected.has(item.id) ? '#87CBB9' : '#475569' }}>
+                                style={{ color: selected.has(item.id) ? '#0E7490' : '#475569' }}>
                                 {!item.isPrimary && (selected.has(item.id) ? <CheckSquare size={16} /> : <Square size={16} />)}
                             </button>
 
@@ -256,7 +234,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                                     </button>
                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
                                         className="p-2 rounded-lg" title="Xóa"
-                                        style={{ background: 'rgba(139,26,46,0.2)', color: '#E05252' }}>
+                                        style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
@@ -265,7 +243,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                     ))}
                 </div>
             ) : (
-                <div className="flex flex-col items-center gap-3 py-16 rounded-xl"
+                <div className="flex flex-col items-center gap-3 py-16 rounded-lg"
                     style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
                     <ImageIcon size={48} style={{ color: '#E2E8F0' }} />
                     <p className="text-sm" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
@@ -286,9 +264,9 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                         <button key={p} onClick={() => handlePage(p)}
                             className="w-8 h-8 rounded-lg text-xs font-bold transition-all"
                             style={{
-                                background: p === page ? '#87CBB9' : '#FFFFFF',
+                                background: p === page ? '#0E7490' : '#FFFFFF',
                                 color: p === page ? '#F8FAFC' : '#64748B',
-                                border: `1px solid ${p === page ? '#87CBB9' : '#E2E8F0'}`,
+                                border: `1px solid ${p === page ? '#0E7490' : '#E2E8F0'}`,
                             }}>
                             {p}
                         </button>
@@ -299,11 +277,11 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Lightbox */}
             {lightbox && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center"
-                    style={{ background: 'rgba(10,5,2,0.9)' }}
+                    style={{ background: 'rgba(15,23,42,0.4)' }}
                     onClick={() => setLightbox(null)}>
                     <div className="relative max-w-4xl max-h-[90vh] mx-4" onClick={e => e.stopPropagation()}>
                         <img src={lightbox.url} alt={lightbox.product.productName}
-                            className="max-w-full max-h-[80vh] rounded-xl object-contain" />
+                            className="max-w-full max-h-[80vh] rounded-lg object-contain" />
                         <div className="mt-3 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
@@ -395,8 +373,8 @@ function UploadModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(10,5,2,0.8)' }} onClick={onClose}>
-            <div className="w-full max-w-md rounded-2xl p-6 space-y-5"
+            style={{ background: 'rgba(15,23,42,0.4)' }} onClick={onClose}>
+            <div className="w-full max-w-md rounded-lg p-6 space-y-5"
                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
@@ -434,7 +412,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
                         </select>
                     </div>
 
-                    <label className={`flex flex-col items-center justify-center gap-3 py-8 rounded-xl cursor-pointer transition-all
+                    <label className={`flex flex-col items-center justify-center gap-3 py-8 rounded-lg cursor-pointer transition-all
                         ${!selectedProduct ? 'opacity-50 pointer-events-none' : ''}`}
                         style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0' }}>
                         {uploading ? (

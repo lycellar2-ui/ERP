@@ -1,4 +1,5 @@
 import { Brain } from 'lucide-react'
+import { PageHeader } from '@/components/ui'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
 import { OCRUploadWidget } from './OCRWidget'
 import { ApiKeyVault, AiUsageCard } from './VaultUI'
@@ -24,7 +25,7 @@ const AI_FEATURES = [
         desc: 'Gemini Vision chụp ảnh chai rượu → Nhận dạng SKU, vintage, producer',
         model: 'Gemini 3.1 Pro',
         status: 'Sẵn sàng cấu hình',
-        color: '#D4A853',
+        color: '#B45309',
     },
     {
         icon: '📊',
@@ -32,7 +33,7 @@ const AI_FEATURES = [
         desc: 'AI phân tích số liệu bán hàng → Tóm tắt điểm nổi bật bằng tiếng Việt cho CEO',
         model: 'Gemini 3.1 Pro',
         status: 'Sẵn sàng cấu hình',
-        color: '#4A8FAB',
+        color: '#1D4ED8',
     },
     {
         icon: '💬',
@@ -40,7 +41,7 @@ const AI_FEATURES = [
         desc: 'Tự động tạo mô tả chuyên nghiệp cho từng SKU dựa trên thông số kỹ thuật',
         model: 'Gemini 3.1 Pro',
         status: 'Hoạt động ✓',
-        color: '#5BA88A',
+        color: '#15803D',
     },
     {
         icon: '🔮',
@@ -48,7 +49,7 @@ const AI_FEATURES = [
         desc: 'Exponential smoothing + Trend detection → Dự báo nhu cầu 3 tháng tới',
         model: 'Built-in ML',
         status: 'Hoạt động ✓',
-        color: '#A5DED0',
+        color: '#0891B2',
     },
     {
         icon: '🛡️',
@@ -56,7 +57,7 @@ const AI_FEATURES = [
         desc: 'Quét đơn hàng bất thường, hóa đơn trùng, tồn kho âm, chi phí lớn chưa duyệt',
         model: 'Rule-based AI',
         status: 'Hoạt động ✓',
-        color: '#D4A853',
+        color: '#B45309',
     },
 ]
 
@@ -77,14 +78,10 @@ export default async function AIPage() {
     } catch { }
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                    AI Features & Phân Tích Thông Minh
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                    Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready • Admin Control
-                </p>
-            </div>
+            <PageHeader
+                title="AI Features & Phân Tích Thông Minh"
+                description="Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready • Admin Control"
+            />
 
             {/* ═══ AI System Toggle ═══ */}
             <AiTogglePanel initialConfig={aiConfig} />
@@ -98,8 +95,8 @@ export default async function AIPage() {
                             <span className="text-3xl">{f.icon}</span>
                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                                 style={{
-                                    color: f.status.includes('✓') ? '#5BA88A' : '#64748B',
-                                    background: f.status.includes('✓') ? 'rgba(91,168,138,0.15)' : 'rgba(74,106,122,0.15)',
+                                    color: f.status.includes('✓') ? '#15803D' : '#64748B',
+                                    background: f.status.includes('✓') ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)',
                                 }}>
                                 {f.status}
                             </span>

@@ -14,6 +14,7 @@ import {
 import { EmployeeDetailDrawer } from './EmployeeDetailDrawer'
 import { EmployeeFormModal } from './EmployeeFormModal'
 import { DocumentUploadModal } from './DocumentUploadModal'
+import { PageHeader, Button } from '@/components/ui'
 
 interface Props {
     initialEmployees: any[]
@@ -141,41 +142,35 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-                        <Users className="w-6 h-6 text-[#0891B2]" />
-                        Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên
-                    </h1>
-                    <p className="text-xs text-slate-600 mt-1">
-                        Số hóa hồ sơ nhân sự, lưu trữ hợp đồng, giấy tờ pháp lý và cảnh báo thời hạn tự động cho Wine ERP
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleSendBellNotifications}
-                        disabled={isSendingAlerts}
-                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-all cursor-pointer shadow-xs"
-                        title="Bắn cảnh báo tới quả chuông Header của Ban Giám Đốc và Trợ Lý"
-                    >
-                        <BellRing className={`w-4 h-4 text-amber-600 ${isSendingAlerts ? 'animate-bounce' : ''}`} />
-                        <span>Bắn Cảnh Báo Hết Hạn</span>
-                    </button>
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-[#0891B2] text-white hover:bg-[#68B9A5] transition-all cursor-pointer shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Thêm Nhân Viên</span>
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                title="Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên"
+                description="Số hóa hồ sơ nhân sự, lưu trữ hợp đồng, giấy tờ pháp lý và cảnh báo thời hạn tự động cho Wine ERP"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleSendBellNotifications}
+                            disabled={isSendingAlerts}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-all cursor-pointer"
+                            title="Bắn cảnh báo tới quả chuông Header của Ban Giám Đốc và Trợ Lý"
+                        >
+                            <BellRing className={`w-3.5 h-3.5 text-amber-600 ${isSendingAlerts ? 'animate-bounce' : ''}`} />
+                            <span>Bắn Cảnh Báo</span>
+                        </button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleOpenCreate}
+                        >
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Thêm Nhân Viên
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* KPI Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* 1. Total */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Tổng Nhân Sự</span>
                         <Users className="w-4 h-4 text-[#0891B2]" />
@@ -185,22 +180,22 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </div>
 
                 {/* 2. Active */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Chính Thức</span>
-                        <UserCheck className="w-4 h-4 text-emerald-400" />
+                        <UserCheck className="w-4 h-4 text-emerald-700" />
                     </div>
-                    <p className="text-2xl font-black text-emerald-400">{stats.activeEmployees}</p>
+                    <p className="text-2xl font-black text-emerald-700">{stats.activeEmployees}</p>
                     <p className="text-[10px] text-slate-600 mt-0.5">Đang làm việc</p>
                 </div>
 
                 {/* 3. Probation */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Thử Việc</span>
-                        <Clock className="w-4 h-4 text-blue-400" />
+                        <Clock className="w-4 h-4 text-blue-700" />
                     </div>
-                    <p className="text-2xl font-black text-blue-400">{stats.probationEmployees}</p>
+                    <p className="text-2xl font-black text-blue-700">{stats.probationEmployees}</p>
                     <p className="text-[10px] text-slate-600 mt-0.5">Chờ tiếp nhận</p>
                 </div>
 
@@ -211,7 +206,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         setContractExpiringOnly(newVal)
                         fetchFilteredEmployees(search, deptId, status, newVal)
                     }}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
+                    className={`p-4 rounded-lg border transition-all cursor-pointer shadow-xs ${
                         contractExpiringOnly
                             ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/40'
                             : 'bg-white border-amber-500/30 hover:border-amber-400'
@@ -226,7 +221,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </div>
 
                 {/* 5. Expired */}
-                <div className="p-4 rounded-xl bg-white border border-rose-500/30 shadow-xs">
+                <div className="p-4 rounded-lg bg-white border border-rose-500/30 shadow-xs">
                     <div className="flex items-center justify-between text-rose-800 mb-1.5">
                         <span className="text-[11px] font-bold">HĐ Đã Hết Hạn</span>
                         <AlertCircle className="w-4 h-4 text-rose-600" />
@@ -236,7 +231,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </div>
 
                 {/* 6. Documents Vault */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
                         <span className="text-[11px] font-semibold">Giấy Tờ Số Hóa</span>
                         <FileText className="w-4 h-4 text-[#0891B2]" />
@@ -248,7 +243,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
 
             {/* Urgent Alert Banner */}
             {(stats.expiringContracts > 0 || stats.expiredContracts > 0 || stats.expiringHealthChecks > 0) && (
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="p-4 rounded-lg bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-amber-100 text-amber-700 shrink-0">
                             <AlertTriangle className="w-5 h-5" />
@@ -277,7 +272,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             )}
 
             {/* Filter Bar */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
+            <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
                 <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Search Input */}
                     <div className="relative">
@@ -287,7 +282,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                             placeholder="Tìm theo tên, mã NV, SĐT, CCCD..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                         />
                     </div>
 
@@ -299,7 +294,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 setDeptId(e.target.value)
                                 fetchFilteredEmployees(search, e.target.value, status, contractExpiringOnly)
                             }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                         >
                             <option value="ALL">-- Tất cả phòng ban --</option>
                             {departments.map(d => (
@@ -316,7 +311,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 setStatus(e.target.value)
                                 fetchFilteredEmployees(search, deptId, e.target.value, contractExpiringOnly)
                             }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                         >
                             <option value="ALL">-- Tất cả trạng thái --</option>
                             <option value="ACTIVE">Chính thức (Active)</option>
@@ -357,7 +352,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             </div>
 
             {/* Employee Data Table */}
-            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-md">
+            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                         <thead className="bg-white text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
@@ -390,7 +385,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                         {/* Employee Name + Phone */}
                                         <td className="px-4 py-3">
                                              <div className="flex items-center gap-3">
-                                                 <div className="w-9 h-9 rounded-full bg-[#87CBB9]/20 border border-[#87CBB9]/50 flex items-center justify-center font-bold text-[#0891B2] shrink-0">
+                                                 <div className="w-9 h-9 rounded-full bg-[#0E7490]/20 border border-[#0E7490]/50 flex items-center justify-center font-bold text-[#0891B2] shrink-0">
                                                      {emp.fullName.charAt(0).toUpperCase()}
                                                  </div>
                                                  <div className="min-w-0">

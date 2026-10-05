@@ -29,13 +29,13 @@ const PROMPT_META: Record<string, { icon: any; label: string; desc: string; colo
         icon: Users,
         label: 'CRM Analysis',
         desc: 'Prompt cho phân tích CRM — sức khỏe KH, churning, AR, chiến lược',
-        color: '#D4A853',
+        color: '#B45309',
     },
     'catalog-analysis': {
         icon: Wine,
         label: 'Catalog Intelligence',
         desc: 'Prompt cho phân tích danh mục SP + NCC + nghiên cứu thị trường',
-        color: '#4A8FAB',
+        color: '#1D4ED8',
     },
 }
 
@@ -81,7 +81,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                 <div>
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Prompt Editor — AI Features</h3>
                     <p className="text-[10px]" style={{ color: '#64748B' }}>
-                        Chỉnh sửa prompt cho từng tính năng AI. Dùng <code style={{ color: '#D4A853' }}>{'{{data}}'}</code> cho dữ liệu tự động.
+                        Chỉnh sửa prompt cho từng tính năng AI. Dùng <code style={{ color: '#B45309' }}>{'{{data}}'}</code> cho dữ liệu tự động.
                     </p>
                 </div>
             </div>
@@ -101,13 +101,13 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                 <div className="flex items-center gap-2">
                                     <Icon size={14} style={{ color: '#64748B' }} />
                                     <span className="text-xs" style={{ color: '#64748B' }}>
-                                        {meta?.label ?? slug} — <span style={{ color: '#E05252' }}>Chưa cấu hình</span>
+                                        {meta?.label ?? slug} — <span style={{ color: '#B91C1C' }}>Chưa cấu hình</span>
                                     </span>
                                 </div>
                                 <button onClick={async () => {
                                     await fetch('/api/ai/seed-prompts', { method: 'POST' })
                                     window.location.reload()
-                                }} className="text-[10px] px-2 py-1 rounded" style={{ color: '#0891B2', background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                                }} className="text-[10px] px-2 py-1 rounded" style={{ color: '#0891B2', background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                     Tạo mặc định
                                 </button>
                             </div>
@@ -116,7 +116,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
 
                     return (
                         <div key={slug} className="rounded-md overflow-hidden"
-                            style={{ background: '#FFFFFF', border: `1px solid ${isEditing ? 'rgba(8, 145, 178, 0.25)' : isSaved ? 'rgba(91,168,138,0.3)' : '#1E3545'}` }}>
+                            style={{ background: '#FFFFFF', border: `1px solid ${isEditing ? 'rgba(8, 145, 178, 0.25)' : isSaved ? 'rgba(21,128,61,0.3)' : '#1E3545'}` }}>
                             {/* Header */}
                             <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
                                 onClick={() => isEditing ? setEditingSlug(null) : startEdit(template)}>
@@ -125,12 +125,12 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                     <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{meta.label}</span>
                                     {template._count && template._count.runs > 0 && (
                                         <span className="text-xs px-1.5 py-0.5 rounded"
-                                            style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                            style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                             <Zap size={8} className="inline mr-0.5" />{template._count.runs} runs
                                         </span>
                                     )}
                                     {isSaved && (
-                                        <span className="flex items-center gap-0.5 text-[10px]" style={{ color: '#5BA88A' }}>
+                                        <span className="flex items-center gap-0.5 text-[10px]" style={{ color: '#15803D' }}>
                                             <CheckCircle size={10} /> Đã lưu!
                                         </span>
                                     )}
@@ -164,7 +164,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                     {/* User Template */}
                                     <div>
                                         <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: '#475569' }}>
-                                            User Prompt Template <span style={{ color: '#D4A853' }}>{'(dùng {{data}} cho dữ liệu tự động)'}</span>
+                                            User Prompt Template <span style={{ color: '#B45309' }}>{'(dùng {{data}} cho dữ liệu tự động)'}</span>
                                         </label>
                                         <textarea value={form.userTemplate} rows={12}
                                             onChange={e => setForm(f => ({ ...f, userTemplate: e.target.value }))}
@@ -198,7 +198,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                         <div className="flex-1" />
                                         <button onClick={() => handleSave(slug)} disabled={saving}
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
-                                            style={{ background: 'linear-gradient(135deg, rgba(91,168,138,0.2), rgba(8, 145, 178, 0.08))', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                            style={{ background: 'linear-gradient(135deg, rgba(21,128,61,0.2), rgba(8, 145, 178, 0.08))', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                             {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                                             Lưu Prompt
                                         </button>

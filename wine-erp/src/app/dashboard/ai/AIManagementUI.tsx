@@ -70,8 +70,8 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
-                        style={{ background: config.aiEnabled ? 'rgba(91,168,138,0.15)' : 'rgba(224,82,82,0.1)' }}>
-                        <Power size={16} style={{ color: config.aiEnabled ? '#5BA88A' : '#E05252' }} />
+                        style={{ background: config.aiEnabled ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.1)' }}>
+                        <Power size={16} style={{ color: config.aiEnabled ? '#15803D' : '#B91C1C' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI System Control</h3>
@@ -81,9 +81,9 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                 <button onClick={handleToggle} disabled={saving}
                     className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all"
                     style={{
-                        background: config.aiEnabled ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.08)',
-                        color: config.aiEnabled ? '#5BA88A' : '#E05252',
-                        border: `1px solid ${config.aiEnabled ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
+                        background: config.aiEnabled ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.08)',
+                        color: config.aiEnabled ? '#15803D' : '#B91C1C',
+                        border: `1px solid ${config.aiEnabled ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                     }}>
                     {saving ? <Loader2 size={14} className="animate-spin" /> :
                         config.aiEnabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
@@ -102,15 +102,15 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                             disabled={!config.aiEnabled}
                             className="p-3 rounded-md text-left transition-all hover:scale-[1.01]"
                             style={{
-                                background: active ? 'rgba(91,168,138,0.06)' : '#FFFFFF',
-                                border: `1px solid ${active ? 'rgba(91,168,138,0.2)' : '#1E3545'}`,
+                                background: active ? 'rgba(21,128,61,0.06)' : '#FFFFFF',
+                                border: `1px solid ${active ? 'rgba(21,128,61,0.2)' : '#1E3545'}`,
                                 opacity: config.aiEnabled ? 1 : 0.4,
                             }}>
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-lg">{mod.icon}</span>
                                 <div className="w-3 h-3 rounded-full" style={{
-                                    background: active ? '#5BA88A' : '#E2E8F0',
-                                    boxShadow: active ? '0 0 6px rgba(91,168,138,0.5)' : 'none',
+                                    background: active ? '#15803D' : '#E2E8F0',
+                                    boxShadow: active ? '0 0 6px rgba(21,128,61,0.5)' : 'none',
                                 }} />
                             </div>
                             <p className="text-[11px] font-semibold" style={{ color: active ? '#0F172A' : '#64748B' }}>{mod.label}</p>
@@ -167,8 +167,8 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
-                        style={{ background: 'rgba(212,168,83,0.15)' }}>
-                        <FileText size={16} style={{ color: '#D4A853' }} />
+                        style={{ background: 'rgba(180,83,9,0.15)' }}>
+                        <FileText size={16} style={{ color: '#B45309' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Báo Cáo AI Đã Lưu</h3>
@@ -178,13 +178,13 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                 <div className="flex items-center gap-1">
                     <button onClick={() => setFilter('all')}
                         className="px-2 py-1 rounded text-[10px] font-semibold"
-                        style={{ background: filter === 'all' ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === 'all' ? '#0F172A' : '#64748B' }}>
+                        style={{ background: filter === 'all' ? 'rgba(100,116,139,0.15)' : 'transparent', color: filter === 'all' ? '#0F172A' : '#64748B' }}>
                         Tất cả
                     </button>
                     {modules.map(m => (
                         <button key={m} onClick={() => setFilter(m)}
                             className="px-2 py-1 rounded text-[10px] font-semibold capitalize"
-                            style={{ background: filter === m ? 'rgba(138,174,187,0.15)' : 'transparent', color: filter === m ? '#0F172A' : '#64748B' }}>
+                            style={{ background: filter === m ? 'rgba(100,116,139,0.15)' : 'transparent', color: filter === m ? '#0F172A' : '#64748B' }}>
                             {m}
                         </button>
                     ))}
@@ -203,15 +203,15 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                         const isExpanded = expandedId === report.id
                         return (
                             <div key={report.id} className="rounded-md overflow-hidden"
-                                style={{ background: '#FFFFFF', border: `1px solid ${report.isPinned ? 'rgba(212,168,83,0.2)' : '#1E3545'}` }}>
+                                style={{ background: '#FFFFFF', border: `1px solid ${report.isPinned ? 'rgba(180,83,9,0.2)' : '#1E3545'}` }}>
                                 <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
                                     onClick={() => setExpandedId(isExpanded ? null : report.id)}>
                                     <div className="flex items-center gap-2 min-w-0">
-                                        {report.isPinned && <Pin size={10} style={{ color: '#D4A853' }} />}
+                                        {report.isPinned && <Pin size={10} style={{ color: '#B45309' }} />}
                                         <ModIcon size={13} style={{ color: '#0891B2' }} />
                                         <span className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{report.title}</span>
                                         <span className="text-xs px-1.5 py-0.5 rounded capitalize"
-                                            style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>{report.module}</span>
+                                            style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{report.module}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
                                         <span className="text-xs" style={{ color: '#64748B' }}>
@@ -220,7 +220,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                                         </span>
                                         <button onClick={e => { e.stopPropagation(); handlePin(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Ghim">
-                                            <Pin size={11} style={{ color: report.isPinned ? '#D4A853' : '#64748B' }} />
+                                            <Pin size={11} style={{ color: report.isPinned ? '#B45309' : '#64748B' }} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleArchive(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Lưu trữ">
@@ -228,7 +228,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleDelete(report.id) }}
                                             className="p-1 rounded transition-all hover:scale-110" title="Xóa">
-                                            <Trash2 size={11} style={{ color: '#E05252' }} />
+                                            <Trash2 size={11} style={{ color: '#B91C1C' }} />
                                         </button>
                                         {isExpanded ? <ChevronUp size={12} style={{ color: '#64748B' }} /> : <ChevronDown size={12} style={{ color: '#64748B' }} />}
                                     </div>

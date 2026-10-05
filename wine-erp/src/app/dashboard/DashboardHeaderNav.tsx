@@ -47,7 +47,7 @@ export function DashboardHeaderNav({
                     <button
                         type="submit"
                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                        style={{ background: 'rgba(91,168,138,0.12)', color: '#15803D', border: '1px solid rgba(91,168,138,0.3)' }}
+                        style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}
                     >
                         <Download size={14} /> {t.exportExcel}
                     </button>
@@ -64,7 +64,7 @@ export function DashboardHeaderNav({
                             : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
                     }`}
                 >
-                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-cyan-400' : 'text-slate-400'} />
+                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-cyan-700' : 'text-slate-400'} />
                     <span>{t.executiveOverview}</span>
                 </Link>
                 <Link
@@ -75,10 +75,10 @@ export function DashboardHeaderNav({
                             : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
                     }`}
                 >
-                    <Users size={15} className={currentTab === 'customers' ? 'text-amber-400' : 'text-slate-400'} />
+                    <Users size={15} className={currentTab === 'customers' ? 'text-amber-700' : 'text-slate-400'} />
                     <span>{t.customerAnalytics}</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
-                        currentTab === 'customers' ? 'bg-amber-400/20 text-amber-300' : 'bg-amber-100 text-amber-800'
+                        currentTab === 'customers' ? 'bg-amber-400/20 text-amber-700' : 'bg-amber-100 text-amber-800'
                     }`}>
                         {t.customerAnalyticsBadge}
                     </span>

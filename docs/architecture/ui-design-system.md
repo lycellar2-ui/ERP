@@ -187,6 +187,7 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | **v3.2** | 2026-10-05 | Pilot được duyệt. Đợt 1: codemod màu cho 25 file (quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals); chuyển cấu trúc sang kit cho Returns, Price List, Delivery (kèm E-POD/Create drawer). Lưu ý: `Toolbar` nhận `left`/`right`, không nhận children; `TableMessageRow` có `p-0` → luôn bọc `EmptyState`/`TableSkeleton` bên trong. |
 | **v3.1** | 2026-10-05 | Pilot xong: Sales (list + 3 drawer), Products (list, bảng, 2 drawer), Customers (list + drawer), Sidebar/Header. Thêm `Drawer.actions`, `Pagination.onPageHover`, `WineTypeBadge` dùng chung (bỏ màu tím Fortified ở Margin). Script `ui-palette-codemod.mjs` + test. |
 | **v3.0** | 2026-10-05 | Viết lại tài liệu thành 1 bản Light duy nhất (bỏ spec Dark cũ & đoạn lặp). Tải Inter qua `next/font`, Toaster light. Thêm token `lys-teal-strong/hover/soft`, 6 tông trạng thái `tone-*`, token chuyển động, `type-caption`; `radius-lg` 10→8px. Tạo `src/components/ui` (11 nhóm component) + `src/lib/ui/status.ts`. |
+| v3.6 | 2026-10-05 | Hoàn tất Đợt 4 (Toàn bộ 8 module còn lại): hr, settings, audit-log, media, qr-codes, agency, ai, dashboard (CEO Overview). Toàn bộ 34 module trong ERP đã chuẩn hóa 100% về Light Design System đồng nhất. |
 | v3.5 | 2026-10-05 | Hoàn tất Đợt 3 (Tài chính & Kế toán — 7 module): finance, reconciliation, costing, margin, reports, kpi, market-price. Chuẩn hóa PageHeader, StatGrid, StatCard, Button, drawer Light, loại bỏ rounded-2xl/xl và màu cũ. |
 | v3.4 | 2026-10-05 | Hoàn tất Đợt 2 (Kho & Mua hàng — 10 module): warehouse, transfers, stock-count, allocation, procurement, suppliers, shipments, declarations, stamps, consignment. Loại bỏ toàn bộ rounded-2xl/xl, chuẩn hóa PageHeader, StatGrid, Button, loại bỏ dark hover/tokens. |
 | v3.3 | 2026-10-05 | Hoàn tất Đợt 1 (Bán hàng — 9 module): quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals. |
@@ -229,4 +230,11 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | ✅ Đã chuẩn hóa | **Reports** — ReportsClient (PageHeader, StatGrid, StatCard, Excel export UI, scheduler table) |
 | ✅ Đã chuẩn hóa | **KPI** — KpiClient (PageHeader, StatGrid, StatCard tone, Setup tabs, clean target table) |
 | ✅ Đã chuẩn hóa | **Market Price** — MarketPriceClient (PageHeader, StatGrid, StatCard, Button, drawer light, comparison table) |
-| ⏳ Chờ | **Đợt 4: Khác** (hr, settings, audit-log, media, qr-codes, agency, ai, dashboard) |
+| ✅ Đã chuẩn hóa | **HR** — HrClient + DocumentUploadModal + EmployeeDetailDrawer + EmployeeFormModal (PageHeader, StatGrid, Button, Drawer) |
+| ✅ Đã chuẩn hóa | **Settings** — SettingsClient + approval-matrix + telegram (PageHeader, StatGrid, StatCard, Tabs light, Drawer) |
+| ✅ Đã chuẩn hóa | **Audit Log** — AuditLogClient (PageHeader, StatGrid, StatCard, Log filter table) |
+| ✅ Đã chuẩn hóa | **Media** — MediaClient (PageHeader, StatGrid, StatCard, Button, Light Grid) |
+| ✅ Đã chuẩn hóa | **QR Codes** — QRCodeClient (PageHeader, StatGrid, StatCard, Button, Table) |
+| ✅ Đã chuẩn hóa | **Agency** — AgencyClient (PageHeader, StatGrid, StatCard, Button, Drawer, Tabs) |
+| ✅ Đã chuẩn hóa | **AI** — ai/page.tsx + AIManagementUI + AIWidgets + OCRWidget + VaultUI + ActivePromptEditor (PageHeader, Widgets light) |
+| ✅ Đã chuẩn hóa | **Dashboard (CEO)** — page.tsx + CeoOverviewContent + AICeoSummary + DailyRevenueChart + DashboardFilterBar + CustomerAnalyticsDashboard (PageHeader, StatGrid, Charts, KPI) |

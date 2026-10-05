@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { QrCode, Search, ExternalLink, ShieldCheck, ShieldAlert, Printer } from 'lucide-react'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { getQRCodes } from './actions'
 
 interface QRRow {
@@ -27,50 +28,37 @@ export function QRCodeClient({ initialData, stats }: {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        QR Code Truy Xuất
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý mã QR truy xuất nguồn gốc — Auto-sinh khi Confirm GR
-                    </p>
-                </div>
-                {selectedIds.size > 0 && (
-                    <button onClick={async () => {
-                        const res = await fetch('/api/qr-print', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ids: Array.from(selectedIds) }),
-                        })
-                        const html = await res.text()
-                        const w = window.open('', '_blank')
-                        if (w) { w.document.write(html); w.document.close() }
-                    }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                        <Printer size={14} /> In {selectedIds.size} Nhãn
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                title="QR Code Truy Xuất"
+                description="Quản lý mã QR truy xuất nguồn gốc — Auto-sinh khi Confirm GR"
+                actions={
+                    selectedIds.size > 0 ? (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={async () => {
+                                const res = await fetch('/api/qr-print', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ ids: Array.from(selectedIds) }),
+                                })
+                                const html = await res.text()
+                                const w = window.open('', '_blank')
+                                if (w) { w.document.write(html); w.document.close() }
+                            }}
+                        >
+                            <Printer size={14} className="mr-1.5" /> In {selectedIds.size} Nhãn
+                        </Button>
+                    ) : null
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                {[
-                    { label: 'Tổng QR', value: stats.total, color: '#0891B2', icon: QrCode },
-                    { label: 'Đã Quét', value: stats.scanned, color: '#5BA88A', icon: ShieldCheck },
-                    { label: 'Chưa Quét', value: stats.unscanned, color: '#D4A853', icon: ShieldAlert },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md flex items-center gap-3"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <s.icon size={20} style={{ color: s.color }} />
-                        <div>
-                            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                            <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+                <StatCard label="Tổng QR" value={stats.total} icon={QrCode} />
+                <StatCard label="Đã Quét" value={stats.scanned} icon={ShieldCheck} tone="success" />
+                <StatCard label="Chưa Quét" value={stats.unscanned} icon={ShieldAlert} tone="warning" />
+            </StatGrid>
 
             {/* Search */}
             <div className="flex gap-2">
@@ -82,8 +70,9 @@ export function QRCodeClient({ initialData, stats }: {
                         className="w-full pl-9 pr-3 py-2 rounded-md text-sm outline-none"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                 </div>
-                <button onClick={handleSearch} className="px-4 py-2 text-xs font-semibold rounded-md"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>Tìm</button>
+                <Button variant="primary" size="sm" onClick={handleSearch}>
+                    Tìm
+                </Button>
             </div>
 
             {/* Table */}
@@ -112,8 +101,8 @@ export function QRCodeClient({ initialData, stats }: {
                                 Chưa có QR Code — Confirm GR để auto-sinh
                             </td></tr>
                         ) : data.rows.map(qr => (
-                            <tr key={qr.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                            <tr key={qr.id} style={{ borderBottom: '1px solid #E2E8F0' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                 <td className="px-3 py-2.5">
                                     <input type="checkbox" checked={selectedIds.has(qr.id)}
@@ -127,7 +116,7 @@ export function QRCodeClient({ initialData, stats }: {
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#0891B2' }}>
                                     {qr.code.split('-')[0]}...
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
                                     {qr.lotNo}
                                 </td>
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
@@ -136,16 +125,16 @@ export function QRCodeClient({ initialData, stats }: {
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
                                     {qr.productName}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: qr.scanCount === 0 ? '#64748B' : qr.scanCount === 1 ? '#5BA88A' : '#D4A853' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: qr.scanCount === 0 ? '#64748B' : qr.scanCount === 1 ? '#15803D' : '#B45309' }}>
                                     {qr.scanCount}
                                 </td>
                                 <td className="px-3 py-2.5">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{
                                         ...(qr.scanCount === 0
-                                            ? { color: '#64748B', background: 'rgba(74,106,122,0.15)' }
+                                            ? { color: '#64748B', background: 'rgba(100,116,139,0.15)' }
                                             : qr.scanCount === 1
-                                                ? { color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }
-                                                : { color: '#D4A853', background: 'rgba(212,168,83,0.15)' }),
+                                                ? { color: '#15803D', background: 'rgba(21,128,61,0.15)' }
+                                                : { color: '#B45309', background: 'rgba(180,83,9,0.15)' }),
                                     }}>
                                         {qr.scanCount === 0 ? 'Chưa quét' : qr.scanCount === 1 ? '✅ Chính hãng' : `⚠ ${qr.scanCount} lần`}
                                     </span>

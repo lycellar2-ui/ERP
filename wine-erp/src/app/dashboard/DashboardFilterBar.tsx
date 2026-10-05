@@ -122,7 +122,7 @@ export function DashboardFilterBar({
                                 onClick={() => handlePresetClick(item.key)}
                                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
                                     active
-                                        ? 'bg-[#87CBB9]/20 text-[#0891B2] border border-[#87CBB9]/40 shadow-xs font-bold'
+                                        ? 'bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 shadow-xs font-bold'
                                         : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300'
                                 }`}
                             >
@@ -183,7 +183,7 @@ export function DashboardFilterBar({
                     </div>
 
                     {isPending && (
-                        <div className="flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#87CBB9]/10">
+                        <div className="flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#0E7490]/10">
                             <Loader2 size={12} className="animate-spin" /> {isEn ? 'Loading...' : 'Đang tải...'}
                         </div>
                     )}
@@ -197,14 +197,14 @@ export function DashboardFilterBar({
                     className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs"
                 >
                     <span className="text-slate-600 font-medium flex items-center gap-1">
-                        <Calendar size={13} className="text-[#D4A853]" /> {isEn ? 'Date range:' : 'Khoảng ngày:'}
+                        <Calendar size={13} className="text-[#B45309]" /> {isEn ? 'Date range:' : 'Khoảng ngày:'}
                     </span>
                     <input
                         type="date"
                         value={customFrom}
                         onChange={(e) => setCustomFrom(e.target.value)}
                         required
-                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#87CBB9] focus:outline-none"
+                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#0E7490] focus:outline-none"
                     />
                     <ArrowRight size={12} className="text-slate-500" />
                     <input
@@ -212,7 +212,7 @@ export function DashboardFilterBar({
                         value={customTo}
                         onChange={(e) => setCustomTo(e.target.value)}
                         required
-                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#87CBB9] focus:outline-none"
+                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#0E7490] focus:outline-none"
                     />
                     <button
                         type="submit"
@@ -238,13 +238,13 @@ export function DashboardFilterBar({
             {/* ── Current Filter Status Pill ── */}
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0E7490]" />
                     <span>{isEn ? 'Filtered by:' : 'Dữ liệu đang lọc theo:'}</span>
                     <strong className="text-[#0891B2]">{displayRangeText}</strong>
                     {entity !== 'ALL' && (
                         <span>
                             · {isEn ? 'Entity:' : 'Pháp nhân:'}{' '}
-                            <strong className="text-[#D4A853]">
+                            <strong className="text-[#B45309]">
                                 {legalEntities.find((le) => le.id === entity)?.name ?? entity}
                             </strong>
                         </span>

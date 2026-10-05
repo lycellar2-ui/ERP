@@ -6,9 +6,9 @@ import { type ApiKeyRow, type PromptTemplateRow, saveApiKey, toggleApiKey, delet
 
 const PROVIDERS = [
     { value: 'gemini', label: 'Google Gemini', color: '#0891B2' },
-    { value: 'vision', label: 'Google Vision', color: '#4A8FAB' },
-    { value: 'anthropic', label: 'Anthropic Claude', color: '#D4A853' },
-    { value: 'openai', label: 'OpenAI GPT', color: '#5BA88A' },
+    { value: 'vision', label: 'Google Vision', color: '#1D4ED8' },
+    { value: 'anthropic', label: 'Anthropic Claude', color: '#B45309' },
+    { value: 'openai', label: 'OpenAI GPT', color: '#15803D' },
 ]
 
 export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
@@ -55,7 +55,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <Key size={16} style={{ color: '#D4A853' }} /> API Key Vault
+                    <Key size={16} style={{ color: '#B45309' }} /> API Key Vault
                 </h3>
                 <button onClick={() => { setShowAdd(!showAdd); setSaveError('') }}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
@@ -93,8 +93,8 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                     </div>
                     {saveError && (
                         <div className="text-xs p-2 rounded" style={{
-                            background: 'rgba(224,82,82,0.1)', color: '#E05252',
-                            border: '1px solid rgba(224,82,82,0.3)',
+                            background: 'rgba(185,28,28,0.1)', color: '#B91C1C',
+                            border: '1px solid rgba(185,28,28,0.3)',
                         }}>
                             ❌ {saveError}
                         </div>
@@ -122,20 +122,20 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                         const prov = PROVIDERS.find(p => p.value === k.provider)
                         return (
                             <div key={k.id} className="rounded-lg overflow-hidden"
-                                style={{ background: '#FFFFFF', border: `1px solid ${k.isActive ? '#E2E8F0' : 'rgba(224,82,82,0.3)'}` }}>
+                                style={{ background: '#FFFFFF', border: `1px solid ${k.isActive ? '#E2E8F0' : 'rgba(185,28,28,0.3)'}` }}>
 
                                 {/* Key Info Row */}
                                 <div className="p-4">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                            style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
+                                            style={{ background: k.isActive ? '#15803D' : '#B91C1C' }} />
                                         <span className="text-sm font-bold" style={{ color: prov?.color || '#0F172A' }}>
                                             {k.label}
                                         </span>
                                         <span className="text-[10px] px-2 py-0.5 rounded-full"
                                             style={{
-                                                background: k.isActive ? 'rgba(91,168,138,0.15)' : 'rgba(224,82,82,0.15)',
-                                                color: k.isActive ? '#5BA88A' : '#E05252',
+                                                background: k.isActive ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)',
+                                                color: k.isActive ? '#15803D' : '#B91C1C',
                                             }}>
                                             {k.isActive ? '● Active' : '○ Inactive'}
                                         </span>
@@ -153,7 +153,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                         {k.monthlyBudget != null && (
                                             <div>
                                                 <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Budget Tháng</p>
-                                                <p className="font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
+                                                <p className="font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#B91C1C' : '#0E7490' }}>
                                                     ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
                                                 </p>
                                             </div>
@@ -173,9 +173,9 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                 {testResult && testResult.id === k.id && (
                                     <div className="px-4 pb-2">
                                         <p className="text-xs px-3 py-2 rounded" style={{
-                                            background: testResult.ok ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.1)',
-                                            color: testResult.ok ? '#5BA88A' : '#E05252',
-                                            border: `1px solid ${testResult.ok ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
+                                            background: testResult.ok ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.1)',
+                                            color: testResult.ok ? '#15803D' : '#B91C1C',
+                                            border: `1px solid ${testResult.ok ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                                         }}>
                                             {testResult.ok ? '✅ API Key hoạt động!' : `❌ ${testResult.msg}`}
                                         </p>
@@ -192,12 +192,12 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                     </button>
                                     <button onClick={() => handleToggle(k.id)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
-                                        style={{ color: k.isActive ? '#D4A853' : '#5BA88A', borderRight: '1px solid #E2E8F0' }}>
+                                        style={{ color: k.isActive ? '#B45309' : '#15803D', borderRight: '1px solid #E2E8F0' }}>
                                         {k.isActive ? <><ToggleRight size={14} /> Tắt</> : <><ToggleLeft size={14} /> Bật</>}
                                     </button>
                                     <button onClick={() => handleDelete(k.id)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
-                                        style={{ color: '#E05252' }}>
+                                        style={{ color: '#B91C1C' }}>
                                         <Trash2 size={13} /> Xóa
                                     </button>
                                 </div>
@@ -246,7 +246,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <FileText size={16} style={{ color: '#4A8FAB' }} /> Prompt Library
+                    <FileText size={16} style={{ color: '#1D4ED8' }} /> Prompt Library
                 </h3>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
@@ -330,14 +330,14 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                             <div className="flex items-start justify-between">
                                 <div>
                                     <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{t.name}</p>
-                                    <p className="text-[10px] font-mono" style={{ color: '#4A8FAB' }}>{t.slug}</p>
+                                    <p className="text-[10px] font-mono" style={{ color: '#1D4ED8' }}>{t.slug}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                         {t.runCount} runs
                                     </span>
-                                    <button onClick={() => handleDelete(t.id)} className="p-1" style={{ color: '#E05252' }}>
+                                    <button onClick={() => handleDelete(t.id)} className="p-1" style={{ color: '#B91C1C' }}>
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -346,7 +346,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                                 <div className="flex gap-1 mt-2 flex-wrap">
                                     {t.variables.map(v => (
                                         <span key={v} className="text-xs px-1.5 py-0.5 rounded font-mono"
-                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
+                                            style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>
                                             {`{{${v}}}`}
                                         </span>
                                     ))}
@@ -374,10 +374,10 @@ export function AiUsageCard({ stats }: { stats: { totalRuns: number; monthRuns: 
                 {[
                     { label: 'Total Runs', value: stats.totalRuns.toLocaleString(), color: '#0F172A' },
                     { label: 'This Month', value: stats.monthRuns.toLocaleString(), color: '#0891B2' },
-                    { label: 'Failed', value: stats.failedRuns.toLocaleString(), color: stats.failedRuns > 0 ? '#E05252' : '#5BA88A' },
-                    { label: 'Tokens', value: stats.monthTokens.toLocaleString(), color: '#D4A853' },
-                    { label: 'Cost', value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#4A8FAB' },
-                    { label: 'Avg Speed', value: `${stats.avgDurationMs}ms`, color: '#A5DED0' },
+                    { label: 'Failed', value: stats.failedRuns.toLocaleString(), color: stats.failedRuns > 0 ? '#B91C1C' : '#15803D' },
+                    { label: 'Tokens', value: stats.monthTokens.toLocaleString(), color: '#B45309' },
+                    { label: 'Cost', value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#1D4ED8' },
+                    { label: 'Avg Speed', value: `${stats.avgDurationMs}ms`, color: '#0891B2' },
                 ].map(s => (
                     <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{s.label}</p>

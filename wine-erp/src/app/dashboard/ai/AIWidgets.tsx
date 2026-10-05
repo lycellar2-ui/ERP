@@ -18,14 +18,14 @@ export function AnomalyWidget() {
         setLoading(false)
     }
 
-    const severity = { high: '#E05252', medium: '#D4A853', low: '#64748B' }
+    const severity = { high: '#B91C1C', medium: '#B45309', low: '#64748B' }
     const typeIcon = { unusual_order: '📦', duplicate_invoice: '📋', negative_stock: '⚠️', expense_spike: '💰' }
 
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <ShieldAlert size={16} style={{ color: '#D4A853' }} /> AI Anomaly Detection
+                    <ShieldAlert size={16} style={{ color: '#B45309' }} /> AI Anomaly Detection
                 </h3>
                 <button onClick={load} disabled={loading}
                     className="text-xs px-3 py-1.5 rounded font-semibold"
@@ -41,7 +41,7 @@ export function AnomalyWidget() {
             ) : alerts.length === 0 ? (
                 <div className="text-center py-6">
                     <span className="text-3xl">✅</span>
-                    <p className="text-sm mt-2 font-semibold" style={{ color: '#5BA88A' }}>Không phát hiện bất thường</p>
+                    <p className="text-sm mt-2 font-semibold" style={{ color: '#15803D' }}>Không phát hiện bất thường</p>
                 </div>
             ) : (
                 <div className="space-y-2">
@@ -78,13 +78,13 @@ export function DemandForecastWidget() {
         setLoading(false)
     }
 
-    const trendColor = { growing: '#5BA88A', declining: '#E05252', stable: '#D4A853', no_data: '#64748B' }
+    const trendColor = { growing: '#15803D', declining: '#B91C1C', stable: '#B45309', no_data: '#64748B' }
     const trendLabel = { growing: '📈 Tăng', declining: '📉 Giảm', stable: '📊 Ổn định', no_data: '⚠ Chưa có data' }
 
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <h3 className="font-semibold flex items-center gap-2 mb-4" style={{ color: '#0F172A' }}>
-                <TrendingUp size={16} style={{ color: '#5BA88A' }} /> Dự Báo Nhu Cầu
+                <TrendingUp size={16} style={{ color: '#15803D' }} /> Dự Báo Nhu Cầu
             </h3>
             <div className="flex gap-2 mb-4">
                 <input value={productId} onChange={e => setProductId(e.target.value)}
@@ -148,7 +148,7 @@ export function PricingWidget() {
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <h3 className="font-semibold flex items-center gap-2 mb-4" style={{ color: '#0F172A' }}>
-                <DollarSign size={16} style={{ color: '#D4A853' }} /> Gợi Ý Giá Bán
+                <DollarSign size={16} style={{ color: '#B45309' }} /> Gợi Ý Giá Bán
             </h3>
             <div className="flex gap-2 mb-4">
                 <input value={productId} onChange={e => setProductId(e.target.value)}
@@ -166,8 +166,8 @@ export function PricingWidget() {
                 <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-2">
                         {[
-                            { label: 'Giá vốn', value: formatVND(result.unitLandedCost), color: '#E05252' },
-                            { label: 'Giá thị trường', value: formatVND(result.latestMarketPrice), color: '#D4A853' },
+                            { label: 'Giá vốn', value: formatVND(result.unitLandedCost), color: '#B91C1C' },
+                            { label: 'Giá thị trường', value: formatVND(result.latestMarketPrice), color: '#B45309' },
                             { label: 'Tồn kho', value: `${result.currentStock}`, color: '#0891B2' },
                         ].map(s => (
                             <div key={s.label} className="p-2 rounded-md text-center" style={{ background: '#FFFFFF' }}>
@@ -181,7 +181,7 @@ export function PricingWidget() {
                         {result.priceTiers.map((t: any) => (
                             <div key={t.label} className="flex items-center justify-between p-2 rounded"
                                 style={{
-                                    background: result.recommendedTier === t.label ? 'rgba(135,203,185,0.1)' : '#FFFFFF',
+                                    background: result.recommendedTier === t.label ? 'rgba(8,145,178,0.1)' : '#FFFFFF',
                                     border: result.recommendedTier === t.label ? '1px solid rgba(8, 145, 178, 0.25)' : '1px solid transparent',
                                 }}>
                                 <span className="text-xs" style={{ color: '#475569' }}>{t.label}</span>
@@ -190,7 +190,7 @@ export function PricingWidget() {
                                 </span>
                                 {result.recommendedTier === t.label && (
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                                        style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>
+                                        style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>
                                         ✓ Đề xuất
                                     </span>
                                 )}

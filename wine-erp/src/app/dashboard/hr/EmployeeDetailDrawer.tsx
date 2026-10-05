@@ -81,13 +81,13 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                     <div className="px-6 py-5 border-b border-slate-200 bg-white/50 flex items-start justify-between">
                         <div className="flex items-center gap-4">
                             {/* Avatar */}
-                            <div className="w-13 h-13 rounded-full bg-[#87CBB9]/20 border-2 border-[#87CBB9] flex items-center justify-center text-lg font-bold text-[#0891B2] shadow-md">
+                            <div className="w-13 h-13 rounded-full bg-[#0E7490]/20 border-2 border-[#0E7490] flex items-center justify-center text-lg font-bold text-[#0891B2] shadow-md">
                                 {employee.fullName.charAt(0).toUpperCase()}
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-lg font-bold text-slate-900">{employee.fullName}</h2>
-                                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#87CBB9]/15 text-[#0891B2] border border-[#87CBB9]/30">
+                                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#0E7490]/15 text-[#0891B2] border border-[#0E7490]/30">
                                         {employee.code}
                                     </span>
                                 </div>
@@ -165,7 +165,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             onClick={() => setActiveTab('OVERVIEW')}
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'OVERVIEW'
-                                    ? 'border-[#87CBB9] text-[#0891B2]'
+                                    ? 'border-[#0E7490] text-[#0891B2]'
                                     : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -175,7 +175,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             onClick={() => setActiveTab('WORK')}
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'WORK'
-                                    ? 'border-[#87CBB9] text-[#0891B2]'
+                                    ? 'border-[#0E7490] text-[#0891B2]'
                                     : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -185,7 +185,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             onClick={() => setActiveTab('FINANCE')}
                             className={`px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'FINANCE'
-                                    ? 'border-[#87CBB9] text-[#0891B2]'
+                                    ? 'border-[#0E7490] text-[#0891B2]'
                                     : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -195,7 +195,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             onClick={() => setActiveTab('DOCUMENTS')}
                             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                                 activeTab === 'DOCUMENTS'
-                                    ? 'border-[#87CBB9] text-[#0891B2]'
+                                    ? 'border-[#0E7490] text-[#0891B2]'
                                     : 'border-transparent text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -209,7 +209,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                         {activeTab === 'OVERVIEW' && (
                             <div className="space-y-6">
                                 {/* Contact Card */}
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Thông Tin Liên Lạc & Định Danh</p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -240,7 +240,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 </div>
 
                                 {/* Identity Document */}
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Căn Cước Công Dân / Hộ Chiếu</p>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
@@ -277,7 +277,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 </div>
 
                                 {/* Emergency Contact */}
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
@@ -300,7 +300,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                         {/* TAB 2: WORK & CONTRACT */}
                         {activeTab === 'WORK' && (
                             <div className="space-y-6">
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Vị Trí & Quá Trình Công Tác</p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -330,7 +330,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 </div>
 
                                 {/* Contract Card */}
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Hợp Đồng Lao Động Hiện Tại</p>
                                         {contractStatus === 'EXPIRING_SOON' && (
@@ -375,7 +375,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 </div>
 
                                 {/* ERP Account Linking */}
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                                         <Shield className="w-3.5 h-3.5" />
                                         Tài Khoản Đăng Nhập ERP
@@ -391,7 +391,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                             <p className="text-slate-500 text-xs">{employee.user.email}</p>
                                             <div className="flex flex-wrap gap-1 pt-1">
                                                 {employee.user.roles?.map((r: any) => (
-                                                    <span key={r.role?.id || r} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#87CBB9]/15 text-[#0891B2]">
+                                                    <span key={r.role?.id || r} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/15 text-[#0891B2]">
                                                         {r.role?.name || r}
                                                     </span>
                                                 ))}
@@ -409,7 +409,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                         {/* TAB 3: FINANCE & HEALTH */}
                         {activeTab === 'FINANCE' && (
                             <div className="space-y-6">
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Tài Khoản Ngân Hàng</p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -427,7 +427,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Mã Số Thuế & Bảo Hiểm Xã Hội</p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -441,9 +441,9 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl bg-white/50 border border-slate-200 space-y-3">
+                                <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                                        <HeartPulse className="w-3.5 h-3.5 text-rose-400" />
+                                        <HeartPulse className="w-3.5 h-3.5 text-rose-700" />
                                         Khám Sức Khỏe Định Kỳ
                                     </p>
                                     <div className="grid grid-cols-2 gap-4">
@@ -482,7 +482,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 </div>
 
                                 {employee.documents?.length === 0 ? (
-                                    <div className="p-8 text-center rounded-xl bg-white/30 border border-slate-200 border-dashed">
+                                    <div className="p-8 text-center rounded-lg bg-white/30 border border-slate-200 border-dashed">
                                         <FileText className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
                                         <p className="font-semibold text-slate-700">Chưa có giấy tờ nào được tải lên</p>
                                         <p className="text-xs text-slate-600 mt-1">Bấm "Tải Lên Giấy Tờ" để lưu trữ HĐLĐ scan, CCCD, bằng cấp hoặc KSK</p>
@@ -502,10 +502,10 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                             return (
                                                 <div
                                                     key={doc.id}
-                                                    className="p-3.5 rounded-xl bg-white/60 border border-slate-200 hover:border-[#87CBB9]/60 transition-all flex items-center justify-between gap-3"
+                                                    className="p-3.5 rounded-lg bg-white/60 border border-slate-200 hover:border-[#0E7490]/60 transition-all flex items-center justify-between gap-3"
                                                 >
                                                     <div className="flex items-start gap-3 min-w-0">
-                                                        <div className="p-2.5 rounded-lg bg-[#87CBB9]/20 text-[#0891B2] shrink-0">
+                                                        <div className="p-2.5 rounded-lg bg-[#0E7490]/20 text-[#0891B2] shrink-0">
                                                             <FileText className="w-5 h-5" />
                                                         </div>
                                                         <div className="min-w-0">
@@ -513,7 +513,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                                 <h5 className="font-bold text-slate-900 text-xs truncate max-w-[260px]">
                                                                     {doc.title}
                                                                 </h5>
-                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#87CBB9]/10 text-[#0891B2]">
+                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/10 text-[#0891B2]">
                                                                     {DOC_TYPE_LABELS[doc.docType] || doc.docType}
                                                                 </span>
                                                                 {isDocExpired && (

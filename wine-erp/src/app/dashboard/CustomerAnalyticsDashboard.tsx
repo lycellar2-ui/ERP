@@ -54,19 +54,19 @@ function formatFriendlyVND(amount: number | null | undefined): string {
 
 const STATUS_BADGES: Record<string, { labelVi: string; labelEn: string; bg: string; color: string; border: string }> = {
     CONFIRMED: { labelVi: 'Đã xác nhận', labelEn: 'Confirmed', bg: 'rgba(8,145,178,0.08)', color: '#0891B2', border: 'rgba(8,145,178,0.2)' },
-    PARTIALLY_DELIVERED: { labelVi: 'Giao một phần', labelEn: 'Partially Delivered', bg: 'rgba(212,168,83,0.1)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
-    DELIVERED: { labelVi: 'Đã giao hàng', labelEn: 'Delivered', bg: 'rgba(91,168,138,0.12)', color: '#16A34A', border: 'rgba(91,168,138,0.25)' },
+    PARTIALLY_DELIVERED: { labelVi: 'Giao một phần', labelEn: 'Partially Delivered', bg: 'rgba(180,83,9,0.1)', color: '#B45309', border: 'rgba(180,83,9,0.25)' },
+    DELIVERED: { labelVi: 'Đã giao hàng', labelEn: 'Delivered', bg: 'rgba(21,128,61,0.12)', color: '#16A34A', border: 'rgba(21,128,61,0.25)' },
     INVOICED: { labelVi: 'Đã xuất HĐ', labelEn: 'Invoiced', bg: 'rgba(2,132,199,0.1)', color: '#0284C7', border: 'rgba(2,132,199,0.25)' },
     PAID: { labelVi: 'Đã thanh toán', labelEn: 'Paid', bg: 'rgba(22,163,74,0.12)', color: '#15803D', border: 'rgba(22,163,74,0.25)' },
-    PENDING_APPROVAL: { labelVi: 'Chờ duyệt', labelEn: 'Pending Approval', bg: 'rgba(212,168,83,0.12)', color: '#B45309', border: 'rgba(212,168,83,0.25)' },
-    PENDING_ACCOUNTING: { labelVi: 'Chờ kế toán', labelEn: 'Pending Accounting', bg: 'rgba(212,168,83,0.1)', color: '#D97706', border: 'rgba(212,168,83,0.2)' },
+    PENDING_APPROVAL: { labelVi: 'Chờ duyệt', labelEn: 'Pending Approval', bg: 'rgba(180,83,9,0.12)', color: '#B45309', border: 'rgba(180,83,9,0.25)' },
+    PENDING_ACCOUNTING: { labelVi: 'Chờ kế toán', labelEn: 'Pending Accounting', bg: 'rgba(180,83,9,0.1)', color: '#D97706', border: 'rgba(180,83,9,0.2)' },
     DRAFT: { labelVi: 'Bản nháp', labelEn: 'Draft', bg: '#F1F5F9', color: '#64748B', border: '#CBD5E1' },
-    CANCELLED: { labelVi: 'Đã hủy', labelEn: 'Cancelled', bg: 'rgba(224,82,82,0.1)', color: '#E05252', border: 'rgba(224,82,82,0.2)' },
+    CANCELLED: { labelVi: 'Đã hủy', labelEn: 'Cancelled', bg: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: 'rgba(185,28,28,0.2)' },
 }
 
 const DELIVERY_BADGES: Record<string, { labelVi: string; labelEn: string; bg: string; color: string }> = {
     DELIVERED: { labelVi: 'Giao đủ', labelEn: 'Fully Delivered', bg: 'rgba(22,163,74,0.1)', color: '#16A34A' },
-    PARTIALLY_DELIVERED: { labelVi: 'Giao 1 phần', labelEn: 'Partially Delivered', bg: 'rgba(212,168,83,0.1)', color: '#B45309' },
+    PARTIALLY_DELIVERED: { labelVi: 'Giao 1 phần', labelEn: 'Partially Delivered', bg: 'rgba(180,83,9,0.1)', color: '#B45309' },
     PREPARING: { labelVi: 'Đang chuẩn bị', labelEn: 'Preparing', bg: 'rgba(8,145,178,0.08)', color: '#0891B2' },
     UNDELIVERED: { labelVi: 'Chưa giao', labelEn: 'Not Dispatched', bg: '#F1F5F9', color: '#64748B' },
 }

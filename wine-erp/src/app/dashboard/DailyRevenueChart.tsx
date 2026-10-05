@@ -60,12 +60,12 @@ export function DailyRevenueChart({ data }: Props) {
                 <div className="flex items-center gap-2">
                     <TrendingUp size={16} className="text-[#0891B2]" />
                     <h3 className="font-semibold text-sm text-slate-900">{t.dailyChart.title}</h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#87CBB9]/10 text-[#0891B2] border border-[#87CBB9]/20">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] border border-[#0E7490]/20">
                         {items.length} {t.dailyChart.daysUnit}
                     </span>
                 </div>
                 {peakDay && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#D4A853] bg-[#D4A853]/10 px-2.5 py-1 rounded-md border border-[#D4A853]/25 font-medium">
+                    <div className="flex items-center gap-1.5 text-xs text-[#B45309] bg-[#B45309]/10 px-2.5 py-1 rounded-md border border-[#B45309]/25 font-medium">
                         <Award size={13} />
                         <span>{t.dailyChart.peakDay}</span>
                         <strong>{translateDayLabel(peakDay.label, isEn)}</strong>
@@ -96,7 +96,7 @@ export function DailyRevenueChart({ data }: Props) {
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
                         {t.dailyChart.avgOrderValue}
                     </span>
-                    <span className="text-base font-bold text-[#D4A853] font-mono">
+                    <span className="text-base font-bold text-[#B45309] font-mono">
                         {formatCurrency(avgOrderValue)}
                     </span>
                 </div>
@@ -104,7 +104,7 @@ export function DailyRevenueChart({ data }: Props) {
                     <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
                         {t.dailyChart.peakDate}
                     </span>
-                    <span className="text-base font-bold text-[#5BA88A] font-mono truncate block">
+                    <span className="text-base font-bold text-[#15803D] font-mono truncate block">
                         {peakDay ? translateDayLabel(peakDay.label, isEn) : '—'}
                     </span>
                 </div>
@@ -152,13 +152,13 @@ export function DailyRevenueChart({ data }: Props) {
                             const barHeight = Math.max(it.revenue > 0 ? 8 : 2, (heightPct / 100) * 130)
 
                             const barColor = isPeak
-                                ? '#D4A853'
+                                ? '#B45309'
                                 : heightPct > 60
-                                ? '#87CBB9'
+                                ? '#0E7490'
                                 : heightPct > 20
-                                ? '#5BA88A'
+                                ? '#15803D'
                                 : it.revenue > 0
-                                ? '#4A8FAB'
+                                ? '#1D4ED8'
                                 : it.isWeekend
                                 ? '#E2E8F0'
                                 : '#F1F5F9'
@@ -174,7 +174,7 @@ export function DailyRevenueChart({ data }: Props) {
                                     <div
                                         className={`text-[9px] font-mono font-bold transition-all mb-1 truncate text-center ${
                                             isPeak
-                                                ? 'text-[#D4A853]'
+                                                ? 'text-[#B45309]'
                                                 : it.revenue > 0
                                                 ? 'text-[#0891B2]'
                                                 : 'text-transparent'
@@ -190,7 +190,7 @@ export function DailyRevenueChart({ data }: Props) {
                                             height: `${barHeight}px`,
                                             background: barColor,
                                             boxShadow: isPeak
-                                                ? '0 0 10px rgba(212,168,83,0.35)'
+                                                ? '0 0 10px rgba(180,83,9,0.35)'
                                                 : undefined,
                                         }}
                                     />
@@ -198,7 +198,7 @@ export function DailyRevenueChart({ data }: Props) {
                                     {/* Day label */}
                                     <span
                                         className={`text-[9px] sm:text-[10px] mt-1.5 transition-colors text-center ${
-                                            it.isWeekend ? 'text-[#D4A853]/70 font-medium' : 'text-slate-500'
+                                            it.isWeekend ? 'text-[#B45309]/70 font-medium' : 'text-slate-500'
                                         } group-hover:text-slate-900`}
                                     >
                                         {items.length > 20
@@ -215,7 +215,7 @@ export function DailyRevenueChart({ data }: Props) {
                         className="p-2.5 rounded-md border flex items-center justify-between text-xs min-h-[38px] transition-all"
                         style={{
                             background: '#FFFFFF',
-                            borderColor: hoveredItem ? '#87CBB9' : '#E2E8F0',
+                            borderColor: hoveredItem ? '#0E7490' : '#E2E8F0',
                         }}
                     >
                         {hoveredItem ? (
@@ -225,7 +225,7 @@ export function DailyRevenueChart({ data }: Props) {
                                         {translateDayLabel(hoveredItem.dayOfWeek, isEn)}, {hoveredItem.date}
                                     </span>
                                     {hoveredItem.isWeekend && (
-                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#D4A853]/15 text-[#D4A853] font-medium">
+                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#B45309]/15 text-[#B45309] font-medium">
                                             {isEn ? 'Weekend' : 'Cuối tuần'}
                                         </span>
                                     )}

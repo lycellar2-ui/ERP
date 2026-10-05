@@ -16,9 +16,9 @@ import { getAuditLogsDashboard, type AuditLogRow, type AuditStats, type AuditFil
 const ACTION_CONFIG: Record<string, { icon: typeof Plus; color: string; bgColor: string; label: string }> = {
     CREATE: { icon: Plus, color: '#22C55E', bgColor: 'rgba(34,197,94,0.12)', label: 'Tạo mới' },
     UPDATE: { icon: Edit, color: '#F59E0B', bgColor: 'rgba(245,158,11,0.12)', label: 'Cập nhật' },
-    DELETE: { icon: Trash2, color: '#EF4444', bgColor: 'rgba(239,68,68,0.12)', label: 'Xóa' },
+    DELETE: { icon: Trash2, color: '#B91C1C', bgColor: 'rgba(185,28,28,0.12)', label: 'Xóa' },
     APPROVE: { icon: CheckCircle2, color: '#22C55E', bgColor: 'rgba(34,197,94,0.12)', label: 'Duyệt' },
-    REJECT: { icon: XCircle, color: '#EF4444', bgColor: 'rgba(239,68,68,0.12)', label: 'Từ chối' },
+    REJECT: { icon: XCircle, color: '#B91C1C', bgColor: 'rgba(185,28,28,0.12)', label: 'Từ chối' },
     STATUS_CHANGE: { icon: RefreshCw, color: '#0891B2', bgColor: 'rgba(8,145,178,0.12)', label: 'Đổi trạng thái' },
     CONFIRM: { icon: CheckCircle2, color: '#06B6D4', bgColor: 'rgba(6,182,212,0.12)', label: 'Xác nhận' },
     LOGIN: { icon: User, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Đăng nhập' },
@@ -95,7 +95,7 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                 {entries.slice(0, 4).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
                         <span style={{ color: '#64748B' }}>{key}:</span>
-                        <span style={{ color: '#EF4444', textDecoration: 'line-through' }}>{formatFieldValue(val)}</span>
+                        <span style={{ color: '#B91C1C', textDecoration: 'line-through' }}>{formatFieldValue(val)}</span>
                     </div>
                 ))}
             </div>
@@ -111,7 +111,7 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                     {fieldChanges.slice(0, 5).map((fc: any, i: number) => (
                         <div key={i} className="flex items-center gap-1.5 text-xs flex-wrap">
                             <span className="font-medium" style={{ color: '#475569' }}>{fc.field}:</span>
-                            <span style={{ color: '#EF4444' }}>{formatFieldValue(fc.from)}</span>
+                            <span style={{ color: '#B91C1C' }}>{formatFieldValue(fc.from)}</span>
                             <ArrowRight size={10} style={{ color: '#64748B' }} />
                             <span style={{ color: '#22C55E' }}>{formatFieldValue(fc.to)}</span>
                         </div>
@@ -135,7 +135,7 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                     {changes.slice(0, 5).map(([key, val]) => (
                         <div key={key} className="flex items-center gap-1.5 text-xs flex-wrap">
                             <span className="font-medium" style={{ color: '#475569' }}>{key}:</span>
-                            <span style={{ color: '#EF4444' }}>{formatFieldValue((oldValue as any)[key])}</span>
+                            <span style={{ color: '#B91C1C' }}>{formatFieldValue((oldValue as any)[key])}</span>
                             <ArrowRight size={10} style={{ color: '#64748B' }} />
                             <span style={{ color: '#22C55E' }}>{formatFieldValue(val)}</span>
                         </div>
@@ -174,28 +174,7 @@ function formatFieldValue(val: unknown): string {
     return str.length > 60 ? str.slice(0, 57) + '...' : str
 }
 
-// ═══════════════════════════════════════════════════
-// STAT CARDS
-// ═══════════════════════════════════════════════════
-
-function StatCard({ label, value, icon: Icon, color }: { label: string; value: number | string; icon: typeof Activity; color: string }) {
-    return (
-        <div
-            className="p-4 rounded-lg"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-        >
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#64748B' }}>{label}</span>
-                <div className="p-1.5 rounded-md" style={{ background: `${color}18` }}>
-                    <Icon size={14} style={{ color }} />
-                </div>
-            </div>
-            <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                {typeof value === 'number' ? value.toLocaleString('vi-VN') : value}
-            </p>
-        </div>
-    )
-}
+import { PageHeader, StatGrid, StatCard } from '@/components/ui'
 
 // ═══════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -259,29 +238,24 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
     return (
         <div className="space-y-5 max-w-screen-2xl" style={{ opacity: isPending ? 0.7 : 1, transition: 'opacity 150ms' }}>
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#0F172A' }}>
-                        <ScrollText size={26} style={{ color: '#0891B2' }} />
-                        Nhật Ký Hệ Thống
-                    </h1>
-                    <p className="text-sm mt-1" style={{ color: '#64748B' }}>
-                        Theo dõi mọi thay đổi quan trọng trong hệ thống ERP
-                    </p>
-                </div>
-                <div className="text-right">
-                    <p className="text-sm" style={{ color: '#64748B' }}>Tổng sự kiện</p>
-                    <p className="text-xl font-bold" style={{ color: '#0891B2' }}>{stats.total.toLocaleString('vi-VN')}</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Nhật Ký Hệ Thống"
+                description="Theo dõi mọi thay đổi quan trọng trong hệ thống ERP"
+                actions={
+                    <div className="text-right">
+                        <p className="text-xs text-slate-500 font-medium">Tổng sự kiện</p>
+                        <p className="text-lg font-bold text-[#0891B2] font-mono">{stats.total.toLocaleString('vi-VN')}</p>
+                    </div>
+                }
+            />
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Hôm nay" value={stats.today} icon={Calendar} color="#22C55E" />
-                <StatCard label="7 ngày qua" value={stats.thisWeek} icon={Activity} color="#06B6D4" />
-                <StatCard label="Users hoạt động" value={stats.uniqueUsers} icon={User} color="#0891B2" />
-                <StatCard label="Tổng sự kiện" value={stats.total} icon={Shield} color="#87CBB9" />
-            </div>
+            <StatGrid>
+                <StatCard label="Hôm nay" value={stats.today} icon={Calendar} tone="success" />
+                <StatCard label="7 ngày qua" value={stats.thisWeek} icon={Activity} />
+                <StatCard label="Users hoạt động" value={stats.uniqueUsers} icon={User} />
+                <StatCard label="Tổng sự kiện" value={stats.total} icon={Shield} />
+            </StatGrid>
 
             {/* Top Actions & Modules Mini Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -328,7 +302,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                     <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.max(pct, 2)}%`, background: '#87CBB9' }}
+                                            style={{ width: `${Math.max(pct, 2)}%`, background: '#0E7490' }}
                                         />
                                     </div>
                                     <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#64748B' }}>{m.count}</span>
@@ -370,13 +344,13 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                         style={{
                             background: showFilters ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
                             border: '1px solid #E2E8F0',
-                            color: showFilters ? '#87CBB9' : '#475569',
+                            color: showFilters ? '#0E7490' : '#475569',
                         }}
                     >
                         <Filter size={14} />
                         Lọc nâng cao
                         {hasActiveFilters && (
-                            <span className="w-2 h-2 rounded-full" style={{ background: '#87CBB9' }} />
+                            <span className="w-2 h-2 rounded-full" style={{ background: '#0E7490' }} />
                         )}
                     </button>
 
@@ -384,7 +358,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                         <button
                             onClick={handleClearFilters}
                             className="px-3 py-2 text-xs rounded-md transition-all"
-                            style={{ border: '1px solid #E2E8F0', color: '#EF4444' }}
+                            style={{ border: '1px solid #E2E8F0', color: '#B91C1C' }}
                         >
                             Xóa bộ lọc
                         </button>
@@ -478,7 +452,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                     className="px-4 py-3 transition-all duration-150 cursor-pointer"
                                     style={{
                                         background: isExpanded ? '#FFFFFF' : 'transparent',
-                                        borderLeft: isDangerous ? '3px solid #EF4444' : '3px solid transparent',
+                                        borderLeft: isDangerous ? '3px solid #B91C1C' : '3px solid transparent',
                                     }}
                                     onClick={() => setExpandedRow(isExpanded ? null : row.id)}
                                 >
@@ -509,7 +483,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                                     </span>
                                                 )}
                                                 {isDangerous && (
-                                                    <AlertTriangle size={12} style={{ color: '#EF4444' }} />
+                                                    <AlertTriangle size={12} style={{ color: '#B91C1C' }} />
                                                 )}
                                             </div>
 
@@ -575,7 +549,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                         onClick={() => handlePageChange(pageNum)}
                                         className="w-8 h-8 text-xs rounded-md transition-all"
                                         style={{
-                                            background: page === pageNum ? '#87CBB9' : 'transparent',
+                                            background: page === pageNum ? '#0E7490' : 'transparent',
                                             color: page === pageNum ? '#F8FAFC' : '#64748B',
                                             fontWeight: page === pageNum ? 600 : 400,
                                         }}

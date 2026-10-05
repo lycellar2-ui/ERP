@@ -190,11 +190,11 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white/50 shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-lg bg-[#87CBB9]/20 text-[#0891B2]">
+                        <div className="p-2 rounded-lg bg-[#0E7490]/20 text-[#0891B2]">
                             {isEdit ? <Save className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                         </div>
                         <div>
@@ -222,7 +222,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('BASIC')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'BASIC'
-                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                ? 'border-[#0E7490] text-[#0891B2] bg-white'
                                 : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
@@ -234,7 +234,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('WORK')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'WORK'
-                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                ? 'border-[#0E7490] text-[#0891B2] bg-white'
                                 : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
@@ -246,7 +246,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('FINANCE')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'FINANCE'
-                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                ? 'border-[#0E7490] text-[#0891B2] bg-white'
                                 : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
@@ -258,7 +258,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         onClick={() => setActiveTab('ACCOUNT')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-all cursor-pointer ${
                             activeTab === 'ACCOUNT'
-                                ? 'border-[#87CBB9] text-[#0891B2] bg-white'
+                                ? 'border-[#0E7490] text-[#0891B2] bg-white'
                                 : 'border-transparent text-slate-600 hover:text-slate-900'
                         }`}
                     >
@@ -283,12 +283,12 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="VD: NV-001"
                                             value={formData.code || ''}
                                             onChange={e => handleChange('code', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div className="sm:col-span-2">
                                         <label className="block font-semibold text-slate-600 mb-1">
-                                            Họ và tên nhân viên <span className="text-rose-400">*</span>
+                                            Họ và tên nhân viên <span className="text-rose-700">*</span>
                                         </label>
                                         <input
                                             type="text"
@@ -296,7 +296,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             value={formData.fullName}
                                             onChange={e => handleChange('fullName', e.target.value)}
                                             required
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         <select
                                             value={formData.gender || 'NAM'}
                                             onChange={e => handleChange('gender', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
                                             <option value="NAM">Nam</option>
                                             <option value="NU">Nữ</option>
@@ -320,7 +320,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             type="date"
                                             value={formData.dateOfBirth || ''}
                                             onChange={e => handleChange('dateOfBirth', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -330,7 +330,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="0912 345 678"
                                             value={formData.phone || ''}
                                             onChange={e => handleChange('phone', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -343,7 +343,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="12 chữ số CCCD..."
                                             value={formData.nationalId || ''}
                                             onChange={e => handleChange('nationalId', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -352,7 +352,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             type="date"
                                             value={formData.nationalIdDate || ''}
                                             onChange={e => handleChange('nationalIdDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -362,7 +362,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="Cục CS QLHC về TTXH..."
                                             value={formData.nationalIdPlace || ''}
                                             onChange={e => handleChange('nationalIdPlace', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -375,7 +375,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="Địa chỉ theo hộ khẩu / CCCD..."
                                             value={formData.address || ''}
                                             onChange={e => handleChange('address', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -385,7 +385,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="Địa chỉ tạm trú thực tế..."
                                             value={formData.currentAddress || ''}
                                             onChange={e => handleChange('currentAddress', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -401,7 +401,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="Bố/Mẹ/Vợ/Chồng..."
                                                 value={formData.emergencyContact || ''}
                                                 onChange={e => handleChange('emergencyContact', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
@@ -411,7 +411,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="SĐT người thân..."
                                                 value={formData.emergencyPhone || ''}
                                                 onChange={e => handleChange('emergencyPhone', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
@@ -421,7 +421,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="Quan hệ gia đình..."
                                                 value={formData.emergencyRelation || ''}
                                                 onChange={e => handleChange('emergencyRelation', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                     </div>
@@ -438,7 +438,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         <select
                                             value={formData.deptId || ''}
                                             onChange={e => handleChange('deptId', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
                                             <option value="">-- Chưa phân phòng ban --</option>
                                             {departments.map(d => (
@@ -453,7 +453,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="VD: Nhân viên Sales, Kế toán kho..."
                                             value={formData.position || ''}
                                             onChange={e => handleChange('position', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -461,7 +461,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         <select
                                             value={formData.status || 'ACTIVE'}
                                             onChange={e => handleChange('status', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
                                             {STATUS_OPTIONS.map(s => (
                                                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -477,7 +477,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             type="date"
                                             value={formData.startDate || ''}
                                             onChange={e => handleChange('startDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -486,7 +486,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             type="date"
                                             value={formData.officialDate || ''}
                                             onChange={e => handleChange('officialDate', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -504,7 +504,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             <select
                                                 value={formData.contractType || 'DEFINITE_1Y'}
                                                 onChange={e => handleChange('contractType', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             >
                                                 {CONTRACT_TYPES.map(c => (
                                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -518,7 +518,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="VD: HĐLĐ-2026/01/LYS..."
                                                 value={formData.contractNumber || ''}
                                                 onChange={e => handleChange('contractNumber', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                     </div>
@@ -530,18 +530,18 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 type="date"
                                                 value={formData.contractStartDate || ''}
                                                 onChange={e => handleChange('contractStartDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-slate-600 mb-1">
-                                                Ngày kết thúc hợp đồng <span className="text-amber-400 font-bold">*</span>
+                                                Ngày kết thúc hợp đồng <span className="text-amber-700 font-bold">*</span>
                                             </label>
                                             <input
                                                 type="date"
                                                 value={formData.contractEndDate || ''}
                                                 onChange={e => handleChange('contractEndDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                     </div>
@@ -562,7 +562,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="Số TK ngân hàng..."
                                                 value={formData.bankAccountNo || ''}
                                                 onChange={e => handleChange('bankAccountNo', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
@@ -572,7 +572,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="VD: Vietcombank - CN Tân Bình"
                                                 value={formData.bankName || ''}
                                                 onChange={e => handleChange('bankName', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
@@ -582,7 +582,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 placeholder="Tên in hoa không dấu..."
                                                 value={formData.bankAccountHolder || ''}
                                                 onChange={e => handleChange('bankAccountHolder', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                     </div>
@@ -596,7 +596,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="MST 10 số..."
                                             value={formData.taxCode || ''}
                                             onChange={e => handleChange('taxCode', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
@@ -606,7 +606,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             placeholder="Mã số BHXH..."
                                             value={formData.socialInsuranceNo || ''}
                                             onChange={e => handleChange('socialInsuranceNo', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                 </div>
@@ -626,7 +626,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 type="date"
                                                 value={formData.healthCheckDate || ''}
                                                 onChange={e => handleChange('healthCheckDate', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
@@ -635,7 +635,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                                 type="date"
                                                 value={formData.healthCheckExpiry || ''}
                                                 onChange={e => handleChange('healthCheckExpiry', e.target.value)}
-                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                     </div>
@@ -648,7 +648,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         placeholder="Ghi chú về nhân viên..."
                                         value={formData.notes || ''}
                                         onChange={e => handleChange('notes', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#87CBB9] resize-none"
+                                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490] resize-none"
                                     />
                                 </div>
                             </div>
@@ -657,7 +657,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         {/* TAB 4: ACCOUNT LINKING */}
                         {activeTab === 'ACCOUNT' && (
                             <div className="space-y-4">
-                                <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-slate-600">
+                                <div className="p-4 rounded-lg bg-teal-500/10 border border-teal-500/20 text-slate-600">
                                     <div className="flex items-start gap-3">
                                         <Link2 className="w-5 h-5 text-[#0891B2] mt-0.5 shrink-0" />
                                         <div>
@@ -676,7 +676,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     <select
                                         value={formData.userId || ''}
                                         onChange={e => handleChange('userId', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:outline-hidden focus:border-[#87CBB9]"
+                                        className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:outline-hidden focus:border-[#0E7490]"
                                     >
                                         <option value="">-- Không liên kết (Nhân viên chưa có hoặc không cần tài khoản ERP) --</option>
                                         {availableUsers.map(u => (

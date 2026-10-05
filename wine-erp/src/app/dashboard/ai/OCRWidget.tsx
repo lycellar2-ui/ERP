@@ -134,10 +134,10 @@ export function OCRUploadWidget() {
                     <button key={m.key} onClick={() => { setMode(m.key); resetState() }}
                         className="flex-1 p-3 rounded-lg text-left transition-all"
                         style={{
-                            background: mode === m.key ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
+                            background: mode === m.key ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
                             border: `1px solid ${mode === m.key ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
                         }}>
-                        <span className="text-sm font-semibold block" style={{ color: mode === m.key ? '#87CBB9' : '#475569' }}>
+                        <span className="text-sm font-semibold block" style={{ color: mode === m.key ? '#0E7490' : '#475569' }}>
                             {m.label}
                         </span>
                         <span className="text-[10px]" style={{ color: '#64748B' }}>{m.desc}</span>
@@ -155,15 +155,15 @@ export function OCRUploadWidget() {
                         onClick={() => fileInputRef.current?.click()}
                         className="relative rounded-lg cursor-pointer transition-all"
                         style={{
-                            background: dragging ? 'rgba(135,203,185,0.06)' : '#FFFFFF',
-                            border: `2px dashed ${dragging ? '#87CBB9' : file ? '#5BA88A' : '#E2E8F0'}`,
+                            background: dragging ? 'rgba(8,145,178,0.06)' : '#FFFFFF',
+                            border: `2px dashed ${dragging ? '#0E7490' : file ? '#15803D' : '#E2E8F0'}`,
                             padding: file ? '12px 16px' : '24px 16px',
                         }}>
                         <input ref={fileInputRef} type="file" accept=".pdf,.txt,.png,.jpg,.jpeg" className="hidden"
                             onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
                         {file ? (
                             <div className="flex items-center gap-3">
-                                <FileText size={20} style={{ color: '#5BA88A' }} />
+                                <FileText size={20} style={{ color: '#15803D' }} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{file.name}</p>
                                     <p className="text-xs" style={{ color: '#64748B' }}>{(file.size / 1024).toFixed(0)} KB</p>
@@ -173,7 +173,7 @@ export function OCRUploadWidget() {
                             </div>
                         ) : (
                             <div className="text-center">
-                                <Upload size={28} className="mx-auto mb-2" style={{ color: dragging ? '#87CBB9' : '#E2E8F0' }} />
+                                <Upload size={28} className="mx-auto mb-2" style={{ color: dragging ? '#0E7490' : '#E2E8F0' }} />
                                 <p className="text-sm font-semibold" style={{ color: '#475569' }}>
                                     Kéo thả file vào đây
                                 </p>
@@ -202,7 +202,7 @@ export function OCRUploadWidget() {
 
                     {error && (
                         <div className="flex items-center gap-2 mt-3 text-xs p-2 rounded"
-                            style={{ background: 'rgba(224,82,82,0.08)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+                            style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                             <AlertCircle size={12} /> {error}
                         </div>
                     )}
@@ -232,7 +232,7 @@ export function OCRUploadWidget() {
 function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
     if (!result.success) {
         return (
-            <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(224,82,82,0.08)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+            <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                 <AlertCircle size={14} className="inline mr-1" /> Lỗi: {result.error}
             </div>
         )
@@ -244,24 +244,24 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
         { label: 'Nhà Nhập Khẩu', value: result.importerName },
         { label: 'HS Code', value: result.hsCode, mono: true },
         { label: 'Trị Giá CIF', value: result.cifValue ? `${result.cifValue.toLocaleString()} ${result.cifCurrency ?? 'USD'}` : undefined, mono: true },
-        { label: 'Thuế Nhập Khẩu', value: result.importTax ? formatVND(result.importTax) : undefined, color: '#D4A853' },
-        { label: 'Thuế TTĐB', value: result.specialConsumptionTax ? formatVND(result.specialConsumptionTax) : undefined, color: '#D4A853' },
-        { label: 'Thuế GTGT', value: result.vatTax ? formatVND(result.vatTax) : undefined, color: '#D4A853' },
-        { label: 'Tổng Thuế Phải Nộp', value: result.totalTaxPayable ? formatVND(result.totalTaxPayable) : undefined, color: '#E05252', bold: true },
+        { label: 'Thuế Nhập Khẩu', value: result.importTax ? formatVND(result.importTax) : undefined, color: '#B45309' },
+        { label: 'Thuế TTĐB', value: result.specialConsumptionTax ? formatVND(result.specialConsumptionTax) : undefined, color: '#B45309' },
+        { label: 'Thuế GTGT', value: result.vatTax ? formatVND(result.vatTax) : undefined, color: '#B45309' },
+        { label: 'Tổng Thuế Phải Nộp', value: result.totalTaxPayable ? formatVND(result.totalTaxPayable) : undefined, color: '#B91C1C', bold: true },
     ].filter(f => f.value)
 
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 size={14} style={{ color: '#5BA88A' }} />
-                <span className="text-sm font-semibold" style={{ color: '#5BA88A' }}>Trích xuất thành công — Tờ Khai Hải Quan</span>
+                <CheckCircle2 size={14} style={{ color: '#15803D' }} />
+                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>Trích xuất thành công — Tờ Khai Hải Quan</span>
             </div>
             <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 {fields.map((f, i) => (
                     <div key={f.label} className="flex items-center justify-between px-4 py-2.5"
                         style={{
                             background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
-                            borderBottom: i < fields.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
+                            borderBottom: i < fields.length - 1 ? '1px solid #E2E8F0' : undefined,
                         }}>
                         <span className="text-xs" style={{ color: '#64748B' }}>{f.label}</span>
                         <span className="text-sm font-semibold" style={{ color: (f as any).color ?? '#0F172A', fontWeight: (f as any).bold ? 700 : undefined }}>
@@ -281,7 +281,7 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
 function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
     if (!result.success) {
         return (
-            <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(224,82,82,0.08)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+            <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                 <AlertCircle size={14} className="inline mr-1" /> Lỗi: {result.error}
             </div>
         )
@@ -290,8 +290,8 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 size={14} style={{ color: '#5BA88A' }} />
-                <span className="text-sm font-semibold" style={{ color: '#5BA88A' }}>Trích xuất — Invoice Logistics</span>
+                <CheckCircle2 size={14} style={{ color: '#15803D' }} />
+                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>Trích xuất — Invoice Logistics</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -318,10 +318,10 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
                         <div key={i} className="flex items-center justify-between px-4 py-2.5"
                             style={{
                                 background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
-                                borderBottom: i < result.costItems!.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
+                                borderBottom: i < result.costItems!.length - 1 ? '1px solid #E2E8F0' : undefined,
                             }}>
                             <span className="text-xs" style={{ color: '#475569' }}>{item.description}</span>
-                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                            <span className="text-sm font-bold" style={{ color: '#B45309' }}>
                                 {item.amount.toLocaleString()} {item.currency}
                             </span>
                         </div>
@@ -330,7 +330,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
             )}
 
             {result.totalAmount != null && (
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                     <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>TỔNG</span>
                     <span className="text-lg font-bold" style={{ color: '#0891B2' }}>
                         {result.totalAmount.toLocaleString()} USD
