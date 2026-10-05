@@ -257,6 +257,61 @@ export async function getTransactedProducts(warehouseId: string, days: number = 
     return serialize(products)
 }
 
+export async function getRandomSampleSkus(warehouseId: string, count: number = 10): Promise<Array<{
+    id: string
+    skuCode: string
+    productName: string
+    vintage: number | null
+    totalQty: number
+}>> {
+    try {
+        const lots = await prisma.stockLot.findMany({
+            where: {
+                location: { warehouseId },
+                status: 'AVAILABLE',
+                qtyAvailable: { gt: 0 }
+            },
+            select: {
+                productId: true,
+                qtyAvailable: true,
+                vintage: true,
+                product: {
+                    select: {
+                        id: true,
+                        skuCode: true,
+                        productName: true,
+                    }
+                }
+            }
+        })
+
+        const prodMap = new Map<string, { id: string; skuCode: string; productName: string; vintage: number | null; totalQty: number }>()
+        for (const lot of lots) {
+            if (!lot.product) continue
+            const existing = prodMap.get(lot.productId)
+            const qty = Number(lot.qtyAvailable) || 0
+            if (existing) {
+                existing.totalQty += qty
+            } else {
+                prodMap.set(lot.productId, {
+                    id: lot.productId,
+                    skuCode: lot.product.skuCode,
+                    productName: lot.product.productName,
+                    vintage: lot.vintage ?? null,
+                    totalQty: qty
+                })
+            }
+        }
+
+        const all = Array.from(prodMap.values())
+        const shuffled = [...all].sort(() => 0.5 - Math.random())
+        return serialize(shuffled.slice(0, count))
+    } catch (err: any) {
+        console.error('getRandomSampleSkus error:', err)
+        return []
+    }
+}
+
 export async function createStockCountSessionExtended(input: {
     warehouseId: string
     title?: string
@@ -270,6 +325,7 @@ export async function createStockCountSessionExtended(input: {
     selectedProductIds?: string[]
     selectedLocationIds?: string[]
     skuCodes?: string[]
+    randomSampleCount?: number
 }): Promise<{ success: boolean; sessionId?: string; error?: string }> {
     try {
         const currentUser = await getCurrentUser()
@@ -321,6 +377,28 @@ export async function createStockCountSessionExtended(input: {
                     ? { in: (productFilterWhere.id as any).in.filter((id: string) => mIds.includes(id)) }
                     : { in: mIds }
             }
+        }
+
+        // Handle RANDOM / SPOT sampling by count
+        if (input.randomSampleCount && input.randomSampleCount > 0 && (!input.skuCodes || input.skuCodes.length === 0)) {
+            const availableLots = await prisma.stockLot.findMany({
+                where: {
+                    location: { warehouseId: input.warehouseId },
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 }
+                },
+                select: { productId: true },
+                distinct: ['productId']
+            })
+            const allPids = availableLots.map(l => l.productId)
+            if (allPids.length === 0) {
+                return { success: false, error: 'Kho hàng này hiện không có sản phẩm nào có tồn khả dụng để bốc mẫu.' }
+            }
+            const shuffled = [...allPids].sort(() => 0.5 - Math.random())
+            const sampledPids = shuffled.slice(0, input.randomSampleCount)
+            productFilterWhere.id = productFilterWhere.id
+                ? { in: (productFilterWhere.id as any).in.filter((id: string) => sampledPids.includes(id)) }
+                : { in: sampledPids }
         }
 
         // Handle TRANSACTED_ITEMS scope
@@ -1242,6 +1320,10 @@ export async function getCycleCountProgress(warehouseId: string, daysWindow: num
             id: string
             skuCode: string
             productName: string
+            vintage?: number | null
+            wineType?: string | null
+            totalQty?: number
+            locations?: string[]
             lastCountedAt: Date | null
             qtyActual: number | null
             variance: number | null

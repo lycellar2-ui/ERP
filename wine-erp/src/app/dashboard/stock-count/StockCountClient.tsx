@@ -5,13 +5,13 @@ import {
     ClipboardList, Plus, Search, Filter, Warehouse, MapPin, Smartphone,
     Printer, CheckCircle2, ShieldCheck, QrCode, AlertCircle, Eye, EyeOff,
     UserCheck, RefreshCw, Layers, Zap, AlertTriangle, FileText,
-    RotateCcw, Check, Calendar, ArrowRight, Sparkles
+    RotateCcw, Check, Calendar, ArrowRight, ArrowLeft, Sparkles, Shuffle
 } from 'lucide-react'
 import {
     getStockCountList, getStockCountDetail, getCountStats,
     getWarehouseOptions, getWarehouseLocationOptions, getStaffUserOptions,
     createStockCountSessionExtended, startStockCount, approveAndCreateAdjustment,
-    assignStaffToZones, getCycleCountProgress, type CycleCountProgress
+    assignStaffToZones, getCycleCountProgress, getRandomSampleSkus, type CycleCountProgress
 } from './actions'
 import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
@@ -111,6 +111,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [createError, setCreateError] = useState('')
 
+    // 2-Step Creation Wizard State
+    const [createWizardStep, setCreateWizardStep] = useState<1 | 2>(1)
+    const [countCategory, setCountCategory] = useState<'FULL' | 'PARTIAL' | 'RANDOM' | 'CYCLE'>('FULL')
+    const [randomCountMode, setRandomCountMode] = useState<'RANDOM_SAMPLE' | 'MANUAL_SKUS'>('RANDOM_SAMPLE')
+    const [sampleCountSize, setSampleCountSize] = useState<number>(10)
+    const [previewSampleSkus, setPreviewSampleSkus] = useState<Array<{ id: string; skuCode: string; productName: string; vintage: number | null; totalQty: number }>>([])
+    const [loadingSample, setLoadingSample] = useState(false)
+
     // Weekly Cycle Count Planner State
     const [cycleProgress, setCycleProgress] = useState<CycleCountProgress | null>(null)
     const [cycleWarehouseId, setCycleWarehouseId] = useState<string>('')
@@ -157,6 +165,73 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const fetchLocationOptions = async (whId: string) => {
         const locs = await getWarehouseLocationOptions(whId)
         setLocationOptions(locs)
+    }
+
+    const handleFetchSampleSkus = async (whId: string, count: number) => {
+        if (!whId) return
+        setLoadingSample(true)
+        try {
+            const samples = await getRandomSampleSkus(whId, count)
+            setPreviewSampleSkus(samples)
+        } finally {
+            setLoadingSample(false)
+        }
+    }
+
+    const handleSelectCategory = (cat: 'FULL' | 'PARTIAL' | 'RANDOM' | 'CYCLE') => {
+        setCountCategory(cat)
+        setCreateWizardStep(2)
+        setCreateError('')
+        const targetWhId = formWarehouseId || warehouses[0]?.id || ''
+        const targetWh = warehouses.find(w => w.id === targetWhId) || warehouses[0]
+        const whName = targetWh?.name || 'Kho'
+        const today = new Date().toLocaleDateString('vi-VN')
+
+        if (cat === 'FULL') {
+            setFormScopeType('FULL_WAREHOUSE')
+            setFormTitle(`Kiểm kê toàn bộ - ${whName} (${today})`)
+        } else if (cat === 'PARTIAL') {
+            setFormScopeType('CYCLE_COUNT')
+            setFormTitle(`Kiểm kê phân khu kệ - ${whName}`)
+            if (targetWh?.id) {
+                fetchLocationOptions(targetWh.id)
+            }
+        } else if (cat === 'RANDOM') {
+            setFormScopeType('SPOT_COUNT')
+            setRandomCountMode('RANDOM_SAMPLE')
+            setFormTitle(`Kiểm kê ngẫu nhiên (${sampleCountSize} mã) - ${whName}`)
+            if (targetWh?.id) {
+                handleFetchSampleSkus(targetWh.id, sampleCountSize)
+            }
+        } else if (cat === 'CYCLE') {
+            setFormScopeType('CYCLE_COUNT')
+            setFormTitle(`Kiểm kê cuốn chiếu ${today} - ${whName}`)
+            if (targetWh?.id) {
+                loadCycleProgress(targetWh.id, cycleDaysWindow)
+            }
+        }
+    }
+
+    const handleWarehouseChange = (whId: string) => {
+        setFormWarehouseId(whId)
+        fetchLocationOptions(whId)
+        const targetWh = warehouses.find(w => w.id === whId)
+        const whName = targetWh?.name || 'Kho'
+        const today = new Date().toLocaleDateString('vi-VN')
+
+        if (countCategory === 'FULL') {
+            setFormTitle(`Kiểm kê toàn bộ - ${whName} (${today})`)
+        } else if (countCategory === 'PARTIAL') {
+            setFormTitle(`Kiểm kê phân khu kệ - ${whName}`)
+        } else if (countCategory === 'RANDOM') {
+            setFormTitle(`Kiểm kê ngẫu nhiên (${sampleCountSize} mã) - ${whName}`)
+            if (randomCountMode === 'RANDOM_SAMPLE') {
+                handleFetchSampleSkus(whId, sampleCountSize)
+            }
+        } else if (countCategory === 'CYCLE') {
+            setFormTitle(`Kiểm kê cuốn chiếu ${today} - ${whName}`)
+            loadCycleProgress(whId, cycleDaysWindow)
+        }
     }
 
     const loadOptions = async () => {
@@ -242,32 +317,51 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setCreateError('')
         setIsSubmitting(true)
 
-        // Parse spot SKUs if provided
         let skus: string[] | undefined = undefined
-        if (formScopeType === 'SPOT_COUNT' && formSpotSkus.trim()) {
-            skus = formSpotSkus.split(/[\n,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean)
-            if (skus.length === 0) {
-                setIsSubmitting(false)
-                setCreateError('Vui lòng nhập ít nhất 1 mã SKU cần kiểm kê đột xuất / chọn lọc')
-                return
+        let randomCount: number | undefined = undefined
+
+        if (countCategory === 'RANDOM') {
+            if (randomCountMode === 'MANUAL_SKUS') {
+                if (formSpotSkus.trim()) {
+                    skus = formSpotSkus.split(/[\n,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean)
+                }
+                if (!skus || skus.length === 0) {
+                    setIsSubmitting(false)
+                    setCreateError('Vui lòng nhập ít nhất 1 mã SKU cần kiểm kê đột xuất')
+                    return
+                }
+            } else {
+                if (previewSampleSkus.length > 0) {
+                    skus = previewSampleSkus.map(s => s.skuCode)
+                } else {
+                    randomCount = sampleCountSize
+                }
+            }
+        } else if (countCategory === 'CYCLE') {
+            if (selectedDailySkus.length > 0) {
+                skus = selectedDailySkus
+            } else if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
+                const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
+                skus = topN
             }
         }
 
         const res = await createStockCountSessionExtended({
             warehouseId: formWarehouseId,
             title: formTitle || undefined,
-            scopeType: formScopeType,
+            scopeType: countCategory === 'FULL' ? 'FULL_WAREHOUSE' : countCategory === 'RANDOM' ? 'SPOT_COUNT' : 'CYCLE_COUNT',
             isBlindCount: formIsBlind,
             assignedToId: formAssignedToId || undefined,
-            selectedZone: formSelectedZone || undefined,
-            selectedWineType: formWineType || undefined,
-            transactedDays: Number(formTransactedDays) || 30,
+            selectedZone: countCategory === 'PARTIAL' ? (formSelectedZone || undefined) : undefined,
+            selectedWineType: countCategory === 'PARTIAL' ? (formWineType || undefined) : undefined,
             skuCodes: skus,
+            randomSampleCount: randomCount,
         })
 
         setIsSubmitting(false)
         if (res.success) {
             setShowCreateModal(false)
+            setCreateWizardStep(1)
             fetchData()
             loadCycleProgress()
             if (res.sessionId) handleOpenMobileView(res.sessionId)
@@ -371,7 +465,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     </button>
                     {viewMode === 'SESSIONS' ? (
                         <button
-                            onClick={() => setShowCreateModal(true)}
+                            onClick={() => {
+                                setCreateWizardStep(1)
+                                setShowCreateModal(true)
+                            }}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                         >
                             <Plus size={15} /> Tạo Phiếu Kiểm Kê
@@ -950,202 +1047,512 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             </>
             )}
 
-            {/* Create Extended Session Modal */}
+            {/* Create Extended Session Modal — 2-Step Wizard */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh]">
-                        <div className="flex justify-between items-center mb-3 pb-3 border-b border-slate-200">
-                            <div>
-                                <h2 className="text-base font-extrabold text-slate-900">Khởi Tạo Phiếu Kiểm Kê Mới</h2>
-                                <p className="text-xs text-slate-500">Tùy chỉnh phạm vi đếm: toàn kho, khu vực kệ hoặc đột xuất</p>
-                            </div>
-                            <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">✕</button>
-                        </div>
+                    <div className="bg-white border border-slate-200 rounded-xl max-w-2xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[92vh]">
+                        {createWizardStep === 1 ? (
+                            /* ═══════════ BƯỚC 1: CHỌN HÌNH THỨC KIỂM KÊ ═══════════ */
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start pb-3 border-b border-slate-200">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30">
+                                                BƯỚC 1 / 2
+                                            </span>
+                                            <h2 className="text-base font-extrabold text-slate-900">Chọn Hình Thức Kiểm Kê</h2>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Hệ thống sẽ tối ưu hóa danh mục quét và biểu mẫu phù hợp với nhu cầu kiểm đếm của kho
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateModal(false)}
+                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
 
-                        {/* Quick shortcut callout for daily batch count */}
-                        <div className="bg-lys-teal-soft border border-lys-teal-subtle p-3 rounded-lg flex items-center justify-between gap-3 mb-4">
-                            <div className="flex items-center gap-2 text-xs text-slate-800">
-                                <Zap size={16} className="text-lys-teal-strong shrink-0" />
-                                <div>
-                                    <p className="font-bold text-slate-900">Kiểm kê cuốn chiếu hôm nay?</p>
-                                    <p className="text-[11px] text-slate-600">Hệ thống tự động lọc sẵn ~{cycleProgress?.dailySuggestedCount || 15} mã SKU chưa kiểm trong tuần để kiểm kê ngay.</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                                    {/* Card 1: Toàn bộ */}
+                                    <div
+                                        onClick={() => handleSelectCategory('FULL')}
+                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
+                                                    <Layers className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wide">
+                                                    Toàn diện 100%
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0E7490] transition">
+                                                Kiểm Kê Toàn Bộ Kho
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                                Kiểm đếm 100% SKU và toàn bộ vị trí kệ. Thích hợp cho chốt kỳ kế toán tháng, quý hoặc kiểm toán cuối năm.
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-[#0E7490]">
+                                            <span className="text-[11px] text-slate-400 font-normal">Quét tất cả mã & vị trí</span>
+                                            <span className="flex items-center gap-1">Chọn loại này ➔</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card 2: 1 Phần / Khu vực */}
+                                    <div
+                                        onClick={() => handleSelectCategory('PARTIAL')}
+                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center">
+                                                    <MapPin className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 uppercase tracking-wide">
+                                                    Theo Phân Vùng
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0E7490] transition">
+                                                Kiểm Kê 1 Phần / Khu Vực
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                                Giới hạn theo phân khu (Zone A, B...), tủ mát rượu hoặc loại vang cụ thể. Các khu vực khác trong kho tiếp tục xuất nhập bình thường.
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-[#0E7490]">
+                                            <span className="text-[11px] text-slate-400 font-normal">Tùy chọn Zone / Kệ</span>
+                                            <span className="flex items-center gap-1">Chọn loại này ➔</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card 3: Ngẫu nhiên / Đột xuất */}
+                                    <div
+                                        onClick={() => handleSelectCategory('RANDOM')}
+                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
+                                                    <Shuffle className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wide">
+                                                    Giám Sát Rủi Ro
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0E7490] transition">
+                                                Kiểm Kê Ngẫu Nhiên / Đột Xuất
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                                Hệ thống bốc ngẫu nhiên 5-20 mã từ kho hoặc kiểm tra tức thì các mã SKU nghi vấn lệch tồn, hàng đắt tiền.
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-[#0E7490]">
+                                            <span className="text-[11px] text-slate-400 font-normal">Bốc mẫu / Nhập mã</span>
+                                            <span className="flex items-center gap-1">Chọn loại này ➔</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card 4: Cuốn chiếu */}
+                                    <div
+                                        onClick={() => handleSelectCategory('CYCLE')}
+                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <div className="w-10 h-10 rounded-lg bg-cyan-50 border border-cyan-200 text-[#0891B2] flex items-center justify-center">
+                                                    <RefreshCw className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase tracking-wide">
+                                                    Chu Kỳ Xoay Vòng
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0E7490] transition">
+                                                Kiểm Kê Cuốn Chiếu Hàng Ngày
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                                Đếm đều đặn ~15 mã mỗi ngày xoay vòng theo chu kỳ 7/14/30 ngày. Ưu tiên hàng tồn lớn trước mà không làm gián đoạn bán hàng.
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-[#0E7490]">
+                                            <span className="text-[11px] text-slate-400 font-normal">Chia nhỏ theo tuần</span>
+                                            <span className="flex items-center gap-1">Chọn loại này ➔</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowCreateModal(false)
-                                    if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
-                                        const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
-                                        setSelectedDailySkus(topN)
-                                        setBatchCountTitle(`Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${topN.length} mã) - ${cycleProgress.warehouseName}`)
-                                        setBatchSearchTerm('')
-                                        setShowDailyBatchModal(true)
-                                    } else {
-                                        setViewMode('CYCLE_PLAN')
-                                    }
-                                }}
-                                className="px-3 py-1.5 bg-lys-teal-strong hover:bg-lys-teal-hover text-white font-bold text-xs rounded-md shadow-2xs whitespace-nowrap cursor-pointer transition active:scale-95"
-                            >
-                                Đếm Hôm Nay ➔
-                            </button>
-                        </div>
-
-                        {createError && (
-                            <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-lg text-xs flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                                {createError}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
-                            {/* Scope Selector Grid */}
-                            <div>
-                                <label className="text-slate-700 font-bold block mb-2">CHỌN CHẾ ĐỘ KIỂM KÊ:</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        { key: 'FULL_WAREHOUSE', title: '📦 Full Kho', desc: 'Toàn bộ mã & vị trí' },
-                                        { key: 'CYCLE_COUNT', title: '🔄 Cycle Count', desc: 'Theo vị trí / loại rượu' },
-                                        { key: 'TRANSACTED_ITEMS', title: '⚡ Mã Giao Dịch', desc: 'Có nhập/xuất gần đây' },
-                                        { key: 'SPOT_COUNT', title: '🚨 Đột Xuất', desc: 'Kiểm tức thì theo mã/khu' },
-                                    ].map(mode => (
+                        ) : (
+                            /* ═══════════ BƯỚC 2: CẤU HÌNH BIỂU MẪU CHUYÊN BIỆT ═══════════ */
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start pb-3 border-b border-slate-200">
+                                    <div>
                                         <button
                                             type="button"
-                                            key={mode.key}
-                                            onClick={() => setFormScopeType(mode.key as any)}
-                                            className={`p-3 rounded-lg text-left border transition cursor-pointer ${formScopeType === mode.key ? 'bg-teal-50 border-2 border-teal-500 text-teal-900 font-bold shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
+                                            onClick={() => setCreateWizardStep(1)}
+                                            className="text-xs text-[#0891B2] hover:text-[#0E7490] font-bold flex items-center gap-1 cursor-pointer mb-1 transition"
                                         >
-                                            <div className="font-bold text-xs">{mode.title}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">{mode.desc}</div>
+                                            <ArrowLeft size={14} /> Quay lại chọn hình thức khác
                                         </button>
-                                    ))}
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30">
+                                                BƯỚC 2 / 2
+                                            </span>
+                                            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                                                {countCategory === 'FULL' && (
+                                                    <>
+                                                        <span>📦 Kiểm Kê Toàn Bộ Kho</span>
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">Toàn diện 100%</span>
+                                                    </>
+                                                )}
+                                                {countCategory === 'PARTIAL' && (
+                                                    <>
+                                                        <span>🗄️ Kiểm Kê 1 Phần / Khu Vực</span>
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">Theo phân vùng</span>
+                                                    </>
+                                                )}
+                                                {countCategory === 'RANDOM' && (
+                                                    <>
+                                                        <span>🎲 Kiểm Kê Ngẫu Nhiên / Đột Xuất</span>
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Giám sát rủi ro</span>
+                                                    </>
+                                                )}
+                                                {countCategory === 'CYCLE' && (
+                                                    <>
+                                                        <span>🔄 Kiểm Kê Cuốn Chiếu Hàng Ngày</span>
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">Chu kỳ tuần</span>
+                                                    </>
+                                                )}
+                                            </h2>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateModal(false)}
+                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
                                 </div>
-                            </div>
 
-                            {/* Warehouse Selector */}
-                            <div>
-                                <label className="text-slate-700 font-bold block mb-1">Kho Hàng Kiểm Kê:*</label>
-                                <select
-                                    value={formWarehouseId}
-                                    onChange={e => {
-                                        setFormWarehouseId(e.target.value)
-                                        fetchLocationOptions(e.target.value)
-                                    }}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
-                                    required
-                                >
-                                    {warehouses.map(w => (
-                                        <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
-                                    ))}
-                                </select>
-                            </div>
+                                {createError && (
+                                    <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-lg text-xs flex items-center gap-2">
+                                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                                        {createError}
+                                    </div>
+                                )}
 
-                            {/* Title */}
-                            <div>
-                                <label className="text-slate-700 font-bold block mb-1">Tên / Mục Đích Phiếu Kiểm Kê:</label>
-                                <input
-                                    type="text"
-                                    placeholder="vd: Kiểm kê định kỳ tháng 8, Kiểm kê đột xuất hầm rượu..."
-                                    value={formTitle}
-                                    onChange={e => setFormTitle(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
-                                />
-                            </div>
-
-                            {/* Scope-specific Options */}
-                            {formScopeType === 'CYCLE_COUNT' && (
-                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
+                                <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
+                                    {/* Kho hàng */}
                                     <div>
-                                        <label className="text-slate-700 font-bold block mb-1">Lọc theo Vị trí (Zone):</label>
+                                        <label className="text-slate-700 font-bold block mb-1">Kho Hàng Kiểm Kê:*</label>
                                         <select
-                                            value={formSelectedZone}
-                                            onChange={e => setFormSelectedZone(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 text-xs focus:outline-none"
+                                            value={formWarehouseId}
+                                            onChange={e => handleWarehouseChange(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
+                                            required
                                         >
-                                            <option value="">-- Tất cả vị trí --</option>
-                                            {Array.from(new Set(locationOptions.map(l => l.zone))).map(z => (
-                                                <option key={z} value={z}>{z}</option>
+                                            {warehouses.map(w => (
+                                                <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
                                             ))}
                                         </select>
                                     </div>
-                                </div>
-                            )}
 
-                            {formScopeType === 'TRANSACTED_ITEMS' && (
-                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                    <label className="text-slate-700 font-bold block mb-1">Phát sinh giao dịch trong (Ngày):</label>
-                                    <input
-                                        type="number"
-                                        value={formTransactedDays}
-                                        onChange={e => setFormTransactedDays(parseInt(e.target.value, 10) || 30)}
-                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 font-mono text-xs focus:outline-none"
-                                    />
-                                </div>
-                            )}
-
-                            {formScopeType === 'SPOT_COUNT' && (
-                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
+                                    {/* Tiêu đề */}
                                     <div>
-                                        <label className="text-slate-700 font-bold block mb-1">Nhập danh sách mã SKU cần đột xuất (cách nhau bởi dấu phẩy/xuống dòng):</label>
-                                        <textarea
-                                            rows={3}
-                                            placeholder="vd: L10001, L10007, L20015..."
-                                            value={formSpotSkus}
-                                            onChange={e => setFormSpotSkus(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 font-mono text-xs focus:outline-none"
+                                        <label className="text-slate-700 font-bold block mb-1">Tên / Mục Đích Phiếu Kiểm Kê:*</label>
+                                        <input
+                                            type="text"
+                                            placeholder="vd: Kiểm kê toàn bộ hầm rượu, Kiểm kê đột xuất tủ vang..."
+                                            value={formTitle}
+                                            onChange={e => setFormTitle(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
+                                            required
                                         />
                                     </div>
-                                </div>
-                            )}
 
-                            {/* Staff Assignee */}
-                            <div>
-                                <label className="text-slate-700 font-bold block mb-1">Phân Công Cho Nhân Viên:</label>
-                                <select
-                                    value={formAssignedToId}
-                                    onChange={e => setFormAssignedToId(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
-                                >
-                                    <option value="">-- Chưa phân công (Để tự do) --</option>
-                                    {staffList.map(u => (
-                                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                                    ))}
-                                </select>
-                            </div>
+                                    {/* Cấu hình đặc thù: FULL */}
+                                    {countCategory === 'FULL' && (
+                                        <div className="bg-emerald-50/80 border border-emerald-200 p-3.5 rounded-lg flex items-start gap-2.5 text-emerald-950">
+                                            <Layers className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                                            <div>
+                                                <h5 className="font-bold text-xs text-emerald-900">Phạm Vi Toàn Kho (100% SKU)</h5>
+                                                <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                                                    Hệ thống sẽ tự động quét và nạp toàn bộ danh mục sản phẩm cùng các vị trí lưu kho đang có tồn tại kho hàng này để đưa vào biên bản kiểm đếm.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
-                            {/* Blind Count Option Toggle */}
-                            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                <input
-                                    type="checkbox"
-                                    id="blindToggle"
-                                    checked={formIsBlind}
-                                    onChange={e => setFormIsBlind(e.target.checked)}
-                                    className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300"
-                                />
-                                <label htmlFor="blindToggle" className="cursor-pointer">
-                                    <span className="font-bold text-slate-900 block">Kiểm Kê Mù (Giấu Tồn Sổ Sách)</span>
-                                    <span className="text-[10px] text-slate-500 block">Ẩn số liệu tồn sổ sách trên điện thoại nhân viên để đảm bảo đếm thực tế 100%</span>
-                                </label>
-                            </div>
+                                    {/* Cấu hình đặc thù: PARTIAL */}
+                                    {countCategory === 'PARTIAL' && (
+                                        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-slate-700 font-bold block mb-1">Lọc theo Vị trí (Zone / Kệ):*</label>
+                                                    <select
+                                                        value={formSelectedZone}
+                                                        onChange={e => setFormSelectedZone(e.target.value)}
+                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#0E7490]"
+                                                    >
+                                                        <option value="">-- Tất cả vị trí trong kho --</option>
+                                                        {Array.from(new Set(locationOptions.map(l => l.zone))).map(z => (
+                                                            <option key={z} value={z}>{z}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-slate-700 font-bold block mb-1">Lọc theo Loại Vang (Tùy chọn):</label>
+                                                    <select
+                                                        value={formWineType}
+                                                        onChange={e => setFormWineType(e.target.value)}
+                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#0E7490]"
+                                                    >
+                                                        <option value="">-- Tất cả loại vang --</option>
+                                                        <option value="RED">Vang đỏ (Red Wine)</option>
+                                                        <option value="WHITE">Vang trắng (White Wine)</option>
+                                                        <option value="SPARKLING">Champagne & Sủi bọt</option>
+                                                        <option value="ROSE">Vang hồng (Rosé)</option>
+                                                        <option value="FORTIFIED">Fortified / Dessert Wine</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 italic">
+                                                ℹ️ Chỉ kiểm kê các kệ hoặc phân loại được chọn, các khu vực khác không bị khóa dữ liệu.
+                                            </p>
+                                        </div>
+                                    )}
 
-                            {/* Submit Buttons */}
-                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-lg cursor-pointer"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs cursor-pointer"
-                                >
-                                    {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu Kiểm Kê'}
-                                </button>
+                                    {/* Cấu hình đặc thù: RANDOM */}
+                                    {countCategory === 'RANDOM' && (
+                                        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
+                                            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setRandomCountMode('RANDOM_SAMPLE')
+                                                        handleFetchSampleSkus(formWarehouseId, sampleCountSize)
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-md font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
+                                                        randomCountMode === 'RANDOM_SAMPLE'
+                                                            ? 'bg-[#0891B2] text-white shadow-2xs'
+                                                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    <Shuffle size={13} /> Bốc Ngẫu Nhiên Hệ Thống
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setRandomCountMode('MANUAL_SKUS')}
+                                                    className={`px-3 py-1.5 rounded-md font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
+                                                        randomCountMode === 'MANUAL_SKUS'
+                                                            ? 'bg-[#0891B2] text-white shadow-2xs'
+                                                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    ✏️ Nhập Mã SKU Nghi Vấn
+                                                </button>
+                                            </div>
+
+                                            {randomCountMode === 'RANDOM_SAMPLE' ? (
+                                                <div className="space-y-3">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-slate-600 font-bold">Số lượng mã:</span>
+                                                            {[5, 10, 15, 20].map(sz => (
+                                                                <button
+                                                                    type="button"
+                                                                    key={sz}
+                                                                    onClick={() => {
+                                                                        setSampleCountSize(sz)
+                                                                        handleFetchSampleSkus(formWarehouseId, sz)
+                                                                        const targetWh = warehouses.find(w => w.id === formWarehouseId)
+                                                                        setFormTitle(`Kiểm kê ngẫu nhiên (${sz} mã) - ${targetWh?.name || 'Kho'}`)
+                                                                    }}
+                                                                    className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
+                                                                        sampleCountSize === sz
+                                                                            ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold'
+                                                                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                                                                    }`}
+                                                                >
+                                                                    {sz} mã
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleFetchSampleSkus(formWarehouseId, sampleCountSize)}
+                                                            disabled={loadingSample}
+                                                            className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded font-bold flex items-center gap-1 cursor-pointer transition"
+                                                        >
+                                                            <RotateCcw size={12} className={loadingSample ? 'animate-spin' : ''} />
+                                                            Bốc bộ mã khác
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Preview list */}
+                                                    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                                        <div className="p-2 bg-slate-100 border-b border-slate-200 flex justify-between items-center text-[11px] font-bold text-slate-700">
+                                                            <span>Danh sách {previewSampleSkus.length} mã SKU được bốc ngẫu nhiên:</span>
+                                                            <span className="text-slate-500 font-normal">Có thể loại bỏ mã nếu muốn</span>
+                                                        </div>
+                                                        <div className="max-h-40 overflow-y-auto divide-y divide-slate-100">
+                                                            {loadingSample ? (
+                                                                <div className="p-4 text-center text-slate-400">Đang bốc ngẫu nhiên từ kho...</div>
+                                                            ) : previewSampleSkus.length === 0 ? (
+                                                                <div className="p-4 text-center text-slate-400">Kho hàng chưa có dữ liệu tồn để bốc mẫu.</div>
+                                                            ) : (
+                                                                previewSampleSkus.map(s => (
+                                                                    <div key={s.id} className="p-2 px-3 flex items-center justify-between gap-2 hover:bg-slate-50">
+                                                                        <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                                                                            <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] border border-slate-200 shrink-0">
+                                                                                {s.skuCode}
+                                                                            </span>
+                                                                            <span className="truncate font-semibold text-slate-800">{s.productName}</span>
+                                                                            {s.vintage && <span className="text-[10px] text-slate-500 font-mono shrink-0">({s.vintage})</span>}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                            <span className="font-mono text-slate-700 text-xs font-bold">{s.totalQty} chai</span>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setPreviewSampleSkus(prev => prev.filter(x => x.id !== s.id))}
+                                                                                className="text-slate-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                                                                                title="Loại bỏ mã này"
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <label className="text-slate-700 font-bold block mb-1">Nhập danh sách mã SKU cần kiểm tra đột xuất:*</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        placeholder="vd: L10001, L10007, CH-MARG-2015 (cách nhau bởi dấu phẩy hoặc xuống dòng)..."
+                                                        value={formSpotSkus}
+                                                        onChange={e => setFormSpotSkus(e.target.value)}
+                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 font-mono text-xs focus:outline-none focus:border-[#0E7490]"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Cấu hình đặc thù: CYCLE */}
+                                    {countCategory === 'CYCLE' && (
+                                        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="font-bold text-slate-800">Tiến độ chu kỳ ({cycleDaysWindow} ngày):</span>
+                                                <span className="font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                                    Đã kiểm {cycleProgress?.progressPercent || 0}%
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
+                                                            const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
+                                                            setSelectedDailySkus(topN)
+                                                            setFormTitle(`Kiểm kê cuốn chiếu hôm nay (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                                        }
+                                                    }}
+                                                    className="px-2.5 py-1.5 bg-lys-teal-strong hover:bg-lys-teal-hover text-white rounded font-bold text-xs cursor-pointer shadow-2xs flex items-center gap-1"
+                                                >
+                                                    <Zap size={13} /> Đề xuất ~{cycleProgress?.dailySuggestedCount || 15} mã hôm nay
+                                                </button>
+                                                {[5, 10, 15].map(cnt => (
+                                                    <button
+                                                        type="button"
+                                                        key={cnt}
+                                                        onClick={() => {
+                                                            if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
+                                                                const topN = cycleProgress.uncountedProducts.slice(0, cnt).map(p => p.skuCode)
+                                                                setSelectedDailySkus(topN)
+                                                                setFormTitle(`Kiểm kê cuốn chiếu (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                                            }
+                                                        }}
+                                                        className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded font-semibold text-xs cursor-pointer"
+                                                    >
+                                                        Top {cnt} tồn cao
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <p className="text-[11px] text-slate-500">
+                                                {selectedDailySkus.length > 0
+                                                    ? `Đã chọn ${selectedDailySkus.length} mã SKU ưu tiên tồn kho cao nhất chưa kiểm tra.`
+                                                    : `Còn ${cycleProgress?.uncountedProductCount || 0} mã chưa kiểm tra trong chu kỳ này.`}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Phân công & Tùy chọn */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                        <div>
+                                            <label className="text-slate-700 font-bold block mb-1">Phân Công Nhân Viên:</label>
+                                            <select
+                                                value={formAssignedToId}
+                                                onChange={e => setFormAssignedToId(e.target.value)}
+                                                className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490]"
+                                            >
+                                                <option value="">-- Để tự do (Ai đếm cũng được) --</option>
+                                                {staffList.map(u => (
+                                                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200 self-end">
+                                            <input
+                                                type="checkbox"
+                                                id="blindToggle"
+                                                checked={formIsBlind}
+                                                onChange={e => setFormIsBlind(e.target.checked)}
+                                                className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300 cursor-pointer"
+                                            />
+                                            <label htmlFor="blindToggle" className="cursor-pointer">
+                                                <span className="font-bold text-slate-900 block text-xs">Kiểm Kê Mù (Blind Count)</span>
+                                                <span className="text-[10px] text-slate-500 block">Ẩn số tồn sổ sách trên máy người đếm</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Submit Buttons */}
+                                    <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreateWizardStep(1)}
+                                            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 text-xs cursor-pointer flex items-center gap-1"
+                                        >
+                                            <ArrowLeft size={13} /> Chọn lại hình thức
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCreateModal(false)}
+                                                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-lg text-xs cursor-pointer"
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                            >
+                                                <Zap size={14} />
+                                                {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu & Bắt Đầu Kiểm Kê'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
+                        )}
                     </div>
                 </div>
             )}

@@ -648,7 +648,14 @@ Cần thiết vì kho có thể có vùng mù sóng.
 |---|---|---|
 | **Tách Biệt 2 Tab Phân Luồng Chuyên Trách** | `StockCountClient.tsx` | Tách biệt màn hình kiểm kê thành 2 Tab rõ ràng: Tab 1 "Phiếu Kiểm Kê" (`SESSIONS`) tập trung tra cứu lịch sử, trạng thái, in ấn biên bản; Tab 2 "Kế Hoạch Cuốn Chiếu" (`CYCLE_PLAN`) tập trung theo dõi tiến độ chu kỳ 7/14/30 ngày và khởi chạy đợt đếm hàng ngày |
 | **Thanh Lọc SKU & Vị Trí Trong Kế Hoạch Cuốn Chiếu** | `StockCountClient.tsx`, `actions.ts` | Bổ sung thanh tìm kiếm SKU / tên rượu trực tiếp trong bảng cuốn chiếu; cập nhật `getCycleCountProgress` trả về đầy đủ vị trí kệ (`locations`), niên vụ (`vintage`) và tồn kho (`totalQty`) cho cả danh sách đã kiểm và chưa kiểm |
-| **Callout Chuyển Hướng Nhanh Trong Modal Tạo Phiếu** | `StockCountClient.tsx` | Đặt banner gợi ý "Kiểm kê cuốn chiếu hôm nay" ngay đầu modal Tạo Phiếu Kiểm Kê, cho phép thủ kho bấm 1 chạm để nạp ngay ~N mã chưa đếm thay vì phải thao tác chọn thủ công |
+#### Phase 17: Wizard Khởi Tạo Kiểm Kê 2 Bước Phân Định 4 Hình Thức & Bốc Mẫu Ngẫu Nhiên (2-Step Creation Wizard & Random Sampling) (06/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Modal Wizard 2 Bước Chọn Hình Thức Kiểm Kê** | `StockCountClient.tsx` | Thay thế form tạo phiếu dồn ứ bằng luồng Wizard 2 bước: Bước 1 hiển thị 4 Card trực quan (*Toàn Bộ Kho*, *1 Phần / Khu Vực Kệ*, *Ngẫu Nhiên / Đột Xuất*, *Cuốn Chiếu Hàng Ngày*); Bước 2 mở form cấu hình chuyên biệt chỉ chứa các trường cần thiết của loại đó |
+| **API Bốc Mẫu Ngẫu Nhiên (`getRandomSampleSkus`)** | `actions.ts` | Truy vấn các lô hàng `StockLot` có tồn khả dụng (`qtyAvailable > 0`) tại kho được chọn, xáo trộn ngẫu nhiên và bốc ra N mã SKU (5, 10, 15, 20 mã) |
+| **Giao Diện Xem Trước & Loại Trừ Mã Bốc Mẫu** | `StockCountClient.tsx` | Hiển thị danh sách mã vừa bốc kèm niên vụ, tồn kho khả dụng; cho phép thủ kho bấm nút "Bốc bộ mã khác" hoặc bấm `✕` để xóa bớt mã không mong muốn trước khi tạo phiếu |
+| **Cấu Hình Chuyên Biệt Từng Loại & Nút Quay Lại** | `StockCountClient.tsx` | Kiểm kê toàn kho hiển thị banner xác nhận phạm vi 100%; Kiểm kê 1 phần hiển thị lọc Zone và loại vang; Kiểm kê cuốn chiếu tích hợp tiến độ % tuần; có nút `[← Chọn lại hình thức]` quay lại bước 1 linh hoạt |
 
 ### Chi tiết GR Variance Report
 
