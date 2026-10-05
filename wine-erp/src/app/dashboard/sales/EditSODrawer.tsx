@@ -15,6 +15,7 @@ import { SALES_I18N, getSOChannelLabel, getPriceBadgeLabelByLocale } from './i18
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
+import { Badge, Button, Drawer } from '@/components/ui'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -26,17 +27,17 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
 const getPriceBadgeStyle = (source: string) => {
     switch (source) {
         case 'SPECIAL_PRICE':
-            return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/50'
+            return 'bg-amber-100 text-amber-800 border-amber-300'
         case 'FIXED_PRICE':
-            return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-700/50'
+            return 'bg-teal-100 text-teal-800 border-teal-300'
         case 'FIXED_DISCOUNT':
-            return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-700/50'
+            return 'bg-orange-100 text-orange-800 border-orange-300'
         case 'CHANNEL_BASE':
-            return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700/50'
+            return 'bg-emerald-100 text-emerald-800 border-emerald-300'
         case 'RETAIL_FALLBACK':
-            return 'bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700/50'
+            return 'bg-sky-100 text-sky-800 border-sky-300'
         default:
-            return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+            return 'bg-slate-100 text-slate-700 border-slate-300'
     }
 }
 
@@ -497,43 +498,28 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            {/* Backdrop click outside to close */}
-            <div className="hidden md:block md:flex-1" onClick={onClose} />
-
-            {/* Main Drawer Container */}
-            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-slate-50 shadow-2xl border-l border-slate-200 dark:border-slate-200 animate-in slide-in-from-right duration-300">
-                
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-200 bg-white dark:bg-[#15232E] shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-500/20">
-                            ✏️
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-base font-bold text-slate-900 dark:text-white">{t.title}</h2>
-                                <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700/50">
-                                    {soNo}
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.subtitle}</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={onClose} 
-                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                        title={isEn ? 'Close' : 'Đóng'}
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50 dark:bg-[#0E171E]">
+        <Drawer
+            open
+            onClose={onClose}
+            size="xl"
+            className="bg-lys-bg"
+            title={t.title}
+            headerExtra={soNo && <Badge tone="warning" className="type-code">{soNo}</Badge>}
+            description={t.subtitle}
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>{t.cancel}</Button>
+                    <Button onClick={handleSave} loading={saving} disabled={lines.length === 0 || loadingSO}>
+                        {!saving && <Save size={14} />}
+                        {saving ? t.saving : t.saveChanges}
+                    </Button>
+                </>
+            }
+        >
+                <div className="space-y-5">
                     {(loadingData || loadingSO) ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-3">
-                            <Loader2 size={32} className="animate-spin text-amber-600 dark:text-amber-400" />
+                            <Loader2 size={32} className="animate-spin text-amber-600" />
                             <p className="text-xs text-slate-500 font-medium">{t.loadingData}</p>
                         </div>
                     ) : (
@@ -670,11 +656,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                                 {/* Shipping Address Selection */}
                                 <div className="md:col-span-4">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         {t.shippingAddressLabel}
                                     </label>
                                     {!selectedCustomer ? (
-                                        <div className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-200 text-slate-400 bg-slate-100/60 dark:bg-slate-900/40">
+                                        <div className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 text-slate-400 bg-slate-100/60">
                                             {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
@@ -685,7 +671,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         <select
                                             value={shippingAddressId}
                                             onChange={e => setShippingAddressId(e.target.value)}
-                                            className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                         >
                                             <option value="">{t.selectAddressPlaceholder}</option>
                                             {selectedCustomer.addresses.map(addr => (
@@ -699,14 +685,14 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                                 {/* Order Date */}
                                 <div className="md:col-span-3">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         📅 {t.orderDateLabel}
                                     </label>
                                     <input
                                         type="date"
                                         value={orderDate}
                                         onChange={e => setOrderDate(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-semibold font-mono rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-xs font-semibold font-mono rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     />
                                 </div>
                             </div>
@@ -716,9 +702,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 const selectedAddr = selectedCustomer.addresses?.find(a => a.id === shippingAddressId)
                                 if (!selectedAddr) return null
                                 return (
-                                    <div className="p-3 rounded-lg bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/40 text-xs text-slate-700 dark:text-slate-300 leading-relaxed flex items-center justify-between flex-wrap gap-2">
+                                    <div className="p-3 rounded-lg bg-teal-50/70 border border-teal-200 text-xs text-slate-700 leading-relaxed flex items-center justify-between flex-wrap gap-2">
                                         <div>
-                                            <span className="font-bold text-teal-800 dark:text-teal-300">{selectedAddr.label}: </span>
+                                            <span className="font-bold text-teal-800">{selectedAddr.label}: </span>
                                             {selectedAddr.address}
                                             {selectedAddr.ward && `, ${selectedAddr.ward}`}
                                             {selectedAddr.district && `, ${selectedAddr.district}`}
@@ -735,19 +721,19 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                             {/* Credit Status Banner */}
                             {selectedCustomer && (
-                                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-xs text-xs">
+                                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs text-xs">
                                     <div className="flex items-center gap-4 flex-wrap">
                                         <span className={`font-bold flex items-center gap-1.5 ${isCreditHold ? 'text-rose-600' : creditWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
                                             {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
                                         </span>
-                                        <span className="text-slate-500 dark:text-slate-400">
-                                            {t.creditLimit} <strong className="font-mono text-slate-800 dark:text-slate-200">{formatCurrency(effectiveCreditLimit)}</strong>
+                                        <span className="text-slate-500">
+                                            {t.creditLimit} <strong className="font-mono text-slate-800">{formatCurrency(effectiveCreditLimit)}</strong>
                                         </span>
-                                        <span className="text-slate-500 dark:text-slate-400">
-                                            {t.arBalance} <strong className="font-mono text-amber-700 dark:text-amber-300">{formatCurrency(arBalance)}</strong>
+                                        <span className="text-slate-500">
+                                            {t.arBalance} <strong className="font-mono text-amber-700">{formatCurrency(arBalance)}</strong>
                                         </span>
-                                        <span className="text-slate-500 dark:text-slate-400">
-                                            {t.creditAvailable} <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(Math.max(0, creditAvailable))}</strong>
+                                        <span className="text-slate-500">
+                                            {t.creditAvailable} <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700'}`}>{formatCurrency(Math.max(0, creditAvailable))}</strong>
                                         </span>
                                     </div>
                                 </div>
@@ -756,39 +742,39 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             {/* Row 2: Kênh Bán, Payment Term, Pháp Nhân */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         {t.channelLabel}
                                     </label>
                                     <select
                                         value={channel}
                                         onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         {CHANNELS.map(c => <option key={c.value} value={c.value}>{getSOChannelLabel(c.value, locale)}</option>)}
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         {t.paymentTermLabel}
                                     </label>
                                     <select
                                         value={paymentTerm}
                                         onChange={e => setPaymentTerm(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         {['COD', 'NET7', 'NET14', 'NET15', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(term => <option key={term} value={term}>{term}</option>)}
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         {t.entityLabel}
                                     </label>
                                     <select
                                         value={legalEntityId}
                                         onChange={e => setLegalEntityId(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         <option value="">{t.selectEntityPlaceholder}</option>
                                         {entities.map(e => <option key={e.id} value={e.id}>{e.name} ({e.code})</option>)}
@@ -798,7 +784,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                             {/* Diễn giải / Ghi chú đơn hàng */}
                             <div>
-                                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     {t.notesLabel}
                                 </label>
                                 <DebouncedTextarea
@@ -806,7 +792,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     onChange={setNotes}
                                     placeholder={t.notesPlaceholder}
                                     rows={2}
-                                    className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                    className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                 />
                             </div>
 
@@ -815,7 +801,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-center gap-2">
                                         <ShoppingBag size={16} className="text-amber-600" />
-                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                             {t.itemsTitle(lines.length)}
                                         </label>
                                     </div>
@@ -838,7 +824,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     setAddProductSearchQuery(e.target.value)
                                                     setIsAddDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-8 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                                className="w-full pl-3 pr-8 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                             />
                                             <div className="absolute right-2.5 text-slate-400 pointer-events-none">
                                                 <Search size={14} />
@@ -847,7 +833,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                                         {/* Autocomplete Product Results */}
                                         {isAddDropdownOpen && (
-                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white dark:bg-white border-slate-200 dark:border-slate-200 divide-y divide-slate-100 dark:divide-[#E2E8F0]">
+                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white border-slate-200 divide-y divide-slate-100">
                                                 {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
                                                     <div className="px-3 py-2.5 text-xs text-slate-400 text-center">
                                                         {t.noProductFoundOrAdded}
@@ -861,18 +847,18 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 setAddProductSearchQuery('')
                                                                 setIsAddDropdownOpen(false)
                                                             }}
-                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-amber-50/70 dark:hover:bg-[#1C2C3A] transition-colors flex items-center justify-between gap-2"
+                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-amber-50/70 transition-colors flex items-center justify-between gap-2"
                                                         >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
                                                                 {customerCodesMap[p.id] && (
-                                                                    <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                    <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
                                                                         [{customerCodesMap[p.id]}]
                                                                     </span>
                                                                 )}
-                                                                <span className="font-bold font-mono text-teal-700 dark:text-teal-400 shrink-0">[{p.skuCode}]</span>
-                                                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{p.productName}</span>
+                                                                <span className="font-bold font-mono text-teal-700 shrink-0">[{p.skuCode}]</span>
+                                                                <span className="font-medium text-slate-800 truncate">{p.productName}</span>
                                                             </div>
-                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 font-medium">
+                                                            <span className="text-[10px] text-slate-500 shrink-0 font-medium">
                                                                 ({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})
                                                             </span>
                                                         </div>
@@ -884,19 +870,19 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 </div>
 
                                 {lines.length === 0 ? (
-                                    <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-200 bg-white dark:bg-[#121E27]">
-                                        <ShoppingBag size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t.emptyItemsTitle}</p>
+                                    <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 bg-white">
+                                        <ShoppingBag size={28} className="mx-auto mb-2 text-slate-300" />
+                                        <p className="text-xs font-semibold text-slate-600">{t.emptyItemsTitle}</p>
                                         <p className="text-[11px] text-slate-400 mt-0.5">{t.emptyItemsSubtitle}</p>
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-200 bg-white dark:bg-[#121E27] shadow-xs">
+                                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
                                         <table className="w-full text-xs text-left border-collapse min-w-[650px]">
                                             <thead>
-                                                <tr className="bg-slate-100/90 dark:bg-[#162531] text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-200 font-bold">
+                                                <tr className="bg-slate-100/90 text-slate-700 border-b border-slate-200 font-bold">
                                                     <th className="px-3.5 py-3">{t.thProduct}</th>
                                                     {hasCustomerCodes && (
-                                                        <th className="px-3 py-3 w-24 text-center text-amber-600 dark:text-amber-400 font-bold">{t.thCustomerCode}</th>
+                                                        <th className="px-3 py-3 w-24 text-center text-amber-600 font-bold">{t.thCustomerCode}</th>
                                                     )}
                                                     <th className="px-3.5 py-3 w-20 text-center">{t.thStock} {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
                                                     <th className="px-3.5 py-3 w-20 text-center">{t.thQty}</th>
@@ -907,7 +893,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     <th className="px-2 py-3 w-10 text-center"></th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-[#1C2C3A]">
+                                            <tbody className="divide-y divide-slate-100">
                                                 {lines.map((l, idx) => {
                                                     const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
                                                     const lowStock = l.stock < l.qtyOrdered
@@ -915,10 +901,10 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
 
                                                     return (
-                                                        <tr key={idx} className={`hover:bg-slate-50/80 dark:hover:bg-white/50 transition-colors ${lowStock ? 'bg-rose-50/40 dark:bg-rose-950/20' : ''}`}>
+                                                        <tr key={idx} className={`hover:bg-slate-50/80 transition-colors ${lowStock ? 'bg-rose-50/40' : ''}`}>
                                                             <td className="px-3.5 py-2.5">
-                                                                <p className="font-mono font-bold text-slate-900 dark:text-white">{l.skuCode}</p>
-                                                                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-0.5 max-w-[320px]">{l.productName}</p>
+                                                                <p className="font-mono font-bold text-slate-900">{l.skuCode}</p>
+                                                                <p className="text-[11px] text-slate-600 leading-snug mt-0.5 max-w-[320px]">{l.productName}</p>
                                                                 {hasPriceBadge && (
                                                                     <div className="mt-1">
                                                                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getPriceBadgeStyle(priceSource)}`}>
@@ -929,13 +915,13 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             </td>
                                                             {hasCustomerCodes && (
                                                                 <td className="px-3 py-2.5 text-center">
-                                                                    <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/40">
+                                                                    <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                                                                         {l.customerItemCode || customerCodesMap[l.productId] || '—'}
                                                                     </span>
                                                                 </td>
                                                             )}
                                                             <td className="px-3 py-2.5 text-center">
-                                                                <span className={`font-mono font-bold ${lowStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                                                                <span className={`font-mono font-bold ${lowStock ? 'text-rose-600' : 'text-emerald-700'}`}>
                                                                     {l.stock}
                                                                 </span>
                                                             </td>
@@ -945,10 +931,10 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                     min={1}
                                                                     value={l.qtyOrdered}
                                                                     onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
-                                                                    className="w-16 px-2 py-1 text-xs text-center font-bold rounded-md border border-slate-300 dark:border-slate-200 bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                                                    className="w-16 px-2 py-1 text-xs text-center font-bold rounded-md border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
                                                                 />
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                            <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700">
                                                                 {formatCurrency(l.unitPrice)}
                                                             </td>
                                                             <td className="px-3 py-2.5 text-center">
@@ -958,28 +944,28 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                     max={100}
                                                                     value={l.lineDiscountPct}
                                                                     onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
-                                                                    className="w-14 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 dark:border-slate-200 bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                                                    className="w-14 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
                                                                 />
                                                             </td>
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <select
                                                                     value={l.vatRate ?? 10}
                                                                     onChange={e => updateLine(idx, 'vatRate', Number(e.target.value))}
-                                                                    className="w-16 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 dark:border-slate-200 bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                                                    className="w-16 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
                                                                 >
                                                                     <option value={10}>10%</option>
                                                                     <option value={8}>8%</option>
                                                                     <option value={0}>0%</option>
                                                                 </select>
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-right font-mono font-bold text-teal-700 dark:text-teal-400">
+                                                            <td className="px-3 py-2.5 text-right font-mono font-bold text-teal-700">
                                                                 {formatCurrency(lineTotal)}
                                                             </td>
                                                             <td className="px-2 py-2.5 text-center">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => removeLine(idx)}
-                                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
+                                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                                                                     title={t.deleteLine}
                                                                 >
                                                                     <Trash2 size={15} />
@@ -995,29 +981,29 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             </div>
 
                             {/* Section: Tổng Hợp Tài Chính & Chiết Khấu */}
-                            <div className="p-4 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-2">
                                     <Tag size={15} className="text-amber-600" />
-                                    <span className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">{t.orderDiscountLabel}</span>
+                                    <span className="text-xs font-bold uppercase text-slate-700">{t.orderDiscountLabel}</span>
                                     <input
                                         type="number"
                                         min={0}
                                         max={100}
                                         value={orderDiscount}
                                         onChange={e => setOrderDiscount(Math.min(100, Math.max(0, +e.target.value)))}
-                                        className="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-300 dark:border-slate-200 bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                        className="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
                                     />
                                     <span className="text-xs font-semibold text-slate-500">%</span>
                                 </div>
 
                                 <div className="text-right space-y-1">
                                     {isVatInclusive && (
-                                        <div className="mb-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                        <div className="mb-1 text-xs text-emerald-600 font-medium">
                                             {t.vatInclusiveNotice(channel)}
                                         </div>
                                     )}
-                                    <div className="flex justify-end gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                                        <span>{isVatInclusive ? t.preTaxExtracted : t.preTaxNormal} <strong className="font-mono text-slate-700 dark:text-slate-200">{formatCurrency(netSubtotal)}</strong></span>
+                                    <div className="flex justify-end gap-3 text-xs text-slate-500 flex-wrap">
+                                        <span>{isVatInclusive ? t.preTaxExtracted : t.preTaxNormal} <strong className="font-mono text-slate-700">{formatCurrency(netSubtotal)}</strong></span>
                                         <span>•</span>
                                         {vatBreakdown.length > 1 ? (
                                             <span>
@@ -1028,13 +1014,13 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         ) : (
                                             <span>
                                                 VAT ({vatBreakdown[0]?.rate ?? 10}%){isVatInclusive ? (isEn ? ' (extracted)' : ' (bóc tách)') : ''}:{' '}
-                                                <strong className="font-mono text-slate-700 dark:text-slate-200">{formatCurrency(vatAmount)}</strong>
+                                                <strong className="font-mono text-slate-700">{formatCurrency(vatAmount)}</strong>
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex justify-end items-baseline gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t.grandTotalLabel}</span>
-                                        <span className="text-xl font-black font-mono text-amber-700 dark:text-amber-400">
+                                    <div className="flex justify-end items-baseline gap-2 pt-1 border-t border-slate-100">
+                                        <span className="text-xs font-semibold text-slate-600">{t.grandTotalLabel}</span>
+                                        <span className="text-xl font-black font-mono text-amber-700">
                                             {formatCurrency(finalTotal)}
                                         </span>
                                     </div>
@@ -1043,27 +1029,6 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                         </>
                     )}
                 </div>
-
-                {/* Footer Buttons */}
-                <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-200 bg-white dark:bg-[#15232E] flex items-center justify-end gap-3 shrink-0">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-5 py-2.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-                    >
-                        {t.cancel}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={saving || lines.length === 0 || loadingSO}
-                        className="px-6 py-2.5 text-xs font-bold rounded-lg flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-                    >
-                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {saving ? t.saving : t.saveChanges}
-                    </button>
-                </div>
-            </div>
-        </div>
+        </Drawer>
     )
 }

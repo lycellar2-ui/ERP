@@ -13,9 +13,9 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND } from '@/lib/utils'
 
 const STOP_STATUS: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    PENDING: { label: 'Chờ Giao', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: '⏳' },
-    DELIVERED: { label: 'Đã Giao', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: '✅' },
-    FAILED: { label: 'Thất Bại', color: '#E05252', bg: 'rgba(224,82,82,0.15)', icon: '❌' },
+    PENDING: { label: 'Chờ Giao', color: '#B45309', bg: 'rgba(180,83,9,0.15)', icon: '⏳' },
+    DELIVERED: { label: 'Đã Giao', color: '#15803D', bg: 'rgba(21,128,61,0.15)', icon: '✅' },
+    FAILED: { label: 'Thất Bại', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)', icon: '❌' },
 }
 
 // ── Mobile Shipper View ──────────────────────────
@@ -170,7 +170,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: '#F8FAFC' }}>
                         <div className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%`, background: pct === 100 ? '#5BA88A' : '#87CBB9' }} />
+                            style={{ width: `${pct}%`, background: pct === 100 ? '#15803D' : '#0E7490' }} />
                     </div>
                     <span className="text-xs font-bold whitespace-nowrap" style={{ color: '#0891B2' }}>
                         {manifest.deliveredStops}/{manifest.totalStops}
@@ -187,13 +187,13 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                     </div>
                     <div className="p-2 rounded-lg text-center" style={{ background: '#F8FAFC' }}>
                         <p className="text-xs" style={{ color: '#64748B' }}>Đã Giao</p>
-                        <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>
+                        <p className="text-lg font-bold" style={{ color: '#15803D' }}>
                             {manifest.deliveredStops}
                         </p>
                     </div>
                     <div className="p-2 rounded-lg text-center" style={{ background: '#F8FAFC' }}>
                         <p className="text-xs" style={{ color: '#64748B' }}>COD</p>
-                        <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                        <p className="text-sm font-bold" style={{ color: '#B45309' }}>
                             {formatVND(manifest.totalCod)}
                         </p>
                     </div>
@@ -208,7 +208,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
 
                     return (
                         <div key={stop.id} className="rounded-xl overflow-hidden"
-                            style={{ background: '#FFFFFF', border: `1px solid ${isDelivered ? 'rgba(91,168,138,0.3)' : '#E2E8F0'}` }}>
+                            style={{ background: '#FFFFFF', border: `1px solid ${isDelivered ? 'rgba(21,128,61,0.3)' : '#E2E8F0'}` }}>
                             {/* Stop header */}
                             <div className="flex items-start gap-3 p-4">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
@@ -252,7 +252,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                             {stop.itemCount} SP
                                         </span>
                                         {stop.codAmount > 0 && (
-                                            <span className="text-[10px] font-bold" style={{ color: '#D4A853' }}>
+                                            <span className="text-[10px] font-bold" style={{ color: '#B45309' }}>
                                                 COD: {formatVND(stop.codAmount)}
                                             </span>
                                         )}
@@ -273,7 +273,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                     <a href={`https://maps.google.com/?q=${encodeURIComponent(stop.address)}`}
                                         target="_blank" rel="noopener"
                                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold flex-1 justify-center"
-                                        style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', border: '1px solid rgba(138,174,187,0.2)' }}>
+                                        style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', border: '1px solid rgba(100,116,139,0.2)' }}>
                                         <Navigation size={12} /> Bản Đồ
                                     </a>
                                     <button onClick={() => setActiveStop(stop)}
@@ -287,9 +287,9 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                             {/* Delivered info */}
                             {isDelivered && (
                                 <div className="px-4 pb-3">
-                                    <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(91,168,138,0.06)' }}>
-                                        <CheckCircle2 size={12} style={{ color: '#5BA88A' }} />
-                                        <span className="text-[11px]" style={{ color: '#5BA88A' }}>
+                                    <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(21,128,61,0.06)' }}>
+                                        <CheckCircle2 size={12} style={{ color: '#15803D' }} />
+                                        <span className="text-[11px]" style={{ color: '#15803D' }}>
                                             ✅ {stop.podSignedAt && new Date(stop.podSignedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                             {stop.notes && ` — ${stop.notes}`}
                                         </span>
@@ -477,7 +477,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                     <span className="text-xs" style={{ color: '#475569' }}>{stop.soNo}</span>
                     <span className="text-xs" style={{ color: '#64748B' }}>{stop.itemCount} sản phẩm</span>
                     {stop.codAmount > 0 && (
-                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>
+                        <span className="text-xs font-bold" style={{ color: '#B45309' }}>
                             COD: {formatVND(stop.codAmount)}
                         </span>
                     )}
@@ -489,7 +489,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                 {/* Receiver name */}
                 <div>
                     <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
-                        Người Nhận <span style={{ color: '#E05252' }}>*</span>
+                        Người Nhận <span style={{ color: '#B91C1C' }}>*</span>
                     </label>
                     <input type="text" value={name} onChange={e => setName(e.target.value)}
                         placeholder="Tên người nhận hàng"
@@ -512,7 +512,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                 {/* Signature */}
                 <div>
                     <label className="text-xs font-semibold block mb-1.5" style={{ color: '#64748B' }}>
-                        Chữ Ký Khách Hàng <span style={{ color: '#E05252' }}>*</span>
+                        Chữ Ký Khách Hàng <span style={{ color: '#B91C1C' }}>*</span>
                     </label>
                     <SignaturePad onEnd={url => setSignatureUrl(url)} />
                 </div>

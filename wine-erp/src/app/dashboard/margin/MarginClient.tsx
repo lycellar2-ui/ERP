@@ -5,6 +5,7 @@ import { Search, Download, Upload, Calculator, RefreshCw, Trash2, ArrowUpRight, 
 import { toast } from 'sonner'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { MarginProductRow, getMarginProducts, bulkImportMarginPrices } from './actions'
+import { WineTypeBadge } from '@/components/WineTypeBadge'
 
 // Flag emoji dictionary
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -16,23 +17,6 @@ const COUNTRY_FLAGS: Record<string, string> = {
 const COUNTRY_NAMES: Record<string, string> = {
     FR: 'Pháp', IT: 'Ý', ES: 'TBN', PT: 'BĐN', DE: 'Đức',
     US: 'Mỹ', AU: 'Úc', NZ: 'NZ', AR: 'Argentina', CL: 'Chile', ZA: 'Nam Phi',
-}
-
-const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    WHITE: { label: 'Vang trắng', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
-    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
-    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.12)' },
-    FORTIFIED: { label: 'Fortified', color: '#B39EDB', bg: 'rgba(179,158,219,0.12)' },
-    DESSERT: { label: 'Dessert', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
-}
-
-function WineTypeBadge({ type }: { type: string }) {
-    const cfg = WINE_TYPE_CONFIG[type] ?? { label: type, color: '#475569', bg: 'rgba(138,174,187,0.12)' }
-    return (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold"
-            style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-    )
 }
 
 function formatVND(val: number) {

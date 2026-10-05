@@ -7,10 +7,10 @@ import { getTastingEvents, createTastingEvent, type TastingEventRow } from './ac
 import { formatDate, formatVND } from '@/lib/utils'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    PLANNED: { label: 'Lên kế hoạch', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
-    ACTIVE: { label: 'Đang diễn ra', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    PLANNED: { label: 'Lên kế hoạch', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
+    ACTIVE: { label: 'Đang diễn ra', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
     COMPLETED: { label: 'Hoàn thành', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    CANCELLED: { label: 'Đã hủy', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    CANCELLED: { label: 'Đã hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 export function TastingEventsPanel() {
@@ -65,7 +65,7 @@ export function TastingEventsPanel() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Wine size={18} style={{ color: '#D4A853' }} />
+                    <Wine size={18} style={{ color: '#B45309' }} />
                     <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Sự Kiện Thử Rượu
                     </h3>
@@ -140,10 +140,10 @@ export function TastingEventsPanel() {
                                 )}
                                 <div className="grid grid-cols-4 gap-2">
                                     {[
-                                        { label: 'Max', value: ev.maxGuests, color: '#4A8FAB' },
+                                        { label: 'Max', value: ev.maxGuests, color: '#1D4ED8' },
                                         { label: 'RSVP', value: ev.rsvpCount, color: '#0891B2' },
-                                        { label: 'Check-in', value: ev.checkinCount, color: '#5BA88A' },
-                                        { label: 'Chuyển đổi', value: ev.conversionCount, color: '#D4A853' },
+                                        { label: 'Check-in', value: ev.checkinCount, color: '#15803D' },
+                                        { label: 'Chuyển đổi', value: ev.conversionCount, color: '#B45309' },
                                     ].map(m => (
                                         <div key={m.label} className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                             <p className="text-sm font-bold" style={{ color: m.color }}>{m.value}</p>

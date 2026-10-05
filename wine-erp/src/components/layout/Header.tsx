@@ -215,19 +215,13 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
     return (
         <header
-            className="sticky top-0 z-10 flex items-center justify-between px-4"
-            style={{
-                height: '42px',
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(12px)',
-                borderBottom: '1px solid #E2E8F0',
-            }}
+            className="sticky top-0 z-10 flex items-center justify-between px-4 h-[42px] bg-white/95 backdrop-blur-md border-b border-lys-border"
         >
             {/* Page title */}
             <div className="flex items-center">
                 {mobileMenuButton}
                 <div>
-                    <h1 className="font-bold text-sm leading-none tracking-wide" style={{ color: '#0F172A' }}>
+                    <h1 className="text-[15px] font-semibold leading-none text-lys-primary">
                         {title}
                     </h1>
                 </div>
@@ -243,7 +237,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             onClick={() => setLocale('vi')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'vi'
-                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    ? 'bg-lys-teal-strong text-white shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                             }`}
                             title="Tiếng Việt"
@@ -255,7 +249,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             onClick={() => setLocale('en')}
                             className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'en'
-                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    ? 'bg-lys-teal-strong text-white shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                             }`}
                             title="English"
@@ -270,23 +264,13 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 <div className="relative" ref={notiRef}>
                     <button
                         onClick={handleToggleNoti}
-                        className="relative flex items-center justify-center w-7 h-7 transition-all duration-150"
-                        style={{
-                            background: '#FFFFFF',
-                            border: '1px solid #E2E8F0',
-                            color: '#475569',
-                            borderRadius: '5px',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                        aria-label="Thông báo"
+                        className="relative flex items-center justify-center w-7 h-7 rounded-md bg-white border border-lys-border text-lys-secondary transition-colors duration-150 hover:border-lys-teal hover:text-lys-teal-strong cursor-pointer"
                     >
                         <Bell size={14} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
-                            <span
-                                className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-extrabold flex items-center justify-center text-slate-100"
-                                style={{ background: '#E05252' }}
-                            >
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white bg-tone-danger-fg">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -294,20 +278,13 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
                     {/* Popover Dropdown */}
                     {showNoti && (
-                        <div
-                            className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 overflow-hidden"
-                            style={{
-                                background: '#FFFFFF',
-                                border: '1px solid #E2E8F0',
-                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-                            }}
-                        >
-                            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E2E8F0' }}>
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Thông Báo</span>
+                        <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 overflow-hidden bg-lys-card border border-lys-border">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-lys-border">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-lys-secondary">Thông Báo</span>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={handleMarkAllAsRead}
-                                        className="text-[10px] font-semibold hover:underline text-[#0891B2]"
+                                        className="text-[11px] font-semibold hover:underline text-lys-teal-strong cursor-pointer"
                                     >
                                         Đọc tất cả
                                     </button>
@@ -315,7 +292,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             </div>
                             <div className="max-h-64 overflow-y-auto">
                                 {notifications.length === 0 ? (
-                                    <div className="py-8 text-center text-xs" style={{ color: '#64748B' }}>
+                                    <div className="py-8 text-center text-xs text-lys-muted">
                                         Không có thông báo mới
                                     </div>
                                 ) : (
@@ -324,28 +301,28 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                             <div
                                                 key={n.id}
                                                 onClick={() => handleNotificationClick(n)}
-                                                className="px-4 py-3 transition-colors duration-150 cursor-pointer border-b last:border-b-0"
-                                                style={{
-                                                    borderColor: '#E2E8F0',
-                                                    background: n.isRead ? 'transparent' : 'rgba(135,203,185,0.04)',
-                                                }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(135,203,185,0.04)')}
+                                                className={`px-4 py-3 transition-colors duration-150 cursor-pointer border-b border-lys-border last:border-b-0 hover:bg-lys-subtle ${n.isRead ? '' : 'bg-lys-teal-soft/60'}`}
                                             >
                                                 <div className="flex gap-2.5 items-start">
-                                                    <span className="mt-0.5 flex-shrink-0 text-xs">
-                                                        {n.type === 'success' ? '🟢' : n.type === 'warning' ? '🟡' : n.type === 'error' ? '🔴' : '🔵'}
-                                                    </span>
+                                                    <span
+                                                        aria-hidden
+                                                        className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                                                            n.type === 'success' ? 'bg-tone-success-fg'
+                                                                : n.type === 'warning' ? 'bg-tone-warning-fg'
+                                                                    : n.type === 'error' ? 'bg-tone-danger-fg'
+                                                                        : 'bg-tone-info-fg'
+                                                        }`}
+                                                    />
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-xs font-semibold leading-normal" style={{ color: n.isRead ? '#475569' : '#0F172A' }}>
+                                                        <p className={`text-xs font-semibold leading-normal ${n.isRead ? 'text-lys-secondary' : 'text-lys-primary'}`}>
                                                             {n.title}
                                                         </p>
                                                         {n.content && (
-                                                            <p className="text-[10px] mt-0.5 text-slate-400 line-clamp-2">
+                                                            <p className="text-[11px] mt-0.5 text-lys-muted line-clamp-2">
                                                                 {n.content}
                                                             </p>
                                                         )}
-                                                        <span className="text-[10px] block mt-1" style={{ color: '#64748B' }}>
+                                                        <span className="text-[11px] block mt-1 text-lys-dim">
                                                             {formatNotiTime(n.createdAt)}
                                                         </span>
                                                     </div>
@@ -356,12 +333,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                             <button
                                                 onClick={() => fetchNotifications(true)}
                                                 disabled={loadingNoti}
-                                                className="w-full py-2 text-center text-[10px] font-bold border-t hover:underline transition-all"
-                                                style={{ 
-                                                    borderColor: '#E2E8F0', 
-                                                    color: '#0891B2', 
-                                                    background: 'rgba(135,203,185,0.02)' 
-                                                }}
+                                                className="w-full py-2 text-center text-[11px] font-semibold border-t border-lys-border hover:underline text-lys-teal-strong cursor-pointer"
                                             >
                                                 {loadingNoti ? 'Đang tải...' : 'Xem thêm thông báo'}
                                             </button>
@@ -377,48 +349,25 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 <div className="relative" ref={profileRef}>
                     <button
                         onClick={() => setShowProfile(!showProfile)}
-                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 transition-all duration-150"
-                        style={{
-                            background: '#FFFFFF',
-                            border: '1px solid #E2E8F0',
-                            borderRadius: '5px',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-md bg-white border border-lys-border transition-colors duration-150 hover:border-lys-teal cursor-pointer"
                     >
-                        {/* Avatar circle — Teal */}
-                        <div
-                            className="w-6 h-6 flex items-center justify-center text-[11px] font-bold"
-                            style={{
-                                background: 'rgba(8, 145, 178, 0.15)',
-                                color: '#0891B2',
-                                border: '1px solid rgba(8, 145, 178, 0.25)',
-                                borderRadius: '4px',
-                            }}
-                        >
+                        <div className="w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                             {(currentUser?.name?.[0] || 'A').toUpperCase()}
                         </div>
-                        <span className="text-xs font-semibold hidden sm:inline" style={{ color: '#475569' }}>
+                        <span className="text-xs font-semibold hidden sm:inline text-lys-secondary">
                             {currentUser?.name || 'Admin'}
                         </span>
                     </button>
 
                     {/* Profile Dropdown */}
                     {showProfile && (
-                        <div
-                            className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 overflow-hidden"
-                            style={{
-                                background: '#FFFFFF',
-                                border: '1px solid #E2E8F0',
-                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-                            }}
-                        >
-                            <div className="p-4 border-b" style={{ borderColor: '#E2E8F0' }}>
-                                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#475569' }}>Thông Tin Cá Nhân</p>
-                                <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>
+                        <div className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 overflow-hidden bg-lys-card border border-lys-border">
+                            <div className="p-4 border-b border-lys-border">
+                                <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-lys-secondary">Thông Tin Cá Nhân</p>
+                                <p className="text-sm font-semibold truncate text-lys-primary">
                                     {currentUser?.name || 'Admin'}
                                 </p>
-                                <p className="text-xs truncate mt-0.5" style={{ color: '#64748B' }}>
+                                <p className="text-xs truncate mt-0.5 text-lys-muted">
                                     {currentUser?.email || 'admin@lyscellars.com'}
                                 </p>
                                 <div className="flex flex-wrap gap-1 mt-2.5">
@@ -434,14 +383,13 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                             return true
                                         })
                                     )).map(r => (
-                                        <span key={r} className="text-xs px-1.5 py-0.5 rounded font-bold"
-                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
+                                        <span key={r} className="text-[11px] px-1.5 py-0.5 rounded font-semibold bg-lys-teal-soft text-lys-teal-strong">
                                             {r}
                                         </span>
                                     ))}
                                 </div>
                             </div>
-                            <div className="p-2 border-b" style={{ borderColor: '#E2E8F0' }}>
+                            <div className="p-2 border-b border-lys-border">
                                 <button
                                     onClick={() => {
                                         setShowProfile(false)
@@ -449,7 +397,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                     }}
                                     className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                                 >
-                                    <User size={14} style={{ color: '#0891B2' }} />
+                                    <User size={14} className="text-lys-teal-strong" />
                                     Tài khoản của tôi
                                 </button>
                             </div>
@@ -457,10 +405,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                 <button
                                     onClick={handleLogout}
                                     disabled={isLoggingOut}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 disabled:opacity-50 text-left hover:bg-red-950/20"
-                                    style={{ color: '#8B1A2E' }}
-                                    onMouseEnter={e => (e.currentTarget.style.color = '#ff6b6b')}
-                                    onMouseLeave={e => (e.currentTarget.style.color = '#8B1A2E')}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 disabled:opacity-50 text-left text-tone-danger-fg hover:bg-tone-danger-bg cursor-pointer"
                                 >
                                     <LogOut size={14} className={isLoggingOut ? 'animate-spin' : ''} />
                                     {isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất'}
@@ -574,7 +519,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
 
                     {error && (
                         <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
+                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                             <AlertCircle size={14} /> {error}
                         </div>
                     )}

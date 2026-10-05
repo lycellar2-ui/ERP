@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 121 Rules rút ra từ 85 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 122 Rules rút ra từ 86 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-05 00:10 | Wine ERP v11.5 - Phase 6 Bilingual VI/EN Rollout (CEO Dashboard & Executive BI Reports)*
+*Last updated: 2026-10-05 14:46 | Wine ERP v11.5 - UI Light Standardization (pilot approved, batch 1 in progress)*
 

@@ -86,8 +86,8 @@ export function AICatalogAnalysis() {
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(212,168,83,0.2), rgba(91,168,138,0.2))' }}>
-                        <Wine size={14} style={{ color: '#D4A853' }} />
+                        style={{ background: 'linear-gradient(135deg, rgba(180,83,9,0.2), rgba(21,128,61,0.2))' }}>
+                        <Wine size={14} style={{ color: '#B45309' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Catalog & Market Intelligence</h3>
@@ -100,9 +100,9 @@ export function AICatalogAnalysis() {
                         disabled={loading}
                         className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
                         style={{
-                            background: loading ? 'rgba(212,168,83,0.08)' : 'linear-gradient(135deg, rgba(212,168,83,0.2), rgba(91,168,138,0.15))',
-                            color: loading ? '#64748B' : '#D4A853',
-                            border: `1px solid ${loading ? '#E2E8F0' : 'rgba(212,168,83,0.3)'}`,
+                            background: loading ? 'rgba(180,83,9,0.08)' : 'linear-gradient(135deg, rgba(180,83,9,0.2), rgba(21,128,61,0.15))',
+                            color: loading ? '#64748B' : '#B45309',
+                            border: `1px solid ${loading ? '#E2E8F0' : 'rgba(180,83,9,0.3)'}`,
                         }}
                     >
                         {loading ? (
@@ -131,28 +131,28 @@ export function AICatalogAnalysis() {
                                 <p className="text-xs" style={{ color: '#64748B' }}>Sản Phẩm</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                                <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#D4A853' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{fmtVND(stats.totalProductRevenue)}</p>
+                                <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#B45309' }} /></div>
+                                <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.totalProductRevenue)}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Tổng Doanh Thu</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                                <div className="flex items-center justify-center gap-1 mb-0.5"><BarChart3 size={11} style={{ color: '#5BA88A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>{stats.productsWithSales}</p>
+                                <div className="flex items-center justify-center gap-1 mb-0.5"><BarChart3 size={11} style={{ color: '#15803D' }} /></div>
+                                <p className="text-lg font-bold" style={{ color: '#15803D' }}>{stats.productsWithSales}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Có Dữ Liệu Bán</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: stats.productsNoSales > 0 ? 'rgba(212,168,83,0.06)' : '#FFFFFF' }}>
-                                <div className="flex items-center justify-center gap-1 mb-0.5"><ShoppingBag size={11} style={{ color: stats.productsNoSales > 0 ? '#D4A853' : '#64748B' }} /></div>
-                                <p className="text-lg font-bold font-mono" style={{ color: stats.productsNoSales > 0 ? '#D4A853' : '#64748B' }}>{stats.productsNoSales}</p>
+                            <div className="text-center p-2 rounded" style={{ background: stats.productsNoSales > 0 ? 'rgba(180,83,9,0.06)' : '#FFFFFF' }}>
+                                <div className="flex items-center justify-center gap-1 mb-0.5"><ShoppingBag size={11} style={{ color: stats.productsNoSales > 0 ? '#B45309' : '#64748B' }} /></div>
+                                <p className="text-lg font-bold font-mono" style={{ color: stats.productsNoSales > 0 ? '#B45309' : '#64748B' }}>{stats.productsNoSales}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Chưa Bán</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: stats.outOfStock > 0 ? 'rgba(224,82,82,0.06)' : '#FFFFFF' }}>
-                                <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.outOfStock > 0 ? '#E05252' : '#64748B' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#E05252' : '#64748B' }}>{stats.outOfStock}</p>
+                            <div className="text-center p-2 rounded" style={{ background: stats.outOfStock > 0 ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
+                                <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }} /></div>
+                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }}>{stats.outOfStock}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Hết Hàng</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                                <div className="flex items-center justify-center gap-1 mb-0.5"><Truck size={11} style={{ color: '#4A8FAB' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#4A8FAB' }}>{stats.totalSuppliers}</p>
+                                <div className="flex items-center justify-center gap-1 mb-0.5"><Truck size={11} style={{ color: '#1D4ED8' }} /></div>
+                                <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{stats.totalSuppliers}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>NCC</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
@@ -169,7 +169,7 @@ export function AICatalogAnalysis() {
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.typeDistribution).map(([type, count]) => (
                                         <span key={type} className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                                            style={{ background: 'rgba(212,168,83,0.08)', color: '#D4A853' }}>
+                                            style={{ background: 'rgba(180,83,9,0.08)', color: '#B45309' }}>
                                             {TYPE_LABELS[type] ?? type} ×{count}
                                         </span>
                                     ))}
@@ -180,7 +180,7 @@ export function AICatalogAnalysis() {
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.countryDistribution).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([country, count]) => (
                                         <span key={country} className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                                            style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2' }}>
+                                            style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2' }}>
                                             {country} ×{count}
                                         </span>
                                     ))}
@@ -194,7 +194,7 @@ export function AICatalogAnalysis() {
                 {loading && (
                     <div className="px-5 py-8 flex flex-col items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                            style={{ borderColor: '#E2E8F0', borderTopColor: '#D4A853' }} />
+                            style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
                             AI đang phân tích {'{'} danh mục, NCC, market trends, pricing, portfolio gaps... {'}'}
                         </p>
@@ -204,8 +204,8 @@ export function AICatalogAnalysis() {
                 {/* Error */}
                 {error && !loading && (
                     <div className="px-5 py-4">
-                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
-                            <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
                         </div>
                     </div>
                 )}
@@ -223,9 +223,9 @@ export function AICatalogAnalysis() {
 
                                 let color = '#475569'
                                 if (isHeading || isHighlight) color = '#0F172A'
-                                if (isUrgent) color = '#E05252'
-                                if (isPositive) color = '#5BA88A'
-                                if (isMarket && !isUrgent) color = '#D4A853'
+                                if (isUrgent) color = '#B91C1C'
+                                if (isPositive) color = '#15803D'
+                                if (isMarket && !isUrgent) color = '#B45309'
 
                                 return (
                                     <p key={i} className="text-[13px] leading-relaxed" style={{
@@ -245,7 +245,7 @@ export function AICatalogAnalysis() {
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
-                            style={{ background: saved ? 'rgba(91,168,138,0.1)' : 'rgba(138,174,187,0.08)', color: saved ? '#5BA88A' : '#475569', border: `1px solid ${saved ? 'rgba(91,168,138,0.3)' : 'rgba(138,174,187,0.15)'}` }}>
+                            style={{ background: saved ? 'rgba(21,128,61,0.1)' : 'rgba(100,116,139,0.08)', color: saved ? '#15803D' : '#475569', border: `1px solid ${saved ? 'rgba(21,128,61,0.3)' : 'rgba(100,116,139,0.15)'}` }}>
                             {saved ? <><CheckCircle size={10} /> Đã lưu</> : <><Save size={10} /> Lưu Báo Cáo</>}
                         </button>
                     </div>

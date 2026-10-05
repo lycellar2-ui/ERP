@@ -8,11 +8,11 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
-    PENDING_SIGN: { label: 'Chờ Ký', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    ACTIVE: { label: 'Đang Hiệu Lực', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(74,106,122,0.12)' },
-    TERMINATED: { label: 'Đã Chấm Dứt', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
+    PENDING_SIGN: { label: 'Chờ Ký', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    ACTIVE: { label: 'Đang Hiệu Lực', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
+    TERMINATED: { label: 'Đã Chấm Dứt', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -99,7 +99,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
 
     return (
         <>
-            <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
+            <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(500px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                     {error && (
                         <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
+                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
                             <AlertCircle size={14} /> {error}
                         </div>
                     )}
@@ -146,8 +146,8 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                                     className="flex-1 py-2 text-sm font-semibold rounded-lg"
                                     style={{
                                         background: form.counterpartyType === t ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                        border: `1px solid ${form.counterpartyType === t ? '#87CBB9' : '#E2E8F0'}`,
-                                        color: form.counterpartyType === t ? '#87CBB9' : '#64748B',
+                                        border: `1px solid ${form.counterpartyType === t ? '#0E7490' : '#E2E8F0'}`,
+                                        color: form.counterpartyType === t ? '#0E7490' : '#64748B',
                                     }}>
                                     {t === 'supplier' ? '🏭 Nhà Cung Cấp' : '🏨 Khách Hàng'}
                                 </button>
@@ -348,8 +348,8 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                 <button onClick={() => setDrawerOpen(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
                     style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                     <Plus size={16} /> Tạo Hợp Đồng
                 </button>
             </div>
@@ -357,9 +357,9 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Tổng Hợp Đồng', value: stats.total, icon: FileSignature, accent: '#87CBB9' },
-                    { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#5BA88A' },
-                    { label: 'Sắp Hết Hạn (30d)', value: stats.expiringSoon, icon: AlertCircle, accent: '#D4A853' },
+                    { label: 'Tổng Hợp Đồng', value: stats.total, icon: FileSignature, accent: '#0E7490' },
+                    { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#15803D' },
+                    { label: 'Sắp Hết Hạn (30d)', value: stats.expiringSoon, icon: AlertCircle, accent: '#B45309' },
                     { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#64748B' },
                 ].map(s => {
                     const Icon = s.icon
@@ -424,18 +424,18 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                             return (
                                 <React.Fragment key={row.id}>
                                     <tr key={row.id}
-                                        style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = row.isExpiringSoon ? 'rgba(212,168,83,0.04)' : 'rgba(135,203,185,0.04)')}
+                                        style={{ borderBottom: '1px solid #E2E8F0' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = row.isExpiringSoon ? 'rgba(180,83,9,0.04)' : 'rgba(8,145,178,0.04)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                {row.isExpiringSoon && <AlertCircle size={12} style={{ color: '#D4A853' }} />}
+                                                {row.isExpiringSoon && <AlertCircle size={12} style={{ color: '#B45309' }} />}
                                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.contractNo}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs px-2 py-0.5 rounded-full"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                 {TYPE_LABEL[row.type] ?? row.type}
                                             </span>
                                         </td>
@@ -450,12 +450,12 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                         </td>
                                         <td className="px-4 py-3">
                                             <button onClick={() => showUtilization(row.id)} className="text-xs px-2 py-1 rounded"
-                                                style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>Xem</button>
+                                                style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>Xem</button>
                                         </td>
                                         <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{formatDate(row.startDate)}</td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: row.isExpiringSoon ? '#D4A853' : '#475569' }}>
+                                        <td className="px-4 py-3 text-xs" style={{ color: row.isExpiringSoon ? '#B45309' : '#475569' }}>
                                             {formatDate(row.endDate)}
-                                            {row.isExpiringSoon && <p className="text-xs font-bold" style={{ color: '#D4A853' }}>Sắp hết hạn!</p>}
+                                            {row.isExpiringSoon && <p className="text-xs font-bold" style={{ color: '#B45309' }}>Sắp hết hạn!</p>}
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
@@ -473,7 +473,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                         </div>
                                                     ) : utilization ? (
                                                         <div className="space-y-3">
-                                                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#D4A853' }}>Utilization — Mức Sử Dụng</p>
+                                                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#B45309' }}>Utilization — Mức Sử Dụng</p>
                                                             <div className="grid grid-cols-4 gap-3">
                                                                 {[
                                                                     { l: 'Giá Trị HĐ', v: formatVND(utilization.contractValue) },
@@ -490,7 +490,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             <div className="h-2 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
                                                                 <div className="h-full rounded-full" style={{
                                                                     width: `${utilization.utilizationPct}%`,
-                                                                    background: utilization.utilizationPct > 90 ? '#8B1A2E' : utilization.utilizationPct > 60 ? '#D4A853' : '#87CBB9',
+                                                                    background: utilization.utilizationPct > 90 ? '#B91C1C' : utilization.utilizationPct > 60 ? '#B45309' : '#0E7490',
                                                                 }} />
                                                             </div>
                                                             <div className="flex gap-4 text-xs" style={{ color: '#475569' }}>
@@ -499,7 +499,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             </div>
 
                                                             {/* Custom Fields Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                                                                 <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>Thông Tin Điều Khoản & Lưu Trữ</p>
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                     <div className="p-3 rounded bg-white" style={{ border: '1px solid #E2E8F0' }}>
@@ -526,7 +526,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             </div>
 
                                                             {/* Documents Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                                                                 <div className="flex items-center justify-between mb-3">
                                                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>Tài liệu đính kèm ({utilization.documents?.length || 0})</p>
                                                                     <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
@@ -558,13 +558,13 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             </div>
 
                                                             {/* Signature Section */}
-                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
                                                                 <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#0891B2' }}>
                                                                     Ký Điện Tử Khê Duyệt Nhanh
                                                                 </p>
                                                                 {utilization.signatureUrl ? (
-                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
-                                                                        <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                                                    <div className="p-3 rounded bg-white" style={{ border: '1px solid rgba(21,128,61,0.3)' }}>
+                                                                        <p className="text-xs text-[#15803D] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
                                                                         <img src={utilization.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
                                                                     </div>
                                                                 ) : (

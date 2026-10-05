@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import Link from 'next/link'
 import {
-    Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
-    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown, ChevronLeft, ChevronRight, FileText, Tag, ArrowUpRight
+    Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle, BarChart3,
+    Upload, Download, Search, Edit2, Trash2, Printer, ChevronDown, FileText, Tag, ArrowUpRight
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -16,15 +16,29 @@ import {
     lookupTaxInfo, syncCustomerTaxInfoFromGDT,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
-import { formatVND } from '@/lib/utils'
+import { cn, formatVND } from '@/lib/utils'
+import type { Tone } from '@/lib/ui/status'
+import {
+    Badge, Button, Drawer, EmptyState, PageHeader, Pagination, SearchInput, Select, Skeleton, StatCard, StatGrid, StatusBadge,
+    Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr,
+} from '@/components/ui'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
 
-const CUSTOMER_TYPE: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
-    HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', emoji: '🏨' },
-    CORPORATE: { label: 'Corporate', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)', emoji: '🏢' },
-    RETAIL: { label: 'Retail', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)', emoji: '🛍️' },
+const CUSTOMER_TYPE: Record<string, { label: string; tone: Tone }> = {
+    HORECA: { label: 'HORECA', tone: 'brand' },
+    CORPORATE: { label: 'Corporate', tone: 'success' },
+    RETAIL: { label: 'Retail', tone: 'info' },
 }
+
+const CUSTOMER_STATUS_LABEL: Record<string, string> = {
+    ACTIVE: 'Hoạt động',
+    INACTIVE: 'Tạm dừng',
+    CREDIT_HOLD: 'Giữ tín dụng',
+    PENDING_APPROVAL: 'Chờ duyệt',
+    REJECTED: 'Bị từ chối',
+}
+const CUSTOMER_TONE_OVERRIDES = { CREDIT_HOLD: 'warning', PENDING_APPROVAL: 'warning' } as const
 
 const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA (Khách sạn/Nhà hàng)',
@@ -39,57 +53,12 @@ const CITIES = [
 
 function TypeBadge({ type }: { type: string | null }) {
     const key = type ?? 'HORECA'
-    const cfg = CUSTOMER_TYPE[key] ?? { label: key, color: '#475569', bg: 'rgba(168,152,128,0.12)', emoji: '🏢' }
-    return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-            style={{ color: cfg.color, background: cfg.bg }}>
-            {cfg.emoji} {cfg.label}
-        </span>
-    )
+    const cfg = CUSTOMER_TYPE[key] ?? { label: key, tone: 'neutral' as Tone }
+    return <Badge tone={cfg.tone}>{cfg.label}</Badge>
 }
 
 function StatusDot({ status }: { status: string }) {
-    const color = { 
-        ACTIVE: '#5BA88A', 
-        INACTIVE: '#64748B', 
-        CREDIT_HOLD: '#D4963A',
-        PENDING_APPROVAL: '#E0A96D',
-        REJECTED: '#E05252',
-    }[status] ?? '#64748B'
-    const label = { 
-        ACTIVE: 'Hoạt động', 
-        INACTIVE: 'Tạm dừng', 
-        CREDIT_HOLD: 'Giữ tín dụng',
-        PENDING_APPROVAL: 'Chờ duyệt',
-        REJECTED: 'Bị từ chối',
-    }[status] ?? status
-    return (
-        <span className="flex items-center gap-1.5 text-xs" style={{ color }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-            {label}
-        </span>
-    )
-}
-
-function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string; sortDir?: string }) {
-    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#E2E8F0' }} />
-    return sortDir === 'asc'
-        ? <ArrowUp size={11} style={{ color: '#0891B2' }} />
-        : <ArrowDown size={11} style={{ color: '#0891B2' }} />
-}
-
-function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string | number; icon: React.FC<any>; accent: string }) {
-    return (
-        <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl min-w-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accent}20` }}>
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: accent }} />
-            </div>
-            <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold truncate" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate font-mono" style={{ color: '#0F172A' }}>{value}</p>
-            </div>
-        </div>
-    )
+    return <StatusBadge status={status} label={CUSTOMER_STATUS_LABEL[status]} toneOverrides={CUSTOMER_TONE_OVERRIDES} />
 }
 
 function CustomerMobileCard({
@@ -108,14 +77,14 @@ function CustomerMobileCard({
 
     return (
         <div 
-            className="p-3.5 sm:p-4 rounded-xl transition-all duration-150 border space-y-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
+            className="p-3.5 sm:p-4 rounded-lg transition-all duration-150 border space-y-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
             style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}
             onClick={onEdit}
         >
             {/* Row 1: Code, Badges, Status */}
             <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-[#0891B2]">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-lys-teal-strong">
                         {row.code}
                     </span>
                     <TypeBadge type={row.channel} />
@@ -218,7 +187,7 @@ function CustomerMobileCard({
                 <button
                     type="button"
                     onClick={onEdit}
-                    className="flex-[2] min-h-[38px] flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-[#0891B2] border border-cyan-300 hover:bg-cyan-100 transition-colors"
+                    className="flex-[2] min-h-[38px] flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-lys-teal-strong border border-cyan-300 hover:bg-cyan-100 transition-colors"
                 >
                     <Edit2 size={13} /> Chỉnh sửa hồ sơ
                 </button>
@@ -733,43 +702,47 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     }, [open, form, isEdit])
 
     return (
-        <>
-            <div className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-                onClick={handleClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300 w-full sm:w-[560px] max-w-full shadow-2xl"
-                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
-                            <Users size={16} style={{ color: '#0891B2' }} />
+        <Drawer
+            open={open}
+            onClose={handleClose}
+            size="md"
+            className="bg-lys-bg"
+            title={isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
+            description={isEdit ? 'Điền thông tin đầy đủ về khách hàng' : 'Khách sạn, nhà hàng, phân phối, VIP retail'}
+            footer={
+                <>
+                    {isEdit && (
+                        <div className="flex items-center gap-2 mr-auto">
+                            <Button variant="secondary" onClick={handlePrintCustomer}>
+                                <Printer size={14} aria-hidden /> In Hồ Sơ
+                            </Button>
+                            <Button variant="secondary" onClick={handleExportExcelForm} loading={exportingExcel} disabled={exportingExcel}>
+                                {!exportingExcel && <Download size={14} aria-hidden />} Xuất Excel
+                            </Button>
                         </div>
-                        <div>
-                            <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#0F172A' }}>
-                                {isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
-                            </h3>
-                            <p className="text-xs hidden sm:block" style={{ color: '#64748B' }}>
-                                {isEdit ? 'Điền thông tin đầy đủ về khách hàng' : 'Khách sạn, nhà hàng, phân phối, VIP retail'}
-                            </p>
-                        </div>
-                    </div>
-                    <button onClick={handleClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all hover:bg-slate-200" title="Đóng (Esc)"><X size={18} /></button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
+                    )}
+                    <Button variant="secondary" onClick={handleClose}>Hủy</Button>
+                    <Button onClick={handleSave} loading={saving} disabled={saving || loading} title="Ctrl+Enter">
+                        {!saving && <Save size={14} aria-hidden />}
+                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo KH'}
+                    </Button>
+                </>
+            }
+        >
+                <div className="space-y-4 sm:space-y-5">
                     {loading ? (
                         <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                     ) : (
                         <>
                             {errors._global && (
                                 <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                                    style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
+                                    style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
                                     <AlertCircle size={14} /> {errors._global}
                                 </div>
                             )}
 
                             {isEdit && (form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED') && isSalesAdmin && (
-                                <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(212,150,58,0.08)', border: '1px solid rgba(212,150,58,0.3)' }}>
+                                <div className="p-4 rounded-lg space-y-3" style={{ background: 'rgba(212,150,58,0.08)', border: '1px solid rgba(212,150,58,0.3)' }}>
                                     <div className="flex items-center gap-2">
                                         <span className="text-lg">⚖️</span>
                                         <div>
@@ -788,22 +761,22 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={handleReject} disabled={approving} type="button"
-                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all text-[#E05252] border border-[#E05252]/30 hover:bg-[#E05252]/10 disabled:opacity-50">
+                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all text-[#B91C1C] border border-[#B91C1C]/30 hover:bg-[#B91C1C]/10 disabled:opacity-50">
                                                 Từ chối
                                             </button>
                                             <button onClick={handleApprove} disabled={approving} type="button"
-                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#5BA88A] hover:bg-[#72BF9E] text-slate-900 disabled:opacity-60">
+                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#15803D] hover:bg-[#72BF9E] text-slate-900 disabled:opacity-60">
                                                 {approving ? <Loader2 size={14} className="animate-spin" /> : null}
                                                 Duyệt
                                             </button>
                                         </div>
                                     </div>
-                                    {approvalError && <p className="text-xs font-semibold text-[#E05252] mt-1">{approvalError}</p>}
+                                    {approvalError && <p className="text-xs font-semibold text-[#B91C1C] mt-1">{approvalError}</p>}
                                 </div>
                             )}
 
                             {duplicateWarnings.length > 0 && (
-                                <div className="p-3.5 rounded-xl space-y-2 transition-all" style={{ background: 'rgba(212,150,58,0.12)', border: '1px solid rgba(212,150,58,0.4)' }}>
+                                <div className="p-3.5 rounded-lg space-y-2 transition-all" style={{ background: 'rgba(212,150,58,0.12)', border: '1px solid rgba(212,150,58,0.4)' }}>
                                     <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A] flex items-center gap-1.5">
                                         <AlertCircle size={15} /> Cảnh báo trùng lặp thông tin Khách Hàng
                                     </p>
@@ -821,7 +794,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#B91C1C' }}>*</span>}</label>
                                     <div className="flex gap-2">
                                         <input className={inputCls} style={inputStyle} 
                                             value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
@@ -835,14 +808,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 onClick={() => handleAutoGenerateCode()}
                                                 disabled={generatingCode}
                                                 title="Tạo mã tự động theo chuẩn Master Data"
-                                                className="px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-[#0891B2] border border-slate-200 whitespace-nowrap shrink-0 min-h-[42px] sm:min-h-0"
+                                                className="px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-lys-teal-strong border border-slate-200 whitespace-nowrap shrink-0 min-h-[42px] sm:min-h-0"
                                                 style={{ background: '#FFFFFF' }}
                                             >
                                                 {generatingCode ? <Loader2 size={13} className="animate-spin" /> : '🎲 Sinh mã'}
                                             </button>
                                         )}
                                     </div>
-                                    {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
+                                    {errors.code && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.code}</p>}
                                 </div>
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh bán hàng *</label>
@@ -911,7 +884,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </div>
 
                                         {parentDropdownOpen && (
-                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl border border-slate-200" style={{ background: '#F8FAFC' }}>
+                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-lg overflow-hidden shadow-2xl border border-slate-200" style={{ background: '#F8FAFC' }}>
                                                 <div className="overflow-y-auto max-h-[210px] divide-y divide-[#FFFFFF]">
                                                     <button
                                                         type="button"
@@ -940,7 +913,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     key={c.id}
                                                                     type="button"
                                                                     className={`w-full text-left px-3.5 py-2.5 text-xs transition-all flex items-center justify-between ${
-                                                                        isSelected ? 'bg-white text-[#0891B2] font-bold' : 'text-slate-900 hover:bg-white'
+                                                                        isSelected ? 'bg-white text-lys-teal-strong font-bold' : 'text-slate-900 hover:bg-white'
                                                                     }`}
                                                                     onClick={() => {
                                                                         set('parentId', c.id)
@@ -952,13 +925,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     }}
                                                                 >
                                                                     <div className="flex items-center gap-2 truncate">
-                                                                        <span className="font-mono text-[#0891B2] bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200">
+                                                                        <span className="font-mono text-lys-teal-strong bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200">
                                                                             {c.code}
                                                                         </span>
                                                                         <span className="truncate">{c.name}</span>
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
-                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#87CBB9]/10 text-[#0891B2] border border-[#87CBB9]/20 font-semibold shrink-0">
+                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0">
                                                                             🏢 Cty Cha
                                                                         </span>
                                                                     )}
@@ -1001,7 +974,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#0F172A' }}>
                                                     <input type="checkbox" checked={form.allowDirectSO ?? false}
                                                         onChange={e => set('allowDirectSO', e.target.checked)}
-                                                        className="rounded bg-white border-slate-200 text-[#0891B2] focus:ring-0" />
+                                                        className="rounded bg-white border-slate-200 text-lys-teal-strong focus:ring-0" />
                                                     Cho phép đặt SO trực tiếp
                                                 </label>
                                             </div>
@@ -1018,11 +991,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             )}
 
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng <span style={{ color: '#8B1A2E' }}>*</span></label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.name ?? ''} placeholder="Park Hyatt Saigon"
                                     onChange={e => set('name', e.target.value)}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                {errors.name && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.name}</p>}
+                                {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
                                 {duplicateWarnings.find(w => w.type === 'NAME') && (
                                     <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
                                         <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'NAME')?.message}
@@ -1049,9 +1022,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             {/* VAT INVOICE SECTION */}
-                            <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.25)' }}>
+                            <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
                                 <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#D4A853' }}>
+                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
                                         <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
                                     </p>
                                     {form.parentId && (() => {
@@ -1084,7 +1057,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 type="button"
                                                 disabled={taxLookupLoading}
                                                 onClick={handleLookupTax}
-                                                className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-[#0891B2] hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
+                                                className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
                                                 title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
                                             >
                                                 {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
@@ -1109,7 +1082,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                 if (parent.vatAddress && !form.vatAddress) set('vatAddress', parent.vatAddress)
                                                                 if (parent.vatEmail && !form.vatEmail) set('vatEmail', parent.vatEmail)
                                                             }}
-                                                            className="text-[10px] font-bold text-[#0891B2] hover:text-[#06748E] underline cursor-pointer ml-2"
+                                                            className="text-[10px] font-bold text-lys-teal-strong hover:text-[#06748E] underline cursor-pointer ml-2"
                                                         >
                                                             Áp dụng
                                                         </button>
@@ -1126,7 +1099,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             return null
                                         })()}
                                         {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
-                                            <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#E05252]">
+                                            <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#B91C1C]">
                                                 <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
                                             </p>
                                         )}
@@ -1261,13 +1234,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             {/* CƠ CHẾ GIÁ & CHIẾT KHẤU MẶC ĐỊNH */}
-                            <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.25)' }}>
+                            <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(8,145,178,0.25)' }}>
                                 <div className="flex items-center justify-between flex-wrap gap-1">
                                     <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                         <Tag size={14} /> Cơ Chế Giá & Chiết Khấu Mặc Định (Toàn Kho)
                                     </p>
                                     {isEdit && (
-                                        <Link href="/dashboard/price-list" className="text-[11px] text-[#0891B2] hover:underline flex items-center gap-1 font-semibold">
+                                        <Link href="/dashboard/price-list" className="text-[11px] text-lys-teal-strong hover:underline flex items-center gap-1 font-semibold">
                                             Trung tâm giá <ArrowUpRight size={12} />
                                         </Link>
                                     )}
@@ -1341,7 +1314,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Trạng thái</label>
                                     {isSalesRep || form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED' ? (
                                         <div className="py-2.5 px-3 rounded-lg text-sm font-semibold text-slate-900 border border-slate-200 bg-white flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#E05252', ACTIVE: '#5BA88A', INACTIVE: '#64748B', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
+                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#B91C1C', ACTIVE: '#15803D', INACTIVE: '#64748B', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
                                             {{ PENDING_APPROVAL: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm dừng', CREDIT_HOLD: 'Giữ tín dụng' }[form.status ?? 'ACTIVE']}
                                         </div>
                                     ) : (
@@ -1358,41 +1331,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         </>
                     )}
                 </div>
-
-                <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                    {isEdit ? (
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <button onClick={handlePrintCustomer} type="button"
-                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 text-[#D4A853] hover:bg-[#D4A853]/10 min-h-[42px] sm:min-h-0">
-                                <Printer size={14} /> In Hồ Sơ
-                            </button>
-                            <button onClick={handleExportExcelForm} disabled={exportingExcel} type="button"
-                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50 min-h-[42px] sm:min-h-0">
-                                {exportingExcel ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                                Xuất Excel
-                            </button>
-                        </div>
-                    ) : <div className="hidden sm:block" />}
-                    
-                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                        <button onClick={handleClose} type="button" className="flex-1 sm:flex-initial px-4 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px] sm:min-h-0 flex items-center justify-center"
-                            style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}>
-                            Hủy
-                        </button>
-                        <button onClick={handleSave} disabled={saving || loading} type="button"
-                            className="flex-[2] sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all disabled:opacity-60 min-h-[44px] sm:min-h-0"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}
-                            onMouseEnter={e => !saving && (e.currentTarget.style.background = '#0E7490')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '#0891B2')}>
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo KH'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </>
+        </Drawer>
     )
 }
 
@@ -1531,389 +1470,276 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
         applyFilter({ sortBy, sortDir: newDir })
     }
 
-    const sortableHeaders: { key: CustomerFilters['sortBy'] | undefined; label: string; cls: string; sortable: boolean }[] = [
-        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[70px]', sortable: false },
-        { key: undefined, label: 'Mã KH', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
-        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[220px]', sortable: true },
-        { key: undefined, label: 'Mã cha', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
-        { key: undefined, label: 'MST', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
-        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[110px]', sortable: false },
-        { key: undefined, label: 'Thanh Toán', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
-        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[100px]', sortable: true },
-        { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-1.5 w-[70px] text-center', sortable: true },
-        { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
-        { key: undefined, label: '', cls: 'px-3 py-1.5 w-[60px]', sortable: false },
-    ]
+    const handleSyncTax = (id: string) => {
+        toast.promise(syncCustomerTaxInfoFromGDT(id), {
+            loading: 'Đang tra cứu Cục Thuế...',
+            success: (res) => {
+                if (!res.success) throw new Error(res.error)
+                queryClient.invalidateQueries({ queryKey: ['customers'] })
+                return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
+            },
+            error: (err) => `Lỗi tra cứu: ${err.message}`
+        })
+    }
+
+    const openEdit = (id: string) => { setEditingId(id); setDrawerOpen(true) }
+    const sortFor = (key: CustomerFilters['sortBy']) => (filters.sortBy === key ? filters.sortDir ?? 'asc' : false)
+    const refetching = loading && rows.length > 0
+    const hasFilters = !!(search || typeFilter || statusFilter || channelFilter)
+    const COL_COUNT = 11
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Khách Hàng (CRM)
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        B2B: Khách sạn, nhà hàng, phân phối, VIP retail — {stats.total} khách hàng
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <button onClick={handleExport} disabled={exporting}
-                        className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}
-                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#5BA88A' } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}>
-                        <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
-                    </button>
-                    <button onClick={() => setImportOpen(true)}
-                        className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                        style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#4A8FAB' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}>
-                        <Upload size={16} /> Import Excel
-                    </button>
-                    <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 min-h-[44px] md:min-h-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#0E7490')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#0891B2')}>
-                        <Plus size={16} /> Thêm Khách Hàng
-                    </button>
-                </div>
-            </div>
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
+            <PageHeader
+                description={
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
+                        <span>Tổng KH: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{stats.total}</strong></span>
+                        <span className="text-lys-border-strong">|</span>
+                        <span>Hoạt động: <strong className="type-number text-sm ml-1 text-tone-success-fg">{stats.active}</strong></span>
+                        <span className="text-lys-border-strong">|</span>
+                        <span>Chờ duyệt: <strong className="type-number text-sm ml-1 text-tone-warning-fg">{stats.pendingApproval ?? 0}</strong></span>
+                        <span className="hidden xl:inline text-lys-border-strong">|</span>
+                        {isSalesRep ? (
+                            <span className="hidden xl:inline">Từ chối: <strong className="type-number text-sm ml-1 text-tone-danger-fg">{stats.rejected ?? 0}</strong></span>
+                        ) : (
+                            <span className="hidden xl:inline">Tổng hạn mức: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{formatVND(stats.totalCreditLimit)}</strong></span>
+                        )}
+                    </div>
+                }
+                actions={
+                    <>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowStats(!showStats)}
+                            aria-pressed={showStats}
+                            className={showStats ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
+                        >
+                            <BarChart3 size={14} aria-hidden /> Thống Kê
+                        </Button>
+                        <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={exporting}>
+                            {!exporting && <Download size={14} aria-hidden />} {exporting ? 'Đang xuất...' : 'Export CSV'}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                            <Upload size={14} aria-hidden /> Import Excel
+                        </Button>
+                        <Button onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
+                            <Plus size={16} aria-hidden /> Thêm Khách Hàng
+                        </Button>
+                    </>
+                }
+            />
 
-            {/* Collapsible Stats Section */}
-            {!showStats ? (
-                <div className="flex flex-wrap items-center justify-between px-4 py-2.5 rounded-lg text-xs"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-                        <span style={{ color: '#64748B' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
-                        <span style={{ color: '#475569' }}>Tổng KH: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong></span>
-                        <span style={{ color: '#475569' }}>Hoạt động: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.active}</strong></span>
-                        <span style={{ color: '#475569' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E0A96D' }}>{stats.pendingApproval ?? 0}</strong></span>
-                        {isSalesRep ? (
-                            <span style={{ color: '#475569' }}>Từ chối: <strong className="font-mono text-sm ml-1" style={{ color: '#E05252' }}>{stats.rejected ?? 0}</strong></span>
-                        ) : (
-                            <span style={{ color: '#475569' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
-                        )}
-                    </div>
-                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#0891B2' }}>
-                        Xem chi tiết chỉ số ➔
-                    </button>
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết</span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
-                            Thu gọn chỉ số ✕
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <StatCard label="Tổng KH" value={stats.total} icon={Users} accent="#87CBB9" />
-                        <StatCard label="Hoạt động" value={stats.active} icon={Building2} accent="#5BA88A" />
-                        <StatCard label="Chờ duyệt" value={stats.pendingApproval ?? 0} icon={ShoppingBag} accent="#E0A96D" />
-                        {isSalesRep ? (
-                            <StatCard label="Bị từ chối" value={stats.rejected ?? 0} icon={X} accent="#E05252" />
-                        ) : (
-                            <StatCard label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} icon={CreditCard} accent="#87CBB9" />
-                        )}
-                    </div>
-                </div>
+            {showStats && (
+                <StatGrid className="grid-cols-2 lg:grid-cols-4 animate-fade-in">
+                    <StatCard icon={Users} tone="brand" label="Tổng KH" value={stats.total} />
+                    <StatCard icon={Building2} tone="success" label="Hoạt động" value={stats.active} />
+                    <StatCard icon={ShoppingBag} tone="warning" label="Chờ duyệt" value={stats.pendingApproval ?? 0} />
+                    {isSalesRep ? (
+                        <StatCard icon={X} tone="danger" label="Bị từ chối" value={stats.rejected ?? 0} />
+                    ) : (
+                        <StatCard icon={CreditCard} tone="brand" label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} />
+                    )}
+                </StatGrid>
             )}
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-                <div className="relative w-full sm:flex-1 sm:min-w-[240px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                    <input type="text" placeholder="Tìm theo tên, mã, MST, email, SĐT..."
+            <Toolbar
+                left={
+                    <SearchInput
+                        placeholder="Tìm theo tên, mã, MST, email, SĐT..."
                         value={search}
                         onChange={e => handleSearchChange(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-base sm:text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                </div>
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 w-full sm:w-auto">
-                    <select value={typeFilter}
-                        onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
-                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả loại</option>
-                        <option value="HORECA">🏨 HORECA</option>
-                        <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối</option>
-                        <option value="VIP_RETAIL">👑 VIP Retail</option>
-                        <option value="INDIVIDUAL">👤 Cá Nhân</option>
-                    </select>
-                    <select value={statusFilter}
-                        onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Trạng thái</option>
-                        <option value="ACTIVE">Hoạt động</option>
-                        <option value="PENDING_APPROVAL">Chờ duyệt</option>
-                        <option value="REJECTED">Bị từ chối</option>
-                        <option value="CREDIT_HOLD">Giữ tín dụng</option>
-                        <option value="INACTIVE">Tạm dừng</option>
-                    </select>
-                </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                    <select value={channelFilter}
-                        onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
-                        className="flex-1 sm:flex-initial px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: channelFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả kênh</option>
-                        {channels.map(c => (
-                            <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
-                        ))}
-                    </select>
-                    {(search || typeFilter || statusFilter || channelFilter) && (
-                        <button onClick={() => {
-                            if (debounceRef.current) clearTimeout(debounceRef.current)
-                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
-                            applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
-                        }} className="px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold border transition-colors shrink-0"
-                            style={{ color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.3)', background: 'rgba(139,26,46,0.04)' }}>
-                            Xóa lọc
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Table & Mobile Cards */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                
-                {/* 1. Mobile Cards View (Visible on < 768px, hidden on md+) */}
-                <div className="block md:hidden p-3 space-y-3">
-                    {loading && rows.length === 0 ? (
-                        Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 animate-pulse">
-                                <div className="flex justify-between items-center">
-                                    <div className="h-4 rounded bg-slate-200 w-1/3" />
-                                    <div className="h-4 rounded bg-slate-200 w-1/4" />
-                                </div>
-                                <div className="h-5 rounded bg-slate-200 w-3/4" />
-                                <div className="grid grid-cols-2 gap-2 pt-2">
-                                    <div className="h-4 rounded bg-slate-200 w-full" />
-                                    <div className="h-4 rounded bg-slate-200 w-full" />
-                                </div>
-                            </div>
-                        ))
-                    ) : rows.length === 0 ? (
-                        <div className="flex flex-col items-center py-16 gap-3 bg-white rounded-xl border border-slate-200">
-                            <span className="text-3xl">👥</span>
-                            <p style={{ color: '#64748B' }} className="text-sm font-medium">Chưa có khách hàng nào</p>
-                        </div>
-                    ) : (
-                        rows.map(row => (
-                            <CustomerMobileCard
-                                key={row.id}
-                                row={row}
-                                onEdit={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                onDelete={() => handleDelete(row.id, row.name)}
-                                onSyncTax={() => {
-                                    toast.promise(syncCustomerTaxInfoFromGDT(row.id), {
-                                        loading: 'Đang tra cứu Cục Thuế...',
-                                        success: (res) => {
-                                            if (!res.success) throw new Error(res.error)
-                                            queryClient.invalidateQueries({ queryKey: ['customers'] })
-                                            return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
-                                        },
-                                        error: (err) => `Lỗi tra cứu: ${err.message}`
-                                    })
-                                }}
-                            />
-                        ))
-                    )}
-                </div>
-
-                {/* 2. Desktop Table View (Hidden on mobile, visible on md+) */}
-                <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                {sortableHeaders.map((h, i) => (
-                                    <th key={i} className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
-                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#0891B2' : '#475569' }}
-                                        onClick={() => h.sortable && h.key && handleSort(h.key)}>
-                                        <span className="inline-flex items-center gap-1.5">
-                                            {h.label}
-                                            {h.sortable && h.key && <SortIcon column={h.key} sortBy={filters.sortBy} sortDir={filters.sortDir} />}
-                                        </span>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className={`transition-opacity duration-200 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
-                            {loading && rows.length === 0 ? (
-                                Array.from({ length: 6 }).map((_, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}>
-                                        {sortableHeaders.map((_, j) => (
-                                            <td key={j} className="px-4 py-4">
-                                                <div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))
-                            ) : rows.length === 0 ? (
-                                <tr><td colSpan={11}>
-                                    <div className="flex flex-col items-center py-16 gap-3">
-                                        <span className="text-3xl">👥</span>
-                                        <p style={{ color: '#64748B' }} className="text-sm">Chưa có khách hàng nào</p>
-                                    </div>
-                                </td></tr>
-                            ) : rows.map(row => (
-                                <tr key={row.id} className="group transition-colors duration-100"
-                                    style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.channel} /></td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-slate-900 font-semibold">{row.code}</td>
-                                    <td className="px-4 py-1.5">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#0F172A' }} title={row.name}>{row.name}</p>
-                                            {row.entityType === 'COMPANY' ? (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0F172A', background: '#475569' }}>
-                                                    🏢 Công ty {row.allowDirectSO && '(Bán trực tiếp)'} {row.childrenCount > 0 && `• ${row.childrenCount} chi nhánh`}
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0F172A', background: '#5BA88A' }}>
-                                                    🍽️ Nhà hàng
-                                                </span>
-                                            )}
-                                            {row.brandGroup && (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap" style={{ color: '#0F172A', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                    ✨ {row.brandGroup}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-1.5 text-xs">
-                                        {row.parentCode ? (
-                                            <span style={{ color: '#475569' }} className="font-mono text-[11px] whitespace-nowrap">
-                                                {row.parentCode}
-                                            </span>
-                                        ) : (
-                                            <span style={{ color: '#64748B' }} className="text-xs">—</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#64748B' }}>
-                                        <div className="flex items-center gap-1">
-                                            {row.taxId ? (
-                                                <span>{row.taxId}</span>
-                                            ) : row.resolvedVatInfo?.taxId ? (
-                                                <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px]">
-                                                    {row.resolvedVatInfo.taxId} (Cha)
-                                                </span>
-                                            ) : (
-                                                '—'
-                                            )}
-                                            {(row.taxId || row.resolvedVatInfo?.taxId) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        toast.promise(syncCustomerTaxInfoFromGDT(row.id), {
-                                                            loading: 'Đang tra cứu Cục Thuế...',
-                                                            success: (res) => {
-                                                                if (!res.success) throw new Error(res.error)
-                                                                queryClient.invalidateQueries({ queryKey: ['customers'] })
-                                                                return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
-                                                            },
-                                                            error: (err) => `Lỗi tra cứu: ${err.message}`
-                                                        })
-                                                    }}
-                                                    className="p-1 hover:bg-teal-50 text-teal-600 rounded transition-colors cursor-pointer"
-                                                    title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
-                                                >
-                                                    <Search size={11} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#475569' : '#94A3B8' }}>
-                                        {row.salesRepName ?? '—'}
-                                    </td>
-                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap font-mono" style={{ color: '#475569' }}>{row.paymentTerm}</td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#0891B2' : '#94A3B8' }}>
-                                        {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
-                                    </td>
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#94A3B8' }}>
-                                            {row.orderCount}
-                                        </span>
-                                    </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><StatusDot status={row.status} /></td>
-                                    <td className="px-3 py-1.5">
-                                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all whitespace-nowrap">
-                                            <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#475569' }}
-                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)'; e.currentTarget.style.color = '#0891B2' }}
-                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#475569' }}
-                                                title="Chỉnh sửa"><Edit2 size={14} /></button>
-                                            <button onClick={() => handleDelete(row.id, row.name)}
-                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#64748B' }}
-                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
-                                                onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#64748B' }}
-                                                title="Xóa"><Trash2 size={14} /></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                        className="sm:w-80"
+                    />
+                }
+                right={
+                    <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
+                        <Select
+                            aria-label="Loại khách hàng"
+                            value={typeFilter}
+                            onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
+                            className="md:w-36"
+                        >
+                            <option value="">Tất cả loại</option>
+                            <option value="HORECA">HORECA</option>
+                            <option value="WHOLESALE_DISTRIBUTOR">Phân Phối</option>
+                            <option value="VIP_RETAIL">VIP Retail</option>
+                            <option value="INDIVIDUAL">Cá Nhân</option>
+                        </Select>
+                        <Select
+                            aria-label="Trạng thái"
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
+                            className="md:w-36"
+                        >
+                            <option value="">Trạng thái</option>
+                            <option value="ACTIVE">Hoạt động</option>
+                            <option value="PENDING_APPROVAL">Chờ duyệt</option>
+                            <option value="REJECTED">Bị từ chối</option>
+                            <option value="CREDIT_HOLD">Giữ tín dụng</option>
+                            <option value="INACTIVE">Tạm dừng</option>
+                        </Select>
+                        <Select
+                            aria-label="Kênh"
+                            value={channelFilter}
+                            onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
+                            className="md:w-48"
+                        >
+                            <option value="">Tất cả kênh</option>
+                            {channels.map(c => (
+                                <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* 3. Responsive Pagination */}
-                {total > 0 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                        <p className="text-xs text-slate-500 order-2 sm:order-1 text-center sm:text-left">
-                            Hiển thị <span className="font-semibold text-slate-800">{((filters.page ?? 1) - 1) * 25 + 1}–{Math.min((filters.page ?? 1) * 25, total)}</span> trong <span className="font-semibold text-slate-800">{total}</span> khách hàng
-                        </p>
-                        
-                        <div className="flex items-center gap-1.5 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
-                            <button
-                                type="button"
-                                disabled={(filters.page ?? 1) <= 1}
-                                onClick={() => applyFilter({ page: (filters.page ?? 1) - 1 })}
-                                className="min-h-[36px] px-3 rounded-lg text-xs font-medium border border-slate-200 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1 cursor-pointer"
+                        </Select>
+                        {hasFilters && (
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                                    setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
+                                    applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
+                                }}
                             >
-                                <ChevronLeft size={14} /> Trước
-                            </button>
-                            
-                            {/* Page numbers (desktop & tablet) */}
-                            <div className="hidden sm:flex items-center gap-1">
-                                {Array.from({ length: Math.ceil(total / 25) }).slice(0, 8).map((_, i) => (
-                                    <button key={i} onClick={() => applyFilter({ page: i + 1 })}
-                                        className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                                        style={{ 
-                                            background: (filters.page ?? 1) === i + 1 ? '#0891B2' : 'transparent', 
-                                            color: (filters.page ?? 1) === i + 1 ? '#FFFFFF' : '#475569',
-                                            border: (filters.page ?? 1) === i + 1 ? '1px solid #0891B2' : '1px solid transparent'
-                                        }}>
-                                        {i + 1}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Mobile compact page indicator */}
-                            <span className="sm:hidden text-xs font-semibold text-slate-700 px-2 font-mono">
-                                Trang {filters.page ?? 1} / {Math.ceil(total / 25)}
-                            </span>
-
-                            <button
-                                type="button"
-                                disabled={(filters.page ?? 1) >= Math.ceil(total / 25)}
-                                onClick={() => applyFilter({ page: (filters.page ?? 1) + 1 })}
-                                className="min-h-[36px] px-3 rounded-lg text-xs font-medium border border-slate-200 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1 cursor-pointer"
-                            >
-                                Sau <ChevronRight size={14} />
-                            </button>
-                        </div>
+                                <X size={14} aria-hidden /> Xóa lọc
+                            </Button>
+                        )}
                     </div>
+                }
+            />
+
+            {/* Mobile cards (< md) */}
+            <div className={cn('md:hidden flex flex-col gap-3', refetching && 'opacity-50 pointer-events-none')}>
+                {loading && rows.length === 0 ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="p-4 rounded-lg border border-lys-border bg-lys-card space-y-3">
+                            <div className="flex justify-between items-center">
+                                <Skeleton className="h-4 w-1/3" />
+                                <Skeleton className="h-4 w-1/4" />
+                            </div>
+                            <Skeleton className="h-5 w-3/4" />
+                            <div className="grid grid-cols-2 gap-2 pt-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-full" />
+                            </div>
+                        </div>
+                    ))
+                ) : rows.length === 0 ? (
+                    <div className="bg-lys-card border border-lys-border rounded-lg">
+                        <EmptyState icon={Users} title="Chưa có khách hàng nào" />
+                    </div>
+                ) : (
+                    rows.map(row => (
+                        <CustomerMobileCard
+                            key={row.id}
+                            row={row}
+                            onEdit={() => openEdit(row.id)}
+                            onDelete={() => handleDelete(row.id, row.name)}
+                            onSyncTax={() => handleSyncTax(row.id)}
+                        />
+                    ))
                 )}
             </div>
+
+            {/* Desktop table (md+) */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <tr>
+                            <Th className="w-[90px]">Loại</Th>
+                            <Th className="w-[90px]">Mã KH</Th>
+                            <Th className="w-[260px]" sort={sortFor('name')} onSort={() => handleSort('name')}>Khách Hàng</Th>
+                            <Th className="w-[80px]">Mã cha</Th>
+                            <Th className="w-[110px]">MST</Th>
+                            <Th className="w-[110px]">Sales Rep</Th>
+                            <Th className="w-[80px]">Thanh Toán</Th>
+                            <Th className="w-[110px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>Hạn Mức</Th>
+                            <Th className="w-[80px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>Đơn Hàng</Th>
+                            <Th className="w-[110px]">Trạng Thái</Th>
+                            <Th className="w-[70px]"><span className="sr-only">Thao tác</span></Th>
+                        </tr>
+                    </THead>
+                    <TBody className={cn('transition-opacity duration-200', refetching && 'opacity-50 pointer-events-none')}>
+                        {loading && rows.length === 0 ? (
+                            <TableMessageRow colSpan={COL_COUNT}><TableSkeleton rows={6} cols={COL_COUNT} /></TableMessageRow>
+                        ) : rows.length === 0 ? (
+                            <TableMessageRow colSpan={COL_COUNT}><EmptyState icon={Users} title="Chưa có khách hàng nào" /></TableMessageRow>
+                        ) : rows.map(row => (
+                            <Tr key={row.id} className="group">
+                                <Td className="whitespace-nowrap"><TypeBadge type={row.channel} /></Td>
+                                <Td className="whitespace-nowrap type-number font-semibold">{row.code}</Td>
+                                <Td>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => openEdit(row.id)}
+                                            className="font-semibold truncate max-w-[220px] text-left text-lys-primary hover:text-lys-teal-strong hover:underline cursor-pointer"
+                                            title={row.name}
+                                        >
+                                            {row.name}
+                                        </button>
+                                        {row.entityType === 'COMPANY' ? (
+                                            <Badge>
+                                                Công ty{row.allowDirectSO && ' (Bán trực tiếp)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
+                                            </Badge>
+                                        ) : (
+                                            <Badge tone="success">Nhà hàng</Badge>
+                                        )}
+                                        {row.brandGroup && <Badge tone="info">{row.brandGroup}</Badge>}
+                                    </div>
+                                </Td>
+                                <Td className="whitespace-nowrap type-number text-[12px] text-lys-secondary">{row.parentCode ?? <span className="text-lys-dim">—</span>}</Td>
+                                <Td className="whitespace-nowrap type-number text-[12px] text-lys-muted">
+                                    <div className="flex items-center gap-1">
+                                        {row.taxId ? (
+                                            <span>{row.taxId}</span>
+                                        ) : row.resolvedVatInfo?.taxId ? (
+                                            <Badge tone="warning" title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`}>
+                                                {row.resolvedVatInfo.taxId} (Cha)
+                                            </Badge>
+                                        ) : '—'}
+                                        {(row.taxId || row.resolvedVatInfo?.taxId) && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() => handleSyncTax(row.id)}
+                                                title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
+                                                aria-label="Tra cứu Cục Thuế"
+                                            >
+                                                <Search size={12} />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </Td>
+                                <Td className={cn('whitespace-nowrap', row.salesRepName ? 'text-lys-secondary' : 'text-lys-dim')}>{row.salesRepName ?? '—'}</Td>
+                                <Td className="whitespace-nowrap type-number text-[12px] font-semibold text-lys-secondary">{row.paymentTerm}</Td>
+                                <Td align="right" className={cn('whitespace-nowrap', row.creditLimit > 0 ? 'text-lys-primary' : 'text-lys-dim')}>
+                                    {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
+                                </Td>
+                                <Td align="center" className={cn('whitespace-nowrap type-number font-semibold', row.orderCount > 0 ? 'text-tone-success-fg' : 'text-lys-dim')}>
+                                    {row.orderCount}
+                                </Td>
+                                <Td className="whitespace-nowrap"><StatusDot status={row.status} /></Td>
+                                <Td>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity whitespace-nowrap">
+                                        <Button variant="ghost" size="icon-sm" title="Chỉnh sửa" aria-label="Chỉnh sửa" onClick={() => openEdit(row.id)}>
+                                            <Edit2 size={14} />
+                                        </Button>
+                                        <Button variant="ghost" size="icon-sm" title="Xóa" aria-label="Xóa" className="hover:text-tone-danger-fg hover:bg-tone-danger-bg" onClick={() => handleDelete(row.id, row.name)}>
+                                            <Trash2 size={14} />
+                                        </Button>
+                                    </div>
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TBody>
+                </Table>
+            </div>
+
+            <Pagination
+                page={filters.page ?? 1}
+                pageSize={filters.pageSize ?? 25}
+                total={total}
+                onPageChange={p => applyFilter({ page: p })}
+                itemLabel="khách hàng"
+            />
 
             <CustomerDrawer
                 open={drawerOpen} editingId={editingId}

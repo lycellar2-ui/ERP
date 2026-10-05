@@ -66,8 +66,8 @@ export function ContractsPage({
                             className="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-all relative"
                             style={{
                                 background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#64748B',
-                                borderBottom: isActive ? '2px solid #87CBB9' : '2px solid transparent',
+                                color: isActive ? '#0E7490' : '#64748B',
+                                borderBottom: isActive ? '2px solid #0E7490' : '2px solid transparent',
                             }}
                             onMouseEnter={e => {
                                 if (!isActive) e.currentTarget.style.color = '#475569'
@@ -80,8 +80,8 @@ export function ContractsPage({
                             {badge !== null && badge > 0 && (
                                 <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full"
                                     style={{
-                                        background: tab.key === 'regdocs' ? 'rgba(224,82,82,0.2)' : 'rgba(212,168,83,0.2)',
-                                        color: tab.key === 'regdocs' ? '#E05252' : '#D4A853',
+                                        background: tab.key === 'regdocs' ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)',
+                                        color: tab.key === 'regdocs' ? '#B91C1C' : '#B45309',
                                     }}>
                                     {badge}
                                 </span>

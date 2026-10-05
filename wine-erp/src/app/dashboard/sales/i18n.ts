@@ -5,7 +5,7 @@ export const SALES_I18N = {
     vi: {
         pageTitle: 'Quản Lý Đơn Hàng Bán',
         pageSubtitle: 'Theo dõi quy trình bán lẻ & phân phối, phê duyệt chiết khấu, hạn mức công nợ và hóa đơn điện tử',
-        newOrder: '+ Tạo Đơn Hàng',
+        newOrder: 'Tạo Đơn Hàng',
         searchPlaceholder: 'Tìm theo mã đơn (SO), tên khách hàng, số điện thoại...',
         filterAllEntities: 'Tất cả pháp nhân',
         filterAllChannels: 'Tất cả kênh bán',
@@ -277,7 +277,7 @@ export const SALES_I18N = {
     en: {
         pageTitle: 'Sales Orders Management',
         pageSubtitle: 'Track retail & distribution pipeline, margin approval, credit limits and electronic invoices',
-        newOrder: '+ New Sales Order',
+        newOrder: 'New Sales Order',
         searchPlaceholder: 'Search by SO number, customer name, phone number...',
         filterAllEntities: 'All Legal Entities',
         filterAllChannels: 'All Sales Channels',

@@ -7,8 +7,8 @@ import { formatVND } from '@/lib/utils'
 
 const TIER_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
     PLATINUM: { label: 'Platinum', color: '#0F172A', bg: 'rgba(232,241,242,0.12)', icon: '💎' },
-    GOLD: { label: 'Gold', color: '#D4A853', bg: 'rgba(212,168,83,0.12)', icon: '👑' },
-    SILVER: { label: 'Silver', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: '🥈' },
+    GOLD: { label: 'Gold', color: '#B45309', bg: 'rgba(180,83,9,0.12)', icon: '👑' },
+    SILVER: { label: 'Silver', color: '#475569', bg: 'rgba(100,116,139,0.12)', icon: '🥈' },
     BRONZE: { label: 'Bronze', color: '#C07434', bg: 'rgba(192,116,52,0.12)', icon: '🥉' },
 }
 
@@ -34,7 +34,7 @@ export function LoyaltyPanel() {
         <div className="space-y-4">
             {/* Search */}
             <div className="flex items-center gap-2">
-                <Star size={18} style={{ color: '#D4A853' }} />
+                <Star size={18} style={{ color: '#B45309' }} />
                 <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                     Chương Trình Loyalty
                 </h3>
@@ -57,7 +57,7 @@ export function LoyaltyPanel() {
                 </button>
             </div>
 
-            {error && <p className="text-xs" style={{ color: '#8B1A2E' }}>{error}</p>}
+            {error && <p className="text-xs" style={{ color: '#B91C1C' }}>{error}</p>}
 
             {/* Loyalty Card */}
             {info && tierCfg && (
@@ -76,7 +76,7 @@ export function LoyaltyPanel() {
                                 </span>
                             </div>
                             <div className="text-right">
-                                <p className="text-2xl font-bold" style={{ color: '#D4A853' }}>
+                                <p className="text-2xl font-bold" style={{ color: '#B45309' }}>
                                     {info.pointsBalance.toLocaleString('vi-VN')}
                                 </p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>điểm khả dụng</p>
@@ -85,7 +85,7 @@ export function LoyaltyPanel() {
 
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { label: 'Tổng Tích', value: info.totalEarned.toLocaleString('vi-VN'), color: '#5BA88A' },
+                                { label: 'Tổng Tích', value: info.totalEarned.toLocaleString('vi-VN'), color: '#15803D' },
                                 { label: 'Đã Đổi', value: info.totalRedeemed.toLocaleString('vi-VN'), color: '#C07434' },
                                 { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), color: '#0891B2' },
                             ].map(s => (
@@ -110,14 +110,14 @@ export function LoyaltyPanel() {
                                     <div key={i} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF' }}>
                                         <div className="flex items-center gap-2">
                                             {h.type === 'EARN' ? (
-                                                <ArrowUpRight size={12} style={{ color: '#5BA88A' }} />
+                                                <ArrowUpRight size={12} style={{ color: '#15803D' }} />
                                             ) : (
                                                 <ArrowDownLeft size={12} style={{ color: '#C07434' }} />
                                             )}
                                             <span className="text-xs" style={{ color: '#0F172A' }}>{h.description}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-bold" style={{ color: h.type === 'EARN' ? '#5BA88A' : '#C07434' }}>
+                                            <span className="text-xs font-bold" style={{ color: h.type === 'EARN' ? '#15803D' : '#C07434' }}>
                                                 {h.type === 'EARN' ? '+' : ''}{h.points}
                                             </span>
                                             <span className="text-xs" style={{ color: '#64748B' }}>

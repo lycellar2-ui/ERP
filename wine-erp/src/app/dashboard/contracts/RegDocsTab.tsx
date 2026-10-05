@@ -22,12 +22,12 @@ import { toast } from 'sonner'
 // ═══════════════════════════════════════════════════
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
-    ACTIVE: { label: 'Hiệu Lực', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    EXPIRING: { label: 'Sắp Hết Hạn', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    EXPIRED: { label: 'Đã Hết Hạn', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
-    RENEWED: { label: 'Đã Gia Hạn', color: '#4A8FAB', bg: 'rgba(74,143,171,0.12)' },
-    REVOKED: { label: 'Bị Thu Hồi', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
+    ACTIVE: { label: 'Hiệu Lực', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    EXPIRING: { label: 'Sắp Hết Hạn', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    EXPIRED: { label: 'Đã Hết Hạn', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+    RENEWED: { label: 'Đã Gia Hạn', color: '#1D4ED8', bg: 'rgba(29,78,216,0.12)' },
+    REVOKED: { label: 'Bị Thu Hồi', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -48,12 +48,12 @@ const SCOPE_ICONS: Record<string, React.ReactNode> = {
 }
 
 function getDaysColor(days: number | null): string {
-    if (days === null) return '#5BA88A'
-    if (days <= 0) return '#E05252'
-    if (days <= 30) return '#E05252'
-    if (days <= 60) return '#D4A853'
-    if (days <= 90) return '#D4A853'
-    return '#5BA88A'
+    if (days === null) return '#15803D'
+    if (days <= 0) return '#B91C1C'
+    if (days <= 30) return '#B91C1C'
+    if (days <= 60) return '#B45309'
+    if (days <= 90) return '#B45309'
+    return '#15803D'
 }
 
 function getDaysLabel(days: number | null): string {
@@ -161,12 +161,12 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
 
     return (
         <>
-            <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
+            <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(560px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: isRenew ? 'rgba(74,143,171,0.15)' : 'rgba(8, 145, 178, 0.08)' }}>
-                            {isRenew ? <RefreshCw size={16} style={{ color: '#4A8FAB' }} /> : <Shield size={16} style={{ color: '#0891B2' }} />}
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: isRenew ? 'rgba(29,78,216,0.15)' : 'rgba(8, 145, 178, 0.08)' }}>
+                            {isRenew ? <RefreshCw size={16} style={{ color: '#1D4ED8' }} /> : <Shield size={16} style={{ color: '#0891B2' }} />}
                         </div>
                         <div>
                             <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
@@ -183,7 +183,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                     {error && (
                         <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
+                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
                             <AlertTriangle size={14} /> {error}
                         </div>
                     )}
@@ -237,8 +237,8 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
                                             style={{
                                                 background: form.scope === k ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                                border: `1px solid ${form.scope === k ? '#87CBB9' : '#E2E8F0'}`,
-                                                color: form.scope === k ? '#87CBB9' : '#64748B',
+                                                border: `1px solid ${form.scope === k ? '#0E7490' : '#E2E8F0'}`,
+                                                color: form.scope === k ? '#0E7490' : '#64748B',
                                             }}>
                                             {SCOPE_ICONS[k]} {v}
                                         </button>
@@ -323,8 +323,8 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                         className="flex-1 py-2 text-sm font-semibold rounded-lg"
                                         style={{
                                             background: form.keepHistory === v ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                            border: `1px solid ${form.keepHistory === v ? '#87CBB9' : '#E2E8F0'}`,
-                                            color: form.keepHistory === v ? '#87CBB9' : '#64748B',
+                                            border: `1px solid ${form.keepHistory === v ? '#0E7490' : '#E2E8F0'}`,
+                                            color: form.keepHistory === v ? '#0E7490' : '#64748B',
                                         }}>
                                         {v ? '✅ Giữ lịch sử (RENEWED)' : '🗑️ Xóa bản cũ'}
                                     </button>
@@ -339,7 +339,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                         style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: isRenew ? '#4A8FAB' : '#87CBB9', color: '#0F172A' }}>
+                        style={{ background: isRenew ? '#1D4ED8' : '#0E7490', color: '#0F172A' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : isRenew ? <RefreshCw size={14} /> : <Save size={14} />}
                         {saving ? 'Đang lưu...' : isRenew ? 'Gia Hạn' : 'Tạo Giấy Tờ'}
                     </button>
@@ -393,7 +393,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                     </div>
 
                     {/* Files */}
-                    <div className="pt-3" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                    <div className="pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between mb-3">
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>
                                 File Đính Kèm ({files?.length ?? 0})
@@ -431,17 +431,17 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                    <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
                         {doc.status !== 'RENEWED' && doc.status !== 'REVOKED' && (
                             <button onClick={() => onRenew(doc)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-                                style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                                style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.3)' }}>
                                 <RefreshCw size={12} /> Gia Hạn
                             </button>
                         )}
                         <button onClick={() => { if (confirm('Xác nhận xóa giấy tờ này?')) onDelete(doc.id) }}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-                            style={{ background: 'rgba(139,26,46,0.1)', color: '#E05252', border: '1px solid rgba(139,26,46,0.3)' }}>
+                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}>
                             <X size={12} /> Xóa
                         </button>
                     </div>
@@ -516,11 +516,11 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                 {[
-                    { label: 'Tổng Giấy Tờ', value: stats.total, icon: Shield, accent: '#87CBB9' },
-                    { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#5BA88A' },
-                    { label: 'Sắp Hết Hạn', value: stats.expiringSoon, icon: AlertTriangle, accent: '#D4A853' },
-                    { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#E05252' },
-                    { label: 'PCCC & Kho', value: stats.categoryBreakdown?.FACILITY_COMPLIANCE ?? 0, icon: Flame, accent: '#D4A853' },
+                    { label: 'Tổng Giấy Tờ', value: stats.total, icon: Shield, accent: '#0E7490' },
+                    { label: 'Đang Hiệu Lực', value: stats.active, icon: CheckCircle2, accent: '#15803D' },
+                    { label: 'Sắp Hết Hạn', value: stats.expiringSoon, icon: AlertTriangle, accent: '#B45309' },
+                    { label: 'Đã Hết Hạn', value: stats.expired, icon: Clock, accent: '#B91C1C' },
+                    { label: 'PCCC & Kho', value: stats.categoryBreakdown?.FACILITY_COMPLIANCE ?? 0, icon: Flame, accent: '#B45309' },
                 ].map(s => {
                     const Icon = s.icon
                     return (
@@ -569,8 +569,8 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                 <button onClick={() => { setRenewTarget(null); setDrawerOpen(true) }}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ml-auto"
                     style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                     <Plus size={16} /> Thêm Giấy Tờ
                 </button>
             </div>
@@ -601,16 +601,16 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                 <React.Fragment key={row.id}>
                                     <tr
                                         className="cursor-pointer"
-                                        style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                        style={{ borderBottom: '1px solid #E2E8F0' }}
                                         onClick={() => setSelectedId(isExpanded ? null : row.id)}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                         <td className="px-3 py-3">
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.docNo}</span>
                                         </td>
                                         <td className="px-3 py-3">
                                             <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2' }}>
+                                                style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2' }}>
                                                 {CATEGORY_ICONS[row.category]} {REG_DOC_CATEGORY_LABELS[row.category] ?? row.category}
                                             </span>
                                         </td>
@@ -639,7 +639,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                             )}
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>
+                                            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>
                                                 {row.fileCount}
                                             </span>
                                         </td>

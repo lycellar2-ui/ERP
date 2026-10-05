@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Badge, Button, Drawer } from '@/components/ui'
 import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -19,42 +20,42 @@ import { DebouncedInput, DebouncedTextarea } from '@/components/DebouncedInput'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
-    { value: 'WHOLESALE_DISTRIBUTOR', label: 'Đại Lý / Wholesale' },
+    { value: 'WHOLESALE_DISTRIBUTOR', label: 'Äáº¡i LÃ½ / Wholesale' },
     { value: 'VIP_RETAIL', label: 'VIP Retail' },
-    { value: 'DIRECT_INDIVIDUAL', label: 'Trực Tiếp' },
+    { value: 'DIRECT_INDIVIDUAL', label: 'Trá»±c Tiáº¿p' },
 ]
 
 const getPriceBadgeStyle = (source: string) => {
     switch (source) {
         case 'SPECIAL_PRICE':
-            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+            return { background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }
         case 'FIXED_PRICE':
             return { background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }
         case 'FIXED_DISCOUNT':
             return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
         case 'CHANNEL_BASE':
-            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+            return { background: 'rgba(21,128,61,0.1)', color: '#15803D', border: '1px solid rgba(21,128,61,0.2)' }
         case 'RETAIL_FALLBACK':
             return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
         default:
-            return { background: 'rgba(74,106,122,0.1)', color: '#64748B', border: '1px solid rgba(74,106,122,0.2)' }
+            return { background: 'rgba(100,116,139,0.1)', color: '#64748B', border: '1px solid rgba(100,116,139,0.2)' }
     }
 }
 
 const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
     switch (resolved.source) {
         case 'SPECIAL_PRICE':
-            return 'Giá Đặc Biệt (Campaign)'
+            return 'GiÃ¡ Äáº·c Biá»‡t (Campaign)'
         case 'FIXED_PRICE':
-            return 'Giá Cố Định Riêng'
+            return 'GiÃ¡ Cá»‘ Äá»‹nh RiÃªng'
         case 'FIXED_DISCOUNT':
-            return `Chiết Khấu Cố Định (-${resolved.discountPct}%)`
+            return `Chiáº¿t Kháº¥u Cá»‘ Äá»‹nh (-${resolved.discountPct}%)`
         case 'CHANNEL_BASE':
-            return `Giá Kênh ${defaultChannel}`
+            return `GiÃ¡ KÃªnh ${defaultChannel}`
         case 'RETAIL_FALLBACK':
-            return 'Giá Bán Lẻ Mặc Định'
+            return 'GiÃ¡ BÃ¡n Láº» Máº·c Äá»‹nh'
         default:
-            return 'Giá Mặc Định'
+            return 'GiÃ¡ Máº·c Äá»‹nh'
     }
 }
 
@@ -112,7 +113,7 @@ const inputStyle = {
     outline: 'none',
 }
 
-const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN', 'Trợ Lý', 'TRO_LY']
+const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Káº¿ ToÃ¡n', 'KE_TOAN', 'Trá»£ LÃ½', 'TRO_LY']
 
 export interface CloneSOData {
     customerId: string
@@ -178,7 +179,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             children.forEach(child => {
                 result.push({
                     ...child,
-                    name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+                    name: `\u00A0\u00A0\u00A0â†³ ${child.name}`
                 })
             })
         })
@@ -188,7 +189,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         orphans.forEach(child => {
             result.push({
                 ...child,
-                name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+                name: `\u00A0\u00A0\u00A0â†³ ${child.name}`
             })
         })
 
@@ -298,7 +299,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             if (cloneData.proposalId && cloneData.lines.length === 0) {
                 getProposalWithItemsForSO(cloneData.proposalId).then(prop => {
                     if (prop) {
-                        setNotes(`Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
+                        setNotes(`ÄÆ¡n Tasting kÃ¨m Tá» trÃ¬nh ${prop.proposalNo}: ${prop.title}`)
                         if (prop.priceItems && prop.priceItems.length > 0) {
                             const loadedLines = prop.priceItems.map((item: any) => ({
                                 productId: item.productId,
@@ -312,7 +313,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 stock: 100,
                             }))
                             setLines(loadedLines)
-                            toast.success(`✨ Tự động nạp ${loadedLines.length} sản phẩm theo Tờ trình ${prop.proposalNo}`)
+                            toast.success(`âœ¨ Tá»± Ä‘á»™ng náº¡p ${loadedLines.length} sáº£n pháº©m theo Tá» trÃ¬nh ${prop.proposalNo}`)
                         }
                     }
                 }).catch(() => {})
@@ -325,7 +326,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             const found = sortedCustomersForSelect.find(c => c.id === cloneData.customerId)
             if (found) {
                 setSelectedCustomer(found)
-                setCustomerSearchInput(`[${found.code}] ${found.name.replace(/^\u00A0\u00A0\u00A0↳\s*/, '')}`)
+                setCustomerSearchInput(`[${found.code}] ${found.name.replace(/^\u00A0\u00A0\u00A0â†³\s*/, '')}`)
             }
         }
     }, [open, cloneData, sortedCustomersForSelect])
@@ -439,7 +440,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 }))
             }
         } catch (err) {
-            console.error("Lỗi load bảng giá:", err)
+            console.error("Lá»—i load báº£ng giÃ¡:", err)
         }
         setLoadingPrices(false)
     }, [])
@@ -599,10 +600,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const creditWarning = selectedCustomer && (finalTotal > creditAvailable || isCreditHold)
 
     const handleSave = async () => {
-        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
-        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân xuất tuyến')
-        if (lines.length === 0) return toast.error(isEn ? 'Add at least 1 product' : 'Thêm ít nhất 1 sản phẩm')
-        if (lines.some(l => !l.productId)) return toast.error(isEn ? 'Please select a product for all lines' : 'Vui lòng chọn sản phẩm cho tất cả các dòng')
+        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lÃ²ng chá»n khÃ¡ch hÃ ng')
+        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lÃ²ng chá»n phÃ¡p nhÃ¢n xuáº¥t tuyáº¿n')
+        if (lines.length === 0) return toast.error(isEn ? 'Add at least 1 product' : 'ThÃªm Ã­t nháº¥t 1 sáº£n pháº©m')
+        if (lines.some(l => !l.productId)) return toast.error(isEn ? 'Please select a product for all lines' : 'Vui lÃ²ng chá»n sáº£n pháº©m cho táº¥t cáº£ cÃ¡c dÃ²ng')
 
         setSaving(true)
         const promise = createSalesOrder({
@@ -612,7 +613,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             channel,
             orderType,
             proposalId: proposalId || undefined,
-            paymentTerm: orderType === 'TASTING' ? (paymentTerm || 'TASTING - Không thu tiền') : paymentTerm,
+            paymentTerm: orderType === 'TASTING' ? (paymentTerm || 'TASTING - KhÃ´ng thu tiá»n') : paymentTerm,
             orderDiscount: orderType === 'TASTING' ? 0 : orderDiscount,
             notes,
             lines: lines.map(l => ({
@@ -627,17 +628,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
         } as SOCreateInput).then(res => {
-            if (!res.success) throw new Error(res.error ?? (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
+            if (!res.success) throw new Error(res.error ?? (isEn ? 'An error occurred' : 'CÃ³ lá»—i xáº£y ra'))
             return res
         })
 
         toast.promise(promise, {
-            loading: isEn ? 'Creating sales order...' : 'Đang tạo đơn hàng...',
+            loading: isEn ? 'Creating sales order...' : 'Äang táº¡o Ä‘Æ¡n hÃ ng...',
             success: (result) => {
                 setTimeout(() => { onSaved(result.soId); resetForm() }, 500)
-                return isEn ? `Successfully created ${result.soNo}` : `Tạo thành công ${result.soNo}`
+                return isEn ? `Successfully created ${result.soNo}` : `Táº¡o thÃ nh cÃ´ng ${result.soNo}`
             },
-            error: (err: any) => `${isEn ? 'Error:' : 'Lỗi:'} ${err.message}`,
+            error: (err: any) => `${isEn ? 'Error:' : 'Lá»—i:'} ${err.message}`,
             finally: () => setSaving(false)
         })
     }
@@ -658,40 +659,48 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            {/* Backdrop */}
-            <div className="hidden md:block md:flex-1" onClick={onClose} />
-
-            {/* Drawer */}
-            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-slate-50 shadow-2xl border-l border-slate-200 dark:border-slate-200">
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                            <ShoppingBag size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    {orderType === 'TASTING' ? t.tastingTitle : t.title}
-                                </h3>
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
-                                    {orderType === 'TASTING' ? 'TASTING' : 'STANDARD'}
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                {t.subtitle}
-                            </p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <>
+            <Drawer
+                open
+                onClose={() => (previewOpen ? setPreviewOpen(false) : onClose())}
+                size="xl"
+                className="bg-lys-bg"
+                title={orderType === 'TASTING' ? t.tastingTitle : t.title}
+                headerExtra={
+                    <Badge tone={orderType === 'TASTING' ? 'warning' : 'neutral'}>
+                        {orderType === 'TASTING' ? 'TASTING' : 'STANDARD'}
+                    </Badge>
+                }
+                description={t.subtitle}
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            className="mr-auto"
+                            title={t.previewPrintHint}
+                            onClick={() => {
+                                if (!selectedCustomer) {
+                                    toast.error(t.selectCustomerForPrint)
+                                    return
+                                }
+                                if (lines.length === 0 || lines.every(l => !l.productId)) {
+                                    toast.error(t.selectProductForPrint)
+                                    return
+                                }
+                                setPreviewOpen(true)
+                            }}
+                        >
+                            <Printer size={15} aria-hidden /> {t.previewPrint}
+                        </Button>
+                        <Button variant="secondary" onClick={onClose}>{t.cancel}</Button>
+                        <Button onClick={handleSave} loading={saving} disabled={saving}>
+                            {!saving && <Save size={14} aria-hidden />}
+                            {saving ? t.saving : t.createOrderBtn(orderType === 'TASTING')}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="space-y-5">
                     {loadingData && (
                         <div className="flex items-center justify-center py-8">
                             <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
@@ -716,13 +725,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
                                             }`}
                                         >
-                                            📦 {t.commercialOrder}
+                                            ðŸ“¦ {t.commercialOrder}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setOrderType('TASTING')
-                                                setPaymentTerm('TASTING - Không thu tiền')
+                                                setPaymentTerm('TASTING - KhÃ´ng thu tiá»n')
                                                 setLines(prev => prev.map(l => ({ ...l, unitPrice: 0 })))
                                             }}
                                             className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -731,14 +740,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     : 'bg-white text-amber-900 hover:bg-amber-50 border border-amber-400'
                                             }`}
                                         >
-                                            🍷 {t.tastingOrder}
+                                            ðŸ· {t.tastingOrder}
                                         </button>
                                     </div>
                                 </div>
 
                                 {orderType === 'TASTING' && (
                                     <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md flex items-center gap-1 font-semibold shadow-xs">
-                                        ✨ {t.tastingBanner}
+                                        âœ¨ {t.tastingBanner}
                                     </span>
                                 )}
                             </div>
@@ -771,7 +780,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     try {
                                                         const fullProp = await getProposalWithItemsForSO(selectedId)
                                                         if (fullProp) {
-                                                            setNotes(`Đơn Tasting kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}`)
+                                                            setNotes(`ÄÆ¡n Tasting kÃ¨m Tá» trÃ¬nh ${fullProp.proposalNo}: ${fullProp.title}`)
                                                             if (fullProp.customerId && !customerId) {
                                                                 setCustomerId(fullProp.customerId)
                                                                 const foundCust = sortedCustomersForSelect.find(c => c.id === fullProp.customerId)
@@ -808,7 +817,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             </select>
                                         </div>
 
-                                        {/* Field 2: SỐ TỜ TRÌNH (Explicit dedicated field) */}
+                                        {/* Field 2: Sá» Tá»œ TRÃŒNH (Explicit dedicated field) */}
                                         <div className="md:col-span-6">
                                             <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
                                                 {t.proposalNoLabel}
@@ -851,7 +860,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             {t.customerLabel}
                                         </label>
                                         {selectedCustomer && (
-                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-[#0891B2] hover:text-[#06748E] font-semibold hover:underline flex items-center gap-1 transition-colors" title={isEn ? "Open CRM to view customer purchase history" : "Mở tab CRM để xem lịch sử mua hàng chi tiết"}>
+                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-[#0891B2] hover:text-[#06748E] font-semibold hover:underline flex items-center gap-1 transition-colors" title={isEn ? "Open CRM to view customer purchase history" : "Má»Ÿ tab CRM Ä‘á»ƒ xem lá»‹ch sá»­ mua hÃ ng chi tiáº¿t"}>
                                                 <History size={10} />
                                                 {t.purchaseHistory}
                                             </a>
@@ -996,7 +1005,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-400 rounded">
+                                        <div className="px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-700 rounded">
                                             {t.noShippingAddress}
                                         </div>
                                     ) : (
@@ -1021,7 +1030,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Order Date Selection */}
                                 <div className="md:col-span-3">
                                     <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#64748B' }}>
-                                        📅 {t.orderDateLabel}
+                                        ðŸ“… {t.orderDateLabel}
                                     </label>
                                     <input
                                         type="date"
@@ -1038,15 +1047,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 <div className="flex flex-col gap-2 p-2 rounded-md" style={{ background: '#FFFFFF/60', border: '1px solid #E2E8F0' }}>
                                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                                         <div className="flex items-center gap-3">
-                                            <span className="font-bold" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
+                                            <span className="font-bold" style={{ color: creditWarning ? '#B91C1C' : '#15803D' }}>
                                                 {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
                                             </span>
                                             <span style={{ color: '#64748B' }}>{t.creditLimit} <strong className="font-mono text-slate-800">{formatCurrency(effectiveCreditLimit)}</strong></span>
                                             <span style={{ color: '#64748B' }}>{t.arBalance} <strong className="font-mono text-amber-700">{loadingAR ? '...' : formatCurrency(arBalance)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>{t.creditAvailable} <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#0D9488' }}>{formatCurrency(Math.max(0, creditAvailable))}</strong></span>
+                                            <span style={{ color: '#64748B' }}>{t.creditAvailable} <strong className="font-mono" style={{ color: creditWarning ? '#B91C1C' : '#0D9488' }}>{formatCurrency(Math.max(0, creditAvailable))}</strong></span>
                                         </div>
                                         {canOverride && (
-                                            <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}>
+                                            <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', background: 'rgba(180,83,9,0.08)' }}>
                                                 {overrideMode ? t.done : t.editInfo}
                                             </button>
                                         )}
@@ -1075,7 +1084,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 </div>
                             )}
 
-                            {/* Diễn giải đơn hàng */}
+                            {/* Diá»…n giáº£i Ä‘Æ¡n hÃ ng */}
                             <div>
                                 <DebouncedTextarea
                                     value={notes}
@@ -1166,9 +1175,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
-                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-white border border-slate-200 dark:border-slate-200 w-[520px] shadow-xl">
+                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white border border-slate-200 w-[520px] shadow-xl">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
-                                                                                    <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
+                                                                                    <div className="px-3 py-2 text-xs text-slate-500">
                                                                                         {t.noProductFound}
                                                                                     </div>
                                                                                 ) : (
@@ -1179,18 +1188,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                 updateLine(i, 'productId', p.id)
                                                                                                 setActiveDropdownIndex(null)
                                                                                             }}
-                                                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-white transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-200/30 last:border-b-0"
+                                                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0"
                                                                                         >
                                                                                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                                 {customerCodesMap[p.id] && (
-                                                                                                    <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                                                    <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
                                                                                                         [{customerCodesMap[p.id]}]
                                                                                                     </span>
                                                                                                 )}
-                                                                                                <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
-                                                                                                <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
+                                                                                                <span className="font-bold text-teal-600 shrink-0">[{p.skuCode}]</span>
+                                                                                                <span className="font-medium text-slate-800 truncate">{p.productName}</span>
                                                                                             </div>
-                                                                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})</span>
+                                                                                            <span className="text-slate-500 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tá»“n'}: {getProductStock(p, legalEntityId)})</span>
                                                                                         </div>
                                                                                     ))
                                                                                 )}
@@ -1202,7 +1211,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         {alloc && (
                                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
                                                                                 <ShieldAlert size={10} />
-                                                                                {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
+                                                                                {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'VÆ°á»£t'}! ${isEn ? 'Left' : 'CÃ²n'} ${alloc.remaining}` : `${isEn ? 'Left' : 'CÃ²n'} ${alloc.remaining}`}
                                                                             </span>
                                                                         )}
                                                                         {hasAutoPrice && (
@@ -1215,14 +1224,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 </td>
                                                                 {hasCustomerCodes && (
                                                                     <td className="px-3 py-2 text-center">
-                                                                        <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/40">
-                                                                            {line.customerItemCode || customerCodesMap[line.productId] || '—'}
+                                                                        <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                            {line.customerItemCode || customerCodesMap[line.productId] || 'â€”'}
                                                                         </span>
                                                                     </td>
                                                                 )}
                                                                 <td className="px-3 py-2 text-center">
                                                                     <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-slate-600'}`}>
-                                                                        {line.productId ? line.stock : '—'}
+                                                                        {line.productId ? line.stock : 'â€”'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
@@ -1254,7 +1263,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     {formatCurrency(lineTotal)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
-                                                                    <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-400 p-1.5 rounded transition-all" type="button">
+                                                                    <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700 p-1.5 rounded transition-all" type="button">
                                                                         <Trash2 size={14} />
                                                                     </button>
                                                                 </td>
@@ -1276,7 +1285,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
                                                 return (
                                                     <div key={i} className="p-3 rounded-md space-y-2"
-                                                        style={{ background: '#FFFFFF', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#E2E8F0'}` }}>
+                                                        style={{ background: '#FFFFFF', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(185,28,28,0.35)' : '#E2E8F0'}` }}>
                                                         <div className="flex items-start gap-2">
                                                             <div className="flex-1 relative">
                                                                 <input
@@ -1310,9 +1319,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 />
                                                                 
                                                                 {activeDropdownIndex === i && (
-                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white dark:bg-white border-slate-200 dark:border-slate-200">
+                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white border-slate-200">
                                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
-                                                                            <div className="px-3 py-2 text-xs text-slate-500 dark:text-gray-500">
+                                                                            <div className="px-3 py-2 text-xs text-slate-500">
                                                                                 {t.noProductFound}
                                                                             </div>
                                                                         ) : (
@@ -1323,25 +1332,25 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                         updateLine(i, 'productId', p.id)
                                                                                         setActiveDropdownIndex(null)
                                                                                     }}
-                                                                                    className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-white transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-200/30 last:border-b-0"
+                                                                                    className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0"
                                                                                 >
                                                                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                         {customerCodesMap[p.id] && (
-                                                                                            <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                                            <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
                                                                                                 [{customerCodesMap[p.id]}]
                                                                                             </span>
                                                                                         )}
-                                                                                        <span className="font-bold text-teal-600 dark:text-[#0891B2] shrink-0">[{p.skuCode}]</span>
-                                                                                        <span className="font-medium text-slate-800 dark:text-slate-900 truncate">{p.productName}</span>
+                                                                                        <span className="font-bold text-teal-600 shrink-0">[{p.skuCode}]</span>
+                                                                                        <span className="font-medium text-slate-800 truncate">{p.productName}</span>
                                                                                     </div>
-                                                                                    <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tồn'}: {getProductStock(p, legalEntityId)})</span>
+                                                                                    <span className="text-slate-500 text-[10px] whitespace-nowrap shrink-0">({isEn ? 'Stock' : 'Tá»“n'}: {getProductStock(p, legalEntityId)})</span>
                                                                                 </div>
                                                                             ))
                                                                         )}
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }} type="button">
+                                                            <button onClick={() => removeLine(i)} style={{ color: '#B91C1C', padding: '8px' }} type="button">
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         </div>
@@ -1350,9 +1359,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {alloc && (
                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
-                                                                    style={{ background: quotaExceeded ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.12)', color: quotaExceeded ? '#8B1A2E' : '#D4A853', border: `1px solid ${quotaExceeded ? 'rgba(139,26,46,0.3)' : 'rgba(212,168,83,0.25)'}` }}>
+                                                                    style={{ background: quotaExceeded ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.12)', color: quotaExceeded ? '#B91C1C' : '#B45309', border: `1px solid ${quotaExceeded ? 'rgba(185,28,28,0.3)' : 'rgba(180,83,9,0.25)'}` }}>
                                                                     <ShieldAlert size={11} />
-                                                                    {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
+                                                                    {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'VÆ°á»£t'}! ${isEn ? 'Left' : 'CÃ²n'} ${alloc.remaining}` : `${isEn ? 'Left' : 'CÃ²n'} ${alloc.remaining}`}
                                                                 </span>
                                                             )}
                                                             {hasAutoPrice && (
@@ -1368,9 +1377,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 <input type="number" min="1" value={line.qtyOrdered}
                                                                     onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
                                                                     className="w-full px-2 py-1 text-xs outline-none"
-                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#E2E8F0'}` }}
+                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(185,28,28,0.5)' : '#E2E8F0'}` }}
                                                                 />
-                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ {t.stockExceeded} ({line.stock})</p>}
+                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>âš ï¸ {t.stockExceeded} ({line.stock})</p>}
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thUnitPrice}</p>
@@ -1424,7 +1433,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         />
                                     </div>
                                     {isVatInclusive && (
-                                        <div className="mb-2.5 px-2.5 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-400">
+                                        <div className="mb-2.5 px-2.5 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700">
                                             <span>{t.vatInclusiveNotice(channel)}</span>
                                         </div>
                                     )}
@@ -1470,56 +1479,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         </>
                     )}
                 </div>
-
-                {/* Footer */}
-                <div className="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50 shrink-0">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (!selectedCustomer) {
-                                toast.error(t.selectCustomerForPrint)
-                                return
-                            }
-                            if (lines.length === 0 || lines.every(l => !l.productId)) {
-                                toast.error(t.selectProductForPrint)
-                                return
-                            }
-                            setPreviewOpen(true)
-                        }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors bg-white dark:bg-white hover:bg-slate-100 dark:hover:bg-slate-50 text-slate-700 dark:text-slate-900 border border-slate-300 dark:border-slate-200 shadow-xs cursor-pointer"
-                        title={t.previewPrintHint}
-                    >
-                        <Printer size={15} className="text-amber-500" /> {t.previewPrint}
-                    </button>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-50 transition-colors cursor-pointer"
-                        >
-                            {t.cancel}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            {saving ? t.saving : t.createOrderBtn(orderType === 'TASTING')}
-                        </button>
-                    </div>
-                </div>
-            </div>
+            </Drawer>
 
             {/* PRINT PREVIEW MODAL */}
             {previewOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-[#0D1821] border border-slate-200 rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                    <div className="bg-white border border-lys-border rounded-lg max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
-                            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                            <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
                                 <Printer size={18} />
                                 <span>{orderType === 'TASTING' ? t.printPreviewTastingTitle : t.printPreviewTitle}</span>
                             </div>
@@ -1546,80 +1514,80 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                                     <div>
                                         <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
-                                            {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
+                                            {entities.find(e => e.id === legalEntityId)?.name || "CÃ”NG TY Cá»” PHáº¦N THÆ¯Æ NG Máº I THáº®NG Ã‚N"}
                                         </h2>
                                         <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
-                                            Địa chỉ: {(entities.find(e => e.id === legalEntityId) as any)?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
+                                            Äá»‹a chá»‰: {(entities.find(e => e.id === legalEntityId) as any)?.address || "Sá»‘ 10 ngÃµ 52 Giang VÄƒn Minh, PhÆ°á»ng Äá»™i Cáº¥n, Q. Ba ÄÃ¬nh, TP. HÃ  Ná»™i"}<br />
                                             MST: {(entities.find(e => e.id === legalEntityId) as any)?.taxId || "0316123456"} &nbsp;|&nbsp; 
-                                            SĐT: {(entities.find(e => e.id === legalEntityId) as any)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                                            SÄT: {(entities.find(e => e.id === legalEntityId) as any)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
                                             Email: {(entities.find(e => e.id === legalEntityId) as any)?.email || "orders@lyscellars.com"}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
-                                            {orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING' : 'ĐƠN BÁN HÀNG'}
+                                            {orderType === 'TASTING' ? 'ÄÆ N HÃ€NG TASTING' : 'ÄÆ N BÃN HÃ€NG'}
                                         </h1>
-                                        <p className="text-xs font-bold font-mono text-slate-900">DỰ THẢO</p>
-                                        <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
+                                        <p className="text-xs font-bold font-mono text-slate-900">Dá»° THáº¢O</p>
+                                        <p className="text-[9px] text-slate-600 mt-0.5">NgÃ y láº­p: {new Date().toLocaleDateString('vi-VN')}</p>
                                     </div>
                                 </div>
                                 {/* Customer & Info Grid */}
                                 <div className="grid grid-cols-2 gap-4 mb-3 text-xs leading-tight">
                                     <div>
-                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin khách hàng</h3>
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">ThÃ´ng tin khÃ¡ch hÃ ng</h3>
                                         <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Khách hàng:</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">KhÃ¡ch hÃ ng:</td>
                                                     <td className="font-semibold text-slate-900 py-0.5">{selectedCustomer?.name}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">Mã KH:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">MÃ£ KH:</td>
                                                     <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.code}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT liên hệ:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SÄT liÃªn há»‡:</td>
                                                     <td className="font-semibold font-mono text-slate-900 py-0.5">
-                                                        {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || '—'}
+                                                        {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || 'â€”'}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
-                                                    <td className="py-0.5 text-slate-900">{channel || '—'}</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">PhÃ¢n kÃªnh:</td>
+                                                    <td className="py-0.5 text-slate-900">{channel || 'â€”'}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">Mã số thuế:</td>
-                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || (selectedCustomer as any)?.parent?.taxId || '—'}</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">MÃ£ sá»‘ thuáº¿:</td>
+                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || (selectedCustomer as any)?.parent?.taxId || 'â€”'}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
 
                                     <div>
-                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin giao nhận</h3>
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">ThÃ´ng tin giao nháº­n</h3>
                                         <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Người nhận:</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">NgÆ°á»i nháº­n:</td>
                                                     <td className="font-semibold text-slate-900 py-0.5">{selectedCustomer?.receiverName || selectedCustomer?.name}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT nhận hàng:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SÄT nháº­n hÃ ng:</td>
                                                     <td className="font-bold font-mono text-slate-900 py-0.5">
-                                                        {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
+                                                        {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || 'â€”'}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
-                                                    <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || selectedCustomer?.addresses?.[0]?.address || 'Nhận tại kho'}</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Äá»‹a chá»‰ giao:</td>
+                                                    <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || selectedCustomer?.addresses?.[0]?.address || 'Nháº­n táº¡i kho'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
-                                                    <td className="py-0.5 text-slate-900">Tài khoản của bạn</td>
+                                                    <td className="py-0.5 text-slate-900">TÃ i khoáº£n cá»§a báº¡n</td>
                                                 </tr>
 
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Thanh toÃ¡n:</td>
                                                     <td className="font-semibold text-slate-900 py-0.5">{paymentTerm}</td>
                                                 </tr>
                                             </tbody>
@@ -1627,18 +1595,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     </div>
                                 </div>
 
-                                {/* Ghi chú / Diễn giải đơn hàng & Lưu ý giao hàng */}
+                                {/* Ghi chÃº / Diá»…n giáº£i Ä‘Æ¡n hÃ ng & LÆ°u Ã½ giao hÃ ng */}
                                 {((selectedCustomer as any)?.deliveryNotes || notes) && (
                                     <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed space-y-1">
                                         {(selectedCustomer as any)?.deliveryNotes && (
                                             <div>
-                                                <span className="font-bold text-amber-900 uppercase">📦 Lưu ý giao hàng: </span>
+                                                <span className="font-bold text-amber-900 uppercase">ðŸ“¦ LÆ°u Ã½ giao hÃ ng: </span>
                                                 <span className="text-slate-900 font-medium">{(selectedCustomer as any).deliveryNotes}</span>
                                             </div>
                                         )}
                                         {notes && (
                                             <div>
-                                                <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
+                                                <span className="font-bold text-slate-900 uppercase">Ghi chÃº / Diá»…n giáº£i: </span>
                                                 <span className="text-slate-800 italic">{notes}</span>
                                             </div>
                                         )}
@@ -1650,12 +1618,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     <thead>
                                         <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
                                             <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
-                                            <td className="px-2 py-1.5 w-24 border-r border-slate-300">Mã AX</td>
-                                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm</td>
+                                            <td className="px-2 py-1.5 w-24 border-r border-slate-300">MÃ£ AX</td>
+                                            <td className="px-2 py-1.5 border-r border-slate-300">TÃªn sáº£n pháº©m</td>
                                             <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
-                                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
+                                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">ÄÆ¡n giÃ¡</td>
                                             <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
-                                            <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
+                                            <td className="px-2 py-1.5 text-right w-28">ThÃ nh tiá»n</td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1672,7 +1640,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     </td>
                                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{l.qtyOrdered}</td>
                                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(l.unitPrice)}</td>
-                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : '—'}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : 'â€”'}</td>
                                                     <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineVal)}</td>
                                                 </tr>
                                             )
@@ -1685,18 +1653,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     <table className="w-80 text-[11px] border-collapse">
                                         <tbody>
                                             <tr className="border-b border-slate-200 font-semibold">
-                                                <td className="py-1 text-slate-700">Tổng số lượng hàng hóa:</td>
+                                                <td className="py-1 text-slate-700">Tá»•ng sá»‘ lÆ°á»£ng hÃ ng hÃ³a:</td>
                                                 <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">
                                                     {lines.reduce((sum, item) => sum + Number(item.qtyOrdered), 0)} chai
                                                 </td>
                                             </tr>
                                             <tr className="border-b border-slate-200">
-                                                <td className="py-1 text-slate-600">Cộng tiền hàng (chưa VAT):</td>
+                                                <td className="py-1 text-slate-600">Cá»™ng tiá»n hÃ ng (chÆ°a VAT):</td>
                                                 <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
                                             </tr>
                                             {orderDiscount > 0 && (
                                                 <tr className="border-b border-slate-200">
-                                                    <td className="py-1 text-slate-600">Chiết khấu đơn ({orderDiscount}%):</td>
+                                                    <td className="py-1 text-slate-600">Chiáº¿t kháº¥u Ä‘Æ¡n ({orderDiscount}%):</td>
                                                     <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(subtotal * (orderDiscount / 100))}</td>
                                                 </tr>
                                             )}
@@ -1704,23 +1672,23 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 <>
                                                     {vatBreakdown.map(vb => (
                                                         <tr key={vb.rate} className="border-b border-slate-200">
-                                                            <td className="py-1 text-slate-600">Thuế GTGT ({vb.rate}%):</td>
+                                                            <td className="py-1 text-slate-600">Thuáº¿ GTGT ({vb.rate}%):</td>
                                                             <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vb.amount))}</td>
                                                         </tr>
                                                     ))}
                                                     <tr className="border-b border-slate-200 font-semibold">
-                                                        <td className="py-1 text-slate-700">Tổng tiền thuế VAT:</td>
+                                                        <td className="py-1 text-slate-700">Tá»•ng tiá»n thuáº¿ VAT:</td>
                                                         <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vatAmount))}</td>
                                                     </tr>
                                                 </>
                                             ) : (
                                                 <tr className="border-b border-slate-200">
-                                                    <td className="py-1 text-slate-600">Thuế VAT ({vatBreakdown[0]?.rate ?? 10}%):</td>
+                                                    <td className="py-1 text-slate-600">Thuáº¿ VAT ({vatBreakdown[0]?.rate ?? 10}%):</td>
                                                     <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vatAmount))}</td>
                                                 </tr>
                                             )}
                                             <tr className="font-bold border-t-2 border-black">
-                                                <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
+                                                <td className="py-1.5 text-slate-900 text-xs">Tá»•ng cá»™ng thanh toÃ¡n:</td>
                                                 <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(finalTotal)}</td>
                                             </tr>
                                         </tbody>
@@ -1730,25 +1698,25 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Bank Account Details - ONLY FOR COD ORDERS */}
                                 {(paymentTerm === 'COD' || paymentTerm?.toUpperCase().includes('COD')) && (
                                     <div className="border border-slate-200 rounded p-2.5 mb-3 bg-slate-50 text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
-                                        <p className="font-bold text-slate-700 uppercase mb-1 text-[9px]">Thông tin chuyển khoản thanh toán (COD):</p>
+                                        <p className="font-bold text-slate-700 uppercase mb-1 text-[9px]">ThÃ´ng tin chuyá»ƒn khoáº£n thanh toÃ¡n (COD):</p>
                                         <table className="w-full">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-500 w-20 py-0.5">Chủ tài khoản:</td>
+                                                    <td className="text-slate-500 w-20 py-0.5">Chá»§ tÃ i khoáº£n:</td>
                                                     <td className="font-semibold text-slate-800 py-0.5">
-                                                        {entities.find(e => e.id === legalEntityId)?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
+                                                        {entities.find(e => e.id === legalEntityId)?.bankAccountName || "CÃ”NG TY TNHH LY'S CELLARS"}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 py-0.5">Số tài khoản:</td>
+                                                    <td className="text-slate-500 py-0.5">Sá»‘ tÃ i khoáº£n:</td>
                                                     <td className="font-semibold font-mono text-slate-800 py-0.5">
                                                         {entities.find(e => e.id === legalEntityId)?.bankAccountNumber || "1023456789"}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 py-0.5">Ngân hàng:</td>
+                                                    <td className="text-slate-500 py-0.5">NgÃ¢n hÃ ng:</td>
                                                     <td className="text-slate-800 font-semibold py-0.5">
-                                                        {entities.find(e => e.id === legalEntityId)?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
+                                                        {entities.find(e => e.id === legalEntityId)?.bankName || "Vietcombank (VCB) - Chi nhÃ¡nh TP. Há»“ ChÃ­ Minh"}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -1759,20 +1727,20 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 {/* Signatures */}
                                 <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 pb-4 break-inside-avoid print:break-inside-avoid">
                                     <div className="flex flex-col pb-12">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyá»‡t</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Káº¿ toÃ¡n kiá»ƒm soÃ¡t</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thá»§ kho</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">NgÆ°á»i nháº­n hÃ ng</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
                                     </div>
                                 </div>
 
@@ -1781,7 +1749,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     </div>
                 </div>
             )}
-        </div>
+        </>
     )
 }
 

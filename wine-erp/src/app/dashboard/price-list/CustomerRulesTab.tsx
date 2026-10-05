@@ -38,7 +38,7 @@ const RULE_TYPE_CFG: Record<string, { label: string; color: string; bg: string }
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
     PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#B45309', bg: 'rgba(217,119,6,0.12)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#059669', bg: 'rgba(16,185,129,0.12)' },
+    APPROVED: { label: 'Đã Duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
     REJECTED: { label: 'Từ Chối', color: '#E11D48', bg: 'rgba(225,29,72,0.12)' },
 }
 
@@ -430,7 +430,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         <Link
                             href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
                             className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-xs hover:opacity-90"
-                            style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid #87CBB9', color: '#0891B2' }}
+                            style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid #0E7490', color: '#0891B2' }}
                         >
                             <FileText size={14} /> + Đề Xuất Giá (Tờ Trình)
                         </Link>
@@ -582,7 +582,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                     {/* Khách hàng */}
                                                     <td className="p-3.5">
                                                         <div className="flex items-start gap-2.5">
-                                                            <div className="w-8 h-8 rounded-lg bg-[#E6F4F1] border border-[#87CBB9] flex items-center justify-center text-[#0D4F43] shrink-0 font-bold text-xs shadow-xs">
+                                                            <div className="w-8 h-8 rounded-lg bg-[#E6F4F1] border border-[#0E7490] flex items-center justify-center text-[#0D4F43] shrink-0 font-bold text-xs shadow-xs">
                                                                 {c.name.charAt(0)}
                                                             </div>
                                                             <div>
@@ -665,7 +665,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenDrawer(c)}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-[#87CBB9] hover:bg-[#A3E5D4] text-slate-900 shadow-xs hover:shadow transition"
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-[#0E7490] hover:bg-[#A3E5D4] text-slate-900 shadow-xs hover:shadow transition"
                                                             >
                                                                 <Eye size={13} /> Xem Giá Riêng
                                                             </button>
@@ -870,12 +870,12 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         {/* Drawer Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-[#E6F4F1] border border-[#87CBB9] flex items-center justify-center text-[#0D4F43] font-bold shadow-xs">
+                                <div className="w-10 h-10 rounded-lg bg-[#E6F4F1] border border-[#0E7490] flex items-center justify-center text-[#0D4F43] font-bold shadow-xs">
                                     <Building2 size={20} />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#87CBB9]/20 text-[#0891B2] border border-[#87CBB9]/40 font-semibold">
+                                        <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 font-semibold">
                                             {drawerCustomer.code}
                                         </span>
                                         <h3 className="text-base font-bold text-slate-900">{drawerCustomer.name}</h3>
@@ -1108,7 +1108,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         {/* Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-lg bg-[#87CBB9]/15 text-[#0891B2]">
+                                <div className="p-2 rounded-lg bg-[#0E7490]/15 text-[#0891B2]">
                                     <SlidersHorizontal size={18} />
                                 </div>
                                 <div>
@@ -1413,7 +1413,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                          )
                                                      }}
                                                      className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition ${
-                                                         isSelected ? 'bg-[#87CBB9]/20 border border-[#87CBB9]/50' : 'hover:bg-slate-50 border border-transparent'
+                                                         isSelected ? 'bg-[#0E7490]/20 border border-[#0E7490]/50' : 'hover:bg-slate-50 border border-transparent'
                                                      }`}
                                                  >
                                                      <span className="text-slate-800 font-medium">

@@ -24,9 +24,9 @@ const PURPOSE_PRESETS = [
 ]
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    PLANNED: { label: 'Đã lên lịch', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
+    PLANNED: { label: 'Đã lên lịch', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
     COMPLETED: { label: 'Đã hoàn thành', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    CANCELLED: { label: 'Đã hủy', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    CANCELLED: { label: 'Đã hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 export function WeeklyVisitPlannerPanel() {
@@ -408,7 +408,7 @@ export function WeeklyVisitPlannerPanel() {
                                     <button
                                         onClick={() => setShowAddVisit(true)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)' }}
                                     >
                                         <Plus size={12} /> Thêm Lịch Mới
                                     </button>
@@ -428,7 +428,7 @@ export function WeeklyVisitPlannerPanel() {
                         {/* Form thêm lịch viếng thăm mới */}
                         {showAddVisit && !isReadOnly && (
                             <div className="p-4 rounded border space-y-3" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
-                                <p className="text-xs font-bold text-[#D4A853]">Thêm Khách Hàng</p>
+                                <p className="text-xs font-bold text-[#B45309]">Thêm Khách Hàng</p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div>
                                         <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>Khách Hàng</label>
@@ -497,7 +497,7 @@ export function WeeklyVisitPlannerPanel() {
                         ) : (
                             <div className="space-y-3">
                                 {visits.map((v, index) => {
-                                    const cfg = STATUS_CFG[v.status] || { label: v.status, color: '#475569', bg: 'rgba(138,174,187,0.1)' }
+                                    const cfg = STATUS_CFG[v.status] || { label: v.status, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
                                     const isSaved = !!v.id
                                     return (
                                         <div
@@ -505,7 +505,7 @@ export function WeeklyVisitPlannerPanel() {
                                             className="p-4 rounded border transition-all space-y-2.5"
                                             style={{
                                                 background: '#FFFFFF',
-                                                borderColor: isSaved ? '#E2E8F0' : 'rgba(212,168,83,0.3)',
+                                                borderColor: isSaved ? '#E2E8F0' : 'rgba(180,83,9,0.3)',
                                             }}
                                         >
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -538,7 +538,7 @@ export function WeeklyVisitPlannerPanel() {
                                                             </button>
                                                             <button
                                                                 onClick={() => handleCancelVisit(v.id!)}
-                                                                className="px-2.5 py-1 rounded text-[10px] font-bold text-rose-400 border border-rose-500/25 transition hover:bg-rose-500/10"
+                                                                className="px-2.5 py-1 rounded text-[10px] font-bold text-rose-700 border border-rose-500/25 transition hover:bg-rose-500/10"
                                                             >
                                                                 Hủy lịch
                                                             </button>
@@ -547,7 +547,7 @@ export function WeeklyVisitPlannerPanel() {
                                                     {!isSaved && !isReadOnly && (
                                                         <button
                                                             onClick={() => handleRemoveLocalVisit(index)}
-                                                            className="p-1 rounded text-rose-400 hover:bg-rose-500/10"
+                                                            className="p-1 rounded text-rose-700 hover:bg-rose-500/10"
                                                         >
                                                             <Trash2 size={13} />
                                                         </button>
@@ -560,7 +560,7 @@ export function WeeklyVisitPlannerPanel() {
                                             </div>
 
                                             {v.resultNotes && (
-                                                <div className="text-xs p-2.5 rounded border border-[#5BA88A]/20" style={{ background: 'rgba(91,168,138,0.03)', color: '#0891B2' }}>
+                                                <div className="text-xs p-2.5 rounded border border-[#15803D]/20" style={{ background: 'rgba(21,128,61,0.03)', color: '#0891B2' }}>
                                                     📝 <strong>Ghi chú kết quả:</strong> {v.resultNotes}
                                                 </div>
                                             )}
@@ -597,7 +597,7 @@ export function WeeklyVisitPlannerPanel() {
                                     onClick={handleCompleteVisit}
                                     disabled={completing || !resultNotes.trim()}
                                     className="w-full py-2 text-center text-xs font-bold rounded text-slate-900"
-                                    style={{ background: resultNotes.trim() ? '#87CBB9' : '#E2E8F0', color: resultNotes.trim() ? '#F8FAFC' : '#64748B', borderRadius: '4px' }}
+                                    style={{ background: resultNotes.trim() ? '#0E7490' : '#E2E8F0', color: resultNotes.trim() ? '#F8FAFC' : '#64748B', borderRadius: '4px' }}
                                 >
                                     {completing ? 'Đang hoàn thành...' : 'Xác nhận Hoàn Thành'}
                                 </button>
@@ -608,10 +608,10 @@ export function WeeklyVisitPlannerPanel() {
                     {/* Báo Cáo Tuần Cho Khách Hàng Đã Đi Thăm (Summary & Export) */}
                     <div className="p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#D4A853]">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#B45309]">
                                 Báo cáo tuần đã thăm
                             </span>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-[#87CBB9]/10 text-[#0891B2]">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2]">
                                 {completedVisits.length} lượt
                             </span>
                         </div>
@@ -643,7 +643,7 @@ export function WeeklyVisitPlannerPanel() {
                                     <button
                                         onClick={handlePrintReport}
                                         className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-slate-900 hover:opacity-90 transition"
-                                        style={{ background: '#D4A853' }}
+                                        style={{ background: '#B45309' }}
                                     >
                                         <Printer size={12} /> In Báo Cáo
                                     </button>

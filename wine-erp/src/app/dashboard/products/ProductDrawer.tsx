@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
+import { Button, Drawer } from '@/components/ui'
 import { compressImage } from '@/lib/compress-image'
 import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import { toast } from 'sonner'
@@ -21,11 +22,11 @@ function Field({ label, required, error, children }: {
     return (
         <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                {label}{required && <span style={{ color: '#8B1A2E' }}> *</span>}
+                {label}{required && <span style={{ color: '#B91C1C' }}> *</span>}
             </label>
             {children}
             {error && (
-                <p className="flex items-center gap-1 text-xs" style={{ color: '#8B1A2E' }}>
+                <p className="flex items-center gap-1 text-xs" style={{ color: '#B91C1C' }}>
                     <AlertCircle size={11} /> {error}
                 </p>
             )}
@@ -331,59 +332,35 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
         })
     }
 
-    // Overlay + slide-in animation
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-                onClick={onClose}
-            />
-
-            {/* Drawer panel */}
-            <div
-                className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300"
-                style={{
-                    width: 'min(560px, 95vw)',
-                    background: '#F8FAFC',
-                    borderLeft: '1px solid #E2E8F0',
-                    transform: open ? 'translateX(0)' : 'translateX(100%)',
-                }}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-                    style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
-                            <Wine size={16} style={{ color: '#0891B2' }} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
-                                {isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
-                            </h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Điền thông tin đầy đủ về chai rượu</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#64748B' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Body (scrollable) */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 relative">
+        <Drawer
+            open={open}
+            onClose={onClose}
+            size="md"
+            className="bg-lys-bg"
+            title={isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
+            description="Điền thông tin đầy đủ về chai rượu"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>Hủy</Button>
+                    <Button onClick={handleSave} loading={saving} disabled={saving}>
+                        {!saving && <Save size={14} aria-hidden />}
+                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
+                    </Button>
+                </>
+            }
+        >
+                <div className="space-y-5 relative min-h-full">
                     {loading && (
                         <div className="absolute inset-0 bg-slate-50/80 flex flex-col items-center justify-center gap-3 z-30">
-                            <Loader2 size={32} className="animate-spin text-[#0891B2]" />
+                            <Loader2 size={32} className="animate-spin text-lys-teal" />
                             <p className="text-xs" style={{ color: '#64748B' }}>Đang tải thông tin sản phẩm...</p>
                         </div>
                     )}
 
                     {/* Global error */}
                     {errors._global && (
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.4)', color: '#B91C1C' }}>
                             <AlertCircle size={14} />
                             {errors._global}
                         </div>
@@ -837,13 +814,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <div className="grid grid-cols-3 gap-3">
                                         {mediaList.map(m => (
                                             <div key={m.id} className="relative group rounded-lg overflow-hidden"
-                                                style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #E2E8F0', aspectRatio: '3/4', background: '#FFFFFF' }}>
+                                                style={{ border: m.isPrimary ? '2px solid #0E7490' : '1px solid #E2E8F0', aspectRatio: '3/4', background: '#FFFFFF' }}>
                                                 <img src={m.url} alt="Product" className="w-full h-full object-contain p-1" />
 
                                                 {/* Primary badge */}
                                                 {m.isPrimary && (
                                                     <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
-                                                        style={{ background: 'rgba(135,203,185,0.9)', color: '#0F172A' }}>
+                                                        style={{ background: 'rgba(8,145,178,0.9)', color: '#0F172A' }}>
                                                         <Star size={8} /> Ảnh chính
                                                     </div>
                                                 )}
@@ -873,7 +850,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                             }
                                                         }}
                                                         className="p-2 rounded-lg transition-colors"
-                                                        style={{ background: 'rgba(139,26,46,0.2)', color: '#E05252' }}
+                                                        style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}
                                                         title="Xóa">
                                                         <Trash2 size={14} />
                                                     </button>
@@ -901,14 +878,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Awards & Scores */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#D4A853' }}>
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#B45309' }}>
                                 ── Giải Thưởng & Điểm Số
                             </p>
                             {isEdit && (
                                 <button
                                     onClick={() => setShowAwardForm(v => !v)}
                                     className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
                                     <Plus size={10} /> Thêm
                                 </button>
                             )}
@@ -999,19 +976,19 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             <div key={aw.id} className="flex items-center gap-3 p-3 rounded-lg group"
                                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
-                                                    style={{ background: 'rgba(212,168,83,0.12)' }}>
+                                                    style={{ background: 'rgba(180,83,9,0.12)' }}>
                                                     {aw.medalLabel?.charAt(0) ?? '🏅'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{aw.source}</span>
+                                                        <span className="text-xs font-bold" style={{ color: '#B45309' }}>{aw.source}</span>
                                                         {aw.score && (
                                                             <span className="text-sm font-bold" style={{ color: '#0F172A' }}>
                                                                 {aw.score}/100
                                                             </span>
                                                         )}
                                                         {aw.medalLabel && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
                                                                 {aw.medalLabel}
                                                             </span>
                                                         )}
@@ -1029,7 +1006,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                         setAwards(prev => prev.filter(a => a.id !== aw.id))
                                                     }}
                                                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded transition-all"
-                                                    style={{ color: '#E05252' }}
+                                                    style={{ color: '#B91C1C' }}
                                                     title="Xóa">
                                                     <Trash2 size={12} />
                                                 </button>
@@ -1054,33 +1031,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     </div>
 
                 </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0"
-                    style={{ borderTop: '1px solid #E2E8F0' }}>
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2.5 rounded-lg text-sm transition-colors duration-150"
-                        style={{ color: '#475569', border: '1px solid #E2E8F0' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-60"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => !saving && (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                    >
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
-                    </button>
-                </div>
-            </div>
-        </>
+        </Drawer>
     )
 }
 

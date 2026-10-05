@@ -39,8 +39,8 @@ const CALL_OUTCOMES_CFG = [
         id: 'CONNECTED_CLOSED_DEAL',
         label: 'Chốt đơn hàng thành công!',
         shortLabel: 'Chốt đơn 🎯',
-        color: '#10B981',
-        bg: 'rgba(16, 185, 129, 0.15)',
+        color: '#15803D',
+        bg: 'rgba(21,128,61, 0.15)',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
         icon: CheckCircle2
     },
@@ -48,7 +48,7 @@ const CALL_OUTCOMES_CFG = [
         id: 'CONNECTED_MEETING_SET',
         label: 'Đã chốt lịch hẹn gặp / Thử rượu (Tasting)',
         shortLabel: 'Chốt hẹn',
-        color: '#059669',
+        color: '#15803D',
         bg: 'rgba(5, 150, 105, 0.1)',
         badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         icon: Calendar
@@ -75,8 +75,8 @@ const CALL_OUTCOMES_CFG = [
         id: 'WRONG_NUMBER_INVALID',
         label: 'Từ chối / Sai số / Không có nhu cầu',
         shortLabel: 'Từ chối / Sai số',
-        color: '#EF4444',
-        bg: 'rgba(239, 68, 68, 0.1)',
+        color: '#B91C1C',
+        bg: 'rgba(185,28,28, 0.1)',
         badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
         icon: PhoneOff
     },

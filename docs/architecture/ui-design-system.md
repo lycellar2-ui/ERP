@@ -1,597 +1,203 @@
-# UI/UX Design System — LY's Cellars Wine ERP
-**Nguyên tắc:** "The Mediterranean Vault" — Chiều sâu của biển Địa Trung Hải, sang trọng của hầm rượu hiện đại.
-Không phải SaaS xanh thông thường. Không phải dashboard fintech. Đây là phần mở rộng kỹ thuật số của showroom LY's Cellars số 12.
+# UI/UX Design System — LY's Cellars Wine ERP (Light)
+
+> **Nguồn chuẩn duy nhất (single source of truth)** cho giao diện ERP.
+> Token nằm trong [`wine-erp/src/app/globals.css`](../../wine-erp/src/app/globals.css) · Component nằm trong [`wine-erp/src/components/ui/`](../../wine-erp/src/components/ui/) · Trạng thái nằm trong [`wine-erp/src/lib/ui/status.ts`](../../wine-erp/src/lib/ui/status.ts).
+> Kế hoạch triển khai: [`ui-standardization-light.md`](../../ui-standardization-light.md).
 
 ---
 
-## 1. Định Hướng Thiết Kế (Design Direction)
+## 1. Nguyên tắc
 
-### Đối Tượng Sử Dụng & Cảm Xúc Cần Truyền Tải
+| Nguyên tắc | Ý nghĩa |
+|---|---|
+| **Light, dày dữ liệu** | Nền sáng, mật độ Compact — tối ưu cho kế toán, kho, sales admin |
+| **Một bố cục cho mọi trang** | Người dùng chuyển module không cần học lại |
+| **Token, không hardcode** | Không viết hex trong `className`/`style`. Dùng class `lys-*` / `tone-*` |
+| **Component dùng chung** | Không tự viết lại Button, Badge, StatCard, Drawer trong module |
+| **Teal là điểm nhấn** | Chỉ ~10% diện tích: nút chính, tab active, focus, link |
 
-| Người dùng | Ngữ cảnh sử dụng | Cảm xúc cần gợi ra |
+---
+
+## 2. Bố cục trang chuẩn
+
+```
+PageHeader        Tóm tắt / số liệu nhanh                [Phụ] [+ Tạo mới]
+StatGrid          StatCard × 2–6 (tùy chọn, có thể thu gọn)
+Toolbar           StatusTabs (bên trái)  ·  SearchInput + khoảng ngày + [Bộ lọc] (bên phải)
+FilterPanel       Bộ lọc nâng cao (thu gọn được)
+Table             header dính, sort, dòng 40px  (< 768px → danh sách thẻ)
+Pagination
+```
+
+- **Tiêu đề trang** do Header chung hiển thị theo route → trong trang dashboard **không lặp lại tiêu đề**; `PageHeader` chỉ chứa mô tả/tóm tắt + nút. Chỉ truyền `title` cho trang đứng riêng (in, public, form dài).
+- Mã chứng từ (số SO, PO…) trong bảng là link `lys-teal-strong` mở Drawer chi tiết.
+
+- Bấm 1 dòng → **Drawer chi tiết** (phải, `lg` 720px).
+- Tạo/Sửa → **Drawer form** (phải, `md` 640px). Form rất dài (hợp đồng, tờ khai) → **trang riêng**.
+- **Modal** chỉ dùng cho xác nhận ngắn (`ConfirmDialog`) — không đặt form trong modal. Không dùng `window.confirm`.
+- Module không có KPI/tab thì **bỏ block đó**, không tự chế block khác.
+
+```tsx
+<PageContainer>
+  <PageHeader description={<InlineStats />} actions={<Button>+ Tạo đơn</Button>} />
+  <StatGrid>{/* StatCard */}</StatGrid>
+  <Toolbar left={<StatusTabs items={tabs} value={status} onChange={setStatus} hideEmpty />}
+           right={<><SearchInput /><Button variant="secondary">Bộ lọc</Button></>} />
+  {showFilters && <FilterPanel>{/* Field + Select */}</FilterPanel>}
+  <Table>...</Table>
+  <Pagination page={page} pageSize={size} total={total} onPageChange={...} />
+</PageContainer>
+```
+
+---
+
+## 3. Màu sắc
+
+### 3.1 Nền, viền, chữ
+| Token (class) | Hex | Dùng cho |
 |---|---|---|
-| **CEO** | Văn phòng, máy tính hoặc iPad | Kiểm soát, tin tưởng, rõ ràng |
-| **Sales Rep** | Gặp khách tại nhà hàng, điện thoại | Chuyên nghiệp, nhanh, dễ tra cứu |
-| **Thủ Kho** | Trong kho, điện thoại, tay có thể bẩn | Đơn giản, to rõ, thao tác 1 tay |
-| **Kế Toán** | Bàn làm việc, desktop | Dày đặc thông tin, chính xác |
-| **Shipper** | Trên xe, điện thoại, ánh sáng thay đổi | Cực kỳ đơn giản, nút to, ít chữ |
-| **Agency HQ** | Văn phòng, cổng riêng | Rõ ràng, có hướng dẫn |
+| `lys-bg` | `#F8FAFC` | Nền trang |
+| `lys-surface` / `lys-card` | `#FFFFFF` | Card, bảng, drawer, modal |
+| `lys-subtle` | `#F1F5F9` | Header bảng, hover dòng, input disabled |
+| `lys-border` | `#E2E8F0` | Viền mặc định, divider |
+| `lys-border-strong` | `#CBD5E1` | Viền input, nút secondary |
+| `lys-primary` | `#0F172A` | Chữ chính |
+| `lys-secondary` | `#475569` | Label, chữ phụ |
+| `lys-muted` | `#64748B` | Caption, mô tả |
+| `lys-dim` | `#94A3B8` | Placeholder, icon mờ |
 
-### Triết Lý Thiết Kế — "The Mediterranean Vault"
-Lấy cảm hứng từ showroom tại số 12 với cửa xanh Navy đặc trưng và logo LY's Cellars:
-
-- **Tối sâu nhưng khoáng đạt:** Xanh Navy cực đậm (#0A1926) — như màu cửa showroom dưới bóng râm
-- **Teal là linh hồn:** Màu Teal từ logo (#87CBB9) là điểm nhấn hiện đại trên nền kiến trúc tối
-- **Whitespace:** Luxury = breathing room. Mô phỏng các ô kính lớn tại showroom
-- **Burgundy cho cảnh báo:** Màu rượu vang đỏ (#8B1A2E) — đúng ngữ cảnh cho lỗi/quá hạn
-- **Không gradient sặc sỡ, không neon** — Tinh tế hơn là phô trương
-
----
-
-## 2. Color System — "Oceanic Cellar"
-
-### Bảng Màu Chính (Dark Mode Ưu Tiên — CEO/Showroom)
-
-```
-Nền chính    → #0A1926   (Deep Sea Navy — biển sâu và sự tĩnh lặng)
-Nền phụ      → #142433   (Midnight Teal — chiều sâu hầm rượu hiện đại)
-Nền card     → #1B2E3D   (Steel Blue — tạo khối tách biệt nhưng đồng nhất)
-Border       → #2A4355   (Deep Ocean — viền mảnh, tinh tế)
-
-Accent chính → #87CBB9   (Teal Logo — LINH HỒN của LY's Cellars)
-Accent phụ   → #A5DED0   (Mint Light — hover states, trạng thái tích cực)
-Accent navy  → #1A4363   (Showroom Door Navy — màu cửa chính)
-
-Text chính   → #E8F1F2   (Cool White — trắng hơi xanh, sạch và sang trọng)
-Text phụ     → #8AAEBB   (Steel Muted — labels, captions)
-Text muted   → #4A6A7A   (Deep Muted — placeholder, dim text)
-
-Success      → #5BA88A   (Teal Success — đồng nhất với accent)
-Warning      → #D4A853   (Amber Warm — thông báo, cần chú ý)
-Error        → #8B1A2E   (Burgundy Red — màu rượu vang, cho lỗi/quá hạn)
-Info         → #4A8FAB   (Ocean Info — thông tin chung)
-```
-
-### Light Mode (Cho Kế Toán & Quản Lý Ban Ngày)
-
-```
-Nền chính    → #F5F8F9   (Trắng vôi Địa Trung Hải — lấy từ tường showroom)
-Nền phụ      → #EBF2F5   (Xanh nhạt)
-Nền card     → #FFFFFF
-Border       → #C5D8E0   (Xanh nhạt)
-
-Accent chính → #1A7A62   (Teal đậm cho light mode)
-Text chính   → #1A4363   (Xanh Navy đậm từ cửa chính)
-Text phụ     → #3A6078   (Navy trung)
-```
-
-### Quy Tắc Sử Dụng Màu
-- **60%** Nền Navy tối (Background layers: #0A1926, #142433)
-- **30%** Card / Surface (#1B2E3D, #142433)
-- **10%** Accent Teal (#87CBB9) — CTA, Highlights, Active state
-- Màu Burgundy (#8B1A2E) chỉ dùng cho **Alert / Error / Quá Hạn**
-- **TUYỆT ĐỐI KHÔNG** dùng màu đen thuần, nâu ấm, vàng đồng (Cave Noir)
-
----
-
-## 3. Typography (Giữ nguyên — Perfect pairing với LY's Cellars)
-
-### Font Pairing
-
-```
-Heading Display:  "Cormorant Garamond"  — Serif thanh lịch, đồng bộ với chữ "LY's" trong logo
-                  (Google Font — Free)
-
-Body & UI:        "DM Sans"             — Sans-serif sạch, đọc được ở mọi size
-                  (Google Font — Free)
-
-Data / Mono:      "DM Mono"             — Cho số tiền, mã SKU, code
-                  (Google Font — Free)
-```
-
-### Thang Kích Thước (Type Scale — Ratio 1.25)
-
-```
-xs:   12px  — Timestamp, footer labels
-sm:   14px  — Table data, form labels
-base: 16px  — Body text (tối thiểu)
-lg:   20px  — Card headers, section subtitles
-xl:   25px  — Page titles
-2xl:  31px  — Dashboard KPI numbers
-3xl:  39px  — Hero stats (Revenue tháng trên CEO dashboard)
-4xl:  49px  — Display only
-```
-
-### Quy Tắc Typography
-- Tên module / Page title: `Cormorant Garamond` Bold
-- Số KPI lớn (Revenue, Inventory Value): `DM Mono` Bold → Tránh chữ số nhảy
-- Tất cả text body, label, button: `DM Sans`
-- Số âm (lỗ, thiếu hụt): Màu Burgundy (#8B1A2E)
-- Số dương (lời, thặng dư): Màu Teal (#87CBB9) hoặc Teal Success (#5BA88A)
-
----
-
-## 4. Layout System
-
-### Responsive Breakpoints
-
-```
-Mobile:   < 640px   — Shipper, Thủ Kho (ưu tiên cao nhất)
-Tablet:   640–1024px — Sales Rep với iPad
-Desktop: > 1024px   — CEO, Kế Toán, Admin
-Wide:    > 1440px   — Dashboard CEO với nhiều màn hình
-```
-
-### Navigation Structure
-
-**Desktop:**
-```
-┌──────────────────────────────────────────────────────────┐
-│  🍷 LY's Cellars    [Search]           [Notif] [Avatar] │  ← Topbar (Navy #142433)
-├──────────┬───────────────────────────────────────────────┤
-│          │                                               │
-│ Sidebar  │           Main Content Area                  │
-│ (240px)  │           (Background: #0A1926)              │
-│ (#142433)│                                              │
-│          │                                              │
-│ [DSH]    │                                              │
-│ [MDM]    │                                              │
-│ [CRM]    │                                              │
-│ ...      │                                              │
-│          │                                              │
-│ [Logout] │                                              │
-└──────────┴───────────────────────────────────────────────┘
-```
-
-### Sidebar (Desktop)
-- **Icon + Label** khi mở rộng (240px), **Icon only** khi thu nhỏ (64px)
-- Active item: Màu Teal (#87CBB9) + Border-left Teal + Nền nhẹ (rgba(135,203,185,0.12))
-- Hover: Nền nhấc lên rgba(135,203,185,0.06), text Cool White
-- Logo: SVG chiếc ly Teal + "LY's Cellars" font Cormorant Garamond
-
----
-
-## 5. Component Design
-
-### 5.1 KPI Card (CEO Dashboard)
-
-```
-┌────────────────────────────────┐
-│  Doanh Thu Tháng               │
-│                                │
-│  ₫ 2,340,000,000               │  ← DM Mono, 3xl, Cool White
-│            ↑ +12.4% vs T3     │  ← sm, Teal Success
-│                                │
-│  ━━━━━━━━━━━━━━━━━━  78% KPI  │  ← Progress Teal
-└────────────────────────────────┘
-
-Style: Nền card (#1B2E3D), border-l-4 màu Teal (#87CBB9), padding 24px
-Border: 1px solid #2A4355
-Hover: translateY -2px + shadow deeper (navy shadow)
-```
-
-### 5.2 Data Table (Inventory, Orders)
-
-- Header: Nền đậm hơn card (#142433), text muted, font DM Sans 13px Semibold
-- Row: Zebra striping nhẹ (rgba(135,203,185,0.02))
-- Row hover: Background Teal cực nhạt (rgba(135,203,185,0.05))
-- Sticky header khi scroll
-
-### 5.3 Form Inputs
-
-```
-Label (DM Sans 13px, text-muted #8AAEBB)
-┌─────────────────────────────────────┐
-│  Tên sản phẩm                    ↓ │  ← Nền #142433, border #2A4355
-└─────────────────────────────────────┘
-Focus: Border màu Teal (#87CBB9) + glow nhẹ (rgba(135,203,185,0.2))
-Error: Border Burgundy + text lỗi bên dưới
-```
-
-- Input height tối thiểu **44px** (WCAG touch target)
-- Font size **16px** tối thiểu trên mobile (tránh iOS auto-zoom)
-
-### 5.4 Action Buttons
-
-```
-Primary:    Nền Teal (#87CBB9), text Navy đậm (#0A1926), font Semibold
-            → Cảm giác bấm vào sự tươi mới, hiện đại
-Secondary:  Border Teal, nền trong suốt, text Teal
-Danger:     Nền Burgundy (#8B1A2E), text Cool White
-Ghost:      Không nền, không border — chỉ text Teal
-```
-
-- Tất cả button: `rounded-md` (6px) — Sharp nhưng không cắt góc hoàn toàn
-- Padding: `px-5 py-2.5` chuẩn, `py-3` cho mobile
-
-### 5.5 Status Badge
-
-```
-PAID / ACTIVE / DELIVERED:   Nền Teal nhạt rgba(135,203,185,0.15), text Teal (#87CBB9)
-PENDING / IN_TRANSIT:         Nền Amber nhạt rgba(212,168,83,0.15), text Amber (#D4A853)
-DRAFT / INACTIVE:             Nền xám rgba(74,106,122,0.2), text muted (#8AAEBB)
-ERROR / OVERDUE / REJECTED:  Nền Burgundy nhạt rgba(139,26,46,0.2), text Burgundy (#8B1A2E)
-```
-
----
-
-## 6. Mobile-First Priority Screens
-
-### 6.1 Shipper — Delivery Manifest
-- **Top App Bar:** Navy đậm (#1A4363) — mang "cánh cửa cửa hàng" đi theo
-- **CTA Button:** Teal đầy, 56px tall, full width
-
-### 6.2 Thủ Kho — Pick List
-- **Location Badge:** Teal sáng (#87CBB9) — nổi bật trong bóng tối hầm rượu
-- **Scan Button:** Teal với icon camera nổi bật
-
----
-
-## 7. Micro-interactions & Animation
-
-### Nguyên Tắc Animation Cho LY's Cellars
-- **Purposeful only** — Không animate cho có
-- **Luxury pace** — 200-350ms, không vội vàng như fintech
-- **Ease-out chủ yếu** — Vào nhẹ nhàng, dừng chắc
-- **GPU-only** — Chỉ dùng `transform` và `opacity`
-
-### Các Animation Cụ Thể
-
-| Sự kiện | Animation | Duration |
+### 3.2 Accent (Teal)
+| Token | Hex | Dùng cho |
 |---|---|---|
-| Menu sidebar mở/đóng | Width transition + fade labels | 200ms ease-out |
-| Table row hover | Background Teal fade | 100ms |
-| Card hover | Translatey -2px + navy shadow | 200ms ease-out |
-| KPI số thay đổi | Counter animation (count up) | 800ms ease-out |
-| Modal mở | Scale 0.95→1 + fade | 200ms ease-out |
-| Button loading | Spinner fade in, no resize | 150ms |
-| Toast notification | Slide in từ phải | 250ms ease-out |
-| Loading (Wine Fill) | Teal đổ vào ly từ dưới lên | 1200ms ease-in-out |
+| `lys-teal` | `#0891B2` | Icon active, viền focus, gạch chân tab active |
+| `lys-teal-strong` | `#0E7490` | **Chữ link, nền nút primary** (đạt WCAG AA trên nền trắng) |
+| `lys-teal-hover` | `#155E75` | Hover nút primary |
+| `lys-teal-soft` | `#ECFEFF` | Nền nhạt: dòng được chọn, badge đếm tab active |
 
-### Logo Loading State (Đặc biệt)
-Khi dữ liệu tải: SVG chiếc ly rỗng → màu Teal đổ đầy từ dưới lên theo đường uốn lượn của logo.
+> `#0891B2` chỉ đạt ~3.7:1 trên nền trắng → **không dùng cho chữ nhỏ**. Chữ teal luôn dùng `lys-teal-strong`.
 
----
+### 3.3 Tông trạng thái
+Mọi badge trạng thái dùng `<StatusBadge>` → tone lấy từ `getStatusTone()` trong `src/lib/ui/status.ts`. **Không khai báo bảng màu trạng thái trong module.**
 
-## 8. Icons & Imagery
+| Tone | Chữ | Nền | Viền | Trạng thái điển hình |
+|---|---|---|---|---|
+| `neutral` | `#475569` | `#F1F5F9` | `#E2E8F0` | DRAFT, INACTIVE, UNDELIVERED |
+| `warning` | `#B45309` | `#FFFBEB` | `#FDE68A` | PENDING_*, PREPARING, UNPAID |
+| `info` | `#1D4ED8` | `#EFF6FF` | `#BFDBFE` | IN_TRANSIT, PARTIALLY_*, SENT |
+| `brand` | `#0E7490` | `#ECFEFF` | `#A5F3FC` | CONFIRMED, APPROVED, INVOICED, ACTIVE |
+| `success` | `#15803D` | `#F0FDF4` | `#BBF7D0` | PAID, DELIVERED, COMPLETED |
+| `danger` | `#B91C1C` | `#FEF2F2` | `#FECACA` | CANCELLED, REJECTED, OVERDUE |
 
-### Icon Style
-- **Dùng Lucide React** — Stroke 1.5px, consistent
-- Size: 16px (inline), 20px (button), 24px (navigation), 32px (feature icons)
-- Màu icon Active: Teal (#87CBB9), Default: Steel Muted (#8AAEBB)
+Class: `text-tone-{tone}-fg`, `bg-tone-{tone}-bg`, `border-tone-{tone}-border`.
+Module cần khác chuẩn → truyền `toneOverrides` vào `StatusBadge`, không tự đặt màu.
 
-### Product Images
-- Aspect ratio cố định `3:4` (Portrait — chuẩn cho chai rượu)
-- Fallback: Wine bottle silhouette SVG màu #4A6A7A
-
----
-
-## 9. Accessibility
-
-- **WCAG AA** — Teal (#87CBB9) trên Navy (#0A1926) đạt contrast ratio ~7.2:1 ✅
-- **Focus visible:** Ring 2px màu Teal cho keyboard navigation
-- **Touch targets:** Tối thiểu 44×44px
-- **Loading states:** Skeleton screens màu #1B2E3D thay vì spinner
+**Số liệu:** số âm/lỗ → `text-tone-danger-fg`; số dương/lãi → `text-tone-success-fg`.
 
 ---
 
-## 10. Design Tokens (Tailwind v4 CSS Variables)
+## 4. Typography
 
-```css
-/* globals.css — @theme block */
-@theme {
-  /* ── LY's Cellars — Oceanic Cellar Design Tokens ── */
+Font UI: **Inter** (tải qua `next/font`, biến `--font-inter`). **Cormorant Garamond** chỉ dùng cho logo/thương hiệu.
 
-  /* Core Backgrounds */
-  --color-lys-bg:       #0A1926;   /* Deep Sea Navy */
-  --color-lys-surface:  #142433;   /* Midnight Teal */
-  --color-lys-card:     #1B2E3D;   /* Steel Blue */
-  --color-lys-border:   #2A4355;   /* Deep Ocean */
+| Class | Size / Line | Weight | Dùng cho |
+|---|---|---|---|
+| `type-page-title` | 20 / 28 | 700 | Tiêu đề trang (`PageHeader`) |
+| `type-section-title` | 15 / 22 | 600 | Tiêu đề card, drawer, modal |
+| `type-body` | 14 / 21 | 400 | Nội dung, mô tả |
+| `type-table` | 13 / 20 | 400 | Ô bảng, input (desktop) |
+| `type-caption` | 12 / 16 | 500 | Label form, timestamp, phụ đề |
+| `type-number` / `type-money` | — | — | Tiền, số lượng (`tabular-nums`) |
 
-  /* Brand Accents */
-  --color-lys-teal:     #87CBB9;   /* Logo Teal — LINH HỒN */
-  --color-lys-teal-light: #A5DED0; /* Mint Light — Hover */
-  --color-lys-navy:     #1A4363;   /* Showroom Door Navy */
-  --color-lys-wine:     #8B1A2E;   /* Burgundy Red — Error/Alert */
-  --color-lys-amber:    #D4A853;   /* Amber Warm — Warning */
-
-  /* Text */
-  --color-lys-ivory:    #E8F1F2;   /* Cool White */
-  --color-lys-muted:    #8AAEBB;   /* Steel Muted */
-  --color-lys-dim:      #4A6A7A;   /* Deep Muted */
-
-  /* Semantic */
-  --color-success:      #5BA88A;   /* Teal Success */
-  --color-warning:      #D4A853;   /* Amber Warning */
-  --color-error:        #8B1A2E;   /* Burgundy Error */
-  --color-info:         #4A8FAB;   /* Ocean Info */
-
-  /* Typography */
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans:    "DM Sans", system-ui, sans-serif;
-  --font-mono:    "DM Mono", Menlo, monospace;
-
-  /* Radius — Sharp/Luxury */
-  --radius:       6px;
-  --radius-sm:    4px;
-  --radius-lg:    10px;
-  --radius-full:  9999px;
-}
-```
+- Không đặt `fontFamily` inline.
+- Input trên mobile dùng 16px (tránh iOS tự zoom) — đã có sẵn trong `Input`.
 
 ---
 
-## 11. Tailwind Config Reference (Nếu cần file cũ)
+## 5. Hình khối, khoảng cách, chuyển động
 
-```javascript
-// tailwind.config.js - LY's Cellars Edition
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        lys: {
-          bg:      '#0A1926',
-          surface: '#142433',
-          card:    '#1B2E3D',
-          border:  '#2A4355',
-          teal:    '#87CBB9',
-          'teal-light': '#A5DED0',
-          navy:    '#1A4363',
-          ivory:   '#E8F1F2',
-          muted:   '#8AAEBB',
-          dim:     '#4A6A7A',
-          wine:    '#8B1A2E',
-          amber:   '#D4A853',
-        }
-      },
-      fontFamily: {
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-        sans:    ['DM Sans', 'system-ui', 'sans-serif'],
-        mono:    ['DM Mono', 'Menlo', 'monospace'],
-      }
-    }
-  }
-}
-```
+| Hạng mục | Chuẩn |
+|---|---|
+| Bo góc control (nút, input, badge) | `rounded-md` — 6px |
+| Bo góc container (card, bảng, drawer, modal) | `rounded-lg` — 8px |
+| **Cấm** | `rounded-xl`, `rounded-2xl`, `rounded-full` cho badge |
+| Shadow | `shadow-xs` (card, nút) · `shadow-lg` (drawer, modal) |
+| Chiều cao control | 36px desktop · 44px mobile |
+| Dòng bảng | 40px (Compact) |
+| Khoảng cách block | `gap-4` (16px) · padding card `p-4` |
+| Chuyển động | 200ms ease-out, chỉ `transform`/`opacity`: `animate-fade-in`, `animate-drawer-in`, `animate-modal-in` |
+| Hover | Bằng class CSS (`hover:`) — **không** dùng `onMouseEnter` để đổi màu |
 
 ---
 
-## 12. Google Fonts Import
+## 6. Component Library — `src/components/ui`
 
-```html
-<!-- app/layout.tsx <head> -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-```
+Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 
----
-
-## 13. Chuyển Đổi Token (Migration Reference)
-
-| Token cũ (Cave Noir) | Token mới (Oceanic Cellar) | Ý nghĩa |
+| Component | API chính | Ghi chú |
 |---|---|---|
-| `#0F0A08` wine-bg | `#0A1926` lys-bg | Đen ấm → Navy sâu |
-| `#1A1209` wine-surface | `#142433` lys-surface | Nâu đen → Midnight Teal |
-| `#211810` wine-card | `#1B2E3D` lys-card | Chocolate → Steel Blue |
-| `#3D2B1F` wine-border | `#2A4355` lys-border | Nâu ấm → Deep Ocean |
-| `#C4963A` wine-gold | `#87CBB9` lys-teal | Vàng đồng → **Teal Logo** |
-| `#D4AF65` wine-gold-light | `#A5DED0` lys-teal-light | Vàng sáng → Mint Light |
-| `#8B1A2E` wine-garnet | `#8B1A2E` lys-wine | Garnet → Burgundy (GIỮ NGUYÊN) |
-| `#F5EDD8` wine-ivory | `#E8F1F2` lys-ivory | Ivory ấm → Cool White |
-Focus: Border màu Teal (#87CBB9) + glow nhẹ (rgba(135,203,185,0.2))
-Error: Border Burgundy + text lỗi bên dưới
-```
+| `Button` | `variant`: primary · secondary · ghost · link · danger · danger-outline · `size`: sm · md · icon · icon-sm · `loading` | Một nút primary mỗi vùng |
+| `Badge` / `StatusBadge` | `tone` · `icon` / `status`, `label`, `toneOverrides` | Label truyền vào đã dịch (VI/EN) |
+| `Card`, `CardHeader`, `CardBody`, `CardFooter` | `title`, `description`, `actions` | |
+| `StatCard`, `StatGrid` | `label`, `value`, `sub`, `icon`, `tone`, `trend`, `onClick`, `active` | Thay mọi `StatCard`/`SOStatCard`/`KpiCard` cục bộ |
+| `PageHeader`, `PageContainer` | `title?`, `description`, `actions` | `title` bỏ trống trên route dashboard |
+| `StatusTabs` | `items[{value,label,count}]`, `value`, `onChange`, `hideEmpty` | |
+| `Toolbar`, `SearchInput`, `FilterPanel` | `left`, `right` · props của input · grid 2/4/8 cột | |
+| `Pagination` | `page`, `pageSize`, `total`, `onPageChange`, `onPageSizeChange`, `itemLabel`, `isEn`, `onPageHover` | Logic số trang: `src/lib/ui/pagination.ts`. `onPageHover` để prefetch trang kế |
+| `Drawer` | `open`, `onClose`, `title`, `description`, `headerExtra`, `actions`, `footer`, `size` sm·md·lg·xl (480/640/720/960), `className` | Esc để đóng (chặn lan truyền), giữ focus, khóa cuộn. Drawer chi tiết/form dùng `className="bg-lys-bg"` để các Card trắng bên trong nổi lên. Nút phụ bên trái footer: thêm `className="mr-auto"` |
+| `Modal`, `ConfirmDialog` | `danger`, `loading`, `confirmLabel` | Thay `window.confirm` |
+| `Field`, `Input`, `Select`, `Textarea` | `label`, `hint`, `error`, `required` · `invalid` | `Field` dùng render-prop `{id => <Input id={id}/>}` |
+| `Table`, `THead`, `TBody`, `Tr`, `Th`, `Td`, `TableMessageRow` | `Th`: `sort`, `onSort`, `align` · `Td`: `align` · `Tr`: `selected` | Cột số dùng `align="right"` |
+| `EmptyState`, `Skeleton`, `TableSkeleton` | | Skeleton thay spinner khi tải danh sách |
 
-- Input height tối thiểu **44px** (WCAG touch target)
-- Font size **16px** tối thiểu trên mobile (tránh iOS auto-zoom)
+**Component nghiệp vụ dùng chung** (ngoài kit, trong `src/components/`):
 
-### 5.4 Action Buttons
-
-```
-Primary:    Nền Teal (#87CBB9), text Navy đậm (#0A1926), font Semibold
-            → Cảm giác bấm vào sự tươi mới, hiện đại
-Secondary:  Border Teal, nền trong suốt, text Teal
-Danger:     Nền Burgundy (#8B1A2E), text Cool White
-Ghost:      Không nền, không border — chỉ text Teal
-```
-
-- Tất cả button: `rounded-md` (6px) — Sharp nhưng không cắt góc hoàn toàn
-- Padding: `px-5 py-2.5` chuẩn, `py-3` cho mobile
-
-### 5.5 Status Badge
-
-```
-PAID / ACTIVE / DELIVERED:   Nền Teal nhạt rgba(135,203,185,0.15), text Teal (#87CBB9)
-PENDING / IN_TRANSIT:         Nền Amber nhạt rgba(212,168,83,0.15), text Amber (#D4A853)
-DRAFT / INACTIVE:             Nền xám rgba(74,106,122,0.2), text muted (#8AAEBB)
-ERROR / OVERDUE / REJECTED:  Nền Burgundy nhạt rgba(139,26,46,0.2), text Burgundy (#8B1A2E)
-```
+| Component | Ghi chú |
+|---|---|
+| `WineTypeBadge` | Bảng màu **danh mục** loại vang (đỏ/trắng/nổ/hồng/fortified/dessert) — ngoại lệ có chủ đích, tách khỏi tông trạng thái. Dùng ở Products, Product detail, Margin |
 
 ---
 
-## 6. Mobile-First Priority Screens
+## 7. Icon & hình ảnh
+- **Lucide React**. Kích thước: 12–14px (trong badge/nút sm), 16px (nút), 18px (header), 20–24px (điều hướng).
+- Ảnh sản phẩm: tỉ lệ `3:4`, fallback silhouette màu `lys-dim`.
 
-### 6.1 Shipper — Delivery Manifest
-- **Top App Bar:** Navy đậm (#1A4363) — mang "cánh cửa cửa hàng" đi theo
-- **CTA Button:** Teal đầy, 56px tall, full width
+## 8. Accessibility
+- WCAG AA: chữ thường ≥ 4.5:1 — vì vậy chữ teal dùng `lys-teal-strong`.
+- Focus: viền 2px `lys-teal` (global `:focus-visible`).
+- Nút chỉ có icon phải có `aria-label`.
+- Vùng chạm ≥ 44×44px trên mobile (đã có sẵn trong `Button`/`Input`).
 
-### 6.2 Thủ Kho — Pick List
-- **Location Badge:** Teal sáng (#87CBB9) — nổi bật trong bóng tối hầm rượu
-- **Scan Button:** Teal với icon camera nổi bật
+## 9. Quy tắc bắt buộc khi viết UI mới
+1. Dùng component trong `@/components/ui` trước — chỉ tạo mới khi chưa có, và thêm vào kit thay vì để trong module.
+2. Không hex trong `className` (`bg-[#...]`) hay `style={{ color/background/border }}`.
+3. Không thêm class `dark:` (hệ thống chỉ có Light).
+4. Không khai báo `STATUS_COLORS`/`STATUS_CFG` màu cục bộ — chỉ map **nhãn**, màu lấy từ `StatusBadge`.
+5. Email template và `QuotationPublicView` có quy chuẩn riêng (inline CSS do email client) — ngoài phạm vi kit.
+6. Không đổi màu bằng `onMouseEnter/onMouseLeave` — dùng `hover:` class. (`onMouseEnter` chỉ dùng cho prefetch.)
+
+**Codemod hỗ trợ migrate:** `node scripts/ui-palette-codemod.mjs [--dry] <paths>` — đổi hex/rgba Dark cũ sang Light, `text-*-300/400` nhạt → `-700`, xóa `dark:`. Chạy trước khi thay component; không chạy cho trang in (`*/print/*`).
 
 ---
 
-## 7. Micro-interactions & Animation
+## 10. Nhật ký thay đổi
 
-### Nguyên Tắc Animation Cho LY's Cellars
-- **Purposeful only** — Không animate cho có
-- **Luxury pace** — 200-350ms, không vội vàng như fintech
-- **Ease-out chủ yếu** — Vào nhẹ nhàng, dừng chắc
-- **GPU-only** — Chỉ dùng `transform` và `opacity`
-
-### Các Animation Cụ Thể
-
-| Sự kiện | Animation | Duration |
+| Phiên bản | Ngày | Nội dung |
 |---|---|---|
-| Menu sidebar mở/đóng | Width transition + fade labels | 200ms ease-out |
-| Table row hover | Background Teal fade | 100ms |
-| Card hover | Translatey -2px + navy shadow | 200ms ease-out |
-| KPI số thay đổi | Counter animation (count up) | 800ms ease-out |
-| Modal mở | Scale 0.95→1 + fade | 200ms ease-out |
-| Button loading | Spinner fade in, no resize | 150ms |
-| Toast notification | Slide in từ phải | 250ms ease-out |
-| Loading (Wine Fill) | Teal đổ vào ly từ dưới lên | 1200ms ease-in-out |
+| **v3.2** | 2026-10-05 | Pilot được duyệt. Đợt 1: codemod màu cho 25 file (quotations, price-list, pos, returns, delivery, pipeline, crm, contracts, proposals); chuyển cấu trúc sang kit cho Returns, Price List, Delivery (kèm E-POD/Create drawer). Lưu ý: `Toolbar` nhận `left`/`right`, không nhận children; `TableMessageRow` có `p-0` → luôn bọc `EmptyState`/`TableSkeleton` bên trong. |
+| **v3.1** | 2026-10-05 | Pilot xong: Sales (list + 3 drawer), Products (list, bảng, 2 drawer), Customers (list + drawer), Sidebar/Header. Thêm `Drawer.actions`, `Pagination.onPageHover`, `WineTypeBadge` dùng chung (bỏ màu tím Fortified ở Margin). Script `ui-palette-codemod.mjs` + test. |
+| **v3.0** | 2026-10-05 | Viết lại tài liệu thành 1 bản Light duy nhất (bỏ spec Dark cũ & đoạn lặp). Tải Inter qua `next/font`, Toaster light. Thêm token `lys-teal-strong/hover/soft`, 6 tông trạng thái `tone-*`, token chuyển động, `type-caption`; `radius-lg` 10→8px. Tạo `src/components/ui` (11 nhóm component) + `src/lib/ui/status.ts`. |
+| v2.2 | 2026-09-24 | Codemod 123 file từ hex Dark sang Light; xóa ~240 dòng CSS override `!important`. |
+| v1.x | — | Spec "Oceanic Cellar" Dark (đã ngừng dùng). |
 
-### Logo Loading State (Đặc biệt)
-Khi dữ liệu tải: SVG chiếc ly rỗng → màu Teal đổ đầy từ dưới lên theo đường uốn lượn của logo.
-
----
-
-## 8. Icons & Imagery
-
-### Icon Style
-- **Dùng Lucide React** — Stroke 1.5px, consistent
-- Size: 16px (inline), 20px (button), 24px (navigation), 32px (feature icons)
-- Màu icon Active: Teal (#87CBB9), Default: Steel Muted (#8AAEBB)
-
-### Product Images
-- Aspect ratio cố định `3:4` (Portrait — chuẩn cho chai rượu)
-- Fallback: Wine bottle silhouette SVG màu #4A6A7A
-
----
-
-## 9. Accessibility
-
-- **WCAG AA** — Teal (#87CBB9) trên Navy (#0A1926) đạt contrast ratio ~7.2:1 ✅
-- **Focus visible:** Ring 2px màu Teal cho keyboard navigation
-- **Touch targets:** Tối thiểu 44×44px
-- **Loading states:** Skeleton screens màu #1B2E3D thay vì spinner
-
----
-
-## 10. Design Tokens (Tailwind v4 CSS Variables)
-
-```css
-/* globals.css — @theme block */
-@theme {
-  /* ── LY's Cellars — Oceanic Cellar Design Tokens ── */
-
-  /* Core Backgrounds */
-  --color-lys-bg:       #0A1926;   /* Deep Sea Navy */
-  --color-lys-surface:  #142433;   /* Midnight Teal */
-  --color-lys-card:     #1B2E3D;   /* Steel Blue */
-  --color-lys-border:   #2A4355;   /* Deep Ocean */
-
-  /* Brand Accents */
-  --color-lys-teal:     #87CBB9;   /* Logo Teal — LINH HỒN */
-  --color-lys-teal-light: #A5DED0; /* Mint Light — Hover */
-  --color-lys-navy:     #1A4363;   /* Showroom Door Navy */
-  --color-lys-wine:     #8B1A2E;   /* Burgundy Red — Error/Alert */
-  --color-lys-amber:    #D4A853;   /* Amber Warm — Warning */
-
-  /* Text */
-  --color-lys-ivory:    #E8F1F2;   /* Cool White */
-  --color-lys-muted:    #8AAEBB;   /* Steel Muted */
-  --color-lys-dim:      #4A6A7A;   /* Deep Muted */
-
-  /* Semantic */
-  --color-success:      #5BA88A;   /* Teal Success */
-  --color-warning:      #D4A853;   /* Amber Warning */
-  --color-error:        #8B1A2E;   /* Burgundy Error */
-  --color-info:         #4A8FAB;   /* Ocean Info */
-
-  /* Typography */
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans:    "DM Sans", system-ui, sans-serif;
-  --font-mono:    "DM Mono", Menlo, monospace;
-
-  /* Radius — Sharp/Luxury */
-  --radius:       6px;
-  --radius-sm:    4px;
-  --radius-lg:    10px;
-  --radius-full:  9999px;
-}
-```
-
----
-
-## 11. Tailwind Config Reference (Nếu cần file cũ)
-
-```javascript
-// tailwind.config.js - LY's Cellars Edition
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        lys: {
-          bg:      '#0A1926',
-          surface: '#142433',
-          card:    '#1B2E3D',
-          border:  '#2A4355',
-          teal:    '#87CBB9',
-          'teal-light': '#A5DED0',
-          navy:    '#1A4363',
-          ivory:   '#E8F1F2',
-          muted:   '#8AAEBB',
-          dim:     '#4A6A7A',
-          wine:    '#8B1A2E',
-          amber:   '#D4A853',
-        }
-      },
-      fontFamily: {
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-        sans:    ['DM Sans', 'system-ui', 'sans-serif'],
-        mono:    ['DM Mono', 'Menlo', 'monospace'],
-      }
-    }
-  }
-}
-```
-
----
-
-## 12. Google Fonts Import
-
-```html
-<!-- app/layout.tsx <head> -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-```
-
----
-
-## 13. Chuyển Đổi Token (Migration Reference)
-
-| Token cũ (Cave Noir) | Token mới (Oceanic Cellar) | Ý nghĩa |
-|---|---|---|
-| `#0F0A08` wine-bg | `#0A1926` lys-bg | Đen ấm → Navy sâu |
-| `#1A1209` wine-surface | `#142433` lys-surface | Nâu đen → Midnight Teal |
-| `#211810` wine-card | `#1B2E3D` lys-card | Chocolate → Steel Blue |
-| `#3D2B1F` wine-border | `#2A4355` lys-border | Nâu ấm → Deep Ocean |
-| `#C4963A` wine-gold | `#87CBB9` lys-teal | Vàng đồng → **Teal Logo** |
-| `#D4AF65` wine-gold-light | `#A5DED0` lys-teal-light | Vàng sáng → Mint Light |
-| `#8B1A2E` wine-garnet | `#8B1A2E` lys-wine | Garnet → Burgundy (GIỮ NGUYÊN) |
-| `#F5EDD8` wine-ivory | `#E8F1F2` lys-ivory | Ivory ấm → Cool White |
-| `#A89880` wine-muted | `#8AAEBB` lys-muted | Nâu nhạt → Steel Muted |
-| `#6B5A4E` wine-dim | `#4A6A7A` lys-dim | Nâu rất nhạt → Deep Muted |
-
----
-
-## 14. Nhật Ký Kiểm Tra & Chuẩn Hóa Giao Diện (System Design Audit Log)
-
-- **Ngày thực hiện:** 2026-09-24 (Phiên bản v2.2)
-- **Phạm vi kiểm tra & Codemod:** Toàn bộ 123 tệp giao diện TSX/JSX thuộc 35 phân hệ ứng dụng và layout chung.
-- **Kết quả:**
-  - ✅ **Chuẩn hóa Design Tokens:** Cập nhật bảng Design Tokens `@theme` trong `globals.css` với các semantic tokens cho Light Mode (`lys-bg`, `lys-surface`, `lys-card`, `lys-subtle`, `lys-border`, `lys-border-strong`, `lys-primary`, `lys-secondary`, `lys-muted`, `lys-dim`, `lys-teal`, `lys-navy`, `lys-wine`, `lys-amber`).
-  - ✅ **Xóa bỏ 100% Khối CSS Overrides:** Loại bỏ hoàn toàn 240+ dòng CSS selector `[style*="#..."]` đè `!important` trong `globals.css`, giải quyết dứt điểm các lỗi tương phản (contrast bugs) và xung đột CSS.
-  - ✅ **Chuyển đổi 123 Tệp Mã Nguồn:** Thay thế toàn bộ các mã màu dark navy hardcoded (`#0A1926`, `#142433`, `#1B2E3D`, `#2A4355`, `#E8F1F2`, `#8AAEBB`, `#4A6A7A`) sang Tailwind tokens chuẩn Light Mode (`bg-white`, `border-slate-200`, `text-slate-900`, `text-slate-600`, `text-slate-500`, `text-cyan-600`).
-  - ✅ **Chuẩn hóa Email HTML Templates (`notifications.ts`):** Chuyển đổi toàn bộ template email thông báo nội bộ sang bảng màu sáng chuyên nghiệp, tương thích hoàn hảo với Gmail, Outlook, Apple Mail.
-  - ✅ **Đồng bộ Trang Báo Giá Public (`QuotationPublicView.tsx`):** Chuyển sang Light Luxury Wine theme, chuẩn nhận diện thương hiệu LY's Cellars.
-  - ✅ **Kiểm tra biên dịch:** `npx tsc --noEmit` đạt 0 lỗi.
-
----
-*Design System v2.2 — LY's Cellars Pure Light ERP System | Updated 2026-09-24*
-*Inspired by the Mediterranean Navy door of LY's Cellars showroom, số 12.*
-
+### Tiến độ chuẩn hóa module
+| Trạng thái | Module |
+|---|---|
+| ✅ Đã chuẩn hóa | **Sales** — danh sách, SODetailDrawer, CreateSODrawer, EditSODrawer |
+| ✅ Đã chuẩn hóa | **Products** — danh sách, ProductTable, ProductDrawer, ProductDetailDrawer |
+| ✅ Đã chuẩn hóa | **Customers** — danh sách, CustomerDrawer (vỏ + footer; form bên trong còn style cũ đã Light) |
+| ✅ Đã chuẩn hóa | **Sidebar / Header** |
+| ✅ Đã chuẩn hóa | **Returns** — danh sách + drawer tạo đơn trả |
+| ✅ Đã chuẩn hóa | **Price List** — tab Bảng Giá Chung, drawer tạo, modal thêm SP (tab Customer Rules / Mapping mới codemod màu) |
+| ✅ Đã chuẩn hóa | **Delivery** — danh sách, E-POD drawer, Create Route drawer (Shipper view mới codemod màu) |
+| 🎨 Codemod màu | quotations, pos, pipeline, crm, contracts, proposals — còn chờ chuyển cấu trúc |
+| ⏳ Chờ | Đợt 2–4 (xem kế hoạch) |

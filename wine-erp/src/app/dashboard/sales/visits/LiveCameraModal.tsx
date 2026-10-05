@@ -117,7 +117,7 @@ export function LiveCameraModal({
         ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight)
 
         // Teal accent line on top of banner
-        ctx.fillStyle = '#87CBB9'
+        ctx.fillStyle = '#0E7490'
         ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, Math.max(3, Math.round(3.5 * scale)))
 
         // Format date & time based on locale
@@ -154,7 +154,7 @@ export function LiveCameraModal({
         // LINE 3: KHÁCH HÀNG & SALE & BRAND
         const fontMetaSize = Math.round(13 * scale)
         ctx.font = `bold ${fontMetaSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
-        ctx.fillStyle = '#87CBB9'
+        ctx.fillStyle = '#0E7490'
         const metaParts = ['LYS CELLARS ERP']
         if (customerName) metaParts.push(`${locale === 'en' ? 'Client' : 'Khách'}: ${customerName}`)
         if (salespersonName) metaParts.push(`${locale === 'en' ? 'Staff' : 'Sale'}: ${salespersonName}`)
@@ -265,21 +265,21 @@ export function LiveCameraModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
+                <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                        <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600">
                             <Camera size={18} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+                            <p className="text-[11px] text-slate-500">
                                 {subtitle || (locale === 'en' ? 'Capture verified field photo' : 'Chụp ảnh xác nhận từ camera')}
                             </p>
                         </div>
                     </div>
-                    <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer">
+                    <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer">
                         <X size={18} />
                     </button>
                 </div>
@@ -298,7 +298,7 @@ export function LiveCameraModal({
                             />
                             
                             {/* Live Badge */}
-                            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#0891B2] border border-[#87CBB9]/30">
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#0891B2] border border-[#0E7490]/30">
                                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                                 LIVE CAMERA
                             </div>
@@ -346,7 +346,7 @@ export function LiveCameraModal({
                     {/* Error / Native Camera Trigger Fallback */}
                     {cameraError && !capturedImage && (
                         <div className="absolute inset-0 bg-slate-50 p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
-                            <VideoOff size={36} className="text-[#D4A853]" />
+                            <VideoOff size={36} className="text-[#B45309]" />
                             <h4 className="text-sm font-bold text-slate-900">
                                 {locale === 'en' ? 'Open Device Camera' : 'Chụp Ảnh Qua Camera Thiết Bị'}
                             </h4>

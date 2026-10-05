@@ -1,21 +1,32 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { Plus, Tag, Search, Trash2, Loader2, X, DollarSign, Edit3, ChevronRight, Package } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Plus, Tag, Search, Trash2, DollarSign, Package } from 'lucide-react'
 import { PriceListRow, getPriceLists, getPriceListDetail, createPriceList, upsertPriceListLine, removePriceListLine, getProductsForPriceList, deletePriceList } from './actions'
-import { formatVND } from '@/lib/utils'
+import { formatVND, cn } from '@/lib/utils'
+import type { Tone } from '@/lib/ui/status'
+import {
+    Badge, Button, PageHeader, StatCard, StatGrid, StatusTabs, Drawer, Modal, EmptyState, Skeleton,
+    Field, Input, Select, Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+} from '@/components/ui'
 
-const CHANNEL_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    HORECA: { label: 'HORECA', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    VIP_RETAIL: { label: 'VIP Retail', color: '#0891B2', bg: 'rgba(8,145,178,0.15)' },
-    DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
+const CHANNEL_CFG: Record<string, { label: string; tone: Tone }> = {
+    HORECA: { label: 'HORECA', tone: 'warning' },
+    WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý', tone: 'brand' },
+    VIP_RETAIL: { label: 'VIP Retail', tone: 'info' },
+    DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', tone: 'neutral' },
 }
 
 function ChannelBadge({ channel }: { channel: string }) {
-    const cfg = CHANNEL_CFG[channel] ?? { label: channel, color: '#475569', bg: 'rgba(138,174,187,0.12)' }
-    return <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+    const cfg = CHANNEL_CFG[channel] ?? { label: channel, tone: 'neutral' as Tone }
+    return <Badge tone={cfg.tone}>{cfg.label}</Badge>
 }
+
+const TAB_DESCRIPTION = {
+    general: 'Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp',
+    customer: 'Cơ chế giá mặc định (Wholesale -X%, Retail -Y%) và giá đặc biệt riêng của từng khách hàng',
+    mapping: 'Phân bổ bảng giá niêm yết mặc định cho từng nhóm khách hàng khi không có giá đặc biệt',
+} as const
 
 import { CustomerRulesTab } from './CustomerRulesTab'
 import { ChannelMappingTab } from './ChannelMappingTab'
@@ -127,67 +138,25 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
         : products
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        {activeTab === 'general' ? 'Bảng Giá Niêm Yết (PRC)' : activeTab === 'customer' ? 'Trung Tâm Cơ Chế & Giá Khách Hàng (Customer Pricing Hub)' : 'Cấu Hình Ánh Xạ Kênh Giá Mặc Định'}
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        {activeTab === 'general' 
-                            ? 'Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp' 
-                            : activeTab === 'customer'
-                            ? 'Quản lý cơ chế giá mặc định (Wholesale -X%, Retail -Y%) và toàn bộ danh mục giá đặc biệt riêng của từng khách hàng'
-                            : 'Phân bổ bảng giá niêm yết mặc định cho từng nhóm đối tượng khách hàng khi không có giá đặc biệt'}
-                    </p>
-                </div>
-                {activeTab === 'general' && (
-                    <button
-                        onClick={() => setCreateOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
-                        style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                    >
-                        <Plus size={16} /> Tạo Bảng Giá
-                    </button>
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
+            <PageHeader
+                description={TAB_DESCRIPTION[activeTab]}
+                actions={activeTab === 'general' && (
+                    <Button onClick={() => setCreateOpen(true)}>
+                        <Plus size={16} aria-hidden /> Tạo Bảng Giá
+                    </Button>
                 )}
-            </div>
+            />
 
-            {/* Tabs */}
-            <div className="flex border-b border-slate-200 mb-2">
-                <button
-                    onClick={() => setActiveTab('general')}
-                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
-                    style={{
-                        color: activeTab === 'general' ? '#87CBB9' : '#475569',
-                        borderColor: activeTab === 'general' ? '#87CBB9' : 'transparent',
-                    }}
-                >
-                    Bảng Giá Chung
-                </button>
-                <button
-                    onClick={() => setActiveTab('customer')}
-                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
-                    style={{
-                        color: activeTab === 'customer' ? '#87CBB9' : '#475569',
-                        borderColor: activeTab === 'customer' ? '#87CBB9' : 'transparent',
-                    }}
-                >
-                    🏢 Cơ Chế & Giá Khách Hàng
-                </button>
-                <button
-                    onClick={() => setActiveTab('mapping')}
-                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
-                    style={{
-                        color: activeTab === 'mapping' ? '#87CBB9' : '#475569',
-                        borderColor: activeTab === 'mapping' ? '#87CBB9' : 'transparent',
-                    }}
-                >
-                    Cấu Hình Ánh Xạ Kênh
-                </button>
-            </div>
+            <StatusTabs
+                value={activeTab}
+                onChange={setActiveTab}
+                items={[
+                    { value: 'general', label: 'Bảng Giá Chung', count: lists.length },
+                    { value: 'customer', label: 'Cơ Chế & Giá Khách Hàng' },
+                    { value: 'mapping', label: 'Cấu Hình Ánh Xạ Kênh' },
+                ]}
+            />
 
             {activeTab === 'customer' ? (
                 <CustomerRulesTab currentUser={currentUser} />
@@ -195,237 +164,198 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                 <ChannelMappingTab currentUser={currentUser} />
             ) : (
                 <>
-                    {/* Summary cards */}
-                    <div className="grid grid-cols-4 gap-3">
-                        {Object.entries(CHANNEL_CFG).map(([key, cfg]) => {
-                            const count = lists.filter(l => l.channel === key).length
-                            return (
-                                <div key={key} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color }} />
-                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{cfg.label}</p>
-                                    </div>
-                                    <p className="text-xl font-bold font-mono" style={{ color: '#0F172A' }}>{count}</p>
-                                    <p className="text-xs" style={{ color: '#64748B' }}>bảng giá</p>
-                                </div>
-                            )
-                        })}
-                    </div>
+                    <StatGrid className="grid-cols-2 lg:grid-cols-4">
+                        {Object.entries(CHANNEL_CFG).map(([key, cfg]) => (
+                            <StatCard key={key} icon={Tag} tone={cfg.tone} label={cfg.label}
+                                value={lists.filter(l => l.channel === key).length} sub="bảng giá" />
+                        ))}
+                    </StatGrid>
 
-                    {/* Main content: list + detail */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        {/* Left: Price Lists */}
-                        <div className="lg:col-span-1 space-y-2">
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>DANH SÁCH BẢNG GIÁ</p>
+                        {/* Left: price lists */}
+                        <section className="lg:col-span-1 flex flex-col gap-2">
+                            <h3 className="type-section-title text-lys-secondary">Danh sách bảng giá</h3>
                             {lists.length === 0 ? (
-                                <div className="text-center py-12 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <Tag size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                    <p className="text-sm" style={{ color: '#64748B' }}>Chưa có bảng giá nào</p>
-                                </div>
+                                <EmptyState icon={Tag} title="Chưa có bảng giá nào" className="bg-white border border-lys-border rounded-md" />
                             ) : lists.map(pl => (
                                 <div
                                     key={pl.id}
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => loadDetail(pl.id)}
-                                    className="p-3.5 rounded-md cursor-pointer transition-all"
-                                    style={{
-                                        background: selectedId === pl.id ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
-                                        border: `1px solid ${selectedId === pl.id ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
-                                    }}
+                                    onKeyDown={e => { if (e.key === 'Enter') loadDetail(pl.id) }}
+                                    className={cn(
+                                        'p-3 rounded-md border cursor-pointer transition-colors',
+                                        selectedId === pl.id
+                                            ? 'bg-lys-teal-soft border-lys-teal'
+                                            : 'bg-white border-lys-border hover:bg-lys-subtle',
+                                    )}
                                 >
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{pl.name}</p>
+                                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                                        <p className="text-sm font-semibold text-lys-primary">{pl.name}</p>
                                         <ChannelBadge channel={pl.channel} />
                                     </div>
-                                    <div className="flex items-center justify-between text-xs" style={{ color: '#64748B' }}>
-                                        <span>{pl.itemCount} sản phẩm</span>
-                                        <span>{new Date(pl.effectiveDate).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <ChevronRight size={12} style={{ color: '#64748B' }} />
-                                        <button
+                                    <div className="flex items-center justify-between type-caption">
+                                        <span>{pl.itemCount} sản phẩm · {new Date(pl.effectiveDate).toLocaleDateString('vi-VN')}</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
                                             onClick={e => { e.stopPropagation(); handleDelete(pl.id) }}
-                                            className="p-1 rounded hover:bg-red-500/10 transition"
+                                            aria-label="Xóa bảng giá"
                                             title="Xóa bảng giá"
                                         >
-                                            <Trash2 size={12} style={{ color: '#8B1A2E' }} />
-                                        </button>
+                                            <Trash2 size={13} aria-hidden />
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                        </section>
 
-                        {/* Right: Detail */}
-                        <div className="lg:col-span-2">
+                        {/* Right: detail */}
+                        <section className="lg:col-span-2">
                             {detailLoading ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
+                                <div className="flex flex-col gap-3">
+                                    <Skeleton className="h-20" />
+                                    <Skeleton className="h-64" />
                                 </div>
                             ) : !selectedId ? (
-                                <div className="text-center py-20 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <DollarSign size={40} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                    <p className="text-sm" style={{ color: '#64748B' }}>Chọn bảng giá bên trái để xem chi tiết</p>
-                                </div>
+                                <EmptyState icon={DollarSign} title="Chọn bảng giá bên trái để xem chi tiết" className="bg-white border border-lys-border rounded-md py-20" />
                             ) : detail ? (
-                                <div className="space-y-4">
-                                    {/* Detail header */}
-                                    <div className="flex items-center justify-between p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center justify-between gap-3 p-4 rounded-md bg-white border border-lys-border">
                                         <div>
-                                            <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>{detail.name}</h3>
+                                            <h3 className="text-base font-semibold text-lys-primary">{detail.name}</h3>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <ChannelBadge channel={detail.channel} />
-                                                <span className="text-xs" style={{ color: '#64748B' }}>
+                                                <span className="type-caption">
                                                     Hiệu lực: {new Date(detail.effectiveDate).toLocaleDateString('vi-VN')}
                                                     {detail.expiryDate && ` → ${new Date(detail.expiryDate).toLocaleDateString('vi-VN')}`}
                                                 </span>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={openAddProduct}
-                                            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-all"
-                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '6px' }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)')}
-                                        >
-                                            <Plus size={14} /> Thêm Sản Phẩm
-                                        </button>
+                                        <Button variant="secondary" onClick={openAddProduct}>
+                                            <Plus size={14} aria-hidden /> Thêm Sản Phẩm
+                                        </Button>
                                     </div>
 
-                                    {/* Price lines table */}
-                                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                                        <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
-                                            <thead>
-                                                <tr style={{ background: '#FFFFFF' }}>
-                                                    {['SKU', 'Sản Phẩm', 'Giá Bán', 'Tiền Tệ', 'Hành Động'].map(h => (
-                                                        <th key={h} className="px-4 py-2.5 text-xs uppercase tracking-wider text-left font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {detail.lines.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={5} className="text-center py-12" style={{ color: '#64748B' }}>
-                                                            <Package size={28} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
-                                                            <p className="text-xs">Chưa có sản phẩm. Bấm "Thêm Sản Phẩm" để bắt đầu.</p>
-                                                        </td>
-                                                    </tr>
-                                                ) : detail.lines.map(line => (
-                                                    <tr key={line.id} style={{ borderTop: '1px solid #E2E8F0' }}>
-                                                        <td className="px-4 py-2.5">
-                                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{line.skuCode}</span>
-                                                        </td>
-                                                        <td className="px-4 py-2.5 text-xs" style={{ color: '#0F172A' }}>{line.productName}</td>
-                                                        <td className="px-4 py-2.5">
-                                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>{formatVND(line.unitPrice)}</span>
-                                                        </td>
-                                                        <td className="px-4 py-2.5 text-xs" style={{ color: '#64748B' }}>{line.currency}</td>
-                                                        <td className="px-4 py-2.5">
-                                                            <button onClick={() => handleRemoveLine(line.id)} className="p-1.5 rounded transition hover:bg-red-500/10">
-                                                                <Trash2 size={13} style={{ color: '#8B1A2E' }} />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <Table>
+                                        <THead>
+                                            <tr>
+                                                <Th>SKU</Th>
+                                                <Th>Sản Phẩm</Th>
+                                                <Th align="right">Giá Bán</Th>
+                                                <Th>Tiền Tệ</Th>
+                                                <Th aria-label="Thao tác" />
+                                            </tr>
+                                        </THead>
+                                        <TBody>
+                                            {detail.lines.length === 0 ? (
+                                                <TableMessageRow colSpan={5}>
+                                                    <EmptyState icon={Package} title="Chưa có sản phẩm" description='Bấm "Thêm Sản Phẩm" để bắt đầu.' />
+                                                </TableMessageRow>
+                                            ) : detail.lines.map(line => (
+                                                <Tr key={line.id}>
+                                                    <Td className="type-number font-semibold text-lys-teal-strong">{line.skuCode}</Td>
+                                                    <Td className="text-lys-primary">{line.productName}</Td>
+                                                    <Td align="right" className="type-number font-semibold text-lys-primary">{formatVND(line.unitPrice)}</Td>
+                                                    <Td className="text-lys-muted">{line.currency}</Td>
+                                                    <Td align="right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
+                                                            onClick={() => handleRemoveLine(line.id)}
+                                                            aria-label="Xóa dòng giá"
+                                                        >
+                                                            <Trash2 size={13} aria-hidden />
+                                                        </Button>
+                                                    </Td>
+                                                </Tr>
+                                            ))}
+                                        </TBody>
+                                    </Table>
                                 </div>
                             ) : null}
-                        </div>
+                        </section>
                     </div>
                 </>
             )}
 
-            {/* Create drawer */}
-            {createOpen && (
-                <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setCreateOpen(false)} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(420px,95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>Tạo Bảng Giá Mới</h3>
-                            <button onClick={() => setCreateOpen(false)} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        <div className="flex-1 px-6 py-5 space-y-4">
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Tên Bảng Giá</label>
-                                <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="VD: Bảng giá HORECA Q1/2026"
-                                    className="w-full mt-1 px-3 py-2.5 text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Kênh Bán Hàng</label>
-                                <select value={formChannel} onChange={e => setFormChannel(e.target.value)}
-                                    className="w-full mt-1 px-3 py-2.5 text-sm outline-none cursor-pointer" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}>
-                                    {Object.entries(CHANNEL_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Ngày Hiệu Lực</label>
-                                    <input type="date" value={formEffective} onChange={e => setFormEffective(e.target.value)}
-                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Ngày Hết Hạn</label>
-                                    <input type="date" value={formExpiry} onChange={e => setFormExpiry(e.target.value)}
-                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }} />
-                                </div>
-                            </div>
-                            <button onClick={handleCreate} disabled={saving || !formName.trim()}
-                                className="w-full py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
-                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Tạo Bảng Giá'}
-                            </button>
-                        </div>
+            <Drawer
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                title="Tạo Bảng Giá Mới"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setCreateOpen(false)}>Hủy</Button>
+                        <Button onClick={handleCreate} loading={saving} disabled={saving || !formName.trim()}>Tạo Bảng Giá</Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <Field label="Tên Bảng Giá" required>
+                        {id => <Input id={id} value={formName} onChange={e => setFormName(e.target.value)} placeholder="VD: Bảng giá HORECA Q1/2026" />}
+                    </Field>
+                    <Field label="Kênh Bán Hàng">
+                        {id => (
+                            <Select id={id} value={formChannel} onChange={e => setFormChannel(e.target.value)}>
+                                {Object.entries(CHANNEL_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                            </Select>
+                        )}
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Field label="Ngày Hiệu Lực">
+                            {id => <Input id={id} type="date" value={formEffective} onChange={e => setFormEffective(e.target.value)} />}
+                        </Field>
+                        <Field label="Ngày Hết Hạn">
+                            {id => <Input id={id} type="date" value={formExpiry} onChange={e => setFormExpiry(e.target.value)} />}
+                        </Field>
                     </div>
-                </>
-            )}
+                </div>
+            </Drawer>
 
-            {/* Add product modal */}
-            {addProductOpen && (
-                <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setAddProductOpen(false)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
-                        style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Thêm Sản Phẩm vào Bảng Giá</h3>
-                            <button onClick={() => setAddProductOpen(false)} className="p-1" style={{ color: '#64748B' }}><X size={16} /></button>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="relative">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                                <input value={addSearch} onChange={e => setAddSearch(e.target.value)} placeholder="Tìm SKU hoặc tên sản phẩm..."
-                                    className="w-full pl-9 pr-3 py-2 text-xs outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }} />
-                            </div>
-                            <div className="max-h-40 overflow-y-auto space-y-1 rounded-md p-1" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                {filteredProducts.slice(0, 20).map(p => (
-                                    <div key={p.id}
-                                        onClick={() => setAddProductId(p.id)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer text-xs transition"
-                                        style={{
-                                            background: addProductId === p.id ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                            color: addProductId === p.id ? '#87CBB9' : '#475569',
-                                        }}>
-                                        <span className="font-bold">{p.skuCode}</span>
-                                        <span className="truncate" style={{ color: '#0F172A' }}>{p.productName}</span>
-                                    </div>
-                                ))}
-                                {filteredProducts.length === 0 && (
-                                    <p className="text-center py-4 text-xs" style={{ color: '#64748B' }}>Không tìm thấy sản phẩm</p>
+            <Modal
+                open={addProductOpen}
+                onClose={() => setAddProductOpen(false)}
+                title="Thêm Sản Phẩm vào Bảng Giá"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setAddProductOpen(false)}>Hủy</Button>
+                        <Button onClick={handleAddProduct} loading={saving} disabled={saving || !addProductId || !addPrice}>Thêm Giá</Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-3">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
+                        <Input value={addSearch} onChange={e => setAddSearch(e.target.value)} placeholder="Tìm SKU hoặc tên sản phẩm..." className="pl-9" aria-label="Tìm sản phẩm" />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto rounded-md p-1 bg-white border border-lys-border">
+                        {filteredProducts.slice(0, 20).map(p => (
+                            <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => setAddProductId(p.id)}
+                                className={cn(
+                                    'w-full flex items-center gap-2 px-3 py-2 rounded text-left text-xs transition-colors',
+                                    addProductId === p.id ? 'bg-lys-teal-soft text-lys-teal-strong' : 'text-lys-secondary hover:bg-lys-subtle',
                                 )}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Giá Bán (VND)</label>
-                                <input type="number" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="VD: 1500000"
-                                    className="w-full mt-1 px-3 py-2 text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853', fontFamily: 'var(--font-sans)', borderRadius: '6px' }} />
-                            </div>
-                            <button onClick={handleAddProduct} disabled={saving || !addProductId || !addPrice}
-                                className="w-full py-2 text-sm font-semibold transition-all disabled:opacity-50"
-                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Thêm Giá'}
+                            >
+                                <span className="type-number font-semibold">{p.skuCode}</span>
+                                <span className="truncate text-lys-primary">{p.productName}</span>
                             </button>
-                        </div>
+                        ))}
+                        {filteredProducts.length === 0 && (
+                            <p className="text-center py-4 type-caption">Không tìm thấy sản phẩm</p>
+                        )}
                     </div>
-                </>
-            )}
+                    <Field label="Giá Bán (VND)" required>
+                        {id => <Input id={id} type="number" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="VD: 1500000" className="type-number" />}
+                    </Field>
+                </div>
+            </Modal>
         </div>
     )
 }

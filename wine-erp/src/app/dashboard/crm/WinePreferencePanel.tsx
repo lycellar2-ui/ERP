@@ -113,7 +113,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <Wine size={14} style={{ color: '#8B1A2E' }} />
+                    <Wine size={14} style={{ color: '#B91C1C' }} />
                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                         Sở Thích Rượu Vang
                     </p>
@@ -121,7 +121,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                 {!editing ? (
                     <button onClick={() => setEditing(true)}
                         className="text-xs px-2 py-1 rounded font-medium"
-                        style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
+                        style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
                         {pref ? 'Sửa' : '+ Thêm'}
                     </button>
                 ) : (
@@ -140,7 +140,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <div className="flex flex-wrap gap-1">
                                 {pref.grapeVarieties.map(g => (
                                     <span key={g} className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ color: '#8B1A2E', background: 'rgba(139,26,46,0.15)' }}>{g}</span>
+                                        style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>{g}</span>
                                 ))}
                             </div>
                         </div>
@@ -152,7 +152,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <div className="flex flex-wrap gap-1">
                                 {pref.regions.map(r => (
                                     <span key={r} className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>{r}</span>
+                                        style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>{r}</span>
                                 ))}
                             </div>
                         </div>
@@ -164,7 +164,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <div className="flex flex-wrap gap-1">
                                 {pref.tasteProfile.map(t => (
                                     <span key={t} className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.12)' }}>{t}</span>
+                                        style={{ color: '#15803D', background: 'rgba(21,128,61,0.12)' }}>{t}</span>
                                 ))}
                             </div>
                         </div>
@@ -191,11 +191,11 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
             {editing && (
                 <div className="space-y-4">
                     <TagSelector label="Giống nho yêu thích" selected={grapes} presets={GRAPE_PRESETS}
-                        color="#8B1A2E" onToggle={item => toggleItem(grapes, setGrapes, item)} />
+                        color="#B91C1C" onToggle={item => toggleItem(grapes, setGrapes, item)} />
                     <TagSelector label="Vùng sản xuất" selected={regions} presets={REGION_PRESETS}
-                        color="#D4A853" onToggle={item => toggleItem(regions, setRegions, item)} />
+                        color="#B45309" onToggle={item => toggleItem(regions, setRegions, item)} />
                     <TagSelector label="Khẩu vị" selected={tastes} presets={TASTE_PRESETS}
-                        color="#5BA88A" onToggle={item => toggleItem(tastes, setTastes, item)} />
+                        color="#15803D" onToggle={item => toggleItem(tastes, setTastes, item)} />
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>

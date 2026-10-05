@@ -3377,8 +3377,16 @@ Khi kiểm tra báo cáo P&L (Profit & Loss) và chỉ số Gross Profit trên C
 ### Bài học
 > ⚠️ **RULE 121: (1) Mọi hàm tự động sinh bút toán kế toán (Auto-Journal Generation) như `generateDeliveryOrderCOGSJournal` BẮT BUỘC phải có Idempotency Guard (kiểm tra `docType` + `docId` đã tồn tại chưa) trước khi thực hiện `client.journalEntry.create`, ngăn chặn triệt để tình trạng nhân bản bút toán do retry hoặc double-click; (2) Các hàm tổng hợp báo cáo tài chính P&L tổng quan (như `getPLSummary`) BẮT BUỘC phải tuân thủ nghiêm ngặt nguyên tắc phù hợp (Accounting Matching Principle): Nguồn dữ liệu của Doanh thu và Giá vốn phải đồng nhất (cùng từ General Ledger hoặc cùng từ Sales Orders fallback), tuyệt đối không ghép Doanh thu từ Đơn bán hàng với Giá vốn mồ côi từ Sổ cái.**
 
+## BUG-122: Delivery — Bấm Nút Chuyển Trạng Thái Lộ Trình Đồng Thời Mở Drawer E-POD (Event Bubbling)
 
+### Triệu chứng & Bối cảnh
+Trên /dashboard/delivery, bấm nút chuyển trạng thái (VD: "Đang Giao" → "Hoàn Thành") ở cột thao tác thì drawer E-POD của lộ trình đó cũng bật lên, vì cả dòng bảng có onClick mở E-POD.
 
+### Nguyên nhân gốc rễ
+Nút nằm bên trong <tr onClick> nhưng không gọi e.stopPropagation(), nên sự kiện click nổi bọt lên dòng.
 
+### Cách khắc phục
+Khi chuyển DeliveryClient.tsx sang UI kit (đợt 1 chuẩn hóa UI), nút chuyển trạng thái gọi e.stopPropagation() trước handleStatusAdvance.
 
-
+### Bài học
+> ⚠️ **RULE 122: Mọi nút/link đặt trong dòng bảng có onClick (mở drawer/chi tiết) BẮT BUỘC gọi e.stopPropagation() — áp dụng khi chuyển các bảng sang <Tr onClick> của UI kit.**

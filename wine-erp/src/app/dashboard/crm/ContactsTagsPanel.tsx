@@ -70,7 +70,7 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
                 </h4>
                 <button onClick={() => { setShowForm(true); setEditId(null); setForm({ name: '', title: '', phone: '', email: '', isPrimary: false }) }}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
-                    style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
+                    style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
                     <Plus size={10} /> Thêm
                 </button>
             </div>
@@ -83,16 +83,16 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
 
             {contacts.map(c => (
                 <div key={c.id} className="flex items-start gap-3 p-3 rounded-lg group"
-                    style={{ background: '#FFFFFF', border: c.isPrimary ? '1px solid rgba(212,168,83,0.3)' : '1px solid transparent' }}>
+                    style={{ background: '#FFFFFF', border: c.isPrimary ? '1px solid rgba(180,83,9,0.3)' : '1px solid transparent' }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
-                        style={{ background: c.isPrimary ? 'rgba(212,168,83,0.15)' : 'rgba(135,203,185,0.1)', color: c.isPrimary ? '#D4A853' : '#87CBB9' }}>
+                        style={{ background: c.isPrimary ? 'rgba(180,83,9,0.15)' : 'rgba(8,145,178,0.1)', color: c.isPrimary ? '#B45309' : '#0E7490' }}>
                         {c.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{c.name}</span>
                             {c.isPrimary && (
-                                <Star size={10} style={{ color: '#D4A853' }} fill="#D4A853" />
+                                <Star size={10} style={{ color: '#B45309' }} fill="#B45309" />
                             )}
                         </div>
                         {c.title && <p className="text-[10px]" style={{ color: '#64748B' }}>{c.title}</p>}
@@ -111,7 +111,7 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleEdit(c)} className="p-1 rounded" style={{ color: '#64748B' }}><Edit2 size={12} /></button>
-                        <button onClick={() => handleDelete(c.id)} className="p-1 rounded" style={{ color: '#E05252' }}><Trash2 size={12} /></button>
+                        <button onClick={() => handleDelete(c.id)} className="p-1 rounded" style={{ color: '#B91C1C' }}><Trash2 size={12} /></button>
                     </div>
                 </div>
             ))}
@@ -157,12 +157,12 @@ export function TagsPanel({ customerId }: { customerId: string }) {
     const [saving, setSaving] = useState(false)
 
     const presets = [
-        { tag: 'VIP', color: '#D4A853' },
-        { tag: 'At-risk', color: '#E05252' },
-        { tag: 'Price-sensitive', color: '#4A8FAB' },
-        { tag: 'EVFTA', color: '#5BA88A' },
+        { tag: 'VIP', color: '#B45309' },
+        { tag: 'At-risk', color: '#B91C1C' },
+        { tag: 'Price-sensitive', color: '#1D4ED8' },
+        { tag: 'EVFTA', color: '#15803D' },
         { tag: 'New', color: '#0891B2' },
-        { tag: 'Top Buyer', color: '#A5DED0' },
+        { tag: 'Top Buyer', color: '#0891B2' },
         { tag: 'HORECA Key', color: '#475569' },
     ]
 
@@ -209,7 +209,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                 </h4>
                 <button onClick={() => setShowPicker(!showPicker)}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
-                    style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
+                    style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
                     <Plus size={10} /> Gắn
                 </button>
             </div>

@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink } from 'lucide-react'
+import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal } from 'lucide-react'
+import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr } from '@/components/ui'
+import { getStatusTone, type Tone } from '@/lib/ui/status'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
 import { uploadDraftInvoiceToVnpt, deleteDraftInvoiceFromVnpt, syncVnptInvoiceForOrder } from './actions-vnpt'
@@ -24,17 +26,20 @@ const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODr
     ssr: false
 })
 
-const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)', icon: FileText },
-    PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
-    PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', color: '#0891B2', bg: 'rgba(8,145,178,0.12)', icon: Clock },
-    CONFIRMED: { label: 'Đã Xác Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
-    PARTIALLY_DELIVERED: { label: 'Giao 1 Phần', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Truck },
-    DELIVERED: { label: 'Đã Giao', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', icon: Truck },
-    INVOICED: { label: 'Đã Xuất HĐ', color: '#A5DED0', bg: 'rgba(165,222,208,0.12)', icon: ReceiptText },
-    PAID: { label: 'Đã Thu Tiền', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)', icon: DollarSign },
-    CANCELLED: { label: 'Huỷ', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)', icon: XCircle },
+const STATUS_CFG: Record<SOStatus, { label: string; icon: React.FC<any> }> = {
+    DRAFT: { label: 'Nháp', icon: FileText },
+    PENDING_APPROVAL: { label: 'Chờ Duyệt', icon: Clock },
+    PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', icon: Clock },
+    CONFIRMED: { label: 'Đã Xác Nhận', icon: CheckCircle2 },
+    PARTIALLY_DELIVERED: { label: 'Giao 1 Phần', icon: Truck },
+    DELIVERED: { label: 'Đã Giao', icon: Truck },
+    INVOICED: { label: 'Đã Xuất HĐ', icon: ReceiptText },
+    PAID: { label: 'Đã Thu Tiền', icon: DollarSign },
+    CANCELLED: { label: 'Huỷ', icon: XCircle },
 }
+
+/** In the SO flow only PAID is final; DELIVERED is an intermediate business-positive step. */
+const SO_TONE_OVERRIDES: Record<string, Tone> = { DELIVERED: 'brand' }
 
 const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Đại Lý', VIP_RETAIL: 'VIP', DIRECT_INDIVIDUAL: 'Trực Tiếp',
@@ -65,19 +70,6 @@ const INVOICE_STATUS_LABELS: Record<string, string> = {
     PARTIALLY_PAID: 'Thanh toán 1 phần',
     PAID: 'Đã thanh toán',
     OVERDUE: 'Quá hạn',
-}
-
-const getInvoiceStatusStyle = (status: string) => {
-    switch (status) {
-        case 'PAID':
-            return { background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }
-        case 'PARTIALLY_PAID':
-            return { background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }
-        case 'OVERDUE':
-            return { background: 'rgba(224,82,82,0.15)', color: '#E05252' }
-        default:
-            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853' }
-    }
 }
 
 export type DatePresetKey = 
@@ -228,17 +220,17 @@ const SODetailSkeleton = () => (
 const getPriceBadgeStyle = (source: string | null) => {
     switch (source) {
         case 'SPECIAL_PRICE':
-            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+            return { background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }
         case 'FIXED_PRICE':
             return { background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }
         case 'FIXED_DISCOUNT':
             return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
         case 'CHANNEL_BASE':
-            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+            return { background: 'rgba(21,128,61,0.1)', color: '#15803D', border: '1px solid rgba(21,128,61,0.2)' }
         case 'RETAIL_FALLBACK':
             return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
         default:
-            return { background: 'rgba(74,106,122,0.1)', color: '#64748B', border: '1px solid rgba(74,106,122,0.2)' }
+            return { background: 'rgba(100,116,139,0.1)', color: '#64748B', border: '1px solid rgba(100,116,139,0.2)' }
     }
 }
 
@@ -274,11 +266,9 @@ function StatusBadge({ status, approvalStep }: { status: SOStatus; approvalStep?
         }
     }
     return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap"
-            style={{ color: cfg?.color || '#475569', background: cfg?.bg || 'rgba(138,174,187,0.12)' }}>
-            <Icon size={11} />
+        <Badge tone={getStatusTone(status, SO_TONE_OVERRIDES)} icon={Icon}>
             {label}
-        </span>
+        </Badge>
     )
 }
 
@@ -295,53 +285,22 @@ function DeliveryStatusBadge({
     const isEn = locale === 'en'
     switch (status) {
         case 'DELIVERED':
-            return (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
-                    style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
-                    <Truck size={11} /> {isEn ? 'Delivered' : 'Đã Giao'}
-                </span>
-            )
+            return <Badge tone="success" icon={Truck}>{isEn ? 'Delivered' : 'Đã Giao'}</Badge>
         case 'PARTIALLY_DELIVERED':
             return (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
-                    style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
-                    <Truck size={11} /> {isEn ? 'Partially Delivered' : 'Giao 1 phần'} {ordered ? `(${shipped}/${ordered})` : ''}
-                </span>
+                <Badge tone="info" icon={Truck}>
+                    {isEn ? 'Partially Delivered' : 'Giao 1 phần'} {ordered ? `(${shipped}/${ordered})` : ''}
+                </Badge>
             )
         case 'PREPARING':
-            return (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
-                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
-                    <Clock size={11} /> {isEn ? 'Preparing' : 'Đang soạn'}
-                </span>
-            )
+            return <Badge tone="warning" icon={Clock}>{isEn ? 'Preparing' : 'Đang soạn'}</Badge>
         case 'UNDELIVERED':
         default:
-            return (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
-                    style={{ background: 'rgba(138,174,187,0.06)', color: '#6A8A9A', border: '1px solid rgba(138,174,187,0.15)' }}>
-                    {isEn ? 'Undelivered' : 'Chưa giao'}
-                </span>
-            )
+            return <Badge tone="neutral">{isEn ? 'Undelivered' : 'Chưa giao'}</Badge>
     }
 }
 
-function SOStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
-    return (
-        <div className="p-4 rounded-md flex items-center gap-4"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ background: `${accent}20` }}>
-                <div className="w-3 h-3 rounded-sm" style={{ background: accent }} />
-            </div>
-            <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
-                {sub && <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{sub}</p>}
-            </div>
-        </div>
-    )
-}
+
 
 // ── Quick Filter Tabs ────────────────────────────
 const TAB_ORDER: (SOStatus | 'ALL')[] = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID', 'CANCELLED']
@@ -354,48 +313,30 @@ const TAB_LABELS: Record<string, string> = {
 function FilterTabs({ active, counts, onChange }: { active: string; counts: Record<string, number>; onChange: (s: SOStatus | '') => void }) {
     const { locale } = useAppLocale()
     const sI18n = SALES_I18N[locale]
+    const items = TAB_ORDER.map(tab => ({
+        value: tab,
+        count: tab === 'ALL' ? counts.ALL ?? 0 : counts[tab] ?? 0,
+        label: tab === 'ALL'
+            ? sI18n.tabs.all
+            : (sI18n.tabs[tab === 'PENDING_APPROVAL' ? 'pendingApproval' : tab === 'PENDING_ACCOUNTING' ? 'pendingAccounting' : tab === 'PARTIALLY_DELIVERED' ? 'delivering' : tab.toLowerCase() as keyof typeof sI18n.tabs] || TAB_LABELS[tab] || tab),
+    }))
     return (
-        <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {TAB_ORDER.filter(t => t === 'ALL' || (counts[t] ?? 0) > 0).map(tab => {
-                const isActive = (tab === 'ALL' && active === '') || tab === active
-                const count = tab === 'ALL' ? counts.ALL ?? 0 : counts[tab] ?? 0
-                const tabLabel = tab === 'ALL' 
-                    ? sI18n.tabs.all 
-                    : (sI18n.tabs[tab === 'PENDING_APPROVAL' ? 'pendingApproval' : tab === 'PENDING_ACCOUNTING' ? 'pendingAccounting' : tab === 'PARTIALLY_DELIVERED' ? 'delivering' : tab.toLowerCase() as keyof typeof sI18n.tabs] || TAB_LABELS[tab] || tab)
-                return (
-                    <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab as SOStatus)}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-all"
-                        style={{
-                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            color: isActive ? '#87CBB9' : '#64748B',
-                            border: `1px solid ${isActive ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
-                        }}
-                        onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(135,203,185,0.06)')}
-                        onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
-                        {tabLabel}
-                        <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
-                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#64748B' }}>
-                            {count}
-                        </span>
-                    </button>
-                )
-            })}
-        </div>
+        <StatusTabs
+            items={items}
+            value={(active || 'ALL') as SOStatus | 'ALL'}
+            onChange={tab => onChange(tab === 'ALL' ? '' : tab)}
+            hideEmpty
+        />
     )
 }
 
 // ── Sortable Column Header ───────────────────────
-function SortHeader({ label, field, current, dir, onSort, style }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties }) {
-    const isActive = current === field
+function SortHeader({ label, field, current, dir, onSort, style, align }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties; align?: 'left' | 'right' | 'center' }) {
+    const sort = current === field ? (dir === 'asc' ? 'asc' : 'desc') : false
     return (
-        <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#475569', ...style }}
-            onClick={() => onSort(field)}>
-            <span className="inline-flex items-center gap-1">
-                {label}
-                {isActive ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ArrowUpDown size={10} style={{ opacity: 0.4 }} />}
-            </span>
-        </th>
+        <Th sort={sort} onSort={() => onSort(field)} align={align} style={style}>
+            {label}
+        </Th>
     )
 }
 
@@ -772,86 +713,60 @@ function SODetailDrawer({
 
     return (
         <>
-            <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[740px]" style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div>
-                        <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>
-                            {loading ? (isEn ? 'Order Details' : 'Chi Tiết Đơn Hàng') : `SO: ${detail?.soNo}`}
-                        </h3>
-                        {detail && (
-                            <div className="flex items-center gap-2 mt-1">
-                                <p className="text-xs" style={{ color: '#64748B' }}>{detail.customer.name} · {detail.paymentTerm}</p>
-                                <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {detail && (
+            <Drawer
+                open
+                onClose={onClose}
+                size="lg"
+                className="bg-lys-bg"
+                title={loading ? (isEn ? 'Order Details' : 'Chi Tiết Đơn Hàng') : `SO: ${detail?.soNo}`}
+                headerExtra={detail && <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />}
+                description={detail ? `${detail.customer.name} · ${detail.paymentTerm}` : undefined}
+                actions={detail && (
+                    <>
+                        {detail.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
                             <>
-                                {detail.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
-                                    <>
-                                        <button onClick={() => onAcctApprove?.(soId, detail.legalEntityId)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all shadow-sm"
-                                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                                            <CheckCircle2 size={13} /> {isEn ? 'Acct Approve' : 'KT Duyệt'}
-                                        </button>
-                                        <button onClick={() => onAcctReject?.(soId)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all border"
-                                            style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.3)' }}>
-                                            <XCircle size={13} /> {isEn ? 'Return' : 'Trả Về'}
-                                        </button>
-                                    </>
-                                )}
-                                {detail.status === 'PENDING_APPROVAL' && canApprove && (
-                                    <>
-                                        <button onClick={() => onApprove?.(soId)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all shadow-sm"
-                                            style={{ background: '#5BA88A', color: '#FFFFFF' }}>
-                                            <CheckCircle2 size={13} /> {isEn ? 'Approve Order' : 'Duyệt Đơn'}
-                                        </button>
-                                        <button onClick={() => onReject?.(soId)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all border"
-                                            style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.3)' }}>
-                                            <XCircle size={13} /> {isEn ? 'Reject' : 'Từ Chối'}
-                                        </button>
-                                    </>
-                                )}
-                                <button onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
-                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
-                                    style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
-                                    title={isEn ? 'Print order' : 'In ấn đơn hàng'}>
-                                    <Printer size={12} /> {isEn ? 'Print' : 'In Đơn'}
-                                </button>
-                                <button onClick={() => onClone(soId)}
-                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
-                                    style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}
-                                    title={isEn ? 'Clone order' : 'Tạo đơn tương tự'}>
-                                    <Copy size={12} /> {isEn ? 'Clone' : 'Clone'}
-                                </button>
+                                <Button size="sm" onClick={() => onAcctApprove?.(soId, detail.legalEntityId)}>
+                                    <CheckCircle2 size={13} /> {isEn ? 'Acct Approve' : 'KT Duyệt'}
+                                </Button>
+                                <Button size="sm" variant="danger-outline" onClick={() => onAcctReject?.(soId)}>
+                                    <XCircle size={13} /> {isEn ? 'Return' : 'Trả Về'}
+                                </Button>
                             </>
                         )}
-                        <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
-                    </div>
-
-                </div>
-
+                        {detail.status === 'PENDING_APPROVAL' && canApprove && (
+                            <>
+                                <Button size="sm" onClick={() => onApprove?.(soId)}>
+                                    <CheckCircle2 size={13} /> {isEn ? 'Approve Order' : 'Duyệt Đơn'}
+                                </Button>
+                                <Button size="sm" variant="danger-outline" onClick={() => onReject?.(soId)}>
+                                    <XCircle size={13} /> {isEn ? 'Reject' : 'Từ Chối'}
+                                </Button>
+                            </>
+                        )}
+                        <Button size="sm" variant="secondary" onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
+                            title={isEn ? 'Print order' : 'In ấn đơn hàng'}>
+                            <Printer size={12} /> {isEn ? 'Print' : 'In Đơn'}
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => onClone(soId)} title={isEn ? 'Clone order' : 'Tạo đơn tương tự'}>
+                            <Copy size={12} /> Clone
+                        </Button>
+                    </>
+                )}
+            >
                 {loading ? (
                     <SODetailSkeleton />
                 ) : !detail ? (
-                    <p className="text-center py-8" style={{ color: '#64748B' }}>{isEn ? 'Order not found' : 'Không tìm thấy đơn'}</p>
+                    <EmptyState icon={FileText} title={isEn ? 'Order not found' : 'Không tìm thấy đơn'} />
                 ) : (
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                    <div className="space-y-6">
                         
                         {/* 1. WARNING BANNER & PROGRESS STATUS */}
                         {marginData?.hasNegativeMargin && canSeeMargin && (
-                            <div className="flex items-center gap-3 px-4 py-3 rounded-md"
-                                style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)' }}>
-                                <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-md border bg-tone-danger-bg border-tone-danger-border">
+                                <AlertTriangle size={18} className="text-tone-danger-fg shrink-0" />
                                 <div>
-                                    <p className="text-sm font-bold" style={{ color: '#EF4444' }}>{isEn ? '⚠️ Negative Margin Warning' : '⚠️ Cảnh Báo Biên Âm'}</p>
-                                    <p className="text-xs mt-0.5" style={{ color: '#FCA5A5' }}>{isEn ? 'One or more lines have selling price below cost price!' : 'Một hoặc nhiều dòng có giá bán thấp hơn giá vốn!'}</p>
+                                    <p className="text-sm font-bold text-tone-danger-fg">{isEn ? 'Negative Margin Warning' : 'Cảnh Báo Biên Âm'}</p>
+                                    <p className="text-xs mt-0.5 text-tone-danger-fg">{isEn ? 'One or more lines have selling price below cost price!' : 'Một hoặc nhiều dòng có giá bán thấp hơn giá vốn!'}</p>
                                 </div>
                             </div>
                         )}
@@ -860,10 +775,7 @@ function SODetailDrawer({
                         <div className="py-3 px-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-between text-xs mb-4">
                                 <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Order Progress' : 'Tiến Trình Đơn Hàng'}</span>
-                                <span className="font-semibold text-xs px-2 py-0.5 rounded-full"
-                                    style={{ background: STATUS_CFG[detail.status as SOStatus]?.bg, color: STATUS_CFG[detail.status as SOStatus]?.color }}>
-                                    {sI18n.statuses[detail.status as SOStatus] || STATUS_CFG[detail.status as SOStatus]?.label}
-                                </span>
+                                <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />
                             </div>
                             
                             <div className="relative pt-2 pb-1">
@@ -885,7 +797,7 @@ function SODetailDrawer({
                                             <div className="h-full transition-all duration-300" 
                                                 style={{ 
                                                     width: `${activeIdx >= 0 ? (Math.min(activeIdx, 5) / 5) * 100 : 0}%`, 
-                                                    background: '#5BA88A' 
+                                                    background: '#15803D' 
                                                 }} 
                                             />
                                         )
@@ -942,7 +854,7 @@ function SODetailDrawer({
                                                             backgroundColor: isDone ? '#5ba889' : '#FFFFFF',
                                                             color: isDone ? '#0d1e2c' : '#4a6a79',
                                                             border: isCurrent ? '2px solid #87cbb8' : isDone ? 'none' : '2px solid #2a4354',
-                                                            boxShadow: isCurrent ? '0 0 8px rgba(135,203,185,0.4)' : 'none',
+                                                            boxShadow: isCurrent ? '0 0 8px rgba(8,145,178,0.4)' : 'none',
                                                             boxSizing: 'border-box'
                                                         }}>
                                                         {isDone ? '✓' : i + 1}
@@ -950,7 +862,7 @@ function SODetailDrawer({
                                                     
                                                     {/* Nhãn bước */}
                                                     <span className="text-[10px] font-bold mt-2 whitespace-nowrap block" 
-                                                        style={{ color: isCurrent ? '#87CBB9' : isDone ? '#0F172A' : '#64748B' }}>
+                                                        style={{ color: isCurrent ? '#0E7490' : isDone ? '#0F172A' : '#64748B' }}>
                                                         {label}
                                                     </span>
                                                     
@@ -1004,7 +916,7 @@ function SODetailDrawer({
                                                 {detail.customer.taxId ? (
                                                     detail.customer.taxId
                                                 ) : (
-                                                    <span>{(detail.customer as any).parent.taxId} <span className="text-[10px] text-amber-400 font-sans font-normal">{isEn ? '(Parent Co.)' : '(Cty Cha)'}</span></span>
+                                                    <span>{(detail.customer as any).parent.taxId} <span className="text-[10px] text-amber-700 font-sans font-normal">{isEn ? '(Parent Co.)' : '(Cty Cha)'}</span></span>
                                                 )}
                                             </span>
                                         </div>
@@ -1036,7 +948,7 @@ function SODetailDrawer({
                                     )}
                                     <div className="flex justify-between py-1 border-b border-slate-200/20">
                                         <span style={{ color: '#64748B' }}>{isEn ? 'Payment Terms:' : 'Kỳ hạn thanh toán:'}</span>
-                                        <span className="font-semibold" style={{ color: '#D4A853' }}>{detail.paymentTerm}</span>
+                                        <span className="font-semibold" style={{ color: '#B45309' }}>{detail.paymentTerm}</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-slate-200/20">
                                         <span style={{ color: '#64748B' }}>{isEn ? 'Order Date:' : 'Ngày tạo đơn:'}</span>
@@ -1101,17 +1013,17 @@ function SODetailDrawer({
                                                 </div>
                                                 <div className="flex justify-between py-1 border-b border-slate-200/20">
                                                     <span style={{ color: '#64748B' }}>{isEn ? 'Total Cost (COGS):' : 'Tổng giá vốn (COGS):'}</span>
-                                                    <span className="font-bold font-mono" style={{ color: '#D4A853' }}>{formatCurrency(marginData.totalCOGS)}</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#B45309' }}>{formatCurrency(marginData.totalCOGS)}</span>
                                                 </div>
                                                 <div className="flex justify-between py-1 border-b border-slate-200/20">
                                                     <span style={{ color: '#64748B' }}>{isEn ? 'Gross Profit:' : 'Lợi nhuận gộp:'}</span>
-                                                    <span className={`font-bold font-mono ${marginData.totalMargin >= 0 ? 'text-[#5BA88A]' : 'text-[#EF4444]'}`}>
+                                                    <span className={`font-bold font-mono ${marginData.totalMargin >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                                                         {marginData.totalMargin >= 0 ? '' : '-'}{formatCurrency(Math.abs(marginData.totalMargin))}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between py-1 border-b border-slate-200/20">
                                                     <span style={{ color: '#64748B' }}>{isEn ? 'Gross Margin %:' : 'Biên lợi nhuận gộp:'}</span>
-                                                    <span className="font-semibold flex items-center gap-1" style={{ color: marginData.totalMarginPct >= 20 ? '#5BA88A' : marginData.totalMarginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                    <span className="font-semibold flex items-center gap-1" style={{ color: marginData.totalMarginPct >= 20 ? '#15803D' : marginData.totalMarginPct >= 0 ? '#B45309' : '#B91C1C' }}>
                                                         {marginData.totalMarginPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                                                         {marginData.totalMarginPct.toFixed(1)}%
                                                     </span>
@@ -1166,11 +1078,11 @@ function SODetailDrawer({
                                             }))).map(ml => {
                                                 const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
                                                 return (
-                                                <tr key={ml.lineId} style={{ borderTop: '1px solid #E2E8F0', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
+                                                <tr key={ml.lineId} style={{ borderTop: '1px solid #E2E8F0', background: ml.isNegative ? 'rgba(185,28,28,0.06)' : 'transparent' }}>
                                                     <td className="px-2.5 py-2">
                                                         <div className="font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                             {custCode && (
-                                                                <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                                <span className="text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
                                                                     [{custCode}]
                                                                 </span>
                                                             )}
@@ -1192,12 +1104,12 @@ function SODetailDrawer({
                                                     </td>
                                                     <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatCurrency(ml.revenue)}</td>
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853' }}>
+                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#B45309' }}>
                                                             {ml.avgCost > 0 ? formatCurrency(ml.avgCost) : <span style={{ color: '#94A3B8' }}>—</span>}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#64748B' }}>
+                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#15803D' : ml.margin < 0 ? '#B91C1C' : '#64748B' }}>
                                                             {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatCurrency(Math.abs(ml.margin)) : '—'}
                                                         </td>
                                                     )}
@@ -1205,8 +1117,8 @@ function SODetailDrawer({
                                                         <td className="px-2.5 py-2 text-right">
                                                             {ml.avgCost > 0 ? (
                                                                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
-                                                                    background: ml.marginPct >= 20 ? 'rgba(91,168,138,0.15)' : ml.marginPct >= 0 ? 'rgba(212,168,83,0.15)' : 'rgba(220,38,38,0.15)',
-                                                                    color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444',
+                                                                    background: ml.marginPct >= 20 ? 'rgba(21,128,61,0.15)' : ml.marginPct >= 0 ? 'rgba(180,83,9,0.15)' : 'rgba(185,28,28,0.15)',
+                                                                    color: ml.marginPct >= 20 ? '#15803D' : ml.marginPct >= 0 ? '#B45309' : '#B91C1C',
                                                                 }}>
                                                                     {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                                                                     {ml.marginPct.toFixed(1)}%
@@ -1235,12 +1147,12 @@ function SODetailDrawer({
                                     const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
                                     return (
                                     <div key={ml.lineId} className="p-3 rounded-md space-y-1.5" 
-                                        style={{ background: '#FFFFFF', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#E2E8F0'}` }}>
+                                        style={{ background: '#FFFFFF', border: `1px solid ${ml.isNegative ? 'rgba(185,28,28,0.35)' : '#E2E8F0'}` }}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0">
                                                 <p className="text-xs font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                     {custCode && (
-                                                        <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                        <span className="text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
                                                             [{custCode}]
                                                         </span>
                                                     )}
@@ -1275,17 +1187,17 @@ function SODetailDrawer({
                                             <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/20 text-xs">
                                                 <div>
                                                     <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Unit Cost' : 'Giá Vốn'}</p>
-                                                    <p className="font-semibold font-mono text-[#D4A853] mt-0.5">{formatCurrency(ml.avgCost)}</p>
+                                                    <p className="font-semibold font-mono text-[#B45309] mt-0.5">{formatCurrency(ml.avgCost)}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Profit' : 'Lãi Gộp'}</p>
-                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#5BA88A' : '#EF4444' }}>
+                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#15803D' : '#B91C1C' }}>
                                                         {ml.margin >= 0 ? '' : '-'}{formatCurrency(Math.abs(ml.margin))}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Margin %' : 'Biên %'}</p>
-                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#15803D' : ml.marginPct >= 0 ? '#B45309' : '#B91C1C' }}>
                                                         {ml.marginPct.toFixed(1)}%
                                                     </p>
                                                 </div>
@@ -1336,7 +1248,7 @@ function SODetailDrawer({
                                             <button
                                                 onClick={handleToggleExempt}
                                                 disabled={togglingExempt}
-                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-sky-500/40 text-sky-400 hover:bg-sky-500/10 shadow-xs cursor-pointer"
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-sky-500/40 text-sky-700 hover:bg-sky-500/10 shadow-xs cursor-pointer"
                                                 title={isEn ? 'Accounting & Admin only: Cancel exemption to allow VAT invoice issuance' : 'Chỉ Kế toán & Admin: Hủy miễn HĐ để cho phép xuất hóa đơn VAT'}
                                             >
                                                 {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
@@ -1347,7 +1259,7 @@ function SODetailDrawer({
                                             <button
                                                 onClick={handleCreateInvoice}
                                                 disabled={creatingInvoice}
-                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-[#87CBB9]/40 text-[#0891B2] hover:bg-[#87CBB9]/10 shadow-xs cursor-pointer disabled:opacity-50"
+                                                className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all border border-[#0E7490]/40 text-[#0891B2] hover:bg-[#0E7490]/10 shadow-xs cursor-pointer disabled:opacity-50"
                                                 title={isEn ? 'Attach additional VAT invoice number to this order' : 'Gắn thêm mã hóa đơn VAT cho đơn hàng này'}
                                             >
                                                 {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
@@ -1359,7 +1271,7 @@ function SODetailDrawer({
                                 {detail.isInvoiceExempt ? (
                                     <div className="p-3.5 rounded-md bg-amber-500/10 border border-amber-500/30">
                                         <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
                                                 <FileX2 size={18} />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -1391,7 +1303,7 @@ function SODetailDrawer({
                                                         <button
                                                             onClick={handleMarkPaid}
                                                             disabled={markingPaid}
-                                                            className="text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1.5 bg-[#5BA88A] hover:bg-[#4d9377] text-white shadow-sm transition-all cursor-pointer"
+                                                            className="text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1.5 bg-[#15803D] hover:bg-[#4d9377] text-white shadow-sm transition-all cursor-pointer"
                                                         >
                                                             {markingPaid ? <Loader2 size={12} className="animate-spin" /> : <DollarSign size={12} />}
                                                             {isEn ? 'Confirm Payment (PAID)' : 'Xác Nhận Thu Tiền (PAID)'}
@@ -1402,8 +1314,8 @@ function SODetailDrawer({
                                         </div>
                                     </div>
                                 ) : detail.arInvoices.length === 0 ? (
-                                    <div className="py-5 px-4 rounded-lg text-center" style={{ background: 'rgba(27,46,61,0.4)', border: '1px dashed #E2E8F0' }}>
-                                        <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-2">
+                                    <div className="py-5 px-4 rounded-lg text-center" style={{ background: '#F8FAFC', border: '1px dashed #E2E8F0' }}>
+                                        <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-700 flex items-center justify-center mx-auto mb-2">
                                             <ReceiptText size={18} />
                                         </div>
                                         <h5 className="text-xs font-bold text-slate-900 mb-0.5">
@@ -1428,7 +1340,7 @@ function SODetailDrawer({
                                                 <button
                                                     onClick={handleCreateInvoice}
                                                     disabled={creatingInvoice}
-                                                    className="text-xs px-3 py-1.5 rounded-md font-semibold inline-flex items-center gap-1.5 transition-all border border-[#87CBB9]/40 text-[#0891B2] bg-[#87CBB9]/10 hover:bg-[#87CBB9]/20 shadow-xs cursor-pointer disabled:opacity-50"
+                                                    className="text-xs px-3 py-1.5 rounded-md font-semibold inline-flex items-center gap-1.5 transition-all border border-[#0E7490]/40 text-[#0891B2] bg-[#0E7490]/10 hover:bg-[#0E7490]/20 shadow-xs cursor-pointer disabled:opacity-50"
                                                     title={isEn ? 'Attach invoice number issued from other software (MISA, Viettel, etc.)' : 'Gắn số hóa đơn VAT xuất từ hệ thống khác (MISA, Viettel, v.v.)'}
                                                 >
                                                     {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
@@ -1439,7 +1351,7 @@ function SODetailDrawer({
                                                 <button
                                                     onClick={handleToggleExempt}
                                                     disabled={togglingExempt}
-                                                    className="text-xs px-2.5 py-1.5 rounded-md font-medium inline-flex items-center gap-1 transition-all text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-500/10 cursor-pointer disabled:opacity-50"
+                                                    className="text-xs px-2.5 py-1.5 rounded-md font-medium inline-flex items-center gap-1 transition-all text-amber-700 hover:text-amber-800 hover:bg-amber-50 cursor-pointer disabled:opacity-50"
                                                     title={isEn ? 'Accounting & Admin only: Mark this order as exempt from VAT invoice' : 'Chỉ Kế toán & Admin: Đánh dấu đơn hàng này không cần xuất hóa đơn VAT'}
                                                 >
                                                     {togglingExempt ? <Loader2 size={12} className="animate-spin" /> : <FileX2 size={12} />}
@@ -1464,8 +1376,8 @@ function SODetailDrawer({
                                                     key={inv.id}
                                                     className="p-3 rounded-md transition-all"
                                                     style={{
-                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : isVnptPublished ? 'rgba(16,185,129,0.06)' : '#FFFFFF',
-                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : isVnptPublished ? '1px solid rgba(16,185,129,0.35)' : '1px solid #E2E8F0',
+                                                        background: isDraftVnpt ? 'rgba(37,99,235,0.08)' : isVnptPublished ? 'rgba(21,128,61,0.06)' : '#FFFFFF',
+                                                        border: isDraftVnpt ? '1px solid rgba(59,130,246,0.4)' : isVnptPublished ? '1px solid rgba(21,128,61,0.35)' : '1px solid #E2E8F0',
                                                     }}
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
@@ -1523,12 +1435,12 @@ function SODetailDrawer({
                                                             <span className="text-xs font-bold font-mono block" style={{ color: '#0F172A' }}>
                                                                 {formatCurrency(Number(inv.amount))}
                                                             </span>
-                                                            <span
-                                                                className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5"
-                                                                style={isDraftVnpt ? { background: '#DBEAFE', color: '#1E40AF' } : isVnptPublished ? { background: '#D1FAE5', color: '#065F46' } : getInvoiceStatusStyle(inv.status)}
+                                                            <Badge
+                                                                className="mt-0.5"
+                                                                tone={isDraftVnpt ? 'info' : isVnptPublished ? 'success' : getStatusTone(inv.status)}
                                                             >
                                                                 {isDraftVnpt ? (isEn ? 'AWAITING SIGNATURE' : 'CHỜ KÝ SỐ') : isVnptPublished ? (isEn ? 'PUBLISHED' : 'ĐÃ PHÁT HÀNH') : (INVOICE_STATUS_LABELS[inv.status] ?? inv.status)}
-                                                            </span>
+                                                            </Badge>
                                                         </div>
                                                     </div>
 
@@ -1655,83 +1567,83 @@ function SODetailDrawer({
 
                     </div>
                 )}
-            </div>
+            </Drawer>
 
             {/* Modal Cảnh Báo Lệch Ngày Xuất Hóa Đơn (Nghị định 123 / Nghị định 70) */}
             {dateWarningModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 animate-fade-in">
                     <div 
-                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white dark:bg-slate-50 border-slate-200 dark:border-slate-200"
+                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white border-slate-200"
                     >
                         {/* Header */}
                         <div 
                             className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
                                 dateWarningModal.level === 'DANGER'
-                                    ? 'bg-rose-50/80 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900/40'
-                                    : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900/40'
+                                    ? 'bg-rose-50/80 border-rose-200'
+                                    : 'bg-amber-50/80 border-amber-200'
                             }`}
                         >
                             <div className="flex items-center gap-3">
                                 {dateWarningModal.level === 'DANGER' ? (
-                                    <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-300 dark:border-rose-500/40 shadow-2xs">
+                                    <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300 shadow-2xs">
                                         <AlertTriangle size={20} />
                                     </div>
                                 ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-500/40 shadow-2xs">
+                                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-300 shadow-2xs">
                                         <AlertCircle size={20} />
                                     </div>
                                 )}
                                 <div>
                                     <h3 className={`text-sm font-bold tracking-tight ${
                                         dateWarningModal.level === 'DANGER'
-                                            ? 'text-rose-900 dark:text-rose-400'
-                                            : 'text-amber-900 dark:text-amber-300'
+                                            ? 'text-rose-900'
+                                            : 'text-amber-900'
                                     }`}>
                                         {dateWarningModal.level === 'DANGER' 
                                             ? (isEn ? 'TAX PERIOD MISMATCH WARNING (DIFFERENT MONTH)' : 'CẢNH BÁO LỆCH KỲ THUẾ (KHÁC THÁNG)') 
                                             : (isEn ? 'INVOICE ISSUE DATE ADVISORY' : 'LƯU Ý THỜI ĐIỂM LẬP HÓA ĐƠN')}
                                     </h3>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-600 mt-0.5">
-                                        {isEn ? 'Order: ' : 'Đơn hàng: '}<span className="font-mono font-bold text-slate-800 dark:text-white">{detail?.soNo}</span>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                        {isEn ? 'Order: ' : 'Đơn hàng: '}<span className="font-mono font-bold text-slate-800">{detail?.soNo}</span>
                                     </p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setDateWarningModal(null)}
-                                className="text-slate-400 hover:text-slate-700 dark:text-slate-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-black/5 transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
                         {/* Body */}
-                        <div className="p-5 space-y-4 text-xs text-slate-700 dark:text-slate-900">
+                        <div className="p-5 space-y-4 text-xs text-slate-700">
                             {/* Legal Entity & Date Comparison */}
-                            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200/60 space-y-3">
-                                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-200/30">
-                                    <span className="text-slate-500 dark:text-slate-600 font-medium">{isEn ? 'Issuing Legal Entity:' : 'Pháp nhân phát hành:'}</span>
-                                    <span className="font-bold text-slate-900 dark:text-white">
+                            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+                                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200">
+                                    <span className="text-slate-500 font-medium">{isEn ? 'Issuing Legal Entity:' : 'Pháp nhân phát hành:'}</span>
+                                    <span className="font-bold text-slate-900">
                                         {detail?.legalEntity?.name || (detail?.legalEntity?.code === 'TA' ? 'Công ty Cổ phần Thắng Ân (TA)' : detail?.legalEntity?.code === 'LC' ? "Công ty TNHH Phân phối Ly's Cellar (LC)" : 'Thắng Ân (TA)')}
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 pt-0.5">
-                                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200/40 text-center shadow-2xs">
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-600 block uppercase tracking-wider font-semibold mb-1">{isEn ? 'ERP Order Date' : 'Ngày lập đơn ERP'}</span>
-                                        <span className="font-mono font-bold text-sm text-teal-700 dark:text-[#0891B2]">{dateWarningModal.orderDateFormatted}</span>
+                                    <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 block uppercase tracking-wider font-semibold mb-1">{isEn ? 'ERP Order Date' : 'Ngày lập đơn ERP'}</span>
+                                        <span className="font-mono font-bold text-sm text-teal-700">{dateWarningModal.orderDateFormatted}</span>
                                     </div>
-                                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200/40 text-center shadow-2xs">
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-600 block uppercase tracking-wider font-semibold mb-1">{isEn ? 'VNPT Invoice Date' : 'Ngày xuất HĐ VNPT'}</span>
-                                        <span className="font-mono font-bold text-sm text-amber-700 dark:text-amber-400">
-                                            {dateWarningModal.invoiceDateFormatted} <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">({isEn ? 'Today' : 'Hôm nay'})</span>
+                                    <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-center shadow-2xs">
+                                        <span className="text-[10px] text-slate-500 block uppercase tracking-wider font-semibold mb-1">{isEn ? 'VNPT Invoice Date' : 'Ngày xuất HĐ VNPT'}</span>
+                                        <span className="font-mono font-bold text-sm text-amber-700">
+                                            {dateWarningModal.invoiceDateFormatted} <span className="text-xs font-semibold text-slate-600">({isEn ? 'Today' : 'Hôm nay'})</span>
                                         </span>
                                     </div>
                                 </div>
-                                <div className="text-center pt-1 text-[11px] text-slate-500 dark:text-slate-600 flex items-center justify-center gap-1.5">
+                                <div className="text-center pt-1 text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
                                     <span>{isEn ? 'Time gap:' : 'Khoảng cách thời gian:'}</span>
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-bold text-xs ${
                                         dateWarningModal.level === 'DANGER'
-                                            ? 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40'
-                                            : 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40'
+                                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                            : 'bg-amber-100 text-amber-800 border border-amber-200'
                                     }`}>
                                         {dateWarningModal.diffDays} {isEn ? 'days' : 'ngày'}
                                     </span>
@@ -1741,11 +1653,11 @@ function SODetailDrawer({
                             {/* Message / Policy explanation */}
                             <div className={`p-3.5 rounded-lg border text-xs leading-relaxed ${
                                 dateWarningModal.level === 'DANGER' 
-                                    ? 'bg-rose-50 border-rose-200 text-rose-950 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200' 
-                                    : 'bg-amber-50 border-amber-200 text-amber-950 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'
+                                    ? 'bg-rose-50 border-rose-200 text-rose-950' 
+                                    : 'bg-amber-50 border-amber-200 text-amber-950'
                             }`}>
                                 <p className={`font-bold mb-1.5 text-xs flex items-center gap-1.5 ${
-                                    dateWarningModal.level === 'DANGER' ? 'text-rose-900 dark:text-rose-300' : 'text-amber-900 dark:text-amber-300'
+                                    dateWarningModal.level === 'DANGER' ? 'text-rose-900' : 'text-amber-900'
                                 }`}>
                                     {dateWarningModal.level === 'DANGER' ? (isEn ? '⚠️ Pursuant to Decree 123/2020/ND-CP & Decree 70/2025/ND-CP:' : '⚠️ Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:') : (isEn ? 'ℹ️ Legal regulations regarding invoice issuance date:' : 'ℹ️ Quy định pháp luật về thời điểm xuất hóa đơn:')}
                                 </p>
@@ -1753,7 +1665,7 @@ function SODetailDrawer({
                                     {dateWarningModal.message}
                                 </p>
                                 {dateWarningModal.level === 'DANGER' && (
-                                    <p className="mt-2.5 pt-2 border-t border-rose-200 dark:border-rose-800/40 text-[11px] text-rose-800 dark:text-rose-300/90 italic leading-normal">
+                                    <p className="mt-2.5 pt-2 border-t border-rose-200 text-[11px] text-rose-800 italic leading-normal">
                                         {isEn ? '* Note: Issuing an invoice in a different VAT tax filing period from the date of incurrence may incur penalties under Article 24 Decree 125/2020/ND-CP. Accountants must cross-check before confirming.' : '* Lưu ý: Việc xuất hóa đơn khác kỳ kê khai thuế GTGT so với thời điểm phát sinh có thể dẫn đến rủi ro bị cơ quan thuế xử phạt về hóa đơn theo Điều 24 Nghị định 125/2020/NĐ-CP. Kế toán cần đối chiếu kỹ trước khi bấm xác nhận.'}
                                     </p>
                                 )}
@@ -1761,11 +1673,11 @@ function SODetailDrawer({
                         </div>
 
                         {/* Footer Buttons */}
-                        <div className="px-5 py-3.5 bg-slate-50 dark:bg-white border-t border-slate-200 dark:border-slate-200 flex items-center justify-end gap-2.5">
+                        <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
                             <button
                                 type="button"
                                 onClick={() => setDateWarningModal(null)}
-                                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 dark:text-slate-600 dark:hover:text-white dark:bg-transparent dark:border-slate-200 dark:hover:bg-white/5 transition-all cursor-pointer"
+                                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 transition-all cursor-pointer"
                             >
                                 {isEn ? 'Cancel' : 'Hủy Bỏ'}
                             </button>
@@ -1837,7 +1749,7 @@ function SalesOrderMobileCard({
                         {row.soNo}
                     </span>
                     {row.orderType === 'TASTING' && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-700 border border-amber-500/40">
                             🍷 Tasting
                         </span>
                     )}
@@ -1861,7 +1773,7 @@ function SalesOrderMobileCard({
             <div className="flex flex-wrap items-center gap-2">
                 {/* Channel Badge */}
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: 'rgba(135,203,185,0.08)', color: '#475569' }}>
+                    style={{ background: 'rgba(8,145,178,0.08)', color: '#475569' }}>
                     {getSOChannelLabel(row.channel, locale, true)}
                 </span>
 
@@ -1869,8 +1781,8 @@ function SalesOrderMobileCard({
                 {row.legalEntityCode && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                         style={{ 
-                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(8, 145, 178, 0.08)', 
-                            color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' 
+                            background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.12)' : 'rgba(8, 145, 178, 0.08)', 
+                            color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
                         }}>
                         {row.legalEntityCode}
                     </span>
@@ -1879,7 +1791,7 @@ function SalesOrderMobileCard({
                 {/* Invoice Number Badge */}
                 {row.invoiceNo ? (
                     <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
-                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)' }}
+                        style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)' }}
                         title={`Số hóa đơn: ${row.invoiceNo}`}>
                         {isEn ? 'Inv:' : 'HĐ:'} {row.invoiceNo}
                     </span>
@@ -1905,7 +1817,7 @@ function SalesOrderMobileCard({
                         {formatCurrency(row.totalAmount)}
                     </span>
                     {row.orderDiscount > 0 && (
-                        <span className="text-[10px] ml-1.5 font-semibold" style={{ color: '#5BA88A' }}>
+                        <span className="text-[10px] ml-1.5 font-semibold" style={{ color: '#15803D' }}>
                             ({isEn ? 'Disc' : 'CK'} {row.orderDiscount}%)
                         </span>
                     )}
@@ -1925,7 +1837,7 @@ function SalesOrderMobileCard({
                 {/* Eye Detail button (always shown) */}
                 <button onClick={onViewDetail}
                     className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(135,203,185,0.06)', color: '#0891B2', borderColor: 'rgba(8, 145, 178, 0.15)' }}
+                    style={{ background: 'rgba(8,145,178,0.06)', color: '#0891B2', borderColor: 'rgba(8, 145, 178, 0.15)' }}
                     title={isEn ? 'View Details' : 'Chi tiết'}>
                     <Eye size={12} />
                 </button>
@@ -1933,7 +1845,7 @@ function SalesOrderMobileCard({
                 {/* Clone button */}
                 <button onClick={onClone} disabled={actionLoading === row.id}
                     className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', borderColor: 'rgba(138,174,187,0.25)' }}
+                    style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', borderColor: 'rgba(100,116,139,0.25)' }}
                     title={isEn ? 'Clone Order' : 'Nhân bản đơn hàng'}>
                     <Copy size={12} />
                 </button>
@@ -1943,12 +1855,12 @@ function SalesOrderMobileCard({
                     <>
                         <button onClick={onApprove} disabled={isActLoading}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', borderColor: 'rgba(91,168,138,0.3)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', borderColor: 'rgba(21,128,61,0.3)', borderRadius: '4px' }}>
                             {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> {isEn ? 'Approve' : 'Duyệt'}</>}
                         </button>
                         <button onClick={onReject} disabled={isActLoading}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.25)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.25)', borderRadius: '4px' }}>
                             {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> {isEn ? 'Reject' : 'Từ chối'}</>}
                         </button>
                     </>
@@ -1959,12 +1871,12 @@ function SalesOrderMobileCard({
                     <>
                         <button onClick={onConfirm} disabled={isActLoading}
                             className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', borderColor: 'rgba(91,168,138,0.25)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)', borderRadius: '4px' }}>
                             {isActLoading ? <Loader2 size={10} className="animate-spin" /> : (isEn ? 'Confirm' : 'Xác nhận')}
                         </button>
                         <button onClick={onEdit}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', borderColor: 'rgba(212,168,83,0.2)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', borderColor: 'rgba(180,83,9,0.2)', borderRadius: '4px' }}>
                             <Pencil size={10} /> {isEn ? 'Edit' : 'Sửa'}
                         </button>
                     </>
@@ -1980,7 +1892,7 @@ function SalesOrderMobileCard({
                         </button>
                         <button onClick={onAcctReject} disabled={isActLoading}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(139,26,46,0.1)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
                             {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Trả về</>}
                         </button>
                     </>
@@ -1990,14 +1902,14 @@ function SalesOrderMobileCard({
                 {row.status === 'DRAFT' ? (
                     <button onClick={onDelete} disabled={isActLoading}
                         className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                        style={{ background: 'rgba(220,38,38,0.08)', color: '#EF4444', borderColor: 'rgba(220,38,38,0.2)', borderRadius: '4px' }}>
+                        style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
                         Xóa
                     </button>
                 ) : (
                     ['PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(row.status) && (
                         <button onClick={onCancel} disabled={isActLoading}
                             className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(139,26,46,0.08)', color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
                             Huỷ
                         </button>
                     )
@@ -2210,33 +2122,6 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-    const getPageNumbers = () => {
-        if (totalPages <= 7) {
-            return Array.from({ length: totalPages }, (_, i) => i + 1)
-        }
-        const pages: (number | '...')[] = [1]
-        if (page <= 4) {
-            for (let i = 2; i <= 5; i++) {
-                pages.push(i)
-            }
-            pages.push('...')
-            pages.push(totalPages)
-        } else if (page >= totalPages - 3) {
-            pages.push('...')
-            for (let i = totalPages - 4; i <= totalPages - 1; i++) {
-                pages.push(i)
-            }
-            pages.push(totalPages)
-        } else {
-            pages.push('...')
-            for (let i = page - 1; i <= page + 1; i++) {
-                pages.push(i)
-            }
-            pages.push('...')
-            pages.push(totalPages)
-        }
-        return pages
-    }
 
     const handlePageChange = (newPage: number) => {
         if (newPage < 1 || newPage > totalPages || newPage === page) return
@@ -2640,474 +2525,394 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    {/* Inline Quick Stats */}
-                    <div className="hidden xl:flex items-center gap-x-3 text-xs">
-                        <span style={{ color: '#475569' }}>
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
+            {/* Header: inline summary + actions */}
+            <PageHeader
+                description={
+                    <div className="hidden xl:flex items-center gap-x-3 type-caption">
+                        <span>
                             {isEn ? 'Total Rev:' : 'Tổng DT:'}{' '}
-                            <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>
+                            <strong className="type-number text-sm ml-1 text-lys-teal-strong">
                                 {isEn ? `${(stats.monthRevenue / 1e9).toFixed(2)}B VND` : `₫${(stats.monthRevenue / 1e9).toFixed(2)}T`}
                             </strong>
                         </span>
-                        <span className="text-[#E2E8F0]">|</span>
-                        <span style={{ color: '#475569' }} title={isEn ? 'Revenue with VAT Invoice' : 'Doanh thu đã xuất hóa đơn VAT'}>
+                        <span className="text-lys-border-strong">|</span>
+                        <span title={isEn ? 'Revenue with VAT Invoice' : 'Doanh thu đã xuất hóa đơn VAT'}>
                             {isEn ? 'With Inv:' : 'Có HĐ:'}{' '}
-                            <strong className="font-mono text-sm ml-1 text-emerald-400">
+                            <strong className="type-number text-sm ml-1 text-tone-success-fg">
                                 {isEn ? `${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T`}
                             </strong>
                         </span>
-                        <span className="text-[#E2E8F0]">|</span>
-                        <span style={{ color: '#475569' }} title={isEn ? 'Revenue without VAT Invoice' : 'Doanh thu không xuất hóa đơn VAT (vẫn tính đủ 100% VAT)'}>
+                        <span className="text-lys-border-strong">|</span>
+                        <span title={isEn ? 'Revenue without VAT Invoice' : 'Doanh thu không xuất hóa đơn VAT (vẫn tính đủ 100% VAT)'}>
                             {isEn ? 'No Inv:' : 'Không HĐ:'}{' '}
-                            <strong className="font-mono text-sm ml-1 text-amber-400">
+                            <strong className="type-number text-sm ml-1 text-tone-warning-fg">
                                 {isEn ? `${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T`}
                             </strong>
                         </span>
-                        <span className="text-[#E2E8F0]">|</span>
-                        <span style={{ color: '#475569' }}>
+                        <span className="text-lys-border-strong">|</span>
+                        <span>
                             {isEn ? 'Orders:' : 'Đơn:'}{' '}
-                            <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong>
+                            <strong className="type-number text-sm ml-1 text-lys-primary">{stats.monthOrders}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
+                        <span>
                             {isEn ? 'Pending:' : 'Chờ duyệt:'}{' '}
-                            <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong>
+                            <strong className="type-number text-sm ml-1 text-tone-warning-fg">{stats.pendingApproval}</strong>
                         </span>
                     </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowStats(!showStats)}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ 
-                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(138,174,187,0.1)', 
-                            color: showStats ? '#87CBB9' : '#475569', 
-                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(138,174,187,0.25)'}` 
-                        }}
-                        onMouseEnter={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)'
-                        }}
-                        onMouseLeave={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)'
-                        }}
-                    >
-                        📊 {isEn ? 'Stats' : 'Thống Kê'}
-                    </button>
-                    <button onClick={handleExport}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)' }}>
-                        <Download size={14} /> Excel
-                    </button>
-                    <button onClick={() => handleExportMisaSme()}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-black transition-all rounded-md cursor-pointer shadow-2xs active:scale-95"
-                        style={{ background: '#F59E0B', color: '#FFFFFF', border: '1px solid #D97706' }}
-                        title={isEn ? 'Export MISA SME Excel' : 'Xuất file Excel chuẩn MISA SME.NET Offline để Kế toán Import nhanh'}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#D97706')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#F59E0B')}>
-                        <Download size={14} /> ⚡ {isEn ? 'Export MISA' : 'Xuất MISA SME'}
-                    </button>
-                    <button onClick={() => handleExportVnptInvoice()}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-black transition-all rounded-md cursor-pointer shadow-2xs active:scale-95"
-                        style={{ background: '#2563EB', color: '#FFFFFF', border: '1px solid #1D4ED8' }}
-                        title={isEn ? 'Export VNPT E-Invoice Excel' : 'Xuất file Excel Hóa Đơn Điện Tử VNPT'}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#2563EB')}>
-                        <Download size={14} /> 📜 {isEn ? 'VNPT E-Invoice' : 'VNPT HĐĐT'}
-                    </button>
-                    {canCreateSO && (
-                        <button onClick={() => { setCloneData(null); setCreateOpen(true) }}
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
-                            style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                            <Plus size={16} /> {sI18n.newOrder}
-                        </button>
-                    )}
-                </div>
-            </div>
+                }
+                actions={
+                    <>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowStats(!showStats)}
+                            aria-pressed={showStats}
+                            className={showStats ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
+                        >
+                            <BarChart3 size={14} /> {isEn ? 'Stats' : 'Thống Kê'}
+                        </Button>
+                        <Button variant="secondary" onClick={handleExport}>
+                            <Download size={14} /> Excel
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => handleExportMisaSme()}
+                            title={isEn ? 'Export MISA SME Excel' : 'Xuất file Excel chuẩn MISA SME.NET Offline để Kế toán Import nhanh'}
+                        >
+                            <Download size={14} /> {isEn ? 'MISA SME' : 'Xuất MISA SME'}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => handleExportVnptInvoice()}
+                            title={isEn ? 'Export VNPT E-Invoice Excel' : 'Xuất file Excel Hóa Đơn Điện Tử VNPT'}
+                        >
+                            <Download size={14} /> {isEn ? 'VNPT E-Invoice' : 'VNPT HĐĐT'}
+                        </Button>
+                        {canCreateSO && (
+                            <Button onClick={() => { setCloneData(null); setCreateOpen(true) }}>
+                                <Plus size={16} /> {sI18n.newOrder}
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
             {/* Collapsible Stats Section */}
             {showStats && (
-                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                <div className="flex flex-col gap-2 animate-fade-in">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
+                        <span className="type-caption uppercase tracking-wide text-lys-muted">
                             {isEn ? 'Detailed Revenue & Orders Statistics' : 'Thống Kê Chi Tiết Doanh Thu & Đơn Hàng'}
                         </span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
-                            {isEn ? 'Collapse stats ✕' : 'Thu gọn chỉ số ✕'}
-                        </button>
+                        <Button variant="link" size="sm" onClick={() => setShowStats(false)}>
+                            {isEn ? 'Collapse' : 'Thu gọn'} <X size={12} />
+                        </Button>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                        <SOStatCard label={sI18n.stats.totalRevenue} value={isEn ? `${(stats.monthRevenue / 1e9).toFixed(2)}B VND` : `₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} sub={isEn ? 'Includes 100% VAT' : 'Bao gồm 100% VAT'} accent="#87CBB9" />
-                        <SOStatCard label={isEn ? 'Invoiced Revenue' : 'Doanh Thu Có HĐ'} value={isEn ? `${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersWithInvoice || 0} invoiced orders` : `${stats.ordersWithInvoice || 0} đơn có HĐ`} accent="#10B981" />
-                        <SOStatCard label={isEn ? 'Non-Invoiced Revenue' : 'DT Không Xuất HĐ'} value={isEn ? `${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersExemptInvoice || 0} exempt orders` : `${stats.ordersExemptInvoice || 0} đơn miễn HĐ`} accent="#F59E0B" />
-                        <SOStatCard label={isEn ? 'This Month Orders' : 'Đơn Tháng Này'} value={stats.monthOrders} accent="#5BA88A" />
-                        <SOStatCard label={sI18n.stats.pendingApproval} value={stats.pendingApproval} accent="#D4A853" />
-                        <SOStatCard label={isEn ? 'Confirmed' : 'Đã Xác Nhận'} value={stats.confirmed} accent="#4A8FAB" />
-                    </div>
+                    <StatGrid className="sm:grid-cols-3 lg:grid-cols-6">
+                        <StatCard icon={DollarSign} tone="brand" label={sI18n.stats.totalRevenue} value={isEn ? `${(stats.monthRevenue / 1e9).toFixed(2)}B VND` : `₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} sub={isEn ? 'Includes 100% VAT' : 'Bao gồm 100% VAT'} />
+                        <StatCard icon={ReceiptText} tone="success" label={isEn ? 'Invoiced Revenue' : 'Doanh Thu Có HĐ'} value={isEn ? `${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersWithInvoice || 0} invoiced orders` : `${stats.ordersWithInvoice || 0} đơn có HĐ`} />
+                        <StatCard icon={FileX2} tone="warning" label={isEn ? 'Non-Invoiced Revenue' : 'DT Không Xuất HĐ'} value={isEn ? `${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersExemptInvoice || 0} exempt orders` : `${stats.ordersExemptInvoice || 0} đơn miễn HĐ`} />
+                        <StatCard icon={FileText} tone="neutral" label={isEn ? 'This Month Orders' : 'Đơn Tháng Này'} value={stats.monthOrders} />
+                        <StatCard icon={Clock} tone="warning" label={sI18n.stats.pendingApproval} value={stats.pendingApproval} />
+                        <StatCard icon={CheckCircle2} tone="brand" label={isEn ? 'Confirmed' : 'Đã Xác Nhận'} value={stats.confirmed} />
+                    </StatGrid>
                 </div>
             )}
 
             {/* Toolbar: Tabs & Main Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
-                {/* Left side: Quick Filter Tabs */}
-                <div className="flex-1 min-w-0">
-                    <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
-                </div>
+            {(() => {
+                const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL') || (invoiceFilter && invoiceFilter !== 'ALL'))
+                const filtersActive = showFilters || hasAdvancedFilters
+                return (
+                    <Toolbar
+                        left={<FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />}
+                        right={
+                            <>
+                                <SearchInput
+                                    placeholder={sI18n.searchPlaceholder}
+                                    value={searchInput}
+                                    onChange={e => {
+                                        const val = e.target.value
+                                        setSearchInput(val)
+                                        if (debounceRef.current) clearTimeout(debounceRef.current)
+                                        debounceRef.current = setTimeout(() => {
+                                            setSearch(val)
+                                            setPage(1)
+                                            reload({ search: val, page: 1 }, true)
+                                        }, 300)
+                                    }}
+                                    className="sm:w-48 xl:w-64"
+                                />
 
-                {/* Right side: Search + Date inputs + Filter button */}
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Search input */}
-                    <div className="relative w-full sm:w-48 xl:w-64">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input type="text" placeholder={sI18n.searchPlaceholder}
-                            value={searchInput}
-                            onChange={e => {
-                                const val = e.target.value
-                                setSearchInput(val)
-                                if (debounceRef.current) clearTimeout(debounceRef.current)
-                                debounceRef.current = setTimeout(() => {
-                                    setSearch(val)
-                                    setPage(1)
-                                    reload({ search: val, page: 1 }, true)
-                                }, 300)
-                            }}
-                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white text-slate-900 placeholder:text-slate-400 border border-slate-300 rounded focus:border-cyan-600 shadow-2xs"
-                            style={{ color: '#0F172A' }} />
-                    </div>
+                                {/* Date Period Preset + custom range */}
+                                <div className="flex items-center gap-1.5 h-11 sm:h-9 px-2.5 bg-white border border-lys-border-strong rounded-md">
+                                    <Calendar size={13} className={datePreset !== 'ALL' ? 'text-lys-teal' : 'text-lys-muted'} aria-hidden />
+                                    <select
+                                        value={datePreset}
+                                        onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
+                                        aria-label={isEn ? 'Date range' : 'Khoảng thời gian'}
+                                        className={`bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1 ${datePreset !== 'ALL' ? 'text-lys-teal-strong' : 'text-lys-primary'}`}
+                                    >
+                                        {DATE_PRESET_OPTIONS.map(opt => (
+                                            <option key={opt.key} value={opt.key}>
+                                                {sI18n.datePresets[opt.key] || opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="flex items-center gap-1 border-l border-lys-border pl-1.5 ml-0.5">
+                                        <input type="date" value={dateFrom}
+                                            aria-label={isEn ? 'From date' : 'Từ ngày'}
+                                            onChange={e => {
+                                                setDatePreset('CUSTOM')
+                                                setDateFrom(e.target.value)
+                                                setPage(1)
+                                                reload({ dateFrom: e.target.value, dateTo, page: 1 }, true)
+                                            }}
+                                            className="bg-transparent border-none text-[11px] text-lys-primary outline-none w-[95px] p-0" />
+                                        <span className="text-[10px] text-lys-dim">→</span>
+                                        <input type="date" value={dateTo}
+                                            aria-label={isEn ? 'To date' : 'Đến ngày'}
+                                            onChange={e => {
+                                                setDatePreset('CUSTOM')
+                                                setDateTo(e.target.value)
+                                                setPage(1)
+                                                reload({ dateFrom, dateTo: e.target.value, page: 1 }, true)
+                                            }}
+                                            className="bg-transparent border-none text-[11px] text-lys-primary outline-none w-[95px] p-0" />
+                                    </div>
+                                </div>
 
-                    {/* MISA-style Date Period Preset Dropdown */}
-                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 border border-slate-300 rounded-[4px] shadow-2xs">
-                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#0891B2' : '#64748B' }} />
-                        <select
-                            value={datePreset}
-                            onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
-                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1 text-slate-800"
-                            style={{ color: datePreset !== 'ALL' ? '#0891B2' : '#0F172A' }}
-                        >
-                            {DATE_PRESET_OPTIONS.map(opt => (
-                                <option key={opt.key} value={opt.key} className="bg-white text-slate-900">
-                                    {sI18n.datePresets[opt.key] || opt.label}
-                                </option>
-                            ))}
-                        </select>
-
-                        <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-0.5">
-                            <input type="date" value={dateFrom}
-                                onChange={e => {
-                                    setDatePreset('CUSTOM')
-                                    setDateFrom(e.target.value)
-                                    setPage(1)
-                                    reload({ dateFrom: e.target.value, dateTo, page: 1 }, true)
-                                }}
-                                className="bg-transparent border-none text-[11px] text-slate-700 outline-none w-[95px] p-0"
-                                style={{ color: '#0F172A' }} />
-                            <span className="text-[10px] text-slate-400">→</span>
-                            <input type="date" value={dateTo}
-                                onChange={e => {
-                                    setDatePreset('CUSTOM')
-                                    setDateTo(e.target.value)
-                                    setPage(1)
-                                    reload({ dateFrom, dateTo: e.target.value, page: 1 }, true)
-                                }}
-                                className="bg-transparent border-none text-[11px] text-slate-700 outline-none w-[95px] p-0"
-                                style={{ color: '#0F172A' }} />
-                        </div>
-                    </div>
-
-                    {/* Filter Toggle Button */}
-                    {(() => {
-                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL') || (invoiceFilter && invoiceFilter !== 'ALL'));
-                        return (
-                            <button onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all shadow-2xs"
-                                style={{
-                                    background: (showFilters || hasAdvancedFilters) ? 'rgba(8,145,178,0.1)' : '#FFFFFF',
-                                    color: (showFilters || hasAdvancedFilters) ? '#0891B2' : '#475569',
-                                    border: `1px solid ${(showFilters || hasAdvancedFilters) ? 'rgba(8,145,178,0.3)' : '#CBD5E1'}`,
-                                }}
-                            >
-                                <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
-                                {isEn ? 'Filters' : 'Bộ lọc'}
-                                {hasAdvancedFilters && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#0891B2]" />
-                                )}
-                            </button>
-                        );
-                    })()}
-                </div>
-            </div>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    aria-expanded={showFilters}
+                                    className={filtersActive ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
+                                >
+                                    <SlidersHorizontal size={14} />
+                                    {isEn ? 'Filters' : 'Bộ lọc'}
+                                    {hasAdvancedFilters && <span className="w-1.5 h-1.5 rounded-full bg-lys-teal" aria-hidden />}
+                                </Button>
+                            </>
+                        }
+                    />
+                )
+            })()}
 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150 bg-slate-50 border border-slate-200">
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Order Type' : 'Loại Đơn Hàng'}
-                        </label>
-                        <select value={orderTypeFilter} 
-                            onChange={e => { setOrderTypeFilter(e.target.value); setPage(1); reload({ orderType: e.target.value as any, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: orderTypeFilter === 'TASTING' ? '#D97706' : '#0F172A' }}>
-                            <option value="ALL">{isEn ? 'All order types' : 'Tất cả loại đơn'}</option>
-                            <option value="STANDARD">{isEn ? '📦 Commercial' : '📦 Thương Mại'}</option>
-                            <option value="TASTING">{isEn ? '🍷 Tasting' : '🍷 Tasting (Nếm thử)'}</option>
-                            <option value="SAMPLE">{isEn ? '🍾 Sample' : '🍾 Hàng Mẫu'}</option>
-                        </select>
-                    </div>
+                <FilterPanel className="animate-fade-in">
+                    <Field label={isEn ? 'Order Type' : 'Loại Đơn Hàng'}>
+                        {id => (
+                            <Select id={id} value={orderTypeFilter}
+                                onChange={e => { setOrderTypeFilter(e.target.value); setPage(1); reload({ orderType: e.target.value as any, page: 1 }, true) }}>
+                                <option value="ALL">{isEn ? 'All order types' : 'Tất cả loại đơn'}</option>
+                                <option value="STANDARD">{isEn ? 'Commercial' : 'Thương Mại'}</option>
+                                <option value="TASTING">{isEn ? 'Tasting' : 'Tasting (Nếm thử)'}</option>
+                                <option value="SAMPLE">{isEn ? 'Sample' : 'Hàng Mẫu'}</option>
+                            </Select>
+                        )}
+                    </Field>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Invoice Status' : 'Trạng Thái HĐ'}
-                        </label>
-                        <select value={invoiceFilter} 
-                            onChange={e => { setInvoiceFilter(e.target.value as any); setPage(1); reload({ invoiceFilter: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: invoiceFilter === 'EXEMPT' ? '#D97706' : invoiceFilter === 'INVOICED' ? '#059669' : '#0F172A' }}>
-                            <option value="ALL">{isEn ? 'All invoices' : 'Tất cả hóa đơn'}</option>
-                            <option value="INVOICED">{isEn ? '📜 Has VAT invoice' : '📜 Có hóa đơn VAT'}</option>
-                            <option value="EXEMPT">{isEn ? '🚫 Exempt from VAT invoice' : '🚫 Không xuất HĐ VAT'}</option>
-                            <option value="PENDING">{isEn ? '⏳ Pending invoice' : '⏳ Chờ xuất HĐ'}</option>
-                        </select>
-                    </div>
+                    <Field label={isEn ? 'Invoice Status' : 'Trạng Thái HĐ'}>
+                        {id => (
+                            <Select id={id} value={invoiceFilter}
+                                onChange={e => { setInvoiceFilter(e.target.value as any); setPage(1); reload({ invoiceFilter: e.target.value, page: 1 }, true) }}>
+                                <option value="ALL">{isEn ? 'All invoices' : 'Tất cả hóa đơn'}</option>
+                                <option value="INVOICED">{isEn ? 'Has VAT invoice' : 'Có hóa đơn VAT'}</option>
+                                <option value="EXEMPT">{isEn ? 'Exempt from VAT invoice' : 'Không xuất HĐ VAT'}</option>
+                                <option value="PENDING">{isEn ? 'Pending invoice' : 'Chờ xuất HĐ'}</option>
+                            </Select>
+                        )}
+                    </Field>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Sales Rep' : 'Nhân viên Sales'}
-                        </label>
-                        <select value={salesRepFilter} 
-                            onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: '#0F172A' }}>
-                            <option value="">{isEn ? 'All Sales Reps' : 'Tất cả Sales'}</option>
-                            {salesReps.map((u: any) => (
-                                <option key={u.id} value={u.id}>{u.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Channel' : 'Kênh'}
-                        </label>
-                        <select value={channelFilter} 
-                            onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: '#0F172A' }}>
-                            <option value="">{isEn ? 'All channels' : 'Tất cả kênh'}</option>
-                            <option value="HORECA">HORECA</option>
-                            <option value="WHOLESALE_DISTRIBUTOR">{isEn ? 'Wholesale' : 'Đại Lý'}</option>
-                            <option value="VIP_RETAIL">VIP</option>
-                            <option value="DIRECT_INDIVIDUAL">{isEn ? 'Direct' : 'Trực Tiếp'}</option>
-                            <option value="CORPORATE">{isEn ? 'Corporate' : 'Doanh Nghiệp'}</option>
-                            <option value="RETAIL">{isEn ? 'Retail' : 'Bán Lẻ'}</option>
-                        </select>
-                    </div>
+                    <Field label={isEn ? 'Sales Rep' : 'Nhân viên Sales'}>
+                        {id => (
+                            <Select id={id} value={salesRepFilter}
+                                onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}>
+                                <option value="">{isEn ? 'All Sales Reps' : 'Tất cả Sales'}</option>
+                                {salesReps.map((u: any) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Legal Entity' : 'Pháp nhân'}
-                        </label>
-                        <select value={legalEntityFilter} 
-                            onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: '#0F172A' }}>
-                            <option value="">{isEn ? 'All entities' : 'Tất cả pháp nhân'}</option>
-                            {pageLegalEntities.map((le: any) => (
-                                <option key={le.id} value={le.id}>{le.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <Field label={isEn ? 'Channel' : 'Kênh'}>
+                        {id => (
+                            <Select id={id} value={channelFilter}
+                                onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}>
+                                <option value="">{isEn ? 'All channels' : 'Tất cả kênh'}</option>
+                                <option value="HORECA">HORECA</option>
+                                <option value="WHOLESALE_DISTRIBUTOR">{isEn ? 'Wholesale' : 'Đại Lý'}</option>
+                                <option value="VIP_RETAIL">VIP</option>
+                                <option value="DIRECT_INDIVIDUAL">{isEn ? 'Direct' : 'Trực Tiếp'}</option>
+                                <option value="CORPORATE">{isEn ? 'Corporate' : 'Doanh Nghiệp'}</option>
+                                <option value="RETAIL">{isEn ? 'Retail' : 'Bán Lẻ'}</option>
+                            </Select>
+                        )}
+                    </Field>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Warehouse' : 'Kho xuất'}
-                        </label>
-                        <select value={warehouseFilter} 
-                            onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: '#0F172A' }}>
-                            <option value="">{isEn ? 'All warehouses' : 'Tất cả kho'}</option>
-                            {pageWarehouses.map((wh: any) => (
-                                <option key={wh.id} value={wh.id}>{wh.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <Field label={isEn ? 'Legal Entity' : 'Pháp nhân'}>
+                        {id => (
+                            <Select id={id} value={legalEntityFilter}
+                                onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}>
+                                <option value="">{isEn ? 'All entities' : 'Tất cả pháp nhân'}</option>
+                                {pageLegalEntities.map((le: any) => (
+                                    <option key={le.id} value={le.id}>{le.name}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">
-                            {isEn ? 'Payment Terms' : 'Điều khoản'}
-                        </label>
-                        <select value={paymentTermFilter} 
-                            onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
-                            style={{ color: '#0F172A' }}>
-                            <option value="">{isEn ? 'All' : 'Tất cả'}</option>
-                            {paymentTerms.map((pt: string) => (
-                                <option key={pt} value={pt}>{pt}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <Field label={isEn ? 'Warehouse' : 'Kho xuất'}>
+                        {id => (
+                            <Select id={id} value={warehouseFilter}
+                                onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}>
+                                <option value="">{isEn ? 'All warehouses' : 'Tất cả kho'}</option>
+                                {pageWarehouses.map((wh: any) => (
+                                    <option key={wh.id} value={wh.id}>{wh.name}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
+
+                    <Field label={isEn ? 'Payment Terms' : 'Điều khoản'}>
+                        {id => (
+                            <Select id={id} value={paymentTermFilter}
+                                onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}>
+                                <option value="">{isEn ? 'All' : 'Tất cả'}</option>
+                                {paymentTerms.map((pt: string) => (
+                                    <option key={pt} value={pt}>{pt}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
 
                     <div className="flex flex-col justify-end">
-                        <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold text-slate-600">
-                            <input type="checkbox" checked={pendingActionFilter} 
+                        <label className="flex items-center gap-2 h-11 sm:h-9 cursor-pointer type-caption text-lys-secondary">
+                            <input type="checkbox" checked={pendingActionFilter}
                                 onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
-                                className="rounded border-slate-200 text-[#0891B2] focus:ring-0 focus:ring-offset-0 bg-white w-4 h-4" />
-                            <span>{isEn ? '⚠️ Requires Action' : '⚠️ Cần xử lý'}</span>
+                                className="w-4 h-4 rounded border-lys-border-strong accent-lys-teal-strong" />
+                            <AlertTriangle size={13} className="text-tone-warning-fg" aria-hidden />
+                            <span>{isEn ? 'Requires Action' : 'Cần xử lý'}</span>
                         </label>
                     </div>
-                </div>
+                </FilterPanel>
             )}
 
             {/* Table (Desktop View) */}
-            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 1050 }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                <SortHeader label={sI18n.table.soNo} field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>{sI18n.table.invoice}</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '17%' }}>{sI18n.table.customer}</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '6%' }}>{sI18n.table.channel}</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '6%' }}>{sI18n.table.entity}</th>
-                                <SortHeader label={sI18n.table.total} field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '10%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>{isEn ? 'Sales Rep' : 'Nhân viên Sales'}</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>{sI18n.table.status}</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569', width: '9%' }}>{isEn ? 'Delivery' : 'Giao Hàng'}</th>
-                                <SortHeader label={sI18n.table.createdAt} field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '7%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#475569', width: '15%' }}>{sI18n.table.actions}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr><td colSpan={11} className="text-center py-12" style={{ color: '#64748B' }}>
-                                    <Loader2 size={20} className="inline animate-spin mr-2" />{isEn ? 'Loading data...' : 'Đang tải...'}
-                                </td></tr>
-                            ) : rows.length === 0 ? (
-                                <tr><td colSpan={11} className="text-center py-16" style={{ color: '#64748B' }}>
-                                    <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                    <p className="text-sm font-semibold">{hasActiveFilters ? (isEn ? 'No orders match the filter' : 'Không tìm thấy đơn hàng phù hợp với bộ lọc') : (isEn ? 'No sales orders in system' : 'Hệ thống chưa có đơn hàng nào')}</p>
-                                    {hasActiveFilters && (
-                                         <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#0891B2', color: '#FFFFFF' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                                             {isEn ? 'Clear Filters' : 'Xóa Bộ Lọc'}
-                                         </button>
+            <div className="hidden md:block">
+                <Table style={{ minWidth: 1050 }}>
+                    <THead>
+                        <tr>
+                            <SortHeader label={sI18n.table.soNo} field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
+                            <Th style={{ width: '9%' }}>{sI18n.table.invoice}</Th>
+                            <Th style={{ width: '17%' }}>{sI18n.table.customer}</Th>
+                            <Th style={{ width: '6%' }}>{sI18n.table.channel}</Th>
+                            <Th style={{ width: '6%' }}>{sI18n.table.entity}</Th>
+                            <SortHeader label={sI18n.table.total} field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} align="right" style={{ width: '10%' }} />
+                            <Th style={{ width: '9%' }}>{isEn ? 'Sales Rep' : 'Nhân viên Sales'}</Th>
+                            <Th style={{ width: '9%' }}>{sI18n.table.status}</Th>
+                            <Th style={{ width: '9%' }}>{isEn ? 'Delivery' : 'Giao Hàng'}</Th>
+                            <SortHeader label={sI18n.table.createdAt} field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '7%' }} />
+                            <Th align="center" style={{ width: '15%' }}>{sI18n.table.actions}</Th>
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {loading ? (
+                            <TableMessageRow colSpan={11}>
+                                <TableSkeleton rows={8} cols={8} />
+                            </TableMessageRow>
+                        ) : rows.length === 0 ? (
+                            <TableMessageRow colSpan={11}>
+                                <EmptyState
+                                    icon={FileText}
+                                    title={hasActiveFilters ? (isEn ? 'No orders match the filter' : 'Không tìm thấy đơn hàng phù hợp với bộ lọc') : (isEn ? 'No sales orders in system' : 'Hệ thống chưa có đơn hàng nào')}
+                                    action={hasActiveFilters && (
+                                        <Button size="sm" onClick={handleClearFilters}>{isEn ? 'Clear Filters' : 'Xóa Bộ Lọc'}</Button>
                                     )}
-                                </td></tr>
-                            ) : rows.map(row => (
-                                <tr key={row.id}
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: 'transparent' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                                    <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#0891B2' }}>{row.soNo}</span>
-                                    </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap">
-                                        {row.invoiceNo ? (
-                                            <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded"
-                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}
-                                                title={row.invoiceNo}>
-                                                {row.invoiceNo}
-                                            </span>
-                                        ) : row.isInvoiceExempt ? (
-                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
-                                                style={{ background: 'rgba(239,68,68,0.12)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)' }}
-                                                title={`Miễn HĐ: ${row.invoiceExemptReason || 'Không có lý do'}${row.invoiceExemptBy ? ` (Duyệt bởi: ${row.invoiceExemptBy})` : ''}`}>
-                                                <FileX2 size={11} /> {isEn ? 'No Inv' : 'Không HĐ'}
-                                            </span>
-                                        ) : null}
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <p className="text-[13px] font-semibold truncate max-w-[220px]" style={{ color: '#0F172A' }} title={row.customerName}>{row.customerName}</p>
-                                        <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{row.customerCode}</p>
-                                    </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap">
-                                        <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
-                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#475569' }}>
-                                            {getSOChannelLabel(row.channel, locale, true)}
-                                        </span>
-                                    </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap">
-                                        {row.legalEntityCode ? (
-                                            <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
-                                                style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(8, 145, 178, 0.08)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
-                                                {row.legalEntityCode}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[11px]" style={{ color: '#94A3B8' }}>—</span>
+                                />
+                            </TableMessageRow>
+                        ) : rows.map(row => (
+                            <Tr key={row.id}>
+                                <Td className="whitespace-nowrap">
+                                    <button type="button" onClick={() => setDetailId(row.id)} className="type-code font-bold text-lys-teal-strong hover:underline cursor-pointer">
+                                        {row.soNo}
+                                    </button>
+                                </Td>
+                                <Td className="whitespace-nowrap">
+                                    {row.invoiceNo ? (
+                                        <Badge tone="brand" title={row.invoiceNo} className="type-code">{row.invoiceNo}</Badge>
+                                    ) : row.isInvoiceExempt ? (
+                                        <Badge tone="danger" icon={FileX2}
+                                            title={`Miễn HĐ: ${row.invoiceExemptReason || 'Không có lý do'}${row.invoiceExemptBy ? ` (Duyệt bởi: ${row.invoiceExemptBy})` : ''}`}>
+                                            {isEn ? 'No Inv' : 'Không HĐ'}
+                                        </Badge>
+                                    ) : null}
+                                </Td>
+                                <Td>
+                                    <p className="font-semibold truncate max-w-[220px]" title={row.customerName}>{row.customerName}</p>
+                                    <p className="type-caption text-lys-muted">{row.customerCode}</p>
+                                </Td>
+                                <Td className="whitespace-nowrap">
+                                    <Badge tone="neutral">{getSOChannelLabel(row.channel, locale, true)}</Badge>
+                                </Td>
+                                <Td className="whitespace-nowrap">
+                                    {row.legalEntityCode ? (
+                                        <Badge tone={row.legalEntityCode === 'TA' ? 'warning' : 'brand'}>{row.legalEntityCode}</Badge>
+                                    ) : (
+                                        <span className="text-lys-dim">—</span>
+                                    )}
+                                </Td>
+                                <Td align="right" className="whitespace-nowrap">
+                                    <p className="font-bold">{formatCurrency(row.totalAmount)}</p>
+                                    {row.orderDiscount > 0 && <p className="type-caption text-tone-success-fg">{isEn ? 'Disc' : 'CK'} {row.orderDiscount}%</p>}
+                                </Td>
+                                <Td className="whitespace-nowrap text-lys-secondary">{row.salesRepName}</Td>
+                                <Td className="whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></Td>
+                                <Td className="whitespace-nowrap"><DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} /></Td>
+                                <Td className="whitespace-nowrap text-lys-muted">{formatDate(row.createdAt, true)}</Td>
+                                <Td>
+                                    <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                                        <Button size="sm" variant="secondary" className="h-7 px-2" onClick={() => setDetailId(row.id)}>
+                                            <Eye size={12} /> {isEn ? 'View' : 'Xem'}
+                                        </Button>
+                                        <Button size="icon-sm" variant="ghost" className="h-7 w-7" title={isEn ? 'Print' : 'In'} aria-label={isEn ? 'Print' : 'In'}
+                                            onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')}>
+                                            <Printer size={13} />
+                                        </Button>
+                                        {row.status === 'PENDING_APPROVAL' && (
+                                            ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
+                                        ) && (
+                                            <>
+                                                <Button size="sm" className="h-7 px-2" onClick={() => handleApprove(row.id)} loading={actionLoading === row.id}>
+                                                    {actionLoading !== row.id && <CheckCircle2 size={12} />} {isEn ? 'Approve' : 'Duyệt'}
+                                                </Button>
+                                                <Button size="sm" variant="danger-outline" className="h-7 px-2" onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}>
+                                                    <XCircle size={12} /> {isEn ? 'Reject' : 'Từ Chối'}
+                                                </Button>
+                                            </>
                                         )}
-                                    </td>
-                                    <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <p className="text-[13px] font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(row.totalAmount)}</p>
-                                        {row.orderDiscount > 0 && <p className="text-[10px]" style={{ color: '#5BA88A' }}>{isEn ? 'Disc' : 'CK'} {row.orderDiscount}%</p>}
-                                    </td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#475569' }}>{row.salesRepName}</td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} /></td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#64748B' }}>{formatDate(row.createdAt, true)}</td>
-                                    <td className="px-4 py-1.5">
-                                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-                                            <button onClick={() => setDetailId(row.id)} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.08)')}>
-                                                <Eye size={11} /> {isEn ? 'View' : 'Xem'}
-                                            </button>
-                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                style={{ background: 'rgba(138,174,187,0.15)', color: '#475569', border: '1px solid rgba(138,174,187,0.3)' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.15)')}>
-                                                <Printer size={11} /> {isEn ? 'Print' : 'In'}
-                                            </button>
-                                            {row.status === 'PENDING_APPROVAL' && (
-                                                ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
-                                            ) && (
-                                                <>
-                                                    <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.45)' }}
-                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.3)')}
-                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.2)')}>
-                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={11} /> {isEn ? 'Approve' : 'Duyệt'}</>}
-                                                    </button>
-                                                    <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
-                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.4)' }}
-                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.25)')}
-                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.15)')}>
-                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={11} /> {isEn ? 'Reject' : 'Từ Chối'}</>}
-                                                    </button>
-                                                </>
-                                            )}
-                                            {row.status === 'DRAFT' && canCreateSO && (
-                                                <>
-                                                    <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}
-                                                        className="px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : 'Xác Nhận'}
-                                                    </button>
-                                                    <button onClick={() => setEditId(row.id)}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
-                                                        <Pencil size={10} /> Sửa
-                                                    </button>
-                                                    <button onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}
-                                                        className="px-1.5 py-1 text-[10px] font-bold border"
-                                                        style={{ background: 'rgba(220,38,38,0.1)', color: '#EF4444', borderColor: 'rgba(220,38,38,0.25)', borderRadius: '4px' }}>
-                                                        Xóa
-                                                    </button>
-                                                </>
-                                            )}
-                                            {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
-                                                <>
-                                                    <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(8,145,178,0.15)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.35)', borderRadius: '4px' }}>
-                                                        <CheckCircle2 size={10} /> KT Duyệt
-                                                    </button>
-                                                    <button onClick={async () => {
+                                        {row.status === 'DRAFT' && canCreateSO && (
+                                            <>
+                                                <Button size="sm" className="h-7 px-2" onClick={() => handleConfirm(row.id)} loading={actionLoading === row.id}>
+                                                    {isEn ? 'Confirm' : 'Xác Nhận'}
+                                                </Button>
+                                                <Button size="sm" variant="secondary" className="h-7 px-2" onClick={() => setEditId(row.id)}>
+                                                    <Pencil size={12} /> {isEn ? 'Edit' : 'Sửa'}
+                                                </Button>
+                                                <Button size="sm" variant="danger-outline" className="h-7 px-2" onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}>
+                                                    {isEn ? 'Delete' : 'Xóa'}
+                                                </Button>
+                                            </>
+                                        )}
+                                        {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
+                                            <>
+                                                <Button size="sm" className="h-7 px-2" onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}>
+                                                    <CheckCircle2 size={12} /> KT Duyệt
+                                                </Button>
+                                                <Button size="sm" variant="danger-outline" className="h-7 px-2" disabled={actionLoading === row.id}
+                                                    onClick={async () => {
                                                         if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
                                                         setActionLoading(row.id)
                                                         toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
@@ -3116,62 +2921,38 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                         }), {
                                                             loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
                                                         })
-                                                    }} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '4px' }}>
-                                                        <XCircle size={10} /> KT Trả Về
-                                                    </button>
-                                                </>
-                                            )}
-                                            {['PENDING_APPROVAL', 'CONFIRMED'].includes(row.status) && (
-                                                <button onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}
-                                                    className="px-1.5 py-1 text-[10px] font-bold"
-                                                    style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}>
-                                                    Huỷ
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                                    }}>
+                                                    <XCircle size={12} /> KT Trả Về
+                                                </Button>
+                                            </>
+                                        )}
+                                        {['PENDING_APPROVAL', 'CONFIRMED'].includes(row.status) && (
+                                            <Button size="sm" variant="danger-outline" className="h-7 px-2" onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}>
+                                                {isEn ? 'Cancel' : 'Huỷ'}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TBody>
+                </Table>
             </div>
 
             {/* Mobile View */}
             <div className={`block md:hidden space-y-3 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                 {rows.length === 0 && loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="p-4 space-y-3 rounded-lg border border-slate-200/30 bg-slate-50 animate-pulse">
-                            <div className="flex justify-between">
-                                <div className="h-4 bg-white rounded w-1/3" />
-                                <div className="h-3 bg-white rounded w-1/4" />
-                            </div>
-                            <div className="space-y-2">
-                                <div className="h-4 bg-white rounded w-3/4" />
-                                <div className="h-3 bg-white rounded w-1/2" />
-                            </div>
-                            <div className="flex gap-2">
-                                <div className="h-5 bg-white rounded w-16" />
-                                <div className="h-5 bg-white rounded w-12" />
-                            </div>
-                            <div className="flex justify-between pt-2 border-t border-slate-200/20">
-                                <div className="h-4 bg-white rounded w-24" />
-                                <div className="h-5 bg-white rounded w-20" />
-                            </div>
-                        </div>
-                    ))
+                    <Card><TableSkeleton rows={5} cols={3} /></Card>
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-16 rounded-md border border-slate-200 bg-slate-50" style={{ color: '#64748B' }}>
-                        <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                        <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
-                        {hasActiveFilters && (
-                             <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#0891B2', color: '#FFFFFF' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                                 Xóa Bộ Lọc
-                             </button>
-                        )}
-                    </div>
+                    <Card>
+                        <EmptyState
+                            icon={FileText}
+                            title={hasActiveFilters ? (isEn ? 'No orders match the filter' : 'Không tìm thấy đơn hàng phù hợp với bộ lọc') : (isEn ? 'No sales orders in system' : 'Hệ thống chưa có đơn hàng nào')}
+                            action={hasActiveFilters && (
+                                <Button size="sm" onClick={handleClearFilters}>{isEn ? 'Clear Filters' : 'Xóa Bộ Lọc'}</Button>
+                            )}
+                        />
+                    </Card>
                 ) : (
                     rows.map(row => (
                         <SalesOrderMobileCard
@@ -3204,96 +2985,19 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 )}
             </div>
 
-            {/* Pagination */}
-            {total > 0 && (
-                <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-200 rounded-md animate-none">
-                    <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: '#64748B' }}>
-                        <span>
-                            {isEn ? (
-                                <>Showing <span style={{ color: '#475569' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> of <span style={{ color: '#475569' }}>{total}</span> orders</>
-                            ) : (
-                                <>Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span> đơn hàng</>
-                            )}
-                        </span>
-                        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-                            <span>{isEn ? 'Show:' : 'Hiển thị:'}</span>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => {
-                                    const newSize = Number(e.target.value)
-                                    setPageSize(newSize)
-                                    setPage(1)
-                                    reload({ pageSize: newSize, page: 1 }, true)
-                                }}
-                                className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:outline-none focus:border-[#87CBB9]"
-                            >
-                                <option value={20}>20 {isEn ? '/ page' : '/ trang'}</option>
-                                <option value={50}>50 {isEn ? '/ page' : '/ trang'}</option>
-                                <option value={100}>100 {isEn ? '/ page' : '/ trang'}</option>
-                            </select>
-                        </div>
-                    </div>
-                    {totalPages > 1 && (
-                        <div className="flex flex-wrap items-center justify-center gap-1">
-                            <button
-                                onClick={() => handlePageChange(1)}
-                                disabled={page <= 1}
-                                title={isEn ? 'First page' : 'Trang đầu'}
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
-                            >
-                                <ChevronsLeft size={15} />
-                            </button>
-                            <button
-                                onClick={() => handlePageChange(page - 1)}
-                                disabled={page <= 1}
-                                title={isEn ? 'Previous page' : 'Trang trước'}
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
-                            >
-                                <ChevronLeft size={15} />
-                            </button>
-                            {getPageNumbers().map((p, i) =>
-                                p === '...' ? (
-                                    <span key={`dots-${i}`} className="px-1 text-xs select-none" style={{ color: '#64748B' }}>…</span>
-                                ) : (
-                                    <button
-                                        key={p}
-                                        onClick={() => handlePageChange(p as number)}
-                                        className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
-                                        style={{
-                                            background: p === page ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                            color: p === page ? '#87CBB9' : '#475569',
-                                            border: `1px solid ${p === page ? '#87CBB9' : '#E2E8F0'}`,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        {p}
-                                    </button>
-                                )
-                            )}
-                            <button
-                                onClick={() => handlePageChange(page + 1)}
-                                disabled={page >= totalPages}
-                                title={isEn ? 'Next page' : 'Trang sau'}
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
-                            >
-                                <ChevronRight size={15} />
-                            </button>
-                            <button
-                                onClick={() => handlePageChange(totalPages)}
-                                disabled={page >= totalPages}
-                                title={isEn ? 'Last page' : 'Trang cuối'}
-                                className="min-w-[32px] h-8 px-1.5 rounded text-xs font-semibold transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '4px' }}
-                            >
-                                <ChevronsRight size={15} />
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+            <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={handlePageChange}
+                onPageSizeChange={newSize => {
+                    setPageSize(newSize)
+                    setPage(1)
+                    reload({ pageSize: newSize, page: 1 }, true)
+                }}
+                itemLabel={isEn ? 'orders' : 'đơn hàng'}
+                isEn={isEn}
+            />
 
             {detailId && (
                 <SODetailDrawer 
@@ -3366,19 +3070,19 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {acctModalId && (
                 <>
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setAcctModalId(null)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base font-bold">🏛️</span>
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center text-base font-bold">🏛️</span>
                             {isEn ? 'Accounting Order Approval' : 'Kế Toán Duyệt Đơn'}
                         </h3>
                         <div className="mb-5">
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                                 {isEn ? 'Invoicing Legal Entity' : 'Pháp Nhân Xuất Hoá Đơn'}
                             </label>
                             <select
                                 value={acctEntityId}
                                 onChange={e => setAcctEntityId(e.target.value)}
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                             >
                                 <option value="">{isEn ? '— Select entity —' : '— Chưa chọn —'}</option>
                                 {legalEntities.map(e => (
@@ -3390,7 +3094,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             <button
                                 type="button"
                                 onClick={() => setAcctModalId(null)}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                             >
                                 {isEn ? 'Cancel' : 'Huỷ'}
                             </button>
@@ -3532,41 +3236,41 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-200 pb-3">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-bold">🍷</span>
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center text-sm font-bold">🍷</span>
                         {isEn ? 'Approve Order & Assign Vintage' : 'Duyệt Đơn Hàng & Chỉ Định Vintage'}
                     </h3>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                         <X size={18} />
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-slate-500">
                         <Loader2 size={24} className="animate-spin text-teal-600" />
                         {isEn ? 'Loading product info and stock...' : 'Đang tải thông tin sản phẩm và tồn kho...'}
                     </div>
                 ) : !detail ? (
-                    <p className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-center py-8 text-sm text-slate-500">
                         {isEn ? 'Order not found' : 'Không tìm thấy đơn hàng'}
                     </p>
                 ) : (
                     <div className="space-y-4">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {isEn ? 'SO No:' : 'Mã đơn:'} <span className="font-bold text-teal-600 dark:text-teal-400">{detail.soNo}</span> · {isEn ? 'Customer:' : 'Khách hàng:'} <span className="font-semibold text-slate-900 dark:text-white">{detail.customer.name}</span>
+                        <p className="text-xs text-slate-500">
+                            {isEn ? 'SO No:' : 'Mã đơn:'} <span className="font-bold text-teal-600">{detail.soNo}</span> · {isEn ? 'Customer:' : 'Khách hàng:'} <span className="font-semibold text-slate-900">{detail.customer.name}</span>
                         </p>
 
                         {/* Warehouse selector */}
-                        <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                        <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-amber-900">
                                 {isEn ? 'Fulfillment Warehouse *' : 'Kho Xuất Bán Hàng *'} ({isEn ? 'Legal Entity:' : 'Pháp nhân:'} {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
                             </label>
                             <select
                                 value={selectedWarehouseId}
                                 onChange={e => setSelectedWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-900 dark:text-slate-900 shadow-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium"
+                                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium"
                             >
                                 <option value="">{isEn ? '— Select warehouse —' : '— Chọn kho xuất hàng —'}</option>
                                 {warehouses
@@ -3595,20 +3299,20 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             {detail.lines.map((line: any) => {
                                 const avail = availableVintages[line.productId] || []
                                 return (
-                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-200 flex flex-col gap-2">
+                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2">
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold truncate text-slate-900 dark:text-white" title={line.product.productName}>
+                                                <p className="text-xs font-bold truncate text-slate-900" title={line.product.productName}>
                                                     {line.product.productName}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+                                                <p className="text-[10px] text-slate-500 mt-0.5 font-mono">
                                                     SKU: {line.product.skuCode} · {isEn ? 'Qty:' : 'Số lượng:'} {Number(line.qtyOrdered)}
                                                 </p>
                                             </div>
                                         </div>
                                         
                                         <div className="flex items-center gap-2">
-                                            <label className="text-[10px] uppercase font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                            <label className="text-[10px] uppercase font-semibold text-slate-600 whitespace-nowrap">
                                                 Vintage *
                                             </label>
                                             {avail.length > 0 ? (
@@ -3618,7 +3322,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                         const val = Number(e.target.value)
                                                         setSelectedVintages(prev => ({ ...prev, [line.id]: val }))
                                                     }}
-                                                    className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-slate-50 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                                                    className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                                                 >
                                                     <option value="">{isEn ? '— Select available vintage —' : '— Chọn Vintage khả dụng —'}</option>
                                                     {avail.map(v => (
@@ -3626,7 +3330,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                     ))}
                                                 </select>
                                             ) : (
-                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-700">
+                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] bg-slate-100 text-slate-500 border border-dashed border-slate-300">
                                                     {isEn ? 'Non-vintage (No vintage or Out of stock)' : 'Không Vintage (Sản phẩm không Vintage hoặc Hết tồn kho)'}
                                                 </div>
                                             )}
@@ -3636,12 +3340,12 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             })}
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-200">
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
                             <button
                                 type="button"
                                 onClick={onClose}
                                 disabled={submitting}
-                                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-200 bg-white dark:bg-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+                                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
                             >
                                 {isEn ? 'Cancel' : 'Huỷ'}
                             </button>

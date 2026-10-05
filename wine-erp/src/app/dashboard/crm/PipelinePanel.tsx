@@ -15,12 +15,12 @@ import { getCustomersForSO, getSalesReps } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
 
 const STAGES: { key: OppStage; label: string; color: string; bg: string; probability: number }[] = [
-    { key: 'LEAD', label: 'Lead', color: '#475569', bg: 'rgba(138,174,187,0.08)', probability: 10 },
-    { key: 'QUALIFIED', label: 'Qualified', color: '#D4A853', bg: 'rgba(212,168,83,0.08)', probability: 30 },
-    { key: 'PROPOSAL', label: 'Proposal', color: '#0891B2', bg: 'rgba(135,203,185,0.08)', probability: 50 },
+    { key: 'LEAD', label: 'Lead', color: '#475569', bg: 'rgba(100,116,139,0.08)', probability: 10 },
+    { key: 'QUALIFIED', label: 'Qualified', color: '#B45309', bg: 'rgba(180,83,9,0.08)', probability: 30 },
+    { key: 'PROPOSAL', label: 'Proposal', color: '#0891B2', bg: 'rgba(8,145,178,0.08)', probability: 50 },
     { key: 'NEGOTIATION', label: 'Negotiation', color: '#D97706', bg: 'rgba(217,119,6,0.08)', probability: 70 },
-    { key: 'WON', label: 'Won ✓', color: '#5BA88A', bg: 'rgba(91,168,138,0.1)', probability: 100 },
-    { key: 'LOST', label: 'Lost ✗', color: '#8B1A2E', bg: 'rgba(139,26,46,0.08)', probability: 0 },
+    { key: 'WON', label: 'Won ✓', color: '#15803D', bg: 'rgba(21,128,61,0.1)', probability: 100 },
+    { key: 'LOST', label: 'Lost ✗', color: '#B91C1C', bg: 'rgba(185,28,28,0.08)', probability: 0 },
 ]
 
 export function PipelinePanel() {
@@ -208,7 +208,7 @@ export function PipelinePanel() {
             {/* Header Toolbar */}
             <div className="flex items-center justify-between gap-4 p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
-                    <Target size={18} style={{ color: '#D4A853' }} />
+                    <Target size={18} style={{ color: '#B45309' }} />
                     <div>
                         <h4 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
                             Sales Pipeline
@@ -222,9 +222,9 @@ export function PipelinePanel() {
                     <button onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all rounded"
                         style={{
-                            background: showFilters || filterAssignee ? 'rgba(212,168,83,0.15)' : '#FFFFFF',
-                            color: showFilters || filterAssignee ? '#D4A853' : '#475569',
-                            border: `1px solid ${showFilters || filterAssignee ? 'rgba(212,168,83,0.3)' : '#E2E8F0'}`,
+                            background: showFilters || filterAssignee ? 'rgba(180,83,9,0.15)' : '#FFFFFF',
+                            color: showFilters || filterAssignee ? '#B45309' : '#475569',
+                            border: `1px solid ${showFilters || filterAssignee ? 'rgba(180,83,9,0.3)' : '#E2E8F0'}`,
                         }}>
                         <Filter size={12} />
                         {filterAssignee ? `${filterAssignee}` : 'Bộ lọc'}
@@ -248,7 +248,7 @@ export function PipelinePanel() {
                     </select>
                     {filterAssignee && (
                         <button onClick={() => setFilterAssignee('')}
-                            className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(224,82,82,0.1)', color: '#E05252' }}>
+                            className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
                             Xóa filter
                         </button>
                     )}
@@ -259,8 +259,8 @@ export function PipelinePanel() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                     { label: 'Pipeline Value', value: formatVND(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue), icon: DollarSign, color: '#0891B2' },
-                    { label: 'Weighted Value', value: formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue), icon: TrendingUp, color: '#D4A853' },
-                    { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: Percent, color: '#5BA88A' },
+                    { label: 'Weighted Value', value: formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue), icon: TrendingUp, color: '#B45309' },
+                    { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: Percent, color: '#15803D' },
                     { label: 'Tổng Cơ Hội', value: `${filterAssignee ? filteredRows.length : stats.total}`, icon: Target, color: '#475569' },
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md flex items-center gap-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -305,11 +305,11 @@ export function PipelinePanel() {
                                     return (
                                         <div key={row.id}
                                             className="p-2.5 rounded transition-all hover:shadow-lg cursor-pointer group"
-                                            style={{ background: detail?.id === row.id ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF', border: `1px solid ${detail?.id === row.id ? '#87CBB9' : '#E2E8F0'}` }}
+                                            style={{ background: detail?.id === row.id ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF', border: `1px solid ${detail?.id === row.id ? '#0E7490' : '#E2E8F0'}` }}
                                             onClick={() => openDetail(row.id)}>
                                             <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{row.name}</p>
                                             <p className="text-[10px] mt-0.5 truncate" style={{ color: '#64748B' }}>{row.customerName}</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: '#D4A853' }}>
+                                            <p className="text-xs font-bold mt-1" style={{ color: '#B45309' }}>
                                                 {formatVND(row.expectedValue)}
                                             </p>
                                             <div className="flex items-center justify-between mt-2">
@@ -324,12 +324,12 @@ export function PipelinePanel() {
                                                     )}
                                                     {!['WON', 'LOST'].includes(row.stage) && (
                                                         <button onClick={() => handleMarkLost(row.id, row.name)} className="p-1 rounded transition"
-                                                            style={{ background: 'rgba(139,26,46,0.1)' }} title="Lost">
-                                                            <X size={10} style={{ color: '#8B1A2E' }} />
+                                                            style={{ background: 'rgba(185,28,28,0.1)' }} title="Lost">
+                                                            <X size={10} style={{ color: '#B91C1C' }} />
                                                         </button>
                                                     )}
                                                     <button onClick={() => handleDelete(row.id)} className="p-1 rounded transition"
-                                                        style={{ background: 'rgba(74,106,122,0.1)' }} title="Xóa">
+                                                        style={{ background: 'rgba(100,116,139,0.1)' }} title="Xóa">
                                                         <Trash2 size={10} style={{ color: '#64748B' }} />
                                                     </button>
                                                 </div>
@@ -346,7 +346,7 @@ export function PipelinePanel() {
             {/* ═══ Detail Drawer ═══ */}
             {(detail || detailLoading) && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.5)' }} onClick={() => { setDetail(null); setEditing(false) }} />
+                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => { setDetail(null); setEditing(false) }} />
                     <div className="fixed top-0 right-0 h-full z-50 w-full max-w-lg overflow-y-auto"
                         style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', animation: 'slideInRight 0.2s ease-out' }}>
                         {detailLoading ? (
@@ -370,16 +370,16 @@ export function PipelinePanel() {
                                     </div>
                                     <div className="flex gap-1.5">
                                         {!editing ? (
-                                            <button onClick={startEdit} className="p-1.5 rounded transition" style={{ background: 'rgba(212,168,83,0.12)' }}>
-                                                <Edit3 size={14} style={{ color: '#D4A853' }} />
+                                            <button onClick={startEdit} className="p-1.5 rounded transition" style={{ background: 'rgba(180,83,9,0.12)' }}>
+                                                <Edit3 size={14} style={{ color: '#B45309' }} />
                                             </button>
                                         ) : (
                                             <>
-                                                <button onClick={saveEdit} disabled={editSaving} className="p-1.5 rounded transition" style={{ background: 'rgba(91,168,138,0.15)' }}>
-                                                    {editSaving ? <Loader2 size={14} className="animate-spin" style={{ color: '#5BA88A' }} /> : <Save size={14} style={{ color: '#5BA88A' }} />}
+                                                <button onClick={saveEdit} disabled={editSaving} className="p-1.5 rounded transition" style={{ background: 'rgba(21,128,61,0.15)' }}>
+                                                    {editSaving ? <Loader2 size={14} className="animate-spin" style={{ color: '#15803D' }} /> : <Save size={14} style={{ color: '#15803D' }} />}
                                                 </button>
-                                                <button onClick={() => setEditing(false)} className="p-1.5 rounded transition" style={{ background: 'rgba(224,82,82,0.1)' }}>
-                                                    <XCircle size={14} style={{ color: '#E05252' }} />
+                                                <button onClick={() => setEditing(false)} className="p-1.5 rounded transition" style={{ background: 'rgba(185,28,28,0.1)' }}>
+                                                    <XCircle size={14} style={{ color: '#B91C1C' }} />
                                                 </button>
                                             </>
                                         )}
@@ -414,7 +414,7 @@ export function PipelinePanel() {
                                             const isCompleted = detail.stage === 'LOST' ? false : sIdx <= idx
                                             return (
                                                 <div key={s} className="flex-1 h-1.5 rounded-full transition-all" style={{
-                                                    background: isCompleted ? '#87CBB9' : '#E2E8F0',
+                                                    background: isCompleted ? '#0E7490' : '#E2E8F0',
                                                 }} />
                                             )
                                         })}
@@ -426,9 +426,9 @@ export function PipelinePanel() {
                                     <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
                                         {editing ? (
                                             <input type="number" value={editForm.expectedValue} onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
-                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-sans)', color: '#D4A853' }} />
+                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-sans)', color: '#B45309' }} />
                                         ) : (
-                                            <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                                            <p className="text-sm font-bold" style={{ color: '#B45309' }}>
                                                 {formatVND(detail.expectedValue)}
                                             </p>
                                         )}
@@ -438,12 +438,12 @@ export function PipelinePanel() {
                                         <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{detail.probability}%</p>
                                         <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Xác suất</p>
                                     </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'rgba(224,82,82,0.06)' : '#FFFFFF' }}>
-                                        <p className="text-sm font-bold" style={{ color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#E05252' : '#475569' }}>
+                                    <div className="p-3 rounded-md text-center" style={{ background: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
+                                        <p className="text-sm font-bold" style={{ color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#B91C1C' : '#475569' }}>
                                             {detail.daysInStage}d
                                         </p>
                                         <p className="text-[10px] mt-0.5 flex items-center justify-center gap-1" style={{ color: '#64748B' }}>
-                                            {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={9} style={{ color: '#E05252' }} />}
+                                            {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={9} style={{ color: '#B91C1C' }} />}
                                             Trong Stage
                                         </p>
                                     </div>
@@ -518,7 +518,7 @@ export function PipelinePanel() {
                                         )}
                                         <button onClick={() => handleMarkLost(detail.id, detail.name)}
                                             className="px-4 py-2.5 text-xs font-semibold rounded-md transition-all"
-                                            style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
+                                            style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}>
                                             Lost
                                         </button>
                                     </div>
@@ -532,12 +532,12 @@ export function PipelinePanel() {
             {/* ═══ Lost Reason Modal ═══ */}
             {lostModal && (
                 <>
-                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setLostModal(null)} />
+                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setLostModal(null)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-sm p-6 rounded-lg"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(139,26,46,0.15)' }}>
-                                <XCircle size={16} style={{ color: '#8B1A2E' }} />
+                            <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(185,28,28,0.15)' }}>
+                                <XCircle size={16} style={{ color: '#B91C1C' }} />
                             </div>
                             <div>
                                 <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Đánh dấu Lost</h3>
@@ -554,7 +554,7 @@ export function PipelinePanel() {
                                 Hủy
                             </button>
                             <button onClick={confirmLost} className="flex-1 py-2 text-xs font-semibold rounded-md"
-                                style={{ background: '#8B1A2E', color: '#0F172A' }}>
+                                style={{ background: '#B91C1C', color: '#0F172A' }}>
                                 Xác Nhận Lost
                             </button>
                         </div>
@@ -565,7 +565,7 @@ export function PipelinePanel() {
             {/* ═══ Create Modal ═══ */}
             {createOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setCreateOpen(false)} />
+                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setCreateOpen(false)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between mb-4">
@@ -587,7 +587,7 @@ export function PipelinePanel() {
                                     {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                                 <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder="Giá trị kỳ vọng"
-                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#D4A853', fontFamily: 'var(--font-sans)' }} />
+                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#B45309', fontFamily: 'var(--font-sans)' }} />
                             </div>
                             <input type="date" value={formCloseDate} onChange={e => setFormCloseDate(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />

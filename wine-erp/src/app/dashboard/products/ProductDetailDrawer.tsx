@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { getProductViewDetails, type ProductViewDetails, type ProductRow } from './actions'
 import { formatVND } from '@/lib/utils'
+import { Badge, Button, Drawer, StatusBadge } from '@/components/ui'
+import { WineTypeBadge } from '@/components/WineTypeBadge'
 
 interface ProductDetailDrawerProps {
     open: boolean
@@ -31,44 +33,25 @@ const COUNTRY_NAMES: Record<string, string> = {
     GE: 'Georgia', HU: 'Hungary', GR: 'Hy Lạp', AT: 'Áo', RO: 'Romania', MX: 'Mexico', JP: 'Nhật',
 }
 
-const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-    WHITE: { label: 'Vang trắng', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
-    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
-    FORTIFIED: { label: 'Fortified', color: '#0891B2', bg: 'rgba(168,130,204,0.15)' },
-    DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
+const LOT_STATUS_LABEL: Record<string, string> = {
+    AVAILABLE: 'Sẵn sàng',
+    RESERVED: 'Đã đặt trước',
+    QUARANTINE: 'Cách ly',
+    DAMAGED: 'Hư hỏng',
 }
+const LOT_TONE_OVERRIDES = { AVAILABLE: 'success', RESERVED: 'info', QUARANTINE: 'warning', DAMAGED: 'danger' } as const
 
-const LOT_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-    AVAILABLE: { label: 'Sẵn sàng', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    RESERVED: { label: 'Đã đặt trước', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
-    QUARANTINE: { label: 'Cách ly', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    DAMAGED: { label: 'Hư hỏng', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+const STATUS_LABEL: Record<string, string> = {
+    ACTIVE: 'Đang kinh doanh',
+    DISCONTINUED: 'Ngừng kinh doanh',
+    ALLOCATION_ONLY: 'Phân bổ (Allocation)',
 }
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Đang kinh doanh', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    DISCONTINUED: { label: 'Ngừng kinh doanh', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
-    ALLOCATION_ONLY: { label: 'Phân bổ (Allocation)', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-}
+const STATUS_TONE_OVERRIDES = { ALLOCATION_ONLY: 'info' } as const
 
 export function ProductDetailDrawer({ open, productId, initialData, cachedData, onClose, canEdit, onEditTrigger }: ProductDetailDrawerProps) {
     const [data, setData] = useState<ProductViewDetails | null>(null)
     const [loading, setLoading] = useState(false)
     const [activeImage, setActiveImage] = useState<string | null>(null)
-    const [animate, setAnimate] = useState(false)
-
-    useEffect(() => {
-        if (open) {
-            const raf = requestAnimationFrame(() => {
-                setAnimate(true)
-            })
-            return () => cancelAnimationFrame(raf)
-        } else {
-            setAnimate(false)
-        }
-    }, [open])
 
     useEffect(() => {
         if (!open || !productId) return
@@ -113,32 +96,17 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
 
     if (!activeProduct) {
         return (
-            <>
-                <div
-                    className="fixed inset-0 z-40 transition-opacity duration-300"
-                    style={{ background: 'rgba(10,5,2,0.7)', opacity: animate ? 1 : 0 }}
-                    onClick={onClose}
-                />
-                <div
-                    className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300 items-center justify-center gap-3"
-                    style={{
-                        width: 'min(640px, 95vw)',
-                        background: '#F8FAFC',
-                        borderLeft: '1px solid #E2E8F0',
-                        transform: animate ? 'translateX(0)' : 'translateX(100%)',
-                    }}
-                >
-                    <Loader2 size={32} className="animate-spin text-[#0891B2]" />
-                    <p className="text-xs" style={{ color: '#64748B' }}>Đang tải chi tiết...</p>
+            <Drawer open onClose={onClose} size="md" className="bg-lys-bg" title="Chi Tiết Sản Phẩm">
+                <div className="flex flex-col items-center justify-center gap-3 py-24">
+                    <Loader2 size={28} className="animate-spin text-lys-teal" aria-hidden />
+                    <p className="type-caption text-lys-muted">Đang tải chi tiết...</p>
                 </div>
-            </>
+            </Drawer>
         )
     }
 
     const flag = activeProduct.country ? COUNTRY_FLAGS[activeProduct.country] ?? '🌍' : '🌍'
     const countryName = activeProduct.country ? COUNTRY_NAMES[activeProduct.country] ?? activeProduct.country : ''
-    const wineTypeBadge = activeProduct.wineType ? WINE_TYPE_CONFIG[activeProduct.wineType] : null
-    const statusBadge = activeProduct.status ? STATUS_CONFIG[activeProduct.status] : null
     const totalStockQty = 'totalStock' in activeProduct 
         ? (activeProduct as any).totalStock 
         : (data ? data.stockLots.reduce((sum, l) => sum + l.qtyAvailable, 0) : 0)
@@ -151,45 +119,22 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
     const effectiveProfile = data?.profile ?? activeProduct.profile ?? null
 
     return (
-        <>
-            <div
-                className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: animate ? 1 : 0 }}
-                onClick={onClose}
-            />
-
-            <div
-                className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden transition-transform duration-300"
-                style={{
-                    width: 'min(640px, 95vw)',
-                    background: '#F8FAFC',
-                    borderLeft: '1px solid #E2E8F0',
-                    transform: animate ? 'translateX(0)' : 'translateX(100%)',
-                }}
-            >
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-                    style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
-                            <Wine size={16} style={{ color: '#0891B2' }} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-lg flex items-center gap-2" style={{ color: '#0F172A' }}>
-                                Chi Tiết Sản Phẩm
-                                {loading && <Loader2 size={14} className="animate-spin text-[#0891B2]" />}
-                            </h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Xem thông tin chi tiết và tồn kho sản phẩm</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: '#64748B' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                        <X size={18} />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 relative">
-                    <div className="flex flex-col md:flex-row gap-5 items-start bg-white/40 p-4 rounded-xl border border-slate-200/30">
+        <Drawer
+            open
+            onClose={onClose}
+            size="md"
+            className="bg-lys-bg"
+            title="Chi Tiết Sản Phẩm"
+            headerExtra={loading ? <Loader2 size={14} className="animate-spin text-lys-teal" aria-label="Đang tải" /> : undefined}
+            description="Xem thông tin chi tiết và tồn kho sản phẩm"
+            footer={canEdit ? (
+                <Button onClick={() => { onClose(); onEditTrigger(activeProduct.id) }}>
+                    <Edit size={14} aria-hidden /> Chỉnh Sửa Thông Tin
+                </Button>
+            ) : undefined}
+        >
+                <div className="space-y-6 relative">
+                    <div className="flex flex-col md:flex-row gap-5 items-start bg-white/40 p-4 rounded-lg border border-slate-200/30">
                         <div className="w-full md:w-36 h-48 rounded-lg flex-shrink-0 flex flex-col items-center justify-center relative bg-white border border-slate-200/60 overflow-hidden">
                             {activeImage ? (
                                 <img src={activeImage} alt={activeProduct.productName} className="h-full object-contain p-2" />
@@ -205,21 +150,11 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <p className="text-xs font-sans tracking-wide" style={{ color: '#0891B2' }}>{activeProduct.skuCode}</p>
                             
                             <div className="flex flex-wrap gap-2 pt-1">
-                                {wineTypeBadge && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: wineTypeBadge.color, background: wineTypeBadge.bg }}>
-                                        {wineTypeBadge.label}
-                                    </span>
+                                <WineTypeBadge type={activeProduct.wineType} />
+                                {activeProduct.status && (
+                                    <StatusBadge status={activeProduct.status} label={STATUS_LABEL[activeProduct.status]} toneOverrides={STATUS_TONE_OVERRIDES} />
                                 )}
-                                {statusBadge && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: statusBadge.color, background: statusBadge.bg }}>
-                                        {statusBadge.label}
-                                    </span>
-                                )}
-                                {effectiveIsAllocation && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: '#0891B2', background: 'rgba(135,203,185,0.1)' }}>
-                                        Allocation
-                                    </span>
-                                )}
+                                {effectiveIsAllocation && <Badge tone="info">Allocation</Badge>}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-slate-200/20 text-xs">
@@ -229,7 +164,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 </div>
                                 <div>
                                     <span style={{ color: '#64748B' }}>Khả dụng bán: </span>
-                                    <span className="font-bold text-sm block font-sans" style={{ color: totalStockQty > 0 ? '#5BA88A' : '#E05252' }}>
+                                    <span className="font-bold text-sm block font-sans" style={{ color: totalStockQty > 0 ? '#15803D' : '#B91C1C' }}>
                                         {totalStockQty.toLocaleString()} chai
                                     </span>
                                 </div>
@@ -250,18 +185,18 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                 <span className="text-xs font-bold font-mono text-slate-900">{totalBookQty.toLocaleString()}</span>
                                             </div>
                                             <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
-                                                <span className="text-[10px] uppercase font-bold text-[#0891B2] block">On-hand</span>
-                                                <span className="text-xs font-bold font-mono text-[#0891B2]">{totalOnHandQty.toLocaleString()}</span>
+                                                <span className="text-[10px] uppercase font-bold text-lys-teal block">On-hand</span>
+                                                <span className="text-xs font-bold font-mono text-lys-teal">{totalOnHandQty.toLocaleString()}</span>
                                             </div>
                                             <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
-                                                <span className="text-[10px] uppercase font-bold text-[#D4A853] block">Khả Dụng</span>
-                                                <span className="text-xs font-bold font-mono text-[#D4A853]">{totalAvailQty.toLocaleString()}</span>
-                                                {totalResQty > 0 && <span className="text-[9px] text-sky-400 block">(Đặt: {totalResQty})</span>}
+                                                <span className="text-[10px] uppercase font-bold text-[#B45309] block">Khả Dụng</span>
+                                                <span className="text-xs font-bold font-mono text-[#B45309]">{totalAvailQty.toLocaleString()}</span>
+                                                {totalResQty > 0 && <span className="text-[9px] text-sky-700 block">(Đặt: {totalResQty})</span>}
                                             </div>
                                         </div>
                                         {totalVarQty !== 0 && (
                                             <div className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border flex items-center justify-between ${
-                                                totalVarQty < 0 ? 'text-rose-400 bg-rose-950/40 border-rose-800/60' : 'text-amber-400 bg-amber-950/40 border-amber-800/60'
+                                                totalVarQty < 0 ? 'text-rose-700 bg-rose-950/40 border-rose-800/60' : 'text-amber-700 bg-amber-950/40 border-amber-800/60'
                                             }`}>
                                                 <span>⚠️ Lệch Sổ sách & On-hand:</span>
                                                 <span className="font-mono">{totalVarQty > 0 ? `+${totalVarQty}` : totalVarQty} chai</span>
@@ -277,7 +212,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <Layers size={13} /> Thông Số Kỹ Thuật
                         </h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-xl text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             {[
                                 { label: 'Xuất xứ', value: `${flag} ${countryName}` },
                                 { label: 'Vùng trồng (Appellation)', value: activeProduct.appellationName ?? '—' },
@@ -305,13 +240,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <DollarSign size={13} /> Giá Bán Theo Kênh (VND)
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <div className="p-3.5 rounded-lg flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Giá Bán Lẻ Niêm Yết</span>
                                 <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#0891B2' }}>
                                     {effectiveRetailPrice ? formatVND(effectiveRetailPrice) : 'Chưa thiết lập'}
                                 </span>
                             </div>
-                            <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <div className="p-3.5 rounded-lg flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Giá Bán Buôn (Wholesale)</span>
                                 <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#0891B2' }}>
                                     {effectiveWholesalePrice ? formatVND(effectiveWholesalePrice) : 'Chưa thiết lập'}
@@ -343,7 +278,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                        style={{ background: 'rgba(74,143,171,0.12)', border: '1px solid rgba(74,143,171,0.3)', color: '#7AC4C4' }}
+                                        style={{ background: 'rgba(29,78,216,0.12)', border: '1px solid rgba(29,78,216,0.3)', color: '#7AC4C4' }}
                                     >
                                         🍷 Xem Tasting Note ↗
                                     </a>
@@ -358,7 +293,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
-                            <div className="p-4 rounded-xl space-y-3 text-xs leading-relaxed" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <div className="p-4 rounded-lg space-y-3 text-xs leading-relaxed" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <div className="grid grid-cols-2 gap-4">
                                     {effectiveProfile.grapes && (
                                         <div>
@@ -455,13 +390,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <div className="grid grid-cols-2 gap-2">
                                 {data.awards.map(a => (
                                     <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.1)' }}>
-                                            <Award size={16} style={{ color: '#D4A853' }} />
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.1)' }}>
+                                            <Award size={16} style={{ color: '#B45309' }} />
                                         </div>
                                         <div className="min-w-0">
                                             <p className="font-bold truncate" style={{ color: '#0F172A' }}>
                                                 {a.source}
-                                                {a.score && <span className="ml-1.5 text-xs text-[#0891B2] font-sans font-bold">{a.score}pt</span>}
+                                                {a.score && <span className="ml-1.5 text-xs text-lys-teal font-sans font-bold">{a.score}pt</span>}
                                             </p>
                                             <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
                                                 {a.medalLabel ?? ''} {a.vintage ? `(Vintage: ${a.vintage})` : ''}
@@ -479,7 +414,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         </h4>
                         
                         {loading && !data ? (
-                            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                                 <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -490,7 +425,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     </thead>
                                     <tbody className="animate-pulse">
                                         {[1, 2].map(i => (
-                                            <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                            <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-24" /></td>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-12" /></td>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-16" /></td>
@@ -504,12 +439,12 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         ) : (
                             data && (
                                 data.stockLots.length === 0 ? (
-                                    <div className="flex flex-col items-center py-8 gap-2 rounded-xl text-center" style={{ border: '1px dashed #E2E8F0', background: '#FFFFFF/30' }}>
+                                    <div className="flex flex-col items-center py-8 gap-2 rounded-lg text-center" style={{ border: '1px dashed #E2E8F0', background: '#FFFFFF/30' }}>
                                         <AlertCircle size={24} style={{ color: '#E2E8F0' }} />
                                         <p className="text-xs" style={{ color: '#64748B' }}>Không có hàng tồn kho khả dụng cho sản phẩm này.</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                                    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                                         <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                                             <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                 <thead>
@@ -521,40 +456,37 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                 </thead>
                                                 <tbody>
                                                     {data.stockLots.map(lot => {
-                                                        const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#475569', bg: 'rgba(168,152,128,0.1)' }
                                                         const bookQty = lot.qtyBook ?? lot.qtyReceived ?? 0
                                                         const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable ?? 0
                                                         const variance = lot.variance ?? (onHandQty - bookQty)
 
                                                         return (
-                                                            <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }} className="hover:bg-white/50">
+                                                            <tr key={lot.id} style={{ borderBottom: '1px solid #E2E8F0' }} className="hover:bg-white/50">
                                                                 <td className="px-2.5 py-2 font-medium" style={{ color: '#0F172A' }}>{lot.warehouseName}</td>
                                                                 <td className="px-2.5 py-2 font-sans font-semibold" style={{ color: '#475569' }}>{lot.locationCode}</td>
                                                                 <td className="px-2.5 py-2 font-sans font-mono text-[11px]" style={{ color: '#64748B' }}>{lot.lotNo}</td>
-                                                                <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#87CBB9' : '#64748B' }}>{lot.vintage ?? 'NV'}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#0E7490' : '#64748B' }}>{lot.vintage ?? 'NV'}</td>
                                                                 <td className="px-2.5 py-2 text-center font-mono font-bold" style={{ color: '#475569' }}>
                                                                     {bookQty.toLocaleString()}
                                                                 </td>
                                                                 <td className="px-2.5 py-2 text-center font-mono font-bold">
                                                                     <span style={{ color: '#0891B2' }}>{onHandQty.toLocaleString()}</span>
                                                                     {variance !== 0 && (
-                                                                        <span className={`block text-[9px] font-semibold ${variance < 0 ? 'text-rose-400' : 'text-amber-400'}`}>
+                                                                        <span className={`block text-[9px] font-semibold ${variance < 0 ? 'text-rose-700' : 'text-amber-700'}`}>
                                                                             ({variance > 0 ? `+${variance}` : variance})
                                                                         </span>
                                                                     )}
                                                                 </td>
-                                                                <td className="px-2.5 py-2 text-center font-sans font-bold tabular-nums" style={{ color: '#D4A853' }}>
+                                                                <td className="px-2.5 py-2 text-center font-sans font-bold tabular-nums" style={{ color: '#B45309' }}>
                                                                     {lot.qtyAvailable.toLocaleString()}
                                                                     {lot.qtyReserved > 0 && (
-                                                                        <span className="block text-[9px] text-sky-400 font-semibold font-mono">
+                                                                        <span className="block text-[9px] text-sky-700 font-semibold font-mono">
                                                                             (Đặt: {lot.qtyReserved})
                                                                         </span>
                                                                     )}
                                                                 </td>
                                                                 <td className="px-2.5 py-2">
-                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold inline-block" style={{ color: statusCfg.color, background: statusCfg.bg }}>
-                                                                        {statusCfg.label}
-                                                                    </span>
+                                                                    <StatusBadge status={lot.status} label={LOT_STATUS_LABEL[lot.status]} toneOverrides={LOT_TONE_OVERRIDES} />
                                                                 </td>
                                                             </tr>
                                                         )
@@ -568,24 +500,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         )}
                     </div>
                 </div>
-
-                {activeProduct && canEdit && (
-                    <div className="px-6 py-4 flex-shrink-0 flex justify-end gap-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                        <button
-                            onClick={() => {
-                                onClose()
-                                onEditTrigger(activeProduct.id)
-                            }}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                        >
-                            <Edit size={14} /> Chỉnh Sửa Thông Tin
-                        </button>
-                    </div>
-                )}
-            </div>
-        </>
+        </Drawer>
     )
 }

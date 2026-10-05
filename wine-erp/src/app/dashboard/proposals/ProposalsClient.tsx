@@ -114,27 +114,27 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const isEn = locale === 'en'
         switch (cat) {
             case 'TASTING':
-                return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+                return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             case 'SPECIAL_EVENT':
                 return { label: isEn ? '🎪 Special Event' : '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
-                return { label: isEn ? '🏷️ Special Pricing' : '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+                return { label: isEn ? '🏷️ Special Pricing' : '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'BUDGET_REQUEST':
                 return { label: isEn ? '💰 Budget Request' : '💰 Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
             case 'CAPITAL_EXPENDITURE':
                 return { label: isEn ? '🏢 CAPEX' : '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'NEW_SUPPLIER':
-                return { label: isEn ? '🤝 New Supplier' : '🤝 NCC Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+                return { label: isEn ? '🤝 New Supplier' : '🤝 NCC Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'NEW_PRODUCT':
-                return { label: isEn ? '📦 New Product' : '📦 Sản Phẩm Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+                return { label: isEn ? '📦 New Product' : '📦 Sản Phẩm Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'POLICY_CHANGE':
                 return { label: isEn ? '📋 Policy Change' : '📋 Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
             case 'PAYMENT_SCHEDULE':
-                return { label: isEn ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+                return { label: isEn ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'PROMOTION_CAMPAIGN':
-                return { label: isEn ? '🎁 Promotion' : '🎁 Khuyến Mãi', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+                return { label: isEn ? '🎁 Promotion' : '🎁 Khuyến Mãi', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             default:
-                return { label: getCategoryLabel(cat, locale), bg: 'rgba(74,106,122,0.15)', color: '#475569', border: 'rgba(74,106,122,0.3)' }
+                return { label: getCategoryLabel(cat, locale), bg: 'rgba(100,116,139,0.15)', color: '#475569', border: 'rgba(100,116,139,0.3)' }
         }
     }, [locale])
 
@@ -992,7 +992,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <button
                     onClick={() => setShowCreate(true)}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer hover:opacity-90 shadow-xs"
-                    style={{ background: 'rgba(91,168,138,0.18)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.4)' }}
+                    style={{ background: 'rgba(21,128,61,0.18)', color: '#2E7D5B', border: '1px solid rgba(21,128,61,0.4)' }}
                 >
                     <Plus size={16} /> {t.header.createBtn}
                 </button>
@@ -1002,10 +1002,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 {[
                     { label: t.stats.total, value: currentStats.total, accent: '#475569' },
-                    { label: t.stats.pending, value: currentStats.pending, accent: '#D4A853' },
+                    { label: t.stats.pending, value: currentStats.pending, accent: '#B45309' },
                     { label: t.stats.draft, value: currentStats.draft, accent: '#64748B' },
-                    { label: t.stats.approved, value: currentStats.approved, accent: '#5BA88A' },
-                    { label: t.stats.rejected, value: currentStats.rejected, accent: '#8B1A2E' },
+                    { label: t.stats.approved, value: currentStats.approved, accent: '#15803D' },
+                    { label: t.stats.rejected, value: currentStats.rejected, accent: '#B91C1C' },
                 ].map((s, idx) => (
                     <div 
                         key={s.label} 
@@ -1028,7 +1028,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             className="px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap"
                             style={{
                                 background: filter === f ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                color: filter === f ? '#87CBB9' : '#64748B',
+                                color: filter === f ? '#0E7490' : '#64748B',
                                 borderRight: '1px solid #E2E8F0',
                             }}
                         >
@@ -1046,7 +1046,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         style={{
                             background: categoryFilter === 'ALL' ? '#FFFFFF' : 'rgba(8, 145, 178, 0.08)',
                             border: '1px solid #E2E8F0',
-                            color: categoryFilter === 'ALL' ? '#475569' : '#87CBB9',
+                            color: categoryFilter === 'ALL' ? '#475569' : '#0E7490',
                         }}
                     >
                         <option value="ALL">{t.filters.allCategories}</option>
@@ -1071,9 +1071,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         onChange={e => setPriorityFilter(e.target.value)}
                         className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
                         style={{
-                            background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(212,168,83,0.15)',
+                            background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(180,83,9,0.15)',
                             border: '1px solid #E2E8F0',
-                            color: priorityFilter === 'ALL' ? '#475569' : '#D4A853',
+                            color: priorityFilter === 'ALL' ? '#475569' : '#B45309',
                         }}
                     >
                         <option value="ALL">{t.filters.allPriorities}</option>
@@ -1118,7 +1118,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 className="p-4 rounded-lg space-y-3 transition-all cursor-pointer"
                                 style={{
                                     background: '#FFFFFF',
-                                    border: canApproveThis ? '1px solid #D4A853' : '1px solid #E2E8F0',
+                                    border: canApproveThis ? '1px solid #B45309' : '1px solid #E2E8F0',
                                 }}
                                 onClick={() => openDetail(p.id)}
                             >
@@ -1145,7 +1145,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[10px] px-2 py-0.5 rounded-full"
-                                        style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                        style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                         {getCategoryBadge(p.category).label}
                                     </span>
                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
@@ -1154,7 +1154,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.2)', color: '#475569' }}>
+                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid #E2E8F0', color: '#475569' }}>
                                     <div>
                                         <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Submitter' : 'Người trình'}</p>
                                         <p className="font-medium mt-0.5">{p.creatorName}</p>
@@ -1178,7 +1178,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <div className="flex justify-end gap-2 pt-2" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => openDetail(p.id)}
                                         className="px-3 py-1.5 text-xs font-medium rounded transition-all"
-                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                                        style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                         <Eye size={12} className="inline mr-1" />{t.actions.detail}
                                     </button>
                                     {canApproveThis && (
@@ -1187,7 +1187,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 onClick={() => handleApproval(p.id, 'APPROVE')}
                                                 disabled={actionLoading === p.id}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
                                                 {t.actions.approve}
                                             </button>
@@ -1197,7 +1197,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                 }}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                                 <XCircle size={12} className="inline mr-1" />{t.actions.reject}
                                             </button>
                                         </>
@@ -1207,7 +1207,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             onClick={() => handleSubmitProposal(p.id)}
                                             disabled={actionLoading === p.id}
                                             className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                                            style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.3)' }}>
                                             {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
                                             {t.actions.submit}
                                         </button>
@@ -1282,10 +1282,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             className="transition-all cursor-pointer hover:brightness-110"
                                             style={{
                                                 borderBottom: '1px solid #E2E8F0',
-                                                background: canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent',
+                                                background: canApproveThis ? 'rgba(180,83,9,0.03)' : 'transparent',
                                             }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.06)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.06)'}
+                                            onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(180,83,9,0.03)' : 'transparent'}
                                         >
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold font-mono text-[#0891B2] whitespace-nowrap block truncate" title={p.proposalNo}>
@@ -1343,11 +1343,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
-                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#5BA88A]" title={locale === 'en' ? 'Final CEO Approval Time' : 'Thời gian CEO phê duyệt hoàn tất'}>
+                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#15803D]" title={locale === 'en' ? 'Final CEO Approval Time' : 'Thời gian CEO phê duyệt hoàn tất'}>
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : p.status === 'REJECTED' ? (
-                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#8B1A2E]" title={locale === 'en' ? 'Rejection Time' : 'Thời gian từ chối'}>
+                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#B91C1C]" title={locale === 'en' ? 'Rejection Time' : 'Thời gian từ chối'}>
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : (
@@ -1369,7 +1369,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                 onClick={(e) => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
                                                                 disabled={actionLoading === p.id}
                                                                 className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:scale-105"
-                                                                style={{ background: '#5BA88A', color: '#0F172A' }}>
+                                                                style={{ background: '#15803D', color: '#0F172A' }}>
                                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
                                                                 {t.actions.approve}
                                                             </button>
@@ -1380,7 +1380,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                                 }}
                                                                 className="px-2 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:bg-rose-900/30"
-                                                                style={{ background: 'rgba(139,26,46,0.15)', color: '#FF6B6B', border: '1px solid rgba(139,26,46,0.4)' }}>
+                                                                style={{ background: 'rgba(185,28,28,0.15)', color: '#FF6B6B', border: '1px solid rgba(185,28,28,0.4)' }}>
                                                                 <XCircle size={12} className="inline mr-1" />{t.actions.reject}
                                                             </button>
                                                         </>
@@ -1390,7 +1390,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                             onClick={(e) => { e.stopPropagation(); handleSubmitProposal(p.id) }}
                                                             disabled={actionLoading === p.id}
                                                             className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
-                                                            style={{ background: 'rgba(74,143,171,0.2)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.4)' }}>
+                                                            style={{ background: 'rgba(29,78,216,0.2)', color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.4)' }}>
                                                             {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
                                                             {t.actions.submit}
                                                         </button>
@@ -1746,7 +1746,7 @@ function BatchProductPickerModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
                     <h4 className="text-sm sm:text-base font-bold text-slate-900">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
                     <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer"><X size={20} className="text-slate-400" /></button>
@@ -1787,7 +1787,7 @@ function BatchProductPickerModal({
                                             type="checkbox"
                                             checked={isChecked}
                                             onChange={() => toggleSelect(p)}
-                                            className="w-4 h-4 accent-[#87CBB9] cursor-pointer flex-shrink-0"
+                                            className="w-4 h-4 accent-[#0E7490] cursor-pointer flex-shrink-0"
                                         />
                                         <div className="min-w-0 flex-1">
                                             <span className="font-mono font-bold text-[#0891B2] mr-2">{p.skuCode}</span>
@@ -1812,7 +1812,7 @@ function BatchProductPickerModal({
                                                         }))
                                                     }}
                                                     className="w-16 px-2 py-1 text-xs font-bold font-mono outline-none rounded text-center"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #D4A853', color: '#D4A853' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #B45309', color: '#B45309' }}
                                                 />
                                             </div>
 
@@ -1829,10 +1829,10 @@ function BatchProductPickerModal({
                                                         }))
                                                     }}
                                                     className="w-24 px-2 py-1 text-xs font-bold font-mono outline-none rounded"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #87CBB9', color: '#0891B2' }}
+                                                    style={{ background: '#FFFFFF', border: '1px solid #0E7490', color: '#0891B2' }}
                                                 />
                                             </div>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diffPct < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diffPct < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
                                                 {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
                                             </span>
                                         </div>
@@ -1978,10 +1978,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200">
+            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white border-l border-slate-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200 bg-slate-50/50 dark:bg-white/50">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <FileText size={22} className="text-amber-500" />
                         {t.createDrawer.title}
                     </h3>
@@ -2030,7 +2030,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             type="button" 
                                             onClick={() => setBatchPickerOpen(true)}
                                             className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all cursor-pointer hover:opacity-90"
-                                            style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.45)' }}
+                                            style={{ background: 'rgba(180,83,9,0.18)', color: '#B45309', border: '1px solid rgba(180,83,9,0.45)' }}
                                         >
                                             <Search size={13} /> Chọn nhanh hàng loạt
                                         </button>
@@ -2092,7 +2092,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                     padding: '6px 8px',
                                                                     fontSize: '13px',
                                                                     background: '#FFFFFF',
-                                                                    border: '1px solid #D4A853',
+                                                                    border: '1px solid #B45309',
                                                                     fontWeight: 'bold',
                                                                     color: '#B45309',
                                                                     textAlign: 'center',
@@ -2155,16 +2155,16 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     </div>
 
                                     {relatedBranchesForProposal.length > 0 && (
-                                        <div className="p-2.5 rounded bg-[#D4A853]/10 border border-[#D4A853]/30 space-y-1.5">
+                                        <div className="p-2.5 rounded bg-[#B45309]/10 border border-[#B45309]/30 space-y-1.5">
                                             <div className="flex items-center justify-between text-[11px]">
-                                                <span className="text-[#D4A853] font-semibold">Gợi ý cùng chuỗi / thương hiệu ({relatedBranchesForProposal.length} cơ sở):</span>
+                                                <span className="text-[#B45309] font-semibold">Gợi ý cùng chuỗi / thương hiệu ({relatedBranchesForProposal.length} cơ sở):</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         const allRelIds = relatedBranchesForProposal.map((b: any) => b.id)
                                                         setAdditionalBranches(prev => Array.from(new Set([...prev, ...allRelIds])))
                                                     }}
-                                                    className="text-[#D4A853] hover:underline font-bold"
+                                                    className="text-[#B45309] hover:underline font-bold"
                                                 >
                                                     + Chọn tất cả
                                                 </button>
@@ -2182,7 +2182,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 )
                                                             }}
                                                             className={`px-2 py-1 rounded text-[11px] font-medium flex items-center gap-1 transition ${
-                                                                isSelected ? 'bg-[#0891B2] text-white font-bold' : 'bg-white text-slate-900 border border-slate-200 hover:border-[#87CBB9]'
+                                                                isSelected ? 'bg-[#0891B2] text-white font-bold' : 'bg-white text-slate-900 border border-slate-200 hover:border-[#0E7490]'
                                                             }`}
                                                         >
                                                             {isSelected ? <Check size={11} /> : <Plus size={11} />}
@@ -2210,7 +2210,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold uppercase mb-1 block text-[#D4A853]">
+                                    <label className="text-xs font-bold uppercase mb-1 block text-[#B45309]">
                                         📅 Ngày kết thúc hiệu lực
                                     </label>
                                     <input 
@@ -2256,7 +2256,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             <button 
                                                 type="button" 
                                                 onClick={() => setBatchPickerOpen(true)}
-                                                className="text-xs flex items-center gap-1 text-[#D4A853] font-semibold hover:underline"
+                                                className="text-xs flex items-center gap-1 text-[#B45309] font-semibold hover:underline"
                                             >
                                                 <Search size={12} /> Chọn nhanh hàng loạt
                                             </button>
@@ -2311,7 +2311,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                     copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
                                                                     setPriceLines(copy)
                                                                 }}
-                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
+                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#B45309', textAlign: 'center' }}
                                                             />
                                                         </div>
 
@@ -2319,7 +2319,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                             <div className="flex items-center justify-between mb-0.5">
                                                                 <label className="text-[9px]" style={{ color: '#64748B' }}>Giá đề xuất</label>
                                                                 {line.proposedPrice > 0 && wholesale > 0 && (
-                                                                    <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                                    <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-700' : 'text-green-700'}`}>
                                                                         {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
                                                                     </span>
                                                                 )}
@@ -2345,7 +2345,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         <button 
                                                             type="button" 
                                                             onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
-                                                            className="p-1.5 rounded text-red-400 hover:bg-red-500/10 mb-0.5 cursor-pointer flex-shrink-0"
+                                                            className="p-1.5 rounded text-red-700 hover:bg-red-500/10 mb-0.5 cursor-pointer flex-shrink-0"
                                                             title="Xóa dòng"
                                                         >
                                                             <X size={15} />
@@ -2356,7 +2356,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         })}
                                         {priceLines.length === 0 && (
                                             <p className="text-center text-xs py-4 text-gray-400 border border-dashed border-slate-200 rounded-md">
-                                                Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
+                                                Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#B45309]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
                                             </p>
                                         )}
                                     </div>
@@ -2470,7 +2470,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             onClick={handleSave}
                             disabled={saving}
                             className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}
+                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
                             {t.actions.saveDraft}
@@ -2544,7 +2544,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         onPrint('BILINGUAL')
                                     }}
                                     className="px-2 sm:px-2.5 py-1.5 text-xs font-semibold rounded-l flex items-center gap-1 transition-all cursor-pointer hover:opacity-90 whitespace-nowrap"
-                                    style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)', borderRight: 'none' }}
+                                    style={{ background: 'rgba(180,83,9,0.18)', color: '#B45309', border: '1px solid rgba(180,83,9,0.4)', borderRight: 'none' }}
                                     title={locale === 'en' ? 'Print Bilingual (Default)' : 'In bản Song Ngữ (Mặc định)'}
                                 >
                                     <Printer size={13} />
@@ -2556,7 +2556,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         type="button"
                                         onClick={() => setPrintMenuOpen(prev => !prev)}
                                         className="px-1.5 py-1.5 text-xs font-semibold rounded-r flex items-center transition-all cursor-pointer hover:opacity-90"
-                                        style={{ background: 'rgba(212,168,83,0.18)', color: '#B45309', border: '1px solid rgba(212,168,83,0.4)' }}
+                                        style={{ background: 'rgba(180,83,9,0.18)', color: '#B45309', border: '1px solid rgba(180,83,9,0.4)' }}
                                         title={locale === 'en' ? 'Print language options' : 'Tùy chọn ngôn ngữ in'}
                                     >
                                         <ChevronDown size={13} />
@@ -2665,17 +2665,17 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                                     return (
                                         <React.Fragment key={level}>
-                                            {i > 0 && <div className="flex-1 h-0.5 rounded" style={{ background: isDone ? '#5BA88A' : '#E2E8F0' }} />}
+                                            {i > 0 && <div className="flex-1 h-0.5 rounded" style={{ background: isDone ? '#15803D' : '#E2E8F0' }} />}
                                             <div className="flex flex-col items-center gap-1">
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                                                     style={{
-                                                        background: isDone ? 'rgba(91,168,138,0.2)' : isRejected ? 'rgba(139,26,46,0.2)' : isCurrent ? 'rgba(212,168,83,0.2)' : '#FFFFFF',
-                                                        border: `2px solid ${isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#E2E8F0'}`,
-                                                        color: isDone ? '#5BA88A' : isRejected ? '#8B1A2E' : isCurrent ? '#D4A853' : '#64748B',
+                                                        background: isDone ? 'rgba(21,128,61,0.2)' : isRejected ? 'rgba(185,28,28,0.2)' : isCurrent ? 'rgba(180,83,9,0.2)' : '#FFFFFF',
+                                                        border: `2px solid ${isDone ? '#15803D' : isRejected ? '#B91C1C' : isCurrent ? '#B45309' : '#E2E8F0'}`,
+                                                        color: isDone ? '#15803D' : isRejected ? '#B91C1C' : isCurrent ? '#B45309' : '#64748B',
                                                     }}>
                                                         {isDone ? '✓' : isRejected ? '✗' : level}
                                                 </div>
-                                                <span className="text-xs font-medium" style={{ color: isCurrent ? '#D4A853' : '#64748B' }}>
+                                                <span className="text-xs font-medium" style={{ color: isCurrent ? '#B45309' : '#64748B' }}>
                                                     {levelLabel}
                                                 </span>
                                                 {log && (
@@ -2723,7 +2723,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 {detail.discountPct !== null && detail.discountPct !== undefined && (
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                         <p className="text-xs" style={{ color: '#64748B' }}>{locale === 'en' ? 'Entire portfolio discount' : 'Chiết khấu toàn danh mục'}</p>
-                                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{detail.discountPct}%</p>
+                                        <p className="text-lg font-bold" style={{ color: '#B45309' }}>{detail.discountPct}%</p>
                                     </div>
                                 )}
 
@@ -2747,7 +2747,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                                 <p className="font-bold" style={{ color: '#0891B2' }}>{formatVND(item.proposedPrice)}</p>
                                                                 <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{locale === 'en' ? 'Orig: ' : 'Gốc: '}{formatVND(originalPrice)}</p>
                                                             </div>
-                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diff < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diff < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
                                                                 {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
                                                             </span>
                                                         </div>
@@ -2801,7 +2801,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-bold text-[#0891B2]">{so.soNo}</span>
                                                     {so.orderType === 'TASTING' && (
-                                                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-300 border border-amber-500/40">🍷 Tasting</span>
+                                                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40">🍷 Tasting</span>
                                                     )}
                                                     <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                                 </div>
@@ -2825,7 +2825,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             </div>
                             {detail.justification && (
                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#D4A853' }}>
+                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#B45309' }}>
                                         {locale === 'en' ? 'Justification & Analysis' : 'Lý do & Phân tích'}
                                     </p>
                                     <p className="text-sm whitespace-pre-wrap" style={{ color: '#0F172A', lineHeight: 1.6 }}>{detail.justification}</p>
@@ -2833,7 +2833,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             )}
                             {detail.expectedOutcome && (
                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#5BA88A' }}>
+                                    <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#15803D' }}>
                                         {locale === 'en' ? 'Expected Outcome' : 'Kết quả kỳ vọng'}
                                     </p>
                                     <p className="text-sm" style={{ color: '#0F172A' }}>{detail.expectedOutcome}</p>
@@ -2871,7 +2871,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             </td>
                                             <td className="p-2.5 font-bold text-slate-900 whitespace-nowrap">{detail.creator?.name || '—'}</td>
                                             <td className="p-2.5 text-center whitespace-nowrap">
-                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 whitespace-nowrap">
                                                     ✓ {locale === 'en' ? 'Created & Submitted' : 'Đã lập & trình'}
                                                 </span>
                                             </td>
@@ -2898,11 +2898,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     <td className="p-2.5 text-center whitespace-nowrap">
                                                         {log ? (
                                                             log.action === 'APPROVE' ? (
-                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 whitespace-nowrap">
                                                                     ✓ {locale === 'en' ? 'Approved' : 'Đã duyệt'}
                                                                 </span>
                                                             ) : (
-                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-700 border border-rose-500/30 whitespace-nowrap">
                                                                     ✗ {locale === 'en' ? 'Rejected' : 'Từ chối'}
                                                                 </span>
                                                             )
@@ -2966,12 +2966,12 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                         {/* Action Bar */}
                         {canApproveDetail && (
-                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-md shadow-2xs" style={{ background: 'rgba(212,168,83,0.05)', border: '2px solid rgba(212,168,83,0.2)' }}>
+                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-md shadow-2xs" style={{ background: 'rgba(180,83,9,0.05)', border: '2px solid rgba(180,83,9,0.2)' }}>
                                 <button
                                     onClick={() => onApproval('APPROVE')}
                                     disabled={Boolean(actionLoading)}
                                     className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs hover:opacity-95"
-                                    style={{ background: 'rgba(91,168,138,0.25)', color: '#2E7D5B', border: '1px solid rgba(91,168,138,0.5)' }}>
+                                    style={{ background: 'rgba(21,128,61,0.25)', color: '#2E7D5B', border: '1px solid rgba(21,128,61,0.5)' }}>
                                     {actionLoading === detail.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} 
                                     {locale === 'en' ? 'Approve Proposal' : 'Duyệt Tờ Trình'}
                                 </button>
@@ -2983,7 +2983,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         }}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
-                                        style={{ background: 'rgba(196,90,42,0.1)', color: '#C45A2A', border: '1px solid rgba(196,90,42,0.2)' }}>
+                                        style={{ background: 'rgba(196,90,42,0.1)', color: '#B45309', border: '1px solid rgba(196,90,42,0.2)' }}>
                                         <RotateCcw size={14} className="inline mr-1" /> {locale === 'en' ? 'Return' : 'Trả Lại'}
                                     </button>
                                     <button
@@ -2993,7 +2993,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         }}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
-                                        style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                        style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                         <XCircle size={14} className="inline mr-1" /> {locale === 'en' ? 'Reject' : 'Từ Chối'}
                                     </button>
                                 </div>
@@ -3013,7 +3013,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {detail.status === 'IN_PROGRESS' && isCEO && (
                             <button onClick={async () => { await updateProposalStatus(detail.id, 'CLOSED', userId); onRefresh() }}
                                 className="w-full py-2.5 text-sm font-semibold rounded-md cursor-pointer"
-                                style={{ background: 'rgba(74,106,122,0.15)', color: '#64748B', border: '1px solid rgba(74,106,122,0.3)' }}>
+                                style={{ background: 'rgba(100,116,139,0.15)', color: '#64748B', border: '1px solid rgba(100,116,139,0.3)' }}>
                                 <CheckCircle2 size={14} className="inline mr-1" /> {locale === 'en' ? 'Mark Completed' : 'Đánh dấu Hoàn tất'}
                             </button>
                         )}

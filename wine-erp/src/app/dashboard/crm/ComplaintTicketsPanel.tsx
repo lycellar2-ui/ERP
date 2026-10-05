@@ -6,17 +6,17 @@ import { toast } from 'sonner'
 import { getComplaintTickets, resolveComplaintTicket, type ComplaintRow } from './actions'
 
 const SEVERITY_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    CRITICAL: { label: '🔴 Critical', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
+    CRITICAL: { label: '🔴 Critical', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
     HIGH: { label: '🟠 High', color: '#C07434', bg: 'rgba(192,116,52,0.12)' },
-    MEDIUM: { label: '🟡 Medium', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
-    LOW: { label: '🟢 Low', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)' },
+    MEDIUM: { label: '🟡 Medium', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    LOW: { label: '🟢 Low', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    OPEN: { label: 'Mở', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
-    IN_PROGRESS: { label: 'Đang xử lý', color: '#4A8FAB', bg: 'rgba(74,143,171,0.12)' },
-    RESOLVED: { label: 'Đã giải quyết', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)' },
-    CLOSED: { label: 'Đã đóng', color: '#64748B', bg: 'rgba(74,106,122,0.12)' },
+    OPEN: { label: 'Mở', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    IN_PROGRESS: { label: 'Đang xử lý', color: '#1D4ED8', bg: 'rgba(29,78,216,0.12)' },
+    RESOLVED: { label: 'Đã giải quyết', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
+    CLOSED: { label: 'Đã đóng', color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -75,7 +75,7 @@ export function ComplaintTicketsPanel() {
     if (loading || !tickets) {
         return (
             <div className="flex items-center justify-center py-16 gap-2">
-                <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
+                <Loader2 size={16} className="animate-spin" style={{ color: '#B45309' }} />
                 <span className="text-sm" style={{ color: '#64748B' }}>Đang tải tickets...</span>
             </div>
         )
@@ -86,22 +86,22 @@ export function ComplaintTicketsPanel() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <AlertTriangle size={18} style={{ color: '#D4A853' }} />
+                    <AlertTriangle size={18} style={{ color: '#B45309' }} />
                     <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Phiếu Khiếu Nại
                     </h3>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>{tickets.length}</span>
+                        style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>{tickets.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     {overSLACount > 0 && (
                         <span className="text-xs px-2 py-1 rounded-full font-semibold flex items-center gap-1"
-                            style={{ color: '#E05252', background: 'rgba(224,82,82,0.12)' }}>
+                            style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>
                             <Clock size={11} /> {overSLACount} vượt SLA
                         </span>
                     )}
                     <span className="text-xs px-2 py-1 rounded-full font-semibold"
-                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
+                        style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                         {openCount} mở
                     </span>
                 </div>
@@ -134,8 +134,8 @@ export function ComplaintTicketsPanel() {
             {/* Tickets */}
             {tickets.length === 0 ? (
                 <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <CheckCircle2 size={28} style={{ color: '#5BA88A', margin: '0 auto' }} />
-                    <p className="text-sm mt-3" style={{ color: '#5BA88A' }}>Không có phiếu khiếu nại</p>
+                    <CheckCircle2 size={28} style={{ color: '#15803D', margin: '0 auto' }} />
+                    <p className="text-sm mt-3" style={{ color: '#15803D' }}>Không có phiếu khiếu nại</p>
                 </div>
             ) : (
                 <div className="space-y-2">
@@ -147,8 +147,8 @@ export function ComplaintTicketsPanel() {
                             <div key={t.id} className="rounded-lg overflow-hidden"
                                 style={{
                                     background: '#FFFFFF',
-                                    border: `1px solid ${t.isOverSLA ? 'rgba(224,82,82,0.4)' : '#E2E8F0'}`,
-                                    borderLeft: `3px solid ${t.isOverSLA ? '#E05252' : sevCfg.color}`,
+                                    border: `1px solid ${t.isOverSLA ? 'rgba(185,28,28,0.4)' : '#E2E8F0'}`,
+                                    borderLeft: `3px solid ${t.isOverSLA ? '#B91C1C' : sevCfg.color}`,
                                 }}>
                                 <button onClick={() => setExpandedId(isExpanded ? null : t.id)}
                                     className="w-full text-left p-4 flex items-center justify-between">
@@ -169,7 +169,7 @@ export function ComplaintTicketsPanel() {
                                         </span>
                                         {t.isOverSLA && (
                                             <span className="text-xs px-1.5 py-0.5 rounded font-bold"
-                                                style={{ color: '#E05252', background: 'rgba(224,82,82,0.12)' }}>⏰ SLA</span>
+                                                style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>⏰ SLA</span>
                                         )}
                                         <ChevronDown size={14} style={{
                                             color: '#64748B',
@@ -204,8 +204,8 @@ export function ComplaintTicketsPanel() {
                                             <p className="text-sm" style={{ color: '#0F172A' }}>{t.description}</p>
                                         </div>
                                         {t.resolution && (
-                                            <div className="p-3 rounded" style={{ background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.2)' }}>
-                                                <p className="text-xs font-semibold mb-1" style={{ color: '#5BA88A' }}>✅ Giải quyết</p>
+                                            <div className="p-3 rounded" style={{ background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.2)' }}>
+                                                <p className="text-xs font-semibold mb-1" style={{ color: '#15803D' }}>✅ Giải quyết</p>
                                                 <p className="text-sm" style={{ color: '#0F172A' }}>{t.resolution}</p>
                                             </div>
                                         )}
@@ -219,7 +219,7 @@ export function ComplaintTicketsPanel() {
                                                 <button onClick={() => handleResolve(t.id)}
                                                     disabled={resolving === t.id || !resolutionText.trim()}
                                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                                                    style={{ background: '#5BA88A', color: '#0F172A' }}>
+                                                    style={{ background: '#15803D', color: '#0F172A' }}>
                                                     {resolving === t.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                                                     Giải quyết
                                                 </button>

@@ -11,12 +11,12 @@ import { formatVND, formatDate } from '@/lib/utils'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
 
 const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.12)' },
-    SENT: { label: 'Đã Gửi', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    ACCEPTED: { label: 'Chấp Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
+    SENT: { label: 'Đã Gửi', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    ACCEPTED: { label: 'Chấp Nhận', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
     CONVERTED: { label: 'Đã Chuyển SO', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(74,106,122,0.12)' },
-    CANCELLED: { label: 'Huỷ', color: '#8B1A2E', bg: 'rgba(139,26,46,0.12)' },
+    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
+    CANCELLED: { label: 'Huỷ', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 interface Props {
@@ -363,8 +363,8 @@ export function QuotationClient({ initialData }: Props) {
                     <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-slate-200 text-xs">
                         <span style={{ color: '#475569' }}>Giá trị: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
                         <span style={{ color: '#475569' }}>BG: <strong className="font-mono text-sm ml-1" style={{ color: '#475569' }}>{stats.total}</strong></span>
-                        <span style={{ color: '#475569' }}>Đã gửi: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.sent}</strong></span>
-                        <span style={{ color: '#475569' }}>Chấp nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.accepted}</strong></span>
+                        <span style={{ color: '#475569' }}>Đã gửi: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{stats.sent}</strong></span>
+                        <span style={{ color: '#475569' }}>Chấp nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.accepted}</strong></span>
                     </div>
                 </div>
                 
@@ -372,15 +372,15 @@ export function QuotationClient({ initialData }: Props) {
                     <button onClick={() => setShowStats(!showStats)}
                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all rounded-md"
                         style={{ 
-                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(138,174,187,0.1)', 
-                            color: showStats ? '#87CBB9' : '#475569', 
-                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(138,174,187,0.25)'}` 
+                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(100,116,139,0.1)', 
+                            color: showStats ? '#0E7490' : '#475569', 
+                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(100,116,139,0.25)'}` 
                         }}
                         onMouseEnter={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)'
+                            if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)'
                         }}
                         onMouseLeave={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)'
+                            if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)'
                         }}
                     >
                         📊 Thống Kê
@@ -388,8 +388,8 @@ export function QuotationClient({ initialData }: Props) {
                     <button onClick={openCreate}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150"
                         style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                         <Plus size={16} /> Tạo Báo Giá
                     </button>
                 </div>
@@ -399,11 +399,11 @@ export function QuotationClient({ initialData }: Props) {
             {showStats && (
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 animate-in slide-in-from-top-2 duration-150">
                     {[
-                        { label: 'Tổng Giá Trị', value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#87CBB9' },
+                        { label: 'Tổng Giá Trị', value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#0E7490' },
                         { label: 'Tổng BG', value: stats.total, accent: '#475569' },
-                        { label: 'Đã Gửi', value: stats.sent, accent: '#D4A853' },
-                        { label: 'Chấp Nhận', value: stats.accepted, accent: '#5BA88A' },
-                        { label: 'Đã → SO', value: stats.converted, accent: '#87CBB9' },
+                        { label: 'Đã Gửi', value: stats.sent, accent: '#B45309' },
+                        { label: 'Chấp Nhận', value: stats.accepted, accent: '#15803D' },
+                        { label: 'Đã → SO', value: stats.converted, accent: '#0E7490' },
                     ].map(s => (
                         <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
@@ -421,7 +421,7 @@ export function QuotationClient({ initialData }: Props) {
                         className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
                         style={{
                             background: statusFilter === '' ? '#FFFFFF' : 'transparent',
-                            color: statusFilter === '' ? '#87CBB9' : '#475569',
+                            color: statusFilter === '' ? '#0E7490' : '#475569',
                         }}
                     >
                         Tất cả
@@ -430,7 +430,7 @@ export function QuotationClient({ initialData }: Props) {
                         <button key={k} onClick={() => { setStatusFilter(k); setTimeout(reload, 50) }}
                             className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
                             style={{
-                                background: statusFilter === k ? 'rgba(135,203,185,0.1)' : 'transparent',
+                                background: statusFilter === k ? 'rgba(8,145,178,0.1)' : 'transparent',
                                 color: statusFilter === k ? v.color : '#475569',
                             }}
                         >
@@ -472,8 +472,8 @@ export function QuotationClient({ initialData }: Props) {
                             const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
                             return (
                                 <tr key={row.id}
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                    style={{ borderBottom: '1px solid #E2E8F0' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-4 py-3">
                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
@@ -483,13 +483,13 @@ export function QuotationClient({ initialData }: Props) {
                                         <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#475569' }}>{row.channel}</span>
+                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(8,145,178,0.1)', color: '#475569' }}>{row.channel}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.totalAmount)}</span>
                                     </td>
                                     <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>{row.salesRepName}</td>
-                                    <td className="px-4 py-3 text-xs" style={{ color: isExpired ? '#EF4444' : '#64748B' }}>
+                                    <td className="px-4 py-3 text-xs" style={{ color: isExpired ? '#B91C1C' : '#64748B' }}>
                                         {formatDate(row.validUntil)}
                                         {isExpired && <span className="ml-1 text-[10px] font-bold">QUÁ HẠN</span>}
                                     </td>
@@ -499,18 +499,18 @@ export function QuotationClient({ initialData }: Props) {
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => openDetail(row.id)} className="p-1.5 rounded" title="Chi tiết"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>
+                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                 <Eye size={13} />
                                             </button>
                                             <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
                                                 className="p-1.5 rounded" title="Xem PDF"
-                                                style={{ background: 'rgba(138,174,187,0.1)', color: '#475569' }}>
+                                                style={{ background: 'rgba(100,116,139,0.1)', color: '#475569' }}>
                                                 <Printer size={13} />
                                             </button>
                                             {['DRAFT', 'SENT'].includes(row.status) && (
                                                 <button onClick={() => setSendDrawerOpen(row.id)}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
-                                                    style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
+                                                    style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '4px' }}>
                                                     <Send size={10} /> Gửi
                                                 </button>
                                             )}
@@ -563,22 +563,22 @@ export function QuotationClient({ initialData }: Props) {
                             </div>
 
                             {/* Financials & Timeline Info */}
-                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] pt-1" style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
+                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] pt-1" style={{ borderTop: '1px solid #E2E8F0' }}>
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="px-1.5 py-0.2 rounded text-xs font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2' }}>{row.channel}</span>
+                                    <span className="px-1.5 py-0.2 rounded text-xs font-medium" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>{row.channel}</span>
                                     <span style={{ color: '#64748B' }}>{row.customerCode}</span>
                                     <span style={{ color: '#64748B' }}>• Rep: <strong style={{ color: '#475569' }}>{row.salesRepName}</strong></span>
                                 </div>
                                 <div className="text-right">
-                                    <span style={{ color: isExpired ? '#EF4444' : '#475569' }}>
+                                    <span style={{ color: isExpired ? '#B91C1C' : '#475569' }}>
                                         Hạn: {formatDate(row.validUntil)}
-                                        {isExpired && <span className="ml-1 text-xs font-bold text-[#EF4444]">QUÁ HẠN</span>}
+                                        {isExpired && <span className="ml-1 text-xs font-bold text-[#B91C1C]">QUÁ HẠN</span>}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Actions & View count */}
-                            <div className="flex items-center justify-end gap-1.5 pt-1.5" style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
+                            <div className="flex items-center justify-end gap-1.5 pt-1.5" style={{ borderTop: '1px solid #E2E8F0' }}>
                                 {row.viewCount > 0 && (
                                     <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium mr-auto"
                                         style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
@@ -597,7 +597,7 @@ export function QuotationClient({ initialData }: Props) {
                                     {['DRAFT', 'SENT'].includes(row.status) && (
                                         <button onClick={() => setSendDrawerOpen(row.id)}
                                             className="flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded bg-white/80 hover:bg-white border"
-                                            style={{ color: '#D4A853', borderColor: 'rgba(212,168,83,0.3)' }}>
+                                            style={{ color: '#B45309', borderColor: 'rgba(180,83,9,0.3)' }}>
                                             <Send size={10} /> Gửi
                                         </button>
                                     )}
@@ -619,7 +619,7 @@ export function QuotationClient({ initialData }: Props) {
             {detailId && (
                 <>
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setDetailId(null)} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(580px,95vw)' }}>
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(580px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>
                                 {detailLoading ? 'Chi Tiết Báo Giá' : `QT: ${detail?.quotationNo}`}
@@ -651,7 +651,7 @@ export function QuotationClient({ initialData }: Props) {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xs" style={{ color: '#64748B' }}>Hạn Báo Giá</p>
-                                        <p className="text-sm font-bold mt-1 font-mono" style={{ color: new Date(detail.validUntil) < new Date() ? '#EF4444' : '#D4A853' }}>
+                                        <p className="text-sm font-bold mt-1 font-mono" style={{ color: new Date(detail.validUntil) < new Date() ? '#B91C1C' : '#B45309' }}>
                                             {formatDate(detail.validUntil)}
                                         </p>
                                     </div>
@@ -700,7 +700,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             <td className="px-3 py-2" style={{ color: '#0F172A' }}>{l.product.productName}</td>
                                                             <td className="px-3 py-2 text-right" style={{ color: '#475569' }}>{Number(l.qtyOrdered)}</td>
                                                             <td className="px-3 py-2 text-right" style={{ color: '#475569' }}>{formatVND(Number(l.unitPrice))}</td>
-                                                            <td className="px-3 py-2 text-center" style={{ color: '#D4A853' }}>{Number(l.lineDiscountPct) > 0 ? `${Number(l.lineDiscountPct)}%` : '—'}</td>
+                                                            <td className="px-3 py-2 text-center" style={{ color: '#B45309' }}>{Number(l.lineDiscountPct) > 0 ? `${Number(l.lineDiscountPct)}%` : '—'}</td>
                                                             <td className="px-3 py-2 text-center" style={{ color: '#0F172A' }}>{l.vatRate ? `${l.vatRate}%` : '10%'}</td>
                                                             <td className="px-3 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatVND(total)}</td>
                                                         </tr>
@@ -729,12 +729,12 @@ export function QuotationClient({ initialData }: Props) {
                                     {/* PDF buttons */}
                                     <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=professional`, '_blank')}
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
-                                        style={{ background: 'rgba(138,174,187,0.12)', color: '#475569', border: '1px solid rgba(138,174,187,0.25)', borderRadius: '6px' }}>
+                                        style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', border: '1px solid rgba(100,116,139,0.25)', borderRadius: '6px' }}>
                                         <Printer size={13} /> PDF Trắng
                                     </button>
                                     <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=elegant`, '_blank')}
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
-                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(135,203,185,0.25)', borderRadius: '6px' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)', borderRadius: '6px' }}>
                                         <Printer size={13} /> PDF Dark
                                     </button>
 
@@ -755,7 +755,7 @@ export function QuotationClient({ initialData }: Props) {
                                     {['DRAFT', 'SENT'].includes(detail.status) && (
                                         <button onClick={() => { setSendDrawerOpen(detail.id); setDetailId(null) }}
                                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
-                                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '6px' }}>
+                                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '6px' }}>
                                             <Mail size={13} /> Gửi Email
                                         </button>
                                     )}
@@ -779,7 +779,7 @@ export function QuotationClient({ initialData }: Props) {
             {createOpen && (
                 <>
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={handleCloseCreateDrawer} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(520px,95vw)' }}>
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(520px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>Tạo Báo Giá Mới</h3>
                             <button onClick={handleCloseCreateDrawer} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
@@ -903,7 +903,7 @@ export function QuotationClient({ initialData }: Props) {
 
                             <div className="flex items-center gap-2 py-1 select-none">
                                 <input type="checkbox" id="showQuantity" checked={formData.showQuantity} onChange={e => setFormData({ ...formData, showQuantity: e.target.checked })}
-                                    className="w-4 h-4 cursor-pointer accent-[#87CBB9]" />
+                                    className="w-4 h-4 cursor-pointer accent-[#0E7490]" />
                                 <label htmlFor="showQuantity" className="text-xs font-semibold cursor-pointer" style={{ color: '#0F172A' }}>Hiển thị số lượng (SL) trên báo giá</label>
                             </div>
 
@@ -915,7 +915,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <button onClick={openPicker} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', borderRadius: '4px' }}>
                                             {products.length === 0 ? '⏳ Đang tải...' : '🔍 Chọn Nhanh'}
                                         </button>
-                                        <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(138,174,187,0.15)', color: '#475569', borderRadius: '4px' }}>+ Thêm dòng</button>
+                                        <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(100,116,139,0.15)', color: '#475569', borderRadius: '4px' }}>+ Thêm dòng</button>
                                     </div>
                                 </div>
                                 <div className="space-y-2.5">
@@ -941,7 +941,7 @@ export function QuotationClient({ initialData }: Props) {
                                                                 products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)
                                                             )}
                                                         </select>
-                                                        <button onClick={() => removeLine(i)} className="p-1.5 text-xs" style={{ color: '#8B1A2E' }}>✕</button>
+                                                        <button onClick={() => removeLine(i)} className="p-1.5 text-xs" style={{ color: '#B91C1C' }}>✕</button>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-3">
@@ -956,11 +956,11 @@ export function QuotationClient({ initialData }: Props) {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-start justify-between gap-1">
                                                                 <h5 className="text-xs font-bold truncate" style={{ color: '#0F172A' }} title={prod?.productName}>{prod?.productName}</h5>
-                                                                <button onClick={() => removeLine(i)} className="p-0.5 text-xs flex-shrink-0" style={{ color: '#8B1A2E' }}>✕</button>
+                                                                <button onClick={() => removeLine(i)} className="p-0.5 text-xs flex-shrink-0" style={{ color: '#B91C1C' }}>✕</button>
                                                             </div>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-[10px] font-mono" style={{ color: '#475569' }}>{prod?.skuCode}</span>
-                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#EF4444' }}>
+                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(185,28,28,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
                                                                     Tồn: {prod?.totalStock}
                                                                 </span>
                                                                 <span className="text-[10px] text-slate-500 truncate">
@@ -983,7 +983,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>Giá báo khách</label>
                                                                 <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
-                                                                    className="w-full px-2 py-1 text-xs outline-none text-right font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853', borderRadius: '4px' }} />
+                                                                    className="w-full px-2 py-1 text-xs outline-none text-right font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>CK%</label>
@@ -1004,15 +1004,15 @@ export function QuotationClient({ initialData }: Props) {
                                                         <div className="flex items-center justify-between text-[10px] px-1 py-0.5 rounded" style={{ background: '#F8FAFC' }}>
                                                             <div className="flex items-center gap-1.5">
                                                                 <span style={{ color: '#64748B' }}>Wholesale:</span>
-                                                                <span className="font-mono font-semibold text-[#D4A853]">{prod.wholesalePrice.toLocaleString('vi-VN')} đ</span>
-                                                                <span className="font-semibold" style={{ color: diffPct >= 0 ? '#5BA88A' : '#EF4444' }}>
+                                                                <span className="font-mono font-semibold text-[#B45309]">{prod.wholesalePrice.toLocaleString('vi-VN')} đ</span>
+                                                                <span className="font-semibold" style={{ color: diffPct >= 0 ? '#15803D' : '#B91C1C' }}>
                                                                     {diffPct >= 0 ? `+${diffPct.toFixed(1)}%` : `${diffPct.toFixed(1)}%`}
                                                                 </span>
                                                             </div>
                                                             {prod.costPrice > 0 && (
                                                                 <div className="flex items-center gap-1">
                                                                     <span style={{ color: '#64748B' }}>Lãi gộp:</span>
-                                                                    <span className="font-semibold" style={{ color: marginPct >= 15 ? '#87CBB9' : marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                                    <span className="font-semibold" style={{ color: marginPct >= 15 ? '#0E7490' : marginPct >= 0 ? '#B45309' : '#B91C1C' }}>
                                                                         {marginPct.toFixed(1)}%
                                                                     </span>
                                                                 </div>
@@ -1030,14 +1030,14 @@ export function QuotationClient({ initialData }: Props) {
                                 <button onClick={handlePreview} disabled={!formData.customerId || formLines.length === 0}
                                     type="button"
                                     className="flex-1 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 border"
-                                    style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', borderColor: 'rgba(138,174,187,0.25)', borderRadius: '6px' }}
+                                    style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', borderColor: 'rgba(100,116,139,0.25)', borderRadius: '6px' }}
                                     onMouseEnter={e => {
                                         if (formData.customerId && formLines.length > 0) {
-                                            e.currentTarget.style.background = 'rgba(138,174,187,0.2)';
+                                            e.currentTarget.style.background = 'rgba(100,116,139,0.2)';
                                         }
                                     }}
                                     onMouseLeave={e => {
-                                        e.currentTarget.style.background = 'rgba(138,174,187,0.1)';
+                                        e.currentTarget.style.background = 'rgba(100,116,139,0.1)';
                                     }}
                                 >
                                     👁️ Xem Trước
@@ -1057,7 +1057,7 @@ export function QuotationClient({ initialData }: Props) {
             {sendDrawerOpen && (
                 <>
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setSendDrawerOpen(null)} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-slate-50 border-l border-slate-200 dark:border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(420px,95vw)' }}>
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(420px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>Gửi Báo Giá</h3>
                             <button onClick={() => setSendDrawerOpen(null)} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
@@ -1082,11 +1082,11 @@ export function QuotationClient({ initialData }: Props) {
                             }} disabled={sendLoading}
                                 className="w-full p-4 rounded-lg text-left transition-all"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#D4A853')}
+                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#B45309')}
                                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
-                                        <Mail size={18} style={{ color: '#D4A853' }} />
+                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.15)' }}>
+                                        <Mail size={18} style={{ color: '#B45309' }} />
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>📧 Gửi qua Email</p>
@@ -1247,7 +1247,7 @@ export function QuotationClient({ initialData }: Props) {
                                             onClick={() => handleCheckboxChange(!selection.checked)}
                                             className="p-2.5 rounded-sm flex items-center gap-3 transition-all cursor-pointer"
                                             style={{ 
-                                                background: selection.checked ? 'rgba(135,203,185,0.04)' : '#FFFFFF', 
+                                                background: selection.checked ? 'rgba(8,145,178,0.04)' : '#FFFFFF', 
                                                 border: selection.checked ? '1px solid rgba(8, 145, 178, 0.25)' : '1px solid #E2E8F0',
                                                 borderRadius: '4px'
                                             }}
@@ -1258,7 +1258,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 checked={selection.checked} 
                                                 onChange={e => handleCheckboxChange(e.target.checked)}
                                                 onClick={e => e.stopPropagation()} 
-                                                className="cursor-pointer accent-[#87CBB9]" 
+                                                className="cursor-pointer accent-[#0E7490]" 
                                             />
 
                                             {/* Image - Horizontal */}
@@ -1273,10 +1273,10 @@ export function QuotationClient({ initialData }: Props) {
                                             {/* Details */}
                                             <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
                                                 <div className="flex items-center justify-between gap-2">
-                                                    <h4 className="text-xs font-bold truncate" style={{ color: selection.checked ? '#87CBB9' : '#0F172A' }}>
+                                                    <h4 className="text-xs font-bold truncate" style={{ color: selection.checked ? '#0E7490' : '#0F172A' }}>
                                                         {p.productName}
                                                     </h4>
-                                                    <span className="text-xs font-bold text-[#D4A853] font-mono">
+                                                    <span className="text-xs font-bold text-[#B45309] font-mono">
                                                         {p.wholesalePrice.toLocaleString('vi-VN')} đ
                                                     </span>
                                                 </div>
@@ -1285,7 +1285,7 @@ export function QuotationClient({ initialData }: Props) {
                                                     <span className="text-[10px] text-slate-500">•</span>
                                                     <span className="text-[10px] text-slate-600">{p.wineType} ({p.country})</span>
                                                     <span className="text-[10px] text-slate-500">•</span>
-                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#EF4444' }}>
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(185,28,28,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
                                                         Tồn: {p.totalStock}
                                                     </span>
                                                 </div>
@@ -1318,7 +1318,7 @@ export function QuotationClient({ initialData }: Props) {
                                 <button 
                                     onClick={() => setPickerOpen(false)}
                                     className="px-4 py-2 text-xs font-semibold rounded"
-                                    style={{ background: 'rgba(138,174,187,0.1)', color: '#475569', borderRadius: '4px' }}
+                                    style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', borderRadius: '4px' }}
                                 >
                                     Hủy bỏ
                                 </button>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { RotateCcw, Plus, X, Save, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { RotateCcw, Plus, Save, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type ReturnOrderRow,
@@ -9,14 +9,20 @@ import {
     getSOOptionsForReturn, getSOLinesForReturn
 } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
+import {
+    Button, PageHeader, StatCard, StatGrid, StatusBadge, Drawer, EmptyState,
+    Field, Input, Select, Textarea,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+} from '@/components/ui'
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(138,174,187,0.15)' },
-    PENDING_INSPECTION: { label: 'Chờ Kiểm Tra', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    REJECTED: { label: 'Từ Chối', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
-    COMPLETED: { label: 'Hoàn Thành', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+const STATUS_LABEL: Record<string, string> = {
+    DRAFT: 'Nháp',
+    PENDING_INSPECTION: 'Chờ Kiểm Tra',
+    APPROVED: 'Đã Duyệt',
+    REJECTED: 'Từ Chối',
+    COMPLETED: 'Hoàn Thành',
 }
+const STATUS_TONES = { PENDING_INSPECTION: 'warning' } as const
 
 export function ReturnsClient({ initialRows, stats }: {
     initialRows: ReturnOrderRow[]
@@ -89,180 +95,151 @@ export function ReturnsClient({ initialRows, stats }: {
         )
     }
 
+    const updateLine = (i: number, patch: Partial<(typeof returnLines)[number]>) => {
+        const v = [...returnLines]; v[i] = { ...v[i], ...patch }; setReturnLines(v)
+    }
+    const returnTotal = returnLines.filter(l => l.qtyReturned > 0).reduce((s, l) => s + l.qtyReturned * l.unitPrice, 0)
+
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Trả Hàng & Credit Note
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý đơn trả hàng, kiểm tra chất lượng, sinh Credit Note
-                    </p>
-                </div>
-                <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                    <Plus size={16} /> Tạo Đơn Trả
-                </button>
-            </div>
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
+            <PageHeader
+                description="Quản lý đơn trả hàng, kiểm tra chất lượng, sinh Credit Note"
+                actions={
+                    <Button onClick={openCreate}>
+                        <Plus size={16} aria-hidden /> Tạo Đơn Trả
+                    </Button>
+                }
+            />
 
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-3">
-                {[
-                    { label: 'Tổng Đơn Trả', value: stats.total, accent: '#87CBB9', icon: RotateCcw },
-                    { label: 'Chờ Xử Lý', value: stats.pending, accent: '#D4A853', icon: Clock },
-                    { label: 'Đã Duyệt', value: stats.approved, accent: '#5BA88A', icon: CheckCircle2 },
-                    { label: 'Tổng Credit', value: `${(stats.totalCredited / 1e6).toFixed(0)}M ₫`, accent: '#4A8FAB', icon: AlertCircle },
-                ].map(s => {
-                    const Icon = s.icon
-                    return (
-                        <div key={s.label} className="p-4 rounded-md flex items-center gap-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: `${s.accent}18` }}>
-                                <Icon size={20} style={{ color: s.accent }} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatGrid className="grid-cols-2 lg:grid-cols-4">
+                <StatCard icon={RotateCcw} tone="brand" label="Tổng Đơn Trả" value={stats.total} />
+                <StatCard icon={Clock} tone="warning" label="Chờ Xử Lý" value={stats.pending} />
+                <StatCard icon={CheckCircle2} tone="success" label="Đã Duyệt" value={stats.approved} />
+                <StatCard icon={AlertCircle} tone="info" label="Tổng Credit" value={`${(stats.totalCredited / 1e6).toFixed(0)}M ₫`} />
+            </StatGrid>
 
-            {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                            {['Mã', 'SO Gốc', 'Khách Hàng', 'Lý Do', 'Trạng Thái', 'Giá Trị', 'Credit Note', 'Ngày', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.length === 0 ? (
-                            <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>Chưa có đơn trả hàng</td></tr>
-                        ) : rows.map((r: any) => {
-                            const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
-                            return (
-                                <tr key={r.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>{r.returnNo}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{r.soNo}</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>{r.customerName}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{r.reason}</td>
-                                    <td className="px-3 py-2.5">
-                                        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
-                                    </td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{formatVND(r.totalAmount)}</td>
-                                    <td className="px-3 py-2.5 text-xs font-mono" style={{ color: r.creditNoteNo ? '#5BA88A' : '#64748B' }}>
-                                        {r.creditNoteNo ?? '—'}
-                                    </td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{formatDate(r.createdAt)}</td>
-                                    <td className="px-3 py-2.5">
-                                        {(r.status === 'DRAFT' || r.status === 'PENDING_INSPECTION') && (
-                                            <button onClick={() => handleApprove(r.id)} className="text-xs px-2 py-1 rounded font-semibold"
-                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>Duyệt</button>
-                                        )}
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
+            <Table>
+                <THead>
+                    <tr>
+                        <Th>Mã</Th>
+                        <Th>SO Gốc</Th>
+                        <Th>Khách Hàng</Th>
+                        <Th>Lý Do</Th>
+                        <Th>Trạng Thái</Th>
+                        <Th align="right">Giá Trị</Th>
+                        <Th>Credit Note</Th>
+                        <Th>Ngày</Th>
+                        <Th aria-label="Thao tác" />
+                    </tr>
+                </THead>
+                <TBody>
+                    {rows.length === 0 ? (
+                        <TableMessageRow colSpan={9}><EmptyState icon={RotateCcw} title="Chưa có đơn trả hàng" /></TableMessageRow>
+                    ) : rows.map((r: any) => (
+                        <Tr key={r.id}>
+                            <Td className="type-number font-semibold text-lys-teal-strong">{r.returnNo}</Td>
+                            <Td className="type-number text-lys-secondary">{r.soNo}</Td>
+                            <Td className="font-semibold text-lys-primary">{r.customerName}</Td>
+                            <Td className="text-lys-secondary">{r.reason}</Td>
+                            <Td>
+                                <StatusBadge status={r.status} label={STATUS_LABEL[r.status] ?? r.status} toneOverrides={STATUS_TONES} />
+                            </Td>
+                            <Td align="right" className="type-number font-semibold text-lys-primary">{formatVND(r.totalAmount)}</Td>
+                            <Td className={r.creditNoteNo ? 'type-number text-tone-success-fg' : 'text-lys-muted'}>
+                                {r.creditNoteNo ?? '—'}
+                            </Td>
+                            <Td className="text-lys-secondary">{formatDate(r.createdAt)}</Td>
+                            <Td align="right">
+                                {(r.status === 'DRAFT' || r.status === 'PENDING_INSPECTION') && (
+                                    <Button size="sm" variant="secondary" onClick={() => handleApprove(r.id)}>
+                                        <CheckCircle2 size={13} aria-hidden /> Duyệt
+                                    </Button>
+                                )}
+                            </Td>
+                        </Tr>
+                    ))}
+                </TBody>
+            </Table>
 
-            {/* Create Drawer */}
-            {createOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[520px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Đơn Trả Hàng</h3>
-                            <button onClick={() => setCreateOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Đơn Hàng Gốc (SO)</label>
-                                <select value={selectedSo} onChange={e => handleSelectSO(e.target.value)}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                    <option value="">— Chọn SO —</option>
-                                    {soOptions.map((s: any) => <option key={s.id} value={s.id}>{s.soNo} — {s.customer.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Lý Do Trả Hàng</label>
-                                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
-                                    className="w-full px-3 py-2 rounded text-sm resize-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                                    placeholder="Mô tả lý do trả hàng..." />
-                            </div>
+            <Drawer
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                title="Tạo Đơn Trả Hàng"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setCreateOpen(false)}>Hủy</Button>
+                        <Button onClick={handleCreate}>
+                            <Save size={14} aria-hidden /> Tạo Đơn Trả Hàng
+                        </Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <Field label="Đơn Hàng Gốc (SO)" required>
+                        {id => (
+                            <Select id={id} value={selectedSo} onChange={e => handleSelectSO(e.target.value)}>
+                                <option value="">— Chọn SO —</option>
+                                {soOptions.map((s: any) => <option key={s.id} value={s.id}>{s.soNo} — {s.customer.name}</option>)}
+                            </Select>
+                        )}
+                    </Field>
+                    <Field label="Lý Do Trả Hàng" required>
+                        {id => (
+                            <Textarea id={id} value={reason} onChange={e => setReason(e.target.value)} rows={2}
+                                className="resize-none" placeholder="Mô tả lý do trả hàng..." />
+                        )}
+                    </Field>
 
-                            {soLines.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#D4A853' }}>
-                                        Sản Phẩm Trả Lại (nhập SL {'>'} 0)
-                                    </p>
-                                    <div className="space-y-2">
-                                        {soLines.map((l: any, i: number) => (
-                                            <div key={l.productId} className="p-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div>
-                                                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{l.product.skuCode}</span>
-                                                        <span className="text-xs ml-2" style={{ color: '#475569' }}>{l.product.productName}</span>
-                                                    </div>
-                                                    <span className="text-xs" style={{ color: '#64748B' }}>Đã mua: {Number(l.qtyOrdered)}</span>
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div>
-                                                        <label className="text-[10px]" style={{ color: '#64748B' }}>SL Trả</label>
-                                                        <input type="number" min={0} max={Number(l.qtyOrdered)} value={returnLines[i]?.qtyReturned ?? 0}
-                                                            onChange={e => {
-                                                                const v = [...returnLines]; v[i] = { ...v[i], qtyReturned: Number(e.target.value) }; setReturnLines(v)
-                                                            }}
-                                                            className="w-full px-2 py-1 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }} />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px]" style={{ color: '#64748B' }}>Tình Trạng</label>
-                                                        <select value={returnLines[i]?.condition ?? 'GOOD'}
-                                                            onChange={e => {
-                                                                const v = [...returnLines]; v[i] = { ...v[i], condition: e.target.value }; setReturnLines(v)
-                                                            }}
-                                                            className="w-full px-2 py-1 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                                            <option value="GOOD">Tốt</option>
-                                                            <option value="DAMAGED">Hư hỏng</option>
-                                                            <option value="EXPIRED">Hết hạn</option>
-                                                        </select>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px]" style={{ color: '#64748B' }}>Ghi chú</label>
-                                                        <input type="text" value={returnLines[i]?.reason ?? ''}
-                                                            onChange={e => {
-                                                                const v = [...returnLines]; v[i] = { ...v[i], reason: e.target.value }; setReturnLines(v)
-                                                            }}
-                                                            className="w-full px-2 py-1 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                                                            placeholder="..." />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {returnLines.some(l => l.qtyReturned > 0) && (
-                                        <div className="mt-3 p-3 rounded flex items-center justify-between" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                                            <span className="text-xs" style={{ color: '#D4A853' }}>Tổng giá trị trả lại:</span>
-                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
-                                                {formatVND(returnLines.filter((l: any) => l.qtyReturned > 0).reduce((s: number, l: any) => s + l.qtyReturned * l.unitPrice, 0))}
-                                            </span>
+                    {soLines.length > 0 && (
+                        <section className="flex flex-col gap-2">
+                            <h3 className="type-section-title text-lys-secondary">Sản Phẩm Trả Lại (nhập SL {'>'} 0)</h3>
+                            {soLines.map((l: any, i: number) => (
+                                <div key={l.productId} className="p-3 rounded-md border border-lys-border bg-white">
+                                    <div className="flex items-center justify-between mb-2 text-xs">
+                                        <div>
+                                            <span className="type-number font-semibold text-lys-teal-strong">{l.product.skuCode}</span>
+                                            <span className="ml-2 text-lys-secondary">{l.product.productName}</span>
                                         </div>
-                                    )}
+                                        <span className="text-lys-muted">Đã mua: {Number(l.qtyOrdered)}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Field label="SL Trả">
+                                            {id => (
+                                                <Input id={id} type="number" min={0} max={Number(l.qtyOrdered)}
+                                                    value={returnLines[i]?.qtyReturned ?? 0}
+                                                    onChange={e => updateLine(i, { qtyReturned: Number(e.target.value) })} />
+                                            )}
+                                        </Field>
+                                        <Field label="Tình Trạng">
+                                            {id => (
+                                                <Select id={id} value={returnLines[i]?.condition ?? 'GOOD'}
+                                                    onChange={e => updateLine(i, { condition: e.target.value })}>
+                                                    <option value="GOOD">Tốt</option>
+                                                    <option value="DAMAGED">Hư hỏng</option>
+                                                    <option value="EXPIRED">Hết hạn</option>
+                                                </Select>
+                                            )}
+                                        </Field>
+                                        <Field label="Ghi chú">
+                                            {id => (
+                                                <Input id={id} type="text" value={returnLines[i]?.reason ?? ''} placeholder="..."
+                                                    onChange={e => updateLine(i, { reason: e.target.value })} />
+                                            )}
+                                        </Field>
+                                    </div>
+                                </div>
+                            ))}
+                            {returnTotal > 0 && (
+                                <div className="mt-1 p-3 rounded-md flex items-center justify-between border border-tone-warning-border bg-tone-warning-bg text-tone-warning-fg">
+                                    <span className="text-xs">Tổng giá trị trả lại:</span>
+                                    <span className="type-number text-sm font-semibold">{formatVND(returnTotal)}</span>
                                 </div>
                             )}
-
-                            <button onClick={handleCreate} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                                <Save size={14} /> Tạo Đơn Trả Hàng
-                            </button>
-                        </div>
-                    </div>
+                        </section>
+                    )}
                 </div>
-            )}
+            </Drawer>
         </div>
     )
 }

@@ -66,8 +66,8 @@ export function AIPipelineAnalysis() {
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(212,168,83,0.2), rgba(91,168,138,0.2))' }}>
-                        <TrendingUp size={14} style={{ color: '#D4A853' }} />
+                        style={{ background: 'linear-gradient(135deg, rgba(180,83,9,0.2), rgba(21,128,61,0.2))' }}>
+                        <TrendingUp size={14} style={{ color: '#B45309' }} />
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Sales Pipeline Analysis</h3>
@@ -79,9 +79,9 @@ export function AIPipelineAnalysis() {
                     disabled={loading}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all hover:scale-[1.02]"
                     style={{
-                        background: loading ? 'rgba(212,168,83,0.08)' : 'linear-gradient(135deg, rgba(212,168,83,0.2), rgba(91,168,138,0.15))',
-                        color: loading ? '#64748B' : '#D4A853',
-                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(212,168,83,0.3)'}`,
+                        background: loading ? 'rgba(180,83,9,0.08)' : 'linear-gradient(135deg, rgba(180,83,9,0.2), rgba(21,128,61,0.15))',
+                        color: loading ? '#64748B' : '#B45309',
+                        border: `1px solid ${loading ? '#E2E8F0' : 'rgba(180,83,9,0.3)'}`,
                     }}
                 >
                     {loading ? (
@@ -107,27 +107,27 @@ export function AIPipelineAnalysis() {
                             <p className="text-xs" style={{ color: '#64748B' }}>Active Deals</p>
                         </div>
                         <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                            <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#D4A853' }} /></div>
-                            <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{fmtVND(stats.pipelineValue)}</p>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#B45309' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.pipelineValue)}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Pipeline Value</p>
                         </div>
                         <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                            <p className="text-lg font-bold" style={{ color: '#4A8FAB' }}>{fmtVND(stats.weightedValue)}</p>
+                            <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{fmtVND(stats.weightedValue)}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Weighted Value</p>
                         </div>
-                        <div className="text-center p-2 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
-                            <div className="flex items-center justify-center gap-1 mb-0.5"><Trophy size={11} style={{ color: '#5BA88A' }} /></div>
-                            <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>{stats.winRate}%</p>
+                        <div className="text-center p-2 rounded" style={{ background: 'rgba(21,128,61,0.06)' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><Trophy size={11} style={{ color: '#15803D' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#15803D' }}>{stats.winRate}%</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Win Rate</p>
                         </div>
-                        <div className="text-center p-2 rounded" style={{ background: stats.staleDeals > 0 ? 'rgba(224,82,82,0.06)' : '#FFFFFF' }}>
-                            <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.staleDeals > 0 ? '#E05252' : '#64748B' }} /></div>
-                            <p className="text-lg font-bold" style={{ color: stats.staleDeals > 0 ? '#E05252' : '#64748B' }}>{stats.staleDeals}</p>
+                        <div className="text-center p-2 rounded" style={{ background: stats.staleDeals > 0 ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.staleDeals > 0 ? '#B91C1C' : '#64748B' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: stats.staleDeals > 0 ? '#B91C1C' : '#64748B' }}>{stats.staleDeals}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Stale Deals</p>
                         </div>
                         <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                            <div className="flex items-center justify-center gap-1 mb-0.5"><XCircle size={11} style={{ color: '#8B1A2E' }} /></div>
-                            <p className="text-lg font-bold" style={{ color: '#8B1A2E' }}>{stats.lostDeals}</p>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><XCircle size={11} style={{ color: '#B91C1C' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#B91C1C' }}>{stats.lostDeals}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Lost</p>
                         </div>
                     </div>
@@ -137,7 +137,7 @@ export function AIPipelineAnalysis() {
                 {loading && (
                     <div className="px-5 py-8 flex flex-col items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                            style={{ borderColor: '#E2E8F0', borderTopColor: '#D4A853' }} />
+                            style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
                             AI đang phân tích {'{'}pipeline, win rate, deal velocity, coaching...{'}'}
                         </p>
@@ -147,8 +147,8 @@ export function AIPipelineAnalysis() {
                 {/* Error */}
                 {error && !loading && (
                     <div className="px-5 py-4">
-                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
-                            <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
                         </div>
                     </div>
                 )}
@@ -165,8 +165,8 @@ export function AIPipelineAnalysis() {
 
                                 let color = '#475569'
                                 if (isHeading || isHighlight) color = '#0F172A'
-                                if (isUrgent) color = '#E05252'
-                                if (isPositive) color = '#5BA88A'
+                                if (isUrgent) color = '#B91C1C'
+                                if (isPositive) color = '#15803D'
 
                                 return (
                                     <p key={i} className="text-[13px] leading-relaxed" style={{
@@ -186,7 +186,7 @@ export function AIPipelineAnalysis() {
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
-                            style={{ background: saved ? 'rgba(91,168,138,0.1)' : 'rgba(138,174,187,0.08)', color: saved ? '#5BA88A' : '#475569', border: `1px solid ${saved ? 'rgba(91,168,138,0.3)' : 'rgba(138,174,187,0.15)'}` }}>
+                            style={{ background: saved ? 'rgba(21,128,61,0.1)' : 'rgba(100,116,139,0.08)', color: saved ? '#15803D' : '#475569', border: `1px solid ${saved ? 'rgba(21,128,61,0.3)' : 'rgba(100,116,139,0.15)'}` }}>
                             {saved ? <><CheckCircle size={10} /> Đã lưu</> : <><Save size={10} /> Lưu Báo Cáo</>}
                         </button>
                     </div>

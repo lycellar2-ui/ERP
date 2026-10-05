@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
+import { Plus, Upload, Download, SlidersHorizontal, X } from 'lucide-react'
+import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar } from '@/components/ui'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
 import dynamic from 'next/dynamic'
@@ -23,51 +24,16 @@ const COUNTRY_NAMES: Record<string, string> = {
     GE: 'Georgia', HU: 'Hungary', GR: 'Hy Lạp', AT: 'Áo', RO: 'Romania', MX: 'Mexico', JP: 'Nhật',
 }
 
-const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    WHITE: { label: 'Vang trắng', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
-    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
-    FORTIFIED: { label: 'Fortified', color: '#0891B2', bg: 'rgba(168,130,204,0.15)' },
-    DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
+export const PRODUCT_STATUS_LABEL: Record<string, string> = {
+    ACTIVE: 'Đang bán',
+    DISCONTINUED: 'Ngừng KD',
+    ALLOCATION_ONLY: 'Allocation',
 }
 
-export function WineTypeBadge({ type }: { type: string }) {
-    const cfg = WINE_TYPE_CONFIG[type] ?? { label: type, color: '#475569', bg: 'rgba(168,152,128,0.15)' }
-    return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-            style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-    )
-}
+const PRODUCT_TONE_OVERRIDES = { ALLOCATION_ONLY: 'info' } as const
 
-export function StatusBadge({ status }: { status: string }) {
-    const cfg = {
-        ACTIVE: { label: 'Đang bán', color: '#5BA88A', bg: 'rgba(74,124,89,0.15)' },
-        DISCONTINUED: { label: 'Ngừng KD', color: '#64748B', bg: 'rgba(107,90,78,0.15)' },
-        ALLOCATION_ONLY: { label: 'Allocation', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    }[status] ?? { label: status, color: '#475569', bg: 'rgba(168,152,128,0.15)' }
-    return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-    )
-}
-
-function StatCard({ label, value, icon: Icon, accent }: {
-    label: string; value: string | number; icon: React.FC<any>; accent: string
-}) {
-    return (
-        <div className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
-                style={{ background: `${accent}20` }}>
-                <Icon size={20} style={{ color: accent }} />
-            </div>
-            <div>
-                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
-            </div>
-        </div>
-    )
+export function ProductStatusBadge({ status }: { status: string }) {
+    return <StatusBadge status={status} label={PRODUCT_STATUS_LABEL[status]} toneOverrides={PRODUCT_TONE_OVERRIDES} />
 }
 
 type ProductsPageResult = { rows: ProductRow[]; total: number; stats: ProductStats; countries: { code: string; count: number }[]; producers: { id: string; name: string }[]; canEdit: boolean }
@@ -269,155 +235,124 @@ export function ProductsClient({
         producerFilter,
     ].filter(Boolean).length
 
+    const hasFilters = !!(search || typeFilter || statusFilter || countryFilter || producerFilter)
+
     return (
-        <div className="space-y-4 max-w-screen-2xl">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/40 p-3 rounded-xl border border-slate-200/30">
-                <div className="flex flex-wrap items-center gap-4">
-                    <div>
-                        <h2 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                            Danh Mục Sản Phẩm
-                        </h2>
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
+            <PageHeader
+                description={
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
+                        <span>Tổng: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{stats.total}</strong></span>
+                        <span className="text-lys-border-strong">|</span>
+                        <span>Đang bán: <strong className="type-number text-sm ml-1 text-tone-success-fg">{stats.active}</strong></span>
+                        <span className="text-lys-border-strong">|</span>
+                        <span>Hết hàng: <strong className="type-number text-sm ml-1 text-tone-danger-fg">{stats.outOfStock}</strong></span>
+                        <span className="hidden xl:inline text-lys-border-strong">|</span>
+                        <span className="hidden xl:inline">Nổi bật: <strong className="type-number text-sm ml-1 text-lys-primary">{topTypeLabel}</strong></span>
                     </div>
-                    
-                    {/* Compact Metrics Pill Row */}
-                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#0891B2' }}>
-                            Tổng: &nbsp;<strong className="text-slate-900">{stats.total}</strong>
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#5BA88A' }}>
-                            Đang bán: &nbsp;<strong className="text-slate-900">{stats.active}</strong>
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#E05252' }}>
-                            Hết hàng: &nbsp;<strong className="text-slate-900">{stats.outOfStock}</strong>
-                        </span>
-                        <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200/50" style={{ color: '#4A8FAB' }}>
-                            Nổi bật: &nbsp;<strong className="text-slate-900 font-mono">{topTypeLabel}</strong>
-                        </span>
-                    </div>
-                </div>
+                }
+                actions={
+                    <>
+                        <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={exporting}>
+                            {!exporting && <Download size={14} aria-hidden />} {exporting ? 'Đang xuất...' : 'Export'}
+                        </Button>
+                        {canEdit && (
+                            <>
+                                <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                                    <Upload size={14} aria-hidden /> Import
+                                </Button>
+                                <Button onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
+                                    <Plus size={16} aria-hidden /> Thêm Sản Phẩm
+                                </Button>
+                            </>
+                        )}
+                    </>
+                }
+            />
 
-                <div className="flex items-center gap-1.5">
-                    <button
-                        onClick={handleExport}
-                        disabled={exporting}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: '#FFFFFF', color: '#5BA88A', border: '1px solid #E2E8F0' }}
-                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#5BA88A' } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}
-                    >
-                        <Download size={13} /> {exporting ? 'Đang xuất...' : 'Export'}
-                    </button>
-                    {canEdit && (
-                        <>
-                            <button
-                                onClick={() => setImportOpen(true)}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                                style={{ background: '#FFFFFF', color: '#4A8FAB', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#4A8FAB' }}
-                                onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E2E8F0' }}
-                            >
-                                <Upload size={13} /> Import
-                            </button>
-                            <button
-                                onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                            >
-                                <Plus size={13} /> Thêm Sản Phẩm
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                        <input
-                            type="text"
+            <Toolbar
+                left={
+                    <div className="flex gap-2">
+                        <SearchInput
                             placeholder="Tìm theo tên, SKU, nhà SX..."
                             value={search}
                             onChange={e => handleSearchChange(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                            className="sm:w-72"
                         />
+                        <Button
+                            variant="secondary"
+                            className="md:hidden"
+                            aria-expanded={showMobileFilters}
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
+                            <SlidersHorizontal size={14} aria-hidden />
+                            Lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+                        </Button>
                     </div>
-                    {/* Collapsible Trigger Button for Mobile Filters */}
-                    <button
-                        onClick={() => setShowMobileFilters(!showMobileFilters)}
-                        className="flex md:hidden items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
-                        style={{ 
-                            background: '#FFFFFF', 
-                            color: showMobileFilters ? '#87CBB9' : '#475569', 
-                            borderColor: showMobileFilters ? '#87CBB9' : '#E2E8F0' 
-                        }}
-                    >
-                        <SlidersHorizontal size={13} />
-                        Lọc {activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
-                    </button>
-                </div>
-
-                {/* Filters container: collapsible on mobile, flex row on desktop */}
-                <div className={`${showMobileFilters ? 'flex flex-col sm:flex-row' : 'hidden'} md:flex flex-wrap gap-2 transition-all duration-200`}>
-                    <select value={typeFilter}
-                        onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
-                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả loại</option>
-                        <option value="WHITE">Vang trắng</option>
-                        <option value="RED">Vang đỏ</option>
-                        <option value="SPARKLING">Vang nổ</option>
-                        <option value="ROSE">Vang hồng</option>
-                    </select>
-                    <select value={statusFilter}
-                        onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: statusFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="ACTIVE">Đang bán</option>
-                        <option value="DISCONTINUED">Ngừng KD</option>
-                        <option value="ALLOCATION_ONLY">Allocation</option>
-                    </select>
-                    {/* Country filter — dynamic from DB */}
-                    <select value={countryFilter}
-                        onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
-                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: countryFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả quốc gia</option>
-                        {countries.map(c => (
-                            <option key={c.code} value={c.code}>
-                                {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
-                            </option>
-                        ))}
-                    </select>
-                    {/* Producer/NCC filter — dynamic from DB */}
-                    <select value={producerFilter}
-                        onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
-                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer md:max-w-[180px]"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: producerFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả NCC / Nhà SX</option>
-                        {producers.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
-                    {(search || typeFilter || statusFilter || countryFilter || producerFilter) && (
-                        <button onClick={() => {
-                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
-                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
-                        }} className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                            style={{ color: '#E05252', border: '1px solid rgba(224,82,82,0.3)', background: 'rgba(224,82,82,0.05)' }}>
-                            Xóa bộ lọc
-                        </button>
-                    )}
-                </div>
-            </div>
+                }
+                right={
+                    <div className={`${showMobileFilters ? 'grid grid-cols-2' : 'hidden'} md:flex md:flex-wrap items-center gap-2 w-full md:w-auto`}>
+                        <Select
+                            aria-label="Loại vang"
+                            value={typeFilter}
+                            onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
+                            className="md:w-36"
+                        >
+                            <option value="">Tất cả loại</option>
+                            <option value="WHITE">Vang trắng</option>
+                            <option value="RED">Vang đỏ</option>
+                            <option value="SPARKLING">Vang nổ</option>
+                            <option value="ROSE">Vang hồng</option>
+                        </Select>
+                        <Select
+                            aria-label="Trạng thái"
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
+                            className="md:w-40"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="ACTIVE">Đang bán</option>
+                            <option value="DISCONTINUED">Ngừng KD</option>
+                            <option value="ALLOCATION_ONLY">Allocation</option>
+                        </Select>
+                        <Select
+                            aria-label="Quốc gia"
+                            value={countryFilter}
+                            onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
+                            className="md:w-40"
+                        >
+                            <option value="">Tất cả quốc gia</option>
+                            {countries.map(c => (
+                                <option key={c.code} value={c.code}>
+                                    {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
+                                </option>
+                            ))}
+                        </Select>
+                        <Select
+                            aria-label="NCC / Nhà SX"
+                            value={producerFilter}
+                            onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
+                            className="md:w-44"
+                        >
+                            <option value="">Tất cả NCC / Nhà SX</option>
+                            {producers.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </Select>
+                        {hasFilters && (
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
+                                    applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
+                                }}
+                            >
+                                <X size={14} aria-hidden /> Xóa bộ lọc
+                            </Button>
+                        )}
+                    </div>
+                }
+            />
 
             <ProductTable
                 rows={rows} total={total} loading={loading}

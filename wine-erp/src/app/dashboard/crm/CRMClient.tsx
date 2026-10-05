@@ -21,9 +21,9 @@ import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
     HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    WHOLESALE: { label: 'Đại Lý', color: '#4A8FAB', bg: 'rgba(74,143,171,0.12)' },
-    VIP_RETAIL: { label: 'VIP', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
-    DISTRIBUTOR: { label: 'NPP', color: '#A5DED0', bg: 'rgba(165,222,208,0.1)' },
+    WHOLESALE: { label: 'Đại Lý', color: '#1D4ED8', bg: 'rgba(29,78,216,0.12)' },
+    VIP_RETAIL: { label: 'VIP', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    DISTRIBUTOR: { label: 'NPP', color: '#0891B2', bg: 'rgba(8,145,178,0.1)' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
@@ -38,7 +38,7 @@ const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
 
 const TIER_CFG: Record<string, { label: string; color: string; icon: string }> = {
     PLATINUM: { label: 'Platinum', color: '#0F172A', icon: '💎' },
-    GOLD: { label: 'Gold', color: '#D4A853', icon: '🥇' },
+    GOLD: { label: 'Gold', color: '#B45309', icon: '🥇' },
     SILVER: { label: 'Silver', color: '#475569', icon: '🥈' },
     BRONZE: { label: 'Bronze', color: '#87685A', icon: '🥉' },
 }
@@ -51,16 +51,16 @@ function getTierFromRevenue(revenue: number): string {
 }
 
 function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSelect: () => void; isSelected: boolean }) {
-    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#475569', bg: 'rgba(138,174,187,0.1)' }
+    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
     const tier = getTierFromRevenue(row.totalRevenue)
     const tierCfg = TIER_CFG[tier]
 
     return (
         <button onClick={onSelect} className="w-full text-left p-4 rounded-md transition-all duration-150"
             style={{
-                background: isSelected ? 'rgba(135,203,185,0.08)' : '#FFFFFF',
-                border: `1px solid ${isSelected ? '#87CBB9' : '#E2E8F0'}`,
-                borderLeft: `3px solid ${isSelected ? '#87CBB9' : 'transparent'}`,
+                background: isSelected ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
+                border: `1px solid ${isSelected ? '#0E7490' : '#E2E8F0'}`,
+                borderLeft: `3px solid ${isSelected ? '#0E7490' : 'transparent'}`,
             }}
             onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#0891B2' } }}
             onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' } }}
@@ -78,7 +78,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                         )}
                         {row.openComplaints > 0 && (
                             <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
-                                style={{ color: '#8B1A2E', background: 'rgba(139,26,46,0.15)' }}>
+                                style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
                                 ⚠ {row.openComplaints} KN
                             </span>
                         )}
@@ -97,7 +97,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                     <p className="text-xs" style={{ color: '#64748B' }}>Doanh số</p>
                 </div>
                 <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
-                    <p className="text-xs font-bold" style={{ color: '#5BA88A' }}>{row.totalOrders}</p>
+                    <p className="text-xs font-bold" style={{ color: '#15803D' }}>{row.totalOrders}</p>
                     <p className="text-xs" style={{ color: '#64748B' }}>Đơn hàng</p>
                 </div>
             </div>
@@ -148,8 +148,8 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium transition-all"
                             style={{
                                 background: type === t ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
-                                color: type === t ? '#87CBB9' : '#475569',
-                                border: `1px solid ${type === t ? '#87CBB9' : '#E2E8F0'}`,
+                                color: type === t ? '#0E7490' : '#475569',
+                                border: `1px solid ${type === t ? '#0E7490' : '#E2E8F0'}`,
                                 borderRadius: '4px',
                             }}>
                             <Icon size={11} /> {t}
@@ -170,7 +170,7 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
             <button onClick={handleLog} disabled={saving || !desc.trim()}
                 className="mt-2 px-4 py-1.5 text-xs font-semibold transition-all"
                 style={{
-                    background: desc.trim() ? '#87CBB9' : '#E2E8F0',
+                    background: desc.trim() ? '#0E7490' : '#E2E8F0',
                     color: desc.trim() ? '#F8FAFC' : '#64748B',
                     borderRadius: '4px',
                     opacity: saving ? 0.7 : 1,
@@ -281,7 +281,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     )
                 }} disabled={tierRecalcing}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-all"
-                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
                     {tierRecalcing ? <Loader2 size={12} className="animate-spin" /> : <Crown size={12} />}
                     {tierRecalcing ? 'Đang tính...' : 'Recalc Tiers'}
                 </button>
@@ -290,10 +290,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Khách Hàng Đang Hoạt Động', value: stats.total, icon: Users, accent: '#87CBB9' },
-                    { label: 'HORECA Partners', value: stats.horeca, icon: Wine, accent: '#5BA88A' },
-                    { label: 'Cơ Hội Đang Theo Dõi', value: stats.openOpps, icon: TrendingUp, accent: '#D4A853' },
-                    { label: 'Khiếu Nại Chưa Xử Lý', value: stats.openTickets, icon: AlertCircle, accent: '#8B1A2E' },
+                    { label: 'Khách Hàng Đang Hoạt Động', value: stats.total, icon: Users, accent: '#0E7490' },
+                    { label: 'HORECA Partners', value: stats.horeca, icon: Wine, accent: '#15803D' },
+                    { label: 'Cơ Hội Đang Theo Dõi', value: stats.openOpps, icon: TrendingUp, accent: '#B45309' },
+                    { label: 'Khiếu Nại Chưa Xử Lý', value: stats.openTickets, icon: AlertCircle, accent: '#B91C1C' },
                 ].map(s => {
                     const Icon = s.icon
                     return (
@@ -326,7 +326,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                         style={{
                             background: crmTab === tab.key ? '#FFFFFF' : 'transparent',
-                            color: crmTab === tab.key ? '#87CBB9' : '#64748B',
+                            color: crmTab === tab.key ? '#0E7490' : '#64748B',
                             border: crmTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
                         }}>
                         <tab.icon size={13} /> {tab.label}
@@ -390,7 +390,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         className="flex items-center gap-0.5 px-2 py-1 text-[10px] font-semibold rounded transition-all"
                                         style={{
                                             background: sortBy === key ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                            color: sortBy === key ? '#87CBB9' : '#64748B',
+                                            color: sortBy === key ? '#0E7490' : '#64748B',
                                             border: `1px solid ${sortBy === key ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
                                         }}>
                                         {label}
@@ -428,7 +428,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                             <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Doanh Số</p>
                                         </div>
                                         <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
-                                            <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
+                                            <p className="text-lg font-bold" style={{ color: '#B45309' }}>
                                                 {rows.reduce((s, r) => s + r.totalOrders, 0)}
                                             </p>
                                             <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Đơn Hàng</p>
@@ -465,7 +465,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                         className="w-full flex items-center justify-between py-2 px-3 rounded transition-all hover:bg-opacity-80"
                                                         style={{ background: '#FFFFFF' }}>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#64748B' }}>#{i + 1}</span>
+                                                            <span className="text-xs font-bold" style={{ color: i < 3 ? '#B45309' : '#64748B' }}>#{i + 1}</span>
                                                             <div className="text-left">
                                                                 <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.name}</p>
                                                                 <p className="text-[10px]" style={{ color: '#64748B' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
@@ -488,7 +488,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         ) : (
                             <>
                                 {/* Customer header */}
-                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
+                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #0E7490' }}>
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
                                             <h3 className="text-xl font-bold" style={{ color: '#0F172A' }}>
@@ -499,7 +499,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                             </p>
                                         </div>
                                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>
+                                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D' }}>
                                             {selectedCustomer.status}
                                         </span>
                                     </div>
@@ -508,8 +508,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
                                             { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#0891B2' },
-                                            { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#5BA88A' },
-                                            { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#D4A853' },
+                                            { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#15803D' },
+                                            { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#B45309' },
                                         ].map(kpi => (
                                             <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                                                 <p className="text-lg font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
@@ -542,9 +542,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     <>
                                         {profile.arBalance > 0 && (
                                             <div className="p-3 rounded-md flex items-center justify-between"
-                                                style={{ background: 'rgba(212,168,83,0.08)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                                                <span className="text-xs" style={{ color: '#D4A853' }}>Công nợ chưa thu</span>
-                                                <span className="text-sm font-bold" style={{ color: '#D4A853' }}>{formatVND(profile.arBalance)}</span>
+                                                style={{ background: 'rgba(180,83,9,0.08)', border: '1px solid rgba(180,83,9,0.2)' }}>
+                                                <span className="text-xs" style={{ color: '#B45309' }}>Công nợ chưa thu</span>
+                                                <span className="text-sm font-bold" style={{ color: '#B45309' }}>{formatVND(profile.arBalance)}</span>
                                             </div>
                                         )}
                                         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -566,7 +566,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Transaction History Button */}
                                         {!txOpen && (
                                             <button onClick={loadTxHistory} className="w-full py-2 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
+                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                                 📊 Xem Toàn Bộ Lịch Sử Giao Dịch
                                             </button>
                                         )}
@@ -578,9 +578,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="grid grid-cols-4 gap-2">
                                                     {[
                                                         { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#0891B2' },
-                                                        { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#4A8FAB' },
-                                                        { label: 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#5BA88A' },
-                                                        { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#D4A853' },
+                                                        { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#1D4ED8' },
+                                                        { label: 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#15803D' },
+                                                        { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#B45309' },
                                                     ].map(s => (
                                                         <div key={s.label} className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                                             <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
@@ -592,14 +592,14 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Top SKUs */}
                                                 {txHistory.topSkus.length > 0 && (
                                                     <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#D4A853' }}>
+                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>
                                                             🏆 Top SKU Hay Mua
                                                         </p>
                                                         <div className="space-y-1">
                                                             {txHistory.topSkus.slice(0, 5).map((sku, i) => (
                                                                 <div key={sku.skuCode} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#64748B' }}>#{i + 1}</span>
+                                                                        <span className="text-xs font-bold" style={{ color: i < 3 ? '#B45309' : '#64748B' }}>#{i + 1}</span>
                                                                         <div>
                                                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{sku.skuCode}</span>
                                                                             <span className="text-xs ml-1" style={{ color: '#475569' }}>{sku.productName}</span>
@@ -607,7 +607,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{sku.totalQty} chai</span>
-                                                                        <span className="text-xs ml-2" style={{ color: '#5BA88A' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
+                                                                        <span className="text-xs ml-2" style={{ color: '#15803D' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -626,8 +626,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
                                                                 <span className="text-xs" style={{ color: '#475569' }}>{formatDate(o.date)}</span>
                                                                 <span className="text-xs px-1.5 py-0.5 rounded" style={{
-                                                                    background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)',
-                                                                    color: o.status === 'PAID' ? '#5BA88A' : '#475569',
+                                                                    background: o.status === 'PAID' ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)',
+                                                                    color: o.status === 'PAID' ? '#15803D' : '#475569',
                                                                 }}>{o.status}</span>
                                                                 <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(o.amount)}</span>
                                                             </div>
@@ -644,17 +644,17 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                         <div className="space-y-1 max-h-[200px] overflow-y-auto">
                                                             {txHistory.invoices.map(inv => (
                                                                 <div key={inv.invoiceNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
-                                                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{inv.invoiceNo}</span>
+                                                                    <span className="text-xs font-bold" style={{ color: '#B45309' }}>{inv.invoiceNo}</span>
                                                                     <span className="text-xs" style={{ color: '#475569' }}>{formatDate(inv.date)}</span>
                                                                     <span className="text-xs px-1.5 py-0.5 rounded" style={{
-                                                                        background: inv.status === 'PAID' ? 'rgba(91,168,138,0.15)' :
-                                                                            inv.status === 'OVERDUE' ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.15)',
-                                                                        color: inv.status === 'PAID' ? '#5BA88A' :
-                                                                            inv.status === 'OVERDUE' ? '#8B1A2E' : '#D4A853',
+                                                                        background: inv.status === 'PAID' ? 'rgba(21,128,61,0.15)' :
+                                                                            inv.status === 'OVERDUE' ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
+                                                                        color: inv.status === 'PAID' ? '#15803D' :
+                                                                            inv.status === 'OVERDUE' ? '#B91C1C' : '#B45309',
                                                                     }}>{inv.status}</span>
                                                                     <div className="text-right">
                                                                         <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(inv.amount)}</span>
-                                                                        <span className="text-[10px] block" style={{ color: '#5BA88A' }}>Đã thu: {formatVND(inv.paidAmount)}</span>
+                                                                        <span className="text-[10px] block" style={{ color: '#15803D' }}>Đã thu: {formatVND(inv.paidAmount)}</span>
                                                                     </div>
                                                                 </div>
                                                             ))}

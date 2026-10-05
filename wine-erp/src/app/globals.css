@@ -3,58 +3,67 @@
 
 
 @theme {
-  /* ── LY's Cellars — Oceanic Cellar Design Tokens (Light ERP Aesthetic) ── */
+  /* ── LY's Cellars — Light ERP Design Tokens (source of truth: docs/architecture/ui-design-system.md) ── */
 
   /* Core Backgrounds */
   --color-lys-bg: #F8FAFC;
-  /* Light Slate Background */
   --color-lys-surface: #FFFFFF;
-  /* Pure White Surface */
   --color-lys-card: #FFFFFF;
-  /* Pure White Card */
   --color-lys-subtle: #F1F5F9;
-  /* Slate 100 Subtle Background */
   --color-lys-border: #E2E8F0;
-  /* Light Gray Border */
   --color-lys-border-strong: #CBD5E1;
-  /* Slate 300 Stronger Border */
 
   /* Brand Accents */
   --color-lys-teal: #0891B2;
-  /* Ocean Teal (Light Mode variant) */
+  /* Accent: icons, focus borders, active tab indicator */
+  --color-lys-teal-strong: #0E7490;
+  /* Text links + primary button background (WCAG AA on white) */
+  --color-lys-teal-hover: #155E75;
+  --color-lys-teal-soft: #ECFEFF;
   --color-lys-teal-light: #06B6D4;
-  /* Bright Cyan/Teal for hover */
   --color-lys-navy: #1E3A8A;
-  /* Deep Navy */
   --color-lys-wine: #B91C1C;
-  /* Burgundy / Wine Red / Alert */
   --color-lys-amber: #D97706;
-  /* Amber / Warning */
 
   /* Text Scale */
   --color-lys-primary: #0F172A;
-  /* Primary Text: Dark Slate 900 */
   --color-lys-secondary: #475569;
-  /* Secondary Text: Medium Slate 600 */
   --color-lys-muted: #64748B;
-  /* Muted Text: Slate 500 */
   --color-lys-dim: #94A3B8;
-  /* Tertiary / Dim Text: Slate 400 */
 
   /* Legacy Aliases for backwards compatibility */
   --color-lys-ivory: #0F172A;
 
-  /* Semantic */
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-error: #B91C1C;
-  --color-info: #2563EB;
+  /* Status Tones — used by <StatusBadge> via src/lib/ui/status.ts */
+  --color-tone-neutral-fg: #475569;
+  --color-tone-neutral-bg: #F1F5F9;
+  --color-tone-neutral-border: #E2E8F0;
+  --color-tone-info-fg: #1D4ED8;
+  --color-tone-info-bg: #EFF6FF;
+  --color-tone-info-border: #BFDBFE;
+  --color-tone-brand-fg: #0E7490;
+  --color-tone-brand-bg: #ECFEFF;
+  --color-tone-brand-border: #A5F3FC;
+  --color-tone-success-fg: #15803D;
+  --color-tone-success-bg: #F0FDF4;
+  --color-tone-success-border: #BBF7D0;
+  --color-tone-warning-fg: #B45309;
+  --color-tone-warning-bg: #FFFBEB;
+  --color-tone-warning-border: #FDE68A;
+  --color-tone-danger-fg: #B91C1C;
+  --color-tone-danger-bg: #FEF2F2;
+  --color-tone-danger-border: #FECACA;
 
-  /* Typography — next/font injects these as CSS vars on <html class="...">.
-     Define fallbacks here; the actual font name comes from next/font at runtime. */
+  /* Semantic */
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #B91C1C;
+  --color-info: #1D4ED8;
+
+  /* Typography — next/font sets --font-inter / --font-display on <html>. */
   --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-inter), "Inter", system-ui, sans-serif;
   
   /* Semantic Font Tokens */
   --font-ui: var(--font-sans);
@@ -64,8 +73,26 @@
   /* Border radius — Sharp/Luxury */
   --radius: 6px;
   --radius-sm: 4px;
-  --radius-lg: 10px;
+  --radius-lg: 8px;
   --radius-full: 9999px;
+
+  /* Motion — 200ms ease-out, transform/opacity only */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-drawer-in: drawer-in 200ms ease-out;
+  --animate-modal-in: modal-in 200ms ease-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
 }
 
 /* ── Base Reset ── */
@@ -94,6 +121,9 @@ tbody tr:hover {
   --color-lys-border: #E2E8F0;
   --color-lys-border-strong: #CBD5E1;
   --color-lys-teal: #0891B2;
+  --color-lys-teal-strong: #0E7490;
+  --color-lys-teal-hover: #155E75;
+  --color-lys-teal-soft: #ECFEFF;
   --color-lys-teal-light: #06B6D4;
   --color-lys-navy: #1E3A8A;
   --color-lys-wine: #B91C1C;
@@ -169,6 +199,13 @@ body {
   font-weight: 400;
 }
 
+.type-caption {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
 .type-code {
   font-family: var(--font-code);
   font-size: 12px;
@@ -199,7 +236,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(135, 203, 185, 0.5);
+  background: var(--color-lys-border-strong);
 }
 
 /* ── Focus ring — Teal ── */
@@ -210,7 +247,7 @@ body {
 
 /* ── Selection — Teal ── */
 ::selection {
-  background-color: rgba(135, 203, 185, 0.25);
+  background-color: rgba(8, 145, 178, 0.18);
   color: var(--color-lys-ivory);
 }
 

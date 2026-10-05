@@ -76,7 +76,7 @@ export function ChannelMappingTab({ currentUser }: Props) {
         <div className="max-w-4xl space-y-6">
             <div className="p-6 rounded-lg space-y-6" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
-                    <div className="p-2 rounded-md bg-[#87CBB9]/10 text-[#0891B2]">
+                    <div className="p-2 rounded-md bg-[#0E7490]/10 text-[#0891B2]">
                         <Settings size={20} />
                     </div>
                     <div>
@@ -90,7 +90,7 @@ export function ChannelMappingTab({ currentUser }: Props) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* HORECA */}
                     <div className="p-4 rounded-md space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
+                        <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: '#B45309' }}>
                             1. Kênh HORECA (Nhà Hàng / Khách Sạn)
                         </label>
                         <p className="text-[11px] style={{ color: '#64748B' }}">Bảng giá áp dụng mặc định cho nhóm nhà hàng, khách sạn, bar</p>
