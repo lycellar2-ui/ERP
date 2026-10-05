@@ -439,7 +439,11 @@ export async function recordMobileCountLine(input: {
 
         const sessStatus = (line.session?.status as string) || ''
         if (sessStatus === 'DRAFT') {
-            return { success: false, error: 'Phiên kiểm kê đang ở trạng thái Nháp (DRAFT). Vui lòng bấm "Bắt Đầu Kiểm Kê" để kích hoạt đếm số lượng.' }
+            // Tự động chuyển phiên sang IN_PROGRESS khi bắt đầu đếm dòng đầu tiên trên điện thoại
+            await prisma.stockCountSession.update({
+                where: { id: line.sessionId },
+                data: { status: 'IN_PROGRESS' }
+            })
         }
         if (sessStatus === 'APPROVED') {
             return { success: false, error: 'Phiên kiểm kê này đã được duyệt. Không thể chỉnh sửa số lượng nữa.' }

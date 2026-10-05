@@ -114,7 +114,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                 <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                     {/* Step 1: Product Selector */}
                     <div>
-                        <label className="text-slate-700 font-bold block mb-1">1. CHỌN SẢN PHẨM KHỔNG TỒN TẠI TRONG DANH SÁCH:</label>
+                        <label className="text-slate-700 font-bold block mb-1">1. CHỌN SẢN PHẨM KHÔNG CÓ TRONG DANH SÁCH:</label>
                         <div className="relative mb-2">
                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                             <input
@@ -125,7 +125,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                     setSearchQuery(e.target.value)
                                     handleSearchProducts(e.target.value)
                                 }}
-                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 font-semibold"
+                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg pl-9 pr-3 py-2 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 font-semibold"
                             />
                         </div>
 
@@ -168,10 +168,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                             <label className="text-slate-700 font-bold block mb-1">2. VINTAGE (NĂM SX):</label>
                             <input
                                 type="number"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 placeholder="VD: 2020 (Bỏ trống nếu NV)"
                                 value={vintage}
                                 onChange={e => setVintage(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] font-mono font-bold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-mono font-bold"
                             />
                         </div>
 
@@ -182,7 +184,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 placeholder="VD: Khu A - Kệ 02"
                                 value={locationCode}
                                 onChange={e => setLocationCode(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] font-extrabold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-extrabold"
                             />
                         </div>
                     </div>
@@ -195,6 +197,8 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 <span className="text-[10px] font-extrabold text-slate-500 block mb-1">📦 SỐ THÙNG</span>
                                 <input
                                     type="number"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     min="0"
                                     value={cases}
                                     onChange={e => setCases(parseInt(e.target.value, 10) || 0)}
@@ -206,6 +210,8 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 <span className="text-[10px] font-extrabold text-slate-500 block mb-1">🍾 CHAI LẺ</span>
                                 <input
                                     type="number"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     min="0"
                                     value={loose}
                                     onChange={e => setLoose(parseInt(e.target.value, 10) || 0)}

@@ -201,11 +201,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
     const overallPercent = lines.length > 0 ? Math.round((overallCounted / lines.length) * 100) : 0
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-24 select-none max-w-md mx-auto">
+        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-36 sm:pb-28 select-none max-w-md mx-auto">
             {/* Top Fixed Header */}
             <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 p-3 sticky top-0 z-30 shadow-2xs space-y-2.5">
-                {/* Row 1: Back, Title, Blind Toggle */}
-                <div className="flex items-center justify-between gap-2">
+                {/* Row 1: Back, Title, Add Unlisted (in Focus), Blind Toggle */}
+                <div className="flex items-center justify-between gap-1.5">
                     <button
                         onClick={onBack}
                         className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-lg flex items-center gap-1 text-xs font-extrabold transition cursor-pointer shrink-0"
@@ -215,39 +215,53 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                     <div className="text-center flex-1 min-w-0 px-1">
                         <div className="flex items-center justify-center gap-1.5 truncate">
-                            <span className="text-[10px] font-mono font-extrabold uppercase bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                            <span className="text-[10px] font-mono font-extrabold uppercase bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
                                 {detail.sessionNo}
                             </span>
                             <span className="text-xs font-extrabold text-slate-900 truncate">{detail.warehouseName}</span>
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => setIsBlind(!isBlind)}
-                        className={`p-2 rounded-lg text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer shrink-0 ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
-                        title="Tắt/Bật giấu tồn sổ sách"
-                    >
-                        {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                        {viewMode === 'FOCUS' && (
+                            <button
+                                onClick={() => setShowAddUnlistedModal(true)}
+                                className="px-2 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition cursor-pointer active:scale-95"
+                                title="Chèn mã ngoài danh sách"
+                            >
+                                <Plus className="w-3.5 h-3.5 text-amber-700" />
+                                <span className="text-[10px] hidden xs:inline font-bold">Chèn</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setIsBlind(!isBlind)}
+                            className={`p-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                            title="Tắt/Bật giấu tồn sổ sách"
+                        >
+                            {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Row 2: Action Buttons Bar (📊 Bảng Điền & ➕ Chèn Mã) */}
-                <div className="grid grid-cols-2 gap-2 pt-0.5">
-                    {onOpenTableModal && (
+                {/* Row 2: Action Buttons Bar (Shown in ZONES and LIST mode) */}
+                {viewMode !== 'FOCUS' && (
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                        {onOpenTableModal && (
+                            <button
+                                onClick={onOpenTableModal}
+                                className="py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
+                            >
+                                📊 Bảng Điền Trực Tiếp
+                            </button>
+                        )}
                         <button
-                            onClick={onOpenTableModal}
-                            className="py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
+                            onClick={() => setShowAddUnlistedModal(true)}
+                            className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal ? 'col-span-2' : ''}`}
                         >
-                            📊 Bảng Điền Trực Tiếp
+                            ➕ Chèn Mã / Vintage Bổ Sung
                         </button>
-                    )}
-                    <button
-                        onClick={() => setShowAddUnlistedModal(true)}
-                        className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal ? 'col-span-2' : ''}`}
-                    >
-                        ➕ Chèn Mã / Vintage Bổ Sung
-                    </button>
-                </div>
+                    </div>
+                )}
 
                 {/* Progress Bar Header */}
                 <div className="space-y-1">
@@ -368,13 +382,24 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="🔍 Gõ SKU / Barcode để nhảy nhanh tới mã..."
+                            placeholder="🔍 Gõ SKU / Quét Barcode để nhảy nhanh tới mã..."
                             value={searchTerm}
                             onChange={e => {
                                 setSearchTerm(e.target.value)
                                 setActiveIdx(0)
                             }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-lg pl-3 pr-10 py-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    if (filteredLines.length > 0) {
+                                        playBeepSound()
+                                        triggerHaptic()
+                                        setActiveIdx(0)
+                                        setSearchTerm('')
+                                    }
+                                }
+                            }}
+                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-lg pl-3 pr-10 py-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
                         />
                         {searchTerm && (
                             <button
@@ -451,9 +476,21 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
                                                 <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
                                                 {!isBlind && (
-                                                    <span className="text-slate-500 text-[11px] font-mono">
-                                                        Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-slate-500 text-[11px] font-mono">
+                                                            Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
+                                                        </span>
+                                                        {currentItem.qtySystem > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExactQty(currentItem.id, currentItem.qtySystem)}
+                                                                className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded border border-emerald-200 cursor-pointer active:scale-95 transition"
+                                                                title="Khớp nhanh theo số tồn sổ sách"
+                                                            >
+                                                                ✓ Khớp tồn sổ
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
 
@@ -464,17 +501,20 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                     <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
-                                                            type="button"
-                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                             type="button"
+                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
+                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
                                                         >
                                                             -
                                                         </button>
                                                         <input
                                                             type="number"
+                                                            inputMode="numeric"
+                                                            pattern="[0-9]*"
                                                             min="0"
                                                             value={currentItem.qtyActual !== null ? currentCases : ''}
                                                             placeholder="0"
+                                                            onFocus={e => e.target.select()}
                                                             onChange={e => {
                                                                 const newCases = parseInt(e.target.value, 10) || 0
                                                                 setExactQty(currentItem.id, newCases * upc + currentLoose)
@@ -482,9 +522,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
                                                         />
                                                         <button
-                                                            type="button"
-                                                            onClick={() => setExactQty(currentItem.id, total + upc)}
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                             type="button"
+                                                             onClick={() => setExactQty(currentItem.id, total + upc)}
+                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
                                                         >
                                                             +
                                                         </button>
@@ -497,17 +537,20 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                     <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
-                                                            type="button"
-                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                             type="button"
+                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
+                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
                                                         >
                                                             -
                                                         </button>
                                                         <input
                                                             type="number"
+                                                            inputMode="numeric"
+                                                            pattern="[0-9]*"
                                                             min="0"
                                                             value={currentItem.qtyActual !== null ? currentLoose : ''}
                                                             placeholder="0"
+                                                            onFocus={e => e.target.select()}
                                                             onChange={e => {
                                                                 const newLoose = parseInt(e.target.value, 10) || 0
                                                                 setExactQty(currentItem.id, currentCases * upc + newLoose)
@@ -515,9 +558,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
                                                         />
                                                         <button
-                                                            type="button"
-                                                            onClick={() => setExactQty(currentItem.id, total + 1)}
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                             type="button"
+                                                             onClick={() => setExactQty(currentItem.id, total + 1)}
+                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
                                                         >
                                                             +
                                                         </button>
@@ -552,7 +595,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => saveCurrentLineAndNext(currentItem)}
                                     disabled={savingLineId === currentItem.id}
-                                    className="w-full py-4 bg-[#0891B2] hover:bg-[#0E7490] active:scale-98 text-slate-900 font-black text-sm rounded-lg flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                                    className="w-full py-3.5 bg-[#0891B2] hover:bg-[#0E7490] active:scale-98 text-white font-extrabold text-sm rounded-lg flex items-center justify-center gap-2 shadow-xs transition cursor-pointer disabled:opacity-50"
                                 >
                                     {savingLineId === currentItem.id ? (
                                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -616,7 +659,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         placeholder="Tìm SKU hoặc tên rượu..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-3 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 mb-2 shadow-2xs"
+                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-3 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 mb-2 shadow-2xs"
                     />
 
                     {filteredLines.map((line, idx) => (
@@ -757,7 +800,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             )}
 
             {/* FLOATING BOTTOM NAVIGATION BAR */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-2 z-40 shadow-lg">
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
                 <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
                     <button
                         onClick={() => setViewMode('ZONES')}

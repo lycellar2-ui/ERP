@@ -632,6 +632,18 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Modal Tạo Đợt Đếm Hàng Ngày 1-Click (Daily Batch Count Modal)** | `StockCountClient.tsx` | Nút `[⚡ Tạo Đợt Đếm Hôm Nay]` tự động mở modal với các nút chọn nhanh (`+ 5 mã đầu tồn cao nhất`, `+ 10 mã`, `+ 15 mã`, `Tất cả`), thanh tìm kiếm SKU/tên rượu, tùy chọn phân công nhân viên và chế độ Kiểm Kê Mù (Blind Count) |
 | **Tối Ưu Giao Diện Responsive Desktop & Mobile** | `StockCountClient.tsx` | Bố cục thẻ tiến độ 4 chỉ số trực quan, thiết kế 2 cột phân đoạn linh hoạt (`flex-1 min-w-0 truncate`), tự động ẩn mã vị trí dài trên màn hình hẹp ($\le 390$px) để loại bỏ hoàn toàn hiện tượng tràn chữ/chồng lấn số lượng |
 
+#### Phase 15: Nâng Cấp Công Thái Học Mobile & Tự Động Kích Hoạt Kiểm Kê Thực Địa (Mobile Location Counter Ergonomics & Auto-Start Logic) (05/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Tự Động Kích Hoạt Phiếu Khi Đếm Dòng Đầu Tiên** | `stock-count/actions.ts` (`countStockLine`) | Tự động thăng cấp trạng thái phiếu từ `DRAFT` sang `IN_PROGRESS` ngay khi thủ kho bấm lưu số lượng đếm dòng đầu tiên trên điện thoại, xóa bỏ triệt để lỗi chặn thao tác yêu cầu quản lý bấm bắt đầu thủ công trước |
+| **Bàn Phím Số Chuyên Dụng Một Tay (Numeric Numpad)** | `MobileLocationCounter.tsx`, `AddUnlistedModal.tsx` | Thiết lập `inputMode="numeric"`, `pattern="[0-9]*"` và `onFocus={select()}` cho toàn bộ ô nhập số thùng, chai lẻ, vintage. Trình duyệt iPhone/Android tự động mở bàn phím số to rõ, hỗ trợ gõ nhanh bằng 1 tay trong kho |
+| **Triệt Tiêu Triệt Để Lỗi iOS Safari Tự Động Phóng To** | `MobileLocationCounter.tsx`, `AddUnlistedModal.tsx` | Nâng cấp toàn bộ ô tìm kiếm và ô nhập số từ `text-xs` (12px) lên `text-base sm:text-xs` (16px trên viewport mobile), ngăn chặn hoàn toàn việc Safari trên iPhone tự zoom to màn hình làm biến dạng layout |
+| **Nút Chọn Nhanh Khớp Tồn Sổ 1-Chạm (`[✓ Khớp tồn sổ]`)** | `MobileLocationCounter.tsx` | Bổ sung nút 1-chạm tự động điền đủ số thùng và chai lẻ theo tồn sổ sách (khi không bật chế độ kiểm kê mù), giúp thủ kho tiết kiệm thời gian với các kệ nguyên đai nguyên kiện |
+| **Tích Hợp Phím Enter Máy Quét Mã Vạch & Âm Báo Haptic** | `MobileLocationCounter.tsx` | Ô tìm kiếm nhanh tự động xử lý sự kiện `Enter` từ máy quét barcode Bluetooth/USB: phát âm bíp Web Audio, rung xúc giác haptic feedback (`navigator.vibrate`), chuyển trực tiếp tới chai tìm thấy và xóa trắng ô tìm kiếm để sẵn sàng cho lần quét tiếp theo |
+| **Chống Che Khuất Cuộn & Hỗ Trợ Safe-Area iPhone** | `MobileLocationCounter.tsx` | Tăng khoảng đệm chân trang lên `pb-36 sm:pb-28` giúp các nút Chuyển chai và Chốt khu vực không bao giờ bị dock che lấp; bổ sung `pb-[max(0.5rem,env(safe-area-inset-bottom))]` tương thích hoàn hảo thanh Home bar của iPhone |
+| **Chuẩn Hóa Giao Diện & Sửa Lỗi Chính Tả Modal Chèn Mã** | `AddUnlistedModal.tsx`, `MobileLocationCounter.tsx` | Sửa thông điệp "KHỔNG TỒN TẠI" $\rightarrow$ "KHÔNG CÓ TRONG DANH SÁCH", nâng cấp nút bấm CTA chính sang tông màu Brand Cyan `#0891B2` tương phản cao chữ trắng đậm |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -642,7 +654,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-05 | Wine ERP v10.51 — Selective SKU Spot Count & Rolling Weekly Cycle Count Planner*
+*Last updated: 2026-10-05 | Wine ERP v10.52 — Mobile Location Counter Ergonomics & Auto-Start Logic*
 
 
 
