@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react'
 import {
     ClipboardList, Plus, Search, Filter, Warehouse, MapPin, Smartphone,
     Printer, CheckCircle2, ShieldCheck, QrCode, AlertCircle, Eye, EyeOff,
-    UserCheck, RefreshCw, Layers, Zap, AlertTriangle, FileText
+    UserCheck, RefreshCw, Layers, Zap, AlertTriangle, FileText,
+    RotateCcw, Check, Calendar, ArrowRight, Sparkles
 } from 'lucide-react'
 import {
     getStockCountList, getStockCountDetail, getCountStats,
     getWarehouseOptions, getWarehouseLocationOptions, getStaffUserOptions,
     createStockCountSessionExtended, startStockCount, approveAndCreateAdjustment,
-    assignStaffToZones
+    assignStaffToZones, getCycleCountProgress, type CycleCountProgress
 } from './actions'
 import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
@@ -109,6 +110,34 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [createError, setCreateError] = useState('')
 
+    // Weekly Cycle Count Planner State
+    const [cycleProgress, setCycleProgress] = useState<CycleCountProgress | null>(null)
+    const [cycleWarehouseId, setCycleWarehouseId] = useState<string>('')
+    const [cycleDaysWindow, setCycleDaysWindow] = useState<number>(7)
+    const [loadingCycle, setLoadingCycle] = useState<boolean>(false)
+    const [activeCycleTab, setActiveCycleTab] = useState<'UNCOUNTED' | 'COUNTED'>('UNCOUNTED')
+
+    // Daily Batch Count Modal State
+    const [showDailyBatchModal, setShowDailyBatchModal] = useState<boolean>(false)
+    const [selectedDailySkus, setSelectedDailySkus] = useState<string[]>([])
+    const [batchCountTitle, setBatchCountTitle] = useState<string>('')
+    const [batchIsBlind, setBatchIsBlind] = useState<boolean>(false)
+    const [batchAssigneeId, setBatchAssigneeId] = useState<string>('')
+    const [isCreatingBatch, setIsCreatingBatch] = useState<boolean>(false)
+    const [batchSearchTerm, setBatchSearchTerm] = useState<string>('')
+
+    const loadCycleProgress = async (whId?: string, days?: number) => {
+        const targetWh = whId || cycleWarehouseId || warehouses[0]?.id
+        if (!targetWh) return
+        setLoadingCycle(true)
+        try {
+            const data = await getCycleCountProgress(targetWh, days || cycleDaysWindow)
+            setCycleProgress(data)
+        } finally {
+            setLoadingCycle(false)
+        }
+    }
+
     const fetchLocationOptions = async (whId: string) => {
         const locs = await getWarehouseLocationOptions(whId)
         setLocationOptions(locs)
@@ -122,8 +151,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setWarehouses(whRes)
         setStaffList(staffRes)
         if (whRes.length > 0) {
-            setFormWarehouseId(whRes[0].id)
-            fetchLocationOptions(whRes[0].id)
+            const firstId = whRes[0].id
+            setFormWarehouseId(firstId)
+            setCycleWarehouseId(firstId)
+            fetchLocationOptions(firstId)
+            loadCycleProgress(firstId, 7)
         }
     }
 
@@ -195,10 +227,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setIsSubmitting(true)
 
         // Parse spot SKUs if provided
-        const productIds: string[] = []
+        let skus: string[] | undefined = undefined
         if (formScopeType === 'SPOT_COUNT' && formSpotSkus.trim()) {
-            const skus = formSpotSkus.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
-            // We pass skus to backend via API
+            skus = formSpotSkus.split(/[\n,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean)
+            if (skus.length === 0) {
+                setIsSubmitting(false)
+                setCreateError('Vui lòng nhập ít nhất 1 mã SKU cần kiểm kê đột xuất / chọn lọc')
+                return
+            }
         }
 
         const res = await createStockCountSessionExtended({
@@ -209,16 +245,44 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             assignedToId: formAssignedToId || undefined,
             selectedZone: formSelectedZone || undefined,
             selectedWineType: formWineType || undefined,
-            transactedDays: Number(formTransactedDays) || 30
+            transactedDays: Number(formTransactedDays) || 30,
+            skuCodes: skus,
         })
 
         setIsSubmitting(false)
         if (res.success) {
             setShowCreateModal(false)
             fetchData()
+            loadCycleProgress()
             if (res.sessionId) handleOpenMobileView(res.sessionId)
         } else {
             setCreateError(res.error || 'Khởi tạo phiên kiểm kê thất bại')
+        }
+    }
+
+    const handleCreateBatchSession = async () => {
+        if (!selectedDailySkus || selectedDailySkus.length === 0) {
+            alert('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê')
+            return
+        }
+        setIsCreatingBatch(true)
+        const res = await createStockCountSessionExtended({
+            warehouseId: cycleWarehouseId,
+            title: batchCountTitle || `Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${selectedDailySkus.length} mã)`,
+            scopeType: 'CYCLE_COUNT',
+            type: 'CYCLE',
+            isBlindCount: batchIsBlind,
+            assignedToId: batchAssigneeId || undefined,
+            skuCodes: selectedDailySkus,
+        })
+        setIsCreatingBatch(false)
+        if (res.success) {
+            setShowDailyBatchModal(false)
+            fetchData()
+            loadCycleProgress()
+            if (res.sessionId) handleOpenMobileView(res.sessionId)
+        } else {
+            alert(res.error || 'Khởi tạo đợt kiểm thất bại')
         }
     }
 
@@ -327,6 +391,218 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     </div>
                 </div>
             )}
+
+            {/* ═══ 🔄 KẾ HOẠCH KIỂM KÊ CUỐN CHIẾU THEO TUẦN (CYCLE COUNT PLANNER) ═══ */}
+            <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                            <RotateCcw size={18} className="text-lys-teal-strong" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <span>Kế Hoạch Kiểm Kê Cuốn Chiếu</span>
+                                <span className="text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
+                                    Chu kỳ {cycleDaysWindow} ngày
+                                </span>
+                            </h2>
+                            <p className="text-xs text-slate-500">
+                                Chia nhỏ kiểm kê cả kho thành từng ngày, kiểm cuốn chiếu không làm gián đoạn bán hàng
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Warehouse selector for cycle plan */}
+                        <div className="relative">
+                            <select
+                                value={cycleWarehouseId}
+                                onChange={e => {
+                                    setCycleWarehouseId(e.target.value)
+                                    loadCycleProgress(e.target.value, cycleDaysWindow)
+                                }}
+                                className="bg-slate-50 border border-slate-300 text-slate-900 rounded-md px-2.5 py-1.5 text-xs font-semibold outline-none cursor-pointer focus:border-lys-teal-strong max-w-[180px] truncate"
+                            >
+                                {warehouses.map(w => (
+                                    <option key={w.id} value={w.id}>{w.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Days window selector */}
+                        <select
+                            value={cycleDaysWindow}
+                            onChange={e => {
+                                const days = parseInt(e.target.value, 10) || 7
+                                setCycleDaysWindow(days)
+                                loadCycleProgress(cycleWarehouseId, days)
+                            }}
+                            className="bg-slate-50 border border-slate-300 text-slate-900 rounded-md px-2.5 py-1.5 text-xs font-semibold outline-none cursor-pointer focus:border-lys-teal-strong"
+                        >
+                            <option value={7}>Chu kỳ 7 ngày (1 tuần)</option>
+                            <option value={14}>Chu kỳ 14 ngày (2 tuần)</option>
+                            <option value={30}>Chu kỳ 30 ngày (1 tháng)</option>
+                        </select>
+
+                        {/* CTA button to create today's batch count */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
+                                    alert('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
+                                    return
+                                }
+                                const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
+                                setSelectedDailySkus(topN)
+                                setBatchCountTitle(`Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                setBatchSearchTerm('')
+                                setShowDailyBatchModal(true)
+                            }}
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md shadow-xs transition cursor-pointer active:scale-95"
+                        >
+                            <Zap size={14} />
+                            <span>Tạo Đợt Đếm Hôm Nay</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Progress Bar & Key Cycle Stats */}
+                {loadingCycle ? (
+                    <div className="py-4 text-center text-xs text-slate-400">Đang đồng bộ tiến độ kiểm kê kho...</div>
+                ) : cycleProgress ? (
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                        {/* Progress bar */}
+                        <div>
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                <span className="font-semibold text-slate-700">
+                                    Tiến độ hoàn tất: <strong className="text-lys-teal-strong font-mono">{cycleProgress.countedProductCount}</strong> / <span className="font-mono">{cycleProgress.totalProducts}</span> mã SKU
+                                </span>
+                                <span className="font-bold text-lys-teal-strong font-mono">
+                                    {cycleProgress.progressPercent}% đã kiểm
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                                <div
+                                    className="bg-lys-teal-strong h-2.5 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, Math.max(0, cycleProgress.progressPercent))}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* 4 Mini metric pills */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            <div className="p-2.5 rounded-md bg-emerald-50/60 border border-emerald-200/80">
+                                <span className="text-[10px] text-emerald-800 uppercase font-bold block">MÃ ĐÃ KIỂM</span>
+                                <span className="text-base font-black text-emerald-700 font-mono mt-0.5 block">
+                                    {cycleProgress.countedProductCount} mã
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-md bg-amber-50/60 border border-amber-200/80">
+                                <span className="text-[10px] text-amber-800 uppercase font-bold block">MÃ CẦN KIỂM TIẾP</span>
+                                <span className="text-base font-black text-amber-700 font-mono mt-0.5 block">
+                                    {cycleProgress.uncountedProductCount} mã
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-md bg-lys-teal-soft border border-lys-teal-subtle">
+                                <span className="text-[10px] text-lys-teal-strong uppercase font-bold block">GỢI Ý HÔM NAY</span>
+                                <span className="text-base font-black text-lys-teal-strong font-mono mt-0.5 block">
+                                    ~{cycleProgress.dailySuggestedCount} mã / ngày
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200">
+                                <span className="text-[10px] text-slate-500 uppercase font-bold block">TỔNG TỒN HIỆN CÓ</span>
+                                <span className="text-base font-black text-slate-900 font-mono mt-0.5 block">
+                                    {cycleProgress.totalBottles.toLocaleString()} chai
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Collapsible Tabs: Uncounted vs Counted items toggle */}
+                        <div className="pt-1 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveCycleTab('UNCOUNTED')}
+                                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                                        activeCycleTab === 'UNCOUNTED'
+                                            ? 'bg-slate-200 text-slate-900 font-bold'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Chưa kiểm kê ({cycleProgress.uncountedProducts.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveCycleTab('COUNTED')}
+                                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                                        activeCycleTab === 'COUNTED'
+                                            ? 'bg-slate-200 text-slate-900 font-bold'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Đã kiểm kê ({cycleProgress.countedProducts.length})
+                                </button>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => loadCycleProgress()}
+                                className="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-[11px] font-medium cursor-pointer"
+                                title="Làm mới tiến độ kiểm kê"
+                            >
+                                <RefreshCw size={11} />
+                                <span>Cập nhật</span>
+                            </button>
+                        </div>
+
+                        {/* Quick preview of items in activeCycleTab */}
+                        {activeCycleTab === 'UNCOUNTED' && cycleProgress.uncountedProducts.length > 0 && (
+                            <div className="max-h-36 overflow-y-auto divide-y divide-slate-100 border border-slate-100 rounded-md bg-slate-50/50">
+                                {cycleProgress.uncountedProducts.slice(0, 10).map(p => (
+                                    <div key={p.id} className="p-2 flex items-center justify-between gap-2 text-xs hover:bg-slate-100/70">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
+                                            <span className="font-mono font-bold text-slate-900 shrink-0">{p.skuCode}</span>
+                                            <span className="truncate text-slate-700">{p.productName}</span>
+                                            {p.vintage && <span className="text-[10px] text-slate-500 font-mono shrink-0">({p.vintage})</span>}
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0 text-slate-500 text-[11px]">
+                                            <span className="hidden sm:inline truncate max-w-[150px]">{p.locations.length > 0 ? p.locations.join(', ') : 'Chưa gán vị trí'}</span>
+                                            <strong className="font-mono text-slate-900 shrink-0">{p.totalQty.toLocaleString()} chai</strong>
+                                        </div>
+                                    </div>
+                                ))}
+                                {cycleProgress.uncountedProducts.length > 10 && (
+                                    <div className="p-1.5 text-center text-[10px] text-slate-400 italic">
+                                        và còn {cycleProgress.uncountedProducts.length - 10} mã SKU khác chưa kiểm...
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeCycleTab === 'COUNTED' && cycleProgress.countedProducts.length > 0 && (
+                            <div className="max-h-36 overflow-y-auto divide-y divide-slate-100 border border-slate-100 rounded-md bg-slate-50/50">
+                                {cycleProgress.countedProducts.slice(0, 10).map(p => (
+                                    <div key={p.id} className="p-2 flex items-center justify-between gap-2 text-xs hover:bg-slate-100/70">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
+                                            <span className="font-mono font-bold text-emerald-800 shrink-0">{p.skuCode}</span>
+                                            <span className="truncate text-slate-700">{p.productName}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0 text-slate-500 text-[11px]">
+                                            <span className="hidden sm:inline">{p.lastCountedAt ? new Date(p.lastCountedAt).toLocaleDateString('vi-VN') : '—'}</span>
+                                            <span className="text-emerald-700 font-bold shrink-0">✓ Đã kiểm</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {cycleProgress.countedProducts.length > 10 && (
+                                    <div className="p-1.5 text-center text-[10px] text-slate-400 italic">
+                                        và {cycleProgress.countedProducts.length - 10} mã khác...
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : null}
+            </div>
 
             {/* Filter Tabs & Search Bar — Matched with Sales Order UI */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200">
@@ -871,6 +1147,222 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     onOpenPrintView={id => handleOpenPrintView(id)}
                     onRefreshSession={fetchData}
                 />
+            )}
+
+            {/* ═══ MODAL TẠO ĐỢT KIỂM KÊ CUỐN CHIẾU HÔM NAY (DAILY BATCH CYCLE COUNT) ═══ */}
+            {showDailyBatchModal && cycleProgress && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-start pb-3 border-b border-slate-200">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-extrabold text-slate-900">
+                                        Tạo Đợt Kiểm Kê Cuốn Chiếu Hôm Nay
+                                    </h3>
+                                    <span className="text-[11px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
+                                        {cycleProgress.warehouseName.startsWith('Kho') ? cycleProgress.warehouseName : `Kho ${cycleProgress.warehouseName}`}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Hệ thống gợi ý các mã chưa kiểm trong chu kỳ {cycleDaysWindow} ngày. Chọn các mã cần đếm hôm nay.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowDailyBatchModal(false)}
+                                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Title of this daily session */}
+                        <div>
+                            <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                Tên đợt kiểm kê hôm nay:
+                            </label>
+                            <input
+                                type="text"
+                                value={batchCountTitle}
+                                onChange={e => setBatchCountTitle(e.target.value)}
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-xs outline-none focus:border-lys-teal-strong font-medium"
+                                placeholder="vd: Kiểm kê cuốn chiếu ngày..."
+                            />
+                        </div>
+
+                        {/* Quick Presets Selection */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                                <label className="font-bold text-slate-700">
+                                    Chọn nhanh các mã chưa kiểm kê ({cycleProgress.uncountedProducts.length} mã còn lại):
+                                </label>
+                                <span className="font-bold text-lys-teal-strong">
+                                    Đã chọn: {selectedDailySkus.length} mã
+                                </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const top5 = cycleProgress.uncountedProducts.slice(0, 5).map(p => p.skuCode)
+                                        setSelectedDailySkus(top5)
+                                    }}
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                >
+                                    + 5 mã đầu (tồn cao nhất)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const top10 = cycleProgress.uncountedProducts.slice(0, 10).map(p => p.skuCode)
+                                        setSelectedDailySkus(top10)
+                                    }}
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                >
+                                    + 10 mã
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const top15 = cycleProgress.uncountedProducts.slice(0, 15).map(p => p.skuCode)
+                                        setSelectedDailySkus(top15)
+                                    }}
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                >
+                                    + 15 mã
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedDailySkus(cycleProgress.uncountedProducts.map(p => p.skuCode))
+                                    }}
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                >
+                                    Tất cả ({cycleProgress.uncountedProducts.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedDailySkus([])}
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-500 font-semibold border border-slate-200 cursor-pointer"
+                                >
+                                    Bỏ chọn
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search and list of uncounted products */}
+                        <div className="space-y-1.5">
+                            <div className="relative">
+                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm mã SKU hoặc tên sản phẩm..."
+                                    value={batchSearchTerm}
+                                    onChange={e => setBatchSearchTerm(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong"
+                                />
+                            </div>
+
+                            <div className="border border-slate-200 rounded-md max-h-60 overflow-y-auto divide-y divide-slate-100 bg-white">
+                                {cycleProgress.uncountedProducts
+                                    .filter(p => !batchSearchTerm || p.skuCode.toLowerCase().includes(batchSearchTerm.toLowerCase()) || p.productName.toLowerCase().includes(batchSearchTerm.toLowerCase()))
+                                    .map(p => {
+                                        const isSelected = selectedDailySkus.includes(p.skuCode)
+                                        return (
+                                            <label
+                                                key={p.id}
+                                                className={`p-2 flex items-center justify-between gap-3 text-xs cursor-pointer transition ${
+                                                    isSelected ? 'bg-lys-teal-soft/40' : 'hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => {
+                                                            if (isSelected) {
+                                                                setSelectedDailySkus(prev => prev.filter(s => s !== p.skuCode))
+                                                            } else {
+                                                                setSelectedDailySkus(prev => [...prev, p.skuCode])
+                                                            }
+                                                        }}
+                                                        className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300"
+                                                    />
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                                                            <span className="font-mono text-lys-teal-strong shrink-0">{p.skuCode}</span>
+                                                            <span className="truncate">{p.productName}</span>
+                                                            {p.vintage && <span className="text-[10px] text-slate-400 font-mono font-normal shrink-0">({p.vintage})</span>}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500 truncate">
+                                                            Vị trí: {p.locations.length > 0 ? p.locations.join(', ') : 'Chưa gán vị trí'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-right shrink-0">
+                                                    <strong className="font-mono text-slate-900">{p.totalQty.toLocaleString()} chai</strong>
+                                                </div>
+                                            </label>
+                                        )
+                                    })}
+                            </div>
+                        </div>
+
+                        {/* Assignee & Blind Count */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
+                            <div>
+                                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                    Phân công nhân viên đếm:
+                                </label>
+                                <select
+                                    value={batchAssigneeId}
+                                    onChange={e => setBatchAssigneeId(e.target.value)}
+                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-xs outline-none focus:border-lys-teal-strong"
+                                >
+                                    <option value="">-- Để tự do (chưa gán) --</option>
+                                    {staffList.map(st => (
+                                        <option key={st.id} value={st.id}>{st.name} ({st.email})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-4">
+                                <input
+                                    type="checkbox"
+                                    id="batchBlindToggle"
+                                    checked={batchIsBlind}
+                                    onChange={e => setBatchIsBlind(e.target.checked)}
+                                    className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300 cursor-pointer"
+                                />
+                                <label htmlFor="batchBlindToggle" className="cursor-pointer">
+                                    <span className="font-bold text-slate-900 block">Kiểm Kê Mù (Blind Count)</span>
+                                    <span className="text-[10px] text-slate-500 block">Giấu tồn sổ sách trên máy nhân viên đếm</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Submit Buttons */}
+                        <div className="pt-3 border-t border-slate-200 flex justify-end gap-2 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setShowDailyBatchModal(false)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
+                            >
+                                Hủy Bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCreateBatchSession}
+                                disabled={isCreatingBatch || selectedDailySkus.length === 0}
+                                className="px-5 py-2 bg-lys-teal-strong hover:bg-lys-teal-hover text-white font-extrabold rounded-lg shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                                <Zap size={14} />
+                                <span>{isCreatingBatch ? 'Đang khởi tạo...' : `Tạo Phiếu & Bắt Đầu Đếm (${selectedDailySkus.length} mã)`}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

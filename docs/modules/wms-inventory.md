@@ -622,6 +622,16 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Bản Địa Hóa Xuất File CSV Tồn Kho** | `WarehouseClient.tsx` | Tự động dịch tiêu đề 14 cột CSV (`Stock Lot`, `Book Qty`, `On-hand Qty`...) và tên file xuất theo ngôn ngữ đang chọn của người dùng |
 | **Đồng Bộ Thanh Điều Hướng Đáy Mobile & Alerts** | `WarehouseClient.tsx` | Dịch toàn bộ thanh dock điều hướng ngón tay cái và các thông báo nảy nổi/âm thanh nhắc nhặt hàng sang tiếng Anh khi kích hoạt EN |
 
+#### Phase 14: Kiểm Kê Chọn Lọc (Spot Count) & Kế Hoạch Kiểm Kê Cuốn Chiếu Theo Tuần (Rolling Cycle Count Planner) (05/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Kiểm Kê Chọn Lọc / Đột Xuất (Selective SKU Spot Count)** | `actions.ts`, `StockCountClient.tsx` | Cho phép thủ kho/quản lý nhập hoặc chọn danh sách các mã SKU cụ thể cần kiểm tra (`skuCodes: string[]`). Hệ thống tự động truy vấn các `Product` tương ứng và chỉ sinh `StockCountLine` cho các mã được chọn, không tạo dư toàn kho |
+| **Kế Hoạch Kiểm Kê Cuốn Chiếu Theo Tuần (Weekly Rolling Cycle Count Planner)** | `actions.ts`, `StockCountClient.tsx` | Chia nhỏ việc kiểm kê toàn bộ kho thành từng ngày theo chu kỳ 7, 14 hoặc 30 ngày để không làm gián đoạn việc xuất nhập bán hàng. Hàm `getCycleCountProgress(warehouseId, daysWindow)` tự động tính toán tiến độ hoàn thành (`% đã kiểm`), số mã đã kiểm trong chu kỳ, số mã còn lại, và số lượng đề xuất kiểm hàng ngày (`~N mã/ngày`) |
+| **Thứ Tự Ưu Tiên Kiểm Kê Tồn Cao (High-Stock First)** | `actions.ts` | Danh sách các sản phẩm chưa kiểm kê được tự động sắp xếp theo tổng tồn kho giảm dần (`totalQty: desc`), giúp ưu tiên kiểm soát các mặt hàng có giá trị hoặc lượng hàng tồn lớn trước |
+| **Modal Tạo Đợt Đếm Hàng Ngày 1-Click (Daily Batch Count Modal)** | `StockCountClient.tsx` | Nút `[⚡ Tạo Đợt Đếm Hôm Nay]` tự động mở modal với các nút chọn nhanh (`+ 5 mã đầu tồn cao nhất`, `+ 10 mã`, `+ 15 mã`, `Tất cả`), thanh tìm kiếm SKU/tên rượu, tùy chọn phân công nhân viên và chế độ Kiểm Kê Mù (Blind Count) |
+| **Tối Ưu Giao Diện Responsive Desktop & Mobile** | `StockCountClient.tsx` | Bố cục thẻ tiến độ 4 chỉ số trực quan, thiết kế 2 cột phân đoạn linh hoạt (`flex-1 min-w-0 truncate`), tự động ẩn mã vị trí dài trên màn hình hẹp ($\le 390$px) để loại bỏ hoàn toàn hiện tượng tràn chữ/chồng lấn số lượng |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -632,7 +642,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-04 | Wine ERP v10.50 — Complete Bilingual VI/EN Support for Central Warehouse & Inventory (Session 18)*
+*Last updated: 2026-10-05 | Wine ERP v10.51 — Selective SKU Spot Count & Rolling Weekly Cycle Count Planner*
 
 
 

@@ -269,6 +269,7 @@ export async function createStockCountSessionExtended(input: {
     transactedDays?: number
     selectedProductIds?: string[]
     selectedLocationIds?: string[]
+    skuCodes?: string[]
 }): Promise<{ success: boolean; sessionId?: string; error?: string }> {
     try {
         const currentUser = await getCurrentUser()
@@ -285,7 +286,7 @@ export async function createStockCountSessionExtended(input: {
         })
         const nextSeq = lastSession?.sessionNo ? parseInt(lastSession.sessionNo.slice(-2), 10) + 1 : 1
         const sessionNo = `${prefix}${String(nextSeq).padStart(2, '0')}`
-        const title = input.title || `Kiểm kê ${input.scopeType === 'FULL_WAREHOUSE' ? 'Tổng thể' : input.scopeType === 'SPOT_COUNT' ? 'Đột xuất' : 'Chu kỳ'} - ${wh.name}`
+        const title = input.title || `Kiểm kê ${input.scopeType === 'FULL_WAREHOUSE' ? 'Tổng thể' : input.scopeType === 'SPOT_COUNT' ? 'Đột xuất / Chọn lọc' : 'Chu kỳ'} - ${wh.name}`
 
         // Filter locations/lots
         let locationWhere: any = { warehouseId: input.warehouseId }
@@ -304,6 +305,24 @@ export async function createStockCountSessionExtended(input: {
             productFilterWhere.id = { in: input.selectedProductIds }
         }
 
+        // Handle specific SKU codes (Spot count or selective Cycle count)
+        if (input.skuCodes && input.skuCodes.length > 0) {
+            const cleanSkus = input.skuCodes.map(s => s.trim().toUpperCase()).filter(Boolean)
+            if (cleanSkus.length > 0) {
+                const matchedProducts = await prisma.product.findMany({
+                    where: { skuCode: { in: cleanSkus, mode: 'insensitive' } },
+                    select: { id: true, skuCode: true }
+                })
+                const mIds = matchedProducts.map(p => p.id)
+                if (mIds.length === 0) {
+                    return { success: false, error: `Không tìm thấy sản phẩm nào trong hệ thống khớp với các mã SKU: ${cleanSkus.join(', ')}` }
+                }
+                productFilterWhere.id = productFilterWhere.id
+                    ? { in: (productFilterWhere.id as any).in.filter((id: string) => mIds.includes(id)) }
+                    : { in: mIds }
+            }
+        }
+
         // Handle TRANSACTED_ITEMS scope
         if (input.scopeType === 'TRANSACTED_ITEMS') {
             const days = input.transactedDays || 30
@@ -312,7 +331,9 @@ export async function createStockCountSessionExtended(input: {
             if (tIds.length === 0) {
                 return { success: false, error: `Không có mã hàng nào phát sinh giao dịch trong ${days} ngày gần nhất tại kho này.` }
             }
-            productFilterWhere.id = { in: tIds }
+            productFilterWhere.id = productFilterWhere.id
+                ? { in: (productFilterWhere.id as any).in.filter((id: string) => tIds.includes(id)) }
+                : { in: tIds }
         }
 
         // Fetch locations and stock lots
@@ -641,10 +662,11 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
 }
 
 export async function getWarehouseOptions() {
-    return prisma.warehouse.findMany({
+    const list = await prisma.warehouse.findMany({
         select: { id: true, code: true, name: true },
         orderBy: { code: 'asc' },
     })
+    return serialize(list)
 }
 
 export async function getWarehouseLocationOptions(warehouseId: string) {
@@ -1051,3 +1073,229 @@ export async function addUnlistedProductToStockCountSession(input: {
         return { success: false, error: err.message || 'Lỗi thêm sản phẩm ngoài danh sách' }
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🔄 WEEKLY ROLLING CYCLE COUNT PLANNER (KIỂM KÊ CUỐN CHIẾU THEO TUẦN)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type CycleCountProgress = {
+    warehouseId: string
+    warehouseName: string
+    daysWindow: number
+    totalProducts: number
+    totalBottles: number
+    countedProductCount: number
+    uncountedProductCount: number
+    progressPercent: number
+    dailySuggestedCount: number
+    uncountedProducts: Array<{
+        id: string
+        skuCode: string
+        productName: string
+        vintage: number | null
+        wineType: string | null
+        totalQty: number
+        locations: string[]
+    }>
+    countedProducts: Array<{
+        id: string
+        skuCode: string
+        productName: string
+        lastCountedAt: Date | null
+        qtyActual: number | null
+        variance: number | null
+    }>
+    recentSessions: Array<{
+        id: string
+        sessionNo: string
+        title: string
+        status: string
+        createdAt: Date
+        lineCount: number
+    }>
+}
+
+export async function getCycleCountProgress(warehouseId: string, daysWindow: number = 7): Promise<CycleCountProgress | null> {
+    try {
+        const wh = await prisma.warehouse.findUnique({
+            where: { id: warehouseId },
+            select: { id: true, name: true }
+        })
+        if (!wh) return null
+
+        // 1. All available stock lots in this warehouse (via location.warehouseId)
+        const lots = await prisma.stockLot.findMany({
+            where: {
+                location: {
+                    warehouseId
+                },
+                status: 'AVAILABLE',
+                qtyAvailable: { gt: 0 }
+            },
+            include: {
+                product: {
+                    select: {
+                        id: true,
+                        skuCode: true,
+                        productName: true,
+                        wineType: true
+                    }
+                },
+                location: {
+                    select: {
+                        locationCode: true,
+                        zone: true
+                    }
+                }
+            }
+        })
+
+        // Group lots by product
+        const productMap = new Map<string, {
+            id: string
+            skuCode: string
+            productName: string
+            vintage: number | null
+            wineType: string | null
+            totalQty: number
+            locations: Set<string>
+        }>()
+
+        let totalBottles = 0
+        for (const lot of lots) {
+            totalBottles += Number(lot.qtyAvailable)
+            const p = lot.product
+            if (!productMap.has(p.id)) {
+                productMap.set(p.id, {
+                    id: p.id,
+                    skuCode: p.skuCode,
+                    productName: p.productName,
+                    vintage: lot.vintage,
+                    wineType: p.wineType,
+                    totalQty: Number(lot.qtyAvailable),
+                    locations: new Set(lot.location?.locationCode ? [lot.location.locationCode] : [])
+                })
+            } else {
+                const entry = productMap.get(p.id)!
+                entry.totalQty += Number(lot.qtyAvailable)
+                if (lot.location?.locationCode) {
+                    entry.locations.add(lot.location.locationCode)
+                }
+            }
+        }
+
+        // 2. Query sessions within the cycle daysWindow
+        const sinceDate = new Date()
+        sinceDate.setDate(sinceDate.getDate() - daysWindow)
+
+        const recentSessions = await prisma.stockCountSession.findMany({
+            where: {
+                warehouseId,
+                createdAt: { gte: sinceDate },
+                status: { in: ['IN_PROGRESS', 'COMPLETED', 'APPROVED'] }
+            },
+            include: {
+                lines: {
+                    select: {
+                        productId: true,
+                        qtyActual: true,
+                        variance: true,
+                        countedAt: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+
+        const countedMap = new Map<string, { lastCountedAt: Date | null; qtyActual: number | null; variance: number | null }>()
+        for (const sess of recentSessions) {
+            for (const line of sess.lines) {
+                if (!countedMap.has(line.productId)) {
+                    countedMap.set(line.productId, {
+                        lastCountedAt: line.countedAt || sess.createdAt,
+                        qtyActual: line.qtyActual ? Number(line.qtyActual) : null,
+                        variance: line.variance ? Number(line.variance) : null
+                    })
+                }
+            }
+        }
+
+        const uncountedProducts: Array<{
+            id: string
+            skuCode: string
+            productName: string
+            vintage: number | null
+            wineType: string | null
+            totalQty: number
+            locations: string[]
+        }> = []
+
+        const countedProducts: Array<{
+            id: string
+            skuCode: string
+            productName: string
+            lastCountedAt: Date | null
+            qtyActual: number | null
+            variance: number | null
+        }> = []
+
+        for (const [pId, pData] of productMap.entries()) {
+            const countedInfo = countedMap.get(pId)
+            if (countedInfo) {
+                countedProducts.push({
+                    id: pId,
+                    skuCode: pData.skuCode,
+                    productName: pData.productName,
+                    lastCountedAt: countedInfo.lastCountedAt,
+                    qtyActual: countedInfo.qtyActual,
+                    variance: countedInfo.variance
+                })
+            } else {
+                uncountedProducts.push({
+                    id: pId,
+                    skuCode: pData.skuCode,
+                    productName: pData.productName,
+                    vintage: pData.vintage,
+                    wineType: pData.wineType,
+                    totalQty: pData.totalQty,
+                    locations: Array.from(pData.locations)
+                })
+            }
+        }
+
+        // Sort uncounted by stock qty descending (count high stock / high velocity first)
+        uncountedProducts.sort((a, b) => b.totalQty - a.totalQty)
+
+        const totalProducts = productMap.size
+        const countedProductCount = countedProducts.length
+        const uncountedProductCount = uncountedProducts.length
+        const progressPercent = totalProducts > 0 ? Math.round((countedProductCount / totalProducts) * 100) : 100
+        const dailySuggestedCount = Math.max(1, Math.ceil(uncountedProductCount / Math.max(1, daysWindow)))
+
+        return serialize({
+            warehouseId,
+            warehouseName: wh.name,
+            daysWindow,
+            totalProducts,
+            totalBottles,
+            countedProductCount,
+            uncountedProductCount,
+            progressPercent,
+            dailySuggestedCount,
+            uncountedProducts,
+            countedProducts,
+            recentSessions: recentSessions.map(s => ({
+                id: s.id,
+                sessionNo: s.sessionNo || `SC-${s.id.slice(-6).toUpperCase()}`,
+                title: s.title || `Phiếu kiểm kê`,
+                status: s.status,
+                createdAt: s.createdAt,
+                lineCount: s.lines.length
+            }))
+        })
+    } catch (err: any) {
+        console.error('getCycleCountProgress error:', err)
+        return null
+    }
+}
+
