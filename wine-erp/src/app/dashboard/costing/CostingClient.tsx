@@ -7,10 +7,11 @@ import type { SensitivityResult, SensitivityScenario } from './actions'
 import { suggestPrices } from './costingUtils'
 import { formatVND } from '@/lib/utils'
 import { LandedCostTab } from './LandedCostTab'
+import { PageHeader, StatGrid, StatCard } from '@/components/ui'
 
 const WINE_COLORS: Record<string, string> = {
-    RED: '#8B1A2E', WHITE: '#D4A853', ROSE: '#C45A2A',
-    SPARKLING: '#87CBB9', FORTIFIED: '#4A8FAB', DESSERT: '#A5DED0',
+    RED: '#B91C1C', WHITE: '#B45309', ROSE: '#B45309',
+    SPARKLING: '#0E7490', FORTIFIED: '#1D4ED8', DESSERT: '#0891B2',
 }
 
 const SCT_NOTE: Record<string, string> = {
@@ -50,14 +51,11 @@ export function CostingClient({ products }: Props) {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                    Tính Giá Vốn & Đề Xuất Giá (CST)
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                    Landed cost / chai • Margin analysis • Đề xuất giá theo kênh
-                </p>
-            </div>
+            {/* Header */}
+            <PageHeader
+                title="Tính Giá Vốn & Đề Xuất Giá (CST)"
+                description="Landed cost / chai • Margin analysis • Đề xuất giá theo kênh"
+            />
 
             {/* Tab Navigation */}
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -69,7 +67,7 @@ export function CostingClient({ products }: Props) {
                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
                             style={{
                                 background: isActive ? '#FFFFFF' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#64748B',
+                                color: isActive ? '#0E7490' : '#64748B',
                                 border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
                             }}>
                             <Icon size={14} />
@@ -83,22 +81,11 @@ export function CostingClient({ products }: Props) {
             {tab === 'sku' && (
                 <>
                     {/* Summary */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>SKU Đang Bán</p>
-                            <p className="text-2xl font-bold" style={{ color: '#0891B2' }}>{products.length}</p>
-                        </div>
-                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Margin TB</p>
-                            <p className="text-2xl font-bold" style={{ color: '#5BA88A' }}>{avgMargin.toFixed(1)}%</p>
-                        </div>
-                        <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${lossCount > 0 ? '#8B1A2E' : '#5BA88A'}` }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>SKU Bán Dưới Giá Vốn</p>
-                            <p className="text-2xl font-bold" style={{ color: lossCount > 0 ? '#8B1A2E' : '#5BA88A' }}>
-                                {lossCount}
-                            </p>
-                        </div>
-                    </div>
+                    <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+                        <StatCard label="SKU Đang Bán" value={products.length} icon={Package} />
+                        <StatCard label="Margin TB" value={`${avgMargin.toFixed(1)}%`} icon={TrendingUp} />
+                        <StatCard label="SKU Bán Dưới Giá Vốn" value={lossCount} icon={AlertCircle} />
+                    </StatGrid>
 
                     <div className="grid grid-cols-12 gap-5">
                         {/* Left — SKU list */}
@@ -134,13 +121,13 @@ export function CostingClient({ products }: Props) {
                                                 <tr key={p.id}
                                                     onClick={() => setSelected(p)}
                                                     style={{
-                                                        borderBottom: '1px solid rgba(42,67,85,0.5)',
-                                                        background: isSelected ? 'rgba(135,203,185,0.08)' : p.isLoss ? 'rgba(139,26,46,0.05)' : 'transparent',
+                                                        borderBottom: '1px solid #E2E8F0',
+                                                        background: isSelected ? 'rgba(8,145,178,0.08)' : p.isLoss ? 'rgba(185,28,28,0.05)' : 'transparent',
                                                         cursor: 'pointer',
-                                                        borderLeft: isSelected ? '2px solid #87CBB9' : p.isLoss ? '2px solid #8B1A2E' : 'none',
+                                                        borderLeft: isSelected ? '2px solid #0E7490' : p.isLoss ? '2px solid #B91C1C' : 'none',
                                                     }}
-                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.background = p.isLoss ? 'rgba(139,26,46,0.05)' : 'transparent')}
+                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
+                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.background = p.isLoss ? 'rgba(185,28,28,0.05)' : 'transparent')}
                                                 >
                                                     <td className="px-3 py-2.5">
                                                         <span className="text-xs px-1.5 py-0.5 rounded font-bold"
@@ -156,7 +143,7 @@ export function CostingClient({ products }: Props) {
                                                             </p>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
+                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
                                                         {p.unitLandedCost > 0 ? formatVND(p.unitLandedCost) : '—'}
                                                     </td>
                                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>
@@ -164,10 +151,10 @@ export function CostingClient({ products }: Props) {
                                                     </td>
                                                     <td className="px-3 py-2.5">
                                                         <div className="flex items-center gap-1">
-                                                            {p.isLoss ? <TrendingDown size={10} style={{ color: '#8B1A2E' }} /> :
-                                                                <TrendingUp size={10} style={{ color: '#5BA88A' }} />}
+                                                            {p.isLoss ? <TrendingDown size={10} style={{ color: '#B91C1C' }} /> :
+                                                                <TrendingUp size={10} style={{ color: '#15803D' }} />}
                                                             <span className="text-xs font-bold"
-                                                                style={{ color: p.isLoss ? '#8B1A2E' : marginOk ? '#5BA88A' : '#D4A853' }}>
+                                                                style={{ color: p.isLoss ? '#B91C1C' : marginOk ? '#15803D' : '#B45309' }}>
                                                                 {p.marginPct !== null ? `${p.marginPct.toFixed(1)}%` : '—'}
                                                             </span>
                                                         </div>
@@ -198,14 +185,14 @@ export function CostingClient({ products }: Props) {
                                     <div className="p-3 rounded-md mb-4" style={{ background: '#FFFFFF' }}>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-xs" style={{ color: '#64748B' }}>Giá Vốn / Chai (WA)</span>
-                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                                            <span className="text-sm font-bold" style={{ color: '#B45309' }}>
                                                 {formatVND(selected.unitLandedCost)}
                                             </span>
                                         </div>
                                         {selected.abvPercent && (
                                             <div className="flex justify-between">
                                                 <span className="text-xs" style={{ color: '#64748B' }}>Thuế TTĐB áp dụng</span>
-                                                <span className="text-xs font-bold" style={{ color: selected.abvPercent >= 20 ? '#8B1A2E' : '#D4A853' }}>
+                                                <span className="text-xs font-bold" style={{ color: selected.abvPercent >= 20 ? '#B91C1C' : '#B45309' }}>
                                                     {selected.abvPercent >= 20 ? '65%' : '35%'} ({selected.abvPercent}° ABV)
                                                 </span>
                                             </div>
@@ -214,9 +201,9 @@ export function CostingClient({ products }: Props) {
 
                                     {selected.isLoss && (
                                         <div className="flex items-center gap-2 p-3 rounded-md mb-4"
-                                            style={{ background: 'rgba(139,26,46,0.1)', border: '1px solid rgba(139,26,46,0.3)' }}>
-                                            <AlertCircle size={14} style={{ color: '#8B1A2E' }} />
-                                            <p className="text-xs" style={{ color: '#8B1A2E' }}>
+                                            style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)' }}>
+                                            <AlertCircle size={14} style={{ color: '#B91C1C' }} />
+                                            <p className="text-xs" style={{ color: '#B91C1C' }}>
                                                 ⚠️ Giá bán hiện tại <strong>{formatVND(selected.listPrice!)}</strong> thấp hơn giá vốn!
                                             </p>
                                         </div>
@@ -314,7 +301,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
 
             {/* Custom Input */}
             <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#D4A853' }}>🔧 Kịch Bản Tùy Chỉnh</h4>
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#B45309' }}>🔧 Kịch Bản Tùy Chỉnh</h4>
                 <div className="grid grid-cols-3 gap-3">
                     <div>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Tỷ giá Δ (%)</label>
@@ -366,25 +353,25 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                 const costUp = sc.costDeltaPct > 0
                                 const marginDown = (sc.marginDelta ?? 0) < 0
                                 return (
-                                    <tr key={r.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                    <tr key={r.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>{r.skuCode}</td>
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{formatVND(r.currentUnitCost)}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#E85D5D' : '#5BA88A' }}>{formatVND(sc.newUnitCost)}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#B91C1C' : '#15803D' }}>{formatVND(sc.newUnitCost)}</td>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{
-                                                background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(91,168,138,0.15)',
-                                                color: costUp ? '#E85D5D' : '#5BA88A',
+                                                background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(21,128,61,0.15)',
+                                                color: costUp ? '#B91C1C' : '#15803D',
                                             }}>
                                                 {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
                                             </span>
                                         </td>
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: marginDown ? '#E85D5D' : '#5BA88A' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: marginDown ? '#B91C1C' : '#15803D' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
                                         <td className="px-3 py-2.5">
                                             {sc.marginDelta !== null ? (
                                                 <div className="flex items-center gap-1">
-                                                    {marginDown ? <TrendingDown size={10} style={{ color: '#E85D5D' }} /> : <TrendingUp size={10} style={{ color: '#5BA88A' }} />}
-                                                    <span className="text-xs font-bold" style={{ color: marginDown ? '#E85D5D' : '#5BA88A' }}>
+                                                    {marginDown ? <TrendingDown size={10} style={{ color: '#B91C1C' }} /> : <TrendingUp size={10} style={{ color: '#15803D' }} />}
+                                                    <span className="text-xs font-bold" style={{ color: marginDown ? '#B91C1C' : '#15803D' }}>
                                                         {sc.marginDelta > 0 ? '+' : ''}{sc.marginDelta.toFixed(1)}%
                                                     </span>
                                                 </div>

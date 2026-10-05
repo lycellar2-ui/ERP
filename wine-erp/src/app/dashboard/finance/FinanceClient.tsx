@@ -9,14 +9,15 @@ import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceShee
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
+import { PageHeader } from '@/components/ui'
 
 type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
 const AR_STATUS: Record<string, { label: string; color: string }> = {
-    UNPAID: { label: 'Chưa Thu', color: '#D4A853' },
-    PARTIALLY_PAID: { label: 'Đã Thu 1 Phần', color: '#4A8FAB' },
-    PAID: { label: 'Đã Thu Đủ', color: '#5BA88A' },
-    OVERDUE: { label: 'Quá Hạn', color: '#8B1A2E' },
+    UNPAID: { label: 'Chưa Thu', color: '#B45309' },
+    PARTIALLY_PAID: { label: 'Đã Thu 1 Phần', color: '#1D4ED8' },
+    PAID: { label: 'Đã Thu Đủ', color: '#15803D' },
+    OVERDUE: { label: 'Quá Hạn', color: '#B91C1C' },
     CANCELLED: { label: 'Huỷ', color: '#64748B' },
 }
 
@@ -42,11 +43,11 @@ function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
 function AgingBars({ buckets }: { buckets: Record<string, number> }) {
     const total = Object.values(buckets).reduce((a, b) => a + b, 0)
     const bars = [
-        { label: 'Chưa Đến Hạn', key: 'current', color: '#5BA88A' },
-        { label: '1–30 Ngày', key: 'd30', color: '#D4A853' },
+        { label: 'Chưa Đến Hạn', key: 'current', color: '#15803D' },
+        { label: '1–30 Ngày', key: 'd30', color: '#B45309' },
         { label: '31–60 Ngày', key: 'd60', color: '#D4833A' },
-        { label: '61–90 Ngày', key: 'd90', color: '#C45A2A' },
-        { label: '> 90 Ngày', key: 'over90', color: '#8B1A2E' },
+        { label: '61–90 Ngày', key: 'd90', color: '#B45309' },
+        { label: '> 90 Ngày', key: 'over90', color: '#B91C1C' },
     ]
 
     return (
@@ -104,13 +105,13 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                             </td></tr>
                         ) : rows.map(row => (
                             <tr key={row.id}
-                                style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
+                                style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
                             >
                                 <td className="px-3 py-3">
                                     <div className="flex items-center gap-1.5">
-                                        {row.isOverdue && <AlertCircle size={12} style={{ color: '#8B1A2E' }} />}
+                                        {row.isOverdue && <AlertCircle size={12} style={{ color: '#B91C1C' }} />}
                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</span>
                                     </div>
                                 </td>
@@ -120,14 +121,14 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                 </td>
                                 <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.soNo ?? '–'}</td>
                                 <td className="px-3 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.amount)}</td>
-                                <td className="px-3 py-3 text-sm" style={{ color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                <td className="px-3 py-3 text-sm" style={{ color: '#15803D' }}>{formatVND(row.paidAmount)}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
                                     {formatVND(row.outstanding)}
                                 </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#475569' }}>
+                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>
                                     {formatDate(row.dueDate)}
                                     {row.isOverdue && row.daysOverdue > 0 && (
-                                        <p className="font-bold" style={{ color: '#8B1A2E' }}>+{row.daysOverdue}d</p>
+                                        <p className="font-bold" style={{ color: '#B91C1C' }}>+{row.daysOverdue}d</p>
                                     )}
                                 </td>
                                 <td className="px-3 py-3">
@@ -142,9 +143,9 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                     {row.outstanding > 0 && row.status !== 'CANCELLED' && (
                                         <button onClick={() => onPayment(row.id)}
                                             className="px-2.5 py-1 text-xs font-semibold transition-all"
-                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.25)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.15)')}
+                                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.25)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.15)')}
                                         >
                                             Ghi Thu
                                         </button>
@@ -286,32 +287,27 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Tài Chính & Kế Toán
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Quản lý công nợ AR/AP vận hành — Bút toán xuất sang PM kế toán
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-md"
-                    style={{ background: 'rgba(212,168,83,0.08)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                    <div className="w-2 h-2 rounded-full" style={{ background: '#D4A853' }} />
-                    <div>
-                        <p className="text-xs font-bold" style={{ color: '#D4A853' }}>Export-Only</p>
-                        <p className="text-xs" style={{ color: '#64748B' }}>Xuất bút toán → PM kế toán</p>
+            <PageHeader
+                title="Tài Chính & Kế Toán"
+                description="Quản lý công nợ AR/AP vận hành — Bút toán xuất sang PM kế toán"
+                actions={
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                        <div className="w-2 h-2 rounded-full bg-amber-600" />
+                        <div>
+                            <p className="text-xs font-bold text-amber-800">Export-Only</p>
+                            <p className="text-[10px] text-slate-500">Xuất bút toán → PM kế toán</p>
+                        </div>
                     </div>
-                </div>
-            </div>
+                }
+            />
 
             {/* KPIs */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <FinKpiCard label="Phải Thu (AR)" value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} accent="#87CBB9" icon={ArrowUpRight} />
-                <FinKpiCard label="AR Quá Hạn" value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} hóa đơn`} accent="#8B1A2E" icon={AlertCircle} />
-                <FinKpiCard label="Phải Trả (AP)" value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} accent="#D4A853" icon={ArrowDownRight} />
-                <FinKpiCard label="AP Quá Hạn" value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} hóa đơn`} accent="#C45A2A" icon={AlertCircle} />
-                <FinKpiCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} accent="#5BA88A" icon={TrendingDown} />
+                <FinKpiCard label="Phải Thu (AR)" value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} accent="#0E7490" icon={ArrowUpRight} />
+                <FinKpiCard label="AR Quá Hạn" value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} hóa đơn`} accent="#B91C1C" icon={AlertCircle} />
+                <FinKpiCard label="Phải Trả (AP)" value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} accent="#B45309" icon={ArrowDownRight} />
+                <FinKpiCard label="AP Quá Hạn" value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} hóa đơn`} accent="#B45309" icon={AlertCircle} />
+                <FinKpiCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} accent="#15803D" icon={TrendingDown} />
             </div>
 
             {/* Tabs — 2 groups: Operational | Accounting */}
@@ -326,7 +322,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
                                 style={{
                                     background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                    color: tab === t.key ? '#87CBB9' : '#64748B',
+                                    color: tab === t.key ? '#0E7490' : '#64748B',
                                 }}>
                                 <Icon size={13} />
                                 {t.label}
@@ -344,7 +340,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
                                 style={{
                                     background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                    color: tab === t.key ? '#D4A853' : '#64748B',
+                                    color: tab === t.key ? '#B45309' : '#64748B',
                                 }}>
                                 <Icon size={13} />
                                 {t.label}
@@ -411,9 +407,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                         const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
                                         return (
                                             <tr key={row.id}
-                                                style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
+                                                style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
                                             >
                                                 <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</td>
                                                 <td className="px-3 py-3">
@@ -432,7 +428,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{row.currency}</span>
+                                                    <span className="text-xs font-bold" style={{ color: '#B45309' }}>{row.currency}</span>
                                                     {isMultiCurrency && (
                                                         <p className="text-xs" style={{ color: '#64748B' }}>
                                                             ×{row.exchangeRate.toLocaleString()}
@@ -440,7 +436,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                                    <p className="text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
                                                         {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
                                                     </p>
                                                     {isMultiCurrency && row.outstanding > 0 && (
@@ -449,12 +445,12 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                         </p>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#475569' }}>{formatDate(row.dueDate)}</td>
+                                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>{formatDate(row.dueDate)}</td>
                                                 <td className="px-3 py-3">
                                                     <span className="text-xs px-2 py-0.5 rounded-full"
                                                         style={{
-                                                            background: row.status === 'PAID' ? 'rgba(91,168,138,0.15)' : row.isOverdue ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.15)',
-                                                            color: row.status === 'PAID' ? '#5BA88A' : row.isOverdue ? '#8B1A2E' : '#D4A853',
+                                                            background: row.status === 'PAID' ? 'rgba(21,128,61,0.15)' : row.isOverdue ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
+                                                            color: row.status === 'PAID' ? '#15803D' : row.isOverdue ? '#B91C1C' : '#B45309',
                                                         }}>
                                                         {row.status === 'PAID' ? 'Đã Trả' : row.status === 'PARTIALLY_PAID' ? 'Trả 1 Phần' : row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
                                                     </span>
@@ -463,9 +459,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     {row.outstanding > 0 && (
                                                         <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
                                                             className="px-2.5 py-1 text-xs font-semibold"
-                                                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}
-                                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.25)')}
-                                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.15)')}>
+                                                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '4px' }}
+                                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.25)')}
+                                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.15)')}>
                                                             Ghi Trả
                                                         </button>
                                                     )}
@@ -498,7 +494,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 toast.success('Đã xuất AR Aging Excel')
                             } catch { toast.error('Lỗi xuất Excel') }
                         }} className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-md font-semibold"
-                            style={{ border: '1px solid #E2E8F0', color: '#D4A853' }}>
+                            style={{ border: '1px solid #E2E8F0', color: '#B45309' }}>
                             <ArrowDownRight size={13} /> Export AR Aging Excel
                         </button>
                     </div>

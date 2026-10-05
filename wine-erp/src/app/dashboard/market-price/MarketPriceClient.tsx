@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Plus, X, AlertTriangle, DollarSign, Search } from 'lucide-react'
+import { TrendingUp, TrendingDown, Plus, X, AlertTriangle, DollarSign, Search, Tag, Globe, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { type MarketPriceRow, getMarketPrices, addMarketPrice, getProductOptions } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -49,35 +50,40 @@ export function MarketPriceClient({ initialRows, stats }: {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        Giá Thị Trường
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        So sánh Giá Thị Trường vs Giá Vốn vs Giá Bán — Phát hiện rủi ro margin
-                    </p>
-                </div>
-                <button onClick={openDrawer} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
-                    <Plus size={16} /> Thêm Giá TT
-                </button>
-            </div>
+            <PageHeader
+                title="Giá Thị Trường"
+                description="So sánh Giá Thị Trường vs Giá Vốn vs Giá Bán — Phát hiện rủi ro margin"
+                actions={
+                    <Button variant="primary" size="sm" onClick={openDrawer}>
+                        <Plus size={14} className="mr-1.5" /> Thêm Giá TT
+                    </Button>
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
-                {[
-                    { label: 'Tổng Entries', value: stats.totalEntries, accent: '#87CBB9' },
-                    { label: 'SP Tracked', value: stats.trackedProducts, accent: '#4A8FAB' },
-                    { label: 'Dưới Cost', value: belowCostCount, accent: belowCostCount > 0 ? '#8B1A2E' : '#5BA88A' },
-                    { label: 'Nguồn', value: stats.sourceBreakdown.map(s => s.source).join(', ') || '—', accent: '#D4A853' },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
-                    </div>
-                ))}
-            </div>
+            <StatGrid>
+                <StatCard
+                    label="Tổng Entries"
+                    value={stats.totalEntries}
+                    icon={Tag}
+                />
+                <StatCard
+                    label="SP Tracked"
+                    value={stats.trackedProducts}
+                    icon={TrendingUp}
+                />
+                <StatCard
+                    label="Dưới Cost"
+                    value={belowCostCount}
+                    icon={belowCostCount > 0 ? AlertTriangle : CheckCircle2}
+                    tone={belowCostCount > 0 ? 'danger' : 'success'}
+                />
+                <StatCard
+                    label="Nguồn"
+                    value={stats.sourceBreakdown.map(s => s.source).join(', ') || '—'}
+                    icon={Globe}
+                />
+            </StatGrid>
 
             {/* Search */}
             <div className="relative">
@@ -106,27 +112,27 @@ export function MarketPriceClient({ initialRows, stats }: {
                             </td></tr>
                         ) : filtered.map(r => (
                             <tr key={r.id} style={{
-                                borderBottom: '1px solid rgba(42,67,85,0.5)',
-                                background: r.isBelowCost ? 'rgba(139,26,46,0.04)' : 'transparent',
+                                borderBottom: '1px solid #E2E8F0',
+                                background: r.isBelowCost ? 'rgba(185,28,28,0.04)' : 'transparent',
                             }}>
                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>{r.skuCode}</td>
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>{r.productName}</td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
                                     {formatVND(r.marketPrice)}
                                 </td>
                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#475569' }}>
                                     {r.landedCost !== null ? formatVND(r.landedCost) : '—'}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: r.isBelowCost ? '#8B1A2E' : '#5BA88A' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: r.isBelowCost ? '#B91C1C' : '#15803D' }}>
                                     {r.listPrice !== null ? formatVND(r.listPrice) : '—'}
                                 </td>
                                 <td className="px-3 py-2.5">
                                     {r.marginGap !== null ? (
                                         <div className="flex items-center gap-1">
                                             {r.marginGap >= 0
-                                                ? <TrendingUp size={12} style={{ color: '#5BA88A' }} />
-                                                : <TrendingDown size={12} style={{ color: '#8B1A2E' }} />}
-                                            <span className="text-xs font-bold" style={{ color: r.marginGap >= 20 ? '#5BA88A' : r.marginGap >= 0 ? '#D4A853' : '#8B1A2E' }}>
+                                                ? <TrendingUp size={12} style={{ color: '#15803D' }} />
+                                                : <TrendingDown size={12} style={{ color: '#B91C1C' }} />}
+                                            <span className="text-xs font-bold" style={{ color: r.marginGap >= 20 ? '#15803D' : r.marginGap >= 0 ? '#B45309' : '#B91C1C' }}>
                                                 {r.marginGap > 0 ? '+' : ''}{r.marginGap.toFixed(1)}%
                                             </span>
                                         </div>
@@ -137,7 +143,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                                 <td className="px-3 py-2.5">
                                     {r.isBelowCost && (
                                         <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded"
-                                            style={{ background: 'rgba(139,26,46,0.15)', color: '#8B1A2E' }}>
+                                            style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C' }}>
                                             <AlertTriangle size={10} /> Lỗ
                                         </span>
                                     )}
@@ -151,31 +157,31 @@ export function MarketPriceClient({ initialRows, stats }: {
             {/* Create Drawer */}
             {drawerOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Thêm Giá Thị Trường</h3>
-                            <button onClick={() => setDrawerOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
+                    <div className="w-[420px] h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+                            <h3 className="text-base font-bold text-slate-900">Thêm Giá Thị Trường</h3>
+                            <button onClick={() => setDrawerOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1"><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Sản Phẩm *</label>
+                                <label className="block text-xs font-semibold mb-1 text-slate-700">Sản Phẩm *</label>
                                 <select value={form.productId} onChange={e => setForm(f => ({ ...f, productId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
+                                    className="w-full px-3 py-2 rounded-md text-sm bg-white border border-slate-200 text-slate-900">
                                     <option value="">— Chọn SP —</option>
                                     {products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Giá *</label>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-700">Giá *</label>
                                     <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
+                                        className="w-full px-3 py-2 rounded-md text-sm bg-white border border-slate-200 text-slate-900"
                                         placeholder="VD: 500000" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Tiền Tệ</label>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-700">Tiền Tệ</label>
                                     <select value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
+                                        className="w-full px-3 py-2 rounded-md text-sm bg-white border border-slate-200 text-slate-900">
                                         <option value="VND">VND</option>
                                         <option value="USD">USD</option>
                                         <option value="EUR">EUR</option>
@@ -184,22 +190,21 @@ export function MarketPriceClient({ initialRows, stats }: {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Nguồn</label>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-700">Nguồn</label>
                                     <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
+                                        className="w-full px-3 py-2 rounded-md text-sm bg-white border border-slate-200 text-slate-900">
                                         {['Manual', 'Wine-Searcher', 'Competitor', 'Vivino', 'Other'].map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Ngày</label>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-700">Ngày</label>
                                     <input type="date" value={form.priceDate} onChange={e => setForm(f => ({ ...f, priceDate: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
+                                        className="w-full px-3 py-2 rounded-md text-sm bg-white border border-slate-200 text-slate-900" />
                                 </div>
                             </div>
-                            <button onClick={handleAdd} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            <Button variant="primary" size="md" onClick={handleAdd} className="w-full flex items-center justify-center gap-2">
                                 <DollarSign size={14} /> Lưu Giá Thị Trường
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

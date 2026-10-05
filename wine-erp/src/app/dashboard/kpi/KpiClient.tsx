@@ -6,6 +6,7 @@ import {
     Settings, Plus, Trash2, Save, X, Copy, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import type { KpiSummary, KpiTargetRow } from './actions'
 import {
     getKpiSummary, getKpiTargets, upsertKpiTarget, deleteKpiTarget,
@@ -13,9 +14,9 @@ import {
 } from './actions'
 
 const STATUS_CFG = {
-    ON_TRACK: { label: '✅ Đúng KH', color: '#5BA88A', icon: CheckCircle2 },
-    AT_RISK: { label: '⚠️ Chú ý', color: '#D4A853', icon: AlertCircle },
-    BEHIND: { label: '🔴 Chậm', color: '#8B1A2E', icon: TrendingDown },
+    ON_TRACK: { label: '✅ Đúng KH', color: '#15803D', icon: CheckCircle2 },
+    AT_RISK: { label: '⚠️ Chú ý', color: '#B45309', icon: AlertCircle },
+    BEHIND: { label: '🔴 Chậm', color: '#B91C1C', icon: TrendingDown },
     EXCEEDED: { label: '🌟 Vượt KH', color: '#0891B2', icon: TrendingUp },
 }
 
@@ -92,63 +93,53 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        KPI Chỉ Tiêu Kinh Doanh
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        Tháng {month}/{year} — Dữ liệu real-time từ tất cả module
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="KPI Chỉ Tiêu Kinh Doanh"
+                description={`Tháng ${month}/${year} — Dữ liệu real-time từ tất cả module`}
+            />
 
             {/* Tabs */}
-            <div className="flex gap-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                {(['dashboard', 'setup'] as const).map(t => (
-                    <button key={t} onClick={() => setTab(t)}
-                        className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all"
-                        style={{
-                            color: tab === t ? '#87CBB9' : '#64748B',
-                            borderBottom: tab === t ? '2px solid #87CBB9' : '2px solid transparent',
-                        }}>
-                        {t === 'dashboard' ? <><Target size={12} className="inline mr-1" />Dashboard</> :
-                            <><Settings size={12} className="inline mr-1" />Cấu Hình Chỉ Tiêu</>}
-                    </button>
-                ))}
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                {(['dashboard', 'setup'] as const).map(t => {
+                    const isActive = tab === t
+                    return (
+                        <button key={t} onClick={() => setTab(t)}
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
+                            style={{
+                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
+                                color: isActive ? '#0891B2' : '#64748B',
+                                border: isActive ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
+                            }}>
+                            {t === 'dashboard' ? <><Target size={14} /> Dashboard</> :
+                                <><Settings size={14} /> Cấu Hình Chỉ Tiêu</>}
+                        </button>
+                    )
+                })}
             </div>
 
             {tab === 'dashboard' && (
                 <>
                     {/* Overview */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}>
-                            <CheckCircle2 size={20} style={{ color: '#5BA88A' }} />
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Đạt / Vượt KH</p>
-                                <p className="text-xl font-bold" style={{ color: '#5BA88A' }}>{onTrack}/{summaries.length}</p>
-                            </div>
-                        </div>
-                        <div className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #D4A853' }}>
-                            <AlertCircle size={20} style={{ color: '#D4A853' }} />
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Cần Chú Ý</p>
-                                <p className="text-xl font-bold" style={{ color: '#D4A853' }}>
-                                    {summaries.filter(s => s.status === 'AT_RISK').length}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="p-4 rounded-md flex items-center gap-3"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${behind > 0 ? '#8B1A2E' : '#5BA88A'}` }}>
-                            <TrendingDown size={20} style={{ color: behind > 0 ? '#8B1A2E' : '#5BA88A' }} />
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Đang Chậm</p>
-                                <p className="text-xl font-bold" style={{ color: behind > 0 ? '#8B1A2E' : '#5BA88A' }}>{behind}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+                        <StatCard
+                            label="Đạt / Vượt KH"
+                            value={`${onTrack}/${summaries.length}`}
+                            icon={CheckCircle2}
+                            tone="success"
+                        />
+                        <StatCard
+                            label="Cần Chú Ý"
+                            value={summaries.filter(s => s.status === 'AT_RISK').length}
+                            icon={AlertCircle}
+                            tone="warning"
+                        />
+                        <StatCard
+                            label="Đang Chậm"
+                            value={behind}
+                            icon={TrendingDown}
+                            tone={behind > 0 ? 'danger' : 'success'}
+                        />
+                    </StatGrid>
 
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -157,7 +148,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             const barPct = Math.min(Math.min(kpi.progressPct, 120), 100)
                             return (
                                 <div key={kpi.metric} className="p-5 rounded-md"
-                                    style={{ background: '#FFFFFF', border: `1px solid ${kpi.progressPct < 70 ? 'rgba(139,26,46,0.4)' : '#E2E8F0'}` }}>
+                                    style={{ background: '#FFFFFF', border: `1px solid ${kpi.progressPct < 70 ? 'rgba(185,28,28,0.4)' : '#E2E8F0'}` }}>
                                     <div className="flex items-start justify-between mb-4">
                                         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{kpi.label}</p>
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -174,7 +165,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                             <div className="h-full rounded-full transition-all duration-700"
                                                 style={{
                                                     width: `${barPct}%`,
-                                                    background: kpi.progressPct > 110 ? '#D4A853' : kpi.progressPct < 70 ? '#8B1A2E' : kpi.color,
+                                                    background: kpi.progressPct > 110 ? '#B45309' : kpi.progressPct < 70 ? '#B91C1C' : kpi.color,
                                                 }} />
                                         </div>
                                         <div className="flex justify-between mt-1">
@@ -187,7 +178,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                     <p className="text-xs" style={{ color: '#64748B' }}>
                                         {kpi.unit === 'VND' && kpi.actual > 0 ? (
                                             <>
-                                                Dự báo cuối tháng: <span style={{ color: '#D4A853', fontWeight: 600 }}>
+                                                Dự báo cuối tháng: <span style={{ color: '#B45309', fontWeight: 600 }}>
                                                     {formatValue(kpi.actual * (30 / Math.max(new Date().getDate(), 1)), 'VND')}
                                                 </span>
                                                 {kpi.forecast ? ` (AI: ${formatValue(kpi.forecast, 'VND')})` : ''}
@@ -204,7 +195,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
             {tab === 'setup' && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                        <h3 className="text-sm font-bold" style={{ color: '#B45309' }}>
                             Cấu hình chỉ tiêu năm {year}
                         </h3>
                         <div className="flex gap-2">
@@ -214,7 +205,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             </button>
                             <div className="flex items-center gap-1">
                                 <input type="number" className="w-14 px-2 py-1.5 rounded text-xs text-center"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }}
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}
                                     value={growthPct} onChange={e => setGrowthPct(Number(e.target.value))} />
                                 <span className="text-xs" style={{ color: '#64748B' }}>%</span>
                                 <button onClick={async () => {
@@ -232,13 +223,13 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                     setTimeout(() => setCopyResult(null), 4000)
                                 }} disabled={copying}
                                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold disabled:opacity-50"
-                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
                                     {copying ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
                                     Copy từ {year - 1}
                                 </button>
                             </div>
                         </div>
-                        {copyResult && <p className="text-xs mt-1" style={{ color: '#D4A853' }}>{copyResult}</p>}
+                        {copyResult && <p className="text-xs mt-1" style={{ color: '#B45309' }}>{copyResult}</p>}
                     </div>
 
                     {/* Add Form */}
@@ -274,7 +265,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                     <input type="number" value={addForm.targetValue}
                                         onChange={e => setAddForm(f => ({ ...f, targetValue: e.target.value }))}
                                         placeholder="5000000000" className="w-full px-3 py-2 rounded text-xs"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }} />
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }} />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Sales Rep (tuỳ chọn)</label>
@@ -312,14 +303,14 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                 ) : targets.map(t => {
                                     const metricInfo = metrics.find(m => m.metric === t.metric)
                                     return (
-                                        <tr key={t.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <tr key={t.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>
                                                 {metricInfo?.label ?? t.metric}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
                                                 {t.month ? `T${t.month}/${t.year}` : `Năm ${t.year}`}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
                                                 {t.targetValue.toLocaleString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{t.unit}</td>
@@ -329,7 +320,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                             <td className="px-3 py-2.5">
                                                 <button onClick={() => handleDelete(t.id)} className="p-1 transition-all"
                                                     style={{ color: '#64748B' }}
-                                                    onMouseEnter={e => (e.currentTarget.style.color = '#8B1A2E')}
+                                                    onMouseEnter={e => (e.currentTarget.style.color = '#B91C1C')}
                                                     onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}>
                                                     <Trash2 size={13} />
                                                 </button>
@@ -342,14 +333,14 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                     </div>
 
                     {/* Default values info */}
-                    <div className="p-4 rounded-md" style={{ background: 'rgba(135,203,185,0.05)', border: '1px dashed rgba(8, 145, 178, 0.25)' }}>
+                    <div className="p-4 rounded-md" style={{ background: 'rgba(8,145,178,0.05)', border: '1px dashed rgba(8, 145, 178, 0.25)' }}>
                         <p className="text-xs font-bold mb-2" style={{ color: '#0891B2' }}>Giá trị mặc định (khi chưa cấu hình):</p>
                         <div className="grid grid-cols-2 gap-1">
                             {metrics.map(m => {
                                 const def = { REVENUE: '5 tỷ', ORDERS: '50 đơn', NEW_CUSTOMERS: '5 KH', AR_LIMIT: '2 tỷ', STOCK_VALUE: '10 tỷ' }
                                 return (
                                     <p key={m.metric} className="text-xs" style={{ color: '#64748B' }}>
-                                        • {m.label}: <span style={{ color: '#D4A853' }}>{(def as any)[m.metric]}</span>
+                                        • {m.label}: <span style={{ color: '#B45309' }}>{(def as any)[m.metric]}</span>
                                     </p>
                                 )
                             })}

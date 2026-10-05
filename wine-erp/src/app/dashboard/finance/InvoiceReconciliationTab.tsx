@@ -22,21 +22,21 @@ import { formatVND } from '@/lib/utils'
 const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: string; badgeText: string; border: string }> = {
     MATCHED: {
         label: 'Đã Khớp',
-        badgeBg: 'rgba(91,168,138,0.15)',
-        badgeText: '#5BA88A',
-        border: '1px solid rgba(91,168,138,0.4)',
+        badgeBg: 'rgba(21,128,61,0.15)',
+        badgeText: '#15803D',
+        border: '1px solid rgba(21,128,61,0.4)',
     },
     MISSING_INVOICE: {
         label: 'Thiếu HĐ',
-        badgeBg: 'rgba(239,68,68,0.15)',
-        badgeText: '#EF4444',
-        border: '1px solid rgba(239,68,68,0.4)',
+        badgeBg: 'rgba(185,28,28,0.15)',
+        badgeText: '#B91C1C',
+        border: '1px solid rgba(185,28,28,0.4)',
     },
     PENDING_SIGN: {
         label: 'Chờ Ký Số',
-        badgeBg: 'rgba(212,168,83,0.15)',
-        badgeText: '#D4A853',
-        border: '1px solid rgba(212,168,83,0.4)',
+        badgeBg: 'rgba(180,83,9,0.15)',
+        badgeText: '#B45309',
+        border: '1px solid rgba(180,83,9,0.4)',
     },
     DISCREPANCY: {
         label: 'Lệch Tiền',
@@ -488,8 +488,8 @@ export function InvoiceReconciliationTab() {
                     className="px-4 py-2 rounded-t-md text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                     style={{
                         background: activeView === 'SO_VIEW' ? '#FFFFFF' : 'transparent',
-                        color: activeView === 'SO_VIEW' ? '#87CBB9' : '#475569',
-                        borderBottom: activeView === 'SO_VIEW' ? '2px solid #87CBB9' : '2px solid transparent',
+                        color: activeView === 'SO_VIEW' ? '#0E7490' : '#475569',
+                        borderBottom: activeView === 'SO_VIEW' ? '2px solid #0E7490' : '2px solid transparent',
                     }}
                 >
                     <FileText size={14} />
@@ -504,8 +504,8 @@ export function InvoiceReconciliationTab() {
                     className="px-4 py-2 rounded-t-md text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                     style={{
                         background: activeView === 'VNPT_VIEW' ? '#FFFFFF' : 'transparent',
-                        color: activeView === 'VNPT_VIEW' ? '#87CBB9' : '#475569',
-                        borderBottom: activeView === 'VNPT_VIEW' ? '2px solid #87CBB9' : '2px solid transparent',
+                        color: activeView === 'VNPT_VIEW' ? '#0E7490' : '#475569',
+                        borderBottom: activeView === 'VNPT_VIEW' ? '2px solid #0E7490' : '2px solid transparent',
                     }}
                 >
                     <Building2 size={14} />
@@ -529,7 +529,7 @@ export function InvoiceReconciliationTab() {
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
                         <span>Kiểm Soát & Đối Chiếu Hóa Đơn VAT</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-700 border border-blue-500/30">
                             VNPT e-Invoice TT78
                         </span>
                     </h3>
@@ -543,7 +543,7 @@ export function InvoiceReconciliationTab() {
                         onClick={handleBatchSync}
                         disabled={batchSyncing || loading}
                         className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-slate-900"
-                        style={{ background: '#87CBB9' }}
+                        style={{ background: '#0E7490' }}
                         title="Rà soát toàn bộ các đơn hàng đang có bản nháp trên VNPT để tự động kéo số HĐ và link PDF đã ký"
                     >
                         {batchSyncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
@@ -567,10 +567,10 @@ export function InvoiceReconciliationTab() {
                 {/* 1. Coverage */}
                 <div
                     onClick={() => { setStatusFilter('ALL'); setPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#87CBB9]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#0E7490]"
                     style={{
                         background: '#FFFFFF',
-                        border: statusFilter === 'ALL' ? '2px solid #87CBB9' : '1px solid #E2E8F0',
+                        border: statusFilter === 'ALL' ? '2px solid #0E7490' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
@@ -590,22 +590,22 @@ export function InvoiceReconciliationTab() {
                 {/* 2. Missing Invoices */}
                 <div
                     onClick={() => { setStatusFilter('MISSING_INVOICE'); setPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#EF4444]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#B91C1C]"
                     style={{
                         background: '#FFFFFF',
-                        border: statusFilter === 'MISSING_INVOICE' ? '2px solid #EF4444' : '1px solid #E2E8F0',
+                        border: statusFilter === 'MISSING_INVOICE' ? '2px solid #B91C1C' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#EF4444' }}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B91C1C' }}>
                             Cần Xuất HĐ
                         </span>
-                        <AlertCircle size={16} style={{ color: '#EF4444' }} />
+                        <AlertCircle size={16} style={{ color: '#B91C1C' }} />
                     </div>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#EF4444' }}>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#B91C1C' }}>
                         {kpis.missingOrders} <span className="text-xs font-normal">đơn</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#FCA5A5' }}>
+                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#B91C1C' }}>
                         {formatVND(kpis.missingAmount)}
                     </p>
                 </div>
@@ -613,19 +613,19 @@ export function InvoiceReconciliationTab() {
                 {/* 3. Pending Sign */}
                 <div
                     onClick={() => { setStatusFilter('PENDING_SIGN'); setPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#D4A853]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#B45309]"
                     style={{
                         background: '#FFFFFF',
-                        border: statusFilter === 'PENDING_SIGN' ? '2px solid #D4A853' : '1px solid #E2E8F0',
+                        border: statusFilter === 'PENDING_SIGN' ? '2px solid #B45309' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#D4A853' }}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B45309' }}>
                             Chờ Ký Số VNPT
                         </span>
-                        <Clock size={16} style={{ color: '#D4A853' }} />
+                        <Clock size={16} style={{ color: '#B45309' }} />
                     </div>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#D4A853' }}>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#B45309' }}>
                         {kpis.pendingSignOrders} <span className="text-xs font-normal">đơn</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono" style={{ color: '#FDE68A' }}>
@@ -702,8 +702,8 @@ export function InvoiceReconciliationTab() {
                                     className="px-3 py-1.5 rounded text-xs font-medium transition-all cursor-pointer"
                                     style={{
                                         background: active ? '#FFFFFF' : 'transparent',
-                                        color: active ? '#87CBB9' : '#475569',
-                                        border: active ? '1px solid #87CBB9' : '1px solid transparent',
+                                        color: active ? '#0E7490' : '#475569',
+                                        border: active ? '1px solid #0E7490' : '1px solid transparent',
                                     }}
                                 >
                                     {labels[p]}
@@ -772,10 +772,10 @@ export function InvoiceReconciliationTab() {
 
                     {[
                         { key: 'ALL' as const, label: 'Tất Cả', count: kpis.totalOrders, color: '#475569', activecolor: '#0891B2', activeBg: '#FFFFFF' },
-                        { key: 'MISSING_INVOICE' as const, label: 'Thiếu HĐ', count: kpis.missingOrders, color: '#EF4444', activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.15)' },
+                        { key: 'MISSING_INVOICE' as const, label: 'Thiếu HĐ', count: kpis.missingOrders, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
                         { key: 'DISCREPANCY' as const, label: 'Lệch Tiền', count: kpis.discrepancyOrders, color: '#F97316', activeColor: '#F97316', activeBg: 'rgba(249,115,22,0.15)' },
-                        { key: 'PENDING_SIGN' as const, label: 'Chờ Ký Số', count: kpis.pendingSignOrders, color: '#D4A853', activeColor: '#D4A853', activeBg: 'rgba(212,168,83,0.15)' },
-                        { key: 'MATCHED' as const, label: 'Đã Khớp', count: kpis.matchedOrders, color: '#5BA88A', activeColor: '#5BA88A', activeBg: 'rgba(91,168,138,0.15)' },
+                        { key: 'PENDING_SIGN' as const, label: 'Chờ Ký Số', count: kpis.pendingSignOrders, color: '#B45309', activeColor: '#B45309', activeBg: 'rgba(180,83,9,0.15)' },
+                        { key: 'MATCHED' as const, label: 'Đã Khớp', count: kpis.matchedOrders, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
                         { key: 'EXEMPT' as const, label: 'Miễn HĐ', count: kpis.exemptOrders, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
                     ].map(tab => {
                         const active = statusFilter === tab.key
@@ -890,7 +890,7 @@ export function InvoiceReconciliationTab() {
 
                                             {/* 3. Legal Entity */}
                                             <td className="py-3 px-2">
-                                                <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#D4A853' }}>
+                                                <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}>
                                                     {r.legalEntityCode || 'TA'}
                                                 </span>
                                             </td>
@@ -914,20 +914,20 @@ export function InvoiceReconciliationTab() {
                                                         </div>
                                                         {Math.abs(r.variance) > 1000 ? (
                                                             <div 
-                                                                className="text-[10px] font-bold text-orange-400 cursor-help"
+                                                                className="text-[10px] font-bold text-orange-700 cursor-help"
                                                                 title={r.discrepancyReason || `Lệch tổng tiền ${formatVND(r.variance)}`}
                                                             >
                                                                 Lệch: {formatVND(r.variance)}
                                                             </div>
                                                         ) : r.vatVariance && Math.abs(r.vatVariance) > 1000 ? (
                                                             <div 
-                                                                className="text-[10px] font-bold text-orange-400 cursor-help"
+                                                                className="text-[10px] font-bold text-orange-700 cursor-help"
                                                                 title={r.discrepancyReason || `Lệch thuế VAT ${formatVND(r.vatVariance)}`}
                                                             >
                                                                 Lệch VAT: {formatVND(r.vatVariance)}
                                                             </div>
                                                         ) : (
-                                                            <div className="text-[10px] text-emerald-400">Khớp 100%</div>
+                                                            <div className="text-[10px] text-emerald-700">Khớp 100%</div>
                                                         )}
                                                     </div>
                                                 ) : (
@@ -957,7 +957,7 @@ export function InvoiceReconciliationTab() {
                                                             {r.invoiceNo}
                                                         </div>
                                                         {r.taxAuthorityCode && (
-                                                            <div className="text-[10px] font-mono truncate max-w-[130px] text-emerald-400" title={r.taxAuthorityCode}>
+                                                            <div className="text-[10px] font-mono truncate max-w-[130px] text-emerald-700" title={r.taxAuthorityCode}>
                                                                 CQT: {r.taxAuthorityCode}
                                                             </div>
                                                         )}
@@ -1062,7 +1062,7 @@ export function InvoiceReconciliationTab() {
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
                         <span>Danh Sách Hóa Đơn Điện Tử VNPT</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
                             Thắng Ân (TA) & Ly's Cellar (LC)
                         </span>
                     </h3>
@@ -1076,7 +1076,7 @@ export function InvoiceReconciliationTab() {
                         onClick={() => fileInputRef.current?.click()}
                         disabled={vnptUploading || vnptLoading}
                         className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-slate-900"
-                        style={{ background: '#87CBB9' }}
+                        style={{ background: '#0E7490' }}
                         title="Tải lên file bảng kê chi tiết (.xlsx) xuất từ portal VNPT"
                     >
                         {vnptUploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
@@ -1109,10 +1109,10 @@ export function InvoiceReconciliationTab() {
                 {/* 1. Total Invoices */}
                 <div
                     onClick={() => { setVnptStatus('ALL'); setVnptPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#87CBB9]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#0E7490]"
                     style={{
                         background: '#FFFFFF',
-                        border: vnptStatus === 'ALL' ? '2px solid #87CBB9' : '1px solid #E2E8F0',
+                        border: vnptStatus === 'ALL' ? '2px solid #0E7490' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
@@ -1132,22 +1132,22 @@ export function InvoiceReconciliationTab() {
                 {/* 2. Assigned Invoices */}
                 <div
                     onClick={() => { setVnptStatus('ASSIGNED'); setVnptPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#5BA88A]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#15803D]"
                     style={{
                         background: '#FFFFFF',
-                        border: vnptStatus === 'ASSIGNED' ? '2px solid #5BA88A' : '1px solid #E2E8F0',
+                        border: vnptStatus === 'ASSIGNED' ? '2px solid #15803D' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#5BA88A' }}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#15803D' }}>
                             Đã Gán Vào Đơn ERP
                         </span>
-                        <CheckCircle2 size={16} style={{ color: '#5BA88A' }} />
+                        <CheckCircle2 size={16} style={{ color: '#15803D' }} />
                     </div>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#5BA88A' }}>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#15803D' }}>
                         {vnptKpis.assignedCount} <span className="text-xs font-normal">hóa đơn</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono text-emerald-400/80">
+                    <p className="text-[11px] mt-1 font-mono text-emerald-700/80">
                         {formatVND(vnptKpis.assignedAmount)}
                     </p>
                 </div>
@@ -1155,19 +1155,19 @@ export function InvoiceReconciliationTab() {
                 {/* 3. Unassigned / Orphan Invoices */}
                 <div
                     onClick={() => { setVnptStatus('UNASSIGNED'); setVnptPage(1) }}
-                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#EF4444]"
+                    className="p-4 rounded-md transition-all cursor-pointer hover:border-[#B91C1C]"
                     style={{
                         background: '#FFFFFF',
-                        border: vnptStatus === 'UNASSIGNED' ? '2px solid #EF4444' : '1px solid #E2E8F0',
+                        border: vnptStatus === 'UNASSIGNED' ? '2px solid #B91C1C' : '1px solid #E2E8F0',
                     }}
                 >
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#EF4444' }}>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B91C1C' }}>
                             Chưa Gán Đơn (Cần Gán)
                         </span>
-                        <AlertCircle size={16} style={{ color: '#EF4444' }} />
+                        <AlertCircle size={16} style={{ color: '#B91C1C' }} />
                     </div>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#EF4444' }}>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#B91C1C' }}>
                         {vnptKpis.unassignedCount} <span className="text-xs font-normal">hóa đơn</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono text-rose-700">
@@ -1236,8 +1236,8 @@ export function InvoiceReconciliationTab() {
 
                     {[
                         { key: 'ALL' as const, label: 'Tất Cả', count: vnptKpis.totalInvoices, color: '#475569', activecolor: '#0891B2', activeBg: '#FFFFFF' },
-                        { key: 'UNASSIGNED' as const, label: 'Chưa Gán Đơn', count: vnptKpis.unassignedCount, color: '#EF4444', activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.15)' },
-                        { key: 'ASSIGNED' as const, label: 'Đã Gán Đơn', count: vnptKpis.assignedCount, color: '#5BA88A', activeColor: '#5BA88A', activeBg: 'rgba(91,168,138,0.15)' },
+                        { key: 'UNASSIGNED' as const, label: 'Chưa Gán Đơn', count: vnptKpis.unassignedCount, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
+                        { key: 'ASSIGNED' as const, label: 'Đã Gán Đơn', count: vnptKpis.assignedCount, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
                         { key: 'SPECIAL' as const, label: 'Điều Chỉnh / Nội Bộ', count: vnptKpis.specialCount, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
                     ].map(tab => {
                         const active = vnptStatus === tab.key
@@ -1341,9 +1341,9 @@ export function InvoiceReconciliationTab() {
                                                 <span
                                                     className="px-2 py-0.5 rounded text-[10px] font-bold"
                                                     style={{
-                                                        background: item.entityCode === 'LC' ? 'rgba(56,189,248,0.15)' : 'rgba(212,168,83,0.15)',
-                                                        color: item.entityCode === 'LC' ? '#38BDF8' : '#D4A853',
-                                                        border: item.entityCode === 'LC' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(212,168,83,0.3)',
+                                                        background: item.entityCode === 'LC' ? 'rgba(56,189,248,0.15)' : 'rgba(180,83,9,0.15)',
+                                                        color: item.entityCode === 'LC' ? '#38BDF8' : '#B45309',
+                                                        border: item.entityCode === 'LC' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(180,83,9,0.3)',
                                                     }}
                                                 >
                                                     {item.entityCode}
@@ -1359,7 +1359,7 @@ export function InvoiceReconciliationTab() {
                                                     MST: {item.buyerTaxId || 'Khách lẻ'}
                                                 </div>
                                                 {item.note && (
-                                                    <div className="text-[10px] italic text-amber-400/80 truncate mt-0.5" title={item.note}>
+                                                    <div className="text-[10px] italic text-amber-700/80 truncate mt-0.5" title={item.note}>
                                                         📝 {item.note}
                                                     </div>
                                                 )}
@@ -1381,9 +1381,9 @@ export function InvoiceReconciliationTab() {
                                                     <span
                                                         className="px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1"
                                                         style={{
-                                                            background: 'rgba(91,168,138,0.15)',
-                                                            color: '#5BA88A',
-                                                            border: '1px solid rgba(91,168,138,0.4)',
+                                                            background: 'rgba(21,128,61,0.15)',
+                                                            color: '#15803D',
+                                                            border: '1px solid rgba(21,128,61,0.4)',
                                                         }}
                                                     >
                                                         <Check size={12} /> Đã Gán Đơn
@@ -1414,9 +1414,9 @@ export function InvoiceReconciliationTab() {
                                                     <span
                                                         className="px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1"
                                                         style={{
-                                                            background: 'rgba(239,68,68,0.15)',
-                                                            color: '#EF4444',
-                                                            border: '1px solid rgba(239,68,68,0.4)',
+                                                            background: 'rgba(185,28,28,0.15)',
+                                                            color: '#B91C1C',
+                                                            border: '1px solid rgba(185,28,28,0.4)',
                                                         }}
                                                     >
                                                         <AlertCircle size={12} /> Chưa Gán Đơn
@@ -1459,7 +1459,7 @@ export function InvoiceReconciliationTab() {
                                                     <button
                                                         onClick={() => handleUnlinkVnpt(item)}
                                                         disabled={isUnlinking}
-                                                        className="px-2.5 py-1 rounded text-[11px] font-semibold transition-all border border-slate-200 text-slate-600 hover:text-rose-400 hover:border-rose-500/40 cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                                                        className="px-2.5 py-1 rounded text-[11px] font-semibold transition-all border border-slate-200 text-slate-600 hover:text-rose-700 hover:border-rose-500/40 cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
                                                         title="Hủy gán số hóa đơn này khỏi đơn hàng ERP"
                                                     >
                                                         {isUnlinking ? <Loader2 size={11} className="animate-spin" /> : <Unlink size={11} />}
@@ -1469,7 +1469,7 @@ export function InvoiceReconciliationTab() {
                                                     <button
                                                         onClick={() => handleOpenVnptLinkModal(item)}
                                                         className="px-2.5 py-1 rounded text-[11px] font-bold transition-all shadow-sm cursor-pointer inline-flex items-center gap-1 text-slate-900"
-                                                        style={{ background: '#87CBB9' }}
+                                                        style={{ background: '#0E7490' }}
                                                         title="Tìm đơn hàng ERP để gán số hóa đơn này"
                                                     >
                                                         <Link2 size={11} /> Gán Đơn
@@ -1577,7 +1577,7 @@ export function InvoiceReconciliationTab() {
                             type="submit"
                             disabled={linking || !linkInvoiceNo.trim()}
                             className="px-4 py-2 rounded font-bold text-xs text-slate-900 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                            style={{ background: '#87CBB9' }}
+                            style={{ background: '#0E7490' }}
                         >
                             {linking && <Loader2 size={12} className="animate-spin" />}
                             Lưu Gán Hóa Đơn
@@ -1629,7 +1629,7 @@ export function InvoiceReconciliationTab() {
                         </div>
                         <div>
                             <span style={{ color: '#475569' }}>Tổng Thanh Toán: </span>
-                            <span className="font-mono font-bold text-emerald-400 text-sm">{formatVND(selectedVnptItem.totalGross)}</span>
+                            <span className="font-mono font-bold text-emerald-700 text-sm">{formatVND(selectedVnptItem.totalGross)}</span>
                         </div>
                         <div>
                             <span style={{ color: '#475569' }}>Pháp Nhân Bán: </span>
@@ -1712,7 +1712,7 @@ export function InvoiceReconciliationTab() {
                                             onClick={() => handlePerformLinkVnpt(order.id, order.soNo)}
                                             disabled={isLinkingThis}
                                             className="px-3 py-1.5 rounded text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 text-slate-900 flex items-center gap-1.5"
-                                            style={{ background: '#87CBB9' }}
+                                            style={{ background: '#0E7490' }}
                                         >
                                             {isLinkingThis ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                                             Chọn & Gán

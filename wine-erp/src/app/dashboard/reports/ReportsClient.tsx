@@ -8,35 +8,36 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppLocale } from '@/lib/i18n'
+import { PageHeader, StatGrid, StatCard } from '@/components/ui'
 import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
 import { REPORT_CATALOG, type ReportKey } from './constants'
 import { getReportsDictionary } from './i18n'
 
 const CHANNEL_COLOR: Record<string, string> = {
-    HORECA: '#87CBB9',
-    WHOLESALE_DISTRIBUTOR: '#4A8FAB',
-    VIP_RETAIL: '#D4A853',
-    DIRECT_INDIVIDUAL: '#5BA88A',
+    HORECA: '#0E7490',
+    WHOLESALE_DISTRIBUTOR: '#1D4ED8',
+    VIP_RETAIL: '#B45309',
+    DIRECT_INDIVIDUAL: '#15803D',
 }
 
 const WINE_TYPE_COLOR: Record<string, string> = {
-    RED: '#8B1A2E',
-    WHITE: '#D4A853',
-    ROSE: '#C45A2A',
-    SPARKLING: '#87CBB9',
-    FORTIFIED: '#4A8FAB',
-    DESSERT: '#A5DED0',
+    RED: '#B91C1C',
+    WHITE: '#B45309',
+    ROSE: '#B45309',
+    SPARKLING: '#0E7490',
+    FORTIFIED: '#1D4ED8',
+    DESSERT: '#0891B2',
 }
 
 const MODULE_COLORS: Record<string, string> = {
-    WMS: '#5BA88A',
-    SLS: '#87CBB9',
-    FIN: '#D4A853',
-    CST: '#4A8FAB',
+    WMS: '#15803D',
+    SLS: '#0E7490',
+    FIN: '#B45309',
+    CST: '#1D4ED8',
     PRC: '#475569',
-    CRM: '#C45A2A',
-    STM: '#A5DED0',
-    TAX: '#E05252',
+    CRM: '#B45309',
+    STM: '#0891B2',
+    TAX: '#B91C1C',
 }
 
 type TabKey = 'overview' | 'export' | 'schedule'
@@ -128,14 +129,10 @@ export function ReportsClient({
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            <div>
-                <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                    {t.title}
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                    {t.subtitle}
-                </p>
-            </div>
+            <PageHeader
+                title={t.title}
+                description={t.subtitle}
+            />
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -146,7 +143,7 @@ export function ReportsClient({
                         <button
                             key={tabItem.key}
                             onClick={() => (tabItem.key === 'schedule' ? loadSchedules() : setTab(tabItem.key))}
-                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
                             style={{
                                 background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
                                 color: isActive ? '#0891B2' : '#64748B',
@@ -163,64 +160,40 @@ export function ReportsClient({
             {tab === 'overview' && (
                 <>
                     {/* Summary cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #87CBB9' }}
-                        >
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                {t.kpiCards.rev6m}
-                            </p>
-                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#0891B2' }}>
-                                {formatFriendlyShort(totalRevenue, isEn)}
-                            </p>
-                        </div>
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}
-                        >
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                {t.kpiCards.stockValue}
-                            </p>
-                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#5BA88A' }}>
-                                {formatFriendlyShort(stockValuation.totalValue, isEn)}
-                            </p>
-                        </div>
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #D4A853' }}
-                        >
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                {t.kpiCards.totalStock}
-                            </p>
-                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#D4A853' }}>
-                                {stockValuation.totalQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {t.kpiCards.bottlesUnit}
-                            </p>
-                        </div>
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #4A8FAB' }}
-                        >
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                {t.kpiCards.activeSkus}
-                            </p>
-                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#4A8FAB' }}>
-                                {stockValuation.productCount}
-                            </p>
-                        </div>
-                    </div>
+                    <StatGrid>
+                        <StatCard
+                            label={t.kpiCards.rev6m}
+                            value={formatFriendlyShort(totalRevenue, isEn)}
+                            icon={TrendingUp}
+                        />
+                        <StatCard
+                            label={t.kpiCards.stockValue}
+                            value={formatFriendlyShort(stockValuation.totalValue, isEn)}
+                            icon={Package}
+                        />
+                        <StatCard
+                            label={t.kpiCards.totalStock}
+                            value={`${stockValuation.totalQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpiCards.bottlesUnit}`}
+                            icon={Wine}
+                        />
+                        <StatCard
+                            label={t.kpiCards.activeSkus}
+                            value={stockValuation.productCount}
+                            icon={BarChart3}
+                        />
+                    </StatGrid>
 
                     {/* Financial Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div
                             className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #5BA88A' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #15803D' }}
                         >
                             <div className="flex justify-between items-center mb-3">
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                     {t.financial.arTitle}
                                 </p>
-                                <Wallet size={16} style={{ color: '#5BA88A' }} />
+                                <Wallet size={16} style={{ color: '#15803D' }} />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
@@ -232,10 +205,10 @@ export function ReportsClient({
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#E05252' }}>
+                                    <p className="text-[11px]" style={{ color: '#B91C1C' }}>
                                         {t.financial.overdue}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#E05252' }}>
+                                    <p className="text-lg font-bold font-mono" style={{ color: '#B91C1C' }}>
                                         {formatCurrency(financialSummary.ar.overdue)}
                                     </p>
                                 </div>
@@ -243,13 +216,13 @@ export function ReportsClient({
                         </div>
                         <div
                             className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #C45A2A' }}
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #B45309' }}
                         >
                             <div className="flex justify-between items-center mb-3">
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                     {t.financial.apTitle}
                                 </p>
-                                <Wallet size={16} style={{ color: '#C45A2A' }} />
+                                <Wallet size={16} style={{ color: '#B45309' }} />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
@@ -261,10 +234,10 @@ export function ReportsClient({
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#E05252' }}>
+                                    <p className="text-[11px]" style={{ color: '#B91C1C' }}>
                                         {t.financial.overdue}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#E05252' }}>
+                                    <p className="text-lg font-bold font-mono" style={{ color: '#B91C1C' }}>
                                         {formatCurrency(financialSummary.ap.overdue)}
                                     </p>
                                 </div>
@@ -312,7 +285,7 @@ export function ReportsClient({
                                                 className="w-full rounded-t-md transition-all duration-500 group-hover:opacity-90"
                                                 style={{
                                                     height: `${Math.max(4, (pct / 100) * 140)}px`,
-                                                    background: pct > 70 ? '#87CBB9' : pct > 40 ? '#5BA88A' : '#E2E8F0',
+                                                    background: pct > 70 ? '#0E7490' : pct > 40 ? '#15803D' : '#E2E8F0',
                                                 }}
                                             />
                                             <p className="text-xs font-medium" style={{ color: '#64748B' }}>
@@ -415,7 +388,7 @@ export function ReportsClient({
                                                     className="text-[10px] font-bold w-4 text-center flex-shrink-0 rounded-full"
                                                     style={{
                                                         color: i < 3 ? '#FFFFFF' : '#64748B',
-                                                        background: i === 0 ? '#D4A853' : i === 1 ? '#475569' : i === 2 ? '#C45A2A' : 'transparent',
+                                                        background: i === 0 ? '#B45309' : i === 1 ? '#475569' : i === 2 ? '#B45309' : 'transparent',
                                                     }}
                                                 >
                                                     {i + 1}
@@ -510,7 +483,7 @@ export function ReportsClient({
                                                     </div>
                                                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#F1F5F9' }}>
                                                         <div
-                                                            className="h-full rounded-full transition-all duration-500 bg-[#87CBB9]"
+                                                            className="h-full rounded-full transition-all duration-500 bg-[#0E7490]"
                                                             style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
@@ -558,7 +531,7 @@ export function ReportsClient({
                                                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#F1F5F9' }}>
                                                     <div
                                                         className="h-full rounded-full transition-all duration-500"
-                                                        style={{ width: `${pct}%`, background: '#87CBB9' }}
+                                                        style={{ width: `${pct}%`, background: '#0E7490' }}
                                                     />
                                                 </div>
                                             </div>
@@ -574,7 +547,7 @@ export function ReportsClient({
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
-                                <Trophy size={18} style={{ color: '#D4A853' }} />
+                                <Trophy size={18} style={{ color: '#B45309' }} />
                                 <h3 className="font-semibold" style={{ color: '#0F172A' }}>
                                     {t.analytics.topSalesRepsTitle}
                                 </h3>
@@ -590,7 +563,7 @@ export function ReportsClient({
                                             <div
                                                 className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
                                                 style={{
-                                                    background: i === 0 ? '#D4A853' : i === 1 ? '#475569' : i === 2 ? '#C45A2A' : '#F1F5F9',
+                                                    background: i === 0 ? '#B45309' : i === 1 ? '#475569' : i === 2 ? '#B45309' : '#F1F5F9',
                                                     color: i < 3 ? '#FFFFFF' : '#64748B',
                                                 }}
                                             >
@@ -616,10 +589,10 @@ export function ReportsClient({
                         {/* Low Stock Alerts */}
                         <div
                             className="col-span-12 lg:col-span-4 p-5 rounded-md"
-                            style={{ background: 'rgba(224, 82, 82, 0.05)', border: '1px solid rgba(224, 82, 82, 0.2)' }}
+                            style={{ background: 'rgba(185,28,28, 0.05)', border: '1px solid rgba(185,28,28, 0.2)' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
-                                <AlertTriangle size={18} style={{ color: '#E05252' }} />
+                                <AlertTriangle size={18} style={{ color: '#B91C1C' }} />
                                 <h3 className="font-semibold" style={{ color: '#0F172A' }}>
                                     {t.analytics.lowStockTitle}
                                 </h3>
@@ -634,7 +607,7 @@ export function ReportsClient({
                                         <div
                                             key={l.productId}
                                             className="flex items-center justify-between p-2 rounded"
-                                            style={{ background: 'rgba(224, 82, 82, 0.1)' }}
+                                            style={{ background: 'rgba(185,28,28, 0.1)' }}
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>
@@ -645,7 +618,7 @@ export function ReportsClient({
                                                 </p>
                                             </div>
                                             <div className="text-right ml-3 flex-shrink-0">
-                                                <p className="text-xs font-bold font-mono" style={{ color: '#E05252' }}>
+                                                <p className="text-xs font-bold font-mono" style={{ color: '#B91C1C' }}>
                                                     {l.qtyAvailable.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {t.analytics.bottlesSold}
                                                 </p>
                                             </div>
@@ -662,7 +635,7 @@ export function ReportsClient({
                 <div className="space-y-4">
                     <div
                         className="p-4 rounded-md"
-                        style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(8, 145, 178, 0.15)' }}
+                        style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(8, 145, 178, 0.15)' }}
                     >
                         <p className="text-xs" style={{ color: '#0891B2' }}>
                             <FileSpreadsheet size={14} className="inline mr-1.5" />
@@ -723,9 +696,9 @@ export function ReportsClient({
                                                     disabled={isDownloading}
                                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-all disabled:opacity-50 cursor-pointer"
                                                     style={{
-                                                        background: justDownloaded ? 'rgba(91,168,138,0.15)' : 'rgba(8, 145, 178, 0.08)',
-                                                        color: justDownloaded ? '#5BA88A' : '#0891B2',
-                                                        border: `1px solid ${justDownloaded ? 'rgba(91,168,138,0.3)' : 'rgba(8, 145, 178, 0.2)'}`,
+                                                        background: justDownloaded ? 'rgba(21,128,61,0.15)' : 'rgba(8, 145, 178, 0.08)',
+                                                        color: justDownloaded ? '#15803D' : '#0891B2',
+                                                        border: `1px solid ${justDownloaded ? 'rgba(21,128,61,0.3)' : 'rgba(8, 145, 178, 0.2)'}`,
                                                     }}
                                                 >
                                                     {isDownloading ? (
@@ -757,9 +730,9 @@ export function ReportsClient({
                 <div className="space-y-4">
                     <div
                         className="p-4 rounded-md"
-                        style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.2)' }}
+                        style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.2)' }}
                     >
-                        <p className="text-xs" style={{ color: '#D4A853' }}>
+                        <p className="text-xs" style={{ color: '#B45309' }}>
                             <Calendar size={14} className="inline mr-1.5" />
                             {t.schedules.bannerText}
                         </p>
@@ -767,7 +740,7 @@ export function ReportsClient({
 
                     {scheduleLoading ? (
                         <div className="flex items-center justify-center py-16 gap-2">
-                            <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
+                            <Loader2 size={16} className="animate-spin" style={{ color: '#B45309' }} />
                             <span className="text-sm" style={{ color: '#64748B' }}>
                                 {t.schedules.loading}
                             </span>
@@ -810,7 +783,7 @@ export function ReportsClient({
                                                     {s.templateName}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#D4A853' }}>
+                                                    <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#B45309' }}>
                                                         <Clock size={11} /> {freqLabel}
                                                     </span>
                                                 </td>
@@ -842,9 +815,9 @@ export function ReportsClient({
                                                         }}
                                                         className="text-xs font-semibold px-2 py-1 rounded transition-all cursor-pointer"
                                                         style={{
-                                                            background: isActive ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)',
-                                                            color: isActive ? '#5BA88A' : '#8B1A2E',
-                                                            border: `1px solid ${isActive ? 'rgba(91,168,138,0.3)' : 'rgba(139,26,46,0.3)'}`,
+                                                            background: isActive ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)',
+                                                            color: isActive ? '#15803D' : '#B91C1C',
+                                                            border: `1px solid ${isActive ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                                                         }}
                                                     >
                                                         {isActive ? t.schedules.active : t.schedules.paused}

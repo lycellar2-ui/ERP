@@ -20,22 +20,22 @@ const inputStyle: React.CSSProperties = {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    CONFIRMED: { label: 'Đã Tính', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
-    ALLOCATED: { label: 'Hoàn Tất', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    DRAFT: { label: 'Nháp', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    CONFIRMED: { label: 'Đã Tính', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
+    ALLOCATED: { label: 'Hoàn Tất', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
 }
 
 const SHIPMENT_STATUS_MAP: Record<string, { label: string; color: string }> = {
     BOOKED: { label: 'Booked', color: '#64748B' },
-    ON_VESSEL: { label: 'On Vessel', color: '#4A8FAB' },
-    ARRIVED_PORT: { label: 'Arrived Port', color: '#D4A853' },
+    ON_VESSEL: { label: 'On Vessel', color: '#1D4ED8' },
+    ARRIVED_PORT: { label: 'Arrived Port', color: '#B45309' },
     CUSTOMS_CLEARED: { label: 'Customs Cleared', color: '#0891B2' },
-    DELIVERED_TO_WAREHOUSE: { label: 'Delivered', color: '#5BA88A' },
+    DELIVERED_TO_WAREHOUSE: { label: 'Delivered', color: '#15803D' },
 }
 
 const WINE_COLORS: Record<string, string> = {
-    RED: '#8B1A2E', WHITE: '#D4A853', ROSE: '#C45A2A',
-    SPARKLING: '#87CBB9', FORTIFIED: '#4A8FAB', DESSERT: '#A5DED0',
+    RED: '#B91C1C', WHITE: '#B45309', ROSE: '#B45309',
+    SPARKLING: '#0E7490', FORTIFIED: '#1D4ED8', DESSERT: '#0891B2',
 }
 
 export function LandedCostTab() {
@@ -224,13 +224,13 @@ export function LandedCostTab() {
                 {/* Action messages */}
                 {actionMsg && (
                     <div className="flex items-center gap-2 p-3 rounded-md" style={{
-                        background: actionMsg.type === 'ok' ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.1)',
-                        border: `1px solid ${actionMsg.type === 'ok' ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
+                        background: actionMsg.type === 'ok' ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.1)',
+                        border: `1px solid ${actionMsg.type === 'ok' ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                     }}>
                         {actionMsg.type === 'ok'
-                            ? <CheckCircle2 size={14} style={{ color: '#5BA88A' }} />
-                            : <AlertTriangle size={14} style={{ color: '#E05252' }} />}
-                        <span className="text-xs" style={{ color: actionMsg.type === 'ok' ? '#5BA88A' : '#E05252' }}>
+                            ? <CheckCircle2 size={14} style={{ color: '#15803D' }} />
+                            : <AlertTriangle size={14} style={{ color: '#B91C1C' }} />}
+                        <span className="text-xs" style={{ color: actionMsg.type === 'ok' ? '#15803D' : '#B91C1C' }}>
                             {actionMsg.text}
                         </span>
                     </div>
@@ -284,9 +284,9 @@ export function LandedCostTab() {
                             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                                 {[
                                     { label: 'CIF', value: detail.cifAmount, color: '#475569', suffix: ` ${detail.cifCurrency}` },
-                                    { label: 'Thuế NK', value: detail.totalImportTax, color: '#D4A853' },
-                                    { label: 'Thuế TTĐB', value: detail.totalSct, color: '#E05252' },
-                                    { label: 'VAT', value: detail.totalVat, color: '#4A8FAB' },
+                                    { label: 'Thuế NK', value: detail.totalImportTax, color: '#B45309' },
+                                    { label: 'Thuế TTĐB', value: detail.totalSct, color: '#B91C1C' },
+                                    { label: 'VAT', value: detail.totalVat, color: '#1D4ED8' },
                                     { label: 'Chi phí khác', value: detail.totalOtherCost, color: '#0891B2' },
                                 ].map(s => (
                                     <div key={s.label} className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
@@ -301,7 +301,7 @@ export function LandedCostTab() {
                                 <span className="text-xs font-semibold uppercase" style={{ color: '#64748B' }}>
                                     Tổng Chi Phí Thuế & Logistics
                                 </span>
-                                <span className="text-lg font-bold" style={{ color: '#D4A853' }}>
+                                <span className="text-lg font-bold" style={{ color: '#B45309' }}>
                                     {formatVND(detail.totalCost)}
                                 </span>
                             </div>
@@ -320,7 +320,7 @@ export function LandedCostTab() {
                         <button onClick={handleCalculate} disabled={calculating || !canCalculate}
                             className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-md transition-all"
                             style={{
-                                background: canCalculate ? '#4A8FAB' : '#E2E8F0',
+                                background: canCalculate ? '#1D4ED8' : '#E2E8F0',
                                 color: canCalculate ? '#fff' : '#64748B',
                                 cursor: canCalculate ? 'pointer' : 'not-allowed',
                             }}>
@@ -330,7 +330,7 @@ export function LandedCostTab() {
                         <button onClick={handleFinalize} disabled={finalizing || !canFinalize}
                             className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-md transition-all"
                             style={{
-                                background: canFinalize ? '#5BA88A' : '#E2E8F0',
+                                background: canFinalize ? '#15803D' : '#E2E8F0',
                                 color: canFinalize ? '#fff' : '#64748B',
                                 cursor: canFinalize ? 'pointer' : 'not-allowed',
                             }}>
@@ -342,9 +342,9 @@ export function LandedCostTab() {
 
                 {isLocked && (
                     <div className="flex items-center gap-2 p-3 rounded-md"
-                        style={{ background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.2)' }}>
-                        <Lock size={14} style={{ color: '#5BA88A' }} />
-                        <span className="text-xs font-medium" style={{ color: '#5BA88A' }}>
+                        style={{ background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.2)' }}>
+                        <Lock size={14} style={{ color: '#15803D' }} />
+                        <span className="text-xs font-medium" style={{ color: '#15803D' }}>
                             Campaign đã hoàn tất — Giá vốn đã cập nhật vào tất cả StockLot.
                         </span>
                     </div>
@@ -379,8 +379,8 @@ export function LandedCostTab() {
                                         const pct = totalQty > 0 ? (a.qty / totalQty) * 100 : 0
                                         const typeColor = WINE_COLORS[a.wineType] ?? '#475569'
                                         return (
-                                            <tr key={a.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                                onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                            <tr key={a.id} style={{ borderBottom: '1px solid #E2E8F0' }}
+                                                onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                                 onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                                 <td className="px-3 py-2.5">
                                                     <span className="text-xs px-1.5 py-0.5 rounded font-bold"
@@ -393,7 +393,7 @@ export function LandedCostTab() {
                                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#475569' }}>
                                                     {a.qty.toLocaleString()}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
                                                     {formatVND(a.unitLandedCost)}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>
@@ -404,7 +404,7 @@ export function LandedCostTab() {
                                                         <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
                                                             <div className="h-full rounded-full" style={{
                                                                 width: `${Math.min(pct, 100)}%`,
-                                                                background: '#87CBB9',
+                                                                background: '#0E7490',
                                                             }} />
                                                         </div>
                                                         <span className="text-xs" style={{ color: '#0891B2' }}>
@@ -416,7 +416,7 @@ export function LandedCostTab() {
                                         )
                                     })}
                                     {/* Total row */}
-                                    <tr style={{ background: 'rgba(135,203,185,0.06)', borderTop: '2px solid #E2E8F0' }}>
+                                    <tr style={{ background: 'rgba(8,145,178,0.06)', borderTop: '2px solid #E2E8F0' }}>
                                         <td colSpan={2} className="px-3 py-3 text-xs font-bold uppercase"
                                             style={{ color: '#0891B2' }}>Tổng Cộng</td>
                                         <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>
@@ -563,7 +563,7 @@ export function LandedCostTab() {
                                 <span className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>
                                     Tổng Chi Phí
                                 </span>
-                                <span className="text-base font-bold" style={{ color: '#D4A853' }}>
+                                <span className="text-base font-bold" style={{ color: '#B45309' }}>
                                     {formatVND(
                                         (Number(createForm.importTax) || 0)
                                         + (Number(createForm.sct) || 0)
@@ -574,7 +574,7 @@ export function LandedCostTab() {
                             </div>
 
                             {createError && (
-                                <p className="text-xs flex items-center gap-1" style={{ color: '#E05252' }}>
+                                <p className="text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
                                     <AlertTriangle size={12} /> {createError}
                                 </p>
                             )}
@@ -625,8 +625,8 @@ export function LandedCostTab() {
                                 return (
                                     <tr key={c.id}
                                         onClick={() => openDetail(c.id)}
-                                        style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', cursor: 'pointer' }}
-                                        onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                        style={{ borderBottom: '1px solid #E2E8F0', cursor: 'pointer' }}
+                                        onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                         onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
@@ -644,7 +644,7 @@ export function LandedCostTab() {
                                         <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#475569' }}>
                                             {c.cifAmount > 0 ? `$${c.cifAmount.toLocaleString('en-US')}` : '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 text-sm font-bold" style={{ color: '#D4A853' }}>
+                                        <td className="px-3 py-2.5 text-sm font-bold" style={{ color: '#B45309' }}>
                                             {formatVND(c.totalCost)}
                                         </td>
                                         <td className="px-3 py-2.5">

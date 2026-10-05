@@ -410,7 +410,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
     return (
         <div className="space-y-4 max-w-screen-2xl text-slate-900">
             {/* Select & Workbench Section */}
-            <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-4 relative overflow-hidden space-y-4">
+            <div className="bg-slate-50 border border-slate-200/40 rounded-lg p-4 relative overflow-hidden space-y-4">
                 {/* Selector Row (NCC Filter, Autocomplete, Admin tools, and Help tooltip inline) */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                     {/* Supplier Filter (NCC) */}
@@ -426,7 +426,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     setSearchQuery('')
                                 }
                             }}
-                            className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none cursor-pointer text-slate-900 focus:border-[#D4A853] transition-colors"
+                            className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none cursor-pointer text-slate-900 focus:border-[#B45309] transition-colors"
                         >
                             <option value="">Tất cả NCC</option>
                             {uniqueSuppliers.map(s => (
@@ -440,9 +440,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         <div className="flex items-center gap-1.5 h-4 mb-1">
                             <label className="block text-[10px] font-bold text-slate-400 uppercase leading-none">Chọn mã sản phẩm</label>
                             <div className="relative group leading-none flex items-center">
-                                <HelpCircle size={13} className="text-slate-600 hover:text-[#D4A853] cursor-pointer transition-colors" />
+                                <HelpCircle size={13} className="text-slate-600 hover:text-[#B45309] cursor-pointer transition-colors" />
                                 <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-700 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
-                                    <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
+                                    <p className="font-bold text-[#B45309]">💡 Hướng dẫn nhanh:</p>
                                     <p>• Chọn NCC để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
                                     <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
                                     <p>• Hệ thống lưu trữ độc lập Cost, Retail và Wholesale theo bảng Excel bạn đã tải lên.</p>
@@ -460,7 +460,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     setIsOpenDropdown(true)
                                 }}
                                 onFocus={() => setIsOpenDropdown(true)}
-                                className="w-full h-8 pl-8 pr-8 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#D4A853] focus:ring-1 focus:ring-[#D4A853]/30 transition-all font-sans"
+                                className="w-full h-8 pl-8 pr-8 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-[#B45309]/30 transition-all font-sans"
                             />
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
                             <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -498,9 +498,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     <div className="flex items-center justify-between gap-2">
                                                         <div className="font-semibold text-slate-900 truncate">{p.productName}</div>
                                                         {p.hasCustomPrice ? (
-                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Đã import</span>
+                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Đã import</span>
                                                         ) : (
-                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 flex-shrink-0">Chưa import</span>
+                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 border border-amber-500/20 flex-shrink-0">Chưa import</span>
                                                         )}
                                                     </div>
                                                     <div className="text-[10px] text-slate-400 font-sans mt-0.5 flex items-center gap-1.5">
@@ -539,7 +539,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <span className="hidden md:block text-[10px] font-bold text-transparent select-none h-4">Excel Tools</span>
                                 <button
                                     onClick={() => setImportOpen(true)}
-                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white hover:bg-white border border-slate-200 text-[#D4A853]"
+                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white hover:bg-white border border-slate-200 text-[#B45309]"
                                 >
                                     <Upload size={13} />
                                     <span>Nhập Excel</span>
@@ -566,9 +566,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-[10px] text-slate-600 font-sans font-medium">{activeProduct.skuCode}</span>
                                     {activeProduct.hasCustomPrice ? (
-                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20">Đã có giá import</span>
+                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20">Đã có giá import</span>
                                     ) : (
-                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-400 bg-amber-500/10 uppercase tracking-wide border border-amber-500/20 animate-pulse">Chưa import (Giá giả định)</span>
+                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 uppercase tracking-wide border border-amber-500/20 animate-pulse">Chưa import (Giá giả định)</span>
                                     )}
                                 </div>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
@@ -582,14 +582,14 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         {/* Inputs & Outputs Column */}
                         <div className="md:col-span-8 flex flex-col justify-between space-y-4">
                             {/* Base Reference Values */}
-                            <div className="grid grid-cols-3 gap-3 bg-white/40 p-3.5 rounded-xl border border-slate-200/30 text-center font-sans">
+                            <div className="grid grid-cols-3 gap-3 bg-white/40 p-3.5 rounded-lg border border-slate-200/30 text-center font-sans">
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Cost</div>
                                     <div className="text-lg sm:text-xl font-black text-[#0891B2] mt-1">{formatNumberOnly(activeProduct.costPrice)}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Wholesale</div>
-                                    <div className="text-lg sm:text-xl font-black text-[#D4A853] mt-1">{formatNumberOnly(activeProduct.wholesalePrice)}</div>
+                                    <div className="text-lg sm:text-xl font-black text-[#B45309] mt-1">{formatNumberOnly(activeProduct.wholesalePrice)}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Retail</div>
@@ -600,17 +600,17 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             {/* User Interactive Inputs (6-columns) */}
                             <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider">Special Price</label>
+                                    <label className="block text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">Special Price</label>
                                     <input
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
                                         onChange={e => handleSimSellingPriceChange(parseNumberString(e.target.value))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#0E7490]"
                                         placeholder="Special Price"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider">Discount (%)</label>
+                                    <label className="block text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">Discount (%)</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -619,36 +619,36 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             step="0.5"
                                             value={simDiscount === 0 ? '' : simDiscount}
                                             onChange={e => handleSimDiscountChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
+                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#0E7490]"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-amber-400 uppercase tracking-wider">Buy</label>
+                                    <label className="block text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">Buy</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={simBuyQty === 0 ? '' : simBuyQty}
                                         onChange={e => setSimBuyQty(Math.max(1, parseInt(e.target.value || '1')))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-slate-900 focus:outline-none focus:border-[#D4A853]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-slate-900 focus:outline-none focus:border-[#B45309]"
                                         placeholder="1"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-amber-400 uppercase tracking-wider">FOC</label>
+                                    <label className="block text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">FOC</label>
                                     <input
                                         type="number"
                                         min="0"
                                         value={simFocQty === 0 ? '' : simFocQty}
                                         onChange={e => setSimFocQty(Math.max(0, parseInt(e.target.value || '0')))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-slate-900 focus:outline-none focus:border-[#D4A853]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-slate-900 focus:outline-none focus:border-[#B45309]"
                                         placeholder="0"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-sky-400 uppercase tracking-wider">% Incentive</label>
+                                    <label className="block text-[11px] font-extrabold text-sky-700 uppercase tracking-wider">% Incentive</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -657,43 +657,43 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             step="0.1"
                                             value={simIncentivePercent === 0 ? '' : simIncentivePercent}
                                             onChange={e => handleSimIncentivePercentChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#87CBB9]"
+                                            className="w-full pl-3 pr-6 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#0E7490]"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-extrabold text-sky-400 uppercase tracking-wider">Incentive Value</label>
+                                    <label className="block text-[11px] font-extrabold text-sky-700 uppercase tracking-wider">Incentive Value</label>
                                     <input
                                         type="text"
                                         value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
                                         onChange={e => handleSimIncentiveChange(parseNumberString(e.target.value))}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#87CBB9]"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-base font-sans font-bold text-sky-700 focus:outline-none focus:border-[#0E7490]"
                                         placeholder="Value"
                                     />
                                 </div>
                             </div>
 
                             {/* Dynamic calculations */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/30 p-3.5 rounded-xl border border-slate-200/30">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/30 p-3.5 rounded-lg border border-slate-200/30">
                                 <div className="text-center font-sans">
                                     <div className="text-xs text-slate-400 uppercase font-extrabold tracking-wider">Special Price</div>
                                     <div className="text-lg sm:text-xl font-black text-[#0891B2] mt-1">{formatVND(activeComputed.netSellingPrice)}</div>
                                 </div>
                                 <div className="text-center font-sans">
                                     <div className="text-xs text-slate-400 uppercase font-extrabold tracking-wider">Gross Margin</div>
-                                    <div className="text-lg sm:text-xl font-black mt-1" style={{ color: activeComputed.profit >= 0 ? '#5BA88A' : '#E05252' }}>
+                                    <div className="text-lg sm:text-xl font-black mt-1" style={{ color: activeComputed.profit >= 0 ? '#15803D' : '#B91C1C' }}>
                                         {activeComputed.profit >= 0 ? '+' : ''}{formatVND(activeComputed.profit)}
                                     </div>
                                 </div>
                                 <div className="text-center font-sans">
                                     <div className="text-xs text-slate-400 uppercase font-extrabold tracking-wider">% Gross Margin</div>
-                                    <div className="text-lg sm:text-xl font-black text-[#D4A853] mt-1">{activeComputed.marginPercent.toFixed(1)}%</div>
+                                    <div className="text-lg sm:text-xl font-black text-[#B45309] mt-1">{activeComputed.marginPercent.toFixed(1)}%</div>
                                 </div>
                                 <div className="text-center font-sans">
                                     <div className="text-xs text-slate-400 uppercase font-extrabold tracking-wider">vs Wholesale</div>
-                                    <div className="text-lg sm:text-xl font-black text-rose-400 mt-1">
+                                    <div className="text-lg sm:text-xl font-black text-rose-700 mt-1">
                                         {activeComputed.reductionVsWholesale > 0 ? `-${activeComputed.reductionVsWholesale.toFixed(1)}%` : '0%'}
                                     </div>
                                 </div>
@@ -704,7 +704,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 className="w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 text-xs transition-all duration-150"
                                 style={{ background: '#D97706', color: '#FFFFFF' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = '#E5B964')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '#D4A853')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#B45309')}
                             >
                                 <Plus size={14} /> THÊM VÀO BẢNG CHECK MARGIN
                             </button>
@@ -738,7 +738,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             onClick={() => setIsCompactView(prev => !prev)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 border ${
                                 isCompactView
-                                    ? 'bg-[#D4A853] text-slate-900 border-[#D4A853] hover:bg-[#E5B964]'
+                                    ? 'bg-[#B45309] text-slate-900 border-[#B45309] hover:bg-[#E5B964]'
                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-white hover:text-slate-900'
                             }`}
                         >
@@ -747,13 +747,13 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         </button>
                         <button
                             onClick={handleExportCsv}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#0891B2] text-white hover:bg-[#A5DED0]"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#0891B2] text-white hover:bg-[#0891B2]"
                         >
                             <Download size={13} /> Xuất Báo Giá (CSV)
                         </button>
                         <button
                             onClick={handleClearAll}
-                            className="text-xs text-[#E05252] border border-[#E05252]/20 hover:border-[#E05252]/40 rounded-lg px-2.5 py-1.5 hover:bg-[#E05252]/5 transition-all flex items-center gap-1"
+                            className="text-xs text-[#B91C1C] border border-[#B91C1C]/20 hover:border-[#B91C1C]/40 rounded-lg px-2.5 py-1.5 hover:bg-[#B91C1C]/5 transition-all flex items-center gap-1"
                         >
                             <Trash2 size={12} /> Xóa sạch
                         </button>
@@ -763,7 +763,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
             {/* Empty State warning */}
             {addedProducts.length === 0 ? (
-                <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-12 text-center">
+                <div className="bg-slate-50 border border-slate-200/40 rounded-lg p-12 text-center">
                     <span className="text-3xl mb-2 block">📋</span>
                     <p className="font-semibold text-slate-700 text-xs">Chưa có sản phẩm nào trong bảng check margin</p>
                     <p className="text-[10px] text-slate-500 max-w-sm mt-1">
@@ -773,7 +773,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             ) : isCompactView ? (
                 <>
                     {/* DESKTOP VIEW: Simplified Compact Table */}
-                    <div className="hidden md:block rounded-xl overflow-hidden border border-slate-200/40 bg-slate-50">
+                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200/40 bg-slate-50">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -794,7 +794,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             <tr key={p.id} className="group border-b border-slate-200/30 hover:bg-white/10 transition-colors">
                                                 <td className="px-3 py-2.5 text-xs text-slate-600 font-sans font-medium whitespace-nowrap">{p.skuCode}</td>
                                                 <td className="px-3 py-2.5 text-xs text-slate-900 font-medium leading-snug">{p.productName}</td>
-                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#D4A853] font-semibold whitespace-nowrap">{formatNumberOnly(p.wholesalePrice)}</td>
+                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#B45309] font-semibold whitespace-nowrap">{formatNumberOnly(p.wholesalePrice)}</td>
                                                 <td className="px-3 py-2.5 text-xs text-right font-sans text-[#0891B2] font-bold whitespace-nowrap">{formatVND(row.netSellingPrice)}</td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
                                                     {row.marginPercent === -100 ? (
@@ -802,8 +802,8 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     ) : (
                                                         <span className="px-1.5 py-0.5 rounded text-xs font-bold font-sans"
                                                             style={{
-                                                                background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
-                                                                color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                                                                background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
+                                                                color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
                                                             }}>
                                                             {row.marginPercent.toFixed(1)}%
                                                         </span>
@@ -811,7 +811,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap font-sans text-xs text-slate-600">
                                                     {row.reductionVsWholesale > 0 ? (
-                                                        <span className="flex items-center justify-center gap-0.5 text-rose-400">
+                                                        <span className="flex items-center justify-center gap-0.5 text-rose-700">
                                                             <ArrowUpRight size={10} className="rotate-90" /> {row.reductionVsWholesale.toFixed(1)}%
                                                         </span>
                                                     ) : (
@@ -821,7 +821,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                 <td className="px-3 py-2.5 text-center">
                                                     <button
                                                         onClick={() => removeProductFromReport(p.id)}
-                                                        className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                                        className="p-1 text-slate-500 hover:text-red-700 transition-colors"
                                                     >
                                                         <Trash2 size={13} />
                                                     </button>
@@ -839,7 +839,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         {computedRows.map(row => {
                             const p = row.product
                             return (
-                                <div key={p.id} className="bg-slate-50 border border-slate-200/40 rounded-xl p-3.5 space-y-2 relative">
+                                <div key={p.id} className="bg-slate-50 border border-slate-200/40 rounded-lg p-3.5 space-y-2 relative">
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="min-w-0 flex-1">
                                             <h4 className="text-xs font-bold text-slate-900 leading-snug">{p.productName}</h4>
@@ -847,7 +847,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         </div>
                                         <button
                                             onClick={() => removeProductFromReport(p.id)}
-                                            className="p-1.5 rounded-lg bg-[#E05252]/10 text-[#E05252] hover:bg-[#E05252]/20 transition-colors flex-shrink-0"
+                                            className="p-1.5 rounded-lg bg-[#B91C1C]/10 text-[#B91C1C] hover:bg-[#B91C1C]/20 transition-colors flex-shrink-0"
                                         >
                                             <Trash2 size={13} />
                                         </button>
@@ -857,7 +857,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <div className="space-y-1">
                                             <div className="flex justify-between">
                                                 <span className="text-slate-400">Wholesale:</span>
-                                                <span className="font-semibold text-[#D4A853]">{formatNumberOnly(p.wholesalePrice)}</span>
+                                                <span className="font-semibold text-[#B45309]">{formatNumberOnly(p.wholesalePrice)}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-slate-400">Special Price:</span>
@@ -868,13 +868,13 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             <div className="flex justify-between items-center">
                                                 <span className="text-slate-400">Margin:</span>
                                                 <span className="font-bold px-1 rounded" style={{
-                                                    background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
-                                                    color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                                                    background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
+                                                    color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
                                                 }}>{row.marginPercent.toFixed(1)}%</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-slate-400">vs Wholesale:</span>
-                                                <span className="font-semibold text-rose-400">-{row.reductionVsWholesale.toFixed(1)}%</span>
+                                                <span className="font-semibold text-rose-700">-{row.reductionVsWholesale.toFixed(1)}%</span>
                                             </div>
                                         </div>
                                     </div>
@@ -888,15 +888,15 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
 
                     {/* DESKTOP VIEW: Premium Wide Grid Table */}
-                    <div className="hidden md:block rounded-xl overflow-hidden border border-slate-200/40 bg-slate-50">
+                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200/40 bg-slate-50">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr style={{ background: '#102435', borderBottom: '1px solid rgba(42, 67, 85, 0.4)' }}>
+                                    <tr style={{ background: '#102435', borderBottom: '1px solid #E2E8F0' }}>
                                         <th colSpan={4} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-slate-400 text-center border-r border-slate-200/40">
                                             Thông tin tham chiếu
                                         </th>
-                                        <th colSpan={6} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-emerald-400 bg-[#132A3E]/40 text-center border-r border-slate-200/40">
+                                        <th colSpan={6} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-emerald-700 bg-[#132A3E]/40 text-center border-r border-slate-200/40">
                                             Nhập liệu & Tinh chỉnh
                                         </th>
                                         <th colSpan={6} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-[#0891B2] text-center">
@@ -909,12 +909,12 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-slate-600 text-right w-[85px]">Retail</th>
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-slate-600 text-right w-[85px] border-r border-slate-200/40">Wholesale</th>
                                         
-                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[100px]">Special Price</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[65px]">C.Khấu D (%)</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">Buy</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">FOC</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-center w-[65px]">% Inc</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-right w-[80px] border-r border-slate-200/40">Inc VNĐ</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-emerald-700 bg-[#132A3E]/20 text-center w-[100px]">Special Price</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-emerald-700 bg-[#132A3E]/20 text-center w-[65px]">C.Khấu D (%)</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-700 bg-[#132A3E]/20 text-center w-[42px]">Buy</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-700 bg-[#132A3E]/20 text-center w-[42px]">FOC</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-700 bg-[#132A3E]/20 text-center w-[65px]">% Inc</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-700 bg-[#132A3E]/20 text-right w-[80px] border-r border-slate-200/40">Inc VNĐ</th>
                                         
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#0891B2] text-right w-[95px]">Special Price</th>
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-slate-600 text-right w-[95px]">Lãi gộp</th>
@@ -1067,7 +1067,7 @@ function SimulatedTableRow({
             </td>
 
             {/* Giá Sỉ tiêu chuẩn (Vùng chia 1) */}
-            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-[#D4A853] font-semibold whitespace-nowrap leading-tight border-r border-slate-200/40">
+            <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-[#B45309] font-semibold whitespace-nowrap leading-tight border-r border-slate-200/40">
                 <div>{formatNumberOnly(p.wholesalePrice)}</div>
             </td>
 
@@ -1077,7 +1077,7 @@ function SimulatedTableRow({
                     type="text"
                     value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                     onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                    className="w-[85px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#87CBB9]"
+                    className="w-[85px] px-1 py-0.5 bg-white border border-slate-200 rounded text-right font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#0E7490]"
                     placeholder="0đ"
                 />
             </td>
@@ -1092,7 +1092,7 @@ function SimulatedTableRow({
                         step="0.5"
                         value={row.discountPercent === 0 ? '' : row.discountPercent}
                         onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#87CBB9]"
+                        className="w-[40px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-emerald-700 font-bold outline-none focus:border-[#0E7490]"
                         placeholder="0"
                     />
                     <span className="text-xs text-slate-500 ml-0.5">%</span>
@@ -1106,7 +1106,7 @@ function SimulatedTableRow({
                     min="1"
                     value={row.buyQty === 0 ? '' : row.buyQty}
                     onChange={e => onUpdate(p.id, 'buyQty', Math.max(1, parseInt(e.target.value || '1')))}
-                    className="w-[36px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-slate-900 outline-none focus:border-[#D4A853]"
+                    className="w-[36px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-slate-900 outline-none focus:border-[#B45309]"
                     placeholder="1"
                 />
             </td>
@@ -1118,7 +1118,7 @@ function SimulatedTableRow({
                     min="0"
                     value={row.focQty === 0 ? '' : row.focQty}
                     onChange={e => onUpdate(p.id, 'focQty', Math.max(0, parseInt(e.target.value || '0')))}
-                    className="w-[36px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-slate-900 outline-none focus:border-[#D4A853]"
+                    className="w-[36px] px-0.5 py-0.5 bg-white border border-slate-200 rounded text-center font-sans text-[11px] text-slate-900 outline-none focus:border-[#B45309]"
                     placeholder="0"
                 />
             </td>
@@ -1158,7 +1158,7 @@ function SimulatedTableRow({
 
             {/* Lãi gộp VND */}
             <td className="px-1.5 py-2.5 text-right font-sans text-[11px] font-bold whitespace-nowrap leading-tight"
-                style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
+                style={{ color: row.profit >= 0 ? '#15803D' : '#B91C1C' }}>
                 <div>{row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}</div>
             </td>
 
@@ -1169,8 +1169,8 @@ function SimulatedTableRow({
                 ) : (
                     <span className="px-1.5 py-0.5 rounded text-[11px] font-bold font-sans"
                         style={{
-                            background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
-                            color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                            background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
+                            color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
                         }}>
                         {row.marginPercent.toFixed(1)}%
                     </span>
@@ -1182,7 +1182,7 @@ function SimulatedTableRow({
             {/* % Giảm vs Wholesale */}
             <td className="px-1 py-2.5 text-center whitespace-nowrap font-sans text-[11px] text-slate-600">
                 {row.reductionVsWholesale > 0 ? (
-                    <span className="flex items-center justify-center gap-0.5 text-rose-400">
+                    <span className="flex items-center justify-center gap-0.5 text-rose-700">
                         <ArrowUpRight size={10} className="rotate-90" /> {row.reductionVsWholesale.toFixed(1)}%
                     </span>
                 ) : (
@@ -1194,7 +1194,7 @@ function SimulatedTableRow({
             <td className="px-2.5 py-2.5 text-center">
                 <button
                     onClick={() => onDelete(p.id)}
-                    className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                    className="p-1 text-slate-500 hover:text-red-700 transition-colors"
                 >
                     <Trash2 size={13} />
                 </button>
@@ -1246,7 +1246,7 @@ function MobileSimulatedCard({
     }, [p.primaryImageUrl])
 
     return (
-        <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-3 space-y-2.5 relative">
+        <div className="bg-slate-50 border border-slate-200/40 rounded-lg p-3 space-y-2.5 relative">
             {/* Header info */}
             <div className="flex gap-2">
                 <div className="relative w-14 h-14 rounded bg-white border border-slate-200/50 flex items-center justify-center p-1 flex-shrink-0 transition-all duration-200 hover:scale-[2.5] hover:z-50 hover:shadow-2xl hover:bg-slate-50 cursor-zoom-in">
@@ -1285,7 +1285,7 @@ function MobileSimulatedCard({
                 {/* Trash Delete button */}
                 <button
                     onClick={() => onDelete(p.id)}
-                    className="absolute right-3 top-3 p-1.5 rounded-lg bg-[#E05252]/10 text-[#E05252] hover:bg-[#E05252]/20 transition-colors"
+                    className="absolute right-3 top-3 p-1.5 rounded-lg bg-[#B91C1C]/10 text-[#B91C1C] hover:bg-[#B91C1C]/20 transition-colors"
                 >
                     <Trash2 size={13} />
                 </button>
@@ -1299,7 +1299,7 @@ function MobileSimulatedCard({
                 </div>
                 <div>
                     <span className="text-slate-400 block text-xs uppercase">Wholesale</span>
-                    <span className="font-bold text-[#D4A853] block">{formatNumberOnly(p.wholesalePrice)}</span>
+                    <span className="font-bold text-[#B45309] block">{formatNumberOnly(p.wholesalePrice)}</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-xs uppercase">Retail</span>
@@ -1311,19 +1311,19 @@ function MobileSimulatedCard({
             <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                 {/* Pair 1 Left: Special Price */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Special Price</span>
+                    <span className="text-xs uppercase font-bold text-emerald-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">Special Price</span>
                     <input
                         type="text"
                         value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                         onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#87CBB9]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans font-bold text-emerald-700 focus:outline-none focus:border-[#0E7490]"
                         placeholder="0đ"
                     />
                 </div>
 
                 {/* Pair 1 Right: Discount */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Discount</span>
+                    <span className="text-xs uppercase font-bold text-emerald-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">Discount</span>
                     <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
@@ -1332,7 +1332,7 @@ function MobileSimulatedCard({
                             step="0.5"
                             value={row.discountPercent === 0 ? '' : row.discountPercent}
                             onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-emerald-700 font-bold focus:outline-none focus:border-[#87CBB9]"
+                            className="w-full pl-1.5 pr-4 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-emerald-700 font-bold focus:outline-none focus:border-[#0E7490]"
                             placeholder="0"
                         />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-bold">%</span>
@@ -1341,33 +1341,33 @@ function MobileSimulatedCard({
 
                 {/* Pair 2 Left: BUY */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">BUY</span>
+                    <span className="text-xs uppercase font-bold text-amber-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">BUY</span>
                     <input
                         type="number"
                         min="1"
                         value={row.buyQty === 0 ? '' : row.buyQty}
                         onChange={e => onUpdate(p.id, 'buyQty', Math.max(1, parseInt(e.target.value || '1')))}
-                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-slate-900 focus:outline-none focus:border-[#D4A853]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-slate-900 focus:outline-none focus:border-[#B45309]"
                         placeholder="1"
                     />
                 </div>
 
                 {/* Pair 2 Right: FOC */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">FOC</span>
+                    <span className="text-xs uppercase font-bold text-amber-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">FOC</span>
                     <input
                         type="number"
                         min="0"
                         value={row.focQty === 0 ? '' : row.focQty}
                         onChange={e => onUpdate(p.id, 'focQty', Math.max(0, parseInt(e.target.value || '0')))}
-                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-slate-900 focus:outline-none focus:border-[#D4A853]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-sans text-slate-900 focus:outline-none focus:border-[#B45309]"
                         placeholder="0"
                     />
                 </div>
 
                 {/* Pair 3 Left: INC % */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC %</span>
+                    <span className="text-xs uppercase font-bold text-sky-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC %</span>
                     <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
@@ -1385,7 +1385,7 @@ function MobileSimulatedCard({
 
                 {/* Pair 3 Right: INC Đ */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC Đ</span>
+                    <span className="text-xs uppercase font-bold text-sky-700 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC Đ</span>
                     <input
                         type="text"
                         value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
@@ -1404,7 +1404,7 @@ function MobileSimulatedCard({
                 </div>
                 <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[7px] text-slate-400 uppercase">Gross Margin</span>
-                    <span className="text-[11px] font-bold" style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
+                    <span className="text-[11px] font-bold" style={{ color: row.profit >= 0 ? '#15803D' : '#B91C1C' }}>
                         {row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}
                     </span>
                 </div>
@@ -1412,15 +1412,15 @@ function MobileSimulatedCard({
                     <span className="text-[7px] text-slate-400 uppercase">% Margin</span>
                     <span className="text-[11px] font-bold font-sans px-1 py-0.5 rounded"
                         style={{
-                            background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
-                            color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                            background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
+                            color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
                         }}>
                         {row.marginPercent.toFixed(1)}%
                     </span>
                 </div>
                 <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[7px] text-slate-400 uppercase">vs Wholesale</span>
-                    <span className="text-[11px] font-bold text-rose-400">
+                    <span className="text-[11px] font-bold text-rose-700">
                         {row.reductionVsWholesale > 0 ? `-${row.reductionVsWholesale.toFixed(1)}%` : '0%'}
                     </span>
                 </div>
