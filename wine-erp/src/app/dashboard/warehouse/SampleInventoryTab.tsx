@@ -316,7 +316,7 @@ export function SampleInventoryTab() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
+                            <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Mã Mã Mẫu / SKU</th>
@@ -388,7 +388,7 @@ export function SampleInventoryTab() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[850px]">
+                            <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Ngày GD</th>

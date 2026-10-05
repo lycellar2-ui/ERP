@@ -1219,9 +1219,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="w-full min-w-[1100px]">
-                    <table className="w-full min-w-[1100px]" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
+            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="w-full">
+                    <table className="w-full" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                         <colgroup>
                             <col style={{ width: '120px' }} />
                             <col style={{ minWidth: '180px' }} />

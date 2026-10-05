@@ -464,7 +464,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                             </div>
                         ) : (
                             <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
-                                <table className="w-full text-left border-collapse min-w-[1000px]">
+                                <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
                                             <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">STT</th>

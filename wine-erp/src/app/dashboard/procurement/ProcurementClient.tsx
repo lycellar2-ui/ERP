@@ -2434,7 +2434,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             <div className="hidden md:block rounded-lg overflow-hidden shadow-sm"
                 style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
+                    <table className="w-full text-left border-collapse">
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
@@ -2444,7 +2444,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600" style={{ width: '14%' }}>
                                     Trạng Thái & Hồ Sơ
                                 </th>
-                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600 text-right" style={{ width: '16%', minWidth: '175px' }}>
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600 text-right" style={{ width: '16%' }}>
                                     Thao Tác
                                 </th>
                             </tr>

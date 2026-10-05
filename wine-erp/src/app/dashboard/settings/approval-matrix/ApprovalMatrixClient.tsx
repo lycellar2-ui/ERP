@@ -196,7 +196,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                 {/* Matrix table */}
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
+                    <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                 <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
@@ -330,7 +330,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
+                    <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                 <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"

@@ -157,7 +157,7 @@ export function ReplenishmentTab() {
                 style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20 text-indigo-700">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-lys-teal-soft text-lys-teal-strong">
                             <ArrowRightLeft size={18} />
                         </div>
                         <div>
@@ -234,15 +234,15 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-lg border bg-indigo-50/60 border-indigo-200 shadow-xs">
-                    <div className="flex items-center justify-between text-xs font-semibold text-indigo-900 mb-1">
+                <div className="p-3.5 rounded-lg border bg-lys-teal-soft/60 border-lys-teal-subtle shadow-xs">
+                    <div className="flex items-center justify-between text-xs font-semibold text-lys-primary mb-1">
                         <span>Quy Cách Điều Chuyển</span>
-                        <Boxes size={15} className="text-indigo-600" />
+                        <Boxes size={15} className="text-lys-teal-strong" />
                     </div>
-                    <div className="text-2xl font-black font-mono text-indigo-950">
-                        6 / 12 <span className="text-xs font-normal text-indigo-700 font-sans">chai/thùng</span>
+                    <div className="text-2xl font-black font-mono text-lys-teal-strong">
+                        6 / 12 <span className="text-xs font-normal text-lys-secondary font-sans">chai/thùng</span>
                     </div>
-                    <div className="text-[11px] text-indigo-700 mt-1">
+                    <div className="text-[11px] text-lys-secondary mt-1">
                         Làm tròn chẵn thùng khi xuất kho
                     </div>
                 </div>
@@ -448,7 +448,7 @@ export function ReplenishmentTab() {
                                         {/* Suggested Qty */}
                                         <td className="px-3.5 py-2.5 text-center min-w-[130px]">
                                             <div className="inline-flex flex-col items-center">
-                                                <span className="text-sm font-black font-mono text-indigo-700">
+                                                <span className="text-sm font-black font-mono text-lys-teal-strong">
                                                     {row.suggestedQty} <span className="text-[10px] font-sans font-normal text-slate-500">chai</span>
                                                 </span>
                                                 <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded mt-0.5">
@@ -477,7 +477,7 @@ export function ReplenishmentTab() {
                                         <td className="px-3.5 py-2.5 text-right min-w-[150px]">
                                             <button
                                                 onClick={() => handleCreateTransfer(row)}
-                                                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-bold transition-all shadow-xs cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-bold transition-all shadow-xs cursor-pointer bg-lys-teal-strong hover:bg-teal-700 text-white"
                                             >
                                                 <Zap size={13} />
                                                 Tạo Lệnh Chuyển
@@ -537,7 +537,7 @@ export function ReplenishmentTab() {
                                         {row.reason}
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <span className="font-black font-mono text-indigo-700 text-sm">
+                                        <span className="font-black font-mono text-lys-teal-strong text-sm">
                                             {row.suggestedQty} chai
                                         </span>
                                         <span className="text-[10px] text-slate-500 block font-medium">
@@ -550,7 +550,7 @@ export function ReplenishmentTab() {
                                 <button
                                     type="button"
                                     onClick={() => handleCreateTransfer(row)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white min-h-[44px]"
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer bg-lys-teal-strong hover:bg-teal-700 text-white min-h-[44px]"
                                 >
                                     <Zap size={14} />
                                     Tạo Lệnh Chuyển Ngay

@@ -3192,11 +3192,11 @@ export function SalesVisitsClient({
 
                             {/* 5. Khách mới mở */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                                <span className="text-[10px] font-semibold text-lys-teal-strong uppercase tracking-wider">
                                     {locale === 'en' ? 'New Clients' : 'Khách mới'}
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="text-lg sm:text-xl font-black text-indigo-600 font-mono">{reviewStats.newLeads}</span>
+                                    <span className="text-lg sm:text-xl font-black text-lys-teal-strong font-mono">{reviewStats.newLeads}</span>
                                     <span className="text-[10px] text-slate-400">leads</span>
                                 </div>
                             </div>
