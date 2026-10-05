@@ -1105,6 +1105,10 @@ export type CycleCountProgress = {
         id: string
         skuCode: string
         productName: string
+        vintage?: number | null
+        wineType?: string | null
+        totalQty?: number
+        locations?: string[]
         lastCountedAt: Date | null
         qtyActual: number | null
         variance: number | null
@@ -1250,6 +1254,10 @@ export async function getCycleCountProgress(warehouseId: string, daysWindow: num
                     id: pId,
                     skuCode: pData.skuCode,
                     productName: pData.productName,
+                    vintage: pData.vintage,
+                    wineType: pData.wineType,
+                    totalQty: pData.totalQty,
+                    locations: Array.from(pData.locations),
                     lastCountedAt: countedInfo.lastCountedAt,
                     qtyActual: countedInfo.qtyActual,
                     variance: countedInfo.variance

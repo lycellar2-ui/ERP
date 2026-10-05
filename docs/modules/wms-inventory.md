@@ -642,7 +642,13 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Nút Chọn Nhanh Khớp Tồn Sổ 1-Chạm (`[✓ Khớp tồn sổ]`)** | `MobileLocationCounter.tsx` | Bổ sung nút 1-chạm tự động điền đủ số thùng và chai lẻ theo tồn sổ sách (khi không bật chế độ kiểm kê mù), giúp thủ kho tiết kiệm thời gian với các kệ nguyên đai nguyên kiện |
 | **Tích Hợp Phím Enter Máy Quét Mã Vạch & Âm Báo Haptic** | `MobileLocationCounter.tsx` | Ô tìm kiếm nhanh tự động xử lý sự kiện `Enter` từ máy quét barcode Bluetooth/USB: phát âm bíp Web Audio, rung xúc giác haptic feedback (`navigator.vibrate`), chuyển trực tiếp tới chai tìm thấy và xóa trắng ô tìm kiếm để sẵn sàng cho lần quét tiếp theo |
 | **Chống Che Khuất Cuộn & Hỗ Trợ Safe-Area iPhone** | `MobileLocationCounter.tsx` | Tăng khoảng đệm chân trang lên `pb-36 sm:pb-28` giúp các nút Chuyển chai và Chốt khu vực không bao giờ bị dock che lấp; bổ sung `pb-[max(0.5rem,env(safe-area-inset-bottom))]` tương thích hoàn hảo thanh Home bar của iPhone |
-| **Chuẩn Hóa Giao Diện & Sửa Lỗi Chính Tả Modal Chèn Mã** | `AddUnlistedModal.tsx`, `MobileLocationCounter.tsx` | Sửa thông điệp "KHỔNG TỒN TẠI" $\rightarrow$ "KHÔNG CÓ TRONG DANH SÁCH", nâng cấp nút bấm CTA chính sang tông màu Brand Cyan `#0891B2` tương phản cao chữ trắng đậm |
+#### Phase 16: Tái Cấu Trúc Tab Phân Luồng Kiểm Kê & Tối Giản Trải Nghiệm (Dedicated Sessions vs Cycle Count Navigation) (06/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Tách Biệt 2 Tab Phân Luồng Chuyên Trách** | `StockCountClient.tsx` | Tách biệt màn hình kiểm kê thành 2 Tab rõ ràng: Tab 1 "Phiếu Kiểm Kê" (`SESSIONS`) tập trung tra cứu lịch sử, trạng thái, in ấn biên bản; Tab 2 "Kế Hoạch Cuốn Chiếu" (`CYCLE_PLAN`) tập trung theo dõi tiến độ chu kỳ 7/14/30 ngày và khởi chạy đợt đếm hàng ngày |
+| **Thanh Lọc SKU & Vị Trí Trong Kế Hoạch Cuốn Chiếu** | `StockCountClient.tsx`, `actions.ts` | Bổ sung thanh tìm kiếm SKU / tên rượu trực tiếp trong bảng cuốn chiếu; cập nhật `getCycleCountProgress` trả về đầy đủ vị trí kệ (`locations`), niên vụ (`vintage`) và tồn kho (`totalQty`) cho cả danh sách đã kiểm và chưa kiểm |
+| **Callout Chuyển Hướng Nhanh Trong Modal Tạo Phiếu** | `StockCountClient.tsx` | Đặt banner gợi ý "Kiểm kê cuốn chiếu hôm nay" ngay đầu modal Tạo Phiếu Kiểm Kê, cho phép thủ kho bấm 1 chạm để nạp ngay ~N mã chưa đếm thay vì phải thao tác chọn thủ công |
 
 ### Chi tiết GR Variance Report
 
