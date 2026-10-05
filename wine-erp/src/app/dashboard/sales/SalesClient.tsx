@@ -331,10 +331,10 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
 }
 
 // ── Sortable Column Header ───────────────────────
-function SortHeader({ label, field, current, dir, onSort, style, align }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties; align?: 'left' | 'right' | 'center' }) {
+function SortHeader({ label, field, current, dir, onSort, style, align, className }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties; align?: 'left' | 'right' | 'center'; className?: string }) {
     const sort = current === field ? (dir === 'asc' ? 'asc' : 'desc') : false
     return (
-        <Th sort={sort} onSort={() => onSort(field)} align={align} style={style}>
+        <Th sort={sort} onSort={() => onSort(field)} align={align} style={style} className={className}>
             {label}
         </Th>
     )
@@ -2802,29 +2802,25 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
             {/* Table (Desktop View) */}
             <div className="hidden md:block">
-                <Table style={{ minWidth: 1050 }}>
+                <Table className="w-full">
                     <THead>
                         <tr>
-                            <SortHeader label={sI18n.table.soNo} field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
-                            <Th style={{ width: '9%' }}>{sI18n.table.invoice}</Th>
-                            <Th style={{ width: '17%' }}>{sI18n.table.customer}</Th>
-                            <Th style={{ width: '6%' }}>{sI18n.table.channel}</Th>
-                            <Th style={{ width: '6%' }}>{sI18n.table.entity}</Th>
-                            <SortHeader label={sI18n.table.total} field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} align="right" style={{ width: '10%' }} />
-                            <Th style={{ width: '9%' }}>{isEn ? 'Sales Rep' : 'Nhân viên Sales'}</Th>
-                            <Th style={{ width: '9%' }}>{sI18n.table.status}</Th>
-                            <Th style={{ width: '9%' }}>{isEn ? 'Delivery' : 'Giao Hàng'}</Th>
-                            <SortHeader label={sI18n.table.createdAt} field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '7%' }} />
-                            <Th align="center" style={{ width: '15%' }}>{sI18n.table.actions}</Th>
+                            <SortHeader label={sI18n.table.soNo} field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} className="px-2 whitespace-nowrap" />
+                            <Th className="px-2">{sI18n.table.customer}</Th>
+                            <Th className="px-2 whitespace-nowrap" align="center">{sI18n.table.invoice}</Th>
+                            <SortHeader label={sI18n.table.total} field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} align="right" className="px-2 whitespace-nowrap" />
+                            <Th className="px-2 whitespace-nowrap">{sI18n.table.status}</Th>
+                            <SortHeader label={isEn ? 'Sales Rep / Date' : 'Phụ trách / Ngày'} field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} className="px-2 whitespace-nowrap" />
+                            <Th align="center" className="px-2 whitespace-nowrap">{sI18n.table.actions}</Th>
                         </tr>
                     </THead>
                     <TBody>
                         {loading ? (
-                            <TableMessageRow colSpan={11}>
-                                <TableSkeleton rows={8} cols={8} />
+                            <TableMessageRow colSpan={7}>
+                                <TableSkeleton rows={8} cols={7} />
                             </TableMessageRow>
                         ) : rows.length === 0 ? (
-                            <TableMessageRow colSpan={11}>
+                            <TableMessageRow colSpan={7}>
                                 <EmptyState
                                     icon={FileText}
                                     title={hasActiveFilters ? (isEn ? 'No orders match the filter' : 'Không tìm thấy đơn hàng phù hợp với bộ lọc') : (isEn ? 'No sales orders in system' : 'Hệ thống chưa có đơn hàng nào')}
@@ -2834,48 +2830,57 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 />
                             </TableMessageRow>
                         ) : rows.map(row => (
-                            <Tr key={row.id}>
-                                <Td className="whitespace-nowrap">
-                                    <button type="button" onClick={() => setDetailId(row.id)} className="type-code font-bold text-lys-teal-strong hover:underline cursor-pointer">
-                                        {row.soNo}
-                                    </button>
+                            <Tr key={row.id} onClick={() => setDetailId(row.id)}>
+                                <Td className="px-2 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5">
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); setDetailId(row.id) }} className="type-code font-bold text-lys-teal-strong hover:underline cursor-pointer">
+                                            {row.soNo}
+                                        </button>
+                                        {row.legalEntityCode && (
+                                            <Badge tone={row.legalEntityCode === 'TA' ? 'warning' : 'brand'} className="text-[10px] px-1 py-0 font-bold">
+                                                {row.legalEntityCode}
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </Td>
-                                <Td className="whitespace-nowrap">
+                                <Td className="px-2">
+                                    <p className="font-semibold truncate max-w-[160px] xl:max-w-[200px]" title={row.customerName}>{row.customerName}</p>
+                                    <p className="type-caption text-lys-muted truncate max-w-[160px] xl:max-w-[200px]">
+                                        {row.customerCode} · <span className="font-medium text-lys-secondary">{getSOChannelLabel(row.channel, locale, true)}</span>
+                                    </p>
+                                </Td>
+                                <Td className="px-2 whitespace-nowrap text-center">
                                     {row.invoiceNo ? (
-                                        <Badge tone="brand" title={row.invoiceNo} className="type-code">{row.invoiceNo}</Badge>
+                                        <Badge tone="brand" title={row.invoiceNo} className="type-code text-[11px]">{row.invoiceNo}</Badge>
                                     ) : row.isInvoiceExempt ? (
-                                        <Badge tone="danger" icon={FileX2}
+                                        <Badge tone="danger" icon={FileX2} className="text-[11px]"
                                             title={`Miễn HĐ: ${row.invoiceExemptReason || 'Không có lý do'}${row.invoiceExemptBy ? ` (Duyệt bởi: ${row.invoiceExemptBy})` : ''}`}>
                                             {isEn ? 'No Inv' : 'Không HĐ'}
                                         </Badge>
-                                    ) : null}
-                                </Td>
-                                <Td>
-                                    <p className="font-semibold truncate max-w-[220px]" title={row.customerName}>{row.customerName}</p>
-                                    <p className="type-caption text-lys-muted">{row.customerCode}</p>
-                                </Td>
-                                <Td className="whitespace-nowrap">
-                                    <Badge tone="neutral">{getSOChannelLabel(row.channel, locale, true)}</Badge>
-                                </Td>
-                                <Td className="whitespace-nowrap">
-                                    {row.legalEntityCode ? (
-                                        <Badge tone={row.legalEntityCode === 'TA' ? 'warning' : 'brand'}>{row.legalEntityCode}</Badge>
                                     ) : (
-                                        <span className="text-lys-dim">—</span>
+                                        <span className="text-lys-dim text-xs">—</span>
                                     )}
                                 </Td>
-                                <Td align="right" className="whitespace-nowrap">
+                                <Td align="right" className="px-2 whitespace-nowrap">
                                     <p className="font-bold">{formatCurrency(row.totalAmount)}</p>
-                                    {row.orderDiscount > 0 && <p className="type-caption text-tone-success-fg">{isEn ? 'Disc' : 'CK'} {row.orderDiscount}%</p>}
+                                    {row.orderDiscount > 0 && <p className="type-caption text-tone-success-fg font-medium">{isEn ? 'Disc' : 'CK'} {row.orderDiscount}%</p>}
                                 </Td>
-                                <Td className="whitespace-nowrap text-lys-secondary">{row.salesRepName}</Td>
-                                <Td className="whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></Td>
-                                <Td className="whitespace-nowrap"><DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} /></Td>
-                                <Td className="whitespace-nowrap text-lys-muted">{formatDate(row.createdAt, true)}</Td>
-                                <Td>
-                                    <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                                        <Button size="sm" variant="secondary" className="h-7 px-2" onClick={() => setDetailId(row.id)}>
-                                            <Eye size={12} /> {isEn ? 'View' : 'Xem'}
+                                <Td className="px-2 whitespace-nowrap">
+                                    <div className="flex flex-col gap-0.5 items-start">
+                                        <StatusBadge status={row.status} approvalStep={row.approvalStep} />
+                                        {row.deliveryStatus && row.deliveryStatus !== 'UNDELIVERED' && (
+                                            <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
+                                        )}
+                                    </div>
+                                </Td>
+                                <Td className="px-2 whitespace-nowrap">
+                                    <p className="text-xs font-medium text-lys-primary truncate max-w-[110px]" title={row.salesRepName || undefined}>{row.salesRepName || '—'}</p>
+                                    <p className="type-caption text-lys-muted" title={formatDate(row.createdAt, true)}>{formatDate(row.createdAt)}</p>
+                                </Td>
+                                <Td className="px-1.5" onClick={e => e.stopPropagation()}>
+                                    <div className="flex items-center justify-center gap-0.5 whitespace-nowrap">
+                                        <Button size="icon-sm" variant="secondary" className="h-7 w-7" title={isEn ? 'View' : 'Xem'} aria-label={isEn ? 'View' : 'Xem'} onClick={() => setDetailId(row.id)}>
+                                            <Eye size={13} />
                                         </Button>
                                         <Button size="icon-sm" variant="ghost" className="h-7 w-7" title={isEn ? 'Print' : 'In'} aria-label={isEn ? 'Print' : 'In'}
                                             onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')}>
@@ -2898,11 +2903,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                 <Button size="sm" className="h-7 px-2" onClick={() => handleConfirm(row.id)} loading={actionLoading === row.id}>
                                                     {isEn ? 'Confirm' : 'Xác Nhận'}
                                                 </Button>
-                                                <Button size="sm" variant="secondary" className="h-7 px-2" onClick={() => setEditId(row.id)}>
-                                                    <Pencil size={12} /> {isEn ? 'Edit' : 'Sửa'}
+                                                <Button size="icon-sm" variant="secondary" className="h-7 w-7" title={isEn ? 'Edit' : 'Sửa'} aria-label={isEn ? 'Edit' : 'Sửa'} onClick={() => setEditId(row.id)}>
+                                                    <Pencil size={12} />
                                                 </Button>
-                                                <Button size="sm" variant="danger-outline" className="h-7 px-2" onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}>
-                                                    {isEn ? 'Delete' : 'Xóa'}
+                                                <Button size="icon-sm" variant="danger-outline" className="h-7 w-7" title={isEn ? 'Delete' : 'Xóa'} aria-label={isEn ? 'Delete' : 'Xóa'} onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}>
+                                                    <XCircle size={12} />
                                                 </Button>
                                             </>
                                         )}
@@ -2916,7 +2921,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                         if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
                                                         setActionLoading(row.id)
                                                         toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
-                                                            if (detailId === row.id) setDetailId(null)
+                                                             if (detailId === row.id) setDetailId(null)
                                                             reload()
                                                         }), {
                                                             loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
