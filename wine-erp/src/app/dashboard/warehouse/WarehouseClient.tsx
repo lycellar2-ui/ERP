@@ -22,6 +22,9 @@ import {
 } from './actions'
 import { getLegalEntities } from '../sales/actions'
 import { useAppLocale } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
+import { Button, Badge, StatCard, StatGrid } from '@/components/ui'
+import { type Tone } from '@/lib/ui/status'
 import { WAREHOUSE_I18N, getLotStatusLabel, getWineTypeLabel } from './i18n'
 import { GoodsReceiptTab } from './GoodsReceiptTab'
 import { DeliveryOrderTab } from './DeliveryOrderTab'
@@ -701,8 +704,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             title: t.modules.replenishment.title,
             subtitle: t.modules.replenishment.subtitle,
             icon: ArrowRightLeft,
-            color: '#6366F1',
-            bg: 'rgba(99,102,241,0.1)',
+            color: '#0E7490',
+            bg: 'rgba(14,116,144,0.1)',
             description: t.modules.replenishment.description,
             actionLabel: t.modules.replenishment.actionLabel,
         },
@@ -837,13 +840,23 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             return 0
         })
 
-    const statCards = [
-        { label: t.stats.warehouses, value: stats.warehouses, accent: '#0F172A', icon: Warehouse },
-        { label: t.stats.totalStock, value: `${stats.availableBottles.toLocaleString()} ${t.bottlesUnit}`, accent: '#16A34A', icon: Package },
-        { label: t.stats.inventoryValue, value: formatCurrency(stats.inventoryValue), accent: '#B47816', icon: DollarSign },
-        { label: t.stats.reserved, value: `${stats.reservedBottles.toLocaleString()} ${t.bottlesUnit}`, accent: '#2563EB', icon: Box },
-        { label: t.stats.lowStock, value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#B47816' : '#16A34A', icon: AlertTriangle },
-        { label: t.stats.slowMoving, value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#B91C1C' : '#16A34A', icon: TrendingDown },
+    const formatStatCurrency = (val: number) => {
+        if (val >= 1_000_000_000) {
+            return `${(val / 1_000_000_000).toFixed(2)} tỷ ₫`
+        }
+        if (val >= 1_000_000) {
+            return `${(val / 1_000_000).toFixed(1)} tr ₫`
+        }
+        return formatCurrency(val)
+    }
+
+    const statCards: { label: string; value: React.ReactNode; sub?: string; tone: Tone; icon: any }[] = [
+        { label: t.stats.warehouses, value: stats.warehouses, sub: 'kho hoạt động', tone: 'neutral', icon: Warehouse },
+        { label: t.stats.totalStock, value: stats.availableBottles.toLocaleString(), sub: `${t.bottlesUnit} khả dụng`, tone: 'success', icon: Package },
+        { label: t.stats.inventoryValue, value: formatStatCurrency(stats.inventoryValue), sub: formatCurrency(stats.inventoryValue), tone: 'brand', icon: DollarSign },
+        { label: t.stats.reserved, value: stats.reservedBottles.toLocaleString(), sub: `${t.bottlesUnit} giữ chỗ`, tone: 'info', icon: Box },
+        { label: t.stats.lowStock, value: stats.lowStockCount, sub: stats.lowStockCount > 0 ? 'cần nhập thêm' : 'mức an toàn', tone: stats.lowStockCount > 0 ? 'warning' : 'neutral', icon: AlertTriangle },
+        { label: t.stats.slowMoving, value: stats.slowMovingCount, sub: stats.slowMovingCount > 0 ? '> 90 ngày' : 'lưu thông tốt', tone: stats.slowMovingCount > 0 ? 'danger' : 'neutral', icon: Clock },
     ]
 
     const activeModule = wmsFeatureModules.find(m => m.key === activeTab)
@@ -856,13 +869,13 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="flex items-center justify-between gap-2">
                     {viewMode === 'grid' ? (
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-                                <Warehouse size={18} className="text-amber-600" />
+                            <div className="w-8 h-8 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                                <Warehouse size={18} className="text-lys-teal-strong" />
                             </div>
                             <div>
                                 <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-none">
                                     {t.pageTitle}
-                                    <span className="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                                    <span className="text-[10px] bg-lys-teal-soft text-lys-teal-strong font-bold px-2 py-0.5 rounded-full border border-lys-teal-subtle max-w-[120px] truncate inline-block align-middle">
                                         {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
                                     </span>
                                 </h2>
@@ -873,11 +886,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
                             >
                                 <ArrowLeft size={14} /> {t.mobileMenuBtn}
                             </button>
-                            <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg truncate">
+                            <span className="text-xs font-bold text-lys-primary bg-lys-subtle border border-lys-border px-2 py-1 rounded-lg truncate">
                                 {activeModule?.title}
                             </span>
                         </div>
@@ -898,12 +911,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-2 pr-6 py-1.5 rounded-lg text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
+                                className="appearance-none pl-2 pr-6 py-1.5 rounded-lg text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-lys-teal-strong max-w-[140px] truncate"
                             >
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        🏢 {w.name} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
+                                        {w.name} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
@@ -931,12 +944,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 {viewMode === 'grid' && showMobileStats && (
                     <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                         {statCards.map(s => (
-                            <div key={s.label} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
+                            <div key={s.label} className="p-2 rounded-lg bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
                                 <div className="flex items-center gap-1 text-[9px] uppercase font-bold text-slate-500">
-                                    <s.icon size={10} style={{ color: s.accent }} />
+                                    <s.icon size={11} className="text-slate-600" />
                                     <span className="truncate">{s.label}</span>
                                 </div>
-                                <span className="text-[11px] font-bold font-mono mt-0.5" style={{ color: s.accent }}>
+                                <span className="text-[11px] font-bold font-mono mt-0.5 text-slate-900">
                                     {s.value}
                                 </span>
                             </div>
@@ -949,49 +962,45 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             <div className="hidden md:block p-3.5 rounded-lg shadow-2xs bg-white border border-slate-200">
                 <div className="flex flex-row items-center justify-between gap-3">
                     {/* Left: Title & Active Breadcrumb */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2.5 shrink-0">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-slate-900"
-                            title="Nhấn vào Kho Hàng để về trang Bảng Chức Năng Kho"
+                            className="text-base font-extrabold flex items-center gap-2 hover:opacity-85 transition cursor-pointer text-slate-900"
+                            title="Về Bảng Chức Năng Kho"
                         >
-                            <Warehouse size={20} className="text-amber-500" /> {t.pageTitle}
+                            <div className="w-8 h-8 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                                <Warehouse size={18} className="text-lys-teal-strong" />
+                            </div>
+                            <span>{t.pageTitle}</span>
                         </button>
 
+                        <Badge tone="neutral" className="text-xs font-semibold">
+                            {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
+                        </Badge>
+
                         {viewMode === 'workspace' && (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2 ml-1">
                                 <ChevronRight size={14} className="text-slate-400" />
-                                <span className="text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg text-xs font-bold">
+                                <Badge tone="brand" className="text-xs font-bold">
                                     {activeModule?.title}
-                                </span>
-                                <button
+                                </Badge>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
                                     onClick={() => setViewMode('grid')}
-                                    className="ml-2 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold transition shadow-2xs cursor-pointer active:scale-95"
+                                    className="ml-1 text-xs gap-1"
                                 >
-                                    {t.backToMenu}
-                                </button>
+                                    <ArrowLeft size={13} /> {t.backToMenu}
+                                </Button>
                             </div>
                         )}
                     </div>
 
-                    {/* Middle: Stat Badges — ONLY SHOW ON MAIN KHO HÀNG SCREEN (viewMode === 'grid') */}
-                    {viewMode === 'grid' && (
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
-                            {statCards.map(s => (
-                                <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-2xs bg-slate-50 border border-slate-200">
-                                    <s.icon size={13} style={{ color: s.accent }} />
-                                    <span className="uppercase font-semibold text-slate-500">{s.label}:</span>
-                                    <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Right Action Group: Warehouse Selector Dropdown & Notification Alert Toggle */}
+                    {/* Right Action Group: Warehouse Selector Dropdown, Notification Alert Toggle & Create Warehouse */}
                     <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={toggleAudioNotify}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
                                 audioNotifyEnabled
                                     ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/20'
                                     : 'bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200'
@@ -1029,25 +1038,46 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-3 pr-8 py-2 rounded-lg text-base sm:text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
+                                className="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-semibold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-lys-teal-strong max-w-[210px] xl:max-w-[280px] truncate"
                             >
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        🏢 {w.name} {w.allowSales === false ? '⛔ [Chỉ Điều Chuyển]' : w.isDefault ? '⭐ [Kho Mặc Định]' : ''} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
+                                        {w.name} {w.allowSales === false ? '[Chỉ Điều Chuyển]' : w.isDefault ? '[Mặc Định]' : ''} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
                             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                         </div>
 
-                        <button onClick={() => setCreateWHOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-2xs transition-all hover:brightness-105 shrink-0 cursor-pointer bg-amber-500 text-slate-950">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setCreateWHOpen(true)}
+                            className="gap-1.5"
+                        >
                             <Plus size={14} /> {t.createWarehouseBtn}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
+
+            {/* ═══ 📊 DESKTOP STATS ROW (>= 768px, ON MAIN GRID VIEW) ═══ */}
+            {viewMode === 'grid' && (
+                <div className="hidden md:grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                    {statCards.map(s => (
+                        <StatCard
+                            key={s.label}
+                            label={s.label}
+                            value={s.value}
+                            sub={s.sub}
+                            icon={s.icon}
+                            tone={s.tone}
+                            className="p-3 [&_.text-xl]:text-base sm:[&_.text-xl]:text-lg [&_.text-xl]:leading-tight"
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
             {viewMode === 'grid' && (
@@ -1058,12 +1088,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
                                 {t.menuTitle}
                             </p>
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
                                 {t.modulesCount(wmsFeatureModules.length)}
                             </span>
                         </div>
 
-                        {/* Single Unified 2-Column Mobile Grid for All 9 Modules */}
+                        {/* Single Unified 2-Column Mobile Grid for All Modules */}
                         <div className="grid grid-cols-2 gap-2.5">
                             {wmsFeatureModules.map(mod => {
                                 const Icon = mod.icon
@@ -1071,11 +1101,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <button
                                         key={mod.key}
                                         onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
-                                        className="p-3.5 bg-white border border-slate-200 rounded-lg text-left active:scale-95 transition shadow-2xs flex flex-col justify-between"
+                                        className="p-3 bg-white border border-slate-200 rounded-lg text-left active:scale-95 transition shadow-2xs flex flex-col justify-between"
                                     >
                                         <div className="flex items-start justify-between mb-2">
-                                            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
-                                                <Icon size={18} />
+                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
+                                                <Icon size={16} />
                                             </div>
                                             {mod.badge !== undefined && mod.badge > 0 && (
                                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white">
@@ -1085,7 +1115,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         </div>
                                         <div>
                                             <div className="text-xs font-bold text-slate-900 leading-snug">{mod.title}</div>
-                                            <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">{mod.subtitle}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{mod.subtitle}</div>
                                         </div>
                                     </button>
                                 )
@@ -1094,69 +1124,103 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     </div>
 
                     {/* 🖥️ DESKTOP GRID VIEW (>= 768px) */}
-                    <div className="hidden md:block space-y-4">
-                    <div className="flex items-center justify-between px-1">
-                        <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
-                            {t.menuTitle}
-                        </p>
-                    </div>
+                    <div className="hidden md:block space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                            <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
+                                {t.menuTitle}
+                            </p>
+                            <span className="text-xs text-slate-500 font-medium">
+                                {t.modulesCount(wmsFeatureModules.length)}
+                            </span>
+                        </div>
 
-                    {/* 9 Feature Cards Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                        {wmsFeatureModules.map(mod => {
-                            const Icon = mod.icon
-                            return (
-                                <div
-                                    key={mod.key}
-                                    onClick={() => {
-                                        handleTabChange(mod.key)
-                                        setViewMode('workspace')
-                                    }}
-                                    className="p-4 sm:p-5 rounded-lg flex flex-col justify-between cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group shadow-sm"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                >
-                                    <div>
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="p-3 rounded-lg transition-transform group-hover:scale-105 shrink-0"
-                                                style={{ background: mod.bg, color: mod.color }}>
-                                                <Icon size={24} />
+                        {/* Feature Cards Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                            {wmsFeatureModules.map(mod => {
+                                const Icon = mod.icon
+                                return (
+                                    <div
+                                        key={mod.key}
+                                        onClick={() => {
+                                            handleTabChange(mod.key)
+                                            setViewMode('workspace')
+                                        }}
+                                        className="p-4 sm:p-5 rounded-lg bg-white border border-slate-200 flex flex-col justify-between cursor-pointer transition-all hover:border-lys-teal hover:shadow-md group shadow-2xs"
+                                    >
+                                        <div>
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div
+                                                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                                                    style={{ background: mod.bg, color: mod.color }}
+                                                >
+                                                    <Icon size={20} />
+                                                </div>
+                                                {mod.badge !== undefined && mod.badge > 0 && (
+                                                    <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white shadow-2xs">
+                                                        {t.modules.quarantine.badgeAlerts(mod.badge)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            {mod.badge !== undefined && mod.badge > 0 && (
-                                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold shadow-xs"
-                                                    style={{ background: '#B91C1C', color: '#FFFFFF' }}>
-                                                    {t.modules.quarantine.badgeAlerts(mod.badge)}
-                                                </span>
-                                            )}
+
+                                            <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-lys-teal-strong transition-colors">
+                                                {mod.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed line-clamp-2">
+                                                {mod.subtitle}
+                                            </p>
                                         </div>
 
-                                        <h4 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#B47816] transition-colors"
-                                            style={{ color: '#0F172A' }}>
-                                            {mod.title}
-                                        </h4>
-                                        <p className="text-[11px] font-mono mb-2" style={{ color: '#64748B' }}>
-                                            {mod.subtitle}
-                                        </p>
-                                        <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
-                                            {mod.description}
-                                        </p>
+                                        <div className="mt-4 pt-3 flex items-center justify-between text-xs font-bold text-lys-teal-strong border-t border-slate-100 group-hover:translate-x-0.5 transition-transform">
+                                            <span>{mod.actionLabel}</span>
+                                            <ChevronRight size={14} />
+                                        </div>
                                     </div>
-
-                                    <div className="mt-4 pt-3 flex items-center justify-between text-xs font-bold"
-                                        style={{ borderTop: '1px solid #F1F5F9', color: mod.color }}>
-                                        <span>{mod.actionLabel}</span>
-                                        <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
 
             {/* ═══ VIEW MODE 2: MÀN HÌNH LÀM VIỆC CHI TIẾT (WORKSPACE VIEW) ═══ */}
             {viewMode === 'workspace' && (
                 <div className="space-y-4 pb-24 md:pb-8">
+                    {/* ═══ WORKSPACE TOP SUB-TAB BAR (DESKTOP & TABLET) ═══ */}
+                    <div className="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1.5 bg-white border border-slate-200 rounded-lg shadow-2xs">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1 shrink-0 transition cursor-pointer"
+                            title={t.backToMenu}
+                        >
+                            <LayoutGrid size={14} />
+                            <span>Menu</span>
+                        </button>
+                        <div className="h-4 w-px bg-slate-200 mx-0.5 shrink-0" />
+                        {wmsFeatureModules.map(mod => {
+                            const Icon = mod.icon
+                            const isActive = activeTab === mod.key
+                            return (
+                                <button
+                                    key={mod.key}
+                                    onClick={() => handleTabChange(mod.key)}
+                                    className={cn(
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition shrink-0 cursor-pointer',
+                                        isActive
+                                            ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-bold'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-semibold border border-transparent'
+                                    )}
+                                >
+                                    <Icon size={14} style={{ color: isActive ? undefined : mod.color }} />
+                                    <span>{mod.title}</span>
+                                    {mod.badge !== undefined && mod.badge > 0 && (
+                                        <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white">
+                                            {mod.badge}
+                                        </span>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
 
                     {/* NXT — Stock Movement Report Tab */}
                     {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} selectedWarehouseId={selectedWH ?? undefined} />}
@@ -1309,9 +1373,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                             className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
                                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: statusFilter ? '#0F172A' : '#64748B' }}>
                                             <option value="">{t.table.allStatuses}</option>
-                                            <option value="AVAILABLE">✅ {t.lotStatuses.AVAILABLE}</option>
-                                            <option value="RESERVED">📌 {t.lotStatuses.RESERVED}</option>
-                                            <option value="QUARANTINE">⚠️ {t.lotStatuses.QUARANTINE}</option>
+                                            <option value="AVAILABLE">{t.lotStatuses.AVAILABLE}</option>
+                                            <option value="RESERVED">{t.lotStatuses.RESERVED}</option>
+                                            <option value="QUARANTINE">{t.lotStatuses.QUARANTINE}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1319,15 +1383,14 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                             {lotsLoading ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <Loader2 size={24} className="animate-spin" style={{ color: '#B45309' }} />
+                                    <Loader2 size={24} className="animate-spin text-lys-teal-strong" />
                                 </div>
                             ) : selectedWH ? (
                                 <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} />
                             ) : (
-                                <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs"
-                                    style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
-                                    <Warehouse size={36} style={{ color: '#94A3B8' }} />
-                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
+                                <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs bg-white border border-dashed border-slate-300">
+                                    <Warehouse size={36} className="text-slate-400" />
+                                    <p className="text-sm font-semibold text-slate-800">
                                         {t.table.selectWhPrompt}
                                     </p>
                                 </div>
@@ -1337,12 +1400,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             )}
 
-            {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS - LIGHT LUXURY THEME */}
+            {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS - DESIGN SYSTEM THEME */}
             <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-2 z-40 shadow-2xl">
                 <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <LayoutGrid size={16} />
                         {t.bottomNav.menu}
@@ -1353,7 +1416,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('inventory')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <Package size={16} />
                         {t.bottomNav.inventory}
@@ -1364,7 +1427,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('do')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <Truck size={16} />
                         {t.bottomNav.do}
@@ -1375,7 +1438,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('gr')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <PackagePlus size={16} />
                         {t.bottomNav.gr}
@@ -1386,7 +1449,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('stock-count')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <ClipboardList size={16} />
                         {t.bottomNav.stockCount}
