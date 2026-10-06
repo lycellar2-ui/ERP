@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import {
     Smartphone, QrCode, CheckCircle2, ChevronLeft, MapPin,
     Plus, Minus, Save, Eye, EyeOff, Camera, AlertTriangle, RefreshCw,
-    ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle
+    ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle, FileText
 } from 'lucide-react'
 import { AddUnlistedModal } from './AddUnlistedModal'
 import { recordMobileCountLine, completeZoneCount, startStockCount } from './actions'
@@ -41,6 +41,7 @@ type Props = {
     onBack: () => void
     onRefreshed?: () => void
     onOpenTableModal?: () => void
+    onOpenReport?: (sessionId: string) => void
 }
 
 const REASONS = [
@@ -78,7 +79,7 @@ function triggerHaptic() {
     }
 }
 
-export default function MobileLocationCounter({ detail, onBack, onRefreshed, onOpenTableModal }: Props) {
+export default function MobileLocationCounter({ detail, onBack, onRefreshed, onOpenTableModal, onOpenReport }: Props) {
     const [lines, setLines] = useState<LineItem[]>(detail.lines)
     const [viewMode, setViewMode] = useState<'FOCUS' | 'ZONES' | 'LIST'>('ZONES')
     const [selectedZone, setSelectedZone] = useState<string>('ALL')
@@ -245,20 +246,29 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                 {/* Row 2: Action Buttons Bar (Shown in ZONES and LIST mode) */}
                 {viewMode !== 'FOCUS' && (
-                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5">
                         {onOpenTableModal && (
                             <button
                                 onClick={onOpenTableModal}
                                 className="py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
                             >
-                                📊 Bảng Điền Trực Tiếp
+                                📊 Bảng Điền
+                            </button>
+                        )}
+                        {onOpenReport && (
+                            <button
+                                onClick={() => onOpenReport(detail.id)}
+                                className="py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
+                                title="Xem báo cáo kiểm kê và chênh lệch A4"
+                            >
+                                <FileText className="w-3.5 h-3.5" /> Báo Cáo A4
                             </button>
                         )}
                         <button
                             onClick={() => setShowAddUnlistedModal(true)}
-                            className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal ? 'col-span-2' : ''}`}
+                            className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal && !onOpenReport ? 'col-span-2' : ''}`}
                         >
-                            ➕ Chèn Mã / Vintage Bổ Sung
+                            ➕ Thêm Mã
                         </button>
                     </div>
                 )}
@@ -776,12 +786,26 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             )}
                         </div>
 
-                        <button
-                            onClick={() => setShowZoneReportModal(false)}
-                            className="w-full py-3 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-lg shadow-sm cursor-pointer"
-                        >
-                            HOÀN TẤT VÀ TIẾP TỤC
-                        </button>
+                        <div className="flex gap-2">
+                            {onOpenReport && (
+                                <button
+                                    onClick={() => {
+                                        setShowZoneReportModal(false)
+                                        onOpenReport(detail.id)
+                                    }}
+                                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-lg shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    BÁO CÁO ĐỐI SOÁT A4
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowZoneReportModal(false)}
+                                className="flex-1 py-3 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-lg shadow-sm cursor-pointer"
+                            >
+                                TIẾP TỤC ĐẾM
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

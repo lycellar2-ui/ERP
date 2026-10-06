@@ -123,8 +123,18 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [cycleProgress, setCycleProgress] = useState<CycleCountProgress | null>(null)
     const [cycleWarehouseId, setCycleWarehouseId] = useState<string>('')
     const [cycleDaysWindow, setCycleDaysWindow] = useState<number>(7)
+    const [cycleDateMode, setCycleDateMode] = useState<'PRESET' | 'CUSTOM'>('PRESET')
+    const [cycleDateFrom, setCycleDateFrom] = useState<string>(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 7)
+        return d.toISOString().slice(0, 10)
+    })
+    const [cycleDateTo, setCycleDateTo] = useState<string>(() => {
+        return new Date().toISOString().slice(0, 10)
+    })
     const [loadingCycle, setLoadingCycle] = useState<boolean>(false)
     const [activeCycleTab, setActiveCycleTab] = useState<'UNCOUNTED' | 'COUNTED'>('UNCOUNTED')
+    const [wizardCycleSearchTerm, setWizardCycleSearchTerm] = useState<string>('')
 
     // Daily Batch Count Modal State
     const [showDailyBatchModal, setShowDailyBatchModal] = useState<boolean>(false)
@@ -150,13 +160,30 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         )
     }, [cycleProgress, activeCycleTab, cycleSearchTerm])
 
-    const loadCycleProgress = async (whId?: string, days?: number) => {
+    const filteredWizardCycleProducts = useMemo(() => {
+        if (!cycleProgress?.uncountedProducts) return []
+        if (!wizardCycleSearchTerm.trim()) return cycleProgress.uncountedProducts
+        const term = wizardCycleSearchTerm.toLowerCase().trim()
+        return cycleProgress.uncountedProducts.filter(p =>
+            p.skuCode.toLowerCase().includes(term) ||
+            p.productName.toLowerCase().includes(term) ||
+            (Array.isArray(p.locations) && p.locations.some((loc: string) => loc.toLowerCase().includes(term)))
+        )
+    }, [cycleProgress, wizardCycleSearchTerm])
+
+    const loadCycleProgress = async (whId?: string, days?: number, fromDateStr?: string, toDateStr?: string) => {
         const targetWh = whId || cycleWarehouseId || warehouses[0]?.id
         if (!targetWh) return
         setLoadingCycle(true)
         try {
-            const data = await getCycleCountProgress(targetWh, days || cycleDaysWindow)
+            const isCustom = cycleDateMode === 'CUSTOM' || (fromDateStr !== undefined && toDateStr !== undefined)
+            const fDate = fromDateStr !== undefined ? fromDateStr : (isCustom ? cycleDateFrom : undefined)
+            const tDate = toDateStr !== undefined ? toDateStr : (isCustom ? cycleDateTo : undefined)
+            const data = await getCycleCountProgress(targetWh, days || cycleDaysWindow, fDate, tDate)
             setCycleProgress(data)
+            if (data?.daysWindow) {
+                setCycleDaysWindow(data.daysWindow)
+            }
         } finally {
             setLoadingCycle(false)
         }
@@ -344,6 +371,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
                 skus = topN
             }
+            if (!skus || skus.length === 0) {
+                setIsSubmitting(false)
+                setCreateError('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê cuốn chiếu')
+                return
+            }
         }
 
         const res = await createStockCountSessionExtended({
@@ -419,12 +451,20 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 onBack={() => {
                     setMobileViewDetail(null)
                     fetchData()
+                    loadCycleProgress()
                 }}
-                onRefreshed={() => fetchData()}
+                onRefreshed={() => {
+                    fetchData()
+                    loadCycleProgress()
+                }}
                 onOpenTableModal={() => {
                     const sid = mobileViewDetail.id
                     setMobileViewDetail(null)
                     setTableModalSessionId(sid)
+                }}
+                onOpenReport={sid => {
+                    setMobileViewDetail(null)
+                    handleOpenPrintView(sid)
                 }}
             />
         )
@@ -574,10 +614,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <RotateCcw size={20} className="text-lys-teal-strong" />
                             </div>
                             <div>
-                                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <h2 className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-2">
                                     <span>Kế Hoạch Kiểm Kê Cuốn Chiếu (Cycle Count)</span>
                                     <span className="text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
-                                        Chu kỳ {cycleDaysWindow} ngày
+                                        {cycleProgress?.dateFrom && cycleProgress?.dateTo ? (
+                                            `Từ ${new Date(cycleProgress.dateFrom).toLocaleDateString('vi-VN')} đến ${new Date(cycleProgress.dateTo).toLocaleDateString('vi-VN')} (${cycleProgress.daysWindow} ngày)`
+                                        ) : (
+                                            `Chu kỳ ${cycleDaysWindow} ngày`
+                                        )}
                                     </span>
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
@@ -601,20 +645,70 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 ))}
                             </select>
 
-                            {/* Days window selector */}
-                            <select
-                                value={cycleDaysWindow}
-                                onChange={e => {
-                                    const days = parseInt(e.target.value, 10) || 7
-                                    setCycleDaysWindow(days)
-                                    loadCycleProgress(cycleWarehouseId, days)
-                                }}
-                                className="bg-slate-50 border border-slate-300 text-slate-900 rounded-md px-3 py-2 text-xs font-semibold outline-none cursor-pointer focus:border-lys-teal-strong"
-                            >
-                                <option value={7}>Chu kỳ 7 ngày (1 tuần)</option>
-                                <option value={14}>Chu kỳ 14 ngày (2 tuần)</option>
-                                <option value={30}>Chu kỳ 30 ngày (1 tháng)</option>
-                            </select>
+                            {/* Date mode: PRESET vs CUSTOM */}
+                            {cycleDateMode === 'PRESET' ? (
+                                <div className="flex items-center gap-1.5">
+                                    <select
+                                        value={cycleDaysWindow}
+                                        onChange={e => {
+                                            const days = parseInt(e.target.value, 10) || 7
+                                            setCycleDaysWindow(days)
+                                            loadCycleProgress(cycleWarehouseId, days)
+                                        }}
+                                        className="bg-slate-50 border border-slate-300 text-slate-900 rounded-md px-3 py-2 text-xs font-semibold outline-none cursor-pointer focus:border-lys-teal-strong"
+                                    >
+                                        <option value={7}>Chu kỳ 7 ngày (1 tuần)</option>
+                                        <option value={14}>Chu kỳ 14 ngày (2 tuần)</option>
+                                        <option value={30}>Chu kỳ 30 ngày (1 tháng)</option>
+                                        <option value={60}>Chu kỳ 60 ngày (2 tháng)</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCycleDateMode('CUSTOM')}
+                                        className="px-2.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-md flex items-center gap-1 cursor-pointer"
+                                        title="Chuyển sang chọn ngày tùy ý"
+                                    >
+                                        <Calendar size={13} />
+                                        <span>Tùy chọn ngày</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-md border border-slate-300">
+                                    <span className="text-[11px] font-bold text-slate-600 pl-1">Từ:</span>
+                                    <input
+                                        type="date"
+                                        value={cycleDateFrom}
+                                        onChange={e => setCycleDateFrom(e.target.value)}
+                                        className="bg-white border border-slate-300 text-slate-900 rounded px-2 py-1 text-xs outline-none focus:border-lys-teal-strong"
+                                    />
+                                    <span className="text-[11px] font-bold text-slate-600">Đến:</span>
+                                    <input
+                                        type="date"
+                                        value={cycleDateTo}
+                                        onChange={e => setCycleDateTo(e.target.value)}
+                                        className="bg-white border border-slate-300 text-slate-900 rounded px-2 py-1 text-xs outline-none focus:border-lys-teal-strong"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => loadCycleProgress(cycleWarehouseId, undefined, cycleDateFrom, cycleDateTo)}
+                                        className="px-2 py-1 bg-lys-teal-strong hover:bg-lys-teal-hover text-white rounded font-bold text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
+                                        title="Tính toán lại theo khoảng ngày"
+                                    >
+                                        <RefreshCw size={11} /> Áp dụng
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCycleDateMode('PRESET')
+                                            loadCycleProgress(cycleWarehouseId, 7)
+                                        }}
+                                        className="px-2 py-1 bg-white hover:bg-slate-200 text-slate-600 rounded font-semibold text-xs cursor-pointer border border-slate-200"
+                                        title="Trở lại chu kỳ cố định"
+                                    >
+                                        Theo tuần
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Primary CTA */}
                             <button
@@ -770,6 +864,138 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         </div>
                                     ))
                                 )}
+                            </div>
+
+                            {/* ═══ BÁO CÁO CÁC ĐỢT KIỂM KÊ & CHÊNH LỆCH TRONG KỲ ═══ */}
+                            <div className="pt-4 border-t border-slate-200 space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <FileText size={16} className="text-lys-teal-strong" />
+                                            <span>Báo Cáo Các Đợt Kiểm Kê & Chênh Lệch Trong Kỳ</span>
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Tổng hợp kết quả các đợt kiểm kê cuốn chiếu, tỷ lệ chênh lệch thực tế so với sổ sách và xuất biên bản đối soát A4.
+                                        </p>
+                                    </div>
+
+                                    {/* Stats summary badges */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-semibold">
+                                            Tổng: <strong>{cycleProgress.recentSessions?.length || 0}</strong> đợt
+                                        </span>
+                                        {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => s.hasVariance).length > 0 && (
+                                            <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                                                <AlertTriangle size={12} />
+                                                {cycleProgress.recentSessions.filter(s => s.hasVariance).length} đợt có lệch
+                                            </span>
+                                        )}
+                                        {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length > 0 && (
+                                            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                                                <CheckCircle2 size={12} />
+                                                {cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length} đợt khớp 100%
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Table of recent sessions */}
+                                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                                <th className="p-2.5 pl-3">SỐ PHIẾU / TIÊU ĐỀ</th>
+                                                <th className="p-2.5 whitespace-nowrap">NGÀY THỰC HIỆN</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">SỐ MÃ SKU</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">TRẠNG THÁI</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">CHÊNH LỆCH TỒN</th>
+                                                <th className="p-2.5 pr-3 text-right whitespace-nowrap">BÁO CÁO & ĐỐI SOÁT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-slate-800">
+                                            {!cycleProgress.recentSessions || cycleProgress.recentSessions.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                                                        Chưa có đợt kiểm kê nào được tạo trong khoảng thời gian này.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                cycleProgress.recentSessions.map(s => {
+                                                    return (
+                                                        <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                                                            <td className="p-2.5 pl-3">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenDetail(s.id)}
+                                                                    className="font-mono font-bold text-lys-teal-strong hover:underline block text-left"
+                                                                >
+                                                                    {s.sessionNo}
+                                                                </button>
+                                                                <span className="text-[11px] text-slate-600 truncate max-w-xs block font-medium">
+                                                                    {s.title}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-2.5 whitespace-nowrap text-slate-600 font-medium">
+                                                                {new Date(s.createdAt).toLocaleDateString('vi-VN')}
+                                                            </td>
+                                                            <td className="p-2.5 text-center whitespace-nowrap font-mono font-bold text-slate-800">
+                                                                {s.lineCount} mã
+                                                            </td>
+                                                            <td className="p-2.5 text-center whitespace-nowrap">
+                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                                    s.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                                                                    s.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                                                                    s.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                                                                    'bg-slate-100 text-slate-700 border border-slate-200'
+                                                                }`}>
+                                                                    {s.status === 'APPROVED' ? 'Đã duyệt' :
+                                                                     s.status === 'COMPLETED' ? 'Đã hoàn tất' :
+                                                                     s.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-2.5 text-center whitespace-nowrap">
+                                                                {s.status === 'DRAFT' ? (
+                                                                    <span className="text-slate-400 text-[11px]">Chưa đếm</span>
+                                                                ) : s.hasVariance ? (
+                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                                                        <AlertTriangle size={11} />
+                                                                        Lệch {s.totalVariance} chai
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                        <CheckCircle2 size={11} />
+                                                                        Khớp 100% (0 chai)
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-2.5 pr-3 text-right whitespace-nowrap">
+                                                                <div className="flex items-center justify-end gap-1.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleOpenPrintView(s.id)}
+                                                                        className="px-2.5 py-1.5 bg-[#0891B2] hover:bg-[#0E7490] text-white rounded font-bold text-[11px] shadow-2xs flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                                        title="Xem biên bản đối soát và chênh lệch kiểm kê"
+                                                                    >
+                                                                        <FileText size={12} />
+                                                                        <span>Báo Cáo Chênh Lệch</span>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleOpenDetail(s.id)}
+                                                                        className="px-2 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded font-semibold text-[11px] cursor-pointer"
+                                                                        title="Xem chi tiết phiên kiểm"
+                                                                    >
+                                                                        Chi tiết
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     ) : null}
@@ -949,10 +1175,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                                     <button
                                                         onClick={() => handleOpenPrintView(row.id)}
-                                                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
-                                                        title="In Biên bản"
+                                                        className="px-2 py-1 bg-cyan-50 hover:bg-cyan-100 text-[#0891B2] border border-[#0891B2]/30 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
+                                                        title="Xem báo cáo chênh lệch & In biên bản đối soát A4"
                                                     >
-                                                        <Printer className="w-3 h-3 text-slate-500" /> In
+                                                        <FileText className="w-3 h-3 text-[#0891B2]" /> Báo Cáo
                                                     </button>
                                                 </div>
                                             </td>
@@ -1037,7 +1263,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     onClick={() => handleOpenPrintView(row.id)}
                                     className="py-2 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                 >
-                                    <Printer className="w-3.5 h-3.5 text-amber-600" /> In Biên Bản
+                                    <FileText className="w-3.5 h-3.5 text-lys-teal-strong" /> Báo Cáo A4
                                 </button>
                             </div>
                         </div>
@@ -1447,48 +1673,166 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Cấu hình đặc thù: CYCLE */}
                                     {countCategory === 'CYCLE' && (
                                         <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="font-bold text-slate-800">Tiến độ chu kỳ ({cycleDaysWindow} ngày):</span>
-                                                <span className="font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
-                                                    Đã kiểm {cycleProgress?.progressPercent || 0}%
-                                                </span>
+                                            {/* Progress & Cycle Summary */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs pb-2 border-b border-slate-200">
+                                                <div>
+                                                    <span className="font-bold text-slate-800">
+                                                        Kho: <strong className="text-slate-900">{cycleProgress?.warehouseName || '...'}</strong> ({cycleProgress?.daysWindow || cycleDaysWindow} ngày)
+                                                    </span>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                                        Đã kiểm: <span className="font-mono font-bold text-emerald-700">{cycleProgress?.countedProductCount || 0}</span> / {cycleProgress?.totalProducts || 0} mã · Còn lại: <span className="font-mono font-bold text-amber-700">{cycleProgress?.uncountedProductCount || 0}</span> mã
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 text-[11px] font-mono">
+                                                        Đã kiểm {cycleProgress?.progressPercent || 0}%
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                                                        selectedDailySkus.length > 0 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700'
+                                                    }`}>
+                                                        Đã chọn: {selectedDailySkus.length} mã
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
-                                                            const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
-                                                            setSelectedDailySkus(topN)
-                                                            setFormTitle(`Kiểm kê cuốn chiếu hôm nay (${topN.length} mã) - ${cycleProgress.warehouseName}`)
-                                                        }
-                                                    }}
-                                                    className="px-2.5 py-1.5 bg-lys-teal-strong hover:bg-lys-teal-hover text-white rounded font-bold text-xs cursor-pointer shadow-2xs flex items-center gap-1"
-                                                >
-                                                    <Zap size={13} /> Đề xuất ~{cycleProgress?.dailySuggestedCount || 15} mã hôm nay
-                                                </button>
-                                                {[5, 10, 15].map(cnt => (
+
+                                            {/* Quick Selection Presets */}
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-bold text-slate-700 block">
+                                                    Chọn nhanh mã theo gợi ý hoặc số lượng:
+                                                </label>
+                                                <div className="flex flex-wrap items-center gap-1.5">
                                                     <button
                                                         type="button"
-                                                        key={cnt}
                                                         onClick={() => {
                                                             if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
-                                                                const topN = cycleProgress.uncountedProducts.slice(0, cnt).map(p => p.skuCode)
+                                                                const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
                                                                 setSelectedDailySkus(topN)
-                                                                setFormTitle(`Kiểm kê cuốn chiếu (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                                                setFormTitle(`Kiểm kê cuốn chiếu hôm nay (${topN.length} mã) - ${cycleProgress.warehouseName}`)
                                                             }
                                                         }}
-                                                        className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded font-semibold text-xs cursor-pointer"
+                                                        className="px-2.5 py-1 bg-lys-teal-strong hover:bg-lys-teal-hover text-white rounded font-bold text-[11px] cursor-pointer shadow-2xs flex items-center gap-1 active:scale-95"
                                                     >
-                                                        Top {cnt} tồn cao
+                                                        <Zap size={12} /> Đề xuất ~{cycleProgress?.dailySuggestedCount || 15} mã hôm nay
                                                     </button>
-                                                ))}
+                                                    {[5, 10, 20].map(cnt => (
+                                                        <button
+                                                            type="button"
+                                                            key={cnt}
+                                                            onClick={() => {
+                                                                if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
+                                                                    const topN = cycleProgress.uncountedProducts.slice(0, cnt).map(p => p.skuCode)
+                                                                    setSelectedDailySkus(topN)
+                                                                    setFormTitle(`Kiểm kê cuốn chiếu (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded font-semibold text-[11px] cursor-pointer"
+                                                        >
+                                                            Top {cnt} tồn cao
+                                                        </button>
+                                                    ))}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (cycleProgress && cycleProgress.uncountedProducts.length > 0) {
+                                                                const all = cycleProgress.uncountedProducts.map(p => p.skuCode)
+                                                                setSelectedDailySkus(all)
+                                                                setFormTitle(`Kiểm kê cuốn chiếu tất cả (${all.length} mã) - ${cycleProgress.warehouseName}`)
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded font-semibold text-[11px] cursor-pointer"
+                                                    >
+                                                        Chọn tất cả ({cycleProgress?.uncountedProducts.length || 0})
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedDailySkus([])
+                                                        }}
+                                                        className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded font-semibold text-[11px] cursor-pointer"
+                                                    >
+                                                        Bỏ chọn hết
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <p className="text-[11px] text-slate-500">
-                                                {selectedDailySkus.length > 0
-                                                    ? `Đã chọn ${selectedDailySkus.length} mã SKU ưu tiên tồn kho cao nhất chưa kiểm tra.`
-                                                    : `Còn ${cycleProgress?.uncountedProductCount || 0} mã chưa kiểm tra trong chu kỳ này.`}
-                                            </p>
+
+                                            {/* Search SKU in uncounted list */}
+                                            <div className="space-y-1.5 pt-1">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <label className="font-bold text-slate-700">
+                                                        Danh sách mã SKU chưa kiểm (Click để chọn / bỏ chọn từng mã):*
+                                                    </label>
+                                                    <span className="text-[11px] text-slate-500 font-mono">
+                                                        {filteredWizardCycleProducts.length} mã hiển thị
+                                                    </span>
+                                                </div>
+
+                                                <div className="relative">
+                                                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Tìm mã SKU, tên rượu vang, vị trí kệ..."
+                                                        value={wizardCycleSearchTerm}
+                                                        onChange={e => setWizardCycleSearchTerm(e.target.value)}
+                                                        className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong shadow-2xs"
+                                                    />
+                                                </div>
+
+                                                {/* Checklist of uncounted SKUs */}
+                                                <div className="border border-slate-200 rounded-md max-h-52 overflow-y-auto divide-y divide-slate-100 bg-white">
+                                                    {filteredWizardCycleProducts.length === 0 ? (
+                                                        <div className="p-4 text-center text-slate-400 text-xs">
+                                                            {wizardCycleSearchTerm ? 'Không tìm thấy mã SKU nào khớp với tìm kiếm.' : 'Tất cả các mã trong kho đã được kiểm kê!'}
+                                                        </div>
+                                                    ) : (
+                                                        filteredWizardCycleProducts.map(p => {
+                                                            const isSelected = selectedDailySkus.includes(p.skuCode)
+                                                            return (
+                                                                <label
+                                                                    key={p.id}
+                                                                    className={`p-2 flex items-center justify-between gap-3 text-xs cursor-pointer transition select-none ${
+                                                                        isSelected ? 'bg-lys-teal-soft/50 font-semibold' : 'hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isSelected}
+                                                                            onChange={() => {
+                                                                                if (isSelected) {
+                                                                                    const next = selectedDailySkus.filter(s => s !== p.skuCode)
+                                                                                    setSelectedDailySkus(next)
+                                                                                    setFormTitle(`Kiểm kê cuốn chiếu (${next.length} mã) - ${cycleProgress?.warehouseName || ''}`)
+                                                                                } else {
+                                                                                    const next = [...selectedDailySkus, p.skuCode]
+                                                                                    setSelectedDailySkus(next)
+                                                                                    setFormTitle(`Kiểm kê cuốn chiếu (${next.length} mã) - ${cycleProgress?.warehouseName || ''}`)
+                                                                                }
+                                                                            }}
+                                                                            className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300"
+                                                                        />
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <span className="font-mono font-bold text-lys-teal-strong shrink-0 bg-white px-1.5 py-0.5 rounded border border-lys-teal-subtle text-[11px]">
+                                                                                    {p.skuCode}
+                                                                                </span>
+                                                                                <span className="truncate text-slate-900">{p.productName}</span>
+                                                                                {p.vintage && <span className="text-[10px] text-slate-500 font-mono shrink-0">({p.vintage})</span>}
+                                                                            </div>
+                                                                            <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                                                                                📍 {p.locations && p.locations.length > 0 ? p.locations.join(', ') : 'Chưa gán vị trí'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="text-right shrink-0">
+                                                                        <strong className="font-mono text-slate-900 text-xs">{(p.totalQty ?? 0).toLocaleString()} chai</strong>
+                                                                    </div>
+                                                                </label>
+                                                            )
+                                                        })
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
@@ -1542,11 +1886,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             </button>
                                             <button
                                                 type="submit"
-                                                disabled={isSubmitting}
+                                                disabled={isSubmitting || (countCategory === 'CYCLE' && selectedDailySkus.length === 0)}
                                                 className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                                             >
                                                 <Zap size={14} />
-                                                {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu & Bắt Đầu Kiểm Kê'}
+                                                {isSubmitting
+                                                    ? 'Đang khởi tạo...'
+                                                    : countCategory === 'CYCLE' && selectedDailySkus.length > 0
+                                                        ? `Tạo Phiếu Đếm (${selectedDailySkus.length} mã)`
+                                                        : 'Tạo Phiếu & Bắt Đầu Kiểm Kê'}
                                             </button>
                                         </div>
                                     </div>

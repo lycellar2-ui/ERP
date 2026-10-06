@@ -1164,6 +1164,8 @@ export type CycleCountProgress = {
     warehouseId: string
     warehouseName: string
     daysWindow: number
+    dateFrom?: string
+    dateTo?: string
     totalProducts: number
     totalBottles: number
     countedProductCount: number
@@ -1198,10 +1200,17 @@ export type CycleCountProgress = {
         status: string
         createdAt: Date
         lineCount: number
+        totalVariance: number
+        hasVariance: boolean
     }>
 }
 
-export async function getCycleCountProgress(warehouseId: string, daysWindow: number = 7): Promise<CycleCountProgress | null> {
+export async function getCycleCountProgress(
+    warehouseId: string,
+    daysWindow: number = 7,
+    startDateStr?: string,
+    endDateStr?: string
+): Promise<CycleCountProgress | null> {
     try {
         const wh = await prisma.warehouse.findUnique({
             where: { id: warehouseId },
@@ -1270,14 +1279,40 @@ export async function getCycleCountProgress(warehouseId: string, daysWindow: num
             }
         }
 
-        // 2. Query sessions within the cycle daysWindow
-        const sinceDate = new Date()
-        sinceDate.setDate(sinceDate.getDate() - daysWindow)
+        // 2. Query sessions within the cycle window (custom date range or daysWindow)
+        let fromDate: Date
+        let toDate: Date = new Date()
+
+        if (endDateStr) {
+            const parsedEnd = new Date(endDateStr)
+            if (!isNaN(parsedEnd.getTime())) {
+                parsedEnd.setHours(23, 59, 59, 999)
+                toDate = parsedEnd
+            }
+        }
+
+        if (startDateStr) {
+            const parsedStart = new Date(startDateStr)
+            if (!isNaN(parsedStart.getTime())) {
+                parsedStart.setHours(0, 0, 0, 0)
+                fromDate = parsedStart
+            } else {
+                fromDate = new Date(toDate)
+                fromDate.setDate(fromDate.getDate() - daysWindow)
+                fromDate.setHours(0, 0, 0, 0)
+            }
+        } else {
+            fromDate = new Date(toDate)
+            fromDate.setDate(fromDate.getDate() - daysWindow)
+            fromDate.setHours(0, 0, 0, 0)
+        }
+
+        const effectiveDays = Math.max(1, Math.round((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)))
 
         const recentSessions = await prisma.stockCountSession.findMany({
             where: {
                 warehouseId,
-                createdAt: { gte: sinceDate },
+                createdAt: { gte: fromDate, lte: toDate },
                 status: { in: ['IN_PROGRESS', 'COMPLETED', 'APPROVED'] }
             },
             include: {
@@ -1364,12 +1399,14 @@ export async function getCycleCountProgress(warehouseId: string, daysWindow: num
         const countedProductCount = countedProducts.length
         const uncountedProductCount = uncountedProducts.length
         const progressPercent = totalProducts > 0 ? Math.round((countedProductCount / totalProducts) * 100) : 100
-        const dailySuggestedCount = Math.max(1, Math.ceil(uncountedProductCount / Math.max(1, daysWindow)))
+        const dailySuggestedCount = Math.max(1, Math.ceil(uncountedProductCount / effectiveDays))
 
         return serialize({
             warehouseId,
             warehouseName: wh.name,
-            daysWindow,
+            daysWindow: effectiveDays,
+            dateFrom: fromDate.toISOString(),
+            dateTo: toDate.toISOString(),
             totalProducts,
             totalBottles,
             countedProductCount,
@@ -1378,14 +1415,19 @@ export async function getCycleCountProgress(warehouseId: string, daysWindow: num
             dailySuggestedCount,
             uncountedProducts,
             countedProducts,
-            recentSessions: recentSessions.map(s => ({
-                id: s.id,
-                sessionNo: s.sessionNo || `SC-${s.id.slice(-6).toUpperCase()}`,
-                title: s.title || `Phiếu kiểm kê`,
-                status: s.status,
-                createdAt: s.createdAt,
-                lineCount: s.lines.length
-            }))
+            recentSessions: recentSessions.map(s => {
+                const totalVariance = s.lines.reduce((sum, l) => sum + (l.variance ? Math.abs(Number(l.variance)) : 0), 0)
+                return {
+                    id: s.id,
+                    sessionNo: s.sessionNo || `SC-${s.id.slice(-6).toUpperCase()}`,
+                    title: s.title || `Phiếu kiểm kê`,
+                    status: s.status,
+                    createdAt: s.createdAt,
+                    lineCount: s.lines.length,
+                    totalVariance,
+                    hasVariance: totalVariance > 0
+                }
+            })
         })
     } catch (err: any) {
         console.error('getCycleCountProgress error:', err)

@@ -657,6 +657,14 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Giao Diện Xem Trước & Loại Trừ Mã Bốc Mẫu** | `StockCountClient.tsx` | Hiển thị danh sách mã vừa bốc kèm niên vụ, tồn kho khả dụng; cho phép thủ kho bấm nút "Bốc bộ mã khác" hoặc bấm `✕` để xóa bớt mã không mong muốn trước khi tạo phiếu |
 | **Cấu Hình Chuyên Biệt Từng Loại & Nút Quay Lại** | `StockCountClient.tsx` | Kiểm kê toàn kho hiển thị banner xác nhận phạm vi 100%; Kiểm kê 1 phần hiển thị lọc Zone và loại vang; Kiểm kê cuốn chiếu tích hợp tiến độ % tuần; có nút `[← Chọn lại hình thức]` quay lại bước 1 linh hoạt |
 
+#### Phase 18: Tùy Chọn Mã SKU Cuốn Chiếu, Báo Cáo Chênh Lệch Đối Soát & Tùy Biến Khoảng Ngày (Custom SKU Selection, Variance Report & Date Range Filter) (06/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Chọn Mã SKU Linh Hoạt Cho Kiểm Kê Cuốn Chiếu** | `StockCountClient.tsx` | Cho phép thủ kho xem toàn bộ danh mục sản phẩm chưa kiểm kê, tìm kiếm theo mã SKU/tên rượu/vị trí kệ, tick/untick từng mã độc lập vào danh sách kiểm đếm; cung cấp các nút chọn nhanh (`Đề xuất ~N mã hôm nay`, `Top 5, 10, 20 tồn cao`, `Chọn tất cả`, `Bỏ chọn hết`) và huy hiệu đếm số lượng mã đã chọn |
+| **Báo Cáo Kiểm Kê & Chênh Lệch Trong Kỳ (Variance Report)** | `StockCountClient.tsx`, `MobileLocationCounter.tsx`, `actions.ts` | Tích hợp bảng "Báo Cáo Các Đợt Kiểm Kê & Chênh Lệch Trong Kỳ" ngay trong tab Cuốn Chiếu, hiển thị số mã SKU, trạng thái, huy hiệu lệch tồn (`✓ Khớp 100% (0 chai)` hoặc `⚠️ Lệch X chai`); nút `[📊 Báo Cáo Chênh Lệch]` mở ngay Biên bản đối soát A4 (`PrintableAuditReport`) chi tiết tồn sổ, thực tế, giá trị lệch VNĐ và nút duyệt điều chỉnh kế toán; bổ sung nút mở báo cáo A4 trực tiếp từ màn hình đếm di động |
+| **Tính Toán Tiến Độ Theo Khoảng Ngày Tùy Chọn** | `actions.ts`, `StockCountClient.tsx` | Nâng cấp hàm `getCycleCountProgress(warehouseId, daysWindow, startDateStr, endDateStr)` hỗ trợ chọn ngày bắt đầu (`cycleDateFrom`) và ngày kết thúc (`cycleDateTo`) linh hoạt; tự động tính toán số ngày chu kỳ, tiến độ kiểm kê, số lượng đề xuất hàng ngày và lọc chính xác các đợt kiểm kê diễn ra trong khoảng thời gian đã chọn |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -667,7 +675,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-05 | Wine ERP v10.52 — Mobile Location Counter Ergonomics & Auto-Start Logic*
+*Last updated: 2026-10-06 | Wine ERP v10.53 — Cycle Count Custom SKU Selection, Variance Report & Date Range Filter*
 
 
 
