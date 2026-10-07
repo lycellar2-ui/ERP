@@ -60,7 +60,7 @@ const I18N = {
         salesRep: 'Sales Rep',
         paymentTerm: 'Thanh toán',
         orderStatus: 'Trạng thái',
-        deliveryNotePrefix: '📦 Lưu ý giao hàng: ',
+        deliveryNotePrefix: 'Lưu ý giao hàng: ',
         orderNotesPrefix: 'Ghi chú / Diễn giải: ',
         colIndex: 'STT',
         colCustomerItemCode: 'Mã Khách',
@@ -124,7 +124,7 @@ const I18N = {
         salesRep: 'Sales Rep',
         paymentTerm: 'Payment Term',
         orderStatus: 'Status',
-        deliveryNotePrefix: '📦 Delivery Notice: ',
+        deliveryNotePrefix: 'Delivery Notice: ',
         orderNotesPrefix: 'Notes / Description: ',
         colIndex: 'No.',
         colCustomerItemCode: 'Cust Code',
@@ -224,7 +224,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white px-4">
                 <div className="p-6 rounded-lg max-w-md w-full bg-white border border-[#EF4444]/30 text-center">
-                    <p className="text-sm font-bold text-[#EF4444] mb-4">⚠ Lỗi hệ thống</p>
+                    <p className="text-sm font-bold text-[#EF4444] mb-4">Lỗi hệ thống</p>
                     <p className="text-sm text-slate-900 mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
                     <button onClick={() => window.close()} className="px-4 py-2 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-500 transition-colors">
                         Đóng cửa sổ

@@ -1221,7 +1221,7 @@ export async function addUnlistedProductToStockCountSession(input: {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 🔄 WEEKLY ROLLING CYCLE COUNT PLANNER (KIỂM KÊ CUỐN CHIẾU THEO TUẦN)
+// WEEKLY ROLLING CYCLE COUNT PLANNER (KIỂM KÊ CUỐN CHIẾU THEO TUẦN)
 // ══════════════════════════════════════════════════════════════════════════════
 
 export type CycleCountProgress = {

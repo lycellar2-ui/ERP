@@ -241,8 +241,8 @@ export function TransfersTab() {
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
                                 {renderSortHeader('transferNo', 'Mã Phiếu')}
-                                {renderSortHeader('fromWarehouse', '🔴 Kho Xuất (Đi)')}
-                                {renderSortHeader('toWarehouse', '🟢 Kho Nhận (Đến)')}
+                                {renderSortHeader('fromWarehouse', 'Kho Xuất')}
+                                {renderSortHeader('toWarehouse', 'Kho Nhận')}
                                 {renderSortHeader('requesterName', 'Người Lập')}
                                 {renderSortHeader('transferDate', 'Ngày Chuyển')}
                                 {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
@@ -349,9 +349,9 @@ export function TransfersTab() {
 
                                 {/* Route indicator */}
                                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between text-xs font-semibold gap-1">
-                                    <span className="text-rose-700 font-bold truncate min-w-0 flex-1">🔴 {r.fromWarehouse}</span>
+                                    <span className="text-rose-700 font-bold truncate min-w-0 flex-1">{r.fromWarehouse}</span>
                                     <span className="text-slate-400 px-1 font-bold shrink-0">➔</span>
-                                    <span className="text-emerald-700 font-bold truncate min-w-0 flex-1 text-right">🟢 {r.toWarehouse}</span>
+                                    <span className="text-emerald-700 font-bold truncate min-w-0 flex-1 text-right">{r.toWarehouse}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">

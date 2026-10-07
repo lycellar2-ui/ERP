@@ -736,8 +736,8 @@ function SODetailDrawer({
     }
 
     const ACTION_ICON: Record<string, string> = {
-        CREATE: '📝', UPDATE: '✏️', CONFIRM: '✅', APPROVE: '👍', REJECT: '❌',
-        STATUS_CHANGE: '🔄', DELETE: '🗑️', EXPORT: '📤', SIGN: '🖊️',
+        CREATE: '•', UPDATE: '•', CONFIRM: '•', APPROVE: '•', REJECT: '•',
+        STATUS_CHANGE: '•', DELETE: '•', EXPORT: '•', SIGN: '•',
     }
 
     return (
@@ -923,7 +923,7 @@ function SODetailDrawer({
                                     {detail.orderType === 'TASTING' && (
                                         <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs">
                                             <span className="font-bold text-amber-800">{isEn ? 'Order Type:' : 'Loại Đơn Hàng:'}</span>
-                                            <span className="font-extrabold text-amber-900">{isEn ? '🍷 Tasting Order' : '🍷 Đơn Hàng Tasting'}</span>
+                                            <span className="font-extrabold text-amber-900">{isEn ? 'Tasting Order' : 'Đơn Hàng Tasting'}</span>
                                         </div>
                                     )}
                                     {detail.proposal && (
@@ -1060,7 +1060,7 @@ function SODetailDrawer({
                                             </>
                                         ) : !canSeeMargin ? (
                                             <div className="py-3 px-3 rounded text-[11px] leading-relaxed bg-white/40 border border-slate-200/30" style={{ color: '#64748B' }}>
-                                                {isEn ? '🔒 Profit margin details hidden for Sales Rep / Sales Assistant accounts.' : '🔒 Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Nhân viên Sales / Trợ lý Sales.'}
+                                                {isEn ? 'Profit margin details hidden for Sales Rep / Sales Assistant accounts.' : 'Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Nhân viên Sales / Trợ lý Sales.'}
                                             </div>
                                         ) : null}
                                     </div>
@@ -1072,7 +1072,7 @@ function SODetailDrawer({
                         {detail.notes && (
                             <div className="p-3 rounded-md bg-white border border-slate-200/40 text-xs">
                                 <span className="font-bold text-[10px] uppercase tracking-wider block mb-1" style={{ color: '#64748B' }}>
-                                    {isEn ? '📝 Order Notes / Remarks' : '📝 Ghi Chú / Diễn Giải Đơn Hàng'}
+                                    {isEn ? 'Order Notes / Remarks' : 'Ghi Chú / Diễn Giải Đơn Hàng'}
                                 </span>
                                 <p className="text-slate-900 leading-relaxed whitespace-pre-wrap">{detail.notes}</p>
                             </div>
@@ -1688,7 +1688,7 @@ function SODetailDrawer({
                                 <p className={`font-bold mb-1.5 text-xs flex items-center gap-1.5 ${
                                     dateWarningModal.level === 'DANGER' ? 'text-rose-900' : 'text-amber-900'
                                 }`}>
-                                    {dateWarningModal.level === 'DANGER' ? (isEn ? '⚠️ Pursuant to Decree 123/2020/ND-CP & Decree 70/2025/ND-CP:' : '⚠️ Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:') : (isEn ? 'ℹ️ Legal regulations regarding invoice issuance date:' : 'ℹ️ Quy định pháp luật về thời điểm xuất hóa đơn:')}
+                                    {dateWarningModal.level === 'DANGER' ? (isEn ? 'Pursuant to Decree 123/2020/ND-CP & Decree 70/2025/ND-CP:' : 'Căn cứ Nghị định 123/2020/NĐ-CP & Nghị định 70/2025/NĐ-CP:') : (isEn ? 'Legal regulations regarding invoice issuance date:' : 'Quy định pháp luật về thời điểm xuất hóa đơn:')}
                                 </p>
                                 <p className="text-xs leading-normal">
                                     {dateWarningModal.message}
@@ -1781,7 +1781,7 @@ function SalesOrderMobileCard({
                     </span>
                     {row.orderType === 'TASTING' && (
                         <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-700 border border-amber-500/40">
-                            🍷 Tasting
+                            Tasting
                         </span>
                     )}
                 </div>
@@ -1830,7 +1830,7 @@ function SalesOrderMobileCard({
                     <span className="text-[9px] px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1"
                         style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}
                         title={row.invoiceExemptReason || (isEn ? 'Invoice exempt order' : 'Đơn hàng không xuất HĐ VAT')}>
-                        🚫 {isEn ? 'No Inv' : 'Không HĐ'}
+                        {isEn ? 'No Inv' : 'Không HĐ'}
                     </span>
                 ) : null}
 
@@ -3149,7 +3149,9 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setAcctModalId(null)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                         <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center text-base font-bold">🏛️</span>
+                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
+                                <ShieldCheck size={18} />
+                            </span>
                             {isEn ? 'Accounting Order Approval' : 'Kế Toán Duyệt Đơn'}
                         </h3>
                         <div className="mb-5">
@@ -3318,7 +3320,9 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
             <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center text-sm font-bold">🍷</span>
+                        <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
+                            <CheckCircle2 size={18} />
+                        </span>
                         {isEn ? 'Approve Order & Assign Vintage' : 'Duyệt Đơn Hàng & Chỉ Định Vintage'}
                     </h3>
                     <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
@@ -3364,8 +3368,8 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                         return (
                                             <option key={w.id} value={w.id} disabled={!isAllowed}>
                                                 {isAllowed
-                                                    ? `${w.isDefault ? (isEn ? '⭐ [Default Warehouse]' : '⭐ [Kho Mặc Định]') : (isEn ? '✔️ [Sales Warehouse]' : '✔️ [Kho Xuất Bán]')} ${w.code} — ${w.name}`
-                                                    : `${isEn ? '⛔ [Transfer Only - No Sales]' : '⛔ [Chỉ Điều Chuyển - Không Xuất Bán]'} ${w.code} — ${w.name}`
+                                                    ? `${w.isDefault ? (isEn ? '[Default Warehouse]' : '[Kho Mặc Định]') : (isEn ? '[Sales Warehouse]' : '[Kho Xuất Bán]')} ${w.code} — ${w.name}`
+                                                    : `${isEn ? '[Transfer Only - No Sales]' : '[Chỉ Điều Chuyển - Không Xuất Bán]'} ${w.code} — ${w.name}`
                                                 }
                                             </option>
                                         )

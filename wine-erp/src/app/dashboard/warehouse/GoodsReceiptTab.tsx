@@ -1084,7 +1084,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                 </p>
 
                                                 <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                                                    <span>📍 Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong></span>
+                                                    <span>Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong></span>
                                                     <span>Lô: <strong className="font-mono text-slate-800">{l.lotNo}</strong></span>
                                                 </div>
 
@@ -1413,7 +1413,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                         </p>
                                                         {pol.isFoc && (
                                                             <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                                                                🎁 FOC {pol.focNote ? `(${pol.focNote})` : ''}
+                                                                FOC {pol.focNote ? `(${pol.focNote})` : ''}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1555,7 +1555,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                             <option value="">-- Chọn vị trí --</option>
                                                             {locations.map(loc => (
                                                                 <option key={loc.id} value={loc.id}>
-                                                                    📍 {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
+                                                                    {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
                                                                 </option>
                                                             ))}
                                                         </select>

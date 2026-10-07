@@ -126,7 +126,7 @@ export const WAREHOUSE_I18N = {
             thLotValue: 'Giá Trị Lô',
             thStatus: 'TT',
             daysSuffix: 'd',
-            varianceBadge: (variance: number) => `⚠️ ${variance > 0 ? `+${variance}` : variance} lệch`,
+            varianceBadge: (variance: number) => `${variance > 0 ? `+${variance}` : variance} lệch`,
             varianceTitle: (variance: number, onHand: number, book: number) => `Lệch ${variance > 0 ? `+${variance}` : variance} chai giữa On-hand (${onHand}) và Sổ sách (${book})`,
             reservedLabel: (qty: number) => `(Đặt: ${qty})`,
             emptyTitle: 'Chưa có tồn kho',
@@ -145,12 +145,12 @@ export const WAREHOUSE_I18N = {
         },
 
         wineTypes: {
-            RED: '🔴 Đỏ',
-            WHITE: '🟡 Trắng',
-            ROSE: '🌸 Rosé',
-            SPARKLING: '🥂 Sủi tăm',
-            FORTIFIED: '🍯 Fortified',
-            DESSERT: '🍮 Dessert',
+            RED: 'Vang Đỏ',
+            WHITE: 'Vang Trắng',
+            ROSE: 'Vang Rosé',
+            SPARKLING: 'Vang Sủi tăm',
+            FORTIFIED: 'Vang Cường hóa (Fortified)',
+            DESSERT: 'Vang Ngọt (Dessert)',
         },
 
         lotStatuses: {
@@ -162,7 +162,7 @@ export const WAREHOUSE_I18N = {
         },
 
         createModal: {
-            title: '🏭 Tạo Kho Mới',
+            title: 'Tạo Kho Mới',
             codeLabel: 'Mã Kho (VD: KHO-HCM)',
             codePlaceholder: 'KHO-HCM-01',
             nameLabel: 'Tên Kho',
@@ -210,7 +210,7 @@ export const WAREHOUSE_I18N = {
         menuTitle: 'Warehouse Management Dashboard',
         allWarehouses: 'All Warehouses',
         allWarehousesCompact: 'All Warehouses',
-        allWarehousesCount: (count: number) => `🏢 All Warehouses (${count})`,
+        allWarehousesCount: (count: number) => `All Warehouses (${count})`,
         createWarehouseBtn: 'New Warehouse',
         bottlesUnit: 'btls',
         lotsCount: (count: number) => `${count} lots`,
@@ -223,13 +223,13 @@ export const WAREHOUSE_I18N = {
             titleOff: 'Enable Alerts',
             tooltipOn: 'Picking notifications enabled (Click to mute)',
             tooltipOff: 'Click to enable audio & desktop picking alerts',
-            toastDesktopGranted: '🔊 Desktop & audio picking alerts enabled!',
+            toastDesktopGranted: 'Desktop & audio picking alerts enabled!',
             toastDesktopGrantedDesc: 'You will receive popup notifications and chimes when new orders arrive.',
-            toastSoundOnly: '🔊 Audio picking alerts enabled!',
+            toastSoundOnly: 'Audio picking alerts enabled!',
             toastSoundOnlyDesc: 'Grant browser notification permissions to receive popup alerts.',
-            toastDisabled: '🔕 Picking notifications muted.',
-            desktopNotifyTitle: (doNo: string) => `📦 [NEW PICKING ORDER] ${doNo}`,
-            toastNewDOTitle: (doNo: string) => `📦 NEW PICKING ORDER: ${doNo}`,
+            toastDisabled: 'Picking notifications muted.',
+            desktopNotifyTitle: (doNo: string) => `[NEW PICKING ORDER] ${doNo}`,
+            toastNewDOTitle: (doNo: string) => `NEW PICKING ORDER: ${doNo}`,
             toastNewDODesc: (cust: string, soNo: string, count: number) => `Customer: ${cust} — SO ${soNo} (${count} lines to pick)`,
             actionGoPick: 'Start Picking',
         },
@@ -326,7 +326,7 @@ export const WAREHOUSE_I18N = {
             thLotValue: 'Lot Value',
             thStatus: 'Status',
             daysSuffix: 'd',
-            varianceBadge: (variance: number) => `⚠️ ${variance > 0 ? `+${variance}` : variance} diff`,
+            varianceBadge: (variance: number) => `${variance > 0 ? `+${variance}` : variance} diff`,
             varianceTitle: (variance: number, onHand: number, book: number) => `Variance of ${variance > 0 ? `+${variance}` : variance} btls between On-hand (${onHand}) and Book (${book})`,
             reservedLabel: (qty: number) => `(Res: ${qty})`,
             emptyTitle: 'No stock lots found',
@@ -345,12 +345,12 @@ export const WAREHOUSE_I18N = {
         },
 
         wineTypes: {
-            RED: '🔴 Red',
-            WHITE: '🟡 White',
-            ROSE: '🌸 Rosé',
-            SPARKLING: '🥂 Sparkling',
-            FORTIFIED: '🍯 Fortified',
-            DESSERT: '🍮 Dessert',
+            RED: 'Red Wine',
+            WHITE: 'White Wine',
+            ROSE: 'Rosé Wine',
+            SPARKLING: 'Sparkling Wine',
+            FORTIFIED: 'Fortified Wine',
+            DESSERT: 'Dessert Wine',
         },
 
         lotStatuses: {
@@ -362,7 +362,7 @@ export const WAREHOUSE_I18N = {
         },
 
         createModal: {
-            title: '🏭 Create New Warehouse',
+            title: 'Create New Warehouse',
             codeLabel: 'Warehouse Code (e.g. WH-HCM)',
             codePlaceholder: 'WH-HCM-01',
             nameLabel: 'Warehouse Name',

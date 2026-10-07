@@ -270,7 +270,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                             <div key={loc.id} className="p-4 rounded-lg bg-white border border-slate-200 text-slate-900 space-y-2 shadow-2xs">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200 whitespace-nowrap shrink-0">
-                                        📍 {loc.code}
+                                        {loc.code}
                                     </span>
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 inline-flex items-center ${loc.active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600'}`}>
                                         {loc.active ? 'Hoạt động' : 'Tắt'}

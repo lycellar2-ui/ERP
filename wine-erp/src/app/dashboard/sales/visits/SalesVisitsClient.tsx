@@ -34,13 +34,13 @@ interface Props {
 
 // Activity Presets for Wine ERP
 export const ACTIVITY_PRESETS = [
-    { value: 'PERIODIC_CARE', label: 'Chăm sóc khách hàng định kỳ', icon: '🤝', color: '#0891B2' },
-    { value: 'WINE_TASTING', label: 'Thử rượu & Giới thiệu mẫu mới', icon: '🍷', color: '#B45309' },
-    { value: 'MERCHANDISE_CHECK', label: 'Kiểm tra tồn kho & Trưng bày điểm bán', icon: '📦', color: '#1D4ED8' },
-    { value: 'DEBT_COLLECTION', label: 'Thu hồi công nợ / Đối soát hóa đơn', icon: '💵', color: '#E57373' },
-    { value: 'CONTRACT_NEGOTIATION', label: 'Ký kết hợp đồng / Đàm phán giá', icon: '📝', color: '#BA68C8' },
-    { value: 'COMPLAINT_HANDLING', label: 'Xử lý khiếu nại & Hậu mãi', icon: '⚠️', color: '#FFB74D' },
-    { value: 'OTHER', label: 'Mục đích khác', icon: '📌', color: '#90A4AE' },
+    { value: 'PERIODIC_CARE', label: 'Chăm sóc khách hàng định kỳ', icon: '', color: '#0891B2' },
+    { value: 'WINE_TASTING', label: 'Thử rượu & Giới thiệu mẫu mới', icon: '', color: '#B45309' },
+    { value: 'MERCHANDISE_CHECK', label: 'Kiểm tra tồn kho & Trưng bày điểm bán', icon: '', color: '#1D4ED8' },
+    { value: 'DEBT_COLLECTION', label: 'Thu hồi công nợ / Đối soát hóa đơn', icon: '', color: '#E57373' },
+    { value: 'CONTRACT_NEGOTIATION', label: 'Ký kết hợp đồng / Đàm phán giá', icon: '', color: '#BA68C8' },
+    { value: 'COMPLAINT_HANDLING', label: 'Xử lý khiếu nại & Hậu mãi', icon: '', color: '#FFB74D' },
+    { value: 'OTHER', label: 'Mục đích khác', icon: '', color: '#90A4AE' },
 ]
 
 export function getVietnameseDayName(date: Date | string, locale: VisitLocale = 'vi'): string {
@@ -111,7 +111,7 @@ function SearchableCustomerCombobox({
                         </span>
                     ) : (
                         <span className="text-slate-400 font-medium truncate">
-                            {locale === 'en' ? '🔍 Click to select client...' : '🔍 Bấm chọn khách hàng...'}
+                            {locale === 'en' ? 'Click to select client...' : 'Bấm chọn khách hàng...'}
                         </span>
                     )}
                 </div>
@@ -227,7 +227,7 @@ function GpsPermissionGuideModal({
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-amber-500/10">
                     <div className="flex items-center gap-2.5">
                         <div className="p-2 rounded-xl bg-amber-500 text-white font-bold">
-                            📍
+                            <MapPin size={18} />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-900">
@@ -258,7 +258,7 @@ function GpsPermissionGuideModal({
                                 : 'bg-white text-slate-600 hover:bg-slate-100'
                         }`}
                     >
-                        🍎 iPhone (Safari)
+                        iPhone (Safari)
                     </button>
                     <button
                         type="button"
@@ -269,7 +269,7 @@ function GpsPermissionGuideModal({
                                 : 'bg-white text-slate-600 hover:bg-slate-100'
                         }`}
                     >
-                        🤖 Android (Chrome)
+                        Android (Chrome)
                     </button>
                 </div>
 
@@ -327,7 +327,7 @@ function GpsPermissionGuideModal({
                                 </div>
                                 <div>
                                     <p className="font-semibold text-slate-900">
-                                        {isEn ? 'Tap the 🔒 (Lock) or ⚙️ icon' : 'Bấm vào biểu tượng 🔒 (Khóa) hoặc ⚙️'}
+                                        {isEn ? 'Tap the Lock or Settings icon' : 'Bấm vào biểu tượng Khóa hoặc Cài đặt'}
                                     </p>
                                     <p className="text-[11px] text-slate-500 mt-0.5">
                                         {isEn ? 'Located on the left side of Chrome address bar.' : 'Nằm ngay bên trái thanh địa chỉ URL của Google Chrome.'}
@@ -703,11 +703,11 @@ export function SalesVisitsClient({
 
         const handleOnline = () => {
             setIsNetworkOnline(true)
-            toast.success(getVisitLocale() === 'en' ? '📶 Network connection restored! Checking offline sync...' : '📶 Đã có kết nối mạng trở lại! Hệ thống đang tự động kiểm tra đồng bộ...')
+            toast.success(getVisitLocale() === 'en' ? 'Network connection restored. Checking offline sync...' : 'Đã kết nối lại mạng. Hệ thống đang tự động kiểm tra đồng bộ...')
         }
         const handleOffline = () => {
             setIsNetworkOnline(false)
-            toast.warning(getVisitLocale() === 'en' ? '📶 Network disconnected. Cellar check-in drafts will be saved offline.' : '📶 Bạn đã mất kết nối mạng. Các lượt check-in hầm rượu sẽ được lưu ngoại tuyến trên máy.')
+            toast.warning(getVisitLocale() === 'en' ? 'Network disconnected. Cellar check-in drafts will be saved offline.' : 'Mất kết nối mạng. Dữ liệu check-in sẽ được lưu ngoại tuyến trên thiết bị.')
         }
 
         window.addEventListener('online', handleOnline)
@@ -1355,7 +1355,7 @@ export function SalesVisitsClient({
                 const updated = [draft, ...existing]
                 localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
                 setOfflineDrafts(updated)
-                toast.warning(locale === 'en' ? `📶 No 4G connection (cellar). Check-in at ${customerName} saved offline! Will auto-sync when online.` : `📶 Bạn đang mất sóng 4G (hầm rượu). Đã lưu tạm lượt check-in tại ${customerName} vào bộ nhớ máy! Hệ thống sẽ tự động đồng bộ khi có sóng trở lại.`, {
+                toast.warning(locale === 'en' ? `No network connection. Check-in at ${customerName} saved offline. Will auto-sync when online.` : `Mất tín hiệu mạng. Đã lưu tạm lượt check-in tại ${customerName} trên thiết bị. Hệ thống sẽ tự động đồng bộ khi có kết nối trở lại.`, {
                     duration: 8000
                 })
             } catch (e) {
@@ -1391,7 +1391,7 @@ export function SalesVisitsClient({
                 const updated = [draft, ...existing]
                 localStorage.setItem('SALES_VISITS_OFFLINE_DRAFTS_V1', JSON.stringify(updated))
                 setOfflineDrafts(updated)
-                toast.warning(locale === 'en' ? `📶 Network transmission error. Check-in at ${customerName} safely saved offline!` : `📶 Lỗi đường truyền mạng (hầm rượu/mất sóng). Đã lưu an toàn lượt check-in tại ${customerName} trên máy!`, {
+                toast.warning(locale === 'en' ? `Network transmission error. Check-in at ${customerName} saved offline.` : `Lỗi đường truyền mạng. Đã lưu dữ liệu check-in tại ${customerName} trên máy.`, {
                     duration: 8000
                 })
             } catch (e) {
@@ -1749,8 +1749,8 @@ export function SalesVisitsClient({
                                                     item.planStatus === 'DRAFT' ? 'bg-slate-200 text-slate-600' :
                                                     'bg-slate-100 text-slate-400'
                                                 }`}>
-                                                    {item.planStatus === 'APPROVED' ? (locale === 'en' ? '✓ Approved' : '✓ Đã Duyệt') :
-                                                     item.planStatus === 'SUBMITTED' ? (locale === 'en' ? '⏳ Pending' : '⏳ Chờ Duyệt') :
+                                                    {item.planStatus === 'APPROVED' ? (locale === 'en' ? 'Approved' : 'Đã Duyệt') :
+                                                     item.planStatus === 'SUBMITTED' ? (locale === 'en' ? 'Pending' : 'Chờ Duyệt') :
                                                      item.planStatus === 'DRAFT' ? (locale === 'en' ? 'Draft' : 'Bản Nháp') : (locale === 'en' ? 'Not Scheduled' : 'Chưa Lên Lịch')}
                                                 </span>
                                             </td>
@@ -1957,7 +1957,7 @@ export function SalesVisitsClient({
                                                                     onClick={() => setQuickReportTarget(v)}
                                                                     className="text-[11px] font-bold text-teal-600 hover:text-teal-800 hover:underline cursor-pointer"
                                                                 >
-                                                                    {v.notes ? (locale === 'en' ? '✏️ Edit' : '✏️ Sửa báo cáo') : (locale === 'en' ? '+ Write' : '+ Ghi báo cáo')}
+                                                                    {v.notes ? (locale === 'en' ? 'Edit' : 'Sửa báo cáo') : (locale === 'en' ? '+ Write' : '+ Ghi báo cáo')}
                                                                 </button>
                                                             </div>
                                                             {v.notes ? (
@@ -2004,7 +2004,7 @@ export function SalesVisitsClient({
                                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                                                             pv.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-slate-100 text-slate-500'
                                                         }`}>
-                                                            {pv.status === 'COMPLETED' ? (locale === 'en' ? '✓ Visited' : '✓ Đã viếng thăm') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
+                                                            {pv.status === 'COMPLETED' ? (locale === 'en' ? 'Visited' : 'Đã viếng thăm') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
                                                         </span>
                                                     </div>
                                                 ))}
@@ -2041,8 +2041,8 @@ export function SalesVisitsClient({
                                                         <ShieldCheck size={16} className="text-amber-600 shrink-0" />
                                                         <span className="font-semibold">
                                                             {locale === 'en'
-                                                                ? '👑 CEO Exclusive Authority: You are evaluating and approving CBO Jeremie Courivault.'
-                                                                : '👑 Thẩm quyền riêng của CEO: Bạn đang kiểm soát và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
+                                                                ? 'CEO Exclusive Authority: You are evaluating and approving CBO Jeremie Courivault.'
+                                                                : 'Thẩm quyền riêng của CEO: Bạn đang kiểm soát và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -2050,8 +2050,8 @@ export function SalesVisitsClient({
                                                         <Lock size={16} className="text-rose-600 shrink-0" />
                                                         <span className="font-semibold">
                                                             {locale === 'en'
-                                                                ? '🔒 Restricted: Only CEO has the authority to evaluate and approve CBO Jeremie Courivault.'
-                                                                : '🔒 Giới hạn quyền hạn: Chỉ CEO mới có quyền thẩm định và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
+                                                                ? 'Restricted: Only CEO has the authority to evaluate and approve CBO Jeremie Courivault.'
+                                                                : 'Giới hạn quyền hạn: Chỉ CEO mới có quyền thẩm định và phê duyệt kế hoạch của CBO Jeremie Courivault.'}
                                                         </span>
                                                     </div>
                                                 )
@@ -2423,14 +2423,14 @@ export function SalesVisitsClient({
                                     onClick={() => setActiveTab('PLANNING')}
                                     className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer"
                                 >
-                                    📅 {locale === 'en' ? 'Weekly Plan' : 'Lập Kế Hoạch Tuần'}
+                                    {locale === 'en' ? 'Weekly Plan' : 'Lập Kế Hoạch Tuần'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowUnplannedModal(true)}
                                     className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition cursor-pointer"
                                 >
-                                    ⚡ {locale === 'en' ? 'Check-in Now' : 'Check-in Ngay'}
+                                    {locale === 'en' ? 'Check-in Now' : 'Check-in Ngay'}
                                 </button>
                             </div>
                         </div>
@@ -2475,7 +2475,7 @@ export function SalesVisitsClient({
                                                         ? 'bg-emerald-500/15 text-emerald-600'
                                                         : 'bg-slate-100 text-slate-500'
                                                 }`}>
-                                                    {isItemCompleted ? (locale === 'en' ? '✓ Completed' : '✓ Đã hoàn thành') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
+                                                    {isItemCompleted ? (locale === 'en' ? 'Completed' : 'Đã hoàn thành') : (locale === 'en' ? 'Pending' : 'Chưa đi')}
                                                 </span>
                                             </div>
 
@@ -2540,7 +2540,7 @@ export function SalesVisitsClient({
                                             {isItemCompleted ? (
                                                 <div className="space-y-2">
                                                     <div className="py-2.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs font-bold text-emerald-600 flex items-center justify-center gap-1.5 min-h-[42px]">
-                                                        <CheckCircle2 size={16} /> {locale === 'en' ? '✓ Visit Completed' : '✓ Đã Hoàn Thành Viếng Thăm'}
+                                                        <CheckCircle2 size={16} /> {locale === 'en' ? 'Visit Completed' : 'Đã Hoàn Thành Viếng Thăm'}
                                                     </div>
                                                     <button
                                                         type="button"
@@ -2641,7 +2641,7 @@ export function SalesVisitsClient({
                                                             </span>
                                                         )}
                                                         <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600">
-                                                            {locale === 'en' ? '✓ Checked-in' : '✓ Đã Check-in'}
+                                                            {locale === 'en' ? 'Checked-in' : 'Đã Check-in'}
                                                         </span>
                                                     </div>
                                                     <h5 className="text-sm font-bold text-slate-900 mt-1">
@@ -2657,7 +2657,7 @@ export function SalesVisitsClient({
                                                         {new Date(v.checkInTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
                                                     <span className="text-[10px] text-emerald-600 font-semibold">
-                                                        {locale === 'en' ? '✓ Completed' : '✓ Hoàn thành'}
+                                                        {locale === 'en' ? 'Completed' : 'Hoàn thành'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -2718,7 +2718,7 @@ export function SalesVisitsClient({
                                                         onClick={() => setQuickReportTarget(v)}
                                                         className="text-[11px] font-bold text-teal-600 hover:text-teal-800 flex items-center gap-1 cursor-pointer hover:underline"
                                                     >
-                                                        <span>{v.notes ? (locale === 'en' ? '✏️ Edit' : '✏️ Sửa báo cáo') : (locale === 'en' ? '+ Write' : '+ Ghi báo cáo')}</span>
+                                                        <span>{v.notes ? (locale === 'en' ? 'Edit' : 'Sửa báo cáo') : (locale === 'en' ? '+ Write' : '+ Ghi báo cáo')}</span>
                                                     </button>
                                                 </div>
                                                 {v.notes ? (
@@ -3134,9 +3134,9 @@ export function SalesVisitsClient({
                                 weeklyPlan?.status === 'SUBMITTED' ? 'bg-blue-500/15 text-blue-600 border border-blue-500/30' :
                                 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
                             }`}>
-                                {weeklyPlan?.status === 'APPROVED' ? (locale === 'en' ? '✓ MANAGER APPROVED' : '✓ QUẢN LÝ ĐÃ DUYỆT') :
-                                 weeklyPlan?.status === 'SUBMITTED' ? (locale === 'en' ? '⏳ PENDING APPROVAL' : '⏳ ĐANG CHỜ DUYỆT') :
-                                 (locale === 'en' ? '📝 REPORT NOT SUBMITTED' : '📝 CHƯA CHỐT BÁO CÁO')}
+                                {weeklyPlan?.status === 'APPROVED' ? (locale === 'en' ? 'MANAGER APPROVED' : 'QUẢN LÝ ĐÃ DUYỆT') :
+                                 weeklyPlan?.status === 'SUBMITTED' ? (locale === 'en' ? 'PENDING APPROVAL' : 'ĐANG CHỜ DUYỆT') :
+                                 (locale === 'en' ? 'REPORT NOT SUBMITTED' : 'CHƯA CHỐT BÁO CÁO')}
                             </span>
                         </div>
                     </div>
@@ -3351,11 +3351,11 @@ export function SalesVisitsClient({
                                                             <div className="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
                                                                 {item.isPlanned ? (
                                                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/15 text-blue-600 border border-blue-500/25 shrink-0">
-                                                                        {locale === 'en' ? '📋 PLANNED' : '📋 THEO KẾ HOẠCH'}
+                                                                        {locale === 'en' ? 'PLANNED' : 'THEO KẾ HOẠCH'}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/25 shrink-0">
-                                                                        {locale === 'en' ? '⚡ AD-HOC' : '⚡ ĐỘT XUẤT'}
+                                                                        {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                                     </span>
                                                                 )}
 
@@ -3396,7 +3396,7 @@ export function SalesVisitsClient({
                                                             {/* Cột Kế hoạch dự kiến */}
                                                             <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70">
                                                                 <span className="text-slate-400 shrink-0 font-bold">
-                                                                    {locale === 'en' ? '🎯 Planned:' : '🎯 Kế hoạch:'}
+                                                                    {locale === 'en' ? 'Planned:' : 'Kế hoạch:'}
                                                                 </span>
                                                                 {item.isPlanned ? (
                                                                     <span className="text-slate-700 font-medium">
@@ -3412,7 +3412,7 @@ export function SalesVisitsClient({
                                                             {/* Cột Thực tế thực hiện */}
                                                             <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50/70">
                                                                 <span className="text-slate-400 shrink-0 font-bold">
-                                                                    {locale === 'en' ? '📍 Actual:' : '📍 Thực tế:'}
+                                                                    {locale === 'en' ? 'Actual:' : 'Thực tế:'}
                                                                 </span>
                                                                 {item.actualVisit ? (
                                                                     <div className="space-y-1 flex-1 min-w-0">
@@ -3448,7 +3448,7 @@ export function SalesVisitsClient({
                                                                         </div>
                                                                         {item.actualVisit.notes && (
                                                                             <div className="text-[10px] text-slate-600 bg-white p-1.5 rounded border border-slate-200/80 break-words">
-                                                                                💬 {item.actualVisit.notes}
+                                                                                {item.actualVisit.notes}
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -3767,11 +3767,11 @@ export function SalesVisitsClient({
 
                                                         {v.isUnplanned ? (
                                                             <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs">
-                                                                ⚡ {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
+                                                                {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                             </span>
                                                         ) : (
                                                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white shadow-xs">
-                                                                📋 {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
+                                                                {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -3834,11 +3834,11 @@ export function SalesVisitsClient({
                                                 {/* Notes or Purpose */}
                                                 {v.notes ? (
                                                     <div className="text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded-lg border border-slate-100 line-clamp-2" title={v.notes}>
-                                                        💬 {v.notes}
+                                                        {v.notes}
                                                     </div>
                                                 ) : v.purpose ? (
                                                     <div className="text-[11px] text-slate-400 italic line-clamp-1" title={v.purpose}>
-                                                        🎯 {v.purpose}
+                                                        {v.purpose}
                                                     </div>
                                                 ) : null}
                                             </div>
@@ -3976,7 +3976,7 @@ export function SalesVisitsClient({
                                                 </td>
                                                 <td className="p-3.5 text-center whitespace-nowrap">
                                                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600">
-                                                        ✓ {locale === 'en' ? 'Completed' : 'Hoàn thành'}
+                                                        {locale === 'en' ? 'Completed' : 'Hoàn thành'}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -4036,7 +4036,7 @@ export function SalesVisitsClient({
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
-                                            {p.icon} {getActivityPresetLabel(p.value, locale)}
+                                            {getActivityPresetLabel(p.value, locale)}
                                         </option>
                                     ))}
                                 </select>
@@ -4128,7 +4128,7 @@ export function SalesVisitsClient({
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
-                                            {p.icon} {getActivityPresetLabel(p.value, locale)}
+                                            {getActivityPresetLabel(p.value, locale)}
                                         </option>
                                     ))}
                                 </select>

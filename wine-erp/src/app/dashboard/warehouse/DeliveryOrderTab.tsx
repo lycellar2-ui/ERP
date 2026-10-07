@@ -184,7 +184,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     toast.error(res.error || 'Lỗi cập nhật trạng thái')
                     return
                 }
-                toast.success('✅ Đơn hàng đã giao thành công!')
+                toast.success('Đơn hàng đã giao thành công')
                 reload()
                 setDetailData(null)
             }
@@ -339,7 +339,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <div className="mb-2.5">
                                                 <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded flex items-center gap-1 inline-flex"
                                                     style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
-                                                    🏢 Kho xuất: <strong style={{ color: '#0F172A' }}>{targetWh?.name || 'Kho Mặc Định'}</strong>
+                                                    Kho xuất: <strong style={{ color: '#0F172A' }}>{targetWh?.name || 'Kho Mặc Định'}</strong>
                                                 </span>
                                             </div>
 
@@ -553,7 +553,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 {/* Custom Date Editor for backdating/editing data */}
                                 <div className="px-3.5 py-2.5 rounded-lg flex flex-wrap items-center justify-between gap-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <div>
-                                        <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>📅 Ngày Xuất Hàng (Chỉnh sửa dữ liệu)</p>
+                                        <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>Ngày Xuất Hàng (Chỉnh sửa dữ liệu)</p>
                                         <p className="text-xs font-bold mt-0.5" style={{ color: '#0F172A' }}>{formatDate(detailData.createdAt)}</p>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">
@@ -645,11 +645,11 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <div key={l.id} className="p-3 rounded-lg space-y-1.5 shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</span>
-                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">🍇 Vintage: {(l as any).vintage ?? 'NV'}</span>
+                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Niên vụ: {(l as any).vintage ?? 'NV'}</span>
                                             </div>
                                             <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{l.productName}</p>
                                             <div className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
-                                                📍 {l.locationCode}
+                                                Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong>
                                             </div>
                                             <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: '#E2E8F0' }}>
                                                 <span style={{ color: '#64748B' }}>Picked: <strong className="font-mono text-[#0F172A]">{l.qtyPicked}</strong></span>

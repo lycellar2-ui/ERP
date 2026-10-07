@@ -77,7 +77,7 @@ export default function DOPrintPage({ searchParams }: Props) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-white px-4">
                 <div className="p-6 rounded-lg max-w-md w-full bg-white border border-[#EF4444]/30 text-center">
-                    <p className="text-sm font-bold text-[#EF4444] mb-4">⚠ Lỗi hệ thống</p>
+                    <p className="text-sm font-bold text-[#EF4444] mb-4">Lỗi hệ thống</p>
                     <p className="text-sm text-slate-900 mb-6">{error || 'Không tìm thấy dữ liệu'}</p>
                     <button onClick={() => window.close()} className="px-4 py-2 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-500 transition-colors">
                         Đóng cửa sổ
@@ -249,7 +249,7 @@ export default function DOPrintPage({ searchParams }: Props) {
                     <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed space-y-1">
                         {(data as any).deliveryNotes && (
                             <div>
-                                <span className="font-bold text-amber-900 uppercase">📦 Lưu ý giao hàng: </span>
+                                <span className="font-bold text-amber-900 uppercase">Lưu ý giao hàng: </span>
                                 <span className="text-slate-900 font-medium">{(data as any).deliveryNotes}</span>
                             </div>
                         )}

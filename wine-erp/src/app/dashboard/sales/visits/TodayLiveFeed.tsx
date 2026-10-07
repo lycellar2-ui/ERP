@@ -139,10 +139,10 @@ export function TodayLiveFeed({
                             onChange={e => setSelectedRepId(e.target.value)}
                             className="w-full pl-3 pr-8 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500 cursor-pointer"
                         >
-                            <option value="ALL">👥 {locale === 'en' ? 'All Sales Reps' : 'Tất cả nhân sự'}</option>
+                            <option value="ALL">{locale === 'en' ? 'All Sales Reps' : 'Tất cả nhân sự'}</option>
                             {repsList.map(r => (
                                 <option key={r.id} value={r.id}>
-                                    👤 {r.name}
+                                    {r.name}
                                 </option>
                             ))}
                         </select>
@@ -170,7 +170,7 @@ export function TodayLiveFeed({
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            💬 {locale === 'en' ? 'With notes' : 'Có báo cáo'} ({withNotesCount})
+                            {locale === 'en' ? 'With notes' : 'Có báo cáo'} ({withNotesCount})
                         </button>
                         <button
                             type="button"
@@ -181,7 +181,7 @@ export function TodayLiveFeed({
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            ⏳ {locale === 'en' ? 'Pending' : 'Chưa ghi'} ({withoutNotesCount})
+                            {locale === 'en' ? 'Pending' : 'Chưa ghi'} ({withoutNotesCount})
                         </button>
                     </div>
                 </div>
@@ -250,11 +250,11 @@ export function TodayLiveFeed({
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {v.isUnplanned ? (
                                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 font-mono">
-                                                    {locale === 'en' ? '⚡ AD-HOC' : '⚡ ĐỘT XUẤT'}
+                                                    {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                 </span>
                                             ) : (
                                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 font-mono">
-                                                    {locale === 'en' ? '📋 PLANNED' : '📋 KẾ HOẠCH'}
+                                                    {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
                                                 </span>
                                             )}
                                             <span className="font-mono text-xs font-bold text-teal-700 flex items-center gap-0.5">

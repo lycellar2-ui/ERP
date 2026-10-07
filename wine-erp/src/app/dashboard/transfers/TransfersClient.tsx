@@ -93,7 +93,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 try {
                     const res = await accountingApproveTransfer(id)
                     if (!res.success) throw new Error(res.error)
-                    toast.success('✅ Đã phê duyệt phiếu chuyển kho thành công!')
+                    toast.success('Đã phê duyệt phiếu chuyển kho thành công')
                     reload()
                 } catch (err: any) {
                     toast.error('Lỗi duyệt phiếu: ' + err.message)
@@ -278,8 +278,8 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 <THead>
                     <Tr>
                         {renderSortHeader('transferNo', 'Mã Phiếu')}
-                        {renderSortHeader('fromWarehouse', '🔴 Kho Xuất (Đi)')}
-                        {renderSortHeader('toWarehouse', '🟢 Kho Nhận (Đến)')}
+                        {renderSortHeader('fromWarehouse', 'Kho Xuất')}
+                        {renderSortHeader('toWarehouse', 'Kho Nhận')}
                         {renderSortHeader('requesterName', 'Người Lập')}
                         {renderSortHeader('transferDate', 'Ngày Chuyển')}
                         {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}

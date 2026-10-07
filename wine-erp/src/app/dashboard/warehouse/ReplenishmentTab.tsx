@@ -425,7 +425,7 @@ export function ReplenishmentTab() {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-mono">
-                                                        ⚠️ Còn: {row.targetStockAvailable} chai
+                                                        Còn: {row.targetStockAvailable} chai
                                                     </span>
                                                 </div>
                                             </div>
@@ -439,7 +439,7 @@ export function ReplenishmentTab() {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
-                                                        🟢 Sẵn có: {row.sourceStockAvailable} chai
+                                                        Khả dụng: {row.sourceStockAvailable} chai
                                                     </span>
                                                 </div>
                                             </div>
@@ -522,12 +522,12 @@ export function ReplenishmentTab() {
                                     <div className="p-2 rounded-lg bg-rose-50/60 border border-rose-200/60 space-y-1">
                                         <p className="text-[10px] font-bold text-rose-800 uppercase tracking-wide truncate">Kho Nhận (Đích)</p>
                                         <p className="font-semibold text-slate-900 text-[11px] truncate">{row.targetWarehouseName}</p>
-                                        <p className="text-[11px] font-bold font-mono text-rose-700">⚠️ Còn {row.targetStockAvailable}c</p>
+                                        <p className="text-[11px] font-bold font-mono text-rose-700">Còn {row.targetStockAvailable} chai</p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/60 space-y-1">
                                         <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide truncate">Kho Xuất (Nguồn)</p>
                                         <p className="font-semibold text-slate-900 text-[11px] truncate">{row.sourceWarehouseName}</p>
-                                        <p className="text-[11px] font-bold font-mono text-emerald-700">🟢 Sẵn {row.sourceStockAvailable}c</p>
+                                        <p className="text-[11px] font-bold font-mono text-emerald-700">Khả dụng {row.sourceStockAvailable} chai</p>
                                     </div>
                                 </div>
 
@@ -552,8 +552,8 @@ export function ReplenishmentTab() {
                                     onClick={() => handleCreateTransfer(row)}
                                     className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer bg-lys-teal-strong hover:bg-teal-700 text-white min-h-[44px]"
                                 >
-                                    <Zap size={14} />
-                                    Tạo Lệnh Chuyển Ngay
+                                    <Boxes size={14} />
+                                    Tạo Phiếu Chuyển Kho
                                 </button>
                             </div>
                         ))}
@@ -572,7 +572,7 @@ export function ReplenishmentTab() {
                     setTransferOpen(false)
                     setTransferInitialData(null)
                     loadData()
-                    toast.success('🎉 Đã lập phiếu chuyển kho thành công!')
+                    toast.success('Đã lập phiếu chuyển kho thành công')
                 }}
                 initialData={transferInitialData}
             />

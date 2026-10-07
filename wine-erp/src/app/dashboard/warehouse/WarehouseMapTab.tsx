@@ -805,7 +805,7 @@ export function WarehouseMapTab({
                             {mapData && (
                                 <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
 
-                                    {/* 🏢 Outer Warehouse Perimeter Frame */}
+                                    {/* Outer Warehouse Perimeter Frame */}
                                     <div style={{
                                         position: 'absolute',
                                         left: 0, top: 0,
@@ -1051,7 +1051,7 @@ export function WarehouseMapTab({
                                 </div>
                                 <div>
                                     <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5">
-                                        📍 Vị Trí: <span className="font-mono text-amber-700">{selectedLoc.locationCode}</span>
+                                        Vị Trí: <span className="font-mono text-amber-700">{selectedLoc.locationCode}</span>
                                     </h3>
                                     <p className="text-[11px] text-slate-500">
                                         Zone: <strong className="text-slate-800">{selectedLoc.zone}</strong> • Sức chứa: <strong className="text-slate-800">{selectedLoc.capacityCases ?? 50} thùng</strong>

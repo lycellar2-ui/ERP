@@ -101,7 +101,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         try {
             const res = await accountingApproveTransfer(transferId)
             if (!res.success) throw new Error(res.error)
-            toast.success('✅ Đã phê duyệt Phiếu Chuyển Kho thành công!')
+            toast.success('Đã phê duyệt Phiếu Chuyển Kho thành công')
             loadData(transferId)
             onRefresh()
         } catch (err: any) {
@@ -138,7 +138,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         try {
             const res = await dispatchTransferOrder(transferId)
             if (!res.success) throw new Error(res.error)
-            toast.success('🚚 Đã xuất kho & trừ tồn kho tại Kho Xuất thành công!')
+            toast.success('Đã xuất kho & trừ tồn kho tại Kho Xuất thành công')
             loadData(transferId)
             onRefresh()
         } catch (err: any) {
@@ -191,7 +191,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                 receiptNotes,
             })
             if (!res.success) throw new Error(res.error)
-            toast.success('📥 Đã xác nhận kiểm đếm & nhận kho thành công!')
+            toast.success('Đã xác nhận kiểm đếm & nhận kho thành công')
             setShowReceiveModal(false)
             loadData(transferId)
             onRefresh()
@@ -213,7 +213,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         try {
             const res = await submitTransferForAccounting(transferId)
             if (!res.success) throw new Error(res.error)
-            toast.success('✅ Đã gửi Kế toán phê duyệt!')
+            toast.success('Đã gửi Kế toán phê duyệt')
             loadData(transferId)
             onRefresh()
         } catch (err: any) {
@@ -235,7 +235,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                 newVintage: vNum,
             })
             if (res.success) {
-                toast.success('✅ Đã đổi niên vụ thành công!')
+                toast.success('Đã cập nhật niên vụ thành công')
                 setEditingVintageLineId(null)
                 await loadData(transferId)
                 onRefresh()
@@ -256,7 +256,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             const res = await autoFixTransferVintages(transferId)
             if (res.success) {
                 if (res.updatedCount && res.updatedCount > 0) {
-                    toast.success(`🎉 Đã tự động khớp ${res.updatedCount} dòng sang niên vụ có sẵn tồn kho!`)
+                    toast.success(`Đã tự động khớp ${res.updatedCount} dòng sang niên vụ có sẵn tồn kho`)
                     await loadData(transferId)
                     onRefresh()
                 } else {
@@ -463,9 +463,9 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
                                         <div className="flex items-center gap-2 font-semibold">
-                                            <span className="text-rose-700 font-bold">🔴 {detail.fromWarehouse}</span>
+                                            <span className="text-rose-700 font-bold">{detail.fromWarehouse}</span>
                                             <span className="text-slate-400 font-bold">➔</span>
-                                            <span className="text-emerald-700 font-bold">🟢 {detail.toWarehouse}</span>
+                                            <span className="text-emerald-700 font-bold">{detail.toWarehouse}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
                                             <span>{detail.lines.length} mặt hàng</span>
@@ -561,7 +561,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     className="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
                                                 >
                                                     {autoFixing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                                                    ⚡ Tự Động Khớp Niên Vụ Còn Hàng
+                                                    Tự động khớp niên vụ còn hàng
                                                 </button>
                                             </div>
                                         )}
@@ -655,7 +655,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                 </div>
                                                                                 {isEditable && isLowOrZeroStock && (
                                                                                     <span className="text-[10px] text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-semibold whitespace-nowrap border border-rose-100">
-                                                                                        ⚠️ Tồn: {l.vintageAvailableStock ?? 0}c
+                                                                                        Tồn: {l.vintageAvailableStock ?? 0} chai
                                                                                     </span>
                                                                                 )}
                                                                             </div>
@@ -727,7 +727,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                             </div>
                                                             {isEditable && isLowOrZeroStock && (
                                                                 <div className="text-[10px] text-rose-600 bg-rose-50 p-1.5 rounded font-semibold border border-rose-200">
-                                                                    ⚠️ Cảnh báo tồn: Lô còn {l.vintageAvailableStock ?? 0} chai
+                                                                    Cảnh báo tồn: Lô còn {l.vintageAvailableStock ?? 0} chai
                                                                 </div>
                                                             )}
                                                         </div>
@@ -870,11 +870,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                 </span>
                                                                             ) : p.isSufficient ? (
                                                                                 <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">
-                                                                                    🟢 Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
+                                                                                    Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
                                                                                 </span>
                                                                             ) : (
                                                                                 <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">
-                                                                                    ⚠️ Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
+                                                                                    Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -971,7 +971,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                 </div>
             </div>
 
-            {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING & PICKING */}
+            {/* Printable A4 Modal for signing and picking */}
             {printModalOpen && detail && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
                     <div className="bg-white border border-slate-200 rounded-lg max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
@@ -983,13 +983,13 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         onClick={() => setPrintDocType('VOUCHER')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0891B2] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
-                                        📄 Phiếu Chuyển Kho A4
+                                        Phiếu Chuyển Kho A4
                                     </button>
                                     <button
                                         onClick={() => setPrintDocType('PICK_LIST')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'PICK_LIST' ? 'bg-[#38BDF8] text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
-                                        📋 Danh Sách Nhặt Hàng (Pick List)
+                                        Danh Sách Nhặt Hàng (Pick List)
                                     </button>
                                 </div>
                             </div>
@@ -1157,7 +1157,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
                                     </>
                                 ) : (
-                                    /* 📋 PRINTABLE PICK LIST FOR WAREHOUSE PICKER */
+                                    /* Printable Pick List for warehouse picker */
                                     <>
                                         <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                                             <div>
@@ -1179,7 +1179,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
 
                                         <div className="mb-3 text-[10px] p-2 bg-slate-100 border border-slate-300 rounded font-medium">
-                                            ⚠️ <strong>Hướng dẫn thủ kho:</strong> Nhặt hàng theo thứ tự Vị trí Kệ (FIFO). Đánh dấu [✓] khi đã nhặt xong từng vị trí.
+                                            <strong>Hướng dẫn thủ kho:</strong> Nhặt hàng theo thứ tự Vị trí Kệ (FIFO). Đánh dấu [✓] khi đã nhặt xong từng vị trí.
                                         </div>
 
                                         {/* Picking Table */}
@@ -1395,7 +1395,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             {/* Receipt Notes / Damage Report */}
                             <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
                                 <label className="block text-xs font-bold text-slate-800">
-                                    📝 Ghi Chú Kiểm Đếm / Biên Bản Hao Hụt (nếu có chênh lệch hoặc vỡ hỏng):
+                                    Ghi Chú Kiểm Đếm / Biên Bản Hao Hụt (nếu có chênh lệch hoặc vỡ hỏng):
                                 </label>
                                 <textarea
                                     value={receiptNotes}

@@ -640,7 +640,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                             )}
                                                                             {c.brandGroup && (
                                                                                 <span className="text-amber-600 font-medium">
-                                                                                    ✨ {c.brandGroup}
+                                                                                    {c.brandGroup}
                                                                                 </span>
                                                                             )}
                                                                             {c.channel && <span>{t.channelLabel}: {getSOChannelLabel(c.channel, locale, true)}</span>}
@@ -693,7 +693,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 {/* Order Date */}
                                 <div className="md:col-span-3">
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                        📅 {t.orderDateLabel}
+                                        {t.orderDateLabel}
                                     </label>
                                     <input
                                         type="date"

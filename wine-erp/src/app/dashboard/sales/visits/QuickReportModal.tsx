@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FileText, X, Check, Sparkles, MapPin, Clock, Camera, Send, Lock } from 'lucide-react'
+import { FileText, X, Check, AlertCircle, MapPin, Clock, Camera, Send, Lock } from 'lucide-react'
 import { type VisitLocale } from './i18n'
 
 interface QuickReportModalProps {
@@ -25,13 +25,13 @@ interface QuickReportModalProps {
 }
 
 const QUICK_TAG_SUGGESTIONS = [
-    { label: '🍷 Khách quan tâm vang Ý', text: 'Khách hàng quan tâm các dòng vang Ý mới (Anselmi, Chianti, Monteforte).' },
-    { label: '🍷 Đã gửi mẫu thử tasting', text: 'Đã bàn giao chai mẫu tasting cho quản lý/sommelier dùng thử và phản hồi.' },
-    { label: '📦 Quầy hết tồn, cần lên đơn', text: 'Tồn kho tại điểm bán sắp hết, khách có nhu cầu đặt thêm hàng trong tuần.' },
-    { label: '💵 Thu công nợ / đối soát', text: 'Đã đối soát chứng từ hóa đơn và thu hồi công nợ theo đúng hạn.' },
-    { label: '📝 Đàm phán hợp đồng / menu', text: 'Đang thương thảo danh mục rượu đưa vào wine list và mức chiết khấu kênh.' },
-    { label: '⚠️ Khách phản ánh giá', text: 'Khách phản ánh về mức giá cạnh tranh trên thị trường, cần hỗ trợ thêm CTKM.' },
-    { label: '🤝 Chăm sóc định kỳ tốt', text: 'Thăm hỏi định kỳ, duy trì quan hệ thân thiết với chủ nhà hàng / bar.' },
+    { label: 'Khách quan tâm vang Ý', text: 'Khách hàng quan tâm các dòng vang Ý mới (Anselmi, Chianti, Monteforte).' },
+    { label: 'Đã gửi mẫu thử tasting', text: 'Đã bàn giao chai mẫu tasting cho quản lý/sommelier dùng thử và phản hồi.' },
+    { label: 'Quầy hết tồn, cần lên đơn', text: 'Tồn kho tại điểm bán sắp hết, khách có nhu cầu đặt thêm hàng trong tuần.' },
+    { label: 'Thu công nợ / đối soát', text: 'Đã đối soát chứng từ hóa đơn và thu hồi công nợ theo đúng hạn.' },
+    { label: 'Đàm phán hợp đồng / menu', text: 'Đang thương thảo danh mục rượu đưa vào wine list và mức chiết khấu kênh.' },
+    { label: 'Khách phản ánh giá', text: 'Khách phản ánh về mức giá cạnh tranh trên thị trường, cần hỗ trợ thêm CTKM.' },
+    { label: 'Chăm sóc định kỳ tốt', text: 'Thăm hỏi định kỳ, duy trì quan hệ thân thiết với chủ nhà hàng / bar.' },
 ]
 
 export function QuickReportModal({
@@ -181,7 +181,8 @@ export function QuickReportModal({
                     {/* Validation Error Alert */}
                     {validationError && (
                         <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-700 text-xs flex items-center gap-2">
-                            <span>⚠️ {validationError}</span>
+                            <AlertCircle size={14} className="shrink-0" />
+                            <span>{validationError}</span>
                         </div>
                     )}
 
@@ -189,8 +190,8 @@ export function QuickReportModal({
                     {!readOnly && (
                         <div className="space-y-1.5">
                             <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
-                                <Sparkles size={12} className="text-amber-500" />
-                                {locale === 'en' ? '1-Tap Quick Tags (Select to insert):' : 'Chọn nhanh mẫu nội dung (Chạm để thêm):'}
+                                <FileText size={12} className="text-teal-600" />
+                                {locale === 'en' ? 'Quick Template Tags (Select to insert):' : 'Mẫu nội dung nhanh (Chọn để thêm):'}
                             </label>
                             <div className="flex flex-wrap gap-1.5">
                                 {QUICK_TAG_SUGGESTIONS.map((tag, idx) => (
@@ -244,8 +245,8 @@ export function QuickReportModal({
                         {!readOnly && (
                             <p className="text-[11px] text-slate-500">
                                 {locale === 'en'
-                                    ? '💡 This note will immediately update for the Management Team in the Live Operations Board.'
-                                    : '💡 Nội dung này sẽ hiển thị tức thì trên Bảng Tin Điều Hành của Quản lý.'}
+                                    ? 'Note: This record will immediately update on the Management Live Operations Board.'
+                                    : 'Lưu ý: Nội dung này sẽ hiển thị tức thì trên Bảng Tin Điều Hành của Quản lý.'}
                             </p>
                         )}
                     </div>

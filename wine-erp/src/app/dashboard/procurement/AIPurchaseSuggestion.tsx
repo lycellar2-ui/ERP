@@ -64,7 +64,7 @@ export function AIPurchaseSuggestion() {
                     ) : suggestion ? (
                         <><RefreshCw size={13} /> Phân tích lại</>
                     ) : (
-                        <><Sparkles size={13} /> 📦 Phân Tích Tồn Kho</>
+                        <><Sparkles size={13} /> Phân Tích Tồn Kho</>
                     )}
                 </button>
             </div>
@@ -108,7 +108,7 @@ export function AIPurchaseSuggestion() {
             {error && !loading && (
                 <div className="px-5 py-4">
                     <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
-                        <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
+                        <p className="text-xs flex items-center gap-1.5" style={{ color: '#B91C1C' }}><AlertTriangle size={13} /> {error}</p>
                     </div>
                 </div>
             )}
@@ -146,7 +146,7 @@ export function AIPurchaseSuggestion() {
                         })}
                     </div>
                     <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                        🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Dữ liệu 3 tháng gần nhất
+                        Phân tích lúc {new Date().toLocaleString('vi-VN')} · Phân tích AI · Dữ liệu 3 tháng gần nhất
                     </p>
                 </div>
             )}
@@ -156,7 +156,7 @@ export function AIPurchaseSuggestion() {
                 <div className="px-5 py-6 flex flex-col items-center gap-2">
                     <Package size={20} style={{ color: '#E2E8F0' }} />
                     <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                        Nhấn <strong>&quot;📦 Phân Tích Tồn Kho&quot;</strong> để nhận gợi ý<br />
+                        Nhấn <strong>&quot;Phân Tích Tồn Kho&quot;</strong> để nhận gợi ý<br />
                         sản phẩm cần nhập, số lượng và mức ưu tiên
                     </p>
                 </div>

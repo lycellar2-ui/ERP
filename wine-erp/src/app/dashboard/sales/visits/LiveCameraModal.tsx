@@ -141,7 +141,7 @@ export function LiveCameraModal({
         const fontLocSize = Math.round(17 * scale)
         ctx.font = `bold ${fontLocSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
         ctx.fillStyle = '#FFFFFF'
-        const locText = locationInfo ? `📍 ${locationInfo}` : (locale === 'en' ? '📍 Acquiring field GPS coordinates...' : '📍 Đang dò tìm toạ độ GPS thực địa...')
+        const locText = locationInfo ? `[GPS] ${locationInfo}` : (locale === 'en' ? 'Acquiring field GPS coordinates...' : 'Đang dò tìm toạ độ GPS thực địa...')
         
         // Auto-truncate if location text exceeds canvas width
         let displayLoc = locText

@@ -479,7 +479,7 @@ export function ProcurementCashFlowModal({
                     {/* Thẻ 4: TỔNG VỐN DÒNG TIỀN */}
                     <div className="p-3 bg-teal-900 text-white rounded-lg shadow-sm">
                         <div className="flex items-center justify-between text-xs text-teal-200 font-semibold mb-1">
-                            <span>🎯 TỔNG VỐN DÒNG TIỀN (Landed)</span>
+                            <span>Tổng vốn dòng tiền (Landed Cost)</span>
                             <span className="text-[10px] bg-teal-800 text-teal-100 px-1.5 py-0.2 rounded font-mono">
                                 100% Vốn
                             </span>

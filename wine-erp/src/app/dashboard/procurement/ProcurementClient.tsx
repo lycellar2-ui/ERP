@@ -524,7 +524,7 @@ function PODiscountSection({
         <div className="p-3.5 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-slate-900">🏷️ Chiết Khấu / Giảm Giá Đơn Hàng</span>
+                    <span className="text-xs font-bold text-slate-900">Chiết khấu / Giảm giá đơn hàng</span>
                     {computedDiscount > 0 && (
                         <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 font-mono">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
@@ -943,7 +943,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                     }}
                                                     className="rounded border-slate-200 text-amber-500 focus:ring-0 cursor-pointer"
                                                 />
-                                                <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
+                                                <span className="font-bold text-[11px]">Hàng tặng (FOC)</span>
                                             </label>
                                         </div>
                                         {lines.length > 1 && (
@@ -971,7 +971,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     <div className="relative">
                                         <input
                                             type="text"
-                                            placeholder="🔍 Gõ SKU hoặc tên sản phẩm / rượu vang..."
+                                            placeholder="Gõ SKU hoặc tên sản phẩm / rượu vang..."
                                             value={searchQueries[i] ?? ''}
                                             onFocus={e => {
                                                 setActiveDropdownIndex(i)
@@ -1051,11 +1051,11 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                     }
                                                 }}
                                             >
-                                                <option value="CASE_6">📦 Thùng 6 chai</option>
-                                                <option value="CASE_12">📦 Thùng 12 chai</option>
-                                                <option value="CASE_3">📦 Thùng 3 chai</option>
-                                                <option value="CASE_1">📦 Thùng 1 chai</option>
-                                                <option value="BOTTLE">🍾 Chai lẻ (1 chai)</option>
+                                                <option value="CASE_6">Thùng 6 chai</option>
+                                                <option value="CASE_12">Thùng 12 chai</option>
+                                                <option value="CASE_3">Thùng 3 chai</option>
+                                                <option value="CASE_1">Thùng 1 chai</option>
+                                                <option value="BOTTLE">Chai lẻ (1 chai)</option>
                                             </select>
                                         </div>
 
@@ -1133,7 +1133,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         <span className="text-slate-500">
                                             {line.isFoc ? (
                                                 <span className="text-amber-800 font-bold">
-                                                    🎁 Hàng FOC (Miễn phí thanh toán NCC):
+                                                    Hàng FOC (Miễn phí tiền hàng NCC):
                                                 </span>
                                             ) : (
                                                 <>
@@ -1614,7 +1614,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                             }}
                                                             className="rounded border-slate-200 text-amber-500 focus:ring-0 cursor-pointer"
                                                         />
-                                                        <span className="font-bold text-[11px]">🎁 Hàng FOC (Miễn phí)</span>
+                                                        <span className="font-bold text-[11px]">Hàng tặng (FOC)</span>
                                                     </label>
                                                 </div>
                                                 {lines.length > 1 && (
@@ -1642,7 +1642,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             <div className="relative">
                                                 <input
                                                     type="text"
-                                                    placeholder="🔍 Gõ SKU hoặc tên sản phẩm / rượu vang..."
+                                                    placeholder="Gõ SKU hoặc tên sản phẩm / rượu vang..."
                                                     value={searchQueries[i] ?? ''}
                                                     onFocus={e => {
                                                         setActiveDropdownIndex(i)
@@ -1721,11 +1721,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                             }
                                                         }}
                                                     >
-                                                        <option value="CASE_6">📦 Thùng 6 chai</option>
-                                                        <option value="CASE_12">📦 Thùng 12 chai</option>
-                                                        <option value="CASE_3">📦 Thùng 3 chai</option>
-                                                        <option value="CASE_1">📦 Thùng 1 chai</option>
-                                                        <option value="BOTTLE">🍾 Chai lẻ (1 chai)</option>
+                                                        <option value="CASE_6">Thùng 6 chai</option>
+                                                        <option value="CASE_12">Thùng 12 chai</option>
+                                                        <option value="CASE_3">Thùng 3 chai</option>
+                                                        <option value="CASE_1">Thùng 1 chai</option>
+                                                        <option value="BOTTLE">Chai lẻ (1 chai)</option>
                                                     </select>
                                                 </div>
 
@@ -1800,7 +1800,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 <span className="text-slate-500">
                                                     {line.isFoc ? (
                                                         <span className="text-amber-800 font-bold">
-                                                            🎁 Hàng FOC (Miễn phí thanh toán NCC):
+                                                            Hàng FOC (Miễn phí tiền hàng NCC):
                                                         </span>
                                                     ) : (
                                                         <>
@@ -2269,7 +2269,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         }}
                         onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)' }}
                         onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)' }}>
-                        📊 Thống Kê
+                        Thống kê
                     </button>
 
                     <button onClick={() => setCashFlowModalOpen(true)}
@@ -2321,7 +2321,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết Đơn Mua Hàng</span>
                         <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
-                            Thu gọn chỉ số ✕
+                            Thu gọn chỉ số
                         </button>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -2599,7 +2599,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
                                                     <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                                                        🎁 FOC: {(row.totalFocQty ?? 0).toLocaleString()} chai
+                                                        FOC: {(row.totalFocQty ?? 0).toLocaleString()} chai
                                                     </span>
                                                 </div>
                                             )}
@@ -2627,7 +2627,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </p>
                                             {row.discountAmount && row.discountAmount > 0 ? (
                                                 <p className="text-[10px] text-amber-700 font-mono">
-                                                    🏷️ -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
+                                                    -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
                                                 </p>
                                             ) : null}
                                             <p className="text-[11px] font-bold font-mono text-[#0891B2] mt-0.5">
@@ -2646,12 +2646,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <div className="flex items-center gap-1.5 mt-1 text-[10px] flex-wrap">
                                                 {row.creatorName && (
                                                     <span className="text-slate-600 font-medium">
-                                                        👤 {row.creatorName}
+                                                        {row.creatorName}
                                                     </span>
                                                 )}
                                                 {row.docCount && row.docCount > 0 ? (
                                                     <span className="text-[#0891B2] flex items-center gap-0.5 font-mono">
-                                                        📎 {row.docCount} file
+                                                        {row.docCount} tệp đính kèm
                                                     </span>
                                                 ) : null}
                                             </div>
@@ -2748,7 +2748,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
                                         <span className="text-[10px] text-amber-700 block font-mono">
-                                            🏷️ Giảm {row.discountAmount.toLocaleString()} {row.currency}
+                                            Giảm {row.discountAmount.toLocaleString()} {row.currency}
                                         </span>
                                     )}
                                 </div>
@@ -2888,7 +2888,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                     <p className="font-extrabold text-slate-900">{line.productName}</p>
                                                                     {line.isFoc && (
                                                                         <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                                                                            🎁 FOC
+                                                                            FOC
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -2959,7 +2959,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 </div>
                                                 {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
                                                     <p className="text-[11px] text-amber-800 font-medium pt-1 border-t border-slate-200/40 italic">
-                                                        🎁 Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
+                                                        Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
                                                     </p>
                                                 )}
                                             </div>
@@ -3030,7 +3030,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="flex items-center gap-2">
                                                         <a href="/dashboard/settings/approval-matrix" target="_blank" rel="noreferrer"
                                                             className="text-[10px] text-[#0891B2] hover:underline flex items-center gap-1 font-mono">
-                                                            ⚙️ Ma trận duyệt
+                                                            Ma trận duyệt
                                                         </a>
                                                         <POStatusBadge status={poDetail.status} />
                                                     </div>
@@ -3191,7 +3191,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                                                                 isApprove ? 'bg-emerald-500/20 text-[#15803D]' : (isReject ? 'bg-red-500/20 text-[#B91C1C]' : 'bg-blue-500/20 text-[#1D4ED8]')
                                                                             }`}>
-                                                                                {isApprove ? '✅ Đã Phê Duyệt' : (isReject ? '❌ Đã Từ Chối' : (isSubmit ? '🚀 Gửi Duyệt' : item.action))}
+                                                                                {isApprove ? 'Đã phê duyệt' : (isReject ? 'Đã từ chối' : (isSubmit ? 'Gửi duyệt' : item.action))}
                                                                             </span>
                                                                             <span className="font-bold text-slate-900">{item.actorName}</span>
                                                                         </div>

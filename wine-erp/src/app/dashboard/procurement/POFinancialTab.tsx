@@ -186,7 +186,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                 </div>
 
                 <div className="p-3 bg-teal-900 text-white rounded-lg">
-                    <span className="text-[11px] font-bold text-teal-200 uppercase block">🎯 Tổng Dự Trù Lô (Landed)</span>
+                    <span className="text-[11px] font-bold text-teal-200 uppercase block">Tổng dự trù lô (Landed Cost)</span>
                     <span className="font-mono text-base font-bold text-white block mt-0.5">
                         {formatVND(calc.grandTotalLandedVND)}
                     </span>

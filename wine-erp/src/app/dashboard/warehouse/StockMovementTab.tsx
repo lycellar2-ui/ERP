@@ -784,7 +784,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                             <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-emerald-700">{m.docNo}</td>
                                                             <td className="px-3.5 py-2.5 text-xs text-slate-700 font-medium">
                                                                 <div>{m.warehouseName}</div>
-                                                                <div className="text-[10px] font-mono text-slate-400">📍 {m.locationCode} · Lô: {m.lotNo}</div>
+                                                                <div className="text-[10px] font-mono text-slate-400">Vị trí: {m.locationCode} · Lô: {m.lotNo}</div>
                                                             </td>
                                                             <td className="px-3.5 py-2.5 text-center">
                                                                 {m.qtyIn > 0 ? (
@@ -831,7 +831,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                         <div key={i} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1.5">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    📍 {loc.locationCode}
+                                                    {loc.locationCode}
                                                 </span>
                                                 <span className="text-xs font-bold font-mono text-emerald-600">
                                                     {loc.qtyAvailable.toLocaleString()} chai

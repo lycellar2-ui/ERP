@@ -282,7 +282,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                             <div className="col-span-2 flex items-center gap-2 px-3 py-2 rounded" style={{ background: customs.inspectionResult === 'PASSED' ? 'rgba(21,128,61,0.1)' : 'rgba(180,83,9,0.1)' }}>
                                 <ClipboardCheck size={14} style={{ color: customs.inspectionResult === 'PASSED' ? '#15803D' : '#B45309' }} />
                                 <span className="text-xs" style={{ color: '#0F172A' }}>
-                                    {customs.inspectionBody} — {customs.inspectionResult === 'PASSED' ? '✅ Đạt' : customs.inspectionResult === 'FAILED' ? '❌ Không đạt' : '⏳ Đang giám định'}
+                                    {customs.inspectionBody} — {customs.inspectionResult === 'PASSED' ? 'Đạt tiêu chuẩn' : customs.inspectionResult === 'FAILED' ? 'Không đạt' : 'Đang giám định'}
                                     {customs.inspectionDate && ` (${fmtDate(customs.inspectionDate)})`}
                                 </span>
                             </div>
@@ -513,7 +513,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                                 {isActive && item.latestFile && (
                                     <a href={item.latestFile.fileUrl} target="_blank" rel="noopener noreferrer"
                                         className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
-                                        📄 File
+                                        Xem tệp
                                     </a>
                                 )}
                             </div>

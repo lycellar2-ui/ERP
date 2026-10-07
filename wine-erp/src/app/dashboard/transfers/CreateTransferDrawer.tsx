@@ -390,7 +390,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                 return
             }
 
-            toast.success(submitForApproval ? `✅ Đã tạo & gửi Kế Toán duyệt thành công (${res.transferNo})` : `✅ Đã lưu nháp Phiếu Chuyển Kho (${res.transferNo})`)
+            toast.success(submitForApproval ? `Đã tạo & gửi Kế Toán duyệt thành công (${res.transferNo})` : `Đã lưu nháp Phiếu Chuyển Kho (${res.transferNo})`)
             onSuccess()
             onClose()
         } catch (err: any) {
@@ -439,7 +439,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             {/* Source WH */}
                             <div>
                                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
-                                    🔴 Kho Xuất (Kho Đi) *
+                                    Kho Xuất (Kho Đi) *
                                 </label>
                                 <select
                                     value={fromWarehouseId}
@@ -460,7 +460,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             {/* Destination WH */}
                             <div>
                                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
-                                    🟢 Kho Nhận (Kho Đến) *
+                                    Kho Nhận (Kho Đến) *
                                 </label>
                                 <select
                                     value={toWarehouseId}
@@ -533,7 +533,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     <div className="space-y-3 pt-2 pb-28">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                🍷 Danh Mục Rượu Chuyển ({lines.length} dòng)
+                                Danh Mục Hàng Chuyển Kho ({lines.length} dòng)
                             </label>
                             <button
                                 type="button"
@@ -551,7 +551,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             </div>
                         ) : (
                             <>
-                                {/* 💻 DESKTOP VIEW (>= sm) - Matching SODrawer Table */}
+                                {/* Desktop View (>= sm) */}
                                 <div
                                     className="hidden sm:block overflow-x-auto border border-slate-200 rounded-md bg-white max-w-full"
                                     style={{ minHeight: lines.length > 0 ? '360px' : 'auto' }}
@@ -656,7 +656,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isOverStock ? (
                                                                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300">
-                                                                            ⚠️ Vượt tồn ({selectedVintageQty}c)
+                                                                            Vượt tồn ({selectedVintageQty} chai)
                                                                         </span>
                                                                     ) : (
                                                                         <span className="text-[10px] text-slate-400">
@@ -682,7 +682,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     </table>
                                 </div>
 
-                                {/* 📱 MOBILE VIEW (< sm) - Card List for Phones */}
+                                {/* Mobile View (< sm) */}
                                 <div className="block sm:hidden space-y-3">
                                     {lines.map((line, idx) => {
                                         const p = products.find(prod => prod.id === line.productId)
@@ -764,13 +764,10 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                     {v} (Tồn: 0c - Hết)
                                                                 </option>
                                                             ))}
-                                                            {line.vintage && !allProductVintages.includes(line.vintage) && !whVintages.some(wv => wv.vintage === line.vintage) && (
-                                                                <option value={line.vintage}>{line.vintage} (Tồn: 0c)</option>
-                                                            )}
                                                         </select>
                                                         {fromWarehouseId && line.productId && (
                                                             <span className={`text-[10px] mt-1 block font-semibold ${isZeroStock ? 'text-rose-600' : 'text-emerald-700'}`}>
-                                                                {isZeroStock ? '⚠️ Hết tồn' : `Tồn: ${selectedVintageQty}c`}
+                                                                {isZeroStock ? 'Hết tồn' : `Tồn: ${selectedVintageQty} chai`}
                                                             </span>
                                                         )}
                                                     </div>
@@ -790,7 +787,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                         />
                                                         {isOverStock && (
                                                             <span className="text-[10px] mt-1 block font-bold text-amber-700">
-                                                                ⚠️ Vượt ({selectedVintageQty}c)
+                                                                Vượt tồn ({selectedVintageQty} chai)
                                                             </span>
                                                         )}
                                                     </div>

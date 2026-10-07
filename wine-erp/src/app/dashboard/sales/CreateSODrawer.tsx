@@ -299,7 +299,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             if (cloneData.proposalId && cloneData.lines.length === 0) {
                 getProposalWithItemsForSO(cloneData.proposalId).then(prop => {
                     if (prop) {
-                        setNotes(`ÄÆ¡n Tasting kÃ¨m Tá» trÃ¬nh ${prop.proposalNo}: ${prop.title}`)
+                        setNotes(`Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
                         if (prop.priceItems && prop.priceItems.length > 0) {
                             const loadedLines = prop.priceItems.map((item: any) => ({
                                 productId: item.productId,
@@ -313,7 +313,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 stock: 100,
                             }))
                             setLines(loadedLines)
-                            toast.success(`✨ Tự động nạp ${loadedLines.length} sáº£n pháº©m theo Tá» trÃ¬nh ${prop.proposalNo}`)
+                            toast.success(`Đã tự động nạp ${loadedLines.length} sản phẩm theo Tờ trình ${prop.proposalNo}`)
                         }
                     }
                 }).catch(() => {})

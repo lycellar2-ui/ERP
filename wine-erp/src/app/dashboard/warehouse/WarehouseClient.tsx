@@ -327,7 +327,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     {lot.lotNo}
                                 </span>
                                 <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200">
-                                    📍 {lot.locationCode}
+                                    {lot.locationCode}
                                 </span>
                             </div>
                             <div>
@@ -469,7 +469,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         {t.thLot}: {lot.lotNo}
                                     </span>
                                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        📍 {lot.location?.locationCode || t.unassigned}
+                                        {lot.location?.locationCode || t.unassigned}
                                     </span>
                                 </div>
                                 <div>
@@ -863,7 +863,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-4 max-w-screen-2xl">
-            {/* ═══ 📱 MOBILE TOP HEADER (< 768px) - CLEAN, UNCLUTTERED 1-ROW BAR ═══ */}
+            {/* Mobile Top Header (< 768px) */}
             <div className="block md:hidden bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-2.5">
                 {/* Row 1: Title / Navigation & Compact Warehouse Selector */}
                 <div className="flex items-center justify-between gap-2">
@@ -958,7 +958,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 )}
             </div>
 
-            {/* ═══ 💻 DESKTOP TOP HEADER (>= 768px) ═══ */}
+            {/* Desktop Top Header (>= 768px) */}
             <div className="hidden md:block p-3.5 rounded-lg shadow-2xs bg-white border border-slate-200">
                 <div className="flex flex-row items-center justify-between gap-3">
                     {/* Left: Title & Active Breadcrumb */}
@@ -1062,7 +1062,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             </div>
 
-            {/* ═══ 📊 DESKTOP STATS ROW (>= 768px, ON MAIN GRID VIEW) ═══ */}
+            {/* Desktop Stats Row (>= 768px, on main grid view) */}
             {viewMode === 'grid' && (
                 <div className="hidden md:grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                     {statCards.map(s => (
@@ -1079,10 +1079,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             )}
 
-            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
+            {/* View Mode 1: Central Features Menu */}
             {viewMode === 'grid' && (
                 <div className="space-y-4">
-                    {/* 📱 MOBILE UNIFIED FEATURE GRID (< 768px) - NO REDUNDANT DUPLICATIONS */}
+                    {/* Mobile Unified Feature Grid (< 768px) */}
                     <div className="block md:hidden space-y-3 pb-20">
                         <div className="flex items-center justify-between px-1">
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
@@ -1123,7 +1123,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </div>
                     </div>
 
-                    {/* 🖥️ DESKTOP GRID VIEW (>= 768px) */}
+                    {/* Desktop Grid View (>= 768px) */}
                     <div className="hidden md:block space-y-3">
                         <div className="flex items-center justify-between px-1">
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
@@ -1314,7 +1314,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                 <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 ${
                                                     totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
                                                 }`}>
-                                                    ⚠️ {t.table.tagVariance} {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}{t.bottlesUnit.charAt(0)}
+                                                    {t.table.tagVariance} {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}{t.bottlesUnit.charAt(0)}
                                                 </span>
                                             )}
                                             <button onClick={() => {

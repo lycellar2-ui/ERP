@@ -155,9 +155,9 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                             )}
                         </div>
                         {selectedProduct && (
-                            <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-extrabold flex items-center justify-between">
-                                <span>✓ Đã chọn: {selectedProduct.productName} ({selectedProduct.skuCode})</span>
-                                <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900">UPC: {selectedProduct.unitsPerCase || 6}</span>
+                            <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-bold flex items-center justify-between text-xs">
+                                <span>Đã chọn: {selectedProduct.productName} ({selectedProduct.skuCode})</span>
+                                <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900 font-mono">Quy cách: {selectedProduct.unitsPerCase || 6}</span>
                             </div>
                         )}
                     </div>
@@ -165,12 +165,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                     {/* Step 2: Vintage & Zone/Location */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">2. VINTAGE (NĂM SX):</label>
+                            <label className="text-slate-700 font-bold block mb-1">2. Niên vụ (Vintage):</label>
                             <input
                                 type="number"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
-                                placeholder="VD: 2020 (Bỏ trống nếu NV)"
+                                placeholder="Ví dụ: 2020 (Để trống nếu NV)"
                                 value={vintage}
                                 onChange={e => setVintage(e.target.value)}
                                 className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-mono font-bold"
@@ -178,23 +178,23 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         </div>
 
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">3. VỊ TRÍ / KỆ KHO:</label>
+                            <label className="text-slate-700 font-bold block mb-1">3. Vị trí kệ kho:</label>
                             <input
                                 type="text"
-                                placeholder="VD: Khu A - Kệ 02"
+                                placeholder="Ví dụ: Khu A - Kệ 02"
                                 value={locationCode}
                                 onChange={e => setLocationCode(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-extrabold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-bold"
                             />
                         </div>
                     </div>
 
                     {/* Step 3: Quantity found */}
                     <div>
-                        <label className="text-slate-700 font-bold block mb-1">4. SỐ LƯỢNG ĐẾM THỰC TẾ TRÊN KỆ:</label>
+                        <label className="text-slate-700 font-bold block mb-1">4. Số lượng thực tế trên kệ:</label>
                         <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
                             <div className="bg-white border border-slate-300 rounded-lg p-2 text-center">
-                                <span className="text-[10px] font-extrabold text-slate-500 block mb-1">📦 SỐ THÙNG</span>
+                                <span className="text-[10px] font-bold text-slate-500 block mb-1 uppercase tracking-wider">Số thùng</span>
                                 <input
                                     type="number"
                                     inputMode="numeric"
@@ -202,12 +202,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                     min="0"
                                     value={cases}
                                     onChange={e => setCases(parseInt(e.target.value, 10) || 0)}
-                                    className="w-full text-center text-xl font-black font-mono text-emerald-800 outline-none"
+                                    className="w-full text-center text-xl font-bold font-mono text-emerald-800 outline-none"
                                 />
                             </div>
 
                             <div className="bg-white border border-slate-300 rounded-lg p-2 text-center">
-                                <span className="text-[10px] font-extrabold text-slate-500 block mb-1">🍾 CHAI LẺ</span>
+                                <span className="text-[10px] font-bold text-slate-500 block mb-1 uppercase tracking-wider">Chai lẻ</span>
                                 <input
                                     type="number"
                                     inputMode="numeric"
@@ -215,7 +215,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                     min="0"
                                     value={loose}
                                     onChange={e => setLoose(parseInt(e.target.value, 10) || 0)}
-                                    className="w-full text-center text-xl font-black font-mono text-emerald-800 outline-none"
+                                    className="w-full text-center text-xl font-bold font-mono text-emerald-800 outline-none"
                                 />
                             </div>
                         </div>
