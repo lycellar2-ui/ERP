@@ -438,6 +438,25 @@ erDiagram
         qty_picked  decimal
         qty_shipped decimal
     }
+    StockCountSession {
+        id              uuid PK
+        session_no      string
+        warehouse_id    uuid FK
+        type            enum
+        scope_type      enum
+        is_blind_count  boolean
+        status          enum
+    }
+    StockCountLine {
+        id              uuid PK
+        session_id      uuid FK
+        product_id      uuid FK
+        vintage         int
+        location_id     uuid FK
+        qty_system      decimal
+        qty_actual      decimal
+        variance        decimal
+    }
 
     %% ── SLS DOMAIN ──────────────────────────────────────────
     SalesOrder {

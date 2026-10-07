@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag, Search, ChevronDown, CheckCircle2, Building2, Star, Calendar, FileText, ShoppingBag, ShieldCheck } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag, Search, ChevronDown, CheckCircle2, Building2, Star, Calendar, FileText, ShoppingBag, ShieldCheck, CornerDownRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -112,15 +112,15 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     const sortedCustomersForSelect = useMemo(() => {
         const parentsAndStandalone = customers.filter(c => !c.parentId)
-        const result: typeof customers = []
+        const result: (typeof customers[number] & { isChild?: boolean })[] = []
 
         parentsAndStandalone.forEach(parent => {
-            result.push(parent)
+            result.push({ ...parent, isChild: false })
             const children = customers.filter(c => c.parentId === parent.id)
             children.forEach(child => {
                 result.push({
                     ...child,
-                    name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+                    isChild: true
                 })
             })
         })
@@ -130,7 +130,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         orphans.forEach(child => {
             result.push({
                 ...child,
-                name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+                isChild: true
             })
         })
 
@@ -608,6 +608,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                     setCustomerDropdownOpen(false)
                                                                 }}
                                                                 className={`px-3.5 py-2.5 cursor-pointer transition-colors ${
+                                                                    (c as any).isChild ? 'pl-7 bg-slate-50/50' : ''
+                                                                } ${
                                                                     isDisabled 
                                                                         ? 'bg-slate-50 opacity-60 cursor-not-allowed' 
                                                                         : isSelected 
@@ -618,6 +620,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex flex-col gap-1 min-w-0">
                                                                         <div className="flex items-center gap-2 flex-wrap">
+                                                                            {(c as any).isChild && (
+                                                                                <span className="inline-flex items-center text-slate-400 shrink-0" title="Chi nhánh / Công ty con">
+                                                                                    <CornerDownRight size={13} />
+                                                                                </span>
+                                                                            )}
                                                                             <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-teal-100 text-teal-700'}`}>
                                                                                 {c.code}
                                                                             </span>

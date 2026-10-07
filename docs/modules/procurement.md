@@ -70,6 +70,22 @@
   3. Tổng Giám Đốc (CEO)
 - Tự động ghi nhật ký lịch sử phê duyệt (`POApprovalLog`) và gửi thông báo In-app Notification cho các cấp phê duyệt liên quan.
 
+### 3.5 Quản Lý Tài Chính & Kế Hoạch Dòng Tiền Lô Hàng (Cash Flow & Landed Cost Forecast)
+- **Mô phỏng dòng tiền theo thời điểm (`ProcurementCashFlowModal`)**:
+  - Truy cập trực tiếp từ Toolbar qua nút `[💰 Dòng Tiền Lô Hàng]`.
+  - Bộ lọc thời điểm linh hoạt: *Tất cả PO đang mở, Tháng này, Tháng tới, Quý này*.
+  - **Setup tỷ giá dự kiến thời gian thực**: Cho phép kế toán/thu mua tự do điều chỉnh tỷ giá dự kiến cho từng đồng tiền (USD, EUR, AUD, GBP). Hệ thống tự động tính toán lại tức thì toàn bộ số tiền cần huy động.
+  - **Linh động thêm/bớt PO vào dòng tiền**: Hỗ trợ checkbox chọn/bỏ chọn từng PO để đưa vào kế hoạch chi tiền mặt trong kỳ.
+  - **Bóc tách 3 trụ cột chi phí đặc thù rượu vang nhập khẩu**:
+    1. *Tiền hàng (FOB/EXW)*: Ngoại tệ và quy đổi VNĐ theo tỷ giá dự kiến.
+    2. *Dự trù thuế 3 tầng nộp Kho bạc trước thông quan*: Tự do điền/điều chỉnh % Thuế Nhập Khẩu (0% EVFTA, 12%, 20%, 50%...), Thuế Tiêu Thụ Đặc Biệt (35%, 65%...) và Thuế GTGT (0%, 8%, 10%...) ở cấp độ toàn cục hoặc riêng lẻ cho từng PO.
+    3. *Chi phí Logistics & Cảng*: Cước biển container lạnh, phí bảo hiểm hàng hải, phí THC/DO, cước kéo xe cont về kho và chi phí dán tem rượu nhập khẩu.
+  - **Lịch dòng tiền theo 4 mốc giải ngân**: Đợt 1 (Cọc 30% khi ký PO) → Đợt 2 (70% tiền hàng khi xuất xưởng/có Bill) → Đợt 3 (Nộp thuế hải quan trước ngày ETA tàu về) → Đợt 4 (Cước vận chuyển & nội địa khi giao hàng về kho).
+  - Xuất bảng tính kế hoạch dòng tiền ra định dạng CSV/Excel.
+- **Tab Tài Chính & Dòng Tiền trong Drawer Chi Tiết PO (`POFinancialTab`)**:
+  - Bổ sung Tab chuyên biệt `[Tài Chính & Dòng Tiền]` bên cạnh tab Sản phẩm, Lô vận tải, Chứng từ, Luồng duyệt.
+  - Cho phép điều chỉnh tỷ giá dự kiến riêng cho PO đó, nhập trực tiếp % thuế suất (NK, TTĐB, VAT) với các nút bấm tắt tiện lợi, phân tích cơ cấu chi phí (Landed Cost Breakdown), tỷ trọng thuế 3 tầng và lịch 4 đợt thanh toán của đơn hàng.
+
 ---
 
 ## 4. Bảng Dữ Liệu & Vận Tải Quốc Tế
@@ -80,4 +96,5 @@
   - **Quy mô & Nhập kho**: Số lượng SKU, Tổng số chai (kèm badge `🎁 FOC: X chai` nếu có hàng tặng), Tiến độ nhập kho (%) với thanh tiến trình trực quan.
   - **Giá trị**: Tổng tiền ngoại tệ, Badge chiết khấu (`🏷️ -X USD`), Giá trị quy đổi VNĐ, Tỷ giá.
   - **Trạng thái & Thao tác**: Badge trạng thái, Thao tác nhanh (*Gửi duyệt, Phê duyệt, Từ chối, Nhập kho, Xem chi tiết*).
-  - **Slide-over Chi Tiết PO**: Hiển thị bảng chi tiết các dòng sản phẩm, phân biệt rõ hàng thương mại và hàng FOC, giá hải quan, lý do FOC và thẻ tóm tắt tài chính (Subtotal, Discount, Total Payable, VNĐ).
+  - **Slide-over Chi Tiết PO**: Hiển thị bảng chi tiết các dòng sản phẩm, phân biệt rõ hàng thương mại và hàng FOC, giá hải quan, lý do FOC và thẻ tóm tắt tài chính (Subtotal, Discount, Total Payable, VNĐ) cùng Tab Tài chính & Dòng tiền chuyên sâu.
+

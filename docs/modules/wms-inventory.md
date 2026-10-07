@@ -665,6 +665,27 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Báo Cáo Kiểm Kê & Chênh Lệch Trong Kỳ (Variance Report)** | `StockCountClient.tsx`, `MobileLocationCounter.tsx`, `actions.ts` | Tích hợp bảng "Báo Cáo Các Đợt Kiểm Kê & Chênh Lệch Trong Kỳ" ngay trong tab Cuốn Chiếu, hiển thị số mã SKU, trạng thái, huy hiệu lệch tồn (`✓ Khớp 100% (0 chai)` hoặc `⚠️ Lệch X chai`); nút `[📊 Báo Cáo Chênh Lệch]` mở ngay Biên bản đối soát A4 (`PrintableAuditReport`) chi tiết tồn sổ, thực tế, giá trị lệch VNĐ và nút duyệt điều chỉnh kế toán; bổ sung nút mở báo cáo A4 trực tiếp từ màn hình đếm di động |
 | **Tính Toán Tiến Độ Theo Khoảng Ngày Tùy Chọn** | `actions.ts`, `StockCountClient.tsx` | Nâng cấp hàm `getCycleCountProgress(warehouseId, daysWindow, startDateStr, endDateStr)` hỗ trợ chọn ngày bắt đầu (`cycleDateFrom`) và ngày kết thúc (`cycleDateTo`) linh hoạt; tự động tính toán số ngày chu kỳ, tiến độ kiểm kê, số lượng đề xuất hàng ngày và lọc chính xác các đợt kiểm kê diễn ra trong khoảng thời gian đã chọn |
 
+#### Phase 19: Nâng Cấp Quản Lý Niên Vụ Trong Kiểm Kê & Khấu Trừ Đa Lô FIFO (Vintage-Aware Stock Count & Multi-Lot FIFO) (07/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Thêm Trường Niên Vụ (`vintage`) Vào `StockCountLine`** | `prisma/schema.prisma` | Bổ sung cột `vintage Int?` vào model `StockCountLine`, đảm bảo mỗi dòng kiểm đếm đại diện cho một cặp chính xác `(Vị trí kệ, SKU, Niên vụ)`, phân định rõ ràng các niên vụ khác nhau của cùng 1 nhãn rượu |
+| **Gộp Nhóm & Tổng Hợp Tồn Theo Niên Vụ** | `actions.ts` (`createStockCountSessionExtended`) | Thay vì lặp đẩy từng lô gây trùng lặp, hệ thống sử dụng Map tổng hợp theo key `${loc.id}_${lot.productId}_${vintage}`, gộp số tồn khả dụng `qtyAvailable` chính xác theo từng năm niên vụ |
+| **Khấu Trừ Hao Hụt Đa Lô Tuân Thủ Niên Vụ (FIFO)** | `actions.ts` (`approveAndCreateAdjustment`) | Khi phát hiện hao hụt, thuật toán lọc đúng các lô `StockLot` có cùng `vintage` và duyệt trừ tuần tự theo ngày nhập `receivedDate: 'asc'` cho đến khi bù đủ 100% số lượng chênh lệch; khi thừa hàng, tạo lô mới mang đúng niên vụ tương ứng |
+| **Hiển Thị & Tìm Kiếm Niên Vụ Trên Mobile Counter** | `MobileLocationCounter.tsx` | Hiển thị huy hiệu Niên vụ `🍇 Vintage: 2018` to rõ trên cả chế độ Đếm tập trung (Focus) và Danh sách (List); thanh tìm kiếm nhanh hỗ trợ gõ năm niên vụ hoặc quét mã vạch nội bộ `SKU-VINTAGE` nhảy trực tiếp tới đúng dòng sản phẩm |
+
+#### Phase 20: Tối Ưu Hóa Trực Quan & Công Thái Học Màn Hình Kiểm Kê Di Động (Mobile Ergonomic Cockpit & Quick-Count Chips) (08/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Công Thái Học Vùng Ngón Tay Cái (Thumb-Zone Ergonomics)** | `MobileLocationCounter.tsx` | Nâng toàn bộ nút bấm cảm ứng lên kích thước chuẩn $\ge 48\text{px}$ (`min-h-[48px]`), bo góc lớn `rounded-2xl` hỗ trợ thao tác bằng 1 tay khi đứng tại kệ kho hẹp; font số hiển thị 32px font-black không cần zoom |
+| **Bảng Điều Khiển Kép Thùng & Chai Kèm Chip Thêm Nhanh** | `MobileLocationCounter.tsx` | Tách biệt 2 khoang điều khiển trực quan 📦 SỐ THÙNG và 🍾 CHAI LẺ; tích hợp các chip chạm 1 lần cộng dồn số lượng lớn (`+1, +2, +5, +10` Thùng và `+1, +2, +3, +5` Chai lẻ) giúp kiểm đếm hàng chục thùng rượu trong vài giây |
+| **Phím Nhanh Kệ Trống & Khớp Tồn Sổ** | `MobileLocationCounter.tsx` | Nút `[0 Kệ Trống (0 chai)]` ghi nhận nhanh khi ô kệ rỗng; nút `[✓ Khớp tồn sổ]` điền tự động số lượng sổ sách chỉ với 1 chạm (tự động khóa bảo mật khi ở chế độ Kiểm Kê Mù) |
+| **Bảng Đối Soát Trực Quan & Chip Lý Do Chênh Lệch 1 Chạm** | `MobileLocationCounter.tsx` | Banner buồng lái hiển thị công thức quy đổi `[X Thùng × upc] + [Y Chai lẻ] = Tổng chai`, tự động tính chênh lệch thời gian thực; hiển thị ngay bộ chip phân loại lý do (`Vỡ hỏng`, `Nhầm SKU`, `Chưa ghi DO/GR`, `Thất thoát`) chạm chọn tức thì |
+| **Nút Nhảy Nhanh Tới Mã Chưa Đếm (Smart Jump)** | `MobileLocationCounter.tsx` | Nút `⚡ Tiếp theo chưa đếm (còn N mã)` tự động quét và chuyển thẳng tới dòng sản phẩm chưa có số lượng thực tế, loại bỏ thao tác bấm next hàng chục lần |
+| **Bộ Lọc Nhanh 4 Trạng Thái Trong Danh Sách** | `MobileLocationCounter.tsx` | Chế độ Danh Sách (List) hỗ trợ 4 tab bộ lọc chuyên dụng: `Tất cả`, `Chưa đếm` (ưu tiên kiểm kê), `Khớp` và `Lệch` (ưu tiên rà soát kiểm toán tại hiện trường) |
+| **Hệ Thống Âm Thanh & Rung Phản Hồi Tactile** | `MobileLocationCounter.tsx` | Tổng hợp âm tần số chuẩn Web AudioContext (tiếng click nhẹ khi chạm nút, hợp âm kép C5-G5 khi lưu thành công, âm cảnh báo khi phát hiện lệch) kết hợp rung Haptic navigator.vibrate |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -675,7 +696,7 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-06 | Wine ERP v10.53 — Cycle Count Custom SKU Selection, Variance Report & Date Range Filter*
+*Last updated: 2026-10-08 | Wine ERP v11.8 — Mobile Ergonomic Cockpit & Quick-Count Chips*
 
 
 

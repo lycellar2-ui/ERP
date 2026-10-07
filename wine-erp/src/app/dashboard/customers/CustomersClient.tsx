@@ -5,7 +5,8 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import Link from 'next/link'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle, BarChart3,
-    Upload, Download, Search, Edit2, Trash2, Printer, ChevronDown, FileText, Tag, ArrowUpRight
+    Upload, Download, Search, Edit2, Trash2, Printer, ChevronDown, FileText, Tag, ArrowUpRight,
+    CornerDownRight, UtensilsCrossed, Scale, Sparkles, Info
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -89,12 +90,12 @@ function CustomerMobileCard({
                     </span>
                     <TypeBadge type={row.channel} />
                     {row.entityType === 'COMPANY' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-800 bg-slate-100 border border-slate-200">
-                            🏢 Cty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200">
+                            <Building2 size={11} className="text-slate-600" /> Cty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
-                            🍽️ Nhà hàng
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                            <UtensilsCrossed size={11} className="text-emerald-700" /> Nhà hàng
                         </span>
                     )}
                 </div>
@@ -406,10 +407,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
 
         const customerTypeLabels: Record<string, string> = {
-            HORECA: '🏨 HORECA (Nhà hàng / Khách sạn)',
-            WHOLESALE_DISTRIBUTOR: '🏭 Phân Phối Sỉ / Đại lý',
-            VIP_RETAIL: '👑 VIP Retail',
-            INDIVIDUAL: '👤 Cá Nhân'
+            HORECA: 'HORECA (Nhà hàng / Khách sạn)',
+            WHOLESALE_DISTRIBUTOR: 'Phân Phối Sỉ / Đại lý',
+            VIP_RETAIL: 'VIP Retail',
+            INDIVIDUAL: 'Cá Nhân'
         }
 
         const statusLabels: Record<string, string> = {
@@ -753,7 +754,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {isEdit && (form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED') && isSalesAdmin && (
                                 <div className="p-4 rounded-lg space-y-3" style={{ background: 'rgba(212,150,58,0.08)', border: '1px solid rgba(212,150,58,0.3)' }}>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-lg">⚖️</span>
+                                        <Scale size={18} className="text-[#D4963A] shrink-0" />
                                         <div>
                                             <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A]">Yêu cầu tạo Khách Hàng</p>
                                             <p className="text-[11px]" style={{ color: '#475569' }}>Khách hàng này do Sale tạo với mã tạm thời là <strong className="font-mono">{form.code}</strong>. Vui lòng ấn định mã chính thức để duyệt.</p>
@@ -820,7 +821,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 className="px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-lys-teal-strong border border-slate-200 whitespace-nowrap shrink-0 min-h-[42px] sm:min-h-0"
                                                 style={{ background: '#FFFFFF' }}
                                             >
-                                                {generatingCode ? <Loader2 size={13} className="animate-spin" /> : '🎲 Sinh mã'}
+                                                {generatingCode ? <Loader2 size={13} className="animate-spin" /> : <><Sparkles size={13} /> Sinh mã</>}
                                             </button>
                                         )}
                                     </div>
@@ -841,9 +842,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             }
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="HORECA">🏨 HORECA (Nhà hàng / Khách sạn)</option>
-                                        <option value="CORPORATE">🏢 Corporate (Doanh nghiệp)</option>
-                                        <option value="RETAIL">🛍️ Retail (Bán lẻ)</option>
+                                        <option value="HORECA">HORECA (Nhà hàng / Khách sạn)</option>
+                                        <option value="CORPORATE">Corporate (Doanh nghiệp)</option>
+                                        <option value="RETAIL">Retail (Bán lẻ)</option>
                                     </select>
                                 </div>
                             </div>
@@ -940,8 +941,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                         <span className="truncate">{c.name}</span>
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
-                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0">
-                                                                            🏢 Cty Cha
+                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 flex items-center gap-1">
+                                                                            <Building2 size={10} /> Cty Cha
                                                                         </span>
                                                                     )}
                                                                 </button>
@@ -963,7 +964,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại thực thể</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phân cấp khách hàng</label>
                                             <select className={inputCls} style={inputStyle} value={form.entityType ?? 'RESTAURANT'}
                                                 onChange={e => {
                                                     const val = e.target.value as 'COMPANY' | 'RESTAURANT'
@@ -974,8 +975,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     }))
                                                 }}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="RESTAURANT">🍽️ Nhà hàng / Chi nhánh con</option>
-                                                <option value="COMPANY">🏢 Công ty cha tính công nợ</option>
+                                                <option value="RESTAURANT">Nhà hàng / Chi nhánh con</option>
+                                                <option value="COMPANY">Công ty cha tính công nợ</option>
                                             </select>
                                         </div>
                                         {form.entityType === 'COMPANY' ? (
@@ -1082,7 +1083,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             if (parent?.taxId && !form.taxId) {
                                                 return (
                                                     <div className="mt-1 flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                                                        <span>🏢 MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
+                                                        <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -1210,12 +1211,12 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
                                         onChange={e => set('orderChannel', e.target.value || null)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="ZALO">💬 Zalo</option>
-                                        <option value="EMAIL">📧 Email</option>
-                                        <option value="WHATSAPP">📱 WhatsApp</option>
-                                        <option value="PHONE">📞 Điện thoại</option>
-                                        <option value="DIRECT">🏢 Trực tiếp</option>
-                                        <option value="OTHER">❓ Khác</option>
+                                        <option value="ZALO">Zalo</option>
+                                        <option value="EMAIL">Email</option>
+                                        <option value="WHATSAPP">WhatsApp</option>
+                                        <option value="PHONE">Điện thoại</option>
+                                        <option value="DIRECT">Trực tiếp</option>
+                                        <option value="OTHER">Khác</option>
                                     </select>
                                 </div>
                             </div>
@@ -1292,8 +1293,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         />
                                     </div>
                                 </div>
-                                <p className="text-[11px] text-slate-400">
-                                    💡 <em>Tự động áp dụng cho mọi sản phẩm trong kho & hàng mới về: [Bảng giá gốc] - [X% chiết khấu].</em>
+                                <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                                    <Info size={13} className="text-slate-400 shrink-0" /> <em>Tự động áp dụng cho mọi sản phẩm trong kho & hàng mới về: [Bảng giá gốc] - [X% chiết khấu].</em>
                                 </p>
                             </div>
 
@@ -1511,7 +1512,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const sortFor = (key: CustomerFilters['sortBy']) => (filters.sortBy === key ? filters.sortDir ?? 'asc' : false)
     const refetching = loading && rows.length > 0
     const hasFilters = !!(search || typeFilter || statusFilter || channelFilter)
-    const COL_COUNT = 11
+    const COL_COUNT = 7
 
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
@@ -1668,17 +1669,13 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 <Table>
                     <THead>
                         <tr>
-                            <Th className="w-[90px]">Loại</Th>
-                            <Th className="w-[90px]">Mã KH</Th>
-                            <Th className="w-[260px]" sort={sortFor('name')} onSort={() => handleSort('name')}>Khách Hàng</Th>
-                            <Th className="w-[80px]">Mã cha</Th>
-                            <Th className="w-[110px]">MST</Th>
+                            <Th className="w-[110px]">Mã & Kênh</Th>
+                            <Th className="min-w-[220px]" sort={sortFor('name')} onSort={() => handleSort('name')}>Khách Hàng</Th>
                             <Th className="w-[110px]">Sales Rep</Th>
-                            <Th className="w-[80px]">Thanh Toán</Th>
-                            <Th className="w-[110px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>Hạn Mức</Th>
-                            <Th className="w-[80px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>Đơn Hàng</Th>
-                            <Th className="w-[110px]">Trạng Thái</Th>
-                            <Th className="w-[70px]"><span className="sr-only">Thao tác</span></Th>
+                            <Th className="w-[130px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>Công nợ & TT</Th>
+                            <Th className="w-[75px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>Đơn Hàng</Th>
+                            <Th className="w-[100px]">Trạng Thái</Th>
+                            <Th className="w-[65px]"><span className="sr-only">Thao tác</span></Th>
                         </tr>
                     </THead>
                     <TBody className={cn('transition-opacity duration-200', refetching && 'opacity-50 pointer-events-none')}>
@@ -1688,55 +1685,77 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             <TableMessageRow colSpan={COL_COUNT}><EmptyState icon={Users} title="Chưa có khách hàng nào" /></TableMessageRow>
                         ) : rows.map(row => (
                             <Tr key={row.id} className="group">
-                                <Td className="whitespace-nowrap"><TypeBadge type={row.channel} /></Td>
-                                <Td className="whitespace-nowrap type-number font-semibold">{row.code}</Td>
+                                <Td className="whitespace-nowrap">
+                                    <div className="flex flex-col gap-1 items-start">
+                                        <span className="font-mono text-xs font-bold text-lys-primary">{row.code}</span>
+                                        <TypeBadge type={row.channel} />
+                                    </div>
+                                </Td>
                                 <Td>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => openEdit(row.id)}
-                                            className="font-semibold truncate max-w-[220px] text-left text-lys-primary hover:text-lys-teal-strong hover:underline cursor-pointer"
-                                            title={row.name}
-                                        >
-                                            {row.name}
-                                        </button>
-                                        {row.entityType === 'COMPANY' ? (
-                                            <Badge>
-                                                Công ty{row.allowDirectSO && ' (Bán trực tiếp)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
-                                            </Badge>
-                                        ) : (
-                                            <Badge tone="success">Nhà hàng</Badge>
-                                        )}
-                                        {row.brandGroup && <Badge tone="info">{row.brandGroup}</Badge>}
-                                    </div>
-                                </Td>
-                                <Td className="whitespace-nowrap type-number text-[12px] text-lys-secondary">{row.parentCode ?? <span className="text-lys-dim">—</span>}</Td>
-                                <Td className="whitespace-nowrap type-number text-[12px] text-lys-muted">
-                                    <div className="flex items-center gap-1">
-                                        {row.taxId ? (
-                                            <span>{row.taxId}</span>
-                                        ) : row.resolvedVatInfo?.taxId ? (
-                                            <Badge tone="warning" title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`}>
-                                                {row.resolvedVatInfo.taxId} (Cha)
-                                            </Badge>
-                                        ) : '—'}
-                                        {(row.taxId || row.resolvedVatInfo?.taxId) && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon-sm"
-                                                onClick={() => handleSyncTax(row.id)}
-                                                title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
-                                                aria-label="Tra cứu Cục Thuế"
+                                    <div className="flex flex-col gap-1 py-0.5">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => openEdit(row.id)}
+                                                className="font-semibold text-left text-lys-primary hover:text-lys-teal-strong hover:underline cursor-pointer"
+                                                title={row.name}
                                             >
-                                                <Search size={12} />
-                                            </Button>
-                                        )}
+                                                {row.name}
+                                            </button>
+                                            {row.entityType === 'COMPANY' ? (
+                                                <Badge tone="neutral" className="gap-1 inline-flex items-center text-[10px]">
+                                                    <Building2 size={10} />
+                                                    Công ty{row.allowDirectSO && ' (Bán TT)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
+                                                </Badge>
+                                            ) : (
+                                                <Badge tone="success" className="gap-1 inline-flex items-center text-[10px]">
+                                                    <UtensilsCrossed size={10} />
+                                                    Nhà hàng
+                                                </Badge>
+                                            )}
+                                            {row.brandGroup && <Badge tone="info" className="text-[10px]">{row.brandGroup}</Badge>}
+                                        </div>
+                                        <div className="flex items-center gap-3 text-[11px] text-lys-muted flex-wrap">
+                                            {row.parentCode && (
+                                                <span className="inline-flex items-center gap-0.5 text-lys-teal-strong font-medium">
+                                                    <CornerDownRight size={11} /> Thuộc: {row.parentCode}
+                                                </span>
+                                            )}
+                                            {row.taxId ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <span>MST: <span className="font-mono font-medium text-lys-secondary">{row.taxId}</span></span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        onClick={() => handleSyncTax(row.id)}
+                                                        title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
+                                                        aria-label="Tra cứu Cục Thuế"
+                                                        className="h-4 w-4 p-0 text-slate-400 hover:text-lys-teal-strong"
+                                                    >
+                                                        <Search size={10} />
+                                                    </Button>
+                                                </span>
+                                            ) : row.resolvedVatInfo?.taxId ? (
+                                                <span className="text-amber-600 font-medium" title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`}>
+                                                    MST cha: <span className="font-mono">{row.resolvedVatInfo.taxId}</span>
+                                                </span>
+                                            ) : null}
+                                            {row.shortName && (
+                                                <span className="text-slate-400 italic">({row.shortName})</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </Td>
-                                <Td className={cn('whitespace-nowrap', row.salesRepName ? 'text-lys-secondary' : 'text-lys-dim')}>{row.salesRepName ?? '—'}</Td>
-                                <Td className="whitespace-nowrap type-number text-[12px] font-semibold text-lys-secondary">{row.paymentTerm}</Td>
-                                <Td align="right" className={cn('whitespace-nowrap', row.creditLimit > 0 ? 'text-lys-primary' : 'text-lys-dim')}>
-                                    {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
+                                <Td className={cn('whitespace-nowrap text-xs', row.salesRepName ? 'text-lys-secondary font-medium' : 'text-lys-dim')}>
+                                    {row.salesRepName ?? '—'}
+                                </Td>
+                                <Td align="right" className="whitespace-nowrap">
+                                    <div className="flex flex-col items-end gap-0.5">
+                                        <span className={cn('font-mono text-xs font-semibold', row.creditLimit > 0 ? 'text-lys-primary' : 'text-lys-dim')}>
+                                            {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
+                                        </span>
+                                        <span className="text-[11px] text-lys-muted">{row.paymentTerm}</span>
+                                    </div>
                                 </Td>
                                 <Td align="center" className={cn('whitespace-nowrap type-number font-semibold', row.orderCount > 0 ? 'text-tone-success-fg' : 'text-lys-dim')}>
                                     {row.orderCount}

@@ -7,8 +7,10 @@ import {
     Package, Globe, ArrowRight, Eye, UploadCloud, Ship, Anchor,
     Filter, RefreshCw, Printer, Calendar, ArrowUpDown, ChevronRight,
     Building2, FileCheck, Layers, ExternalLink, Box, Send, CheckSquare, XCircle, ShieldCheck,
-    Download, ChevronUp, Copy, Pencil, RotateCcw
+    Download, ChevronUp, Copy, Pencil, RotateCcw, DollarSign
 } from 'lucide-react'
+import { ProcurementCashFlowModal } from './ProcurementCashFlowModal'
+import { POFinancialTab } from './POFinancialTab'
 import { toast } from 'sonner'
 import type {
     PORow, PODetail, CreatePOInput, POApprovalLog, POCurrencyBreakdown
@@ -1948,7 +1950,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [poDetail, setPoDetail] = useState<PODetail | null>(null)
     const [detailLoading, setDetailLoading] = useState(false)
-    const [detailTab, setDetailTab] = useState<'LINES' | 'SHIPMENTS' | 'DOCS' | 'APPROVAL'>('LINES')
+    const [detailTab, setDetailTab] = useState<'LINES' | 'FINANCE' | 'SHIPMENTS' | 'DOCS' | 'APPROVAL'>('LINES')
+    const [cashFlowModalOpen, setCashFlowModalOpen] = useState(false)
 
     // Document & Approval state
     const [uploadingDoc, setUploadingDoc] = useState(false)
@@ -2267,6 +2270,15 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)' }}
                         onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)' }}>
                         📊 Thống Kê
+                    </button>
+
+                    <button onClick={() => setCashFlowModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-all rounded-md shadow-xs"
+                        style={{ background: 'rgba(13, 148, 136, 0.1)', color: '#0F766E', border: '1px solid rgba(13, 148, 136, 0.3)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(13, 148, 136, 0.2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(13, 148, 136, 0.1)')}
+                        title="Kế hoạch dự trù chi phí & dòng tiền theo thời điểm">
+                        <DollarSign size={14} /> Dòng Tiền Lô Hàng
                     </button>
 
                     <button onClick={async () => { 
@@ -2836,6 +2848,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="flex border-b border-slate-200 bg-white px-4 gap-1">
                                     {[
                                         { key: 'LINES', label: `Sản Phẩm (${poDetail.lines.length})` },
+                                        { key: 'FINANCE', label: `Tài Chính & Dòng Tiền` },
                                         { key: 'SHIPMENTS', label: `Lô Vận Tải (${poDetail.shipments.length})` },
                                         { key: 'DOCS', label: `Chứng Từ (${poDetail.documents?.length || 0})` },
                                         { key: 'APPROVAL', label: `Luồng Duyệt (${poDetail.approvalHistory?.length || 0})` },
@@ -2951,6 +2964,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 )}
                                             </div>
                                         </div>
+                                    )}
+
+                                    {detailTab === 'FINANCE' && (
+                                        <POFinancialTab po={poDetail} />
                                     )}
 
                                     {detailTab === 'SHIPMENTS' && (
@@ -3326,6 +3343,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 shipmentId={selectedShipmentId}
                 onClose={() => { setShipmentDrawerOpen(false); setSelectedShipmentId(null) }}
             />
+
+            {/* Procurement Cash Flow Simulator Modal */}
+            <ProcurementCashFlowModal
+                open={cashFlowModalOpen}
+                onClose={() => setCashFlowModalOpen(false)}
+                purchaseOrders={rows}
+            />
+
             {confirmDialog}
         </div>
     )

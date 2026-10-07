@@ -1,21 +1,23 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
     Smartphone, QrCode, CheckCircle2, ChevronLeft, MapPin,
     Plus, Minus, Save, Eye, EyeOff, Camera, AlertTriangle, RefreshCw,
-    ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle, FileText
+    ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle, FileText,
+    RotateCcw, Zap, Package, Wine, Tag, Search, X, CheckCheck
 } from 'lucide-react'
 import { AddUnlistedModal } from './AddUnlistedModal'
 import { recordMobileCountLine, completeZoneCount, startStockCount } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
 
-type LineItem = {
+export type LineItem = {
     id: string
     productId: string
     skuCode: string
     productName: string
     unitsPerCase: number
+    vintage?: number | null
     locationCode: string
     zone: string
     qtySystem: number
@@ -45,49 +47,101 @@ type Props = {
 }
 
 const REASONS = [
-    { code: 'BREAKAGE', label: 'Vỡ / Hỏng chai' },
-    { code: 'WRONG_SKU', label: 'Nhầm mã SKU / Tem nhãn' },
-    { code: 'UNRECORDED_DO', label: 'Xuất chưa ghi sổ DO' },
-    { code: 'UNRECORDED_GR', label: 'Nhập chưa ghi sổ GR' },
-    { code: 'LOSS', label: 'Thất thoát chưa rõ nguyên nhân' },
-    { code: 'OTHER', label: 'Lý do khác' }
+    { code: 'BREAKAGE', label: 'Vỡ / Hỏng chai', emoji: '💥' },
+    { code: 'WRONG_SKU', label: 'Nhầm SKU / Tem', emoji: '🏷️' },
+    { code: 'UNRECORDED_DO', label: 'Xuất chưa ghi DO', emoji: '📤' },
+    { code: 'UNRECORDED_GR', label: 'Nhập chưa ghi GR', emoji: '📥' },
+    { code: 'LOSS', label: 'Thất thoát chưa rõ', emoji: '❓' },
+    { code: 'OTHER', label: 'Khác', emoji: '📝' }
 ]
 
-function playBeepSound() {
+// ─── AUDIO & HAPTIC SYSTEM (SINGLETON TO PREVENT SAFARI/CHROME LEAKS) ────
+let sharedAudioCtx: AudioContext | null = null
+
+function getSharedAudioContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioCtx) return null
+    if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+        sharedAudioCtx = new AudioCtx()
+    }
+    if (sharedAudioCtx.state === 'suspended') {
+        sharedAudioCtx.resume().catch(() => {})
+    }
+    return sharedAudioCtx
+}
+
+function playFeedbackSound(type: 'tap' | 'chip' | 'success' | 'alert' = 'tap') {
     try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-        if (!AudioCtx) return
-        const ctx = new AudioCtx()
+        const ctx = getSharedAudioContext()
+        if (!ctx) return
+        const now = ctx.currentTime
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(880, ctx.currentTime)
-        gain.gain.setValueAtTime(0.12, ctx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
         osc.connect(gain)
         gain.connect(ctx.destination)
-        osc.start()
-        osc.stop(ctx.currentTime + 0.1)
-    } catch (e) {
-        // Audio fallback ignore
+
+        if (type === 'tap') {
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(800, now)
+            gain.gain.setValueAtTime(0.08, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
+            osc.start(now)
+            osc.stop(now + 0.05)
+        } else if (type === 'chip') {
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(950, now)
+            gain.gain.setValueAtTime(0.09, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07)
+            osc.start(now)
+            osc.stop(now + 0.07)
+        } else if (type === 'success') {
+            // Dual-tone ascending chime: C5 (523Hz) -> G5 (784Hz)
+            osc.type = 'triangle'
+            osc.frequency.setValueAtTime(523.25, now)
+            osc.frequency.setValueAtTime(783.99, now + 0.08)
+            gain.gain.setValueAtTime(0.12, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25)
+            osc.start(now)
+            osc.stop(now + 0.25)
+        } else if (type === 'alert') {
+            osc.type = 'sawtooth'
+            osc.frequency.setValueAtTime(440, now)
+            osc.frequency.exponentialRampToValueAtTime(280, now + 0.16)
+            gain.gain.setValueAtTime(0.1, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16)
+            osc.start(now)
+            osc.stop(now + 0.16)
+        }
+    } catch {
+        // Fallback ignore
     }
 }
 
-function triggerHaptic() {
+function triggerHaptic(type: 'light' | 'medium' | 'success' = 'light') {
     if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
-        try { navigator.vibrate(40) } catch (e) {}
+        try {
+            if (type === 'light') navigator.vibrate(25)
+            else if (type === 'medium') navigator.vibrate(45)
+            else if (type === 'success') navigator.vibrate([30, 50, 40])
+        } catch {
+            // Fallback ignore
+        }
     }
 }
 
 export default function MobileLocationCounter({ detail, onBack, onRefreshed, onOpenTableModal, onOpenReport }: Props) {
     const [lines, setLines] = useState<LineItem[]>(detail.lines)
-    const [viewMode, setViewMode] = useState<'FOCUS' | 'ZONES' | 'LIST'>('ZONES')
+    const [viewMode, setViewMode] = useState<'FOCUS' | 'ZONES' | 'LIST'>('FOCUS')
     const [selectedZone, setSelectedZone] = useState<string>('ALL')
+    const isBlindLocked = Boolean(detail.isBlindCount)
     const [isBlind, setIsBlind] = useState<boolean>(detail.isBlindCount)
     const [activeIdx, setActiveIdx] = useState<number>(0)
     const [savingLineId, setSavingLineId] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [listFilter, setListFilter] = useState<'ALL' | 'UNCOUNTED' | 'MATCHED' | 'VARIANCE'>('ALL')
     const [showSuccessToast, setShowSuccessToast] = useState(false)
+    const [toastMessage, setToastMessage] = useState('Đã lưu số lượng thành công!')
 
     // Unlisted modal & zone completion states
     const [showAddUnlistedModal, setShowAddUnlistedModal] = useState(false)
@@ -95,32 +149,37 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
     const [zoneReport, setZoneReport] = useState<any>(null)
     const [isCompletingZone, setIsCompletingZone] = useState(false)
 
-    const handleFinishZone = async (zoneName: string) => {
-        setIsCompletingZone(true)
-        const res = await completeZoneCount(detail.id, zoneName)
-        setIsCompletingZone(false)
-        if (res.success && res.summary) {
-            setZoneReport(res.summary)
-            setShowZoneReportModal(true)
-        } else {
-            alert(res.error || 'Không thể tạo báo cáo chốt khu vực')
-        }
-    }
+    // Sync lines from detail props when parent refreshes
+    useEffect(() => {
+        setLines(detail.lines)
+    }, [detail.lines])
 
     // Extract unique zones
-    const zones = Array.from(new Set(lines.map(l => l.zone || l.locationCode)))
+    const zones = useMemo(() => {
+        return Array.from(new Set(lines.map(l => l.zone || l.locationCode || 'Chung')))
+    }, [lines])
 
     // Filter lines by selected zone & search
-    const filteredLines = lines.filter(l => {
-        const s = searchTerm.trim().toLowerCase()
-        // When searching in FOCUS or LIST mode, search across all zones if user typed a search term
-        const matchZone = s ? true : (selectedZone === 'ALL' || l.zone === selectedZone || l.locationCode === selectedZone)
-        const matchSearch = !s ||
-            l.skuCode.toLowerCase().includes(s) ||
-            l.productName.toLowerCase().includes(s) ||
-            (l.locationCode && l.locationCode.toLowerCase().includes(s))
-        return matchZone && matchSearch
-    })
+    const filteredLines = useMemo(() => {
+        return lines.filter(l => {
+            const s = searchTerm.trim().toLowerCase()
+            const matchZone = s ? true : (selectedZone === 'ALL' || l.zone === selectedZone || l.locationCode === selectedZone)
+            const matchSearch = !s ||
+                l.skuCode.toLowerCase().includes(s) ||
+                l.productName.toLowerCase().includes(s) ||
+                (l.vintage !== null && l.vintage !== undefined && String(l.vintage).includes(s)) ||
+                (l.locationCode && l.locationCode.toLowerCase().includes(s))
+
+            if (!matchZone || !matchSearch) return false
+
+            if (viewMode === 'LIST') {
+                if (listFilter === 'UNCOUNTED') return l.qtyActual === null
+                if (listFilter === 'MATCHED') return l.qtyActual !== null && l.variance === 0
+                if (listFilter === 'VARIANCE') return l.qtyActual !== null && l.variance !== 0
+            }
+            return true
+        })
+    }, [lines, searchTerm, selectedZone, viewMode, listFilter])
 
     const currentItem = filteredLines[activeIdx] || filteredLines[0] || null
 
@@ -129,12 +188,61 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
         if (activeIdx >= filteredLines.length && filteredLines.length > 0) {
             setActiveIdx(0)
         }
-    }, [filteredLines.length])
+    }, [filteredLines.length, activeIdx])
 
-    // Handle quantity update
-    const updateQty = (lineId: string, delta: number) => {
-        playBeepSound()
-        triggerHaptic()
+    // Count statistics
+    const overallCounted = lines.filter(l => l.qtyActual !== null).length
+    const overallPercent = lines.length > 0 ? Math.round((overallCounted / lines.length) * 100) : 0
+    const remainingUncountedInZone = useMemo(() => {
+        return filteredLines.filter(l => l.qtyActual === null).length
+    }, [filteredLines])
+
+    // Quick jump to next uncounted item
+    const jumpToNextUncounted = () => {
+        if (filteredLines.length === 0) return
+        const nextIdx = filteredLines.findIndex((l, i) => i > activeIdx && l.qtyActual === null)
+        if (nextIdx !== -1) {
+            playFeedbackSound('chip')
+            triggerHaptic('light')
+            setActiveIdx(nextIdx)
+            return
+        }
+        // Circular search from beginning
+        const firstUncounted = filteredLines.findIndex(l => l.qtyActual === null)
+        if (firstUncounted !== -1) {
+            playFeedbackSound('chip')
+            triggerHaptic('light')
+            setActiveIdx(firstUncounted)
+        } else {
+            playFeedbackSound('alert')
+            setToastMessage('🎉 Tất cả sản phẩm trong danh sách đã được đếm!')
+            setShowSuccessToast(true)
+            setTimeout(() => setShowSuccessToast(false), 2000)
+        }
+    }
+
+    // Set exact actual quantity
+    const setExactQty = (lineId: string, val: number | null) => {
+        playFeedbackSound('tap')
+        triggerHaptic('light')
+
+        setLines(prev => prev.map(l => {
+            if (l.id === lineId) {
+                if (val === null) {
+                    return { ...l, qtyActual: null, variance: null }
+                }
+                const next = Math.max(0, val)
+                const variance = next - l.qtySystem
+                return { ...l, qtyActual: next, variance }
+            }
+            return l
+        }))
+    }
+
+    // Quick increment chip handler
+    const addDeltaQty = (lineId: string, delta: number) => {
+        playFeedbackSound('chip')
+        triggerHaptic('medium')
 
         setLines(prev => prev.map(l => {
             if (l.id === lineId) {
@@ -147,21 +255,28 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
         }))
     }
 
-    const setExactQty = (lineId: string, val: number) => {
-        playBeepSound()
-        triggerHaptic()
-
+    // Set variance reason
+    const setVarianceReason = (lineId: string, reasonCode: string) => {
+        playFeedbackSound('tap')
+        triggerHaptic('light')
         setLines(prev => prev.map(l => {
             if (l.id === lineId) {
-                const next = Math.max(0, val)
-                const variance = next - l.qtySystem
-                return { ...l, qtyActual: next, variance }
+                const nextReason = l.varianceReason === reasonCode ? null : reasonCode
+                return { ...l, varianceReason: nextReason }
             }
             return l
         }))
     }
 
+    // Save current line and advance
     const saveCurrentLineAndNext = async (line: LineItem) => {
+        if (line.qtyActual === null && line.qtySystem > 0) {
+            const confirmed = window.confirm(
+                `⚠️ Bạn chưa nhập số lượng đếm thực tế cho sản phẩm:\n"${line.productName}".\n\nTồn sổ sách: ${line.qtySystem} chai.\nBạn có chắc chắn muốn ghi nhận là 0 CHAI (thất thoát/mất toàn bộ) không?`
+            )
+            if (!confirmed) return
+        }
+
         setSavingLineId(line.id)
         const qtyActual = line.qtyActual !== null ? line.qtyActual : 0
         const res = await recordMobileCountLine({
@@ -174,118 +289,151 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
         setSavingLineId(null)
 
         if (res.success) {
-            triggerHaptic()
+            playFeedbackSound('success')
+            triggerHaptic('success')
             setLines(prev => prev.map(l => l.id === line.id ? { ...l, countedAt: new Date().toISOString() } : l))
             if (onRefreshed) onRefreshed()
 
+            setToastMessage('Đã lưu số lượng thành công!')
             setShowSuccessToast(true)
-            setTimeout(() => setShowSuccessToast(false), 1500)
+            setTimeout(() => setShowSuccessToast(false), 1200)
 
-            // Auto advance to next item
-            if (activeIdx < filteredLines.length - 1) {
+            // Auto advance: prioritize next uncounted item
+            const nextUncountedIdx = filteredLines.findIndex((l, i) => i > activeIdx && l.qtyActual === null)
+            if (nextUncountedIdx !== -1) {
+                setActiveIdx(nextUncountedIdx)
+            } else if (activeIdx < filteredLines.length - 1) {
                 setActiveIdx(prev => prev + 1)
             }
         } else {
+            playFeedbackSound('alert')
             alert(res.error || 'Không thể lưu dòng kiểm kê')
         }
     }
 
-    // Stats per zone
+    const handleFinishZone = async (zoneName: string) => {
+        setIsCompletingZone(true)
+        const res = await completeZoneCount(detail.id, zoneName)
+        setIsCompletingZone(false)
+        if (res.success && res.summary) {
+            playFeedbackSound('success')
+            triggerHaptic('success')
+            setZoneReport(res.summary)
+            setShowZoneReportModal(true)
+        } else {
+            playFeedbackSound('alert')
+            alert(res.error || 'Không thể tạo báo cáo chốt khu vực')
+        }
+    }
+
     const getZoneStats = (zoneName: string) => {
         const zLines = lines.filter(l => zoneName === 'ALL' || l.zone === zoneName || l.locationCode === zoneName)
         const counted = zLines.filter(l => l.qtyActual !== null).length
         const hasDiff = zLines.some(l => l.variance !== null && l.variance !== 0)
-        return { total: zLines.length, counted, percent: zLines.length > 0 ? Math.round((counted / zLines.length) * 100) : 0, hasDiff }
+        return {
+            total: zLines.length,
+            counted,
+            percent: zLines.length > 0 ? Math.round((counted / zLines.length) * 100) : 0,
+            hasDiff
+        }
     }
 
-    const overallCounted = lines.filter(l => l.qtyActual !== null).length
-    const overallPercent = lines.length > 0 ? Math.round((overallCounted / lines.length) * 100) : 0
-
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-36 sm:pb-28 select-none max-w-md mx-auto">
-            {/* Top Fixed Header */}
-            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 p-3 sticky top-0 z-30 shadow-2xs space-y-2.5">
-                {/* Row 1: Back, Title, Add Unlisted (in Focus), Blind Toggle */}
+        <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans pb-36 select-none max-w-md mx-auto relative antialiased">
+            {/* ─── TOP STICKY AUDIT HEADER ─── */}
+            <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 p-3 sticky top-0 z-30 shadow-xs space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
                     <button
                         onClick={onBack}
-                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-lg flex items-center gap-1 text-xs font-extrabold transition cursor-pointer shrink-0"
+                        className="min-h-[44px] px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl flex items-center gap-1.5 text-xs font-black transition cursor-pointer shrink-0"
                     >
                         <ChevronLeft className="w-4 h-4" /> Thoát
                     </button>
 
                     <div className="text-center flex-1 min-w-0 px-1">
                         <div className="flex items-center justify-center gap-1.5 truncate">
-                            <span className="text-[10px] font-mono font-extrabold uppercase bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                            <span className="text-[10px] font-mono font-black uppercase bg-teal-50 text-teal-800 px-2 py-0.5 rounded-md border border-teal-200 shrink-0">
                                 {detail.sessionNo}
                             </span>
-                            <span className="text-xs font-extrabold text-slate-900 truncate">{detail.warehouseName}</span>
+                            <span className="text-xs font-black text-slate-900 truncate">{detail.warehouseName}</span>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                        {viewMode === 'FOCUS' && (
-                            <button
-                                onClick={() => setShowAddUnlistedModal(true)}
-                                className="px-2 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition cursor-pointer active:scale-95"
-                                title="Chèn mã ngoài danh sách"
-                            >
-                                <Plus className="w-3.5 h-3.5 text-amber-700" />
-                                <span className="text-[10px] hidden xs:inline font-bold">Chèn</span>
-                            </button>
-                        )}
+                        {/* Blind count indicator or toggle */}
                         <button
-                            onClick={() => setIsBlind(!isBlind)}
-                            className={`p-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
-                            title="Tắt/Bật giấu tồn sổ sách"
+                            onClick={() => {
+                                if (isBlindLocked) {
+                                    playFeedbackSound('alert')
+                                    alert('🔒 Phiên kiểm kê mù: Tồn sổ sách và chênh lệch được bảo mật tuyệt đối theo quy định kiểm toán, không thể mở xem trên thiết bị đếm hiện trường.')
+                                    return
+                                }
+                                setIsBlind(!isBlind)
+                            }}
+                            className={`min-h-[44px] px-2.5 rounded-xl text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${
+                                isBlind ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                            title={isBlindLocked ? 'Phiên kiểm kê mù (Tồn sổ được bảo mật)' : 'Tắt/Bật giấu tồn sổ sách'}
                         >
                             {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
+                            <span className="text-[11px] font-black">{isBlind ? 'Mù' : 'Mở'}</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Row 2: Action Buttons Bar (Shown in ZONES and LIST mode) */}
-                {viewMode !== 'FOCUS' && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5">
-                        {onOpenTableModal && (
-                            <button
-                                onClick={onOpenTableModal}
-                                className="py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
-                            >
-                                📊 Bảng Điền
-                            </button>
-                        )}
-                        {onOpenReport && (
-                            <button
-                                onClick={() => onOpenReport(detail.id)}
-                                className="py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition"
-                                title="Xem báo cáo kiểm kê và chênh lệch A4"
-                            >
-                                <FileText className="w-3.5 h-3.5" /> Báo Cáo A4
-                            </button>
-                        )}
+                {/* Progress Bar & Quick Stats */}
+                <div className="space-y-1 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                        <span className="flex items-center gap-1.5">
+                            Tiến độ: <strong className="text-slate-900 font-mono font-black">{overallCounted}/{lines.length}</strong> mã
+                        </span>
+                        <div className="flex items-center gap-2">
+                            {remainingUncountedInZone > 0 && (
+                                <span className="text-[11px] font-mono font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
+                                    Còn {remainingUncountedInZone}
+                                </span>
+                            )}
+                            <span className="text-[#0E7490] font-black">{overallPercent}%</span>
+                        </div>
+                    </div>
+                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden p-0.5">
+                        <div
+                            className="bg-gradient-to-r from-[#0E7490] to-[#0891B2] h-full rounded-full transition-all duration-300"
+                            style={{ width: `${overallPercent}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Utility Buttons Bar (Bảng Điền, Báo Cáo A4, Thêm Mã Ngoài Danh Mục) */}
+                <div className="flex items-center gap-1.5 pt-0.5">
+                    {onOpenTableModal && (
                         <button
-                            onClick={() => setShowAddUnlistedModal(true)}
-                            className={`py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 transition ${!onOpenTableModal && !onOpenReport ? 'col-span-2' : ''}`}
+                            onClick={onOpenTableModal}
+                            className="flex-1 min-h-[40px] bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-xl text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition"
                         >
-                            ➕ Thêm Mã
+                            <FileText className="w-3.5 h-3.5" /> Bảng Điền
                         </button>
-                    </div>
-                )}
-
-                {/* Progress Bar Header */}
-                <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 px-0.5">
-                        <span>Tiến độ đếm: <strong className="text-slate-900 font-mono">{overallCounted}/{lines.length}</strong> mã</span>
-                        <span className="text-emerald-700 font-extrabold">{overallPercent}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200 p-0.5">
-                        <div className="bg-[#0E7490] h-full rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
-                    </div>
+                    )}
+                    {onOpenReport && (
+                        <button
+                            onClick={() => onOpenReport(detail.id)}
+                            className="flex-1 min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition"
+                            title="Xem báo cáo đối soát chênh lệch A4"
+                        >
+                            <FileText className="w-3.5 h-3.5" /> Báo Cáo A4
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setShowAddUnlistedModal(true)}
+                        className="min-h-[40px] px-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition shrink-0"
+                    >
+                        <Plus className="w-4 h-4" /> Thêm Mã
+                    </button>
                 </div>
 
+                {/* Draft Alert Banner */}
                 {detail.status === 'DRAFT' && (
-                    <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-lg flex items-center justify-between gap-2 text-xs font-bold text-amber-900 shadow-2xs">
+                    <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs font-bold text-amber-900 shadow-2xs">
                         <span className="flex items-center gap-1.5 truncate">
                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                             Phiếu đang ở trạng thái Nháp
@@ -295,52 +443,59 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 const res = await startStockCount(detail.id)
                                 if (res.success && onRefreshed) onRefreshed()
                             }}
-                            className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-lg text-[11px] shrink-0 active:scale-95 shadow-2xs"
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-lg text-xs shrink-0 active:scale-95 shadow-2xs cursor-pointer"
                         >
-                            ⚡ Bắt Đầu Kiểm Kê
+                            ⚡ Bắt Đầu Đếm
                         </button>
                     </div>
                 )}
-            </div>
+            </header>
 
-            {/* Success Toast Notification */}
+            {/* ─── TOAST NOTIFICATION ─── */}
             {showSuccessToast && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#0891B2] text-white font-extrabold text-xs px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
-                    <CheckCircle2 className="w-4 h-4" /> Đã lưu số lượng thành công!
+                <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-[#0891B2] text-white font-black text-xs px-4 py-2.5 rounded-full shadow-xl z-50 flex items-center gap-2 animate-bounce border border-cyan-300/40">
+                    <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                    <span>{toastMessage}</span>
                 </div>
             )}
 
-            {/* MODE 1: VISUAL LOCATION ZONES GRID */}
+            {/* ═══════════════════════════════════════════════════════════════
+                MODE 1: ZONES OVERVIEW (VỊ TRÍ KHO HÀNG)
+            ═══════════════════════════════════════════════════════════════ */}
             {viewMode === 'ZONES' && (
-                <div className="p-4 space-y-4 flex-1">
+                <main className="p-4 space-y-4 flex-1">
                     <div>
-                        <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">VỊ TRÍ KHO HÀNG</h3>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <MapPin className="w-4 h-4 text-[#0E7490]" />
+                            VỊ TRÍ KHO & DÃY KỆ
+                        </h3>
                         <p className="text-xs text-slate-500 mt-0.5">Chọn vị trí bạn đang đứng để bắt đầu đếm tập trung</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        {/* All Zone Card */}
+                        {/* All Zones Card */}
                         <button
                             onClick={() => {
                                 setSelectedZone('ALL')
                                 setActiveIdx(0)
                                 setViewMode('FOCUS')
+                                playFeedbackSound('tap')
                             }}
-                            className="p-4 bg-white rounded-lg border-2 border-emerald-400 hover:border-emerald-500 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2"
+                            className="p-4 bg-white rounded-2xl border-2 border-[#0E7490] hover:border-[#0891B2] text-left relative overflow-hidden shadow-xs active:scale-98 transition cursor-pointer space-y-2.5"
                         >
                             <div className="flex justify-between items-center">
-                                <span className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
+                                <span className="p-2 bg-teal-50 text-[#0E7490] rounded-xl">
                                     <MapPin className="w-5 h-5" />
                                 </span>
-                                <span className="text-[10px] font-mono font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                <span className="text-[10px] font-mono font-black text-[#0E7490] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
                                     TẤT CẢ
                                 </span>
                             </div>
                             <div>
-                                <h4 className="text-sm font-extrabold text-slate-900">Toàn Bộ Kho</h4>
-                                <p className="text-xs text-slate-500 mt-0.5">{lines.length} sản phẩm</p>
+                                <h4 className="text-sm font-black text-slate-900">Toàn Bộ Kho</h4>
+                                <p className="text-xs text-slate-500 font-semibold mt-0.5">{lines.length} sản phẩm</p>
                             </div>
-                            <div className="text-[10px] font-extrabold text-emerald-700 flex items-center gap-1 pt-1">
+                            <div className="text-[11px] font-black text-[#0891B2] flex items-center gap-1 pt-1">
                                 Đếm liên tục ➔
                             </div>
                         </button>
@@ -357,42 +512,64 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         setSelectedZone(zName)
                                         setActiveIdx(0)
                                         setViewMode('FOCUS')
+                                        playFeedbackSound('tap')
                                     }}
-                                    className={`p-4 rounded-lg border-2 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2 ${
-                                        isDone ? 'bg-emerald-50/60 border-emerald-400' :
-                                        zStats.hasDiff ? 'bg-amber-50/60 border-amber-300' : 'bg-white border-slate-200'
+                                    className={`p-4 rounded-2xl border-2 text-left relative overflow-hidden shadow-xs active:scale-98 transition cursor-pointer space-y-2.5 ${
+                                        isDone
+                                            ? 'bg-emerald-50/70 border-emerald-400'
+                                            : zStats.hasDiff
+                                                ? 'bg-amber-50/70 border-amber-300'
+                                                : 'bg-white border-slate-200 hover:border-slate-300'
                                     }`}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <span className={`p-2 rounded-lg ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                                        <span className={`p-2 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
                                             <Grid className="w-4 h-4" />
                                         </span>
-                                        {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
+                                        {isDone ? (
+                                            <span className="flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                <CheckCheck className="w-3.5 h-3.5" /> Xong
+                                            </span>
+                                        ) : zStats.hasDiff ? (
+                                            <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-md">
+                                                Lệch
+                                            </span>
+                                        ) : null}
                                     </div>
 
                                     <div>
-                                        <h4 className="text-xs font-extrabold text-slate-900 truncate">{zName}</h4>
-                                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{zStats.counted}/{zStats.total} mã đã đếm</p>
+                                        <h4 className="text-xs font-black text-slate-900 truncate">{zName}</h4>
+                                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                                            {zStats.counted}/{zStats.total} mã đã đếm
+                                        </p>
                                     </div>
 
                                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
-                                        <div className={`h-full ${isDone ? 'bg-emerald-600' : 'bg-emerald-500'}`} style={{ width: `${zStats.percent}%` }} />
+                                        <div
+                                            className={`h-full ${isDone ? 'bg-emerald-600' : 'bg-[#0E7490]'}`}
+                                            style={{ width: `${zStats.percent}%` }}
+                                        />
                                     </div>
                                 </button>
                             )
                         })}
                     </div>
-                </div>
+                </main>
             )}
 
-            {/* MODE 2: SINGLE-ITEM FOCUS CARD VIEW (STREAMLINED & SPACIOUS) */}
+            {/* ═══════════════════════════════════════════════════════════════
+                MODE 2: FOCUS VIEW (ĐẾM TẬP TRUNG - ERGONOMIC COCKPIT ⭐)
+            ═══════════════════════════════════════════════════════════════ */}
             {viewMode === 'FOCUS' && (
-                <div className="p-4 flex-1 flex flex-col space-y-3">
+                <main className="p-3.5 flex-1 flex flex-col space-y-3">
                     {/* Fast SKU / Barcode Quick Finder Bar */}
                     <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <Search className="w-4 h-4" />
+                        </div>
                         <input
                             type="text"
-                            placeholder="🔍 Gõ SKU / Quét Barcode để nhảy nhanh tới mã..."
+                            placeholder="Gõ SKU, Tên rượu hoặc Quét Barcode..."
                             value={searchTerm}
                             onChange={e => {
                                 setSearchTerm(e.target.value)
@@ -402,14 +579,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 if (e.key === 'Enter') {
                                     e.preventDefault()
                                     if (filteredLines.length > 0) {
-                                        playBeepSound()
-                                        triggerHaptic()
+                                        playFeedbackSound('chip')
+                                        triggerHaptic('light')
                                         setActiveIdx(0)
                                         setSearchTerm('')
                                     }
                                 }
                             }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-lg pl-3 pr-10 py-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
+                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-2xl pl-9 pr-12 py-3 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs transition"
                         />
                         {searchTerm && (
                             <button
@@ -417,64 +594,87 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     setSearchTerm('')
                                     setActiveIdx(0)
                                 }}
-                                className="absolute right-2.5 top-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-300 cursor-pointer"
+                                className="absolute right-2 top-2 p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold cursor-pointer"
                             >
-                                ✕ Xóa
+                                <X className="w-4 h-4" />
                             </button>
                         )}
                     </div>
 
                     {!currentItem ? (
                         <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-3 shadow-xs my-4">
-                            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto animate-bounce" />
-                            <h4 className="text-sm font-extrabold text-slate-900">Không tìm thấy mã nào khớp với "{searchTerm}"</h4>
-                            <p className="text-xs text-slate-500">Vui lòng kiểm tra lại mã SKU hoặc mã vạch sản phẩm</p>
+                            <AlertCircle className="w-10 h-10 text-amber-500 mx-auto animate-bounce" />
+                            <h4 className="text-sm font-black text-slate-900">Không tìm thấy mã nào khớp với "{searchTerm}"</h4>
+                            <p className="text-xs text-slate-500">Vui lòng kiểm tra lại mã SKU hoặc niên vụ sản phẩm</p>
                             <button
                                 onClick={() => {
                                     setSearchTerm('')
                                     setActiveIdx(0)
                                 }}
-                                className="px-4 py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold text-xs rounded-lg shadow-xs cursor-pointer active:scale-95 transition"
+                                className="min-h-[48px] px-5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                             >
-                                ↺ Xóa từ khóa để xem lại tất cả {lines.length} sản phẩm
+                                ↺ Xem lại toàn bộ {lines.length} sản phẩm
                             </button>
                         </div>
                     ) : (
                         <>
-                            {/* Zone & Index Breadcrumb */}
-                            <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200 text-xs shadow-2xs">
-                                <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
-                                    <MapPin className="w-4 h-4 text-emerald-600" />
-                                    <span>Vị trí: <strong className="text-emerald-800 font-mono font-extrabold">{currentItem.zone}</strong></span>
+                            {/* Location & Quick Jump Header */}
+                            <div className="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs shadow-2xs gap-2">
+                                <div className="flex items-center gap-1.5 font-black text-slate-700 min-w-0">
+                                    <MapPin className="w-4 h-4 text-[#0E7490] shrink-0" />
+                                    <span className="truncate">
+                                        Kệ: <strong className="text-[#0E7490] font-mono font-black">{currentItem.zone || currentItem.locationCode}</strong>
+                                    </span>
                                 </div>
 
-                                <span className="text-[11px] font-mono text-slate-700 font-extrabold bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                                    Mã {activeIdx + 1} / {filteredLines.length}
-                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[11px] font-mono text-slate-700 font-black bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                        {activeIdx + 1}/{filteredLines.length}
+                                    </span>
+
+                                    {/* Quick jump to next uncounted item directly in top pill */}
+                                    {remainingUncountedInZone > 0 && currentItem.qtyActual !== null && (
+                                        <button
+                                            onClick={jumpToNextUncounted}
+                                            className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-black rounded-lg flex items-center gap-1 cursor-pointer active:scale-95 transition border border-amber-300"
+                                            title="Nhảy nhanh tới mã tiếp theo chưa đếm"
+                                        >
+                                            <Zap className="w-3 h-3 text-amber-700 fill-amber-700" />
+                                            <span>Chưa đếm</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* FOCUS HERO ITEM CARD */}
-                            <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
-                                {/* SKU + Vintage Badges */}
+                            {/* ─── HERO PRODUCT & VINTAGE CARD ─── */}
+                            <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs space-y-3.5">
+                                {/* Vintage Hero Pill & SKU Bar */}
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg whitespace-nowrap shrink-0">
+                                    <span className="font-mono text-xs font-black text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl whitespace-nowrap">
                                         {currentItem.skuCode}
                                     </span>
-                                    
-                                    <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-lg flex items-center gap-1 whitespace-nowrap shrink-0">
-                                        🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
-                                    </span>
+
+                                    {/* High Contrast Vintage Badge */}
+                                    <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-50 to-amber-100/80 border-2 border-amber-400 text-amber-950 px-3 py-1 rounded-xl shadow-2xs">
+                                        <Wine className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                        <span className="text-xs font-black font-mono tracking-wide">
+                                            {currentItem.vintage ? `NIÊN VỤ: ${currentItem.vintage}` : 'KHÔNG NIÊN VỤ (NV)'}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {/* Wine Title & Packaging */}
+                                {/* Product Name & Spec */}
                                 <div>
-                                    <h3 className="text-base font-extrabold text-slate-900 leading-snug">{currentItem.productName}</h3>
-                                    <p className="text-xs text-slate-500 font-semibold mt-1">
-                                        Quy cách: <strong className="text-slate-900 font-extrabold">{currentItem.unitsPerCase || 6} chai / thùng</strong>
+                                    <h3 className="text-base font-black text-slate-900 leading-snug">
+                                        {currentItem.productName}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-bold mt-1 flex items-center gap-1.5">
+                                        <Package className="w-3.5 h-3.5 text-slate-400" />
+                                        Quy cách đóng thùng: <strong className="text-slate-800 font-black">{currentItem.unitsPerCase || 6} chai / thùng</strong>
                                     </p>
                                 </div>
 
-                                {/* System Stock vs Actual Count Input */}
+                                {/* ─── COUNTING PODS: CASES & LOOSE BOTTLES ─── */}
                                 {(() => {
                                     const upc = currentItem.unitsPerCase || 6
                                     const total = currentItem.qtyActual !== null ? currentItem.qtyActual : 0
@@ -482,41 +682,47 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     const currentLoose = total % upc
 
                                     return (
-                                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
-                                            <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
-                                                <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
-                                                {!isBlind && (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-slate-500 text-[11px] font-mono">
-                                                            Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
-                                                        </span>
-                                                        {currentItem.qtySystem > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setExactQty(currentItem.id, currentItem.qtySystem)}
-                                                                className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded border border-emerald-200 cursor-pointer active:scale-95 transition"
-                                                                title="Khớp nhanh theo số tồn sổ sách"
-                                                            >
-                                                                ✓ Khớp tồn sổ
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
+                                        <div className="space-y-3">
+                                            {/* System Book Stock Bar (if not blind) */}
+                                            {!isBlind && (
+                                                <div className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                                                    <span className="text-slate-500">
+                                                        Tồn sổ sách: <strong className="text-slate-900 font-mono font-black">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
+                                                    </span>
 
-                                            {/* 2-Column Quantity Controls (Thùng + Chai) */}
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {/* Cases Box */}
-                                                <div className="bg-white border border-slate-300 rounded-lg p-3 text-center space-y-1 shadow-2xs">
-                                                    <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
+                                                    {currentItem.qtySystem > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, currentItem.qtySystem)}
+                                                            className="min-h-[32px] px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black rounded-lg border border-emerald-300 cursor-pointer active:scale-95 transition flex items-center gap-1"
+                                                        >
+                                                            <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                                            ✓ Khớp tồn sổ
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Dual Ergonomic Counter Pods (Cases vs Loose) */}
+                                            <div className="grid grid-cols-2 gap-2.5">
+                                                {/* 📦 POD 1: SỐ THÙNG */}
+                                                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 text-center space-y-2 shadow-2xs">
+                                                    <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                                                        <Package className="w-3.5 h-3.5 text-[#0E7490]" />
+                                                        <span>SỐ THÙNG</span>
+                                                    </div>
+
+                                                    {/* Steppers & Big Display */}
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
-                                                             type="button"
-                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
-                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
+                                                            className="min-h-[48px] min-w-[48px] rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
+                                                            aria-label="Giảm 1 thùng"
                                                         >
-                                                            -
+                                                            <Minus className="w-5 h-5 text-slate-700" />
                                                         </button>
+
                                                         <input
                                                             type="number"
                                                             inputMode="numeric"
@@ -529,30 +735,56 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                 const newCases = parseInt(e.target.value, 10) || 0
                                                                 setExactQty(currentItem.id, newCases * upc + currentLoose)
                                                             }}
-                                                            className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                            className="w-full text-center text-3xl font-black font-mono text-[#0E7490] bg-transparent outline-none py-1"
                                                         />
+
                                                         <button
-                                                             type="button"
-                                                             onClick={() => setExactQty(currentItem.id, total + upc)}
-                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, total + upc)}
+                                                            className="min-h-[48px] min-w-[48px] rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
+                                                            aria-label="Tăng 1 thùng"
                                                         >
-                                                            +
+                                                            <Plus className="w-5 h-5 text-slate-700" />
                                                         </button>
                                                     </div>
-                                                    <span className="text-[10px] text-slate-400 font-semibold block">({upc} chai/thùng)</span>
+
+                                                    <span className="text-[10px] text-slate-400 font-bold block">
+                                                        ({upc} chai / thùng)
+                                                    </span>
+
+                                                    {/* Quick Multi-Add Chips for Cases */}
+                                                    <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-200">
+                                                        {[1, 2, 5, 10].map(cDelta => (
+                                                            <button
+                                                                key={`case_${cDelta}`}
+                                                                type="button"
+                                                                onClick={() => addDeltaQty(currentItem.id, cDelta * upc)}
+                                                                className="min-h-[36px] py-1 bg-white hover:bg-teal-50 active:scale-90 text-[#0E7490] border border-slate-200 hover:border-teal-300 rounded-lg text-xs font-black transition cursor-pointer shadow-2xs"
+                                                            >
+                                                                +{cDelta}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
 
-                                                {/* Loose Bottles Box */}
-                                                <div className="bg-white border border-slate-300 rounded-lg p-3 text-center space-y-1 shadow-2xs">
-                                                    <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
+                                                {/* 🍾 POD 2: CHAI LẺ */}
+                                                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 text-center space-y-2 shadow-2xs">
+                                                    <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                                                        <Wine className="w-3.5 h-3.5 text-amber-700" />
+                                                        <span>CHAI LẺ</span>
+                                                    </div>
+
+                                                    {/* Steppers & Big Display */}
                                                     <div className="flex items-center justify-between gap-1">
                                                         <button
-                                                             type="button"
-                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
-                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
+                                                            className="min-h-[48px] min-w-[48px] rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
+                                                            aria-label="Giảm 1 chai"
                                                         >
-                                                            -
+                                                            <Minus className="w-5 h-5 text-slate-700" />
                                                         </button>
+
                                                         <input
                                                             type="number"
                                                             inputMode="numeric"
@@ -565,152 +797,356 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                 const newLoose = parseInt(e.target.value, 10) || 0
                                                                 setExactQty(currentItem.id, currentCases * upc + newLoose)
                                                             }}
-                                                            className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                            className="w-full text-center text-3xl font-black font-mono text-amber-800 bg-transparent outline-none py-1"
                                                         />
+
                                                         <button
-                                                             type="button"
-                                                             onClick={() => setExactQty(currentItem.id, total + 1)}
-                                                             className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, total + 1)}
+                                                            className="min-h-[48px] min-w-[48px] rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
+                                                            aria-label="Tăng 1 chai"
                                                         >
-                                                            +
+                                                            <Plus className="w-5 h-5 text-slate-700" />
                                                         </button>
                                                     </div>
-                                                    <span className="text-[10px] text-slate-400 font-semibold block">chai rời</span>
+
+                                                    <span className="text-[10px] text-slate-400 font-bold block">
+                                                        (chai rời)
+                                                    </span>
+
+                                                    {/* Quick Multi-Add Chips for Bottles */}
+                                                    <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-200">
+                                                        {[1, 2, 3, 5].map(bDelta => (
+                                                            <button
+                                                                key={`bottle_${bDelta}`}
+                                                                type="button"
+                                                                onClick={() => addDeltaQty(currentItem.id, bDelta)}
+                                                                className="min-h-[36px] py-1 bg-white hover:bg-amber-50 active:scale-90 text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg text-xs font-black transition cursor-pointer shadow-2xs"
+                                                            >
+                                                                +{bDelta}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Total Count Pill & Immediate Variance Warning */}
-                                            <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold px-1">
-                                                <span className="text-emerald-800 font-mono">
-                                                    Tổng thực tế: {formatCasesAndBottles(total, upc)}
-                                                </span>
+                                            {/* Quick Action Helpers (Trống Kệ 0 Chai, Đặt Lại) */}
+                                            <div className="flex items-center justify-between gap-2 pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExactQty(currentItem.id, 0)}
+                                                    className="flex-1 min-h-[38px] bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer border border-slate-300"
+                                                >
+                                                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                                                    0 Kệ Trống (0 chai)
+                                                </button>
 
-                                                {!isBlind && currentItem.qtyActual !== null && (
-                                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 whitespace-nowrap shrink-0 inline-flex items-center ${
-                                                        currentItem.variance === 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
-                                                        currentItem.variance! > 0 ? 'bg-amber-50 text-amber-800 border border-amber-300 animate-pulse' :
-                                                        'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
-                                                    }`}>
-                                                        {currentItem.variance === 0 ? '✓ Khớp 100%' :
-                                                         currentItem.variance! > 0 ? `⚠️ Thừa +${currentItem.variance} chai` :
-                                                         `🚨 Thiếu ${currentItem.variance} chai`}
-                                                    </span>
+                                                {currentItem.qtyActual !== null && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExactQty(currentItem.id, null)}
+                                                        className="px-3 min-h-[38px] bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer border border-rose-200"
+                                                        title="Hủy kết quả đếm của mã này"
+                                                    >
+                                                        ✕ Xóa đếm
+                                                    </button>
                                                 )}
                                             </div>
+
+                                            {/* ─── VISUAL MATH & VARIANCE COCKPIT ─── */}
+                                            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-3.5 space-y-2 shadow-sm">
+                                                <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                                                    <span>Công thức quy đổi:</span>
+                                                    <span className="font-mono text-amber-300 text-xs">
+                                                        [{currentCases} th × {upc}] + [{currentLoose} lẻ]
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1 border-t border-slate-700/80">
+                                                    <div className="text-left">
+                                                        <span className="text-[10px] text-slate-400 font-extrabold uppercase block">TỔNG ĐẾM ĐƯỢC</span>
+                                                        <span className="text-2xl font-black font-mono text-cyan-300">
+                                                            {total} <span className="text-xs font-bold text-slate-300">CHAI</span>
+                                                        </span>
+                                                    </div>
+
+                                                    {!isBlind && currentItem.qtyActual !== null && (
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] text-slate-400 font-extrabold uppercase block">SO VỚI TỒN SỔ</span>
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-mono font-black ${
+                                                                currentItem.variance === 0
+                                                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                                                    : currentItem.variance! > 0
+                                                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                                                                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse'
+                                                            }`}>
+                                                                {currentItem.variance === 0
+                                                                    ? '✓ Khớp 100%'
+                                                                    : currentItem.variance! > 0
+                                                                        ? `⚠️ Thừa +${currentItem.variance} chai`
+                                                                        : `🚨 Thiếu ${currentItem.variance} chai`}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* ─── 1-TAP VARIANCE REASON PICKER ─── */}
+                                            {currentItem.qtyActual !== null && currentItem.variance !== 0 && (
+                                                <div className="bg-amber-50/70 border-2 border-amber-300 rounded-2xl p-3 space-y-2">
+                                                    <div className="flex items-center justify-between text-xs font-black text-amber-900">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <AlertTriangle className="w-4 h-4 text-amber-700" />
+                                                            Chọn nhanh lý do chênh lệch:
+                                                        </span>
+                                                        <span className="text-[10px] text-amber-700 font-bold">(Chạm để chọn)</span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        {REASONS.map(r => {
+                                                            const isSelected = currentItem.varianceReason === r.code
+                                                            return (
+                                                                <button
+                                                                    key={r.code}
+                                                                    type="button"
+                                                                    onClick={() => setVarianceReason(currentItem.id, r.code)}
+                                                                    className={`min-h-[40px] px-2 py-1.5 rounded-xl text-xs font-black text-left flex items-center gap-1.5 transition cursor-pointer border ${
+                                                                        isSelected
+                                                                            ? 'bg-amber-500 text-white border-amber-600 shadow-2xs'
+                                                                            : 'bg-white hover:bg-amber-100/50 text-slate-800 border-amber-200'
+                                                                    }`}
+                                                                >
+                                                                    <span className="text-sm shrink-0">{r.emoji}</span>
+                                                                    <span className="truncate">{r.label}</span>
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )
                                 })()}
 
-                                {/* SAVE & GO NEXT MAIN CTA BUTTON */}
+                                {/* ─── PRIMARY THUMB ACTION: SAVE & NEXT ─── */}
                                 <button
                                     onClick={() => saveCurrentLineAndNext(currentItem)}
                                     disabled={savingLineId === currentItem.id}
-                                    className="w-full py-3.5 bg-[#0891B2] hover:bg-[#0E7490] active:scale-98 text-white font-extrabold text-sm rounded-lg flex items-center justify-center gap-2 shadow-xs transition cursor-pointer disabled:opacity-50"
+                                    className="w-full min-h-[52px] bg-gradient-to-r from-[#0E7490] to-[#0891B2] hover:from-[#0E7490] hover:to-[#0A738D] active:scale-98 text-white font-black text-base rounded-2xl flex items-center justify-center gap-2.5 shadow-md transition cursor-pointer disabled:opacity-50"
                                 >
                                     {savingLineId === currentItem.id ? (
                                         <RefreshCw className="w-5 h-5 animate-spin" />
                                     ) : (
                                         <>
-                                            <Save className="w-5 h-5" />
-                                            LƯU VÀ SANG CHAI TIẾP THEO ➔
+                                            <Save className="w-5 h-5 text-white" />
+                                            LƯU & SANG CHAI TIẾP ➔
                                         </>
                                     )}
                                 </button>
                             </div>
 
-                            {/* FINISH ZONE CTA BUTTON */}
-                            <div className="pt-1">
+                            {/* ─── THUMB STEPPER NAVIGATION ─── */}
+                            <div className="grid grid-cols-3 gap-2 pt-1">
+                                <button
+                                    disabled={activeIdx === 0}
+                                    onClick={() => {
+                                        playFeedbackSound('tap')
+                                        triggerHaptic('light')
+                                        setActiveIdx(prev => Math.max(0, prev - 1))
+                                    }}
+                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-xl font-black text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                >
+                                    <ChevronLeft className="w-4 h-4" /> Trước
+                                </button>
+
+                                <button
+                                    onClick={jumpToNextUncounted}
+                                    className="min-h-[48px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-xl font-black text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                    title="Nhảy tới mã tiếp theo chưa đếm"
+                                >
+                                    <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+                                    <span>Chưa đếm ({remainingUncountedInZone})</span>
+                                </button>
+
+                                <button
+                                    disabled={activeIdx >= filteredLines.length - 1}
+                                    onClick={() => {
+                                        playFeedbackSound('tap')
+                                        triggerHaptic('light')
+                                        setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))
+                                    }}
+                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-xl font-black text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                >
+                                    Sau <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            {/* ─── FINISH ZONE CTA ─── */}
+                            <div className="pt-2">
                                 <button
                                     onClick={() => handleFinishZone(selectedZone)}
                                     disabled={isCompletingZone}
-                                    className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-lg flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
+                                    className="w-full min-h-[48px] bg-white hover:bg-slate-50 text-slate-800 font-black text-xs rounded-xl flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
                                 >
                                     {isCompletingZone ? (
                                         <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
                                     ) : (
                                         <>
                                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                            🏁 CHỐT KHU VỰC NÀY & XEM BÁO CÁO CHÊNH LỆCH
+                                            🏁 CHỐT KHU VỰC & XEM BÁO CÁO ĐỐI SOÁT
                                         </>
                                     )}
                                 </button>
                             </div>
-
-                            {/* Prev / Next Slider Navigation */}
-                            <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                                <button
-                                    disabled={activeIdx === 0}
-                                    onClick={() => setActiveIdx(prev => Math.max(0, prev - 1))}
-                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-lg font-extrabold text-xs flex items-center gap-1 cursor-pointer"
-                                >
-                                    ◄ Chai Trước
-                                </button>
-                                <span className="text-xs font-mono font-extrabold text-slate-600">
-                                    {activeIdx + 1} / {filteredLines.length}
-                                </span>
-                                <button
-                                    disabled={activeIdx >= filteredLines.length - 1}
-                                    onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
-                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer"
-                                >
-                                    Chai Sau ►
-                                </button>
-                            </div>
                         </>
                     )}
-                </div>
+                </main>
             )}
 
-            {/* MODE 3: FULL COMPACT LIST VIEW */}
+            {/* ═══════════════════════════════════════════════════════════════
+                MODE 3: FULL LIST VIEW WITH QUICK FILTERS (DANH SÁCH)
+            ═══════════════════════════════════════════════════════════════ */}
             {viewMode === 'LIST' && (
-                <div className="p-4 space-y-3 flex-1">
-                    <input
-                        type="text"
-                        placeholder="Tìm SKU hoặc tên rượu..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-3 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 mb-2 shadow-2xs"
-                    />
-
-                    {filteredLines.map((line, idx) => (
-                        <div
-                            key={line.id}
-                            onClick={() => {
-                                setActiveIdx(idx)
-                                setViewMode('FOCUS')
-                            }}
-                            className={`p-3.5 rounded-lg border transition cursor-pointer active:scale-98 ${line.qtyActual !== null ? 'bg-emerald-50/50 border-emerald-300' : 'bg-white border-slate-200'}`}
-                        >
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                        {line.skuCode}
-                                    </span>
-                                    <h4 className="text-xs font-extrabold text-slate-900 mt-1">{line.productName}</h4>
-                                </div>
-
-                                <div className="text-right">
-                                    <span className="text-[10px] text-slate-500 block font-mono">📍 {line.zone}</span>
-                                    <span className="text-xs font-bold text-emerald-700 font-mono mt-0.5 block">
-                                        {line.qtyActual !== null ? `${line.qtyActual} chai` : 'Chưa đếm'}
-                                    </span>
-                                </div>
-                            </div>
+                <main className="p-3.5 space-y-3 flex-1">
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <Search className="w-4 h-4" />
                         </div>
-                    ))}
-                </div>
+                        <input
+                            type="text"
+                            placeholder="Tìm SKU, tên rượu, niên vụ..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full bg-white border border-slate-300 text-slate-900 rounded-2xl pl-9 pr-10 py-3 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-2.5 top-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="grid grid-cols-4 gap-1 bg-white p-1 rounded-2xl border border-slate-200">
+                        <button
+                            onClick={() => { setListFilter('ALL'); playFeedbackSound('tap') }}
+                            className={`min-h-[36px] rounded-xl text-xs font-black transition cursor-pointer ${
+                                listFilter === 'ALL' ? 'bg-[#0E7490] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Tất cả ({lines.length})
+                        </button>
+
+                        <button
+                            onClick={() => { setListFilter('UNCOUNTED'); playFeedbackSound('tap') }}
+                            className={`min-h-[36px] rounded-xl text-xs font-black transition cursor-pointer ${
+                                listFilter === 'UNCOUNTED' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Chưa đếm ({lines.filter(l => l.qtyActual === null).length})
+                        </button>
+
+                        <button
+                            onClick={() => { setListFilter('MATCHED'); playFeedbackSound('tap') }}
+                            className={`min-h-[36px] rounded-xl text-xs font-black transition cursor-pointer ${
+                                listFilter === 'MATCHED' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Khớp ({lines.filter(l => l.qtyActual !== null && l.variance === 0).length})
+                        </button>
+
+                        <button
+                            onClick={() => { setListFilter('VARIANCE'); playFeedbackSound('tap') }}
+                            className={`min-h-[36px] rounded-xl text-xs font-black transition cursor-pointer ${
+                                listFilter === 'VARIANCE' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Lệch ({lines.filter(l => l.qtyActual !== null && l.variance !== 0).length})
+                        </button>
+                    </div>
+
+                    {/* List Items */}
+                    <div className="space-y-2">
+                        {filteredLines.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 text-xs font-bold">
+                                Không có sản phẩm nào khớp với bộ lọc
+                            </div>
+                        ) : (
+                            filteredLines.map((line) => {
+                                const realIdx = lines.findIndex(l => l.id === line.id)
+                                const isCounted = line.qtyActual !== null
+                                const isMatched = isCounted && line.variance === 0
+
+                                return (
+                                    <div
+                                        key={line.id}
+                                        onClick={() => {
+                                            setActiveIdx(realIdx !== -1 ? realIdx : 0)
+                                            setViewMode('FOCUS')
+                                            playFeedbackSound('tap')
+                                        }}
+                                        className={`p-3.5 rounded-2xl border transition cursor-pointer active:scale-98 ${
+                                            !isCounted
+                                                ? 'bg-white border-slate-200 hover:border-slate-300'
+                                                : isMatched
+                                                    ? 'bg-emerald-50/50 border-emerald-300'
+                                                    : 'bg-amber-50/50 border-amber-300'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-mono text-xs font-black text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                                        {line.skuCode}
+                                                    </span>
+                                                    <span className="text-[10px] font-mono font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                                                        🍇 {line.vintage ?? 'NV'}
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-2">
+                                                    {line.productName}
+                                                </h4>
+                                            </div>
+
+                                            <div className="text-right shrink-0">
+                                                <span className="text-[10px] text-slate-500 font-mono block">
+                                                    📍 {line.zone || line.locationCode}
+                                                </span>
+                                                <span className={`text-xs font-mono font-black mt-1 inline-block px-2 py-0.5 rounded-md ${
+                                                    !isCounted
+                                                        ? 'bg-slate-100 text-slate-600'
+                                                        : isMatched
+                                                            ? 'bg-emerald-100 text-emerald-800'
+                                                            : 'bg-amber-100 text-amber-900'
+                                                }`}>
+                                                    {isCounted ? `${line.qtyActual} chai` : 'Chưa đếm'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+                    </div>
+                </main>
             )}
 
-            {/* ZONE VARIANCE REPORT MODAL (CHỐT KHU VỰC & ĐỐI SOÁT TẠI CHỖ) */}
+            {/* ═══════════════════════════════════════════════════════════════
+                ZONE VARIANCE REPORT MODAL (CHỐT KHU VỰC & ĐỐI SOÁT TẠI CHỖ)
+            ═══════════════════════════════════════════════════════════════ */}
             {showZoneReportModal && zoneReport && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
                     <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
-                                <span className="text-[10px] font-mono uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                <span className="text-[10px] font-mono uppercase font-black text-[#0E7490] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
                                     BÁO CÁO CHỐT KHU VỰC
                                 </span>
-                                <h3 className="text-base font-extrabold text-slate-900 mt-1">{zoneReport.zoneName}</h3>
+                                <h3 className="text-base font-black text-slate-900 mt-1">{zoneReport.zoneName}</h3>
                             </div>
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
@@ -722,44 +1158,53 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                         {/* KPI Summary Grid */}
                         <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-center">
-                                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Khớp 100%</span>
+                            <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-black text-emerald-800 uppercase block">Khớp 100%</span>
                                 <strong className="text-lg font-black text-emerald-700 font-mono">{zoneReport.matchedCount}</strong>
                             </div>
-                            <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-center">
-                                <span className="text-[10px] font-bold text-amber-800 uppercase block">Thừa (+)</span>
+                            <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-black text-amber-800 uppercase block">Thừa (+)</span>
                                 <strong className="text-lg font-black text-amber-700 font-mono">{zoneReport.overCount}</strong>
                             </div>
-                            <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-lg text-center">
-                                <span className="text-[10px] font-bold text-rose-800 uppercase block">Thiếu (-)</span>
+                            <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-black text-rose-800 uppercase block">Thiếu (-)</span>
                                 <strong className="text-lg font-black text-rose-700 font-mono">{zoneReport.underCount}</strong>
                             </div>
                         </div>
 
                         {/* Variance Line Items Table */}
                         <div className="space-y-2">
-                            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-amber-600" />
                                 Danh Sách Mã Chênh Lệch Cần Xem Lại:
                             </h4>
 
                             {zoneReport.varianceLines.length === 0 ? (
-                                <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
+                                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
                                     🎉 Tuyệt vời! Khu vực này đếm khớp 100%, không phát hiện chênh lệch.
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {zoneReport.varianceLines.map((vl: any) => (
-                                        <div key={vl.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 text-xs">
+                                        <div key={vl.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <span className="font-mono text-xs font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
-                                                        {vl.skuCode}
-                                                    </span>
-                                                    <h5 className="font-extrabold text-slate-900 mt-1">{vl.productName}</h5>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="font-mono text-xs font-black text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
+                                                            {vl.skuCode}
+                                                        </span>
+                                                        <span className="text-[10px] font-mono font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">
+                                                            🍇 {vl.vintage ?? 'NV'}
+                                                        </span>
+                                                    </div>
+                                                    <h5 className="font-black text-slate-900 mt-1">{vl.productName}</h5>
                                                 </div>
 
-                                                <span className={`px-2 py-0.5 rounded font-mono text-xs font-extrabold ${vl.variance > 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300'}`}>
+                                                <span className={`px-2 py-0.5 rounded font-mono text-xs font-black ${
+                                                    vl.variance > 0
+                                                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                                        : 'bg-rose-100 text-rose-900 border border-rose-300'
+                                                }`}>
                                                     {vl.variance > 0 ? `+${vl.variance}` : vl.variance} chai
                                                 </span>
                                             </div>
@@ -768,14 +1213,15 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                 <span>Tồn sổ: {vl.qtySystem} · Thực tế: {vl.qtyActual}</span>
                                                 <button
                                                     onClick={() => {
-                                                        const targetIdx = filteredLines.findIndex(l => l.id === vl.id)
+                                                        const targetIdx = lines.findIndex(l => l.id === vl.id)
                                                         if (targetIdx !== -1) {
                                                             setActiveIdx(targetIdx)
                                                             setViewMode('FOCUS')
                                                             setShowZoneReportModal(false)
+                                                            playFeedbackSound('tap')
                                                         }
                                                     }}
-                                                    className="px-2 py-1 bg-white hover:bg-slate-100 text-emerald-700 font-extrabold rounded border border-slate-300 shadow-2xs cursor-pointer"
+                                                    className="px-2.5 py-1 bg-white hover:bg-slate-100 text-[#0E7490] font-black rounded-lg border border-slate-300 shadow-2xs cursor-pointer active:scale-95"
                                                 >
                                                     🔍 Đếm lại mã này
                                                 </button>
@@ -786,22 +1232,22 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             )}
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 pt-2">
                             {onOpenReport && (
                                 <button
                                     onClick={() => {
                                         setShowZoneReportModal(false)
                                         onOpenReport(detail.id)
                                     }}
-                                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-lg shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                                    className="flex-1 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition"
                                 >
                                     <FileText className="w-4 h-4" />
-                                    BÁO CÁO ĐỐI SOÁT A4
+                                    BÁO CÁO A4
                                 </button>
                             )}
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
-                                className="flex-1 py-3 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-lg shadow-sm cursor-pointer"
+                                className="flex-1 min-h-[44px] bg-[#0E7490] hover:bg-[#0891B2] text-white font-black text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                             >
                                 TIẾP TỤC ĐẾM
                             </button>
@@ -810,7 +1256,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 </div>
             )}
 
-            {/* MODAL CHÈN MÃ / VINTAGE NGOÀI DANH SÁCH */}
+            {/* ═══════════════════════════════════════════════════════════════
+                MODAL CHÈN MÃ / VINTAGE NGOÀI DANH SÁCH
+            ═══════════════════════════════════════════════════════════════ */}
             {showAddUnlistedModal && (
                 <AddUnlistedModal
                     sessionId={detail.id}
@@ -823,34 +1271,57 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 />
             )}
 
-            {/* FLOATING BOTTOM NAVIGATION BAR */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
-                <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
+            {/* ═══════════════════════════════════════════════════════════════
+                FLOATING BOTTOM NAVIGATION BAR (THUMB ZONE)
+            ═══════════════════════════════════════════════════════════════ */}
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-3 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+                <div className="max-w-md mx-auto grid grid-cols-3 gap-1.5">
                     <button
-                        onClick={() => setViewMode('ZONES')}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
+                        onClick={() => {
+                            setViewMode('ZONES')
+                            playFeedbackSound('tap')
+                        }}
+                        className={`min-h-[48px] py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 font-black text-[11px] transition cursor-pointer active:scale-95 ${
+                            viewMode === 'ZONES'
+                                ? 'bg-[#0E7490] text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 bg-transparent'
+                        }`}
                     >
                         <Grid className="w-4 h-4" />
                         Vị Trí Kho
                     </button>
 
                     <button
-                        onClick={() => setViewMode('FOCUS')}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
+                        onClick={() => {
+                            setViewMode('FOCUS')
+                            playFeedbackSound('tap')
+                        }}
+                        className={`min-h-[48px] py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 font-black text-[11px] transition cursor-pointer active:scale-95 ${
+                            viewMode === 'FOCUS'
+                                ? 'bg-[#0E7490] text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 bg-transparent'
+                        }`}
                     >
                         <Sparkles className="w-4 h-4" />
                         Đếm Tập Trung
                     </button>
 
                     <button
-                        onClick={() => setViewMode('LIST')}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0891B2] text-white shadow-xs border border-[#0891B2]' : 'text-slate-600 hover:text-slate-900'}`}
+                        onClick={() => {
+                            setViewMode('LIST')
+                            playFeedbackSound('tap')
+                        }}
+                        className={`min-h-[48px] py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 font-black text-[11px] transition cursor-pointer active:scale-95 ${
+                            viewMode === 'LIST'
+                                ? 'bg-[#0E7490] text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 bg-transparent'
+                        }`}
                     >
                         <ListFilter className="w-4 h-4" />
                         Danh Sách
                     </button>
                 </div>
-            </div>
+            </nav>
         </div>
     )
 }

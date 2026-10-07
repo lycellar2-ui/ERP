@@ -143,20 +143,22 @@ export async function getStockCountDetail(sessionId: string) {
     if (!session) return null
 
     const s = session as any
-    // Compute unit costs and vintages from StockLot
+    // Compute unit costs and vintages from StockLot matching both productId and vintage
     const productIds: string[] = Array.from(new Set(s.lines.map((l: any) => l.productId)))
     const lots = await prisma.stockLot.findMany({
         where: { productId: { in: productIds } },
         select: { productId: true, unitLandedCost: true, vintage: true }
     })
 
-    const lotInfoMap = new Map<string, { unitCost: number; vintage: number | null }>()
+    const lotCostMap = new Map<string, number>()
     for (const lot of lots) {
-        if (!lotInfoMap.has(lot.productId)) {
-            lotInfoMap.set(lot.productId, {
-                unitCost: Number(lot.unitLandedCost) || 0,
-                vintage: lot.vintage ?? null,
-            })
+        const vKey = lot.vintage !== null && lot.vintage !== undefined ? lot.vintage : 'NV'
+        const specificKey = `${lot.productId}_${vKey}`
+        if (!lotCostMap.has(specificKey)) {
+            lotCostMap.set(specificKey, Number(lot.unitLandedCost) || 0)
+        }
+        if (!lotCostMap.has(lot.productId)) {
+            lotCostMap.set(lot.productId, Number(lot.unitLandedCost) || 0)
         }
     }
 
@@ -167,9 +169,9 @@ export async function getStockCountDetail(sessionId: string) {
         const sysQty = Number(l.qtySystem)
         const actQty = l.qtyActual !== null ? Number(l.qtyActual) : null
         const varQty = l.variance !== null ? Number(l.variance) : null
-        const info = lotInfoMap.get(l.productId)
-        const unitCost = info?.unitCost || 0
-        const vintage = (l as any).vintage ?? info?.vintage ?? null
+        const vintage = l.vintage !== undefined && l.vintage !== null ? Number(l.vintage) : null
+        const vKey = vintage !== null ? vintage : 'NV'
+        const unitCost = lotCostMap.get(`${l.productId}_${vKey}`) ?? lotCostMap.get(l.productId) ?? 0
         const varianceValueVND = varQty !== null ? varQty * unitCost : 0
 
         return {
@@ -429,25 +431,36 @@ export async function createStockCountSessionExtended(input: {
                     },
                     select: {
                         productId: true,
-                        qtyAvailable: true
+                        qtyAvailable: true,
+                        vintage: true
                     }
                 }
             }
         })
 
-        // Map location/product lines
-        const linesToCreate: Array<{ productId: string; locationId: string; locationCode: string; qtySystem: number }> = []
+        // Map and aggregate location/product/vintage lines (gộp theo Kệ + SKU + Niên Vụ Vintage)
+        const lineMap = new Map<string, { productId: string; locationId: string; locationCode: string; vintage: number | null; qtySystem: number }>()
 
         for (const loc of locations) {
             for (const lot of loc.stockLots) {
-                linesToCreate.push({
-                    productId: lot.productId,
-                    locationId: loc.id,
-                    locationCode: loc.locationCode,
-                    qtySystem: Number(lot.qtyAvailable)
-                })
+                const vKey = lot.vintage !== null && lot.vintage !== undefined ? lot.vintage : 'NV'
+                const key = `${loc.id}_${lot.productId}_${vKey}`
+                const existing = lineMap.get(key)
+                if (existing) {
+                    existing.qtySystem += Number(lot.qtyAvailable)
+                } else {
+                    lineMap.set(key, {
+                        productId: lot.productId,
+                        locationId: loc.id,
+                        locationCode: loc.locationCode,
+                        vintage: lot.vintage ?? null,
+                        qtySystem: Number(lot.qtyAvailable)
+                    })
+                }
             }
         }
+
+        const linesToCreate = Array.from(lineMap.values())
 
         if (linesToCreate.length === 0) {
             return { success: false, error: 'Không tìm thấy tồn kho phù hợp với điều kiện kiểm kê đã chọn.' }
@@ -472,6 +485,7 @@ export async function createStockCountSessionExtended(input: {
                         productId: l.productId,
                         locationId: l.locationId,
                         locationCode: l.locationCode,
+                        vintage: l.vintage,
                         qtySystem: l.qtySystem
                     }))
                 }
@@ -591,9 +605,19 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
         if (!session) return { success: false, error: 'Không tìm thấy phiên kiểm kê' }
         if (session.status === 'APPROVED') return { success: false, error: 'Phiên kiểm kê đã được duyệt trước đó' }
 
+        // Check role permission
+        const currentUser = await getCurrentUser()
+        const userRoles = currentUser?.roles || []
+        const isAuthorized = userRoles.some(r =>
+            ['ADMIN', 'Admin', 'ADMINISTRATOR', 'DIRECTOR', 'CEO', 'CBO', 'KE_TOAN', 'Kế Toán', 'THU_KHO', 'Thủ Kho', 'WAREHOUSE_MANAGER', 'Manager'].includes(r)
+        ) || currentUser?.permissions.includes('wms:approve') || currentUser?.permissions.includes('stock-count:approve')
+
+        if (!isAuthorized && process.env.NODE_ENV !== 'development') {
+            return { success: false, error: 'Bạn không có quyền phê duyệt điều chỉnh kiểm kê kho. Vui lòng liên hệ Quản lý kho, Kế toán hoặc Ban giám đốc.' }
+        }
+
         // Update session status
         const adjustmentNo = `ADJ-${session.sessionNo || session.id.slice(-6).toUpperCase()}`
-        const currentUser = await getCurrentUser()
         const userId = currentUser?.id ?? 'system'
 
         await prisma.$transaction(async (tx) => {
@@ -605,13 +629,18 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                 if (line.qtyActual !== null && Number(line.variance) !== 0) {
                     const varianceVal = Number(line.variance)
 
-                    // Find primary stock lot matching location or warehouse
+                    const lotVintageFilter: any = line.vintage !== null && line.vintage !== undefined
+                        ? { vintage: line.vintage }
+                        : { OR: [{ vintage: null }, { vintage: 0 }] }
+
+                    // Find primary stock lot matching location, product and vintage
                     let targetLot = null
                     if (line.locationId) {
                         targetLot = await tx.stockLot.findFirst({
                             where: {
                                 productId: line.productId,
                                 locationId: line.locationId,
+                                ...lotVintageFilter,
                                 status: 'AVAILABLE'
                             },
                             orderBy: { receivedDate: 'asc' }
@@ -622,6 +651,7 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                             where: {
                                 productId: line.productId,
                                 location: { warehouseId: session.warehouseId },
+                                ...lotVintageFilter,
                                 status: 'AVAILABLE'
                             },
                             orderBy: { receivedDate: 'asc' }
@@ -631,15 +661,47 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                     const unitCost = targetLot ? Number(targetLot.unitLandedCost) : 0
 
                     if (varianceVal < 0) {
-                        // Shortage (Hao hụt / thiếu hàng)
-                        const shortageQty = Math.abs(varianceVal)
-                        totalShortageVal += shortageQty * unitCost
+                        // Shortage (Hao hụt / thiếu hàng) - Duyệt trừ tuần tự qua các lô khả dụng theo đúng Niên Vụ (FIFO)
+                        let shortageRemaining = Math.abs(varianceVal)
+                        totalShortageVal += shortageRemaining * unitCost
 
-                        if (targetLot) {
-                            const take = Math.min(Number(targetLot.qtyAvailable), shortageQty)
-                            const newQty = Number(targetLot.qtyAvailable) - take
+                        let availableLots: any[] = []
+                        if (line.locationId) {
+                            availableLots = await tx.stockLot.findMany({
+                                where: {
+                                    productId: line.productId,
+                                    locationId: line.locationId,
+                                    ...lotVintageFilter,
+                                    status: 'AVAILABLE',
+                                    qtyAvailable: { gt: 0 }
+                                },
+                                orderBy: { receivedDate: 'asc' }
+                            })
+                        }
+                        if (availableLots.length === 0 || availableLots.reduce((sum, l) => sum + Number(l.qtyAvailable), 0) < shortageRemaining) {
+                            const otherLots = await tx.stockLot.findMany({
+                                where: {
+                                    productId: line.productId,
+                                    location: { warehouseId: session.warehouseId },
+                                    ...lotVintageFilter,
+                                    id: { notIn: availableLots.map(l => l.id) },
+                                    status: 'AVAILABLE',
+                                    qtyAvailable: { gt: 0 }
+                                },
+                                orderBy: { receivedDate: 'asc' }
+                            })
+                            availableLots.push(...otherLots)
+                        }
+
+                        for (const lot of availableLots) {
+                            if (shortageRemaining <= 0) break
+                            const lotAvailable = Number(lot.qtyAvailable)
+                            const take = Math.min(lotAvailable, shortageRemaining)
+                            const newQty = lotAvailable - take
+                            shortageRemaining -= take
+
                             await tx.stockLot.update({
-                                where: { id: targetLot.id },
+                                where: { id: lot.id },
                                 data: {
                                     qtyAvailable: newQty,
                                     status: newQty === 0 ? 'CONSUMED' : 'AVAILABLE'
@@ -660,7 +722,7 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                                 }
                             })
                         } else {
-                            // If no lot exists in warehouse, create new lot so surplus is recorded in DB
+                            // If no lot exists in warehouse for this vintage, create new lot so surplus is recorded in DB
                             let destLocId: string | null = line.locationId
                             if (!destLocId) {
                                 const defaultLoc = await tx.location.findFirst({
@@ -696,6 +758,7 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                                             lotNo,
                                             ownerEntityId,
                                             productId: line.productId,
+                                            vintage: line.vintage ?? null,
                                             locationId: destLocId,
                                             qtyReceived: varianceVal,
                                             qtyAvailable: varianceVal,
@@ -1136,6 +1199,7 @@ export async function addUnlistedProductToStockCountSession(input: {
             data: {
                 sessionId: input.sessionId,
                 productId: input.productId,
+                vintage: input.vintage ?? null,
                 locationId: input.locationId || null,
                 locationCode: locCode,
                 qtySystem,

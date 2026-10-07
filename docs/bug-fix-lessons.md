@@ -3390,3 +3390,28 @@ Khi chuyển DeliveryClient.tsx sang UI kit (đợt 1 chuẩn hóa UI), nút chu
 
 ### Bài học
 > ⚠️ **RULE 122: Mọi nút/link đặt trong dòng bảng có onClick (mở drawer/chi tiết) BẮT BUỘC gọi e.stopPropagation() — áp dụng khi chuyển các bảng sang <Tr onClick> của UI kit.**
+
+---
+
+## BUG-123: WMS Stock Count & Mobile Counter — Trùng Lặp Dòng Khi Kệ Có Nhiều Lô, Trừ Hao Hụt Kho Dở Dang & Vi Phạm Kiểm Kê Mù (Blind Count Breach)
+
+### Triệu chứng & Bối cảnh
+Khi kiểm toán phân hệ Kiểm kê kho và công cụ đếm thực địa trên thiết bị di động (`/dashboard/stock-count` & `MobileLocationCounter.tsx`):
+1. **Trùng lặp dòng kiểm kê trên cùng một vị trí kệ:** Khi tạo phiên kiểm kê kho, nếu tại 1 vị trí kệ (location/bin) đang chứa nhiều lô hàng (`stockLots`) của cùng một mã SKU rượu vang, hệ thống sinh ra nhiều dòng `StockCountLine` riêng lẻ cho từng lô. Khi nhân viên quét mã tại kệ, màn hình hiển thị sản phẩm 2 lần; nhập số đếm thực tế vào dòng 1 dẫn tới chênh lệch ảo, làm sai lệch nghiêm trọng kết quả kiểm toán.
+2. **Trừ thiếu hụt tồn kho dở dang khi phê duyệt điều chỉnh:** Trong hàm `approveAndCreateAdjustment`, khi phát hiện hao hụt (`varianceVal < 0`), thuật toán chỉ lấy duy nhất 1 lô đầu tiên bằng `findFirst()`. Nếu số chai thiếu lớn hơn tồn khả dụng của lô đó, phần chênh lệch còn lại bị bỏ sót, không tiếp tục trừ vào các lô khác trong kho, dẫn đến tồn kho sổ sách không khớp thực tế sau kiểm kê.
+3. **Lỗ hổng Kiểm Kê Mù (Blind Count Breach):** Mặc dù phiên kiểm kê được cấu hình là Kiểm kê mù (`isBlindCount = true`) nhằm chống gian lận, nhân viên đếm kho trên điện thoại vẫn có thể tự do bấm nút Eye để tắt chế độ mù, xem được toàn bộ số tồn sổ sách và bấm "✓ Khớp tồn sổ" để tự động điền số khống.
+4. **Cảnh báo False Zero Count & Tràn bộ nhớ Audio:** Khi nhân viên bấm "Lưu và sang chai tiếp theo" mà chưa nhập số đếm (`qtyActual === null`), hệ thống âm thầm ghi nhận `qtyActual = 0` (báo mất 100% hàng trên kệ) mà không xác nhận; hàm `playBeepSound` khởi tạo `new AudioContext()` liên tục gây lỗi tràn bộ nhớ trên iOS Safari / Android Chrome.
+
+### Nguyên nhân gốc rễ
+1. `createStockCountSessionExtended` lặp trực tiếp qua `loc.stockLots` mà không gom nhóm (aggregate) theo cặp `(locationId, productId)`.
+2. `approveAndCreateAdjustment` thiếu vòng lặp khấu trừ đa lô theo FIFO (`receivedDate: 'asc'`) và thiếu kiểm tra phân quyền RBAC của người thực hiện duyệt.
+3. `MobileLocationCounter.tsx` thiếu trạng thái khóa `isBlindLocked = Boolean(detail.isBlindCount)` và khởi tạo AudioContext mới mỗi lần phát âm thanh thay vì sử dụng Singleton.
+
+### Cách khắc phục
+1. **Gộp nhóm dòng kiểm kê:** Trong `actions.ts`, dùng `Map` tổng hợp theo key `${loc.id}_${lot.productId}` để cộng dồn `qtyAvailable`, đảm bảo mỗi SKU tại 1 vị trí kệ chỉ có duy nhất 1 dòng kiểm đếm với tổng tồn sổ sách chính xác.
+2. **Khấu trừ đa lô theo FIFO:** Trong `approveAndCreateAdjustment`, truy vấn toàn bộ các lô khả dụng theo thứ tự ngày nhập `receivedDate: 'asc'` (ưu tiên cùng kệ, sau đó đến toàn kho) và lặp trừ dần cho tới khi bù đủ `shortageRemaining`. Bổ sung kiểm tra quyền quản lý (`ADMIN`, `THU_KHO`, `KE_TOAN`, `WAREHOUSE_MANAGER`...).
+3. **Khóa chặt Kiểm Kê Mù:** Khóa cố định chế độ mù nếu `detail.isBlindCount === true`, ngăn chặn nhân viên mở xem số tồn sổ hoặc bấm "Khớp tồn sổ".
+4. **Cảnh báo xác nhận 0 chai & Singleton AudioContext:** Bổ sung hộp thoại cảnh báo khi lưu số đếm 0 chai cho sản phẩm có tồn sổ lớn; chuyển đổi AudioContext sang hàm dùng chung `getSharedAudioContext()`.
+
+### Bài học
+> ⚠️ **RULE 123: (1) Khi lập phiếu kiểm kê kho (Stock Count Sessions), BẮT BỤC phải gom nhóm các lô cùng SKU tại cùng một vị trí kệ thành 1 dòng kiểm đếm duy nhất với tổng số tồn sổ; (2) Khi phê duyệt điều chỉnh hao hụt kho (Stock Shortage Adjustment), BẮT BỤC phải áp dụng giải thuật khấu trừ đa lô tuần tự theo FIFO cho đến khi trừ hết số lượng chênh lệch; (3) Trong chế độ Kiểm Kê Mù (Blind Count), TUYỆT ĐỐI KHÔNG cho phép thiết bị di động của nhân viên đếm kho tự ý mở xem tồn sổ sách hoặc tự động khớp tồn số liệu.**
