@@ -809,6 +809,7 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `reg_doc.scope` | COMPANY, SUPPLIER, CUSTOMER, PRODUCT, SHIPMENT, LOT |
 | `reg_doc.status` | ACTIVE, EXPIRING, EXPIRED, REVOKED, RENEWAL_PENDING, DRAFT |
 | `proposal` | `startDate`, `endDate` (Thời hạn hiệu lực ngày bắt đầu và kết thúc) |
+| `ProposalCategory` (enum) | Bổ sung giá trị `INTERNAL_TRAINING` (Tờ trình đào tạo nội bộ & mẫu thử nếm) |
 | `transfer_order_lines` | `vintage` (Niên vụ chọn khi lập phiếu chuyển kho) |
 | `sales_visits` | `visitNo`, `customerId`, `salespersonId`, `status`, `purpose`, `activityType`, `scheduleId`, `isUnplanned`, `checkInTime`/`checkOutTime`, `checkInPhoto`/`checkOutPhoto`, `durationMinutes`, `notes` |
 | `weekly_visit_plans` | `salesRepId`, `weekNumber`, `year`, `status`, `note`, `selfReview`, `managerFeedback`, `submittedAt`, `reviewedAt` |

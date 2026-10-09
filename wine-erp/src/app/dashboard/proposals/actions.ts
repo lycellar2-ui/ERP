@@ -13,6 +13,7 @@ import { createNotification, triggerNotificationForRole } from '@/lib/notificati
 // Category → Required approval levels
 const CATEGORY_ROUTING: Record<string, number[]> = {
     TASTING: [1, 2, 3],               // TP Sales → Kế toán → CEO
+    INTERNAL_TRAINING: [1, 2, 3],     // Trưởng Bộ Phận → Kế toán trưởng → CEO
     BUDGET_REQUEST: [1, 2, 3],        // TP → KT Trưởng → CEO
     CAPITAL_EXPENDITURE: [1, 2, 3],
     PRICE_ADJUSTMENT: [1, 2, 3],

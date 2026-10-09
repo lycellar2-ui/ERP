@@ -58,6 +58,15 @@ export const SYSTEM_ROLES: SystemRoleInfo[] = [
 ]
 
 export const DEFAULT_ROUTING_FULL: Record<string, ProposalRouteConfig> = {
+    INTERNAL_TRAINING: {
+        category: 'INTERNAL_TRAINING',
+        creatorRoles: [], // Tất cả các vai trò phòng ban đều có thể tạo
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng / Bộ Phận' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
     TASTING: {
         category: 'TASTING',
         creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],

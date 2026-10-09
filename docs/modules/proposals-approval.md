@@ -64,6 +64,7 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 
 | Loại Tờ Trình | Code | Cấp Duyệt Mặc Định | Role Tạo Mặc Định |
 |---|---|---|---|
+| **Đào Tạo Nội Bộ** | `INTERNAL_TRAINING` | Cấp 1 (TP Bộ Phận) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Tất cả nhân viên |
 | **Tờ Trình Tasting (Thử Rượu)** | `TASTING` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Cơ Chế Giá** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Xin Ngân Sách** | `BUDGET_REQUEST` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
@@ -73,12 +74,30 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | **Thay Đổi Chính Sách** | `POLICY_CHANGE` | Cấp 1 (CEO) | CEO, Admin |
 | **Lịch Thanh Toán** | `PAYMENT_SCHEDULE` | Cấp 1 (KT) ➔ Cấp 2 (CEO) | Kế Toán, Admin |
 
+> **Quy trình Tờ Trình Đào Tạo Nội Bộ & Hàng Mẫu Thử Nếm (Training Samples)**:
+> 1. Nhân viên các phòng ban lập **Tờ Trình Đào Tạo Nội Bộ (`category: INTERNAL_TRAINING`)**, có thể đính kèm danh sách rượu vang dùng thử nếm trong buổi đào tạo (SKUs & Số lượng chai).
+> 2. Luồng duyệt tự động 3 cấp: **Trưởng Bộ Phận (Cấp 1)** ➔ **Kế Toán Trưởng (Cấp 2 - kiểm soát ngân sách/chi phí mẫu)** ➔ **Tổng Giám Đốc (Cấp 3 - phê duyệt cuối)**.
+> 3. Sau khi được duyệt (`APPROVED`), Drawer chi tiết hiển thị danh sách rượu mẫu kèm nút **`🍷 + Lên Đơn Xuất Mẫu Training`** để tạo nhanh đơn xuất hàng mẫu thử nếm 0 VNĐ trên hệ thống.
+
 > **Quy trình Liên Kết Tờ Trình Tasting & Đơn Hàng Tasting (0 VNĐ)**:
 > 1. Sales lập **Tờ Trình Tasting (`category: TASTING`)** chọn Khách hàng và **chọn chi tiết các mã sản phẩm (SKUs) kèm Số Lượng (chai)** cần nếm thử (thủ công hoặc chọn nhanh hàng loạt).
 > 2. Tờ trình được duyệt qua 3 cấp (TP ➔ KT ➔ CEO).
 > 3. Sau khi Tờ trình được duyệt (`APPROVED`), nút **`🍷 + Lên Đơn Tasting Ngay`** xuất hiện trên Drawer chi tiết Tờ trình.
 > 4. Nhấp nút (hoặc chọn Tờ trình Tasting trong dropdown của `CreateSODrawer`) sẽ **TỰ ĐỘNG NẠP CHÍNH XÁC DANH SÁCH MÃ SẢN PHẨM & SỐ LƯỢNG (QTY)** từ Tờ trình sang bảng sản phẩm đơn hàng, gán đơn giá 0 VNĐ và điều khoản thanh toán *"TASTING - Không thu tiền"*.
 > 5. Tờ trình lưu lịch sử danh sách các Đơn Bán Hàng Tasting đã phát sinh (`salesOrders`) kèm link truy cập nhanh.
+
+> **Quy trình Tờ Trình Chương Trình Khuyến Mãi (CTKM 1 Mã, Mua X Tặng Y & Quota Hạn Mức)**:
+> 1. Lập **Tờ Trình Chương Trình KM (`category: PROMOTION_CAMPAIGN`)**:
+>    - **Phân loại kênh khách hàng**: Chọn các kênh áp dụng (Bán buôn `WHOLESALE_DISTRIBUTOR`, Doanh nghiệp `CORPORATE`, Bán lẻ `RETAIL`, HORECA `HORECA` hoặc Tất cả).
+>    - **Thời gian áp dụng**: Chọn ngày bắt đầu (`startDate`) và ngày kết thúc (`endDate`).
+>    - **Cơ chế Mua Hàng & Quà Tặng (1 mã)**: Chọn mã sản phẩm mua chính (SKU) kèm số lượng mua tối thiểu (X chai) ➔ Chọn cơ chế quà tặng: tặng cùng mã sản phẩm HOẶC tặng mã quà tặng khác (ly vang, khui rượu, chai khác) kèm số lượng tặng (Y chai 0 VNĐ).
+>    - **Hạn mức Quota**: Thiết lập tổng số lượng quà tặng toàn chiến dịch (`maxTotalQty`) VÀ số lượng tối đa trên mỗi đơn hàng/mỗi khách (`maxQtyPerOrder`).
+>    - **Dự toán ngân sách tự động**: Tự động tính toán ngân sách chiến dịch = `maxTotalQty * đơn giá quà tặng`.
+> 2. Luồng duyệt 3 cấp tự động theo Ma trận phân quyền: **Trưởng Bộ Phận (Cấp 1) ➔ Kế Toán Trưởng (Cấp 2) ➔ Tổng Giám Đốc (Cấp 3)**.
+> 3. **Tích hợp Tự Động Hóa trên Đơn Hàng (SO)**:
+>    - Khi Sales lên đơn hàng bán (`CreateSODrawer`), hệ thống tự động kiểm tra thời hạn và kênh của khách hàng.
+>    - Khi đơn hàng có dòng sản phẩm mua chính đạt số lượng >= X: Hệ thống hiển thị **Banner thông báo gợi ý quà tặng** nổi bật kèm nút bấm **`[ 🎁 + Thêm M Chai Quà Tặng (0 VNĐ) ]`** (đã tính theo tỷ lệ X/Y và áp trần `maxQtyPerOrder`).
+>    - Sales bấm xác nhận để hệ thống chèn dòng quà tặng với đơn giá 0 VNĐ và nguồn giá `PROMOTION_GIFT`. Sales hoàn toàn chủ động xác nhận nhận quà, tránh tự ý nhồi dòng ngoài ý muốn.
 
 ---
 
@@ -198,7 +217,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Sắp xếp theo thời gian & lọc theo mức độ ưu tiên | ✅ Hoàn thành (04/09/2026) |
 | Tờ trình song ngữ (Form + Mẫu in Tasting & Cơ chế giá + Bộ chọn ngôn ngữ) | ✅ Hoàn thành (03/10/2026) |
 | Chuyển đổi ngôn ngữ giao diện VI / EN (Sidebar + Proposals List + Form + Detail + Title Splitting) | ✅ Hoàn thành (04/10/2026) |
+| Tờ trình CTKM 1 mã (Mua X tặng Y, Kênh bán buôn/DN/bán lẻ/Horeca, Quota, Gợi ý quà tặng SO) | ✅ Hoàn thành (09/10/2026) |
 
 ---
 
-*Last updated: 2026-10-04 22:15 | Wine ERP v10.9*
+*Last updated: 2026-10-09 22:30 | Wine ERP v10.9*

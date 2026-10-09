@@ -3,6 +3,7 @@ import type { AppLocale } from '@/lib/i18n'
 
 export const CATEGORY_LABELS: Record<string, string> = {
     TASTING: '🍷 Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
+    INTERNAL_TRAINING: '🎓 Tờ Trình Đào Tạo Nội Bộ (Internal Training)',
     SPECIAL_EVENT: '🎪 Tờ Trình Tổ Chức Sự Kiện / Event',
     PRICE_ADJUSTMENT: '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt',
     BUDGET_REQUEST: 'Xin Ngân Sách',
@@ -21,6 +22,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 export const CATEGORY_LABELS_EN: Record<string, string> = {
     TASTING: '🍷 Wine Tasting & Sample Proposal',
+    INTERNAL_TRAINING: '🎓 Internal Training Proposal',
     SPECIAL_EVENT: '🎪 Special Event Proposal',
     PRICE_ADJUSTMENT: '🏷️ Special Pricing & Commercial Policy',
     BUDGET_REQUEST: 'Budget Request',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Badge, Button, Drawer } from '@/components/ui'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag, Wine, Sparkles, Calendar, Truck, CornerDownRight } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag, Wine, Sparkles, Calendar, Truck, CornerDownRight, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -27,6 +27,10 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
 
 const getPriceBadgeStyle = (source: string) => {
     switch (source) {
+        case 'PROMOTION_GIFT':
+            return { background: 'rgba(16, 185, 129, 0.15)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' }
+        case 'TASTING_FREE':
+            return { background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }
         case 'SPECIAL_PRICE':
             return { background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }
         case 'FIXED_PRICE':
@@ -299,7 +303,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             if (cloneData.proposalId && cloneData.lines.length === 0) {
                 getProposalWithItemsForSO(cloneData.proposalId).then(prop => {
                     if (prop) {
-                        setNotes(`Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
+                        setNotes(prop.category === 'INTERNAL_TRAINING' ? `Đơn xuất mẫu Đào tạo kèm Tờ trình ${prop.proposalNo}: ${prop.title}` : `Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
                         if (prop.priceItems && prop.priceItems.length > 0) {
                             const loadedLines = prop.priceItems.map((item: any) => ({
                                 productId: item.productId,
@@ -504,6 +508,126 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const handleChannelChange = async (newChannel: SalesChannel) => {
         setChannel(newChannel)
         loadPrices(customerId || null, newChannel)
+    }
+
+    // Promotion Campaign detection (Buy X Get Y)
+    const activePromoInfo = useMemo(() => {
+        let targetProposal = proposals.find(p => p.id === proposalId)
+
+        if (!targetProposal || (targetProposal as any).category !== 'PROMOTION_CAMPAIGN') {
+            const now = new Date()
+            targetProposal = proposals.find(p => {
+                const propCat = (p as any).category
+                const propScope = (p as any).scope
+                if (propCat !== 'PROMOTION_CAMPAIGN' || !propScope) return false
+                try {
+                    if (typeof propScope === 'string' && propScope.startsWith('{')) {
+                        const parsed = JSON.parse(propScope)
+                        if (parsed.promoType === 'BUY_X_GET_Y') {
+                            const start = (p as any).startDate ? new Date((p as any).startDate) : null
+                            const end = (p as any).endDate ? new Date((p as any).endDate) : null
+                            if (start && now < start) return false
+                            if (end && now > end) return false
+                            const custCh = selectedCustomer?.channel || channel
+                            if (parsed.targetChannels && parsed.targetChannels.length > 0) {
+                                const isChannelMatch = parsed.targetChannels.includes(custCh) ||
+                                    ((custCh === 'DIRECT_INDIVIDUAL' || custCh === 'VIP_RETAIL') && parsed.targetChannels.includes('RETAIL'))
+                                if (!isChannelMatch) return false
+                            }
+                            return true
+                        }
+                    }
+                } catch { return false }
+                return false
+            })
+        }
+
+        const propScope = targetProposal ? (targetProposal as any).scope : null
+        if (!targetProposal || !propScope) return null
+
+        try {
+            if (typeof propScope !== 'string' || !propScope.startsWith('{')) return null
+            const parsed = JSON.parse(propScope)
+            if (parsed.promoType !== 'BUY_X_GET_Y') return null
+
+            const custCh = selectedCustomer?.channel || channel
+            if (parsed.targetChannels && parsed.targetChannels.length > 0) {
+                const isChannelMatch = parsed.targetChannels.includes(custCh) ||
+                    ((custCh === 'DIRECT_INDIVIDUAL' || custCh === 'VIP_RETAIL') && parsed.targetChannels.includes('RETAIL'))
+                if (!isChannelMatch) return null
+            }
+
+            const buyProductId = parsed.buyProductId
+            const buyQtyRequirement = Number(parsed.buyQty) || 1
+            const giftProductId = parsed.giftProductId || buyProductId
+            const giftRatio = Number(parsed.giftQty) || 1
+            const maxPerOrder = Number(parsed.maxQtyPerOrder) || 9999
+
+            const totalBought = lines
+                .filter(l => l.productId === buyProductId && l.priceSource !== 'PROMOTION_GIFT')
+                .reduce((sum, l) => sum + (Number(l.qtyOrdered) || 0), 0)
+
+            const eligibleGifts = Math.min(
+                Math.floor(totalBought / buyQtyRequirement) * giftRatio,
+                maxPerOrder
+            )
+
+            const buyProd = products.find(p => p.id === buyProductId)
+            const giftProd = products.find(p => p.id === giftProductId)
+            const existingGiftLine = lines.find(l => l.productId === giftProductId && l.priceSource === 'PROMOTION_GIFT')
+
+            return {
+                proposal: targetProposal,
+                parsed,
+                buyProductId,
+                buyProductName: buyProd?.productName || 'Sản phẩm mua',
+                buySku: buyProd?.skuCode || '',
+                giftProductId,
+                giftProductName: giftProd?.productName || buyProd?.productName || 'Quà tặng',
+                giftSku: giftProd?.skuCode || buyProd?.skuCode || '',
+                totalBought,
+                buyQtyRequirement,
+                eligibleGifts,
+                maxPerOrder,
+                isEligible: totalBought >= buyQtyRequirement && eligibleGifts > 0,
+                existingGiftLine,
+                giftProduct: giftProd || buyProd,
+            }
+        } catch {
+            return null
+        }
+    }, [proposalId, proposals, selectedCustomer, channel, lines, products])
+
+    const handleApplyGift = () => {
+        if (!activePromoInfo || !activePromoInfo.isEligible) return
+        if (!proposalId) {
+            setProposalId(activePromoInfo.proposal.id)
+        }
+        const giftProd = activePromoInfo.giftProduct
+        const newLine: SOLine = {
+            productId: activePromoInfo.giftProductId,
+            productName: activePromoInfo.giftProductName,
+            skuCode: activePromoInfo.giftSku,
+            qtyOrdered: activePromoInfo.eligibleGifts,
+            unitPrice: 0,
+            lineDiscountPct: 0,
+            vatRate: 10,
+            priceSource: 'PROMOTION_GIFT',
+            stock: giftProd?.totalStock || 100,
+        }
+        setLines(prev => [...prev, newLine])
+        toast.success(`Đã thêm ${activePromoInfo.eligibleGifts} chai [${activePromoInfo.giftSku}] quà tặng 0 VNĐ theo CTKM ${activePromoInfo.proposal.proposalNo}!`)
+    }
+
+    const handleSyncGiftQty = () => {
+        if (!activePromoInfo || !activePromoInfo.existingGiftLine) return
+        setLines(prev => prev.map(l => {
+            if (l.productId === activePromoInfo.giftProductId && l.priceSource === 'PROMOTION_GIFT') {
+                return { ...l, qtyOrdered: activePromoInfo.eligibleGifts }
+            }
+            return l
+        }))
+        toast.success(`Đã cập nhật số lượng quà tặng thành ${activePromoInfo.eligibleGifts} chai!`)
     }
 
     const addLine = () => {
@@ -1124,6 +1248,69 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <Plus size={13} /> {t.addLine}
                                     </button>
                                 </div>
+
+                                {/* Promotion Banner (Buy X Get Y) */}
+                                {activePromoInfo && activePromoInfo.totalBought > 0 && (
+                                    <div className="mb-3 p-3.5 rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+                                        <div className="flex items-start gap-2.5">
+                                            <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 flex-shrink-0 mt-0.5">
+                                                <Gift size={20} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-xs font-black uppercase text-emerald-950 tracking-wide">
+                                                        🎁 {isEn ? 'Promotion Available' : 'Đạt Điều Kiện CTKM'} [{activePromoInfo.proposal.proposalNo}]
+                                                    </span>
+                                                    {activePromoInfo.isEligible && (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs">
+                                                            {isEn ? `Buy ${activePromoInfo.totalBought} Get ${activePromoInfo.eligibleGifts}` : `Mua ${activePromoInfo.totalBought} Tặng ${activePromoInfo.eligibleGifts}`}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-emerald-900 mt-1 leading-relaxed">
+                                                    {isEn ? 'Buying' : 'Đã mua'} <strong className="text-emerald-950">{activePromoInfo.totalBought}</strong> {isEn ? 'bottles of' : 'chai'} <strong>[{activePromoInfo.buySku}] {activePromoInfo.buyProductName}</strong> ➔ {isEn ? 'Eligible for' : 'Được tặng'} <strong className="text-emerald-950">{activePromoInfo.eligibleGifts} {isEn ? 'free bottles of' : 'chai'} [{activePromoInfo.giftSku}] {activePromoInfo.giftProductName}</strong> (0 VNĐ).
+                                                    {activePromoInfo.maxPerOrder && activePromoInfo.maxPerOrder < 9999 && (
+                                                        <span className="text-[11px] text-emerald-700 ml-1">({isEn ? `Max ${activePromoInfo.maxPerOrder} gifts/order` : `Đã áp trần tối đa ${activePromoInfo.maxPerOrder} chai/đơn`})</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-shrink-0 self-end sm:self-center">
+                                            {!activePromoInfo.existingGiftLine ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleApplyGift}
+                                                    disabled={!activePromoInfo.isEligible}
+                                                    className={`px-3.5 py-2 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                                                        activePromoInfo.isEligible 
+                                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95' 
+                                                            : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                                                    }`}
+                                                >
+                                                    <Gift size={14} />
+                                                    {isEn ? `+ Add ${activePromoInfo.eligibleGifts} Free Gift Bottles (0 VND)` : `+ Thêm ${activePromoInfo.eligibleGifts} Chai Quà Tặng (0 VNĐ)`}
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                                                        <CheckCircle2 size={14} className="text-emerald-600" />
+                                                        {isEn ? `Applied ${activePromoInfo.existingGiftLine.qtyOrdered} gifts` : `Đã nhận ${activePromoInfo.existingGiftLine.qtyOrdered} chai tặng`}
+                                                    </span>
+                                                    {activePromoInfo.existingGiftLine.qtyOrdered !== activePromoInfo.eligibleGifts && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleSyncGiftQty}
+                                                            className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs cursor-pointer"
+                                                        >
+                                                            {isEn ? `Update to ${activePromoInfo.eligibleGifts}` : `Cập nhật thành ${activePromoInfo.eligibleGifts} chai`}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {lines.length === 0 ? (
                                     <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #E2E8F0' }}>

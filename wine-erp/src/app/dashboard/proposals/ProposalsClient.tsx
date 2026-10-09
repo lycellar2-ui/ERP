@@ -5,6 +5,7 @@ import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
     Filter, Eye, ArrowRight, ClipboardCheck, Printer, Trash2, Check,
+    Gift, Sparkles, ShoppingBag, Calendar,
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
@@ -115,6 +116,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         switch (cat) {
             case 'TASTING':
                 return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+            case 'INTERNAL_TRAINING':
+                return { label: isEn ? '🎓 Internal Training' : '🎓 Đào Tạo Nội Bộ', bg: 'rgba(16,185,129,0.15)', color: '#059669', border: 'rgba(16,185,129,0.3)' }
             case 'SPECIAL_EVENT':
                 return { label: isEn ? '🎪 Special Event' : '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
@@ -305,7 +308,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const printWindow = window.open('', '_blank')
         if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
 
-        const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT'
+        const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING'
+        const isTraining = detail.category === 'INTERNAL_TRAINING'
         const isPriceAdjustment = detail.category === 'PRICE_ADJUSTMENT'
 
         let titleVi = detail.title || ''
@@ -320,6 +324,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const catClean = catRaw.replace(/^[^\w\s\u00C0-\u1EF9]+/, '').trim().toUpperCase()
         const docTitleVi = isPriceAdjustment ? 'TỜ TRÌNH CƠ CHẾ GIÁ & GIÁ ĐẶC BIỆT' : `TỜ TRÌNH ${catClean}`
         const docTitleEn = isPriceAdjustment ? 'PROPOSAL FOR SPECIAL PRICING MECHANISM & COMMERCIAL POLICY'
+            : detail.category === 'INTERNAL_TRAINING' ? 'INTERNAL TRAINING & SAMPLES PROPOSAL'
             : detail.category === 'BUDGET_REQUEST' ? 'BUDGET ALLOCATION PROPOSAL'
             : detail.category === 'CAPITAL_EXPENDITURE' ? 'CAPITAL EXPENDITURE PROPOSAL'
             : detail.category === 'NEW_SUPPLIER' ? 'NEW SUPPLIER PROPOSAL'
@@ -497,12 +502,18 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </table>
 
                 <!-- Main Title -->
-                <div class="doc-title">${lang === 'EN' ? 'SUBMISSION FOR FREE WINE-TASTING SAMPLES' : 'TỜ TRÌNH XUẤT HÀNG MẪU RƯỢU'}</div>
-                ${lang === 'BILINGUAL' ? '<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 3px;">SUBMISSION FOR FREE WINE-TASTING SAMPLES</div>' : ''}
+                <div class="doc-title">${lang === 'EN' ? (isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES') : (isTraining ? 'TỜ TRÌNH ĐÀO TẠO NỘI BỘ' : 'TỜ TRÌNH XUẤT HÀNG MẪU RƯỢU')}</div>
+                ${lang === 'BILINGUAL' ? `<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 3px;">${isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES'}</div>` : ''}
                 <div class="doc-subtitle">
-                    ${lang === 'VI' ? `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''})` :
-                      lang === 'EN' ? `(Re: Approval for issuing free wine-tasting samples to HoReCa customer${titleEn || titleVi ? ` — ${titleEn || titleVi}` : ''})` :
-                      `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''} /<br/>Approval for issuing free wine-tasting samples to HoReCa customer${titleEn ? ` — ${titleEn}` : ''})`}
+                    ${isTraining ? (
+                        lang === 'VI' ? `(V/v: Phê duyệt kế hoạch đào tạo nội bộ & mẫu thử nếm${titleVi ? ` — ${titleVi}` : ''})` :
+                        lang === 'EN' ? `(Re: Approval for internal training program & tasting samples${titleEn || titleVi ? ` — ${titleEn || titleVi}` : ''})` :
+                        `(V/v: Phê duyệt kế hoạch đào tạo nội bộ & mẫu thử nếm${titleVi ? ` — ${titleVi}` : ''} /<br/>Approval for internal training program & tasting samples${titleEn ? ` — ${titleEn}` : ''})`
+                    ) : (
+                        lang === 'VI' ? `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''})` :
+                        lang === 'EN' ? `(Re: Approval for issuing free wine-tasting samples to HoReCa customer${titleEn || titleVi ? ` — ${titleEn || titleVi}` : ''})` :
+                        `(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa${titleVi ? ` — ${titleVi}` : ''} /<br/>Approval for issuing free wine-tasting samples to HoReCa customer${titleEn ? ` — ${titleEn}` : ''})`
+                    )}
                 </div>
 
                 <!-- Recipient & Basis -->
@@ -1052,6 +1063,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         }}
                     >
                         <option value="ALL">{t.filters.allCategories}</option>
+                        <option value="INTERNAL_TRAINING">{locale === 'en' ? '🎓 Internal Training' : '🎓 Tờ Trình Đào Tạo Nội Bộ'}</option>
                         <option value="TASTING">{locale === 'en' ? '🍷 Wine Tasting & Sample' : '🍷 Tờ Trình Tasting (Thử Rượu)'}</option>
                         <option value="SPECIAL_EVENT">{locale === 'en' ? '🎪 Special Event' : '🎪 Sự Kiện / Event'}</option>
                         <option value="PRICE_ADJUSTMENT">{locale === 'en' ? '🏷️ Special Pricing Mechanism' : '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
@@ -1862,6 +1874,13 @@ function BatchProductPickerModal({
     )
 }
 
+const PROMO_CHANNELS = [
+    { id: 'WHOLESALE_DISTRIBUTOR', labelVi: '🏢 Khách Bán Buôn / Đại Lý', labelEn: 'Wholesale / Distributor' },
+    { id: 'CORPORATE', labelVi: '🏛️ Khách Doanh Nghiệp (B2B)', labelEn: 'Corporate B2B' },
+    { id: 'RETAIL', labelVi: '🛍️ Khách Bán Lẻ / Cá Nhân', labelEn: 'Retail / Individual' },
+    { id: 'HORECA', labelVi: '🍷 Khách HORECA (Nhà hàng, KS)', labelEn: 'HORECA' },
+]
+
 // ─── Create Drawer ───────────────────────────────
 function CreateDrawer({ onClose, userId, onCreated }: {
     onClose: () => void
@@ -1907,6 +1926,81 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     const [saving, setSaving] = useState(false)
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
 
+    // Promotion Campaign (CTKM 1 mã, Buy X Get Y & Quota)
+    const [promoConfig, setPromoConfig] = useState({
+        targetChannels: ['WHOLESALE_DISTRIBUTOR', 'CORPORATE', 'RETAIL'],
+        buyProductId: '',
+        buyQty: 6,
+        giftType: 'SAME_PRODUCT' as 'SAME_PRODUCT' | 'OTHER_PRODUCT',
+        giftProductId: '',
+        giftQty: 1,
+        maxTotalQty: 300,
+        maxQtyPerOrder: 5,
+    })
+
+    const selectedBuyProduct = useMemo(() => {
+        return products.find(p => p.id === promoConfig.buyProductId)
+    }, [products, promoConfig.buyProductId])
+
+    const activeGiftProductId = promoConfig.giftType === 'SAME_PRODUCT'
+        ? promoConfig.buyProductId
+        : promoConfig.giftProductId
+
+    const selectedGiftProduct = useMemo(() => {
+        return products.find(p => p.id === activeGiftProductId)
+    }, [products, activeGiftProductId])
+
+    const calculatedPromoBudget = useMemo(() => {
+        if (!selectedGiftProduct || !promoConfig.maxTotalQty) return 0
+        const price = selectedGiftProduct.wholesalePrice || 0
+        return promoConfig.maxTotalQty * price
+    }, [selectedGiftProduct, promoConfig.maxTotalQty])
+
+    const handleAutoFillPromoContent = () => {
+        if (!selectedBuyProduct) {
+            return alert(locale === 'en' ? 'Please select a product first' : 'Vui lòng chọn sản phẩm áp dụng khuyến mãi trước')
+        }
+        const giftProdName = selectedGiftProduct?.productName || selectedBuyProduct.productName
+        const giftProdSku = selectedGiftProduct?.skuCode || selectedBuyProduct.skuCode
+        const buyProdName = selectedBuyProduct.productName
+        const buyProdSku = selectedBuyProduct.skuCode
+
+        const autoTitle = `CTKM Mua ${promoConfig.buyQty} tặng ${promoConfig.giftQty} [${buyProdSku}] ${buyProdName}`
+        const autoTitleEn = `Promotion: Buy ${promoConfig.buyQty} Get ${promoConfig.giftQty} [${buyProdSku}] ${buyProdName}`
+        
+        const channelNames = promoConfig.targetChannels.map(cid => {
+            const ch = PROMO_CHANNELS.find(c => c.id === cid)
+            return locale === 'en' ? ch?.labelEn : ch?.labelVi
+        }).join(', ')
+
+        const autoContent = locale === 'en' 
+            ? `Commercial Promotion Campaign (Buy X Get Y):
+- Target Channels: ${channelNames || 'All channels'}
+- Purchased Product: [${buyProdSku}] ${buyProdName} (Min order: ${promoConfig.buyQty} bottles)
+- Gift Product: [${giftProdSku}] ${giftProdName} (Gift: ${promoConfig.giftQty} bottles at 0 VND)
+- Quota Limits:
+  + Max ${promoConfig.maxQtyPerOrder} gift bottles per order/customer
+  + Total campaign allocation: ${promoConfig.maxTotalQty} gift bottles
+- Validity: From ${form.startDate || 'approval date'} to ${form.endDate || 'campaign end'}`
+            : `Chương trình khuyến mãi Mua hàng tặng hàng (Buy X Get Y):
+- Kênh áp dụng: ${channelNames || 'Tất cả các kênh'}
+- Sản phẩm mua: [${buyProdSku}] ${buyProdName} (Mua tối thiểu: ${promoConfig.buyQty} chai)
+- Sản phẩm quà tặng: [${giftProdSku}] ${giftProdName} (Tặng: ${promoConfig.giftQty} chai với giá 0 VNĐ)
+- Hạn mức số lượng tối đa:
+  + Tối đa trên mỗi đơn hàng: ${promoConfig.maxQtyPerOrder} chai quà tặng
+  + Tổng số lượng toàn chiến dịch: ${promoConfig.maxTotalQty} chai quà tặng
+- Thời gian áp dụng: Từ ${form.startDate || 'ngày phê duyệt'} đến ${form.endDate || 'khi kết thúc chiến dịch'}`
+
+        setForm(f => ({
+            ...f,
+            title: autoTitle,
+            titleEn: autoTitleEn,
+            content: autoContent,
+            estimatedAmount: calculatedPromoBudget > 0 ? String(calculatedPromoBudget) : f.estimatedAmount,
+        }))
+        toast.success(locale === 'en' ? 'Auto-filled title and content!' : 'Đã tự động điền tiêu đề và nội dung chuẩn!')
+    }
+
     const usableCustomers = useMemo(() => {
         return customers.filter(c => !isParentCustomer(c))
     }, [customers])
@@ -1943,6 +2037,28 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             }
         }
         const isTastingCategory = form.category === 'TASTING' || form.category === 'SPECIAL_EVENT'
+        const isTrainingCategory = form.category === 'INTERNAL_TRAINING'
+        const isPromotionCategory = form.category === 'PROMOTION_CAMPAIGN'
+
+        if (isPromotionCategory) {
+            if (!promoConfig.buyProductId) {
+                return alert(locale === 'en' ? 'Please select the main product for promotion' : 'Vui lòng chọn mã sản phẩm áp dụng khuyến mãi')
+            }
+            const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
+            if (!activeGiftId) {
+                return alert(locale === 'en' ? 'Please select gift product' : 'Vui lòng chọn sản phẩm quà tặng')
+            }
+            if (promoConfig.targetChannels.length === 0) {
+                return alert(locale === 'en' ? 'Please select at least one customer channel' : 'Vui lòng chọn ít nhất một kênh khách hàng áp dụng')
+            }
+            if (!form.startDate || !form.endDate) {
+                return alert(locale === 'en' ? 'Please select campaign start and end date' : 'Vui lòng chọn thời gian bắt đầu và kết thúc khuyến mãi')
+            }
+            if (new Date(form.startDate) > new Date(form.endDate)) {
+                return alert(locale === 'en' ? 'End date must be after start date' : 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+            }
+        }
+
         if (isTastingCategory) {
             if (priceLines.length === 0) {
                 return alert(locale === 'en' ? 'Please select at least 1 tasting product' : 'Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
@@ -1951,25 +2067,68 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 return alert(locale === 'en' ? 'Please select products for all tasting lines' : 'Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
             }
         }
+        if (isTrainingCategory && priceLines.length > 0) {
+            if (priceLines.some(line => !line.productId)) {
+                return alert(locale === 'en' ? 'Please select products for all training sample lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng rượu mẫu đào tạo')
+            }
+        }
         setSaving(true)
-        const finalScope = (form.category === 'PRICE_ADJUSTMENT' && additionalBranches.length > 0)
-            ? `${form.scope} | BRANCHES:${additionalBranches.join(',')}`
-            : form.scope
+
+        let finalScope = form.scope
+        if (form.category === 'PRICE_ADJUSTMENT' && additionalBranches.length > 0) {
+            finalScope = `${form.scope} | BRANCHES:${additionalBranches.join(',')}`
+        } else if (isPromotionCategory) {
+            const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
+            finalScope = JSON.stringify({
+                promoType: 'BUY_X_GET_Y',
+                targetChannels: promoConfig.targetChannels,
+                buyProductId: promoConfig.buyProductId,
+                buyQty: promoConfig.buyQty,
+                giftType: promoConfig.giftType,
+                giftProductId: activeGiftId,
+                giftQty: promoConfig.giftQty,
+                maxTotalQty: promoConfig.maxTotalQty,
+                maxQtyPerOrder: promoConfig.maxQtyPerOrder,
+            })
+        }
+
+        let finalPriceItems = priceLines
+        if (isPromotionCategory) {
+            const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
+            const buyProd = products.find(p => p.id === promoConfig.buyProductId)
+            const giftProd = products.find(p => p.id === activeGiftId)
+            finalPriceItems = [
+                {
+                    productId: promoConfig.buyProductId,
+                    proposedPrice: buyProd?.wholesalePrice || 0,
+                    quantity: promoConfig.buyQty,
+                },
+                {
+                    productId: activeGiftId,
+                    proposedPrice: 0,
+                    quantity: promoConfig.giftQty,
+                }
+            ]
+        }
 
         const finalTitle = form.titleEn?.trim()
             ? `${form.title.trim()} / ${form.titleEn.trim()}`
             : form.title.trim()
 
+        const finalEstimated = isPromotionCategory && calculatedPromoBudget > 0
+            ? calculatedPromoBudget
+            : (form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined)
+
         const result = await createProposal({
             ...form,
             title: finalTitle,
             scope: finalScope,
-            estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
+            estimatedAmount: finalEstimated,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
             startDate: form.startDate || undefined,
             endDate: form.endDate || undefined,
-            priceItems: (isTastingCategory || form.category === 'PRICE_ADJUSTMENT') && priceLines.length > 0
-                ? priceLines 
+            priceItems: (isTastingCategory || isTrainingCategory || form.category === 'PRICE_ADJUSTMENT' || isPromotionCategory) && finalPriceItems.length > 0
+                ? finalPriceItems 
                 : undefined,
             createdBy: userId,
         })
@@ -2001,12 +2160,299 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         </select>
                     </div>
 
-                    {/* Tasting Custom Fields */}
-                    {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT') && (
-                        <div className="space-y-4 p-4 rounded-xl border border-amber-200/90 bg-amber-50/30 shadow-xs">
+                    {/* Promotion Campaign (CTKM 1 Mã, Mua X Tặng Y, Kênh, Quota) */}
+                    {form.category === 'PROMOTION_CAMPAIGN' && (
+                        <div className="space-y-4 p-5 rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 shadow-xs">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-200/80 pb-3 gap-2">
+                                <div>
+                                    <h4 className="text-sm font-black uppercase text-amber-950 flex items-center gap-2 tracking-wide">
+                                        <Gift size={18} className="text-amber-600" />
+                                        {locale === 'en' ? '🎁 PROMOTION MECHANISM (BUY X GET Y & QUOTA)' : '🎁 CẤU HÌNH CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM 1 MÃ & TẶNG HÀNG)'}
+                                    </h4>
+                                    <p className="text-xs text-amber-800 mt-0.5">
+                                        {locale === 'en' 
+                                            ? 'Configure buy & gift products, applicable customer channels, validity dates, and order/campaign quotas.' 
+                                            : 'Thiết lập cơ chế mua hàng tặng hàng 1 mã, kênh khách hàng áp dụng, thời hạn hiệu lực và hạn mức số lượng tối đa.'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAutoFillPromoContent}
+                                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
+                                >
+                                    <Sparkles size={14} />
+                                    {locale === 'en' ? 'Auto-fill Content' : 'Điền nhanh tiêu đề & nội dung'}
+                                </button>
+                            </div>
+
+                            {/* 1. Target Channels */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
+                                        1. {locale === 'en' ? 'Applicable Customer Channels *' : 'Kênh Khách Hàng Áp Dụng *'}
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (promoConfig.targetChannels.length === PROMO_CHANNELS.length) {
+                                                setPromoConfig(p => ({ ...p, targetChannels: [] }))
+                                            } else {
+                                                setPromoConfig(p => ({ ...p, targetChannels: PROMO_CHANNELS.map(c => c.id) }))
+                                            }
+                                        }}
+                                        className="text-xs font-bold text-amber-700 hover:underline cursor-pointer"
+                                    >
+                                        {promoConfig.targetChannels.length === PROMO_CHANNELS.length 
+                                            ? (locale === 'en' ? 'Deselect All' : 'Bỏ chọn tất cả') 
+                                            : (locale === 'en' ? '+ Select All Channels' : '+ Chọn tất cả 4 kênh')}
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {PROMO_CHANNELS.map(ch => {
+                                        const isSelected = promoConfig.targetChannels.includes(ch.id)
+                                        return (
+                                            <button
+                                                key={ch.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setPromoConfig(p => ({
+                                                        ...p,
+                                                        targetChannels: isSelected
+                                                            ? p.targetChannels.filter(id => id !== ch.id)
+                                                            : [...p.targetChannels, ch.id]
+                                                    }))
+                                                }}
+                                                className={`p-2.5 rounded-lg border text-left text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                                                    isSelected 
+                                                        ? 'bg-amber-100/90 border-amber-500 text-amber-950 shadow-2xs' 
+                                                        : 'bg-white border-slate-200 text-slate-600 hover:border-amber-300'
+                                                }`}
+                                            >
+                                                <span>{locale === 'en' ? ch.labelEn : ch.labelVi}</span>
+                                                <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${
+                                                    isSelected ? 'bg-amber-600 border-amber-600 text-white' : 'border-slate-300'
+                                                }`}>
+                                                    {isSelected && '✓'}
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. Validity Dates */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block mb-1">
+                                        2. {locale === 'en' ? 'Start Date (Effective From) *' : 'Thời Gian Bắt Đầu (Từ Ngày) *'}
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={form.startDate}
+                                        onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                                        style={inputStyle}
+                                        className="font-medium"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block mb-1">
+                                        {locale === 'en' ? 'End Date (Effective Until) *' : 'Thời Gian Kết Thúc (Đến Ngày) *'}
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={form.endDate}
+                                        onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                                        style={inputStyle}
+                                        className="font-medium"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 3. Buy & Gift Mechanics */}
+                            <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                            3. {locale === 'en' ? 'Purchased Product (Main SKU) *' : 'Mã Sản Phẩm Mua (1 Mã Chính) *'}
+                                        </label>
+                                        <span className="text-[11px] text-amber-700 font-medium">
+                                            {locale === 'en' ? 'Select SKU that triggers promo' : 'Chọn SKU kích hoạt khuyến mãi'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                        <div className="flex-1 w-full">
+                                            <SearchableProductCombobox
+                                                products={products}
+                                                selectedProductId={promoConfig.buyProductId}
+                                                onSelect={p => {
+                                                    setPromoConfig(prev => ({
+                                                        ...prev,
+                                                        buyProductId: p.id,
+                                                        giftProductId: prev.giftType === 'SAME_PRODUCT' ? p.id : prev.giftProductId,
+                                                    }))
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="w-full sm:w-40 flex-shrink-0">
+                                            <div className="flex items-center border border-amber-300 rounded-lg overflow-hidden bg-amber-50/50">
+                                                <span className="text-xs px-2.5 font-bold text-amber-900 bg-amber-100/60 py-2 border-r border-amber-200">
+                                                    {locale === 'en' ? 'Buy' : 'Mua'}
+                                                </span>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={promoConfig.buyQty}
+                                                    onChange={e => setPromoConfig(p => ({ ...p, buyQty: Math.max(1, parseInt(e.target.value) || 1) }))}
+                                                    className="w-full px-2 py-2 text-center text-xs font-black text-amber-900 outline-none bg-white"
+                                                />
+                                                <span className="text-xs px-2 text-slate-500 font-medium">
+                                                    {locale === 'en' ? 'btls' : 'chai'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Gift Product Options */}
+                                <div className="pt-3 border-t border-slate-100 space-y-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                            {locale === 'en' ? 'Gift Product (Free of charge - 0 VND) *' : 'Sản Phẩm Quà Tặng (Đơn Giá 0 VNĐ) *'}
+                                        </label>
+                                        <div className="flex items-center gap-3 text-xs">
+                                            <label className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700">
+                                                <input
+                                                    type="radio"
+                                                    name="giftType"
+                                                    checked={promoConfig.giftType === 'SAME_PRODUCT'}
+                                                    onChange={() => setPromoConfig(p => ({ ...p, giftType: 'SAME_PRODUCT', giftProductId: p.buyProductId }))}
+                                                    className="accent-amber-600"
+                                                />
+                                                {locale === 'en' ? 'Same as purchased product' : 'Tặng chính sản phẩm này'}
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700">
+                                                <input
+                                                    type="radio"
+                                                    name="giftType"
+                                                    checked={promoConfig.giftType === 'OTHER_PRODUCT'}
+                                                    onChange={() => setPromoConfig(p => ({ ...p, giftType: 'OTHER_PRODUCT' }))}
+                                                    className="accent-amber-600"
+                                                />
+                                                {locale === 'en' ? 'Different gift product' : 'Chọn sản phẩm / quà tặng khác'}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                        <div className="flex-1 w-full">
+                                            {promoConfig.giftType === 'SAME_PRODUCT' ? (
+                                                <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200 text-xs flex items-center justify-between">
+                                                    <span className="font-bold text-amber-950">
+                                                        {selectedBuyProduct ? `[${selectedBuyProduct.skuCode}] ${selectedBuyProduct.productName}` : (locale === 'en' ? 'Select purchased product above' : 'Vui lòng chọn sản phẩm mua ở trên')}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">
+                                                        {locale === 'en' ? 'Same SKU' : 'Cùng loại'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <SearchableProductCombobox
+                                                    products={products}
+                                                    selectedProductId={promoConfig.giftProductId}
+                                                    onSelect={p => {
+                                                        setPromoConfig(prev => ({
+                                                            ...prev,
+                                                            giftProductId: p.id,
+                                                        }))
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="w-full sm:w-40 flex-shrink-0">
+                                            <div className="flex items-center border border-emerald-300 rounded-lg overflow-hidden bg-emerald-50/50">
+                                                <span className="text-xs px-2.5 font-bold text-emerald-900 bg-emerald-100/60 py-2 border-r border-emerald-200">
+                                                    {locale === 'en' ? 'Gift' : 'Tặng'}
+                                                </span>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={promoConfig.giftQty}
+                                                    onChange={e => setPromoConfig(p => ({ ...p, giftQty: Math.max(1, parseInt(e.target.value) || 1) }))}
+                                                    className="w-full px-2 py-2 text-center text-xs font-black text-emerald-900 outline-none bg-white"
+                                                />
+                                                <span className="text-xs px-2 text-slate-500 font-medium">
+                                                    {locale === 'en' ? 'btls' : 'chai'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 4. Quota Limits */}
+                            <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-3">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
+                                    4. {locale === 'en' ? 'Maximum Quantity Limits (Quota) *' : 'Thiết Lập Số Lượng Tối Đa (Quota Hạn Mức) *'}
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                                            {locale === 'en' ? 'Total campaign gift allocation (bottles/items)' : 'Tổng số lượng quà tặng toàn chiến dịch (chai/suất)'}
+                                        </label>
+                                        <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={promoConfig.maxTotalQty}
+                                                onChange={e => setPromoConfig(p => ({ ...p, maxTotalQty: Math.max(1, parseInt(e.target.value) || 1) }))}
+                                                className="w-full px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+                                                placeholder="VD: 300"
+                                            />
+                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2">
+                                                {locale === 'en' ? 'total' : 'tổng'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                                            {locale === 'en' ? 'Max gift bottles per order / customer' : 'Số lượng quà tặng tối đa trên mỗi đơn hàng / mỗi khách'}
+                                        </label>
+                                        <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={promoConfig.maxQtyPerOrder}
+                                                onChange={e => setPromoConfig(p => ({ ...p, maxQtyPerOrder: Math.max(1, parseInt(e.target.value) || 1) }))}
+                                                className="w-full px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+                                                placeholder="VD: 5"
+                                            />
+                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2">
+                                                {locale === 'en' ? 'max/order' : 'tối đa/đơn'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {calculatedPromoBudget > 0 && (
+                                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-emerald-900">
+                                            {locale === 'en' ? 'Estimated Total Gift Budget: ' : 'Ước tính ngân sách quà tặng toàn chiến dịch: '}
+                                        </span>
+                                        <span className="font-mono font-bold text-emerald-800 text-sm">
+                                            {formatVND(calculatedPromoBudget)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tasting / Training Custom Fields */}
+                    {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT' || form.category === 'INTERNAL_TRAINING') && (
+                        <div className={`space-y-4 p-4 rounded-xl border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
                             <div>
-                                <label className="text-xs font-bold uppercase mb-1.5 block tracking-wider text-amber-900">
-                                    👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)
+                                <label className={`text-xs font-bold uppercase mb-1.5 block tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
+                                    {form.category === 'INTERNAL_TRAINING' ? '🏢 Đơn Vị / Khách Hàng / Đối Tác Phối Hợp (Tùy Chọn)' : '👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)'}
                                 </label>
                                 <SearchableCustomerCombobox
                                     customers={usableCustomers}
@@ -2015,8 +2461,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         setForm(f => ({
                                             ...f,
                                             customerId: cust.id,
-                                            title: !f.title && cust.name ? `Tờ trình Tasting thử rượu cho khách hàng ${cust.name}` : f.title,
-                                            titleEn: !f.titleEn && cust.name ? `Tasting wine sample proposal for ${cust.name}` : f.titleEn,
+                                            title: !f.title && cust.name ? (f.category === 'INTERNAL_TRAINING' ? `Tờ trình Đào tạo nội bộ - ${cust.name}` : `Tờ trình Tasting thử rượu cho khách hàng ${cust.name}`) : f.title,
+                                            titleEn: !f.titleEn && cust.name ? (f.category === 'INTERNAL_TRAINING' ? `Internal training proposal for ${cust.name}` : `Tasting wine sample proposal for ${cust.name}`) : f.titleEn,
                                         }))
                                     }}
                                 />
@@ -2024,8 +2470,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                                        🍷 Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *
+                                    <label className={`text-xs font-bold uppercase tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
+                                        {form.category === 'INTERNAL_TRAINING' ? '🎓 Rượu Vang Dùng Thử Nếm Trong Đào Tạo (Tùy Chọn)' : '🍷 Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *'}
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <button 
@@ -2527,6 +2973,19 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     const canApproveDetail = Boolean(isPending && detail && canApproveAtLevel(detail.currentLevel, userRoles))
     const bilingualTitle = formatBilingualTitle(detail?.title, locale)
 
+    const parsedPromo = useMemo(() => {
+        if (!detail || detail.category !== 'PROMOTION_CAMPAIGN' || !detail.scope) return null
+        try {
+            if (typeof detail.scope === 'string' && detail.scope.startsWith('{')) {
+                const data = JSON.parse(detail.scope)
+                if (data.promoType === 'BUY_X_GET_Y') return data
+            }
+        } catch {
+            return null
+        }
+        return null
+    }, [detail])
+
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
@@ -2782,30 +3241,162 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                         {/* Content sections */}
                         <div className="space-y-3">
-                            {/* Tasting Proposal Quick Action & Linked SOs */}
-                            {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT') && (
+                            {/* Promotion Campaign (Buy X Get Y & Quota) Details */}
+                            {detail.category === 'PROMOTION_CAMPAIGN' && parsedPromo && (
+                                <div className="p-4 rounded-xl space-y-3 shadow-xs border border-amber-300 bg-gradient-to-br from-amber-50/90 via-orange-50/50 to-amber-50/90">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 rounded-lg bg-amber-500 text-white">
+                                                <Gift size={16} />
+                                            </div>
+                                            <span className="text-xs font-black uppercase text-amber-950 tracking-wide">
+                                                {locale === 'en' ? '🎁 PROMOTION CAMPAIGN MECHANISM' : '🎁 CƠ CHẾ CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM)'}
+                                            </span>
+                                        </div>
+                                        {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
+                                            <a
+                                                href={`/dashboard/sales?proposalId=${detail.id}`}
+                                                className="px-3 py-1 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                                            >
+                                                <ShoppingBag size={13} />
+                                                {locale === 'en' ? 'Open SO / Create Order' : 'Lên Đơn Hàng Áp Dụng CTKM'}
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    {/* Channels & Dates */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                        <div className="p-2.5 rounded-lg bg-white/80 border border-amber-200">
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">
+                                                {locale === 'en' ? 'Target Customer Channels' : 'Kênh Khách Hàng Áp Dụng'}
+                                            </span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {parsedPromo.targetChannels?.map((cid: string) => {
+                                                    const ch = PROMO_CHANNELS.find(c => c.id === cid)
+                                                    return (
+                                                        <span key={cid} className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300/60">
+                                                            {locale === 'en' ? ch?.labelEn || cid : ch?.labelVi || cid}
+                                                        </span>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-lg bg-white/80 border border-amber-200">
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">
+                                                {locale === 'en' ? 'Validity Period' : 'Thời Gian Áp Dụng'}
+                                            </span>
+                                            <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                                                <Calendar size={13} className="text-amber-600" />
+                                                {detail.startDate ? new Date(detail.startDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
+                                                {' ➔ '}
+                                                {detail.endDate ? new Date(detail.endDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Quota & Rule Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                        <div className="p-2.5 rounded-lg bg-white/80 border border-amber-200">
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+                                                {locale === 'en' ? 'Buy & Gift Ratio' : 'Cơ Chế Mua Tặng'}
+                                            </span>
+                                            <p className="font-bold text-slate-900">
+                                                {locale === 'en' 
+                                                    ? `Buy ${parsedPromo.buyQty} bottles ➔ Get ${parsedPromo.giftQty} bottles free (0 VND)`
+                                                    : `Mua ${parsedPromo.buyQty} chai ➔ Tặng ${parsedPromo.giftQty} chai 0 VNĐ`}
+                                            </p>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-lg bg-white/80 border border-amber-200">
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+                                                {locale === 'en' ? 'Quota Limits (Order & Campaign)' : 'Hạn Mức Quota (Đơn & Chiến Dịch)'}
+                                            </span>
+                                            <p className="font-bold text-slate-900">
+                                                {locale === 'en'
+                                                    ? `Max ${parsedPromo.maxQtyPerOrder} / order | Total ${parsedPromo.maxTotalQty} campaign quota`
+                                                    : `Tối đa ${parsedPromo.maxQtyPerOrder} chai/đơn | Tổng ${parsedPromo.maxTotalQty} chai toàn chiến dịch`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tasting / Training Proposal Quick Action & Linked SOs */}
+                            {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING') && (
                                 <div className="p-4 rounded-xl space-y-2.5 shadow-sm transition-all" style={{
-                                    background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
-                                    border: '1.5px solid #F59E0B',
+                                    background: detail.category === 'INTERNAL_TRAINING' ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+                                    border: detail.category === 'INTERNAL_TRAINING' ? '1.5px solid #10B981' : '1.5px solid #F59E0B',
                                 }}>
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: '#92400E' }}>
-                                            {locale === 'en' ? '🍷 TASTING & SAMPLE PROPOSAL' : '🍷 TỜ TRÌNH TASTING & THỬ VANG'}
+                                        <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: detail.category === 'INTERNAL_TRAINING' ? '#065F46' : '#92400E' }}>
+                                            {detail.category === 'INTERNAL_TRAINING'
+                                                ? (locale === 'en' ? '🎓 INTERNAL TRAINING & SAMPLES' : '🎓 TỜ TRÌNH ĐÀO TẠO NỘI BỘ & HÀNG MẪU')
+                                                : (locale === 'en' ? '🍷 TASTING & SAMPLE PROPOSAL' : '🍷 TỜ TRÌNH TASTING & THỬ VANG')}
                                         </p>
                                         {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
                                             <a
                                                 href={`/dashboard/sales?action=createTasting&proposalId=${detail.id}&customerId=${detail.customerId || ''}`}
-                                                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                                                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg ${detail.category === 'INTERNAL_TRAINING' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'} text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95`}
                                             >
-                                                {locale === 'en' ? '🍷 + Create Tasting Order' : '🍷 + Lên Đơn Tasting Ngay'}
+                                                {detail.category === 'INTERNAL_TRAINING'
+                                                    ? (locale === 'en' ? '🍷 + Create Training Sample Order' : '🍷 + Lên Đơn Xuất Mẫu Training')
+                                                    : (locale === 'en' ? '🍷 + Create Tasting Order' : '🍷 + Lên Đơn Tasting Ngay')}
                                             </a>
                                         )}
                                     </div>
                                     {detail.customer && (
-                                        <p className="text-xs font-medium" style={{ color: '#78350F' }}>
-                                            {locale === 'en' ? 'Applicable customer: ' : 'Khách hàng áp dụng: '}<strong style={{ color: '#451A03', fontWeight: 700 }}>{detail.customer.name}</strong> ({detail.customer.code})
+                                        <p className="text-xs font-medium" style={{ color: detail.category === 'INTERNAL_TRAINING' ? '#064E3B' : '#78350F' }}>
+                                            {locale === 'en' ? 'Applicable customer / unit: ' : 'Đơn vị / Khách hàng liên quan: '}<strong style={{ color: detail.category === 'INTERNAL_TRAINING' ? '#064E3B' : '#451A03', fontWeight: 700 }}>{detail.customer.name}</strong> ({detail.customer.code})
                                         </p>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Wine Samples List for Tasting / Internal Training */}
+                            {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING') && detail.priceItems && detail.priceItems.length > 0 && (
+                                <div className="p-4 rounded-xl space-y-2.5 bg-white border border-slate-200">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                            <span>🍷</span>
+                                            <span>{locale === 'en' ? `Training & Tasting Wine Samples (${detail.priceItems.length} SKUs)` : `Danh Sách Rượu Xuất Mẫu Thử Nếm (${detail.priceItems.length} sản phẩm)`}</span>
+                                        </p>
+                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                            {locale === 'en' ? 'Total: ' : 'Tổng: '} {detail.priceItems.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0)} {locale === 'en' ? 'bottles' : 'chai'}
+                                        </span>
+                                    </div>
+                                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                                        <table className="w-full text-xs text-left">
+                                            <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                                                <tr>
+                                                    <th className="p-2.5 text-center w-8">#</th>
+                                                    <th className="p-2.5">{locale === 'en' ? 'Product Name & SKU' : 'Sản Phẩm & Mã SKU'}</th>
+                                                    <th className="p-2.5 text-center w-16">{locale === 'en' ? 'Qty' : 'SL Chai'}</th>
+                                                    <th className="p-2.5 text-right w-28">{locale === 'en' ? 'Ref. Unit Price' : 'Đơn Giá Tham Khảo'}</th>
+                                                    <th className="p-2.5 text-right w-32">{locale === 'en' ? 'Total Ref. Value' : 'Thành Tiền Tham Khảo'}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 text-slate-900">
+                                                {detail.priceItems.map((item: any, idx: number) => {
+                                                    const qty = item.quantity || 1
+                                                    const price = item.proposedPrice || item.product?.wholesalePrice || 0
+                                                    const total = qty * price
+                                                    return (
+                                                        <tr key={item.id || idx} className="hover:bg-slate-50/60">
+                                                            <td className="p-2.5 text-center font-mono text-gray-400">{idx + 1}</td>
+                                                            <td className="p-2.5">
+                                                                <div className="font-semibold text-slate-900">{item.product?.productName || item.productName}</div>
+                                                                <div className="text-[10px] font-mono text-slate-500">{item.product?.skuCode || item.skuCode}</div>
+                                                            </td>
+                                                            <td className="p-2.5 text-center font-bold text-amber-700">{qty}</td>
+                                                            <td className="p-2.5 text-right font-mono text-slate-600">{formatVND(price)}</td>
+                                                            <td className="p-2.5 text-right font-mono font-bold text-slate-900">{formatVND(total)}</td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
 

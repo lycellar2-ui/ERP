@@ -3786,6 +3786,8 @@ export async function getApprovedProposalsForSO(customerId?: string) {
             createdAt: true,
             customerId: true,
             scope: true,
+            startDate: true,
+            endDate: true,
             customer: { select: { id: true, name: true, code: true } },
             creator: { select: { name: true } },
             priceItems: {

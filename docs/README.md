@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-09 15:35 | Wine ERP v12.2 - Proposal Branch & Parent Resolution in Sales Orders & Proposals (BUG-128)*
+*Last updated: 2026-10-09 21:50 | Wine ERP v12.3 - Internal Training Proposal (INTERNAL_TRAINING) with 3-Level Approval & Wine Tasting Samples Integration*
 
