@@ -219,10 +219,13 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 - ✅ **Tìm kiếm mở rộng**: Tên, mã, MST, email, SĐT, tên viết tắt
 - ✅ **Bộ lọc đa chiều (5 filter controls)**:
   * **Phân cấp khách hàng**: Tất cả / Công ty Mẹ (`PARENT_ONLY`) / Điểm bán con (`CHILD_ONLY`) / KH độc lập (`INDEPENDENT`).
-  * **Lọc theo Khách hàng Cha cụ thể**: Chọn đích danh Công ty Mẹ để xem toàn bộ danh mục điểm bán/nhà hàng trực thuộc (hỗ trợ 1-click quick-filter khi bấm vào nhãn "Thuộc KH Cha" trên từng dòng bảng máy tính hoặc thẻ mobile).
+  * **Lọc theo Khách hàng Cha cụ thể**: Chọn đích danh Công ty Mẹ để xem toàn bộ danh mục điểm bán/nhà hàng trực thuộc (hiển thị kèm số lượng khách hàng con `(X con)`, hỗ trợ 1-click quick-filter khi bấm vào nhãn "Thuộc KH Cha" hoặc badge "X KH con" trên từng dòng bảng máy tính hoặc thẻ mobile).
   * **Loại KH**: HORECA, Phân Phối, VIP Retail, Cá Nhân.
   * **Trạng thái**: Hoạt động, Chờ duyệt, Bị từ chối, Giữ tín dụng, Tạm dừng.
   * **Kênh bán hàng**: HORECA, Corporate, Retail (dynamic đếm số lượng từ DB, responsive font chống iOS zoom).
+- ✅ **Thông tin & Quản trị Khách Hàng Con (Child Customer Visibility)**:
+  * Trên bảng danh sách và thẻ di động: Hiển thị trực quan badge `[Users] X KH con` (kèm trạng thái kích hoạt lọc nhanh).
+  * Trong biểu mẫu Customer Drawer: Hiển thị thẻ danh sách chi tiết toàn bộ các cơ sở con trực thuộc kèm Mã, Tên, Kênh và Trạng thái hoạt động.
 - ✅ **Chuẩn hóa Thuật ngữ Giao diện (Terminology Harmonization)**:
   * Phân định rõ ràng theo ngữ cảnh: Pháp nhân công nợ/hóa đơn thuế sử dụng **"Công ty Mẹ"** (`MST Mẹ`, `Công ty Mẹ (Quản lý công nợ & pháp nhân)`).
   * Quan hệ phân cấp cây điểm bán sử dụng **"Khách hàng Cha"** (`Thuộc KH Cha: [Mã]`, `Khách hàng Cha (Đơn vị quản lý)`).

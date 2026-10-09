@@ -91,10 +91,30 @@ function CustomerMobileCard({
                         {row.code}
                     </span>
                     <TypeBadge type={row.channel} />
-                    {row.entityType === 'COMPANY' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200">
-                            <Building2 size={11} className="text-slate-600" /> Công ty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
-                        </span>
+                    {row.entityType === 'COMPANY' || row.childrenCount > 0 ? (
+                        <>
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200">
+                                <Building2 size={11} className="text-slate-600" /> Công ty Mẹ
+                            </span>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (row.childrenCount > 0 && onSelectParent) {
+                                        onSelectParent(row.id)
+                                    }
+                                }}
+                                className={cn(
+                                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold",
+                                    row.childrenCount > 0
+                                        ? "bg-cyan-50 text-lys-teal-strong border border-cyan-200 active:bg-cyan-100 cursor-pointer"
+                                        : "bg-slate-50 text-slate-400 border border-slate-200"
+                                )}
+                                title={row.childrenCount > 0 ? `Chạm để lọc ${row.childrenCount} khách hàng con trực thuộc` : "Chưa có khách hàng con"}
+                            >
+                                <Users size={10} /> {row.childrenCount} KH con
+                            </button>
+                        </>
                     ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
                             <UtensilsCrossed size={11} className="text-emerald-700" /> Nhà hàng
@@ -244,7 +264,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         vatCompanyName?: string | null
         vatAddress?: string | null
         vatEmail?: string | null
+        childrenCount?: number
     }[]>([])
+    const [loadedChildren, setLoadedChildren] = useState<{ id: string; code: string; name: string; status: string; channel: string }[]>([])
 
     const isEdit = !!editingId
 
@@ -279,6 +301,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             setLoading(true)
             getCustomerById(editingId).then(data => {
                 if (data) {
+                    setLoadedChildren((data as any).children || [])
                     const loadedForm: Partial<CustomerInput> = {
                         code: data.code,
                         name: data.name,
@@ -322,6 +345,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             const newForm: Partial<CustomerInput> = { paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 }
             setForm(newForm)
             initialFormRef.current = null
+            setLoadedChildren([])
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
@@ -950,6 +974,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                             {c.code}
                                                                         </span>
                                                                         <span className="truncate">{c.name}</span>
+                                                                        {c.childrenCount !== undefined && (
+                                                                            <span className="text-[10px] text-slate-500 font-normal shrink-0">
+                                                                                ({c.childrenCount} con)
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
                                                                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 flex items-center gap-1">
@@ -1008,6 +1037,44 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             </div>
                                         )}
                                     </div>
+
+                                    {isEdit && (form.entityType === 'COMPANY' || loadedChildren.length > 0) && (
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Users size={15} className="text-lys-teal-strong" />
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                                                        Khách hàng con trực thuộc ({loadedChildren.length})
+                                                    </span>
+                                                </div>
+                                                <span className="text-[11px] font-semibold text-lys-teal-strong bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                                    {loadedChildren.length} cơ sở
+                                                </span>
+                                            </div>
+                                            {loadedChildren.length > 0 ? (
+                                                <div className="divide-y divide-slate-200 max-h-44 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                                                    {loadedChildren.map(child => (
+                                                        <div key={child.id} className="p-2 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className="font-mono font-semibold text-lys-teal-strong px-1.5 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-[10px]">
+                                                                    {child.code}
+                                                                </span>
+                                                                <span className="truncate font-medium text-slate-800" title={child.name}>{child.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                <TypeBadge type={child.channel} />
+                                                                <StatusDot status={child.status} />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] text-slate-500 italic">
+                                                    Công ty này hiện chưa có cơ sở/chi nhánh con nào liên kết.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -1622,12 +1689,12 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                 setParentFilter(val)
                                 applyFilter({ parentId: val || undefined })
                             }}
-                            className="md:w-48"
+                            className="md:w-56"
                         >
                             <option value="">Tất cả KH Cha ({parentOptions.length})</option>
                             {parentOptions.map(p => (
                                 <option key={p.id} value={p.id}>
-                                    [{p.code}] {p.name}
+                                    [{p.code}] {p.name} {p.childrenCount !== undefined ? `(${p.childrenCount} con)` : ''}
                                 </option>
                             ))}
                         </Select>
@@ -1758,11 +1825,31 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             >
                                                 {row.name}
                                             </button>
-                                            {row.entityType === 'COMPANY' ? (
-                                                <Badge tone="neutral" className="gap-1 inline-flex items-center text-[10px]">
-                                                    <Building2 size={10} />
-                                                    Công ty Mẹ{row.allowDirectSO && ' (Bán TT)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
-                                                </Badge>
+                                            {row.entityType === 'COMPANY' || row.childrenCount > 0 ? (
+                                                <>
+                                                    <Badge tone="neutral" className="gap-1 inline-flex items-center text-[10px]">
+                                                        <Building2 size={10} />
+                                                        Công ty Mẹ{row.allowDirectSO && ' (Bán TT)'}
+                                                    </Badge>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setParentFilter(row.id)
+                                                            applyFilter({ parentId: row.id })
+                                                        }}
+                                                        className={cn(
+                                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer",
+                                                            row.childrenCount > 0
+                                                                ? "bg-cyan-50 text-lys-teal-strong border border-cyan-200 hover:bg-cyan-100"
+                                                                : "bg-slate-50 text-slate-400 border border-slate-200"
+                                                        )}
+                                                        title={row.childrenCount > 0 ? `Bấm để lọc ${row.childrenCount} khách hàng con trực thuộc` : "Chưa có khách hàng con"}
+                                                    >
+                                                        <Users size={10} />
+                                                        {row.childrenCount} KH con
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <Badge tone="success" className="gap-1 inline-flex items-center text-[10px]">
                                                     <UtensilsCrossed size={10} />

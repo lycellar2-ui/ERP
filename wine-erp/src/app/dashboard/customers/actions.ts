@@ -230,6 +230,7 @@ export async function getCustomerById(id: string) {
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
             parent: { select: { id: true, code: true, name: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } },
+            children: { where: { deletedAt: null }, select: { id: true, code: true, name: true, status: true, channel: true }, orderBy: { name: 'asc' } },
         },
     })
     if (!c) return null
@@ -286,6 +287,8 @@ export async function getCustomerById(id: string) {
         orderChannel: c.orderChannel,
         basePriceType: c.basePriceType ?? 'BY_CHANNEL',
         defaultDiscountPct: Number(c.defaultDiscountPct ?? 0),
+        childrenCount: c.children?.length ?? 0,
+        children: c.children ?? [],
     }
 }
 
@@ -399,7 +402,7 @@ export async function getParentCandidates(currentId?: string) {
             where.id = { notIn: excludeIds }
         }
 
-        return await prisma.customer.findMany({
+        const items = await prisma.customer.findMany({
             where,
             select: {
                 id: true,
@@ -410,9 +413,26 @@ export async function getParentCandidates(currentId?: string) {
                 vatCompanyName: true,
                 vatAddress: true,
                 vatEmail: true,
+                _count: {
+                    select: {
+                        children: { where: { deletedAt: null } }
+                    }
+                }
             },
             orderBy: { name: 'asc' },
         })
+
+        return items.map(c => ({
+            id: c.id,
+            name: c.name,
+            code: c.code,
+            entityType: c.entityType,
+            taxId: c.taxId,
+            vatCompanyName: c.vatCompanyName,
+            vatAddress: c.vatAddress,
+            vatEmail: c.vatEmail,
+            childrenCount: (c as any)._count?.children ?? 0,
+        }))
     } catch (err) {
         console.error('Lỗi getParentCandidates:', err)
         return []
