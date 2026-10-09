@@ -52,5 +52,6 @@ Trên màn hình của CEO và các Trưởng phòng sẽ xuất hiện một Kh
 | **Danh sách Vai trò & Quyền** | `SettingsClient.tsx` + `actions.ts:getRoles` | Hiển thị các vai trò, số lượng quyền, số lượng người dùng và thanh tiến độ phần trăm |
 | **Phân quyền Vai trò (CRUD RBAC)** | `SettingsClient.tsx` + `actions.ts:getRolePermissions` | Hỗ trợ click vào vai trò để mở Drawer phân quyền, tích hợp check/uncheck quyền nhóm theo Module và cập nhật trực tiếp xuống DB qua `updateRolePermissions` |
 | **Audit Logs cho Phân quyền** | `actions.ts` | Ghi nhận nhật ký hệ thống chi tiết khi cập nhật quyền của vai trò |
+| **Nhận diện Thương hiệu & Tab Trình duyệt (Favicon/Icons)** | `src/app/layout.tsx`, `src/app/icon.png`, `src/app/favicon.ico`, `src/app/apple-icon.png` | Bộ icon đa độ phân giải chuẩn hoá thương hiệu LY's Cellars (16x16, 32x32, 48x48, 192x192, 512x512) hiển thị sắc nét trên mọi tab trình duyệt và thiết bị di động |
 
-*Last updated: 2026-07-16 22:53 | Wine ERP v7.6*
+*Last updated: 2026-10-09 14:00 | Wine ERP v12.1*
