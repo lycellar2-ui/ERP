@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2 } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
     getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder, markDODelivered,
     reverseDeliveryOrder, updateDeliveryOrderDate, getDODetail, getAvailableLotsForProduct, getWarehouses,
+    swapDOLineAndQuarantineDamaged,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
@@ -88,6 +89,7 @@ export function DeliveryOrderTab({ warehouses }: {
     const [detailLoading, setDetailLoading] = useState(false)
     const [activeSubTab, setActiveSubTab] = useState<'pending' | 'history'>('pending')
     const [searchQuery, setSearchQuery] = useState('')
+    const [swapTarget, setSwapTarget] = useState<any | null>(null)
 
     const [activeWarehouses, setActiveWarehouses] = useState<WarehouseOption[]>(warehouses)
 
@@ -618,7 +620,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                                {['SKU', 'Sản Phẩm', 'Vintage', 'Vị Trí Kho', 'Picked', 'Shipped'].map(h => (
+                                                {['SKU', 'Sản Phẩm', 'Vintage', 'Vị Trí Kho', 'Picked', 'Shipped', ...((detailData.status === 'DRAFT' || detailData.status === 'PICKING') ? ['Thao Tác'] : [])].map(h => (
                                                     <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                 ))}
                                             </tr>
@@ -634,6 +636,29 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     <td className="px-3 py-2 text-xs font-mono font-medium" style={{ color: '#475569' }}>{l.locationCode}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#0F172A' }}>{l.qtyPicked}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#16A34A' }}>{l.qtyShipped}</td>
+                                                    {(detailData.status === 'DRAFT' || detailData.status === 'PICKING') && (
+                                                        <td className="px-3 py-2 text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSwapTarget({
+                                                                    doId: detailData.id,
+                                                                    doLineId: l.id,
+                                                                    productName: l.productName,
+                                                                    skuCode: l.skuCode,
+                                                                    currentLotNo: l.lotNo,
+                                                                    qtyPicked: l.qtyPicked,
+                                                                    productId: (l as any).productId,
+                                                                    warehouseId: (detailData as any).warehouseId,
+                                                                    vintage: (l as any).vintage ?? null,
+                                                                })}
+                                                                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
+                                                                title="Báo chai vỡ / Đổi sang lô khác"
+                                                            >
+                                                                <ShieldAlert size={12} className="text-amber-700" />
+                                                                Đổi Lô Lỗi
+                                                            </button>
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -655,6 +680,28 @@ export function DeliveryOrderTab({ warehouses }: {
                                                 <span style={{ color: '#64748B' }}>Picked: <strong className="font-mono text-[#0F172A]">{l.qtyPicked}</strong></span>
                                                 <span style={{ color: '#64748B' }}>Shipped: <strong className="font-mono text-[#16A34A]">{l.qtyShipped}</strong></span>
                                             </div>
+                                            {(detailData.status === 'DRAFT' || detailData.status === 'PICKING') && (
+                                                <div className="pt-2 flex justify-end border-t border-slate-100">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSwapTarget({
+                                                            doId: detailData.id,
+                                                            doLineId: l.id,
+                                                            productName: l.productName,
+                                                            skuCode: l.skuCode,
+                                                            currentLotNo: l.lotNo,
+                                                            qtyPicked: l.qtyPicked,
+                                                            productId: (l as any).productId,
+                                                            warehouseId: (detailData as any).warehouseId,
+                                                            vintage: (l as any).vintage ?? null,
+                                                        })}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer"
+                                                    >
+                                                        <ShieldAlert size={12} className="text-amber-700" />
+                                                        Đổi Lô Lỗi (Cách Ly)
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -663,6 +710,16 @@ export function DeliveryOrderTab({ warehouses }: {
                     </div>
                 </div>
             )}
+
+            {/* Swap Defect Lot Modal */}
+            <SwapDefectLotModal
+                target={swapTarget}
+                onClose={() => setSwapTarget(null)}
+                onSuccess={() => {
+                    if (detailData) openDetail(detailData.id)
+                    reload()
+                }}
+            />
 
             {/* Create DO Drawer */}
             {createOpen && (
@@ -750,16 +807,6 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         })
                                         remainingNeeded -= allocQty
                                     }
-                                }
-                                // If total stock across all lots < qtyOrdered
-                                if (remainingNeeded > 0) {
-                                    const lastLot = availLots[availLots.length - 1]
-                                    allocatedLines.push({
-                                        productId: sol.productId,
-                                        lotId: lastLot.id,
-                                        locationId: lastLot.locationId,
-                                        qtyPicked: remainingNeeded
-                                    })
                                 }
                             }
                         }
@@ -1349,6 +1396,171 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ── Swap Defect Lot Modal ─────────────────────────
+function SwapDefectLotModal({
+    target,
+    onClose,
+    onSuccess,
+}: {
+    target: {
+        doId: string
+        doLineId: string
+        productName: string
+        skuCode: string
+        currentLotNo: string
+        qtyPicked: number
+        productId: string
+        warehouseId: string
+        vintage: number | null
+    } | null
+    onClose: () => void
+    onSuccess: () => void
+}) {
+    const [lots, setLots] = useState<any[]>([])
+    const [loadingLots, setLoadingLots] = useState(false)
+    const [selectedNewLotId, setSelectedNewLotId] = useState('')
+    const [qtyToSwap, setQtyToSwap] = useState(1)
+    const [reason, setReason] = useState('Bể vỡ khi nhặt hàng tại sàn kho')
+    const [submitting, setSubmitting] = useState(false)
+
+    useEffect(() => {
+        if (!target) return
+        setLoadingLots(true)
+        setQtyToSwap(1)
+        setSelectedNewLotId('')
+        getAvailableLotsForProduct(target.productId, target.warehouseId, target.vintage)
+            .then(res => {
+                const others = res.filter(l => l.lotNo !== target.currentLotNo && l.qtyAvailable > 0)
+                setLots(others)
+                if (others.length > 0) setSelectedNewLotId(others[0].id)
+            })
+            .catch((err: any) => toast.error('Không tải được danh sách lô thay thế: ' + err.message))
+            .finally(() => setLoadingLots(false))
+    }, [target])
+
+    if (!target) return null
+
+    const handleConfirmSwap = async () => {
+        if (!selectedNewLotId) return toast.error('Vui lòng chọn lô thay thế')
+        if (qtyToSwap <= 0 || qtyToSwap > target.qtyPicked) {
+            return toast.error(`Số lượng chai đổi phải từ 1 đến ${target.qtyPicked}`)
+        }
+        if (!reason.trim()) return toast.error('Vui lòng nhập lý do')
+
+        setSubmitting(true)
+        try {
+            const res = await swapDOLineAndQuarantineDamaged({
+                doId: target.doId,
+                doLineId: target.doLineId,
+                newLotId: selectedNewLotId,
+                qtyToSwap,
+                reason,
+            })
+            if (!res.success) throw new Error(res.error || 'Lỗi khi đổi lô')
+            toast.success(`Đã đổi ${qtyToSwap} chai sang lô mới và chuyển chai lỗi vào khu Cách ly (Quarantine)!`)
+            onSuccess()
+            onClose()
+        } catch (err: any) {
+            toast.error(err.message)
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs" onClick={onClose}>
+            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                    <div className="flex items-center gap-2">
+                        <span className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+                            <ShieldAlert size={18} />
+                        </span>
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900">Đổi Lô & Báo Chai Hỏng/Vỡ</h3>
+                            <p className="text-xs text-slate-500 font-mono">SKU: {target.skuCode} · Lô hiện tại: {target.currentLotNo}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><X size={18} /></button>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-lg text-xs space-y-1 border border-slate-200">
+                    <p className="font-bold text-slate-900">{target.productName}</p>
+                    <p className="text-slate-600">Niên vụ yêu cầu: <strong className="text-amber-800">{target.vintage ? target.vintage : 'NV'}</strong> · Đang nhặt: <strong className="text-slate-900">{target.qtyPicked} chai</strong></p>
+                </div>
+
+                <div className="space-y-3">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Số Lượng Chai Lỗi Cần Đổi *</label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={target.qtyPicked}
+                            value={qtyToSwap}
+                            onChange={e => setQtyToSwap(Math.min(target.qtyPicked, Math.max(1, Number(e.target.value))))}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 font-mono font-bold text-slate-900 outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Chọn Lô Hàng Khả Dụng Thay Thế *</label>
+                        {loadingLots ? (
+                            <div className="flex items-center gap-2 py-3 text-xs text-slate-500">
+                                <Loader2 size={16} className="animate-spin text-amber-600" /> Đang tìm các lô khả dụng...
+                            </div>
+                        ) : lots.length === 0 ? (
+                            <p className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                                Không còn lô hàng khả dụng nào khác của sản phẩm này trong kho để thay thế!
+                            </p>
+                        ) : (
+                            <select
+                                value={selectedNewLotId}
+                                onChange={e => setSelectedNewLotId(e.target.value)}
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 font-medium text-slate-900 outline-none"
+                            >
+                                {lots.map(l => (
+                                    <option key={l.id} value={l.id}>
+                                        {l.locationCode} ({l.zone}) · Lô: {l.lotNo} | Vintage: {l.vintage ? l.vintage : 'NV'} | Tồn: {l.qtyAvailable} chai
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Lý Do Đổi Lô (Chuyển Hàng Lỗi Sang Cách Ly) *</label>
+                        <input
+                            type="text"
+                            value={reason}
+                            onChange={e => setReason(e.target.value)}
+                            placeholder="Ví dụ: Bể vỡ khi lấy hàng, hỏng nút bần, tem rách..."
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 text-slate-900 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        type="button"
+                        disabled={submitting || lots.length === 0}
+                        onClick={handleConfirmSwap}
+                        className="px-4 py-2 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+                    >
+                        {submitting && <Loader2 size={13} className="animate-spin" />}
+                        Xác Nhận Đổi Lô & Cách Ly
+                    </button>
                 </div>
             </div>
         </div>

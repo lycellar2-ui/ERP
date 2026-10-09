@@ -229,7 +229,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                                 {lot.vintage}
                                             </span>
                                         ) : (
-                                            <span className="text-xs text-[#94A3B8] font-mono">NV</span>
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200">NV</span>
                                         )}
                                     </td>
                                     <td className="px-3 py-1.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
@@ -334,7 +334,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                 <h4 className="text-xs font-black text-slate-900 leading-tight">{lot.productName}</h4>
                                 <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-500 font-medium">
                                     {flag} <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
-                                    SKU: <strong className="text-slate-800 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : ''}
+                                    SKU: <strong className="text-slate-800 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : '· NV'}
                                 </p>
                             </div>
                             <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-100 text-xs">

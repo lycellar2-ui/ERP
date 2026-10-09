@@ -240,4 +240,28 @@ Hệ thống quản lý kế hoạch gọi điện chủ động dành cho Teles
 - Phân loại theo kênh Corporate và Retail.
 - Nút **[Xuất CSV Báo Cáo]**: Xuất file CSV chi tiết toàn bộ kế hoạch và kết quả cuộc gọi của Telesales theo khoảng thời gian.
 
+### E. Tối Ưu Trải Nghiệm Di Động & Chế Độ Gọi Liên Tục (Mobile Calling Cockpit) ✅ Mới Cập Nhật
+- **Thao tác nhanh 1-chạm (Thumb-friendly Actions)**:
+  - Nút **[💬 Nhắn Zalo]** trực tiếp: Kích hoạt `https://zalo.me/[SĐT]` để nhắn tin ngay cho khách khi máy bận, không nghe máy hoặc cần gửi catalogue rượu.
+  - Nút **[Sao chép SĐT]**: 1-chạm sao chép số điện thoại vào bộ nhớ tạm với thông báo toast.
+  - Điều hướng ngày thông minh: Nút chuyển ngày nhanh `[< Ngày trước]` và `[Ngày sau >]` kèm nút `[Hôm nay]` tiện lợi khi di chuyển.
+- **Thanh Tiến Độ Tối Giản Trên Mobile (Compact Progress Bar)**:
+  - Hiển thị thanh tiến độ trực quan ngay đầu danh sách: `% Hoàn thành • Chưa gọi • Hẹn lại`.
+  - Nút thu gọn / mở rộng chi tiết 4 thẻ chỉ số KPI giúp tiết kiệm diện tích màn hình điện thoại.
+- **Giao Diện BottomSheet Trên Điện Thoại (Chống Che Khuất Bàn Phím)**:
+  - Form báo cáo kết quả cuộc gọi và form thêm khách chuyển đổi linh hoạt thành dạng BottomSheet vuốt từ đáy màn hình (`slide-in-from-bottom`), có vạch kéo cầm tay chuẩn iOS/Android.
+  - **Hệ thống Gợi ý Ghi chú Nhanh 1-chạm (Quick Note Chips)**:
+    - *Gửi bảng giá qua Zalo*
+    - *Hẹn gọi lại sau giờ hành chính*
+    - *Quan tâm vang Ý / Pháp quà Tết*
+    - *Cần chiết khấu đại lý cho tiệc*
+    - *Khách chốt đặt cọc 1 thùng*
+    - *Không nghe máy / Máy bận*
+    - *Từ chối / Sai số*
+    -> Bấm để chèn tự động vào nội dung báo cáo mà không cần gõ bàn phím di động.
+- **Chế Độ Gọi Liên Tục (Cockpit Continuous Calling Banner)**:
+  - Ngay sau khi lưu báo cáo cuộc gọi của khách trước, hệ thống tự động phát hiện mục kế hoạch tiếp theo và hiển thị thanh gợi ý nổi:
+    `🎯 Khách tiếp theo: [Tên khách] • 📞 [SĐT] -> [GỌI TIẾP]`
+  - Telesale có thể thực hiện liên hoàn 20-30 cuộc gọi trong ngày bằng 1 tay mà không cần cuộn tìm lại vị trí trên danh sách.
+
 

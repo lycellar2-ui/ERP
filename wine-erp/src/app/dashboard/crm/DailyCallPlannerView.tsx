@@ -5,7 +5,8 @@ import {
     Phone, PhoneCall, CheckCircle2, Clock, Users, Building2, UserPlus,
     Target, Calendar, Search, Filter, Plus, RefreshCw, X, Download,
     Sparkles, AlertCircle, Check, Smartphone, ArrowRight, Trash2,
-    CalendarCheck, UserCheck, PhoneMissed, PhoneOff, MoreVertical
+    CalendarCheck, UserCheck, PhoneMissed, PhoneOff, MoreVertical,
+    MessageSquare, Copy, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirmDialog } from '@/components/ui'
@@ -25,6 +26,16 @@ interface DailyCallPlannerViewProps {
     customersList?: Array<{ id: string; code: string; name: string; channel: string; phone: string | null }>
     onCallCompleted?: () => void
 }
+
+const QUICK_NOTE_CHIPS = [
+    'Khách xin gửi bảng giá qua Zalo',
+    'Hẹn gọi lại sau giờ hành chính',
+    'Quan tâm vang Ý / Pháp quà Tết',
+    'Cần chiết khấu đại lý cho tiệc',
+    'Khách chốt đặt cọc 1 thùng',
+    'Không nghe máy / Máy bận',
+    'Từ chối / Sai số'
+]
 
 const CALL_OUTCOMES_CFG = [
     {
@@ -99,6 +110,10 @@ export function DailyCallPlannerView({
     const [searchQuery, setSearchQuery] = useState('')
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
+    // Mobile UX States
+    const [showMobileStats, setShowMobileStats] = useState(false)
+    const [nextLeadPrompt, setNextLeadPrompt] = useState<SalesCallPlanItem | null>(null)
+
     // Data
     const [loading, setLoading] = useState(false)
     const [plans, setPlans] = useState<SalesCallPlanItem[]>([])
@@ -118,6 +133,30 @@ export function DailyCallPlannerView({
     const [addModalOpen, setAddModalOpen] = useState(false)
     const [assignBatchModalOpen, setAssignBatchModalOpen] = useState(false)
     const [reportModalOpen, setReportModalOpen] = useState(false)
+
+    // Quick Day navigation
+    const handlePrevDay = () => {
+        const parts = planDate.split('-').map(Number)
+        const d = new Date(parts[0], parts[1] - 1, parts[2] - 1)
+        const newDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(d)
+        setPlanDate(newDateStr)
+    }
+
+    const handleNextDay = () => {
+        const parts = planDate.split('-').map(Number)
+        const d = new Date(parts[0], parts[1] - 1, parts[2] + 1)
+        const newDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(d)
+        setPlanDate(newDateStr)
+    }
+
+    const handleCopyPhone = (phone: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        const clean = phone.replace(/\s+/g, '')
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(clean)
+            toast.success(`Đã sao chép SĐT: ${clean}`)
+        }
+    }
 
     // Add Single Plan State
     const [newChannel, setNewChannel] = useState<'CORPORATE' | 'RETAIL'>('CORPORATE')
@@ -243,6 +282,15 @@ export function DailyCallPlannerView({
             })
             if (res.success) {
                 toast.success(`Đã lưu báo cáo cuộc gọi với [${activePlan.prospectName}] thành công!`)
+
+                // Cockpit mode: Find next pending lead to suggest immediate call
+                const nextPending = plans.find(p => p.id !== activePlan.id && p.status === 'PENDING')
+                if (nextPending) {
+                    setNextLeadPrompt(nextPending)
+                } else {
+                    setNextLeadPrompt(null)
+                }
+
                 setReportModalOpen(false)
                 setActivePlan(null)
                 setActiveCallStartTime(null)
@@ -515,36 +563,52 @@ export function DailyCallPlannerView({
                 </div>
 
                 {/* Filter Controls Row */}
-                <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+                <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                        {/* Date Picker */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                            <Calendar size={13} className="text-slate-400 ml-1.5" />
+                        {/* Date Picker with Prev/Next Day Quick Arrows */}
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-2xs">
+                            <button
+                                type="button"
+                                onClick={handlePrevDay}
+                                className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                                title="Ngày trước"
+                            >
+                                <ChevronLeft size={14} />
+                            </button>
+                            <Calendar size={13} className="text-slate-400" />
                             <input
                                 type="date"
                                 value={planDate}
                                 onChange={e => setPlanDate(e.target.value)}
-                                className="bg-transparent text-xs font-mono font-bold text-slate-800 outline-none pr-1.5 cursor-pointer"
+                                className="bg-transparent text-xs font-mono font-bold text-slate-800 outline-none px-1 cursor-pointer"
                             />
+                            <button
+                                type="button"
+                                onClick={handleNextDay}
+                                className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                                title="Ngày sau"
+                            >
+                                <ChevronRight size={14} />
+                            </button>
                             {planDate !== todayDateStr && (
                                 <button
                                     type="button"
                                     onClick={() => setPlanDate(todayDateStr)}
-                                    className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 cursor-pointer"
+                                    className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 transition cursor-pointer"
                                 >
                                     Hôm nay
                                 </button>
                             )}
                         </div>
 
-                        {/* Channel switcher */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        {/* Channel switcher (horizontal scroll on mobile) */}
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
                             {(['ALL', 'CORPORATE', 'RETAIL'] as const).map(ch => (
                                 <button
                                     key={ch}
                                     type="button"
                                     onClick={() => setChannelFilter(ch)}
-                                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
+                                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer ${
                                         channelFilter === ch
                                             ? 'bg-teal-600 text-white shadow-2xs'
                                             : 'text-slate-600 hover:text-slate-900'
@@ -555,14 +619,14 @@ export function DailyCallPlannerView({
                             ))}
                         </div>
 
-                        {/* Status switcher */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        {/* Status switcher (horizontal scroll on mobile) */}
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
                             {(['ALL', 'PENDING', 'COMPLETED', 'RESCHEDULED'] as const).map(st => (
                                 <button
                                     key={st}
                                     type="button"
                                     onClick={() => setStatusFilter(st)}
-                                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
+                                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer ${
                                         statusFilter === st
                                             ? 'bg-slate-900 text-white shadow-2xs'
                                             : 'text-slate-600 hover:text-slate-900'
@@ -604,8 +668,38 @@ export function DailyCallPlannerView({
                 </div>
             </div>
 
+            {/* Mobile Compact Progress Bar */}
+            <div className="sm:hidden bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-800">
+                        Tiến độ hôm nay: {stats.completed}/{stats.totalPlanned} khách
+                    </span>
+                    <span className="font-mono font-bold text-emerald-600">
+                        {stats.completionRate}%
+                    </span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                        className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, stats.completionRate)}%` }}
+                    />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                    <span>Chưa gọi: <strong className="text-amber-600">{stats.pending}</strong></span>
+                    <span>Hẹn lại: <strong className="text-blue-600">{stats.rescheduled}</strong></span>
+                    <button
+                        type="button"
+                        onClick={() => setShowMobileStats(!showMobileStats)}
+                        className="text-teal-700 font-semibold flex items-center gap-0.5 hover:underline cursor-pointer"
+                    >
+                        <span>{showMobileStats ? 'Thu gọn' : 'Chi tiết chỉ số'}</span>
+                        {showMobileStats ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                </div>
+            </div>
+
             {/* Daily Execution Progress Banner */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${showMobileStats ? 'grid' : 'hidden sm:grid'}`}>
                 <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
                         <Target size={18} />
@@ -774,9 +868,19 @@ export function DailyCallPlannerView({
                                                         [{plan.customerCode}]
                                                     </span>
                                                 )}
-                                                <span className="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
-                                                    📞 {plan.phone}
-                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
+                                                        📞 {plan.phone}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleCopyPhone(plan.phone, e)}
+                                                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                                        title="Sao chép số điện thoại"
+                                                    >
+                                                        <Copy size={12} />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Company (Corporate) */}
@@ -838,6 +942,18 @@ export function DailyCallPlannerView({
                                             <span>GỌI NGAY</span>
                                         </button>
 
+                                        {/* Zalo Direct Chat Button */}
+                                        <a
+                                            href={`https://zalo.me/${plan.phone.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition cursor-pointer min-h-[44px]"
+                                            title="Mở Zalo nhắn tin cho khách"
+                                        >
+                                            <MessageSquare size={15} className="text-blue-600" />
+                                            <span>Zalo</span>
+                                        </a>
+
                                         {/* Fill Report Button */}
                                         <button
                                             type="button"
@@ -870,14 +986,17 @@ export function DailyCallPlannerView({
             </div>
 
             {/* ========================================================================= */}
-            {/* MODAL 1: BÁO CÁO KẾT QUẢ CUỘC GỌI (CALL REPORT MODAL)                     */}
+            {/* MODAL 1: BÁO CÁO KẾT QUẢ CUỘC GỌI (CALL REPORT BOTTOMSHEET / MODAL)       */}
             {/* ========================================================================= */}
             {reportModalOpen && activePlan && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
+                        {/* Mobile drag handle indicator */}
+                        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
+
                         {/* Header */}
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
@@ -968,6 +1087,31 @@ export function DailyCallPlannerView({
                                 </div>
                             </div>
 
+                            {/* Quick Note Chips (1-Touch Add) */}
+                            <div>
+                                <label className="block font-bold text-slate-700 mb-1.5">
+                                    Gợi ý ghi chú nhanh (1-chạm để thêm)
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {QUICK_NOTE_CHIPS.map(chip => (
+                                        <button
+                                            key={chip}
+                                            type="button"
+                                            onClick={() => {
+                                                if (!reportNotes.trim()) {
+                                                    setReportNotes(chip)
+                                                } else if (!reportNotes.includes(chip)) {
+                                                    setReportNotes(`${reportNotes}, ${chip}`)
+                                                }
+                                            }}
+                                            className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-700 border border-slate-200/80 text-slate-600 transition cursor-pointer"
+                                        >
+                                            + {chip}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Follow-up date (if busy or interested) */}
                             {(reportOutcome.includes('CALLBACK') || reportOutcome.includes('BUSY') || reportOutcome.includes('INTERESTED')) && (
                                 <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1.5 animate-in fade-in duration-150">
@@ -1023,11 +1167,12 @@ export function DailyCallPlannerView({
             {/* MODAL 2: THÊM KHÁCH VÀO KẾ HOẠCH NGÀY (ADD SINGLE PLAN ITEM)               */}
             {/* ========================================================================= */}
             {addModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
+                        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                                 <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
@@ -1287,11 +1432,12 @@ export function DailyCallPlannerView({
             {/* MODAL 3: QUẢN LÝ PHÂN BỔ DANH SÁCH GỌI HÀNG LOẠT (MANAGER BATCH ASSIGN)     */}
             {/* ========================================================================= */}
             {assignBatchModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-xl bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
+                        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                                 <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
@@ -1414,6 +1560,46 @@ export function DailyCallPlannerView({
                     </div>
                 </div>
             )}
+
+            {/* Continuous Calling Prompt (Cockpit Mode Banner) */}
+            {nextLeadPrompt && (
+                <div className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-96 z-40 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700/60 flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-200">
+                    <div className="min-w-0 flex-1">
+                        <div className="text-[10px] uppercase font-bold text-teal-400 tracking-wider flex items-center gap-1">
+                            <Zap size={11} /> Khách tiếp theo trong kế hoạch
+                        </div>
+                        <div className="font-bold text-xs truncate mt-0.5">
+                            {nextLeadPrompt.prospectName} {nextLeadPrompt.prospectCompany ? `• ${nextLeadPrompt.prospectCompany}` : ''}
+                        </div>
+                        <div className="text-[11px] text-slate-300 font-mono">
+                            📞 {nextLeadPrompt.phone}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const lead = nextLeadPrompt
+                                setNextLeadPrompt(null)
+                                handleInitiateCall(lead)
+                            }}
+                            className="px-3 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition"
+                        >
+                            <PhoneCall size={13} />
+                            <span>GỌI TIẾP</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setNextLeadPrompt(null)}
+                            className="p-2 text-slate-400 hover:text-white rounded-lg cursor-pointer transition"
+                            title="Bỏ qua gợi ý"
+                        >
+                            <X size={15} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {confirmDialog}
         </div>
     )

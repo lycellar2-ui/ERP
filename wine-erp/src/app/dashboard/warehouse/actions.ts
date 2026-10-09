@@ -273,9 +273,9 @@ export async function getStockInventory(filters: {
         const totalReserved = draftDoQty + soReserved
         const qtyOnHand = dbAvail + draftDoQty
         const qtyReceived = Number(l.qtyReceived)
-        const qtyBook = qtyOnHand
+        const qtyBook = Math.max(0, qtyReceived - shippedQty)
         const qtyAvailable = Math.max(0, qtyOnHand - totalReserved)
-        const variance = 0
+        const variance = qtyOnHand - qtyBook
 
         return {
             id: l.id,
@@ -791,6 +791,11 @@ export async function createGoodsReceipt(input: {
             return gr
         })
 
+        if (autoConfirm) {
+            const { generateQRCodesForGR } = await import('../qr-codes/actions')
+            generateQRCodesForGR(result.id).catch(() => { })
+        }
+
         revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/procurement')
@@ -1293,10 +1298,30 @@ export async function confirmDeliveryOrder(
                 })
             }
 
-            // Update SO status
+            // ── EVENT-DRIVEN: Auto-derive SO status from delivery reality ──
+            const soId = deliveryOrder.soId
+            const soLines = await tx.salesOrderLine.findMany({
+                where: { soId },
+                select: { qtyOrdered: true },
+            })
+            const totalOrdered = soLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+
+            const shippedDOs = await tx.deliveryOrder.findMany({
+                where: { soId, status: { in: ['SHIPPED', 'DELIVERED'] } },
+                select: { id: true },
+            })
+            const shippedDOIds = Array.from(new Set([...shippedDOs.map(d => d.id), doId]))
+
+            const allDOLines = await tx.deliveryOrderLine.findMany({
+                where: { doId: { in: shippedDOIds } },
+                select: { qtyShipped: true, qtyPicked: true },
+            })
+            const totalShipped = allDOLines.reduce((s, l) => s + Number(l.qtyShipped || l.qtyPicked || 0), 0)
+
+            const newSOStatus = totalShipped >= totalOrdered ? 'DELIVERED' : 'PARTIALLY_DELIVERED'
             await tx.salesOrder.update({
-                where: { id: deliveryOrder.soId },
-                data: { status: 'DELIVERED' },
+                where: { id: soId },
+                data: { status: newSOStatus },
             })
 
             // Auto COGS journal entry: DR 632 / CR 156
@@ -1372,10 +1397,30 @@ export async function markDODelivered(
                 data: { status: 'DELIVERED' },
             })
 
-            // Update SO status
+            // ── EVENT-DRIVEN: Auto-derive SO status from delivery reality ──
+            const soId = deliveryOrder.soId
+            const soLines = await tx.salesOrderLine.findMany({
+                where: { soId },
+                select: { qtyOrdered: true },
+            })
+            const totalOrdered = soLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+
+            const shippedDOs = await tx.deliveryOrder.findMany({
+                where: { soId, status: { in: ['SHIPPED', 'DELIVERED'] } },
+                select: { id: true },
+            })
+            const shippedDOIds = Array.from(new Set([...shippedDOs.map(d => d.id), doId]))
+
+            const allDOLines = await tx.deliveryOrderLine.findMany({
+                where: { doId: { in: shippedDOIds } },
+                select: { qtyShipped: true, qtyPicked: true },
+            })
+            const totalShipped = allDOLines.reduce((s, l) => s + Number(l.qtyShipped || l.qtyPicked || 0), 0)
+
+            const newSOStatus = totalShipped >= totalOrdered ? 'DELIVERED' : 'PARTIALLY_DELIVERED'
             await tx.salesOrder.update({
-                where: { id: deliveryOrder.soId },
-                data: { status: 'DELIVERED' },
+                where: { id: soId },
+                data: { status: newSOStatus },
             })
         })
 
@@ -1505,6 +1550,154 @@ export async function updateDeliveryOrderDate(
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/reports')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Swap DO Line Lot & Auto-Quarantine Damaged Bottles ──
+export async function swapDOLineAndQuarantineDamaged(input: {
+    doId: string
+    doLineId: string
+    newLotId: string
+    qtyToSwap: number
+    reason: string
+}): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser()
+    const reporterId = user?.id ?? 'system'
+    try {
+        const { doId, doLineId, newLotId, qtyToSwap, reason } = input
+        if (!qtyToSwap || qtyToSwap <= 0) return { success: false, error: 'Số lượng chai cần đổi phải lớn hơn 0' }
+        if (!reason || reason.trim() === '') return { success: false, error: 'Bắt buộc nhập lý do phát hiện lỗi/bể vỡ' }
+
+        await prisma.$transaction(async (tx) => {
+            const doRecord = await tx.deliveryOrder.findUnique({
+                where: { id: doId },
+                select: { id: true, doNo: true, status: true, warehouseId: true }
+            })
+            if (!doRecord) throw new Error('Không tìm thấy phiếu xuất kho DO')
+            if (!['DRAFT', 'PICKING', 'PACKED'].includes(doRecord.status)) {
+                throw new Error(`Phiếu DO đang ở trạng thái [${doRecord.status}], không được phép đổi lô`)
+            }
+
+            const doLine = await tx.deliveryOrderLine.findUnique({
+                where: { id: doLineId },
+                include: { lot: true }
+            })
+            if (!doLine) throw new Error('Không tìm thấy dòng xuất kho cần đổi lô')
+            if (doLine.doId !== doId) throw new Error('Dòng xuất kho không thuộc phiếu DO này')
+            const pickedQty = Number(doLine.qtyPicked)
+            if (qtyToSwap > pickedQty) {
+                throw new Error(`Số lượng chai đổi (${qtyToSwap}) vượt quá số lượng đã nhặt (${pickedQty})`)
+            }
+
+            const newLot = await tx.stockLot.findUnique({
+                where: { id: newLotId },
+                include: { location: true }
+            })
+            if (!newLot) throw new Error('Không tìm thấy lô hàng thay thế mới')
+            if (newLot.productId !== doLine.productId) throw new Error('Lô thay thế phải cùng mã sản phẩm SKU')
+            if (newLot.location.warehouseId !== doRecord.warehouseId) throw new Error('Lô thay thế phải nằm trong cùng kho xuất hàng')
+            if (newLot.status !== 'AVAILABLE') throw new Error(`Lô thay thế không ở trạng thái khả dụng (${newLot.status})`)
+            if (Number(newLot.qtyAvailable) < qtyToSwap) {
+                throw new Error(`Lô thay thế [${newLot.lotNo}] chỉ còn ${newLot.qtyAvailable} chai khả dụng, không đủ ${qtyToSwap} chai`)
+            }
+
+            // 1. Move old damaged bottle(s) to Quarantine
+            const now = new Date()
+            const yy = String(now.getFullYear()).slice(-2)
+            const mm = String(now.getMonth() + 1).padStart(2, '0')
+            const qPrefix = `LOT-Q-${yy}${mm}-`
+            const lastQLot = await tx.stockLot.findFirst({
+                where: { lotNo: { startsWith: qPrefix } },
+                orderBy: { lotNo: 'desc' },
+                select: { lotNo: true },
+            })
+            const nextQSeq = lastQLot ? parseInt(lastQLot.lotNo.slice(-4)) + 1 : 1
+            const qLotNo = `${qPrefix}${String(nextQSeq).padStart(4, '0')}`
+
+            let qLocation = await tx.location.findFirst({
+                where: { warehouseId: doRecord.warehouseId, type: 'QUARANTINE' }
+            })
+            if (!qLocation) {
+                qLocation = await tx.location.findFirst({
+                    where: { warehouseId: doRecord.warehouseId }
+                })
+            }
+
+            // Deduct from old lot received & on-hand
+            await tx.stockLot.update({
+                where: { id: doLine.lotId },
+                data: {
+                    qtyReceived: { decrement: qtyToSwap },
+                }
+            })
+
+            // Create separate quarantined lot record
+            await tx.stockLot.create({
+                data: {
+                    lotNo: qLotNo,
+                    productId: doLine.productId,
+                    locationId: qLocation?.id ?? doLine.locationId,
+                    ownerEntityId: doLine.lot.ownerEntityId,
+                    qtyReceived: qtyToSwap,
+                    qtyAvailable: 0,
+                    unitLandedCost: doLine.lot.unitLandedCost,
+                    vintage: doLine.lot.vintage,
+                    status: 'QUARANTINE',
+                    receivedDate: now,
+                }
+            })
+
+            // 2. Allocate from new lot
+            await tx.stockLot.update({
+                where: { id: newLot.id },
+                data: {
+                    qtyAvailable: { decrement: qtyToSwap },
+                }
+            })
+
+            // 3. Update DO line to point to new lot & location
+            if (qtyToSwap === pickedQty) {
+                await tx.deliveryOrderLine.update({
+                    where: { id: doLineId },
+                    data: {
+                        lotId: newLot.id,
+                        locationId: newLot.locationId,
+                    }
+                })
+            } else {
+                await tx.deliveryOrderLine.update({
+                    where: { id: doLineId },
+                    data: {
+                        qtyPicked: pickedQty - qtyToSwap,
+                    }
+                })
+                await tx.deliveryOrderLine.create({
+                    data: {
+                        doId,
+                        productId: doLine.productId,
+                        lotId: newLot.id,
+                        locationId: newLot.locationId,
+                        qtyPicked: qtyToSwap,
+                        qtyShipped: 0,
+                    }
+                })
+            }
+
+            // 4. Audit log
+            logAudit({
+                userId: reporterId,
+                action: 'UPDATE',
+                entityType: 'DeliveryOrder',
+                entityId: doId,
+                description: `Đổi lô nhặt hàng DO ${doRecord.doNo}: Đổi ${qtyToSwap} chai từ lô cũ ${doLine.lot.lotNo} sang lô mới ${newLot.lotNo}. Lý do: ${reason}. Đã chuyển ${qtyToSwap} chai lỗi sang lô cách ly ${qLotNo}.`
+            })
+        })
+
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -2040,6 +2233,9 @@ export async function adjustStockFromCount(
                         }
                         remaining -= reduce
                     }
+                    if (remaining > 0) {
+                        throw new Error(`Tồn kho khả dụng tại vị trí ${line.locationCode} không đủ để trừ giảm hao hụt kiểm kê (thiếu ${remaining} chai)`)
+                    }
                 } else {
                     // Positive variance — increase oldest lot
                     await tx.stockLot.update({
@@ -2482,7 +2678,7 @@ export async function getDODetail(doId: string) {
             lines: {
                 include: {
                     product: { select: { productName: true, skuCode: true } },
-                    lot: { select: { lotNo: true } },
+                    lot: { select: { lotNo: true, vintage: true } },
                     location: { select: { locationCode: true } },
                 },
             },
@@ -2499,6 +2695,7 @@ export async function getDODetail(doId: string) {
         id: d.id,
         doNo: d.doNo,
         soNo: d.so.soNo,
+        warehouseId: d.warehouseId,
         customerName: cust.name,
         customerPhone,
         receiverName,
@@ -2509,8 +2706,11 @@ export async function getDODetail(doId: string) {
         createdAt: d.createdAt,
         lines: d.lines.map(l => ({
             id: l.id,
+            productId: l.productId,
+            lotId: l.lotId,
             productName: l.product.productName,
             skuCode: l.product.skuCode,
+            vintage: l.lot.vintage,
             lotNo: l.lot.lotNo,
             locationCode: l.location.locationCode,
             qtyPicked: Number(l.qtyPicked),

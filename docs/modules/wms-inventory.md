@@ -99,6 +99,16 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 4. Sau khi nhặt xong → In **Phiếu Xuất Kho (PDF)** — mẫu in tiêu chuẩn A4 (đồng bộ layout với Đơn Bán Hàng), kèm hàng giao cho Shipper / Khách hàng.
 5. Khi giao thành công → Bấm **"Đã Giao Hàng"** (status: DELIVERED) → SO chuyển DELIVERED, Tồn kho tự động cập nhật & tự sinh bút toán Giá vốn hàng bán (COGS: Nợ 632 / Có 156).
 6. **Hoàn tác Xuất Kho (Reverse DO — Admin only):** Khi hoàn tác DO, hệ thống tự động hoàn trả số lượng vào `StockLot`, chuyển DO về `CANCELLED`, hoàn về trạng thái đơn hàng `CONFIRMED` và **tự động sinh bút toán đảo Giá vốn Nợ 156 / Có 632** để cân đối sổ cái tài chính.
+7. **Xử lý chai lỗi / bể vỡ khi nhặt hàng (Defect Swapping & Auto-Quarantine):**
+   - Khi phát hiện chai nứt vỡ, rách tem hoặc lỗi bao bì trong quá trình pick theo FIFO, nhân viên thủ kho sử dụng nút **"Đổi Lô Lỗi"** ngay trên chi tiết dòng DO.
+   - Hệ thống mở modal hoán đổi: chọn lô khả dụng khác của cùng SKU trong kho và bắt buộc nhập lý do lỗi.
+   - Giao dịch thực hiện atomic: trừ tồn lô cũ, tạo lô cách ly mới `LOT-Q-YYMM-NNNN` trạng thái `QUARANTINE`, tăng phân bổ vào lô mới trên DO (tách dòng `DeliveryOrderLine` nếu đổi 1 phần), và ghi nhận audit log chi tiết.
+8. **Tự động sinh mã QR (`QRCode`) khi Nhập Kho (`autoConfirm`):**
+   - Cả 2 luồng nhập kho (Duyệt thủ công từ DRAFT và Lưu & Nhập Ngay `autoConfirm: true`) đều tự động kích hoạt `generateQRCodesForGR` để in tem nhãn truy xuất nguồn gốc.
+9. **Bảo toàn tính toàn vẹn khi điều chỉnh kiểm kê (`adjustStockFromCount`):**
+   - Nghiêm cấm trừ dở dang: Nếu số lượng hao hụt thực tế vượt quá lượng tồn khả dụng tại vị trí kệ, hệ thống rollback transaction và báo lỗi cảnh báo chi tiết thay vì trừ ngầm một phần.
+10. **Quy chuẩn hiển thị Niên vụ (Vintage & NV Badge):**
+    - Rượu có niên vụ hiển thị `VTG YYYY` (hoặc số năm). Rượu không niên vụ (`vintage = null`) hiển thị huy hiệu `NV` chuẩn design system trên tất cả các bảng và thẻ di động.
 
 ---
 

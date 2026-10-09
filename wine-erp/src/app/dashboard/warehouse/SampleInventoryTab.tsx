@@ -12,6 +12,7 @@ import {
     createSampleProduct, createSampleTransaction
 } from './actions-sample'
 import { formatVND, formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const ORIGIN_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
     FORMAL: { label: 'Chính Ngạch', color: '#15803D', bg: '#ECFDF5', border: '#A7F3D0' },
@@ -92,7 +93,7 @@ export function SampleInventoryTab() {
     // ── Handle Add Submit ─────────────────────────────
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formName.trim()) return alert('Vui lòng nhập tên sản phẩm mẫu')
+        if (!formName.trim()) return toast.error('Vui lòng nhập tên sản phẩm mẫu')
         setSubmittingAdd(true)
         try {
             await createSampleProduct({
@@ -103,11 +104,12 @@ export function SampleInventoryTab() {
                 initialQty: Number(formInitialQty) || 0,
                 notes: formNotes.trim() || undefined,
             })
+            toast.success('Đã khai báo hàng mẫu thành công!')
             setShowAddModal(false)
             resetAddForm()
             loadData()
         } catch (err: any) {
-            alert(err.message || 'Lỗi khi khai báo hàng mẫu')
+            toast.error(err.message || 'Lỗi khi khai báo hàng mẫu')
         } finally {
             setSubmittingAdd(false)
         }
@@ -126,8 +128,8 @@ export function SampleInventoryTab() {
     const handleOutboundSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const prodId = selectedProductForOutbound?.id || outboundProductId
-        if (!prodId) return alert('Vui lòng chọn hàng mẫu cần xuất')
-        if (!outboundQty || Number(outboundQty) <= 0) return alert('Số lượng xuất phải lớn hơn 0')
+        if (!prodId) return toast.error('Vui lòng chọn hàng mẫu cần xuất')
+        if (!outboundQty || Number(outboundQty) <= 0) return toast.error('Số lượng xuất phải lớn hơn 0')
 
         setSubmittingOutbound(true)
         try {
@@ -140,11 +142,12 @@ export function SampleInventoryTab() {
                 requestedBy: outboundRequestedBy,
                 notes: outboundNotes,
             })
+            toast.success('Đã xuất sử dụng hàng mẫu thành công!')
             setShowOutboundModal(false)
             resetOutboundForm()
             loadData()
         } catch (err: any) {
-            alert(err.message || 'Lỗi khi tạo phiếu xuất hàng mẫu')
+            toast.error(err.message || 'Lỗi khi tạo phiếu xuất hàng mẫu')
         } finally {
             setSubmittingOutbound(false)
         }

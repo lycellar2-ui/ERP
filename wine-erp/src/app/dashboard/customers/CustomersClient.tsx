@@ -67,11 +67,13 @@ function CustomerMobileCard({
     onEdit,
     onDelete,
     onSyncTax,
+    onSelectParent,
 }: {
     row: CustomerRow
     onEdit: () => void
     onDelete: () => void
     onSyncTax?: () => void
+    onSelectParent?: (parentId: string) => void
 }) {
     const taxToDisplay = row.taxId || row.resolvedVatInfo?.taxId
     const isVatInherited = !row.taxId && Boolean(row.resolvedVatInfo?.taxId)
@@ -91,7 +93,7 @@ function CustomerMobileCard({
                     <TypeBadge type={row.channel} />
                     {row.entityType === 'COMPANY' ? (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200">
-                            <Building2 size={11} className="text-slate-600" /> Cty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
+                            <Building2 size={11} className="text-slate-600" /> Công ty Mẹ {row.childrenCount > 0 && `(${row.childrenCount} chi nhánh)`}
                         </span>
                     ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
@@ -122,8 +124,17 @@ function CustomerMobileCard({
             {/* Row 3: Meta details (Parent, MST, Sales Rep, Credit) */}
             <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 text-slate-600">
                 {row.parentCode && (
-                    <div className="col-span-2 flex items-center gap-1 text-[11px] bg-slate-50 p-1.5 rounded border border-slate-200/60">
-                        <span className="text-slate-400">Công ty Cha:</span>
+                    <div
+                        className="col-span-2 flex items-center gap-1 text-[11px] bg-slate-50 p-1.5 rounded border border-slate-200/60 cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={(e) => {
+                            if (row.parentId && onSelectParent) {
+                                e.stopPropagation()
+                                onSelectParent(row.parentId)
+                            }
+                        }}
+                        title="Chạm để lọc các cơ sở thuộc KH Cha này"
+                    >
+                        <span className="text-slate-400">Khách hàng Cha:</span>
                         <strong className="font-mono text-cyan-800 font-semibold">{row.parentCode}</strong>
                         <span className="truncate text-slate-600">— {row.parentName}</span>
                     </div>
@@ -134,7 +145,7 @@ function CustomerMobileCard({
                         {taxToDisplay ? (
                             <>
                                 <span className={isVatInherited ? "text-amber-700 font-bold" : ""}>
-                                    {taxToDisplay} {isVatInherited && '(Cha)'}
+                                    {taxToDisplay} {isVatInherited && '(MST Mẹ)'}
                                 </span>
                                 {onSyncTax && (
                                     <button
@@ -328,7 +339,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         const parentCandidate = parentCandidates.find(p => p.id === form.parentId)
         const taxToQuery = form.taxId || parentCandidate?.taxId
         if (!taxToQuery || !taxToQuery.trim()) {
-            toast.error('Vui lòng nhập Mã số thuế hoặc chọn Công ty Cha có Mã số thuế trước khi tra cứu')
+            toast.error('Vui lòng nhập Mã số thuế hoặc chọn Khách hàng Cha có Mã số thuế trước khi tra cứu')
             return
         }
         setTaxLookupLoading(true)
@@ -852,14 +863,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {form.channel === 'HORECA' && (
                                 <div className="space-y-4">
                                     <div className="relative" ref={parentContainerRef}>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã cha (Tính công nợ)</label>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Khách hàng Cha (Đơn vị quản lý)</label>
                                         <div className="relative flex items-center">
                                             <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
                                             <input
                                                 type="text"
                                                 className={`${inputCls} pl-9 pr-8`}
                                                 style={inputStyle}
-                                                placeholder="Gõ tên hoặc mã cha để tìm..."
+                                                placeholder="Gõ tên hoặc mã KH cha để tìm..."
                                                 value={parentSearch}
                                                 onFocus={() => setParentDropdownOpen(true)}
                                                 onChange={e => {
@@ -908,13 +919,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                             }
                                                         }}
                                                     >
-                                                        — Không chọn Mã cha —
+                                                        — Không chọn Khách hàng Cha —
                                                     </button>
                                                     {parentCandidates
                                                         .filter(c => {
-                                                            if (!parentSearch.trim()) return true
-                                                            const q = parentSearch.toLowerCase()
-                                                            return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+                                                             if (!parentSearch.trim()) return true
+                                                             const q = parentSearch.toLowerCase()
+                                                             return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
                                                         })
                                                         .map(c => {
                                                             const isSelected = form.parentId === c.id
@@ -942,7 +953,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
                                                                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 flex items-center gap-1">
-                                                                            <Building2 size={10} /> Cty Cha
+                                                                            <Building2 size={10} /> Công ty Mẹ
                                                                         </span>
                                                                     )}
                                                                 </button>
@@ -954,7 +965,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
                                                     }).length === 0 && (
                                                         <div className="px-3.5 py-3.5 text-center text-xs text-slate-500">
-                                                            Không tìm thấy công ty phù hợp
+                                                            Không tìm thấy đơn vị phù hợp
                                                         </div>
                                                     )}
                                                 </div>
@@ -975,8 +986,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     }))
                                                 }}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="RESTAURANT">Nhà hàng / Chi nhánh con</option>
-                                                <option value="COMPANY">Công ty cha tính công nợ</option>
+                                                <option value="RESTAURANT">Điểm bán / Cơ sở con (Nhà hàng)</option>
+                                                <option value="COMPANY">Công ty Mẹ (Quản lý công nợ & pháp nhân)</option>
                                             </select>
                                         </div>
                                         {form.entityType === 'COMPANY' ? (
@@ -1373,13 +1384,22 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [channelFilter, setChannelFilter] = useState('')
+    const [hierarchyFilter, setHierarchyFilter] = useState<'PARENT_ONLY' | 'CHILD_ONLY' | 'INDEPENDENT' | ''>('')
+    const [parentFilter, setParentFilter] = useState('')
     const [exporting, setExporting] = useState(false)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
 
     const queryClient = useQueryClient()
 
+    const { data: parentOptions = [] } = useQuery({
+        queryKey: ['customerParentCandidates'],
+        queryFn: () => getParentCandidates(),
+        staleTime: 60_000,
+    })
+
     const reload = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ['customers'] })
+        queryClient.invalidateQueries({ queryKey: ['customerParentCandidates'] })
     }, [queryClient])
 
     // TanStack Query — cache customers page data
@@ -1394,7 +1414,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             ])
             return { rows: data.rows, total: data.total, stats, channels, salesReps }
         },
-        initialData: filters.page === 1 && !filters.search && !filters.type && !filters.status && !filters.channel
+        initialData: filters.page === 1 && !filters.search && !filters.type && !filters.status && !filters.channel && !filters.hierarchyRole && !filters.parentId
             ? initialData
             : undefined,
         staleTime: 30_000,
@@ -1511,7 +1531,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const openEdit = (id: string) => { setEditingId(id); setDrawerOpen(true) }
     const sortFor = (key: CustomerFilters['sortBy']) => (filters.sortBy === key ? filters.sortDir ?? 'asc' : false)
     const refetching = loading && rows.length > 0
-    const hasFilters = !!(search || typeFilter || statusFilter || channelFilter)
+    const hasFilters = !!(search || typeFilter || statusFilter || channelFilter || hierarchyFilter || parentFilter)
     const COL_COUNT = 7
 
     return (
@@ -1580,10 +1600,42 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 right={
                     <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
                         <Select
+                            aria-label="Phân cấp khách hàng"
+                            value={hierarchyFilter}
+                            onChange={e => {
+                                const val = e.target.value as any
+                                setHierarchyFilter(val)
+                                applyFilter({ hierarchyRole: val || undefined })
+                            }}
+                            className="md:w-36"
+                        >
+                            <option value="">Tất cả phân cấp</option>
+                            <option value="PARENT_ONLY">🏢 Công ty Mẹ</option>
+                            <option value="CHILD_ONLY">🍴 Điểm bán con</option>
+                            <option value="INDEPENDENT">👤 KH độc lập</option>
+                        </Select>
+                        <Select
+                            aria-label="Lọc theo Khách hàng Cha"
+                            value={parentFilter}
+                            onChange={e => {
+                                const val = e.target.value
+                                setParentFilter(val)
+                                applyFilter({ parentId: val || undefined })
+                            }}
+                            className="md:w-48"
+                        >
+                            <option value="">Tất cả KH Cha ({parentOptions.length})</option>
+                            {parentOptions.map(p => (
+                                <option key={p.id} value={p.id}>
+                                    [{p.code}] {p.name}
+                                </option>
+                            ))}
+                        </Select>
+                        <Select
                             aria-label="Loại khách hàng"
                             value={typeFilter}
                             onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
-                            className="md:w-36"
+                            className="md:w-32"
                         >
                             <option value="">Tất cả loại</option>
                             <option value="HORECA">HORECA</option>
@@ -1595,7 +1647,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             aria-label="Trạng thái"
                             value={statusFilter}
                             onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                            className="md:w-36"
+                            className="md:w-32"
                         >
                             <option value="">Trạng thái</option>
                             <option value="ACTIVE">Hoạt động</option>
@@ -1608,7 +1660,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             aria-label="Kênh"
                             value={channelFilter}
                             onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
-                            className="md:w-48"
+                            className="md:w-40"
                         >
                             <option value="">Tất cả kênh</option>
                             {channels.map(c => (
@@ -1620,8 +1672,8 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                 variant="ghost"
                                 onClick={() => {
                                     if (debounceRef.current) clearTimeout(debounceRef.current)
-                                    setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
-                                    applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
+                                    setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter(''); setHierarchyFilter(''); setParentFilter('')
+                                    applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined, hierarchyRole: undefined, parentId: undefined })
                                 }}
                             >
                                 <X size={14} aria-hidden /> Xóa lọc
@@ -1659,6 +1711,10 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             onEdit={() => openEdit(row.id)}
                             onDelete={() => handleDelete(row.id, row.name)}
                             onSyncTax={() => handleSyncTax(row.id)}
+                            onSelectParent={(parentId) => {
+                                setParentFilter(parentId)
+                                applyFilter({ parentId })
+                            }}
                         />
                     ))
                 )}
@@ -1705,7 +1761,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             {row.entityType === 'COMPANY' ? (
                                                 <Badge tone="neutral" className="gap-1 inline-flex items-center text-[10px]">
                                                     <Building2 size={10} />
-                                                    Công ty{row.allowDirectSO && ' (Bán TT)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
+                                                    Công ty Mẹ{row.allowDirectSO && ' (Bán TT)'}{row.childrenCount > 0 && ` • ${row.childrenCount} chi nhánh`}
                                                 </Badge>
                                             ) : (
                                                 <Badge tone="success" className="gap-1 inline-flex items-center text-[10px]">
@@ -1717,9 +1773,20 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                         </div>
                                         <div className="flex items-center gap-3 text-[11px] text-lys-muted flex-wrap">
                                             {row.parentCode && (
-                                                <span className="inline-flex items-center gap-0.5 text-lys-teal-strong font-medium">
-                                                    <CornerDownRight size={11} /> Thuộc: {row.parentCode}
-                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        if (row.parentId) {
+                                                            setParentFilter(row.parentId)
+                                                            applyFilter({ parentId: row.parentId })
+                                                        }
+                                                    }}
+                                                    title="Bấm để lọc toàn bộ cơ sở thuộc KH Cha này"
+                                                    className="inline-flex items-center gap-0.5 text-lys-teal-strong font-medium hover:underline text-left cursor-pointer"
+                                                >
+                                                    <CornerDownRight size={11} /> Thuộc KH Cha: <span className="font-mono underline">{row.parentCode}</span>
+                                                </button>
                                             )}
                                             {row.taxId ? (
                                                 <span className="inline-flex items-center gap-1">
@@ -1736,8 +1803,8 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                     </Button>
                                                 </span>
                                             ) : row.resolvedVatInfo?.taxId ? (
-                                                <span className="text-amber-600 font-medium" title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`}>
-                                                    MST cha: <span className="font-mono">{row.resolvedVatInfo.taxId}</span>
+                                                <span className="text-amber-600 font-medium" title={`Kế thừa MST từ Công ty Mẹ ${row.parentName || ''}`}>
+                                                    MST Mẹ: <span className="font-mono">{row.resolvedVatInfo.taxId}</span>
                                                 </span>
                                             ) : null}
                                             {row.shortName && (

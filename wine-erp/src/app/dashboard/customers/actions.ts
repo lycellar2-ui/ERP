@@ -53,6 +53,8 @@ export type CustomerFilters = {
     type?: string
     status?: string
     channel?: string
+    hierarchyRole?: 'PARENT_ONLY' | 'CHILD_ONLY' | 'INDEPENDENT'
+    parentId?: string
     page?: number
     pageSize?: number
     sortBy?: 'name' | 'creditLimit' | 'orderCount' | 'createdAt'
@@ -65,9 +67,9 @@ export type CustomerFilters = {
 
 export async function getCustomers(params?: CustomerFilters): Promise<{ rows: CustomerRow[]; total: number }> {
     await requirePermission('MDM', 'READ')
-    const { search, type, status, channel, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
+    const { search, type, status, channel, hierarchyRole, parentId, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
 
-    const isDefaultLoad = page === 1 && !search && !type && !status && !channel && sortBy === 'name' && sortDir === 'asc'
+    const isDefaultLoad = page === 1 && !search && !type && !status && !channel && !hierarchyRole && !parentId && sortBy === 'name' && sortDir === 'asc'
 
     const fetchData = async () => {
         const where: any = { deletedAt: null }
@@ -77,24 +79,61 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
             where.salesRepId = user.id
         }
 
+        const andConditions: any[] = []
+
         if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { code: { contains: search, mode: 'insensitive' } },
-                { taxId: { contains: search, mode: 'insensitive' } },
-                { shortName: { contains: search, mode: 'insensitive' } },
-                {
-                    contacts: {
-                        some: {
-                            OR: [
-                                { email: { contains: search, mode: 'insensitive' } },
-                                { phone: { contains: search, mode: 'insensitive' } },
-                            ]
+            andConditions.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { code: { contains: search, mode: 'insensitive' } },
+                    { taxId: { contains: search, mode: 'insensitive' } },
+                    { shortName: { contains: search, mode: 'insensitive' } },
+                    {
+                        contacts: {
+                            some: {
+                                OR: [
+                                    { email: { contains: search, mode: 'insensitive' } },
+                                    { phone: { contains: search, mode: 'insensitive' } },
+                                ]
+                            }
                         }
-                    }
-                },
-            ]
+                    },
+                ]
+            })
         }
+
+        if (hierarchyRole === 'PARENT_ONLY') {
+            andConditions.push({
+                OR: [
+                    { entityType: 'COMPANY' },
+                    { children: { some: { deletedAt: null } } }
+                ]
+            })
+        } else if (hierarchyRole === 'CHILD_ONLY') {
+            andConditions.push({
+                parentId: { not: null }
+            })
+        } else if (hierarchyRole === 'INDEPENDENT') {
+            andConditions.push({
+                parentId: null,
+                entityType: 'RESTAURANT',
+                children: { none: { deletedAt: null } }
+            })
+        }
+
+        if (parentId) {
+            andConditions.push({
+                OR: [
+                    { id: parentId },
+                    { parentId: parentId }
+                ]
+            })
+        }
+
+        if (andConditions.length > 0) {
+            where.AND = andConditions
+        }
+
         if (type) where.customerType = type
         if (status) where.status = status
         if (channel) where.channel = channel
@@ -405,7 +444,7 @@ export async function exportCustomersData() {
         'Loại': c.customerType,
         'Kênh': c.channel ?? '',
         'MST': c.taxId || c.parent?.taxId || '',
-        'Cty Mẹ': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
+        'Khách Hàng Cha (Cty Mẹ)': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
         'Thanh Toán': c.paymentTerm,
         'Hạn Mức': Number(c.creditLimit),
         'Sales Rep': c.salesRep?.name ?? '',

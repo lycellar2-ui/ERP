@@ -23,6 +23,7 @@ const mockPrisma = {
         findMany: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        count: vi.fn(),
     },
     customerContact: {
         findFirst: vi.fn(),
@@ -45,6 +46,7 @@ const {
     checkCustomerDuplicates,
     createCustomer,
     updateCustomer,
+    getCustomers,
 } = await import('@/app/dashboard/customers/actions')
 
 beforeEach(() => {
@@ -254,4 +256,64 @@ describe('CUST-DUP: Customer Hierarchy & Duplicate Prevention', () => {
             expect(res.error).toContain('Mã số thuế \'0399999999\' đã tồn tại cho Khách hàng [CUST-OTHER]')
         })
     })
+
+    describe('getCustomers: Hierarchy & Parent Filters', () => {
+        it('should query parent companies when hierarchyRole is PARENT_ONLY', async () => {
+            mockPrisma.customer.findMany.mockResolvedValueOnce([])
+            mockPrisma.customer.count.mockResolvedValueOnce(0)
+
+            await getCustomers({ hierarchyRole: 'PARENT_ONLY' })
+
+            expect(mockPrisma.customer.findMany).toHaveBeenCalledTimes(1)
+            const callArgs = mockPrisma.customer.findMany.mock.calls[0][0]
+            expect(callArgs.where.AND).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        OR: [
+                            { entityType: 'COMPANY' },
+                            { children: { some: { deletedAt: null } } }
+                        ]
+                    })
+                ])
+            )
+        })
+
+        it('should query child restaurants when hierarchyRole is CHILD_ONLY', async () => {
+            mockPrisma.customer.findMany.mockResolvedValueOnce([])
+            mockPrisma.customer.count.mockResolvedValueOnce(0)
+
+            await getCustomers({ hierarchyRole: 'CHILD_ONLY' })
+
+            expect(mockPrisma.customer.findMany).toHaveBeenCalledTimes(1)
+            const callArgs = mockPrisma.customer.findMany.mock.calls[0][0]
+            expect(callArgs.where.AND).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        parentId: { not: null }
+                    })
+                ])
+            )
+        })
+
+        it('should query specific parent and its children when parentId is provided', async () => {
+            mockPrisma.customer.findMany.mockResolvedValueOnce([])
+            mockPrisma.customer.count.mockResolvedValueOnce(0)
+
+            await getCustomers({ parentId: 'parent-corp-123' })
+
+            expect(mockPrisma.customer.findMany).toHaveBeenCalledTimes(1)
+            const callArgs = mockPrisma.customer.findMany.mock.calls[0][0]
+            expect(callArgs.where.AND).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        OR: [
+                            { id: 'parent-corp-123' },
+                            { parentId: 'parent-corp-123' }
+                        ]
+                    })
+                ])
+            )
+        })
+    })
 })
+

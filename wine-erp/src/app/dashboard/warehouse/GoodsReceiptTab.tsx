@@ -1139,7 +1139,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                                 {l.unitsPerCase || 6} chai/thùng
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#B45309' }}>
-                                                                {l.vintage ? l.vintage : '—'}
+                                                                {l.vintage ? `VTG ${l.vintage}` : <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">NV</span>}
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#475569' }}>
                                                                 {l.lotNo}

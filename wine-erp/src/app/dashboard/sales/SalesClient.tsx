@@ -366,7 +366,7 @@ function SODetailDrawer({
     canApprove?: boolean;
     canCreateInvoice?: boolean;
     canToggleInvoiceExempt?: boolean;
-    onAcctApprove?: (id: string, legalEntityId?: string) => void;
+    onAcctApprove?: (id: string, legalEntityId?: string, soNo?: string) => void;
     onAcctReject?: (id: string) => void;
     onApprove?: (id: string) => void;
     onReject?: (id: string) => void;
@@ -754,7 +754,7 @@ function SODetailDrawer({
                     <>
                         {detail.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
                             <>
-                                <Button size="sm" onClick={() => onAcctApprove?.(soId, detail.legalEntityId)}>
+                                <Button size="sm" onClick={() => onAcctApprove?.(soId, detail.legalEntityId, detail.soNo)}>
                                     <CheckCircle2 size={13} /> {isEn ? 'Acct Approve' : 'KT Duyệt'}
                                 </Button>
                                 <Button size="sm" variant="danger-outline" onClick={() => onAcctReject?.(soId)}>
@@ -2075,7 +2075,27 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
     const [acctEntityId, setAcctEntityId] = useState('')
+    const [acctOriginalEntityId, setAcctOriginalEntityId] = useState('')
+    const [acctOrderNo, setAcctOrderNo] = useState('')
+    const [showEntityConfirm, setShowEntityConfirm] = useState(false)
     const [approvalModalId, setApprovalModalId] = useState<string | null>(null)
+
+    const openAcctModal = (orderId: string, orderEntityId?: string | null, orderNo?: string) => {
+        setAcctModalId(orderId)
+        const initialEntity = orderEntityId || ''
+        setAcctEntityId(initialEntity)
+        setAcctOriginalEntityId(initialEntity)
+        setAcctOrderNo(orderNo || '')
+        setShowEntityConfirm(false)
+    }
+
+    const closeAcctModal = () => {
+        setAcctModalId(null)
+        setAcctEntityId('')
+        setAcctOriginalEntityId('')
+        setAcctOrderNo('')
+        setShowEntityConfirm(false)
+    }
 
     // Advanced filters
     const [salesRepFilter, setSalesRepFilter] = useState<string>('')
@@ -3003,7 +3023,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         )}
                                         {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
                                             <>
-                                                <Button size="sm" className="h-7 px-2" onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}>
+                                                <Button size="sm" className="h-7 px-2" onClick={() => openAcctModal(row.id, row.legalEntityId, row.soNo)}>
                                                     <CheckCircle2 size={12} /> KT Duyệt
                                                 </Button>
                                                 <Button size="sm" variant="danger-outline" className="h-7 px-2" disabled={actionLoading === row.id}
@@ -3050,7 +3070,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             onConfirm={() => handleConfirm(row.id)}
                             onEdit={() => setEditId(row.id)}
                             onDelete={() => handleDelete(row.id)}
-                            onAcctApprove={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
+                            onAcctApprove={() => openAcctModal(row.id, row.legalEntityId, row.soNo)}
                             onAcctReject={() => handleAcctReject(row.id)}
                             onCancel={() => handleCancel(row.id)}
                             onClone={() => handleClone(row.id)}
@@ -3087,9 +3107,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     canCreateInvoice={canCreateInvoice}
                     canToggleInvoiceExempt={canToggleInvoiceExempt}
                     onReloadList={() => reload()}
-                    onAcctApprove={(id, entityId) => {
-                        setAcctModalId(id)
-                        if (entityId) setAcctEntityId(entityId)
+                    onAcctApprove={(id, entityId, orderNo) => {
+                        openAcctModal(id, entityId, orderNo)
                     }}
                     onAcctReject={(id) => {
                         setActionLoading(id)
@@ -3144,63 +3163,219 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             )}
 
             {/* Accounting Approval Modal */}
-            {acctModalId && (
-                <>
-                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setAcctModalId(null)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
-                                <ShieldCheck size={18} />
-                            </span>
-                            {isEn ? 'Accounting Order Approval' : 'Kế Toán Duyệt Đơn'}
-                        </h3>
-                        <div className="mb-5">
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
-                                {isEn ? 'Invoicing Legal Entity' : 'Pháp Nhân Xuất Hoá Đơn'}
-                            </label>
-                            <select
-                                value={acctEntityId}
-                                onChange={e => setAcctEntityId(e.target.value)}
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
-                            >
-                                <option value="">{isEn ? '— Select entity —' : '— Chưa chọn —'}</option>
-                                {legalEntities.map(e => (
-                                    <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.code === 'TA' ? (isEn ? 'Import' : 'Nhập Khẩu') : (isEn ? 'Distribution' : 'Phân Phối')}</option>
-                                ))}
-                            </select>
+            {acctModalId && (() => {
+                const allEntities: LegalEntityRow[] = legalEntities.length > 0 ? legalEntities : (pageLegalEntities as LegalEntityRow[])
+                const origEntity = allEntities.find((e: LegalEntityRow) => e.id === acctOriginalEntityId)
+                const selectedEntity = allEntities.find((e: LegalEntityRow) => e.id === acctEntityId)
+                const isEntityChanged = Boolean(acctOriginalEntityId && acctEntityId && acctEntityId !== acctOriginalEntityId)
+
+                const executeApprove = async () => {
+                    if (!acctEntityId) {
+                        toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân')
+                        return
+                    }
+                    setActionLoading(acctModalId)
+                    toast.promise(
+                        acctApproveMutation.mutateAsync({ id: acctModalId, legalEntityId: acctEntityId }).then(() => {
+                            closeAcctModal()
+                            if (detailId === acctModalId) setDetailId(null)
+                            reload()
+                        }),
+                        {
+                            loading: isEn ? 'Approving...' : 'Đang duyệt...',
+                            success: isEntityChanged
+                                ? (isEn 
+                                    ? `Accounting approved — entity changed to ${selectedEntity?.code || ''}!` 
+                                    : `KT duyệt thành công — Đã đổi pháp nhân sang ${selectedEntity?.name || selectedEntity?.code}! Chuyển CONFIRMED.`)
+                                : (isEn ? 'Accounting approved — status changed to CONFIRMED!' : 'KT duyệt thành công — chuyển CONFIRMED!'),
+                            error: (e: any) => `${isEn ? 'Error:' : 'Lỗi:'} ${e.message}`,
+                            finally: () => setActionLoading(null),
+                        }
+                    )
+                }
+
+                return (
+                    <>
+                        <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={closeAcctModal} />
+                        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                            {showEntityConfirm ? (
+                                /* Confirmation View When Entity Differs */
+                                <div className="space-y-5">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                                            <AlertTriangle size={20} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h3 className="text-base font-bold text-slate-900">
+                                                    {isEn ? 'Confirm Legal Entity Change' : 'Xác Nhận Thay Đổi Pháp Nhân'}
+                                                </h3>
+                                                {acctOrderNo && (
+                                                    <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                                        {acctOrderNo}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {isEn
+                                                    ? 'The selected legal entity differs from the order’s original entity. Please review and confirm this change.'
+                                                    : 'Pháp nhân bạn chọn khác với pháp nhân ban đầu trong đơn hàng. Vui lòng xác nhận thay đổi trước khi duyệt.'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Diff Comparison Cards */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                                        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1">
+                                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide block">
+                                                {isEn ? 'Original Entity' : 'Pháp Nhân Ban Đầu'}
+                                            </span>
+                                            <div className="font-semibold text-slate-700">
+                                                {origEntity ? `${origEntity.name} (${origEntity.code})` : (isEn ? 'Not specified' : 'Chưa xác định')}
+                                            </div>
+                                            <span className="inline-block text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                {isEn ? 'Set by Sales' : 'Do Sales chọn lúc tạo đơn'}
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 bg-amber-50/70 rounded-lg border border-amber-200/80 shadow-2xs space-y-1">
+                                            <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide block">
+                                                {isEn ? 'New Entity (Changed)' : 'Pháp Nhân Mới (Thay Thế)'}
+                                            </span>
+                                            <div className="font-bold text-amber-900">
+                                                {selectedEntity ? `${selectedEntity.name} (${selectedEntity.code})` : (isEn ? 'None' : 'Chưa chọn')}
+                                            </div>
+                                            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
+                                                {isEn ? 'Accounting Override' : 'Kế toán chỉ định mới'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-blue-50 border border-blue-200/70 text-xs text-blue-800 flex items-start gap-2">
+                                        <AlertCircle size={15} className="text-blue-600 shrink-0 mt-0.5" />
+                                        <span>
+                                            {isEn
+                                                ? 'Notice: VAT invoices, warehouse delivery notes, and accounting journals will be processed under the newly selected entity.'
+                                                : 'Lưu ý: Hóa đơn điện tử VAT, phiếu xuất kho và hạch toán doanh thu sẽ áp dụng theo pháp nhân mới được duyệt.'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2.5 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEntityConfirm(false)}
+                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                                        >
+                                            {isEn ? 'Back to Selection' : 'Quay Lại Chọn Lại'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={actionLoading === acctModalId}
+                                            onClick={executeApprove}
+                                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                        >
+                                            <CheckCircle2 size={14} />
+                                            {isEn ? 'Confirm Change & Approve' : 'Xác Nhận Đổi & Duyệt Đơn'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Standard Selection View */
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
+                                                <ShieldCheck size={18} />
+                                            </span>
+                                            {isEn ? 'Accounting Order Approval' : 'Kế Toán Duyệt Đơn'}
+                                        </h3>
+                                        {acctOrderNo && (
+                                            <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                                {acctOrderNo}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Original Entity Info */}
+                                    <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                                        <span className="text-slate-500 font-medium">
+                                            {isEn ? 'Original Order Entity:' : 'Pháp nhân gốc của đơn:'}
+                                        </span>
+                                        <span className="font-semibold text-slate-800">
+                                            {origEntity ? `${origEntity.name} (${origEntity.code})` : (isEn ? 'Not assigned' : 'Chưa gán')}
+                                        </span>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">
+                                            {isEn ? 'Invoicing Legal Entity' : 'Pháp Nhân Xuất Hoá Đơn / Thực Hiện'}
+                                        </label>
+                                        <select
+                                            value={acctEntityId}
+                                            onChange={e => setAcctEntityId(e.target.value)}
+                                            className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                                        >
+                                            <option value="">{isEn ? '— Select entity —' : '— Chưa chọn —'}</option>
+                                            {allEntities.map((e: LegalEntityRow) => (
+                                                <option key={e.id} value={e.id}>
+                                                    {e.name} ({e.code}) — {e.code === 'TA' ? (isEn ? 'Import' : 'Nhập Khẩu') : (isEn ? 'Distribution' : 'Phân Phối')}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Real-time change alert */}
+                                    {isEntityChanged && (
+                                        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
+                                            <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                                            <div className="space-y-0.5">
+                                                <div className="font-semibold">
+                                                    {isEn ? 'Legal entity is different from original order' : 'Pháp nhân khác với đơn ban đầu!'}
+                                                </div>
+                                                <div className="text-amber-700">
+                                                    {isEn 
+                                                        ? `Changing from ${origEntity?.code || 'Original'} to ${selectedEntity?.code || 'New'}. You will be prompted to confirm.`
+                                                        : `Chuyển từ "${origEntity?.name || 'Gốc'}" sang "${selectedEntity?.name || 'Mới'}". Hệ thống sẽ yêu cầu xác nhận trước khi duyệt.`}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-3 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={closeAcctModal}
+                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                                        >
+                                            {isEn ? 'Cancel' : 'Huỷ'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={actionLoading === acctModalId}
+                                            onClick={() => {
+                                                if (!acctEntityId) {
+                                                    return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân')
+                                                }
+                                                if (isEntityChanged) {
+                                                    setShowEntityConfirm(true)
+                                                } else {
+                                                    executeApprove()
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                        >
+                                            <CheckCircle2 size={14} />
+                                            {isEntityChanged 
+                                                ? (isEn ? 'Review & Confirm Change' : 'Tiếp Tục & Xác Nhận Đổi')
+                                                : (isEn ? 'Approve & Confirm' : 'Duyệt & Xác Nhận')}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                        <div className="flex justify-end gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setAcctModalId(null)}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                            >
-                                {isEn ? 'Cancel' : 'Huỷ'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    if (!acctEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân')
-                                    setActionLoading(acctModalId)
-                                    toast.promise(acctApproveMutation.mutateAsync({ id: acctModalId, legalEntityId: acctEntityId }).then(() => {
-                                        setAcctModalId(null)
-                                        if (detailId === acctModalId) setDetailId(null)
-                                        reload()
-                                    }), {
-                                        loading: isEn ? 'Approving...' : 'Đang duyệt...',
-                                        success: isEn ? 'Accounting approved — status changed to CONFIRMED!' : 'KT duyệt thành công — chuyển CONFIRMED!',
-                                        error: (e: any) => `${isEn ? 'Error:' : 'Lỗi:'} ${e.message}`,
-                                        finally: () => setActionLoading(null),
-                                    })
-                                }}
-                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-all shadow-sm cursor-pointer"
-                            >
-                                <CheckCircle2 size={14} /> {isEn ? 'Approve & Confirm' : 'Duyệt & Xác Nhận'}
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
+                    </>
+                )
+            })()}
 
             {confirmDialog}
         </div>

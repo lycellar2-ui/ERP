@@ -41,6 +41,7 @@ export interface SalesOrderRow {
     orderDiscount: number
     paymentTerm: string
     salesRepName: string
+    legalEntityId?: string | null
     legalEntityName: string | null
     legalEntityCode: string | null
     lineCount: number
@@ -197,6 +198,7 @@ export async function getSalesOrders(filters: {
                    so."isInvoiceExempt", so."invoiceExemptReason", so."invoiceExemptBy", so."invoiceExemptAt",
                    c.name as customer_name, c.code as customer_code,
                    u.name as sales_rep_name,
+                   so."legalEntityId" as legal_entity_id,
                    le.name as legal_entity_name, le.code as legal_entity_code,
                    (SELECT COUNT(*)::int FROM sales_order_lines sol WHERE sol."soId" = so.id) as line_count,
                    (SELECT string_agg(inv."invoiceNo", ', ' ORDER BY inv."createdAt" ASC) FROM ar_invoices inv WHERE inv."soId" = so.id) as invoice_no,
@@ -283,6 +285,7 @@ export async function getSalesOrders(filters: {
                     orderDiscount: Number(o.orderDiscount),
                     paymentTerm: o.paymentTerm,
                     salesRepName: o.sales_rep_name,
+                    legalEntityId: o.legal_entity_id ?? null,
                     legalEntityName: o.legal_entity_name,
                     legalEntityCode: o.legal_entity_code,
                     lineCount: o.line_count,
@@ -1532,6 +1535,10 @@ export async function getLegalEntities(): Promise<LegalEntityRow[]> {
 export async function accountingApproveSO(id: string, legalEntityId?: string): Promise<{ success: boolean; error?: string }> {
     try {
         const user = await requireAuth()
+        const isAccountantOrAdmin = hasRole(user, 'Kế Toán', 'KE_TOAN', 'ACCOUNTANT', 'CEO', 'ADMIN', 'Admin')
+        if (!isAccountantOrAdmin) {
+            return { success: false, error: 'Chỉ Kế toán hoặc Ban Giám Đốc/Admin mới có quyền duyệt kế toán đơn hàng' }
+        }
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { 

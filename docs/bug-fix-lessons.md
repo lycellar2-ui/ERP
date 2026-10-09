@@ -70,6 +70,16 @@
 61. [BUG-114: Dropdown Chọn Sản Phẩm Bị Xổ Lên Trên Và Bị Che Khuất Bởi Hàng Phía Trên (Smart Auto-Flip vs Stacking Context Z-Index Inversion)](#bug-114-dropdown-chọn-sản-phẩm-bị-xổ-lên-trên-và-bị-che-khuất-bởi-hàng-phía-trên-smart-auto-flip-vs-stacking-context-z-index-inversion)
 62. [BUG-115: CEO Dashboard — Lỗi Tính Khống Nợ Quá Hạn AR, Đứt Gãy Bộ Lọc Kỳ/Pháp Nhân & Thác Đổ Chi Phí Bị 0](#bug-115-ceo-dashboard--lỗi-tính-khống-nợ-quá-hạn-ar-đứt-gãy-bộ-lọc-kỳpháp-nhân--thác-đổ-chi-phí-bị-0)
 63. [BUG-116: Toàn Hệ Thống — Audit Lỗi Đa Tầng (Linting React 19, Test Runner, Mocking Integrity, UX Accessibility & SEO Hierarchy)](#bug-116-toàn-hệ-thống--audit-lỗi-đa-tầng-linting-react-19-test-runner-mocking-integrity-ux-accessibility--seo-hierarchy)
+64. [BUG-117: Khách Hàng (MDM/CRM) — Chặn Nhầm Trùng Lặp Mã Số Thuế & SĐT Khách Hàng Con](#bug-117-khách-hàng-mdmcrm--chặn-nhầm-trùng-lặp-mã-số-thuế--số-điện-thoại-khi-tạo-khách-hàng-con-hierarchy-parentsibling-sharing)
+65. [BUG-118: Khách Hàng (MDM/CRM) — Lỗi UI/UX Responsive Form Khách Hàng Mobile](#bug-118-khách-hàng-mdmcrm--lỗi-uiux-responsive-form-tạo--chỉnh-sửa-khách-hàng-grid-squish-ios-safari-auto-zoom-accidental-dismissal--button-hover-bug)
+66. [BUG-119: Kho Hàng (WMS) — Lỗi UI/UX Mobile (Bảng Chi Tiết Co Bóp, Mất Nút Bấm Footer, Auto-Zoom)](#bug-119-kho-hàng-wms--lỗi-uiux-trên-thiết-bị-di-động-bảng-chi-tiết-bị-co-bóp-drawer-mất-chân-trang-ios-safari-auto-zoom--thanh-điều-hướng-đáy-che-khuất)
+67. [BUG-120: Điều Chuyển Kho & Cân Bằng Tồn — Lỗi Ẩn Toàn Bộ Dòng Hàng Chuyển Trên Mobile](#bug-120-điều-chuyển-kho--cân-bằng-tồn-transfers--replenishment--lỗi-ẩn-toàn-bộ-dòng-hàng-chuyển-trên-mobile--sm-bảng-đề-xuất-điều-chuyển-bị-co-bóp--cưỡng-bức-phóng-to-ios-safari)
+68. [BUG-121: Finance & Dashboard — Biên Lợi Nhuận Gộp Âm Do Trùng Bút Toán Giá Vốn & Lệch Nguồn P&L](#bug-121-finance--dashboard--biên-lợi-nhuận-gộp-âm-do-trùng-lặp-bút-toán-giá-vốn-duplicate-cogs-journal-entries--lệch-nguồn-dữ-liệu-pl-matching-principle-mismatch)
+69. [BUG-122: Delivery — Bấm Nút Chuyển Trạng Thái Lộ Trình Đồng Thời Mở Drawer E-POD](#bug-122-delivery--bấm-nút-chuyển-trạng-thái-lộ-trình-đồng-thời-mở-drawer-e-pod-event-bubbling)
+70. [BUG-123: WMS Stock Count & Mobile Counter — Trùng Dòng Nhiều Lô, Trừ Hao Hụt Dở Dang & Vi Phạm Kiểm Kê Mù](#bug-123-wms-stock-count--mobile-counter--trùng-lặp-dòng-khi-kệ-có-nhiều-lô-trừ-hao-hụt-kho-dở-dang--vi-phạm-kiểm-kê-mù-blind-count-breach)
+71. [BUG-124: Dashboard — Sập Trang 500 Khi Đăng Nhập Kế Toán Do Null Pointer yoyData.current & Thiếu Role Config](#bug-124-dashboard--lỗi-sập-trang-500-error--crash-khi-đăng-nhập-tài-khoản-kế-toán-do-null-pointer-yoydatacurrent--thiếu-đồng-bộ-role-dashboard-config)
+72. [BUG-125: Sales Orders — Kế Toán Duyệt Đơn: Xác Nhận Khi Đổi Pháp Nhân & Đồng Bộ legalEntityId](#bug-125-sales-orders--quy-trình-kế-toán-duyệt-đơn-bắt-buộc-xác-nhận-khi-đổi-pháp-nhân-legal-entity-override-safeguard--đồng-bộ-legalentityid-trên-bảng-danh-sách-đơn)
+73. [BUG-126: WMS — Audit Toàn Diện Kho: Lệch Sổ Sách vs On-hand, Đổi Lô Lỗi DO, Mất QR Auto-Confirm & Ngăn Trừ Kiểm Kê Âm](#bug-126-wms--audit-toàn-diện-kho-lệch-sổ-sách-vs-on-hand-đổi-lô-lỗi-do-mất-qr-auto-confirm--ngăn-trừ-kiểm-kê-âm)
 
 ---
 
@@ -3415,3 +3425,97 @@ Khi kiểm toán phân hệ Kiểm kê kho và công cụ đếm thực địa t
 
 ### Bài học
 > ⚠️ **RULE 123: (1) Khi lập phiếu kiểm kê kho (Stock Count Sessions), BẮT BỤC phải gom nhóm các lô cùng SKU tại cùng một vị trí kệ thành 1 dòng kiểm đếm duy nhất với tổng số tồn sổ; (2) Khi phê duyệt điều chỉnh hao hụt kho (Stock Shortage Adjustment), BẮT BỤC phải áp dụng giải thuật khấu trừ đa lô tuần tự theo FIFO cho đến khi trừ hết số lượng chênh lệch; (3) Trong chế độ Kiểm Kê Mù (Blind Count), TUYỆT ĐỐI KHÔNG cho phép thiết bị di động của nhân viên đếm kho tự ý mở xem tồn sổ sách hoặc tự động khớp tồn số liệu.**
+
+---
+
+## BUG-124: Dashboard — Lỗi Sập Trang (500 Error / Crash) Khi Đăng Nhập Tài Khoản Kế Toán Do Null Pointer `yoyData.current` & Thiếu Đồng Bộ Role Dashboard Config
+
+### Triệu chứng & Bối cảnh
+Khi người dùng đăng nhập bằng tài khoản Kế toán (`roles: ['KE_TOAN']` hoặc `['Kế Toán']`) truy cập vào trang tổng quan `/dashboard`:
+1. **Màn hình báo lỗi không thể tải Dashboard:** Toàn bộ trang sập và hiển thị `DashboardError` ("Không thể tải Dashboard - Có thể do mất kết nối database hoặc lỗi server - Cannot read properties of null (reading 'current')").
+2. **Crash SSR ngay khi render:** Lỗi xảy ra trực tiếp trong component `CeoOverviewContent.tsx` tại dòng tính toán `yoyMax`:
+   `const yoyMax = Math.max(...yoyData.current.map((m: any) => m.revenue), ...yoyData.previous.map((m: any) => m.revenue), 1)`.
+
+### Nguyên nhân gốc rễ
+1. **Thiếu Null-Check trên `yoyData` trong `CeoOverviewContent.tsx`:** Trong `ROLE_DASHBOARD`, phân hệ chỉ cấu hình section `revenue_yoy` cho vai trò CEO. Đối với vai trò `KE_TOAN` (và các vai trò khác không có `revenue_yoy`), `page.tsx` đánh giá `has('revenue_yoy') ? getRevenueYoY() : null`, dẫn đến `yoyData === null`. `CeoOverviewContent` truy cập `yoyData.current` trực tiếp mà không kiểm tra dữ liệu tồn tại, gây ra ngoại lệ chết người `TypeError: Cannot read properties of null (reading 'current')`.
+2. **Thiếu section thiết yếu cho vai trò Kế toán (`KE_TOAN`):** Đối với kế toán và quản lý tài chính, biểu đồ so sánh Doanh thu cùng kỳ năm trước (`revenue_yoy`) và Cơ cấu doanh thu theo kênh (`revenue_chart`) là các báo cáo tài chính cơ bản nhưng bị bỏ sót trong `ROLE_DASHBOARD.KE_TOAN.sections`.
+3. **Đối sánh Role mong manh trong `getDashboardConfig`:** Hàm kiểm tra role chỉ dùng `roles.includes(role)` với chuỗi cố định không hỗ trợ các biến thể/alias như tiếng Việt (`'Kế Toán'`, `'Kế toán trưởng'`) hoặc tiếng Anh (`'ACCOUNTANT'`).
+4. **Layout gãy khi thiếu dữ liệu:** Ở Layer 5, nếu một trong hai card `revenue_yoy` hoặc `cost_waterfall` bị ẩn, grid 2 cột để lại khoảng trống lớn; tương tự cho KPI Targets và Channel Breakdown.
+
+### Cách khắc phục
+1. **Null-Safety & Adaptive Grid trong `CeoOverviewContent.tsx`:**
+   - Bổ sung các biến kiểm tra an toàn: `hasYoy`, `hasWf`, `hasKpis`, `hasChannels`, `showShipmentTracker`, `hasCompliance`, `hasLayer5`.
+   - Bọc toàn bộ khối IIFE của `Revenue YoY` bằng điều kiện `hasYoy && (...)`.
+   - Tự động chuyển đổi layout: Nếu chỉ có 1 trong 2 card (YoY hoặc Waterfall) thì card đó chiếm trọn chiều rộng (`w-full`), nếu có cả 2 thì dùng grid 2 cột (`grid-cols-1 lg:grid-cols-2`). Tương tự với KPI Targets và Channel Breakdown.
+   - Chỉ hiển thị Container Tracker trong Layer 3 khi vai trò có cấu hình `shipment_tracker`, tự động co dãn 2 cột hoặc 3 cột.
+2. **Bổ sung `revenue_yoy` & `revenue_chart` cho `ROLE_DASHBOARD.KE_TOAN`:**
+   - Cập nhật cấu hình role Kế Toán bao gồm: `kpi_cards`, `revenue_chart`, `pl_summary`, `cash_position`, `ar_aging`, `pending_approvals`, `cost_waterfall`, `revenue_yoy`.
+3. **Chuẩn hóa đối sánh Role trong `getDashboardConfig`:**
+   - Định nghĩa `DASHBOARD_ROLE_MATCHERS` hỗ trợ đầy đủ các alias cho `CEO`, `KE_TOAN`, `SALES_MGR`, `SALES_ADMIN`, `THU_KHO`, `THU_MUA`, `SALES_REP`.
+
+### Bài học
+> ⚠️ **RULE 124: (1) Mọi dữ liệu phụ thuộc vào cấu hình Role Dashboard (như `yoyData`, `waterfall`, `channels`, `kpis`) khi truyền vào UI component BẮT BUỘC phải có Null-Check / Array Guard trước khi truy cập các thuộc tính lồng nhau (như `.current`, `.bars`, `.channels`), tuyệt đối không giả định dữ liệu luôn tồn tại; (2) Mọi grid chia cột chứa các thẻ phân tích chuyên sâu phải có khả năng tự thích ứng (Adaptive Layout): tự động mở rộng `w-full` khi chỉ có 1 thẻ hiển thị thay vì cố định `grid-cols-2` hay `grid-cols-5` gây khoảng trống giao diện; (3) Hàm lấy cấu hình Dashboard theo quyền (`getDashboardConfig`) BẮT BUỘC phải đối sánh qua danh sách matcher aliases để hỗ trợ cả tên tiếng Việt, tiếng Anh và mã hệ thống.**
+
+---
+
+## BUG-125: Sales Orders — Quy Trình Kế Toán Duyệt Đơn: Bắt Buộc Xác Nhận Khi Đổi Pháp Nhân (Legal Entity Override Safeguard) & Đồng Bộ `legalEntityId` Trên Bảng Danh Sách Đơn
+
+### Triệu chứng & Bối cảnh
+Khi kế toán hoặc quản trị viên thao tác duyệt đơn bán hàng ở trạng thái `PENDING_ACCOUNTING` (Chờ KT Duyệt):
+1. **Thiếu cảnh báo và xác nhận khi thay đổi pháp nhân xuất hóa đơn:** Trong popup modal duyệt ("Kế Toán Duyệt Đơn"), hệ thống cho phép kế toán lựa chọn lại pháp nhân (`acctEntityId`). Tuy nhiên, nếu kế toán chọn pháp nhân khác với pháp nhân ban đầu do nhân viên kinh doanh chỉ định khi tạo đơn, modal không hề có cảnh báo trực quan hay bước xác nhận (confirmation gate). Khi bấm "Duyệt & Xác Nhận", đơn hàng lập tức được duyệt sang `CONFIRMED` với pháp nhân mới mà người dùng không được hỏi lại, tiềm ẩn nguy cơ xuất hóa đơn điện tử VAT, lập phiếu xuất kho và hạch toán kế toán sai pháp nhân do bấm nhầm chuột.
+2. **Khuyết thiếu `legalEntityId` trên danh sách đơn bán hàng (`SalesOrderRow`):** Interface `SalesOrderRow` và câu truy vấn SQL `getSalesOrders` trong `src/app/dashboard/sales/actions.ts` chỉ select `le.name as legal_entity_name, le.code as legal_entity_code` mà bỏ quên `so."legalEntityId"`. Hậu quả là `(row as any).legalEntityId` trên bảng danh sách đơn và thẻ mobile card bị `undefined`, khiến modal duyệt không lấy được pháp nhân hiện thời của đơn.
+3. **Thiếu kiểm tra phân quyền RBAC ở Server Action:** Hàm `accountingApproveSO` gọi `requireAuth()` nhưng chưa chặn các vai trò không có thẩm quyền tài chính kế toán duyệt nhầm đơn hàng.
+
+### Nguyên nhân gốc rễ
+1. `interface SalesOrderRow` và truy vấn raw SQL trong `getSalesOrders` thiếu trường `legalEntityId`.
+2. Component modal duyệt đơn kế toán trong `SalesClient.tsx` phê duyệt trực tiếp mà không lưu vết `acctOriginalEntityId`, không so sánh chênh lệch thực tế (`isEntityChanged`), và không có màn hình xác nhận thay đổi (Confirmation View).
+3. Server Action `accountingApproveSO` thiếu guard `hasRole(user, 'Kế Toán', 'KE_TOAN', 'ACCOUNTANT', 'CEO', 'ADMIN', 'Admin')`.
+
+### Cách khắc phục
+1. **Đồng bộ `legalEntityId` từ Database lên UI:**
+   - Cập nhật `interface SalesOrderRow` bổ sung `legalEntityId?: string | null`.
+   - Bổ sung `so."legalEntityId" as legal_entity_id` vào câu lệnh `SELECT` và gán `legalEntityId: o.legal_entity_id ?? null` trong kết quả trả về của `getSalesOrders`.
+2. **Cơ chế Phê Duyệt 2 Lớp (Two-Tier Approval Gate) Với Cảnh Báo Trực Quan:**
+   - Quản lý state chặt chẽ: `acctOriginalEntityId`, `acctOrderNo`, `showEntityConfirm`.
+   - **Tầng 1 (Selection Modal):** Hiển thị pháp nhân gốc của đơn (`origEntity.name (code)`). Khi người dùng chọn pháp nhân mới khác pháp nhân gốc, hiển thị ngay banner cảnh báo màu vàng Amber thời gian thực. Nút duyệt tự động đổi nhãn thành "Tiếp Tục & Xác Nhận Đổi".
+   - **Tầng 2 (Confirmation View):** Khi nhấn duyệt với pháp nhân bị thay đổi, hệ thống chuyển sang giao diện xác nhận chuyên biệt với thẻ so sánh trực quan (Diff Cards) đối chiếu rõ ràng:
+     - **Pháp Nhân Ban Đầu:** `{origEntity.name} ({origEntity.code})` (Do Sales chọn lúc tạo đơn)
+     - **Pháp Nhân Mới (Thay Thế):** `{selectedEntity.name} ({selectedEntity.code})` (Kế toán chỉ định mới)
+     - Khối thông báo nghiệp vụ: Cảnh báo hóa đơn điện tử VAT, phiếu xuất kho và bút toán doanh thu sẽ áp dụng theo pháp nhân mới.
+     - 2 nút bấm chuẩn công thái học: `[Quay Lại Chọn Lại]` và `[Xác Nhận Đổi & Duyệt Đơn]`.
+   - Trường hợp không đổi pháp nhân: Duyệt tức thì sang `CONFIRMED` mà không qua bước xác nhận trung gian, giữ vững tốc độ thao tác cho người dùng.
+3. **Tăng Cường Bảo Mật RBAC Tầng Server:**
+   - Bổ sung kiểm tra `hasRole(user, 'Kế Toán', 'KE_TOAN', 'ACCOUNTANT', 'CEO', 'ADMIN', 'Admin')` trong `accountingApproveSO`.
+
+### Bài học
+> ⚠️ **RULE 125: Trong mọi quy trình phê duyệt tài chính/kế toán cho phép ghi đè (override) pháp nhân xuất hóa đơn hoặc tài khoản ngân hàng thụ hưởng (Legal Entity / Bank Account): (1) Giao diện BẮT BUỘC phải đối chiếu với giá trị ban đầu và yêu cầu xác nhận rõ ràng (Confirmation Gate with Diff View) trước khi commit thay đổi nếu giá trị mới khác với đơn gốc; (2) Truy vấn danh sách và kiểu dữ liệu `SalesOrderRow` BẮT BUỘC phải select và map trực tiếp `legalEntityId` để tránh lỗi `undefined` khi truyền vào modal; (3) Server Action phê duyệt BẮT BUỘC phải kiểm tra phân quyền RBAC nghiêm ngặt đối với vai trò Kế Toán/Ban Giám Đốc.**
+
+---
+
+## BUG-126: WMS — Audit Toàn Diện Kho: Lệch Sổ Sách vs On-hand, Đổi Lô Lỗi DO, Mất QR Auto-Confirm & Ngăn Trừ Kiểm Kê Âm
+
+### Triệu chứng & Bối cảnh
+1. **Lệch Sổ Sách vs On-hand bị che khuất:** Trong `getStockInventory`, trường `qtyBook` bị hardcode gán bằng `qtyOnHand` và `variance = 0`, khiến các hao hụt thất thoát vật lý không hiển thị đối soát song song.
+2. **Soạn hàng DO gặp chai lỗi / bể vỡ:** Nhân viên kho nhặt hàng theo FIFO gặp chai vỡ không thể đổi lô khác mà phải hủy toàn bộ DO hoặc báo Sales hủy đơn. Khi số lượng đơn lớn hơn 1 lô, logic gán lô cũ đẩy trùng `lastLot` gây lỗi trùng lặp line item và lỗi ngoại lệ transaction DB.
+3. **Mất mã QR khi tạo GR có Auto-Confirm:** Khi tạo phiếu nhập kho với `autoConfirm: true`, giao dịch xác nhận thành công nhưng luồng sinh QR codes `generateQRCodesForGR` bị bỏ qua (chỉ gọi khi confirm thủ công từ DRAFT).
+4. **Trừ giảm hao hụt kiểm kê dở dang (Silent Partial Deduction):** Trong `adjustStockFromCount`, khi hao hụt kiểm kê âm lớn hơn số lượng tồn có sẵn tại vị trí, vòng lặp kết thúc mà không kiểm tra lượng còn thiếu (`remaining > 0`), dẫn đến tồn kho thực tế bị lệch so với biên bản kiểm kê.
+5. **Giao diện Hàng Mẫu (Sample) dùng `window.alert()`:** Gây đứng giao diện trên mobile và không đồng bộ với hệ thống thông báo Toast chung.
+
+### Nguyên nhân gốc rễ
+1. Hardcoded `qtyBook = qtyOnHand` và `variance = 0` trong server action `getStockInventory`.
+2. Thiếu quy trình Defect Lot Swapping và bug push trùng lặp `lastLot` trong `DeliveryOrderTab.tsx`.
+3. Thiếu `generateQRCodesForGR(result.id)` trong khối `autoConfirm` của `createGoodsReceipt`.
+4. Thiếu `if (remaining > 0) throw new Error(...)` trong `adjustStockFromCount`.
+5. `SampleInventoryTab.tsx` gọi trực tiếp `alert()` của trình duyệt.
+
+### Cách khắc phục
+1. Tính đúng `qtyBook = Math.max(0, qtyReceived - shippedQty)` và `variance = qtyOnHand - qtyBook`.
+2. Xây dựng Server Action `swapDOLineAndQuarantineDamaged` tạo lô cách ly `LOT-Q-YYMM-NNNN` trạng thái `QUARANTINE`, hoán đổi lô trên `DeliveryOrderLine`, và tích hợp `SwapDefectLotModal` trên cả Desktop table lẫn Mobile cards. Xóa bỏ đoạn mã push trùng `lastLot`.
+3. Gọi `generateQRCodesForGR(result.id).catch(() => {})` ngay sau transaction `createGoodsReceipt` khi `autoConfirm: true`.
+4. Bổ sung kiểm tra `if (remaining > 0)` trong `adjustStockFromCount` để rollback transaction và báo lỗi rõ ràng nếu tồn khả dụng không đủ trừ hao hụt.
+5. Thay thế toàn bộ `alert()` trong `SampleInventoryTab.tsx` bằng `toast.error()` và `toast.success()` từ `sonner`. Hiển thị nhãn `NV` (Non-Vintage) nổi bật dạng badge thay vì ký tự gạch ngang.
+
+### Bài học
+> ⚠️ **RULE 126: (1) Trong phân hệ Kho (WMS), Tồn Sổ Sách (`qtyBook`) BẮT BUỘC phải tính từ Chứng từ gốc (`qtyReceived - shippedQty`) và so sánh với On-hand (`qtyOnHand`), tuyệt đối không hardcode gán bằng nhau làm mất khả năng đối soát thất thoát; (2) Khi nhặt hàng DO theo FIFO, hệ thống BẮT BUỘC phải hỗ trợ cơ chế Đổi Lô Lỗi trực tiếp (Defect Swapping) và tự động cô lập hàng hỏng vào lô Quarantine, không để nhân viên hủy cả đơn hàng; (3) Mọi luồng nhập kho tự động (Auto-Confirm) BẮT BUỘC phải trigger sinh mã QR và ghi nhận bút toán song song như khi duyệt thủ công; (4) Điều chỉnh kiểm kê âm BẮT BUỘC phải chặn đứng việc trừ giảm dở dang khi tồn khả dụng không đủ bù hao hụt.**
+
+

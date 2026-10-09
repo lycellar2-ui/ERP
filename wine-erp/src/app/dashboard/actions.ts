@@ -986,8 +986,8 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
     KE_TOAN: {
         greeting: 'Kế Toán — Tài Chính',
         sections: [
-            'kpi_cards', 'pl_summary', 'cash_position', 'ar_aging',
-            'pending_approvals', 'cost_waterfall',
+            'kpi_cards', 'revenue_chart', 'pl_summary', 'cash_position', 'ar_aging',
+            'pending_approvals', 'cost_waterfall', 'revenue_yoy',
         ],
         quickLinks: [
             { label: 'Công nợ', href: '/dashboard/finance', icon: 'DollarSign' },
@@ -1027,13 +1027,24 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
     },
 }
 
+const DASHBOARD_ROLE_MATCHERS: Record<string, string[]> = {
+    CEO: ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin', 'Giám Đốc'],
+    KE_TOAN: ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
+    SALES_MGR: ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Trưởng Phòng'],
+    SALES_ADMIN: ['SALES_ADMIN', 'Sales Admin'],
+    THU_KHO: ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG', 'WAREHOUSE_MANAGER'],
+    THU_MUA: ['THU_MUA', 'Thu Mua', 'PURCHASING'],
+    SALES_REP: ['SALES_REP', 'Sales Rep', 'SALES', 'Nhân Viên Kinh Doanh'],
+}
+
 export async function getDashboardConfig(roles: string[]): Promise<DashboardConfig> {
     // Priority: CEO > KE_TOAN > SALES_MGR > SALES_ADMIN > THU_KHO > THU_MUA > SALES_REP
     const priority = ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN', 'THU_KHO', 'THU_MUA', 'SALES_REP']
 
-    for (const role of priority) {
-        if (roles.includes(role)) {
-            return ROLE_DASHBOARD[role]
+    for (const roleKey of priority) {
+        const matchers = DASHBOARD_ROLE_MATCHERS[roleKey] ?? [roleKey]
+        if (roles.some(r => matchers.includes(r))) {
+            return ROLE_DASHBOARD[roleKey]
         }
     }
 

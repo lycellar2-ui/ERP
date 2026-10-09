@@ -32,6 +32,10 @@ PAID / CLOSED
 > - **Bảo toàn 100% VAT & Doanh số**: Đơn hàng không xuất hóa đơn nhưng **giá bán và tổng thanh toán vẫn giữ nguyên và tính đủ 100% thuế VAT** (`totalAmount`, `vatAmount`), tuyệt đối không giảm trừ giá hay miễn trừ thuế làm sai lệch tổng doanh thu.
 > - **Phân tách doanh thu trên báo cáo**: Tách biệt rõ ràng trên Quick Stats & Collapsible Grid giữa **Tổng Doanh Thu** (đủ VAT), **Doanh Thu Có HĐ**, **Doanh Thu Không Xuất HĐ**, và bộ lọc trạng thái hóa đơn (`invoiceFilter`: Tất cả / Có HĐ / Không HĐ / Chưa xuất HĐ).
 > - **Tiến trình đơn hàng**: Khi đơn hàng miễn HĐ hoàn thành giao (`DELIVERED`), tiến trình Stepper tự động hiển thị mốc `Miễn HĐ` thay cho `INVOICED`. Kế toán/Admin có thể xác nhận thu tiền (`Xác Nhận Thu Tiền - PAID`) trực tiếp mà không bắt buộc phải tạo `ARInvoice`. Hệ thống đồng thời khóa chức năng xuất HĐ nếu đơn đang được đánh dấu miễn HĐ.
+>
+> **Quy Trình Kế Toán Duyệt Đơn & Ghi Đè Pháp Nhân Xuất Hóa Đơn (`accountingApproveSO`)**:
+> - **Cơ chế 2 lớp an toàn (Two-Tier Approval Gate)**: Khi đơn ở trạng thái `PENDING_ACCOUNTING`, Kế toán hoặc Quản trị viên (`KE_TOAN`, `ACCOUNTANT`, `CEO`, `ADMIN`) mở popup duyệt để xác nhận hoặc điều chỉnh Pháp nhân xuất hóa đơn (`legalEntityId`).
+> - **Bắt buộc xác nhận khi đổi pháp nhân**: Nếu Kế toán chọn pháp nhân khác với pháp nhân ban đầu do Sales chỉ định khi tạo đơn, hệ thống hiển thị cảnh báo thời gian thực và chuyển tiếp qua màn hình Xác Nhận Thay Đổi Pháp Nhân (Confirmation View) so sánh trực quan (Diff Cards) giữa pháp nhân ban đầu và pháp nhân mới, lưu ý các ảnh hưởng đến Hóa đơn VAT, xuất kho và hạch toán kế toán. Người dùng bắt buộc phải xác nhận tại màn hình này trước khi hệ thống commit cập nhật và chuyển sang `CONFIRMED`. Nếu không đổi pháp nhân, hệ thống cho phép duyệt tức thì, tránh thao tác thừa.
 
 ---
 

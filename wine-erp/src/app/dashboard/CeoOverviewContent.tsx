@@ -169,6 +169,14 @@ export function CeoOverviewContent({
         return label
     }
 
+    const showShipmentTracker = Boolean(!dashConfig?.sections || dashConfig.sections.includes('shipment_tracker'))
+    const hasKpis = Array.isArray(kpis) && kpis.length > 0 && Boolean(!dashConfig?.sections || dashConfig.sections.includes('kpi_targets'))
+    const hasChannels = Boolean(channels && Array.isArray(channels.channels) && channels.channels.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('revenue_chart')))
+    const hasYoy = Boolean(yoyData && Array.isArray(yoyData.current) && Array.isArray(yoyData.previous) && (!dashConfig?.sections || dashConfig.sections.includes('revenue_yoy')))
+    const hasWf = Boolean(wf && Array.isArray(wf.bars) && wf.bars.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('cost_waterfall')))
+    const hasCompliance = Boolean(complianceWarnings && complianceWarnings.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('legal_compliance')))
+    const hasLayer5 = hasKpis || hasChannels || hasYoy || hasWf || hasCompliance
+
     return (
         <div className="space-y-5">
             {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
@@ -296,47 +304,49 @@ export function CeoOverviewContent({
                 </div>
             </div>
 
-            {/* ═══ LAYER 3 — OPERATIONS (3 cols) ═══ */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* ═══ LAYER 3 — OPERATIONS ═══ */}
+            <div className={`grid grid-cols-1 ${showShipmentTracker ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4`}>
                 {/* Container Tracker */}
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead
-                        icon={<Ship size={15} style={{ color: '#0891B2' }} />}
-                        title={t.containers.title}
-                        badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
-                    />
-                    {stats.inTransitShipments.length === 0 ? (
-                        <div className="flex flex-col items-center py-6 gap-1">
-                            <Package size={24} style={{ color: '#E2E8F0' }} />
-                            <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            {stats.inTransitShipments.map((s: any) => {
-                                const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
-                                const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
-                                return (
-                                    <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
-                                                <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
-                                                    {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                                                    {statusLabel}
-                                                </span>
+                {showShipmentTracker && (
+                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <SectionHead
+                            icon={<Ship size={15} style={{ color: '#0891B2' }} />}
+                            title={t.containers.title}
+                            badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
+                        />
+                        {stats.inTransitShipments.length === 0 ? (
+                            <div className="flex flex-col items-center py-6 gap-1">
+                                <Package size={24} style={{ color: '#E2E8F0' }} />
+                                <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {stats.inTransitShipments.map((s: any) => {
+                                    const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
+                                    const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
+                                    return (
+                                        <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
+                                                    <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
+                                                        {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                                                        {statusLabel}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-                </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* AR Aging */}
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -524,205 +534,213 @@ export function CeoOverviewContent({
             </div>
 
             {/* ═══ LAYER 5 — DEEP ANALYSIS (Grid of cards) ═══ */}
-            <div className="space-y-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
-                    📈 {t.inDepth.title}
-                </h3>
+            {hasLayer5 && (
+                <div className="space-y-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
+                        📈 {t.inDepth.title}
+                    </h3>
 
-                {/* KPI Progress + Channel Breakdown */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                    {/* KPI Targets — 3 cols */}
-                    <div className="lg:col-span-3 rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead
-                            icon={<Target size={15} style={{ color: '#0891B2' }} />}
-                            title={t.inDepth.monthlyKpiTargets}
-                            badge={
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
-                                    {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {t.inDepth.achieved}
-                                </span>
-                            }
-                        />
-                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                            {kpis.map((kpi: any) => {
-                                const pct = Math.min(kpi.progressPct, 100)
-                                const sc = kpi.status === 'ON_TRACK' ? '#15803D' : kpi.status === 'AT_RISK' ? '#B45309' : '#B91C1C'
-                                const sl = kpi.status === 'ON_TRACK' ? t.inDepth.onTrack : kpi.status === 'AT_RISK' ? t.inDepth.atRisk : t.inDepth.behind
-                                return (
-                                    <div key={kpi.metric} className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-[10px] font-semibold truncate" style={{ color: '#475569' }}>{kpi.label}</p>
-                                            <span className="text-[10px] px-1 py-0.5 rounded font-bold" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
-                                        </div>
-                                        <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
-                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: kpi.color ?? '#0E7490' }} />
-                                        </div>
-                                        <div className="flex justify-between font-mono">
-                                            <span className="text-[10px] font-bold" style={{ color: '#0F172A' }}>
-                                                {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual, isEn) : kpi.actual}
+                    {/* KPI Progress + Channel Breakdown */}
+                    {(hasKpis || hasChannels) && (
+                        <div className={hasKpis && hasChannels ? "grid grid-cols-1 lg:grid-cols-5 gap-4" : "space-y-4"}>
+                            {/* KPI Targets — 3 cols (or full if only KPIs) */}
+                            {hasKpis && (
+                                <div className={hasChannels ? "lg:col-span-3 rounded-md p-5" : "w-full rounded-md p-5"} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <SectionHead
+                                        icon={<Target size={15} style={{ color: '#0891B2' }} />}
+                                        title={t.inDepth.monthlyKpiTargets}
+                                        badge={
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
+                                                {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {t.inDepth.achieved}
                                             </span>
-                                            <span className="text-[10px]" style={{ color: '#64748B' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target, isEn) : kpi.target}</span>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Channel Breakdown — 2 cols */}
-                    <div className="lg:col-span-2 rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.rankings.channelTitle} />
-                        {channels.channels.length === 0 ? (
-                            <p className="text-xs py-4 text-center" style={{ color: '#64748B' }}>{t.noData}</p>
-                        ) : (
-                            <div className="space-y-2.5">
-                                {channels.channels.map((ch: any) => (
-                                    <div key={ch.channel}>
-                                        <div className="flex justify-between mb-0.5">
-                                            <span className="text-xs" style={{ color: '#475569' }}>{ch.label}</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
-                                            </div>
-                                        </div>
-                                        <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
-                                            <div className="h-full rounded-full transition-all" style={{ width: `${ch.pct}%`, background: ch.color }} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Revenue YoY + Cost Waterfall */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Revenue YoY */}
-                    {(() => {
-                        const yoyMax = Math.max(...yoyData.current.map((m: any) => m.revenue), ...yoyData.previous.map((m: any) => m.revenue), 1)
-                        const cm = new Date().getMonth() + 1
-                        return (
-                            <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <SectionHead
-                                    icon={<TrendingUp size={15} style={{ color: '#0891B2' }} />}
-                                    title={`${t.inDepth.revenueYoY} ${yoyData.thisYear} vs ${yoyData.lastYear}`}
-                                >
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: yoyData.yoyGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
-                                        {yoyData.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoyData.yoyGrowth).toFixed(1)}% YoY
-                                    </span>
-                                </SectionHead>
-                                <div className="flex items-end gap-0.5 h-32 mb-2">
-                                    {yoyData.current.map((m: any, i: number) => {
-                                        const prev = yoyData.previous[i]
-                                        const curH = Math.max(2, (m.revenue / yoyMax) * 110)
-                                        const prevH = Math.max(2, (prev.revenue / yoyMax) * 110)
-                                        return (
-                                            <div key={m.month} className="flex-1 flex flex-col items-center gap-0.5">
-                                                <div className="w-full flex gap-px" style={{ height: 110, alignItems: 'flex-end' }}>
-                                                    <div className="flex-1 rounded-t-sm" style={{ height: prevH, background: '#E2E8F0' }} />
-                                                    <div className="flex-1 rounded-t-sm" style={{ height: m.month > cm ? 0 : curH, background: m.month > cm ? 'transparent' : m.revenue > prev.revenue ? '#0E7490' : '#B45309' }} />
+                                        }
+                                    />
+                                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                                        {kpis.map((kpi: any) => {
+                                            const pct = Math.min(kpi.progressPct, 100)
+                                            const sc = kpi.status === 'ON_TRACK' ? '#15803D' : kpi.status === 'AT_RISK' ? '#B45309' : '#B91C1C'
+                                            const sl = kpi.status === 'ON_TRACK' ? t.inDepth.onTrack : kpi.status === 'AT_RISK' ? t.inDepth.atRisk : t.inDepth.behind
+                                            return (
+                                                <div key={kpi.metric} className="space-y-1.5">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-[10px] font-semibold truncate" style={{ color: '#475569' }}>{kpi.label}</p>
+                                                        <span className="text-[10px] px-1 py-0.5 rounded font-bold" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
+                                                    </div>
+                                                    <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: kpi.color ?? '#0E7490' }} />
+                                                    </div>
+                                                    <div className="flex justify-between font-mono">
+                                                        <span className="text-[10px] font-bold" style={{ color: '#0F172A' }}>
+                                                            {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual, isEn) : kpi.actual}
+                                                        </span>
+                                                        <span className="text-[10px]" style={{ color: '#64748B' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target, isEn) : kpi.target}</span>
+                                                    </div>
                                                 </div>
-                                                <span className="text-[10px]" style={{ color: m.month === cm ? '#0891B2' : '#64748B', fontWeight: m.month === cm ? 'bold' : 'normal' }}>
-                                                    {m.label}
-                                                </span>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Channel Breakdown — 2 cols (or full if only Channels) */}
+                            {hasChannels && (
+                                <div className={hasKpis ? "lg:col-span-2 rounded-md p-5" : "w-full rounded-md p-5"} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.rankings.channelTitle} />
+                                    <div className="space-y-2.5">
+                                        {channels.channels.map((ch: any) => (
+                                            <div key={ch.channel}>
+                                                <div className="flex justify-between mb-0.5">
+                                                    <span className="text-xs" style={{ color: '#475569' }}>{ch.label}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                                    <div className="h-full rounded-full transition-all" style={{ width: `${ch.pct}%`, background: ch.color }} />
+                                                </div>
                                             </div>
-                                        )
-                                    })}
-                                </div>
-                                <div className="flex justify-center gap-6 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                    <div className="text-center">
-                                        <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.thisYear}</p>
-                                        <p className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{formatCurrency(yoyData.totalCurrent)}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.lastYear}</p>
-                                        <p className="text-xs font-bold font-mono" style={{ color: '#64748B' }}>{formatCurrency(yoyData.totalPrevious)}</p>
+                                        ))}
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Revenue YoY + Cost Waterfall */}
+                    {(hasYoy || hasWf) && (
+                        <div className={hasYoy && hasWf ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-4"}>
+                            {/* Revenue YoY */}
+                            {hasYoy && (() => {
+                                const yoyMax = Math.max(...yoyData.current.map((m: any) => m.revenue), ...yoyData.previous.map((m: any) => m.revenue), 1)
+                                const cm = new Date().getMonth() + 1
+                                return (
+                                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                        <SectionHead
+                                            icon={<TrendingUp size={15} style={{ color: '#0891B2' }} />}
+                                            title={`${t.inDepth.revenueYoY} ${yoyData.thisYear} vs ${yoyData.lastYear}`}
+                                        >
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: yoyData.yoyGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
+                                                {yoyData.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoyData.yoyGrowth).toFixed(1)}% YoY
+                                            </span>
+                                        </SectionHead>
+                                        <div className="flex items-end gap-0.5 h-32 mb-2">
+                                            {yoyData.current.map((m: any, i: number) => {
+                                                const prev = yoyData.previous[i]
+                                                const curH = Math.max(2, (m.revenue / yoyMax) * 110)
+                                                const prevH = Math.max(2, (prev.revenue / yoyMax) * 110)
+                                                return (
+                                                    <div key={m.month} className="flex-1 flex flex-col items-center gap-0.5">
+                                                        <div className="w-full flex gap-px" style={{ height: 110, alignItems: 'flex-end' }}>
+                                                            <div className="flex-1 rounded-t-sm" style={{ height: prevH, background: '#E2E8F0' }} />
+                                                            <div className="flex-1 rounded-t-sm" style={{ height: m.month > cm ? 0 : curH, background: m.month > cm ? 'transparent' : m.revenue > prev.revenue ? '#0E7490' : '#B45309' }} />
+                                                        </div>
+                                                        <span className="text-[10px]" style={{ color: m.month === cm ? '#0891B2' : '#64748B', fontWeight: m.month === cm ? 'bold' : 'normal' }}>
+                                                            {m.label}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div className="flex justify-center gap-6 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                            <div className="text-center">
+                                                <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.thisYear}</p>
+                                                <p className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{formatCurrency(yoyData.totalCurrent)}</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.lastYear}</p>
+                                                <p className="text-xs font-bold font-mono" style={{ color: '#64748B' }}>{formatCurrency(yoyData.totalPrevious)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
+
+                            {/* Cost Waterfall */}
+                            {hasWf && (
+                                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.waterfall.title}>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: wf.netProfit >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C' }}>
+                                            Net {wf.revenue > 0 ? ((wf.netProfit / wf.revenue) * 100).toFixed(1) : 0}%
+                                        </span>
+                                    </SectionHead>
+                                    <div className="flex items-end gap-1.5 h-36 mb-3">
+                                        {wf.bars.map((bar: WaterfallBar) => {
+                                            const absMax = Math.max(...wf.bars.map((b: WaterfallBar) => Math.abs(b.value)), 1)
+                                            const barH = Math.max(6, (Math.abs(bar.value) / absMax) * 120)
+                                            return (
+                                                <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
+                                                    <span className="text-[10px] font-bold font-mono" style={{ color: bar.color }}>
+                                                        {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value), isEn) : (isEn ? '0 VND' : '0 đ')}
+                                                    </span>
+                                                    <div className="w-full relative" style={{ height: 120 }}>
+                                                        <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
+                                                    </div>
+                                                    <p className="text-[10px] text-center leading-tight truncate w-full" style={{ color: '#475569' }}>
+                                                        {bar.label.split(' (')[0]}
+                                                    </p>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                    <div className="flex items-center justify-center gap-4 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                        {[
+                                            { label: t.waterfall.revenue, color: '#15803D', val: wf.revenue },
+                                            { label: 'COGS', color: '#B91C1C', val: wf.cogs },
+                                            { label: isEn ? 'OPEX' : 'CP', color: '#B45309', val: wf.totalExpenses },
+                                            { label: t.waterfall.netProfit, color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C', val: wf.netProfit },
+                                        ].map(l => (
+                                            <div key={l.label} className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
+                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{l.label}</span>
+                                                <span className="text-[10px] font-bold font-mono" style={{ color: l.color }}>{formatCurrency(Math.abs(l.val))}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Legal Compliance */}
+                    {hasCompliance && (
+                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <SectionHead
+                                icon={<Shield size={15} style={{ color: '#B45309' }} />}
+                                title={t.compliance.title}
+                                badge={
+                                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#B91C1C' : '#B45309' }}>
+                                        {complianceWarnings.length} {t.compliance.documents}
+                                    </span>
+                                }
+                            >
+                                <Link href="/dashboard/contracts" className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
+                                    {t.compliance.viewAll}
+                                </Link>
+                            </SectionHead>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {complianceWarnings.slice(0, 6).map((w: any) => {
+                                    const sev = w.severity === 'critical' ? { bg: 'rgba(185,28,28,0.06)', border: 'rgba(185,28,28,0.2)', c: '#B91C1C' } : w.severity === 'warning' ? { bg: 'rgba(180,83,9,0.06)', border: 'rgba(180,83,9,0.2)', c: '#B45309' } : { bg: 'rgba(8,145,178,0.06)', border: 'rgba(8, 145, 178, 0.15)', c: '#0E7490' }
+                                    return (
+                                        <div key={w.id} className="flex items-center justify-between p-2.5 rounded" style={{ background: sev.bg, border: `1px solid ${sev.border}` }}>
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <AlertTriangle size={13} style={{ color: sev.c }} />
+                                                <div className="min-w-0">
+                                                    <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{w.name}</p>
+                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>{REG_DOC_TYPE_LABELS[w.type] ?? w.type}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c }}>
+                                                {w.daysRemaining !== null && w.daysRemaining <= 0 ? `${t.compliance.overdue} ${Math.abs(w.daysRemaining)}d` : `${w.daysRemaining}${t.compliance.daysRemaining}`}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
                             </div>
-                        )
-                    })()}
-
-                    {/* Cost Waterfall */}
-                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.waterfall.title}>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: wf.netProfit >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C' }}>
-                                Net {wf.revenue > 0 ? ((wf.netProfit / wf.revenue) * 100).toFixed(1) : 0}%
-                            </span>
-                        </SectionHead>
-                        <div className="flex items-end gap-1.5 h-36 mb-3">
-                            {wf.bars.map((bar: WaterfallBar) => {
-                                const absMax = Math.max(...wf.bars.map((b: WaterfallBar) => Math.abs(b.value)), 1)
-                                const barH = Math.max(6, (Math.abs(bar.value) / absMax) * 120)
-                                return (
-                                    <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
-                                        <span className="text-[10px] font-bold font-mono" style={{ color: bar.color }}>
-                                            {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value), isEn) : (isEn ? '0 VND' : '0 đ')}
-                                        </span>
-                                        <div className="w-full relative" style={{ height: 120 }}>
-                                            <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
-                                        </div>
-                                        <p className="text-[10px] text-center leading-tight truncate w-full" style={{ color: '#475569' }}>
-                                            {bar.label.split(' (')[0]}
-                                        </p>
-                                    </div>
-                                )
-                            })}
                         </div>
-                        <div className="flex items-center justify-center gap-4 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                            {[
-                                { label: t.waterfall.revenue, color: '#15803D', val: wf.revenue },
-                                { label: 'COGS', color: '#B91C1C', val: wf.cogs },
-                                { label: isEn ? 'OPEX' : 'CP', color: '#B45309', val: wf.totalExpenses },
-                                { label: t.waterfall.netProfit, color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C', val: wf.netProfit },
-                            ].map(l => (
-                                <div key={l.label} className="flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
-                                    <span className="text-[10px]" style={{ color: '#64748B' }}>{l.label}</span>
-                                    <span className="text-[10px] font-bold font-mono" style={{ color: l.color }}>{formatCurrency(Math.abs(l.val))}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    )}
                 </div>
-
-                {/* Legal Compliance */}
-                {complianceWarnings.length > 0 && (
-                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead
-                            icon={<Shield size={15} style={{ color: '#B45309' }} />}
-                            title={t.compliance.title}
-                            badge={
-                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#B91C1C' : '#B45309' }}>
-                                    {complianceWarnings.length} {t.compliance.documents}
-                                </span>
-                            }
-                        >
-                            <Link href="/dashboard/contracts" className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                {t.compliance.viewAll}
-                            </Link>
-                        </SectionHead>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {complianceWarnings.slice(0, 6).map((w: any) => {
-                                const sev = w.severity === 'critical' ? { bg: 'rgba(185,28,28,0.06)', border: 'rgba(185,28,28,0.2)', c: '#B91C1C' } : w.severity === 'warning' ? { bg: 'rgba(180,83,9,0.06)', border: 'rgba(180,83,9,0.2)', c: '#B45309' } : { bg: 'rgba(8,145,178,0.06)', border: 'rgba(8, 145, 178, 0.15)', c: '#0E7490' }
-                                return (
-                                    <div key={w.id} className="flex items-center justify-between p-2.5 rounded" style={{ background: sev.bg, border: `1px solid ${sev.border}` }}>
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <AlertTriangle size={13} style={{ color: sev.c }} />
-                                            <div className="min-w-0">
-                                                <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{w.name}</p>
-                                                <p className="text-[10px]" style={{ color: '#64748B' }}>{REG_DOC_TYPE_LABELS[w.type] ?? w.type}</p>
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c }}>
-                                            {w.daysRemaining !== null && w.daysRemaining <= 0 ? `${t.compliance.overdue} ${Math.abs(w.daysRemaining)}d` : `${w.daysRemaining}${t.compliance.daysRemaining}`}
-                                        </span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-                )}
-            </div>
+            )}
 
             {/* ═══ QUICK LINKS (Bottom) ═══ */}
             {dashConfig.quickLinks.length > 0 && (
