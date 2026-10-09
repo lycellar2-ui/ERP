@@ -111,6 +111,12 @@ export const WAREHOUSE_I18N = {
                 description: 'Kho hàng mẫu riêng biệt không bán hàng, quản lý nguồn ngạch & xuất sử dụng',
                 actionLabel: 'Quản Lý Hàng Mẫu',
             },
+            posm: {
+                title: 'Vật Phẩm POSM',
+                subtitle: 'Master Data & Kho vật phẩm tiếp thị độc lập',
+                description: 'Quản lý danh mục vật phẩm tiếp thị, quà tặng ly/khui, kệ trưng bày và nhập/xuất kho POSM',
+                actionLabel: 'Kho & Danh Mục POSM',
+            },
         },
 
         table: {
@@ -310,6 +316,12 @@ export const WAREHOUSE_I18N = {
                 subtitle: 'Sample Wine Inventory',
                 description: 'Dedicated non-commercial wine sample cellar, quota allocations & usage records',
                 actionLabel: 'Manage Samples',
+            },
+            posm: {
+                title: 'POSM & Collateral',
+                subtitle: 'POSM Master Data & Collateral Cellar',
+                description: 'Dedicated marketing collateral catalog, glassware, display racks, and POSM inventory control',
+                actionLabel: 'Manage POSM',
             },
         },
 

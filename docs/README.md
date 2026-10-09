@@ -52,10 +52,10 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 130 |
-| **Prisma enums** | 82 |
+| **Prisma models** | 132 |
+| **Prisma enums** | 85 |
 | **Dashboard routes** | 36 folders |
-| **Server Action files** | 43 files |
+| **Server Action files** | 44 files |
 | **Module spec files** | 28 files |
 | **Sidebar nav items** | 38 items (7 groups) |
 
@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-09 21:50 | Wine ERP v12.3 - Internal Training Proposal (INTERNAL_TRAINING) with 3-Level Approval & Wine Tasting Samples Integration*
+*Last updated: 2026-10-09 22:35 | Wine ERP v12.4 - POSM Master Data & Collateral Inventory Management (PosmProduct, PosmTransaction)*
 

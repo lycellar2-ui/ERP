@@ -6,7 +6,8 @@ import {
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
     ChevronRight, Layers, PackagePlus, Truck, ShieldAlert, Trash2,
     DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, TrendingDown, Download, ChevronDown,
-    ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw, BellRing, BellOff, Volume2
+    ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw, BellRing, BellOff, Volume2,
+    Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -35,6 +36,7 @@ import { TransfersTab } from './TransfersTab'
 import { StockCountTab } from './StockCountTab'
 import { SampleInventoryTab } from './SampleInventoryTab'
 import { ReplenishmentTab } from './ReplenishmentTab'
+import { PosmInventoryTab } from './PosmInventoryTab'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -512,7 +514,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 }
 
 // ── Main WMS Client Component ───────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count' | 'sample' | 'replenishment'
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count' | 'sample' | 'replenishment' | 'posm'
 
 interface Props {
     initialWarehouses?: WarehouseRow[]
@@ -779,6 +781,16 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             bg: 'rgba(180,83,9,0.1)',
             description: t.modules.sample.description,
             actionLabel: t.modules.sample.actionLabel,
+        },
+        {
+            key: 'posm',
+            title: t.modules.posm.title,
+            subtitle: t.modules.posm.subtitle,
+            icon: Sparkles,
+            color: '#D97706',
+            bg: 'rgba(217,119,6,0.1)',
+            description: t.modules.posm.description,
+            actionLabel: t.modules.posm.actionLabel,
         },
     ]
 
@@ -1245,6 +1257,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                     {/* Sample Wine Inventory Tab — Mới */}
                     {activeTab === 'sample' && <SampleInventoryTab />}
+
+                    {/* POSM & Collateral Inventory Tab — Độc lập */}
+                    {activeTab === 'posm' && <PosmInventoryTab />}
 
                     {/* Quarantine Tab — auto-loads */}
                     {activeTab === 'quarantine' && (

@@ -1654,6 +1654,75 @@ model SampleTransaction {
   @@map("sample_transactions")
 }
 
+// ── POSM & Marketing Collateral Inventory (Kho & Danh mục POSM) ──
+
+enum PosmCategory {
+  GLASSWARE_TOOLS       // Ly rượu, Decanter, Đồ khui Sommelier, Xô đá ngâm rượu...
+  DISPLAY_STAND         // Kệ trưng bày rượu, Glorifier, Standee, Tent card, Poster...
+  PACKAGING_GIFT        // Hộp gỗ cao cấp, Hộp da, Túi xách rượu (đơn/đôi/canvas), Hộp quà...
+  MARKETING_COLLATERAL  // Ấn phẩm catalogue, brochure, tạp dề sommelier, sổ tasting...
+  OTHER                 // Vật phẩm tiếp thị khác
+}
+
+enum PosmTxType {
+  INBOUND     // Nhập kho POSM
+  OUTBOUND    // Xuất kho POSM
+  ADJUSTMENT  // Điều chỉnh kiểm kê POSM
+}
+
+enum PosmReason {
+  PURCHASE_INBOUND    // Mua mới nhập kho
+  SUPPLIER_SPONSOR    // Hãng rượu / Winery tài trợ
+  EVENT_RETURN        // Hoàn trả tồn sau sự kiện
+  SALES_ALLOCATION    // Xuất cấp phát cho Sales / PG / Đi thị trường
+  HORECA_PLACEMENT    // Xuất trang bị điểm bán / HORECA
+  PROMO_GIFT          // Xuất làm quà tặng CTKM kèm đơn hàng
+  EVENT_WORKSHOP      // Xuất phục vụ sự kiện / Workshop
+  DAMAGE_LOSS         // Hư hỏng / Bể vỡ / Móp méo
+  INVENTORY_ADJUST    // Điều chỉnh lệch kiểm kê
+  OTHER               // Khác
+}
+
+model PosmProduct {
+  id             String            @id @default(cuid())
+  posmCode       String            @unique // POSM-2026-0001
+  name           String            // Tên vật phẩm POSM
+  category       PosmCategory      @default(GLASSWARE_TOOLS)
+  unit           String            @default("Cái") // Cái, Chiếc, Bộ, Hộp, Cuộn...
+  brand          String?           // Thương hiệu / Hãng rượu tài trợ (Riedel, Penfolds...)
+  imageUrl       String?           // Ảnh vật phẩm
+  costPrice      Decimal           @default(0) // Giá vốn / Giá mua dự toán (VND)
+  qtyOnHand      Decimal           @default(0) // Số lượng tồn kho hiện tại
+  minStockAlert  Decimal           @default(0) // Ngưỡng cảnh báo tồn tối thiểu
+  location       String?           // Vị trí lưu kho (VD: Kệ A1, Ngăn 2)
+  status         String            @default("ACTIVE") // ACTIVE, DISCONTINUED
+  notes          String?
+  transactions   PosmTransaction[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("posm_products")
+}
+
+model PosmTransaction {
+  id            String       @id @default(cuid())
+  docNo         String       @unique // PIR-2026-0001 (Nhập), PIO-2026-0001 (Xuất), PAD-2026-0001
+  type          PosmTxType
+  reason        PosmReason
+  posmProductId String
+  posmProduct   PosmProduct  @relation(fields: [posmProductId], references: [id])
+  qty           Decimal
+  unitCost      Decimal      @default(0)
+  totalCost     Decimal      @default(0)
+  recipient     String?      // Người nhận / Đại lý / Khách hàng / Sự kiện
+  requestedBy   String?      // Nhân viên đề xuất / thực hiện
+  performedAt   DateTime     @default(now())
+  notes         String?
+  createdAt     DateTime     @default(now())
+
+  @@map("posm_transactions")
+}
+
 // =============================================================
 // SLS — Sales & Allocation
 // =============================================================

@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (130 models, 82 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (132 models, 85 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -457,6 +457,32 @@ erDiagram
         qty_actual      decimal
         variance        decimal
     }
+    PosmProduct {
+        id              uuid PK
+        posm_code       string
+        name            string
+        category        enum
+        unit            string
+        brand           string
+        cost_price      decimal
+        qty_on_hand     decimal
+        min_stock_alert decimal
+        location        string
+        status          string
+    }
+    PosmTransaction {
+        id              uuid PK
+        doc_no          string
+        type            enum
+        reason          enum
+        posm_product_id uuid FK
+        qty             decimal
+        unit_cost       decimal
+        total_cost      decimal
+        recipient       string
+        requested_by    string
+        performed_at    datetime
+    }
 
     %% ── SLS DOMAIN ──────────────────────────────────────────
     SalesOrder {
@@ -817,6 +843,11 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `sales_orders` | `isInvoiceExempt`, `invoiceExemptReason`, `invoiceExemptBy`, `invoiceExemptAt` (Nghiệp vụ miễn xuất HĐ VAT, bảo toàn đủ 100% VAT và doanh thu) |
 | `employees` | `code`, `userId`, `fullName`, `gender`, `dateOfBirth`, `phone`, `email`, `nationalId`, `address`, `emergencyContact`, `deptId`, `position`, `status`, `contractType`, `contractEndDate`, `bankAccountNo`, `taxCode`, `socialInsuranceNo`, `healthCheckExpiry` |
 | `employee_documents` | `employeeId`, `docType`, `title`, `docNumber`, `fileUrl`, `filePath`, `issueDate`, `expiryDate`, `status`, `uploadedBy` |
+| `posm_products` | `posmCode`, `name`, `category` (PosmCategory), `unit`, `brand`, `imageUrl`, `costPrice`, `qtyOnHand`, `minStockAlert`, `location`, `status`, `notes` |
+| `posm_transactions` | `docNo`, `type` (PosmTxType), `reason` (PosmReason), `posmProductId`, `qty`, `unitCost`, `totalCost`, `recipient`, `requestedBy`, `performedAt`, `notes` |
+| `PosmCategory` (enum) | `GLASSWARE_TOOLS`, `DISPLAY_STAND`, `PACKAGING_GIFT`, `MARKETING_COLLATERAL`, `OTHER` |
+| `PosmTxType` (enum) | `INBOUND`, `OUTBOUND`, `ADJUSTMENT` |
+| `PosmReason` (enum) | `PURCHASE_INBOUND`, `SUPPLIER_SPONSOR`, `EVENT_RETURN`, `SALES_ALLOCATION`, `HORECA_PLACEMENT`, `PROMO_GIFT`, `EVENT_WORKSHOP`, `DAMAGE_LOSS`, `INVENTORY_ADJUST`, `OTHER` |
 
 ### D. Indexes Quan Trọng
 ```sql

@@ -696,6 +696,16 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Bộ Lọc Nhanh 4 Trạng Thái Trong Danh Sách** | `MobileLocationCounter.tsx` | Chế độ Danh Sách (List) hỗ trợ 4 tab bộ lọc chuyên dụng: `Tất cả`, `Chưa đếm` (ưu tiên kiểm kê), `Khớp` và `Lệch` (ưu tiên rà soát kiểm toán tại hiện trường) |
 | **Hệ Thống Âm Thanh & Rung Phản Hồi Tactile** | `MobileLocationCounter.tsx` | Tổng hợp âm tần số chuẩn Web AudioContext (tiếng click nhẹ khi chạm nút, hợp âm kép C5-G5 khi lưu thành công, âm cảnh báo khi phát hiện lệch) kết hợp rung Haptic navigator.vibrate |
 
+#### Phase 21: Quản Lý Master Data & Kho Vật Phẩm Tiếp Thị POSM Độc Lập (09/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Master Data POSM Riêng Biệt (`PosmProduct`)** | `prisma/schema.prisma`, `actions-posm.ts` | Bảng dữ liệu độc lập cho vật phẩm quảng cáo, ly rượu, khui sommelier, decanter, hộp quà và kệ trưng bày, hoàn toàn không bị trộn lẫn với danh mục rượu thương mại (`Product`) và không làm sai lệch tồn kho/báo cáo thuế TTĐB |
+| **Phân Loại & Thuộc Tính Chuyên Biệt (`PosmCategory`)** | `schema.prisma`, `PosmInventoryTab.tsx` | Quản lý 5 nhóm danh mục: `GLASSWARE_TOOLS`, `DISPLAY_STAND`, `PACKAGING_GIFT`, `MARKETING_COLLATERAL`, `OTHER`, theo dõi đơn vị tính riêng, thương hiệu/hãng rượu tài trợ, giá vốn ước tính và ngưỡng cảnh báo chạm đáy |
+| **Nghiệp Vụ Nhập/Xuất Kho POSM Độc Lập (`PosmTransaction`)** | `schema.prisma`, `actions-posm.ts` | Tự động sinh số phiếu atomic `PIR-YYYY-XXXX` (Nhập) và `PIO-YYYY-XXXX` (Xuất); hỗ trợ các lý do: mua mới, hãng tài trợ, hoàn trả sự kiện, cấp phát Sales/PG thị trường, trang bị HORECA, quà tặng CTKM đơn hàng, hư hỏng/bể vỡ |
+| **Kiểm Soát Tồn Kho & Cảnh Báo Xuất Âm Thông Minh** | `actions-posm.ts`, `PosmInventoryTab.tsx` | Hiển thị cảnh báo màu vàng khi số lượng xuất lớn hơn tồn thực tế nhưng vẫn cho phép thủ kho xác nhận xuất trước và nhập kho bù sau theo đúng thực tế vận hành tại sự kiện |
+| **Tích Hợp Giao Diện Trực Quan Phân Hệ WMS** | `WarehouseClient.tsx`, `PosmInventoryTab.tsx`, `i18n.ts` | Tích hợp thành Tab chuyên biệt "Vật Phẩm POSM" trong WMS, hỗ trợ thẻ chức năng trên Menu Grid, Sub-tab Master Data, Sổ Nhật ký giao dịch và bộ chỉ số KPI giá trị tồn kho dự toán |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -706,7 +716,8 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-08 | Wine ERP v11.8 — Mobile Ergonomic Cockpit & Quick-Count Chips*
+*Last updated: 2026-10-09 | Wine ERP v12.4 — POSM Master Data & Collateral Inventory Management (PosmProduct, PosmTransaction)*
+
 
 
 
