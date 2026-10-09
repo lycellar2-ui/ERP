@@ -783,11 +783,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     try {
                                                         const fullProp = await getProposalWithItemsForSO(selectedId)
                                                         if (fullProp) {
-                                                            setNotes(`ÄÆ¡n Tasting kÃ¨m Tá» trÃ¬nh ${fullProp.proposalNo}: ${fullProp.title}`)
-                                                            if (fullProp.customerId && !customerId) {
-                                                                setCustomerId(fullProp.customerId)
-                                                                const foundCust = sortedCustomersForSelect.find(c => c.id === fullProp.customerId)
-                                                                if (foundCust) setSelectedCustomer(foundCust)
+                                                            setNotes(`Đơn Tasting kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}`)
+                                                            const isCurrentCustApplicable = customerId && (
+                                                                fullProp.customerId === customerId ||
+                                                                Boolean(fullProp.scope && fullProp.scope.includes(customerId))
+                                                            )
+                                                            if (!customerId || !isCurrentCustApplicable) {
+                                                                if (fullProp.customerId) {
+                                                                    setCustomerId(fullProp.customerId)
+                                                                    const foundCust = sortedCustomersForSelect.find(c => c.id === fullProp.customerId)
+                                                                    if (foundCust) setSelectedCustomer(foundCust)
+                                                                }
                                                             }
                                                             if (fullProp.priceItems && fullProp.priceItems.length > 0) {
                                                                 const loadedLines = fullProp.priceItems.map((item: any) => ({

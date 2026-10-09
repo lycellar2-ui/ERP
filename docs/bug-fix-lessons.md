@@ -3560,5 +3560,41 @@ Khi kế toán hoặc quản trị viên thao tác duyệt đơn bán hàng ở 
 ### Bài học
 > ⚠️ **RULE 127: (1) Trong phân hệ Khách Hàng (MDM/CRM), quy ước mã hóa kênh HORECA tuân thủ tuyệt đối cấu trúc tiền tố chuẩn: Công ty Mẹ mang mã gốc `HRxxxxx` (entityType = COMPANY), các Điểm bán / Chi nhánh / Nhà hàng trực thuộc mang mã phân nhánh `HRxxxxx-01`, `HRxxxxx-02` (entityType = RESTAURANT); (2) Tuyệt đối KHÔNG sử dụng hậu tố `-M` hoặc gán chữ `(Cha)`/`(Mẹ)` vào mã hoặc tên khách hàng tự sinh; (3) Khi tạo điểm bán con mà người dùng chưa chỉ định khách hàng cha, hệ thống BẮT BUỘC phải trích xuất phần đầu mã trước dấu gạch ngang (`code.substring(0, code.lastIndexOf('-'))`) để tìm hoặc tự sinh Công ty Mẹ tương ứng; (4) Kênh HORECA là kênh B2B pháp nhân chuỗi — 100% khách hàng HORECA BẮT BUỘC phải thuộc mô hình phân cấp Cha - Con để bảo toàn tính toàn vẹn hóa đơn VAT và quản trị công nợ tập trung.**
 
+---
+
+## BUG-128: Tờ Trình Giá Đặc Biệt (Proposal / CustomerPriceRule) Không Hiển Thị & Áp Dụng Được Cho Các Cơ Sở Con / Công Ty Mẹ Khi Lên Đơn Bán Hàng (SO) & Báo Giá (Quotation)
+
+**Ngày:** 2026-10-09  
+**Module:** `Proposals (PRO) / Sales Orders (SLS) / Price List (PL)`  
+**File liên quan:** `src/app/dashboard/sales/actions.ts`, `src/app/dashboard/sales/CreateSODrawer.tsx`, `src/app/dashboard/proposals/actions.ts`, `src/app/dashboard/proposals/ProposalsClient.tsx`  
+**Trạng thái:** ✅ Đã khắc phục & Kiểm thử tự động thành công  
+
+### Triệu chứng & Bối cảnh
+1. **Tờ trình duyệt giá đặc biệt cho chuỗi chi nhánh (Ví dụ TT-2026-073) không hiển thị khi chọn cơ sở con:** Người dùng tạo Tờ trình điều chỉnh giá `TT-2026-073` cho khách hàng chính `HR10022-01` (Pincho) và tích chọn thêm 3 cơ sở con cùng chuỗi (`HR10022-02` - Salmonoid Restaurant, `HR10022-03` - Sente, `HR10022-04` - Sente Liễu Giai). Tờ trình đã được phê duyệt qua 3 cấp. Tuy nhiên, khi nhân viên kinh doanh vào Tạo Đơn Bán Hàng (SO) cho `HR10022-02`, ô chọn "Tờ trình đã duyệt để liên kết" hoàn toàn trống, không thấy `TT-2026-073`.
+2. **Chọn Tờ trình trước thì bị ép đè khách hàng:** Nếu người dùng chọn Tờ trình `TT-2026-073` trước khi chọn khách hàng, form tự động đè khách hàng về `HR10022-01` (Pincho) thay vì cho phép giữ nguyên cơ sở con mong muốn.
+3. **Chi tiết Tờ trình hiển thị phạm vi "N/A" và ẩn hoàn toàn các cơ sở con:** Trong màn hình xem chi tiết Tờ trình (`DetailDrawer`) và trang in Tờ trình, hệ thống chỉ hiển thị khách hàng chính `HR10022-01`, phạm vi áp dụng ghi "N/A", không liệt kê danh sách các cơ sở con được áp dụng kèm.
+4. **Công ty mẹ `HR10022` không nhận được giá đặc biệt:** Khi tạo đơn hoặc báo giá cho Công ty mẹ (`HR10022`), hệ thống không lấy được giá theo Tờ trình do `syncProposalToCustomerPriceRules` chỉ ghi nhận ID của các cơ sở con mà bỏ quên `parentId`.
+
+### Nguyên nhân gốc rễ
+1. **Lọc Tờ trình trong `getApprovedProposalsForSO` quá hạn hẹp:** Query chỉ lọc `{ customerId: customerId }, { customerId: null }`. Không kiểm tra `scope: { contains: customerId }` (chứa chuỗi `BRANCHES:...`), không đối chiếu quan hệ phân cấp Cha - Con (`parentId`, `children`).
+2. **Logic đè khách hàng trong `CreateSODrawer.tsx`:** Khi chọn tờ trình, code chạy `if (fullProp.customerId && !customerId)` mà không kiểm tra xem khách hàng hiện tại có nằm trong phạm vi `fullProp.scope` hay không.
+3. **So sánh chuỗi cứng nhắc trong UI Proposal:** `detail.scope === 'SPECIFIC_PRODUCTS'` trả về `false` vì chuỗi thực tế có thêm đuôi ` | BRANCHES:...`, dẫn đến fallback sang nhãn `'N/A'`. Đồng thời `getProposalDetail` không truy vấn chi tiết các cơ sở con trong `scope` để truyền ra client.
+4. **Đồng bộ bảng giá bỏ sót công ty mẹ:** `syncProposalToCustomerPriceRules` chỉ duyệt `proposal.customerId` và danh sách `BRANCHES:`, không thêm `proposal.customer.parentId` vào tập hợp khách hàng áp dụng.
+
+### Cách khắc phục
+1. **Mở rộng phạm vi tìm kiếm Tờ trình trong `getApprovedProposalsForSO`:**
+   - Tra cứu `parentId` và `children` của khách hàng được chọn.
+   - Bổ sung các điều kiện `OR`: khớp `customerId`, khớp `parentId`, khớp trong danh sách `children`, hoặc `scope` chứa ID của khách hàng / cha / con.
+2. **Cập nhật `CreateSODrawer.tsx`:** Kiểm tra `isCurrentCustApplicable` — nếu khách hàng đã chọn thuộc phạm vi `fullProp.scope` thì giữ nguyên khách hàng, nạp bảng giá đặc biệt mà không bị ép đè về cơ sở chính.
+3. **Cập nhật `getProposalDetail` và `ProposalsClient.tsx`:**
+   - Parse danh sách ID trong `BRANCHES:` và truy vấn `branchCustomers: { id, code, name }`.
+   - Hiển thị khối "🏢 Áp dụng đồng thời cho X cơ sở / công ty con khác" trên giao diện chi tiết và mẫu in song ngữ.
+   - Sửa điều kiện hiển thị phạm vi dùng `.startsWith()`.
+4. **Đồng bộ giá cho cả Công ty Mẹ:** Bổ sung `proposal.customer.parentId` vào `targetCustomerIds` khi chạy `syncProposalToCustomerPriceRules` để đảm bảo hợp đồng / đơn hàng ở cấp công ty mẹ cũng tự động thụ hưởng giá được duyệt.
+
+### Bài học
+> ⚠️ **RULE 128: (1) Mọi chính sách giá, chiết khấu và Tờ trình (Proposal) áp dụng cho chuỗi / cơ sở con BẮT BUỘC phải kế thừa và liên kết 2 chiều giữa Công ty Mẹ và các Cơ sở con: Tìm kiếm Tờ trình cho Đơn Hàng / Báo Giá BẮT BUỘC phải quét cả `scope: { contains: customerId }`, `parentId` và danh sách `children`; (2) Khi nạp sản phẩm từ Tờ trình vào Đơn hàng, TUYỆT ĐỐI KHÔNG tự tiện đè mã khách hàng nếu khách hàng hiện tại đã được người dùng chọn và nằm trong phạm vi áp dụng (`scope`) của Tờ trình; (3) Mọi dữ liệu lưu dạng Tag mở rộng trong `scope` (như `BRANCHES:id1,id2...`) BẮT BUỘC phải được resolve tên/mã đầy đủ khi hiển thị chi tiết và in ấn, không được để người dùng nhìn thấy chuỗi thô hoặc nhãn 'N/A'.**
+
+
 
 

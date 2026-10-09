@@ -3744,10 +3744,35 @@ export async function getApprovedProposalsForSO(customerId?: string) {
         status: { in: ['APPROVED', 'APPROVED_L1', 'APPROVED_L2', 'IN_PROGRESS', 'SUBMITTED'] },
     }
     if (customerId) {
-        where.OR = [
+        const currentCustomer = await prisma.customer.findUnique({
+            where: { id: customerId },
+            select: {
+                id: true,
+                parentId: true,
+                children: { select: { id: true } }
+            }
+        })
+
+        const orConditions: any[] = [
             { customerId: customerId },
-            { customerId: null }
+            { customerId: null },
+            { scope: { contains: customerId } }
         ]
+
+        if (currentCustomer?.parentId) {
+            orConditions.push({ customerId: currentCustomer.parentId })
+            orConditions.push({ scope: { contains: currentCustomer.parentId } })
+        }
+
+        if (currentCustomer?.children && currentCustomer.children.length > 0) {
+            const childIds = currentCustomer.children.map(c => c.id)
+            orConditions.push({ customerId: { in: childIds } })
+            for (const cId of childIds) {
+                orConditions.push({ scope: { contains: cId } })
+            }
+        }
+
+        where.OR = orConditions
     }
     const proposals = await prisma.proposal.findMany({
         where,
@@ -3760,6 +3785,7 @@ export async function getApprovedProposalsForSO(customerId?: string) {
             estimatedAmount: true,
             createdAt: true,
             customerId: true,
+            scope: true,
             customer: { select: { id: true, name: true, code: true } },
             creator: { select: { name: true } },
             priceItems: {

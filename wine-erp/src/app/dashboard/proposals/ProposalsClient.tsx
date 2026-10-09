@@ -778,6 +778,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     </div>
                     <div style="padding-left: 12px;">
                         <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Khách hàng áp dụng:' : lang === 'EN' ? 'Applicable Customer:' : 'Khách hàng áp dụng / Applicable Customer:'}</strong> ${detail.customer?.name || ''} (${detail.customer?.code || 'N/A'})</p>
+                        ${detail.branchCustomers && detail.branchCustomers.length > 0 ? `
+                        <p style="margin: 4px 0; color: #0E7490;"><strong>${lang === 'VI' ? 'Cơ sở / Công ty con áp dụng kèm theo:' : lang === 'EN' ? 'Applicable Branches / Subsidiaries:' : 'Cơ sở áp dụng kèm / Applicable Branches:'}</strong> ${detail.branchCustomers.map((b: any) => `[${b.code}] ${b.name}`).join(', ')}</p>
+                        ` : ''}
                         <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Phạm vi áp dụng:' : lang === 'EN' ? 'Scope of Application:' : 'Phạm vi áp dụng / Scope:'}</strong> ${scopeText}</p>
                         <p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Thời hạn hiệu lực:' : lang === 'EN' ? 'Validity Period:' : 'Thời hạn hiệu lực / Validity Period:'}</strong> ${detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : (lang === 'EN' ? 'From approval date' : 'Từ ngày phê duyệt')} ${lang === 'EN' ? 'to' : 'đến'} ${detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : (lang === 'EN' ? 'further notice' : 'khi có thông báo mới')}</p>
                         ${detail.discountPct !== null && detail.discountPct !== undefined ? `<p style="margin: 4px 0;"><strong>${lang === 'VI' ? 'Mức chiết khấu toàn danh mục:' : lang === 'EN' ? 'Overall Portfolio Discount Rate:' : 'Mức chiết khấu toàn danh mục / Overall Portfolio Discount:'}</strong> <span style="font-weight: bold; font-size: 15px; color: #0891B2;">${detail.discountPct}%</span></p>` : ''}
@@ -2703,13 +2706,31 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                         <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Scope of Application' : 'Phạm vi áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>
-                                            {detail.scope === 'ENTIRE_PORTFOLIO' ? (locale === 'en' ? 'Entire Portfolio' : 'Toàn danh mục') : 
-                                             detail.scope === 'SPECIFIC_PRODUCTS' ? (locale === 'en' ? 'Specific Products' : 'Một số sản phẩm') : 
-                                             detail.scope === 'MIXED' ? (locale === 'en' ? 'Mixed' : 'Kết hợp') : 'N/A'}
+                                            {detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? (locale === 'en' ? 'Entire Portfolio' : 'Toàn danh mục') : 
+                                             detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? (locale === 'en' ? 'Specific Products' : 'Một số sản phẩm') : 
+                                             detail.scope?.startsWith('MIXED') ? (locale === 'en' ? 'Mixed' : 'Kết hợp') : 'N/A'}
                                         </p>
                                     </div>
                                 </div>
 
+                                
+                                {detail.branchCustomers && detail.branchCustomers.length > 0 && (
+                                    <div className="p-2.5 rounded text-xs" style={{ background: 'rgba(8, 145, 178, 0.06)', border: '1px solid rgba(8, 145, 178, 0.2)' }}>
+                                        <p className="font-semibold text-cyan-900 mb-1 flex items-center gap-1.5">
+                                            <span>🏢</span>
+                                            {locale === 'en' 
+                                                ? `Also applied to ${detail.branchCustomers.length} additional branches / subsidiaries:` 
+                                                : `Áp dụng đồng thời cho ${detail.branchCustomers.length} cơ sở / công ty con khác:`}
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                            {detail.branchCustomers.map((b: any) => (
+                                                <span key={b.id} className="px-2 py-0.5 rounded bg-white text-slate-800 border border-cyan-200 font-medium text-[11px] shadow-2xs">
+                                                    <span className="font-mono text-cyan-800 font-bold">[{b.code}]</span> {b.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="p-2.5 rounded text-xs" style={{ background: '#FFFFFF' }}>
                                     <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Validity Period (Start & End Date)' : 'Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)'}</p>
                                     <p className="font-bold mt-0.5" style={{ color: '#0891B2' }}>

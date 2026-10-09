@@ -147,8 +147,20 @@ export async function getProposalDetail(id: string) {
     })
     if (!p) return null
 
+    let branchCustomers: { id: string; code: string; name: string }[] = []
+    if (p.scope && p.scope.includes('BRANCHES:')) {
+        const branchIds = p.scope.split('BRANCHES:')[1]?.split(',').map(s => s.trim()).filter(Boolean) || []
+        if (branchIds.length > 0) {
+            branchCustomers = await prisma.customer.findMany({
+                where: { id: { in: branchIds } },
+                select: { id: true, code: true, name: true }
+            })
+        }
+    }
+
     return {
         ...p,
+        branchCustomers,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
         discountPct: p.discountPct ? Number(p.discountPct) : null,
         priceItems: p.priceItems?.map((item: any) => ({
@@ -668,11 +680,14 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
     const endDate = proposal.endDate ?? new Date('2026-12-31T23:59:59.999Z')
     let createdCount = 0
 
-    // Resolve all target customer IDs (main customer + any additional branches specified in scope)
+    // Resolve all target customer IDs (main customer + any additional branches specified in scope + parent customer)
     const targetCustomerIds = new Set<string>([proposal.customerId])
     if (proposal.scope && proposal.scope.includes('BRANCHES:')) {
         const branchIds = proposal.scope.split('BRANCHES:')[1]?.split(',').filter(Boolean) || []
         branchIds.forEach(id => targetCustomerIds.add(id.trim()))
+    }
+    if (proposal.customer?.parentId) {
+        targetCustomerIds.add(proposal.customer.parentId)
     }
 
     for (const targetCustId of targetCustomerIds) {
