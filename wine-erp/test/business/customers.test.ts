@@ -210,6 +210,61 @@ describe('CUST-DUP: Customer Hierarchy & Duplicate Prevention', () => {
             expect(res.success).toBe(false)
             expect(res.error).toContain('Mã số thuế \'0312345678\' đã tồn tại cho Khách hàng [CUST-OTHER] Công ty Cổ phần Khác.')
         })
+
+        it('should auto-generate parent company using head code prefix (no -M) for RESTAURANT without parent', async () => {
+            mockPrisma.customer.findFirst.mockResolvedValueOnce(null)
+            // Parent not found, so it creates one
+            mockPrisma.customer.findUnique.mockResolvedValueOnce(null)
+            mockPrisma.customer.create
+                .mockResolvedValueOnce({
+                    id: 'parent-hr10106',
+                    code: 'HR10106',
+                    name: 'Juine',
+                    entityType: 'COMPANY',
+                })
+                .mockResolvedValueOnce({
+                    id: 'child-hr10106-01',
+                    code: 'HR10106-01',
+                    name: 'Juine Branch 1',
+                    parentId: 'parent-hr10106',
+                    entityType: 'RESTAURANT',
+                })
+
+            const res = await createCustomer({
+                code: 'HR10106-01',
+                name: 'Juine Branch 1',
+                entityType: 'RESTAURANT',
+                allowDirectSO: false,
+                channel: 'HORECA',
+                paymentTerm: 'NET30',
+                creditLimit: 50000000,
+                status: 'ACTIVE',
+            })
+
+            expect(res.success).toBe(true)
+            // Verify parent was created with code HR10106, NOT HR10106-01-M or HR10106-M
+            expect(mockPrisma.customer.create).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        code: 'HR10106',
+                        entityType: 'COMPANY',
+                        allowDirectSO: false,
+                    })
+                })
+            )
+            // Verify child was created with parent connected
+            expect(mockPrisma.customer.create).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        code: 'HR10106-01',
+                        creditLimit: 0,
+                        parent: { connect: { id: 'parent-hr10106' } },
+                    })
+                })
+            )
+        })
     })
 
     describe('updateCustomer', () => {

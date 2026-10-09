@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 126 Rules rút ra từ 90 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 127 Rules rút ra từ 91 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -237,5 +237,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-08 23:15 | Wine ERP v12.0 - WMS Warehouse UI/UX and Logic Comprehensive Audit & Hardening (BUG-126)*
+*Last updated: 2026-10-09 10:15 | Wine ERP v12.1 - MDM HORECA Parent Customer Code Standardization & 100% Hierarchy Compliance (BUG-127)*
 

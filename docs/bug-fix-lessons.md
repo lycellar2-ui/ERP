@@ -80,6 +80,7 @@
 71. [BUG-124: Dashboard — Sập Trang 500 Khi Đăng Nhập Kế Toán Do Null Pointer yoyData.current & Thiếu Role Config](#bug-124-dashboard--lỗi-sập-trang-500-error--crash-khi-đăng-nhập-tài-khoản-kế-toán-do-null-pointer-yoydatacurrent--thiếu-đồng-bộ-role-dashboard-config)
 72. [BUG-125: Sales Orders — Kế Toán Duyệt Đơn: Xác Nhận Khi Đổi Pháp Nhân & Đồng Bộ legalEntityId](#bug-125-sales-orders--quy-trình-kế-toán-duyệt-đơn-bắt-buộc-xác-nhận-khi-đổi-pháp-nhân-legal-entity-override-safeguard--đồng-bộ-legalentityid-trên-bảng-danh-sách-đơn)
 73. [BUG-126: WMS — Audit Toàn Diện Kho: Lệch Sổ Sách vs On-hand, Đổi Lô Lỗi DO, Mất QR Auto-Confirm & Ngăn Trừ Kiểm Kê Âm](#bug-126-wms--audit-toàn-diện-kho-lệch-sổ-sách-vs-on-hand-đổi-lô-lỗi-do-mất-qr-auto-confirm--ngăn-trừ-kiểm-kê-âm)
+74. [BUG-127: Khách Hàng (MDM) — Chuẩn Hóa 100% Khách Hàng HORECA Thuộc Mô Hình Cha-Con & Sinh Mã Khách Hàng Cha Dùng Tiền Tố Đầu Mã Thay Vì Hậu Tố -M](#bug-127-khách-hàng-mdm--chuẩn-hóa-100-khách-hàng-horeca-thuộc-mô-hình-cha-con--sinh-mã-khách-hàng-cha-dùng-tiền-tố-đầu-mã-thay-vì-hậu-tố--m)
 
 ---
 
@@ -3517,5 +3518,47 @@ Khi kế toán hoặc quản trị viên thao tác duyệt đơn bán hàng ở 
 
 ### Bài học
 > ⚠️ **RULE 126: (1) Trong phân hệ Kho (WMS), Tồn Sổ Sách (`qtyBook`) BẮT BUỘC phải tính từ Chứng từ gốc (`qtyReceived - shippedQty`) và so sánh với On-hand (`qtyOnHand`), tuyệt đối không hardcode gán bằng nhau làm mất khả năng đối soát thất thoát; (2) Khi nhặt hàng DO theo FIFO, hệ thống BẮT BUỘC phải hỗ trợ cơ chế Đổi Lô Lỗi trực tiếp (Defect Swapping) và tự động cô lập hàng hỏng vào lô Quarantine, không để nhân viên hủy cả đơn hàng; (3) Mọi luồng nhập kho tự động (Auto-Confirm) BẮT BUỘC phải trigger sinh mã QR và ghi nhận bút toán song song như khi duyệt thủ công; (4) Điều chỉnh kiểm kê âm BẮT BUỘC phải chặn đứng việc trừ giảm dở dang khi tồn khả dụng không đủ bù hao hụt.**
+
+---
+
+## BUG-127: Khách Hàng (MDM) — Chuẩn Hóa 100% Khách Hàng HORECA Thuộc Mô Hình Cha-Con & Sinh Mã Khách Hàng Cha Dùng Tiền Tố Đầu Mã Thay Vì Hậu Tố -M
+
+**Ngày:** 2026-10-09  
+**Module:** `MDM / CRM / Customers`  
+**File liên quan:** `src/app/dashboard/customers/actions.ts`, `scripts/standardize-horeca-parents.ts`, `test/business/customers.test.ts`, `docs/modules/master-data.md`  
+**Trạng thái:** ✅ Đã khắc phục & Viết Unit Test & Chạy Migration DB  
+
+### Triệu chứng & Bối cảnh
+1. **Xuất hiện 11 khách hàng "Độc lập" (INDEPENDENT) trong kênh HORECA:** Khi người dùng lọc kênh HORECA và chọn phân cấp "Độc lập", bảng danh sách vẫn hiển thị 11 khách hàng, bao gồm:
+   - 9 cơ sở/nhà hàng nhập liệu lịch sử có mã dạng `-01` (`HR10002-01`, `HR10003-01`, `HR10004-01`, `HR10005-01`, `HR10029-01`, `HR10043-01`, `HR10077-01`, `HR10102-01`, `HR10106-01`).
+   - 2 khách hàng tiềm năng sinh từ lượt check-in thị trường (`LEAD-202609-0024`, `LEAD-202609-0025`).
+2. **Quy tắc sinh mã công ty mẹ tự động bị sai lệch chuẩn:** Trong các server action `createCustomer`, `updateCustomer` và `approveCustomer`, khi người dùng tạo/duyệt một nhà hàng `RESTAURANT` mà không chọn khách hàng cha, hệ thống tự sinh mã công ty mẹ dạng `${code}-M` (VD: `HR10106-01-M` hoặc `HR10106-M`) và gắn chữ `(Cha)`. Điều này vi phạm quy ước đặt mã tự nhiên của kênh HORECA trong ERP (Công ty mẹ là `HR10106`, chi nhánh là `HR10106-01`).
+
+### Nguyên nhân gốc rễ
+1. **Dữ liệu di chuyển lịch sử từ Excel:** 9 hộ kinh doanh/nhà hàng đơn lẻ ban đầu được import với mã chi nhánh `-01` nhưng không có mã công ty mẹ tương ứng trong bảng tính Excel; sau khi dọn dẹp quan hệ tự trỏ chính mình (`parentId = id`), các bản ghi này có `parentId = null`.
+2. **Code gán cứng hậu tố `-M`:** Trong `actions.ts`, logic `if (data.entityType === 'RESTAURANT' && !finalParentId)` sử dụng `const parentCode = `${data.code}-M`` thay vì bóc tách phần đầu mã (Head Prefix trước dấu gạch ngang) theo cấu trúc mã chuẩn của Wine ERP.
+
+### Cách khắc phục
+1. **Chuẩn hóa Server Actions (`createCustomer`, `updateCustomer`, `approveCustomer`):**
+   - Thay thế toàn bộ logic sinh mã `${code}-M` bằng thuật toán bóc tách tiền tố:
+     ```typescript
+     let parentCode: string
+     if (data.code && data.code.includes('-')) {
+         parentCode = data.code.substring(0, data.code.lastIndexOf('-'))
+     } else {
+         parentCode = `${data.code}-P`
+     }
+     ```
+   - Tên công ty mẹ tự sinh lấy theo `data.vatCompanyName || data.name`, tuyệt đối không gắn thêm chữ `(Cha)` hay hậu tố `-M`.
+   - Nếu mã công ty mẹ đã tồn tại, tự động kết nối chi nhánh con vào công ty mẹ sẵn có.
+2. **Thực thi Migration Chuẩn Hóa Cơ Sở Dữ Liệu (`scripts/standardize-horeca-parents.ts`):**
+   - Quét toàn bộ 11 khách hàng HORECA độc lập trong DB.
+   - Tự động sinh 11 thực thể `COMPANY` cha tương ứng (`HR10002`, `HR10003`, `HR10004`, `HR10005`, `HR10029`, `HR10043`, `HR10077`, `HR10102`, `HR10106`, `LEAD-202609-0024-P`, `LEAD-202609-0025-P`) với đầy đủ thông tin pháp nhân VAT và địa chỉ thuế.
+   - Cập nhật `parentId` cho 11 chi nhánh con và đưa hạn mức con về `0` (kế thừa công ty mẹ). Đảm bảo 100% kênh HORECA không còn khách hàng độc lập.
+3. **Bổ sung Unit Test:** Thêm test case kiểm thử tự động sinh công ty mẹ bằng tiền tố đầu mã và xác thực không còn hậu tố `-M` trong `test/business/customers.test.ts`.
+
+### Bài học
+> ⚠️ **RULE 127: (1) Trong phân hệ Khách Hàng (MDM/CRM), quy ước mã hóa kênh HORECA tuân thủ tuyệt đối cấu trúc tiền tố chuẩn: Công ty Mẹ mang mã gốc `HRxxxxx` (entityType = COMPANY), các Điểm bán / Chi nhánh / Nhà hàng trực thuộc mang mã phân nhánh `HRxxxxx-01`, `HRxxxxx-02` (entityType = RESTAURANT); (2) Tuyệt đối KHÔNG sử dụng hậu tố `-M` hoặc gán chữ `(Cha)`/`(Mẹ)` vào mã hoặc tên khách hàng tự sinh; (3) Khi tạo điểm bán con mà người dùng chưa chỉ định khách hàng cha, hệ thống BẮT BUỘC phải trích xuất phần đầu mã trước dấu gạch ngang (`code.substring(0, code.lastIndexOf('-'))`) để tìm hoặc tự sinh Công ty Mẹ tương ứng; (4) Kênh HORECA là kênh B2B pháp nhân chuỗi — 100% khách hàng HORECA BẮT BUỘC phải thuộc mô hình phân cấp Cha - Con để bảo toàn tính toàn vẹn hóa đơn VAT và quản trị công nợ tập trung.**
+
 
 

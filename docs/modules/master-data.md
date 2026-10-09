@@ -214,15 +214,20 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 - ✅ **Quy trình Phê Duyệt Khách Hàng (Customer Approval Workflow)**:
   * **Sales tạo khách hàng**: Tự động gán trạng thái `PENDING_APPROVAL` và sinh Mã KH tạm thời dạng `TEMP-YYMMDD-XXXX`.
   * **Sales Admin duyệt**: Xem danh sách chờ duyệt, ấn định Mã KH chính thức (độc nhất, không chứa `TEMP-`) và Duyệt chuyển sang `ACTIVE` (hoặc Từ chối chuyển sang `REJECTED`).
-  * **Tự động duyệt công ty mẹ**: Nếu Nhà hàng được duyệt có Công ty mẹ tự sinh (đuôi `-M`) đang ở dạng chờ duyệt, Công ty mẹ cũng sẽ tự động được duyệt và đổi mã tương ứng.
+  * **Tự động duyệt công ty mẹ**: Nếu Nhà hàng được duyệt có Công ty mẹ tự sinh đang ở dạng chờ duyệt, Công ty mẹ cũng sẽ tự động được duyệt và đổi mã tương ứng (sử dụng tiền tố đầu mã trước dấu `-`, không gắn hậu tố `-M`).
   * **Thống kê & Bộ lọc cho Sale**: Thẻ hiển thị số lượng khách hàng chờ duyệt và bị từ chối trực quan ngay trên đầu trang.
 - ✅ **Tìm kiếm mở rộng**: Tên, mã, MST, email, SĐT, tên viết tắt
 - ✅ **Bộ lọc đa chiều (5 filter controls)**:
-  * **Phân cấp khách hàng**: Tất cả / Công ty Mẹ (`PARENT_ONLY`) / Điểm bán con (`CHILD_ONLY`) / KH độc lập (`INDEPENDENT`).
+  * **Phân cấp khách hàng**: Tất cả / Công ty Mẹ (`PARENT_ONLY`) / Điểm bán con (`CHILD_ONLY`) / KH độc lập (`INDEPENDENT`). Kênh HORECA được chuẩn hóa 100% thuộc mô hình Cha - Con (0 khách hàng độc lập).
   * **Lọc theo Khách hàng Cha cụ thể**: Chọn đích danh Công ty Mẹ để xem toàn bộ danh mục điểm bán/nhà hàng trực thuộc (hiển thị kèm số lượng khách hàng con `(X con)`, hỗ trợ 1-click quick-filter khi bấm vào nhãn "Thuộc KH Cha" hoặc badge "X KH con" trên từng dòng bảng máy tính hoặc thẻ mobile).
   * **Loại KH**: HORECA, Phân Phối, VIP Retail, Cá Nhân.
   * **Trạng thái**: Hoạt động, Chờ duyệt, Bị từ chối, Giữ tín dụng, Tạm dừng.
   * **Kênh bán hàng**: HORECA, Corporate, Retail (dynamic đếm số lượng từ DB, responsive font chống iOS zoom).
+- ✅ **Quy Tắc Sinh Mã Khách Hàng Cha Cho Điểm Bán / Nhà Hàng (HORECA Parent Code Derivation)**:
+  * Khi tạo khách hàng có `entityType === 'RESTAURANT'` mà chưa chọn khách hàng cha (`parentId` trống), hệ thống tự động trích xuất phần đầu mã trước dấu gạch ngang (Head Prefix) để làm Mã Công Ty Mẹ (`COMPANY`):
+    * Ví dụ: Chi nhánh `HR10106-01` -> Công ty Mẹ tự sinh có mã `HR10106` (tên lấy theo tên VAT hoặc tên khách hàng, không thêm chữ `(Cha)` hay `-M`).
+    * Nếu mã Công ty Mẹ đã tồn tại trong DB, hệ thống tự động liên kết chi nhánh mới vào công ty mẹ này.
+    * Đã chuẩn hóa toàn bộ 11 khách hàng HORECA lịch sử (`HR10002-01` ... `HR10106-01` và 2 CRM Leads) vào mô hình Cha-Con.
 - ✅ **Thông tin & Quản trị Khách Hàng Con (Child Customer Visibility)**:
   * Trên bảng danh sách và thẻ di động: Hiển thị trực quan badge `[Users] X KH con` (kèm trạng thái kích hoạt lọc nhanh).
   * Trong biểu mẫu Customer Drawer: Hiển thị thẻ danh sách chi tiết toàn bộ các cơ sở con trực thuộc kèm Mã, Tên, Kênh và Trạng thái hoạt động.

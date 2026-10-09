@@ -584,7 +584,12 @@ export async function createCustomer(input: CustomerInput) {
 
             // Business Rule: If Restaurant and no parent is specified, auto-generate a parent Company!
             if (data.entityType === 'RESTAURANT' && !finalParentId) {
-                const parentCode = `${data.code}-M`
+                let parentCode: string
+                if (data.code && data.code.includes('-')) {
+                    parentCode = data.code.substring(0, data.code.lastIndexOf('-'))
+                } else {
+                    parentCode = `${data.code}-P`
+                }
                 let parentCompany = await tx.customer.findUnique({
                     where: { code: parentCode }
                 })
@@ -593,8 +598,8 @@ export async function createCustomer(input: CustomerInput) {
                     parentCompany = await tx.customer.create({
                         data: {
                             code: parentCode,
-                            name: `${data.name} (Cha)`,
-                            shortName: data.shortName ? `${data.shortName} (Cha)` : null,
+                            name: data.vatCompanyName || data.name,
+                            shortName: data.shortName || null,
                             taxId: data.taxId !== undefined ? data.taxId : null,
                             vatCompanyName: data.vatCompanyName !== undefined ? data.vatCompanyName : null,
                             vatAddress: data.vatAddress !== undefined ? data.vatAddress : null,
@@ -701,6 +706,9 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
                 salesRepId: true,
                 status: true,
                 shortName: true,
+                vatCompanyName: true,
+                vatAddress: true,
+                vatEmail: true,
                 entityType: true,
                 allowDirectSO: true,
                 parentId: true,
@@ -793,7 +801,12 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
             if (!finalParentId) {
                 const codeForParent = customerData.code ?? oldCustomer.code
                 const nameForParent = customerData.name ?? oldCustomer.name
-                const parentCode = `${codeForParent}-M`
+                let parentCode: string
+                if (codeForParent && codeForParent.includes('-')) {
+                    parentCode = codeForParent.substring(0, codeForParent.lastIndexOf('-'))
+                } else {
+                    parentCode = `${codeForParent}-P`
+                }
                 
                 await prisma.$transaction(async (tx) => {
                     let parentCompany = await tx.customer.findUnique({
@@ -802,12 +815,16 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 
                     if (!parentCompany) {
                         const repId = customerData.salesRepId ?? oldCustomer.salesRepId
+                        const vatName = customerData.vatCompanyName ?? oldCustomer.vatCompanyName
                         parentCompany = await tx.customer.create({
                             data: {
                                 code: parentCode,
-                                name: `${nameForParent} (Cha)`,
-                                shortName: (customerData.shortName ?? oldCustomer.shortName) ? `${customerData.shortName ?? oldCustomer.shortName} (Cha)` : null,
+                                name: vatName || nameForParent,
+                                shortName: (customerData.shortName ?? oldCustomer.shortName) || null,
                                 taxId: customerData.taxId !== undefined ? customerData.taxId : oldCustomer.taxId,
+                                vatCompanyName: vatName ?? null,
+                                vatAddress: (customerData.vatAddress !== undefined ? customerData.vatAddress : oldCustomer.vatAddress) ?? null,
+                                vatEmail: (customerData.vatEmail !== undefined ? customerData.vatEmail : oldCustomer.vatEmail) ?? null,
                                 channel: customerData.channel !== undefined ? customerData.channel : oldCustomer.channel,
                                 paymentTerm: customerData.paymentTerm ?? oldCustomer.paymentTerm,
                                 creditLimit: customerData.creditLimit ?? Number(oldCustomer.creditLimit),
@@ -1301,7 +1318,12 @@ export async function approveCustomer(id: string, officialCode: string) {
             if (updated.parentId) {
                 const parent = await tx.customer.findUnique({ where: { id: updated.parentId } })
                 if (parent && parent.code.startsWith('TEMP-') && (parent.status === 'PENDING_APPROVAL' || parent.status === 'REJECTED')) {
-                    const parentOfficialCode = `${trimmedCode}-M`
+                    let parentOfficialCode: string
+                    if (trimmedCode.includes('-')) {
+                        parentOfficialCode = trimmedCode.substring(0, trimmedCode.lastIndexOf('-'))
+                    } else {
+                        parentOfficialCode = `${trimmedCode}-P`
+                    }
                     await tx.customer.update({
                         where: { id: parent.id },
                         data: {
