@@ -86,16 +86,17 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                     currentUser={currentUser}
                     mobileMenuButton={isMobile ? (
                         <button
+                            type="button"
                             onClick={() => setMobileOpen(true)}
-                            className="p-2 rounded-lg mr-2"
-                            style={{ color: '#0891B2' }}
+                            aria-label="Mở menu điều hướng"
+                            className="p-2 rounded-md mr-2 text-lys-teal-strong hover:bg-lys-subtle transition-colors cursor-pointer"
                         >
                             <Menu size={20} />
                         </button>
                     ) : undefined}
                 />
 
-                <main className="flex-1 overflow-y-auto p-3 md:p-4">
+                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-3 md:p-4 outline-none">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>

@@ -24,15 +24,15 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                 {/* Header */}
                 <div style={{
                     background: data.isFirstScan
-                        ? 'linear-gradient(135deg, rgba(91,168,138,0.2), rgba(135,203,185,0.1))'
-                        : 'linear-gradient(135deg, rgba(212,168,83,0.2), rgba(139,26,46,0.1))',
+                        ? 'linear-gradient(135deg, rgba(21,128,61,0.2), rgba(8,145,178,0.1))'
+                        : 'linear-gradient(135deg, rgba(180,83,9,0.2), rgba(185,28,28,0.1))',
                     padding: '24px', textAlign: 'center',
                     borderBottom: '1px solid #E2E8F0',
                 }}>
                     <div style={{ fontSize: '48px', marginBottom: '8px' }}>
                         {data.isFirstScan ? '✅' : '⚠️'}
                     </div>
-                    <h1 className="font-brand" style={{ color: data.isFirstScan ? '#5BA88A' : '#D4A853', fontSize: '18px', fontWeight: 700 }}>
+                    <h1 className="font-brand" style={{ color: data.isFirstScan ? '#15803D' : '#B45309', fontSize: '18px', fontWeight: 700 }}>
                         {data.isFirstScan ? 'Sản Phẩm Chính Hãng' : 'Đã Được Quét Trước Đó'}
                     </h1>
                     <p style={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}>

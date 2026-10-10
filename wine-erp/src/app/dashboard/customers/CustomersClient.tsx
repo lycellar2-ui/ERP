@@ -1039,7 +1039,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     </div>
 
                                     {isEdit && (form.entityType === 'COMPANY' || loadedChildren.length > 0) && (
-                                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
+                                        <div className="rounded-md border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Users size={15} className="text-lys-teal-strong" />

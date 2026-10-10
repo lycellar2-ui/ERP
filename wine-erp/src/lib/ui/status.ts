@@ -24,6 +24,7 @@ const STATUS_TONE: Record<string, Tone> = {
     ON_HOLD: 'warning',
     REVIEW: 'warning',
     IN_REVIEW: 'warning',
+    REVIEWING_L1: 'warning',
     EXPIRING: 'warning',
 
     // info — in motion
@@ -40,6 +41,7 @@ const STATUS_TONE: Record<string, Tone> = {
     // brand — confirmed, business-positive but not final
     CONFIRMED: 'brand',
     APPROVED: 'brand',
+    REVIEWING_L2: 'brand',
     ACTIVE: 'brand',
     INVOICED: 'brand',
     ACCEPTED: 'brand',

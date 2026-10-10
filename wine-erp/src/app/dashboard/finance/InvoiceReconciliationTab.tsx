@@ -16,9 +16,8 @@ import {
     unlinkVnptInvoiceFromOrder, exportVnptRegistryExcel
 } from './actions-reconciliation'
 import { syncVnptInvoiceForOrder, deleteDraftInvoiceFromVnpt } from '../sales/actions-vnpt'
-import { DataPagination } from '@/components/DataPagination'
 import { formatVND } from '@/lib/utils'
-import { useConfirmDialog } from '@/components/ui'
+import { useConfirmDialog, Pagination } from '@/components/ui'
 
 const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: string; badgeText: string; border: string }> = {
     MATCHED: {
@@ -1061,7 +1060,7 @@ export function InvoiceReconciliationTab() {
                     </table>
                 </div>
 
-                <DataPagination
+                <Pagination
                     page={page}
                     pageSize={pageSize}
                     total={total}
@@ -1500,7 +1499,7 @@ export function InvoiceReconciliationTab() {
 
                 {/* VNPT Pagination */}
                 <div className="p-3 border-t border-slate-200">
-                    <DataPagination
+                    <Pagination
                         total={vnptTotal}
                         page={vnptPage}
                         pageSize={vnptPageSize}

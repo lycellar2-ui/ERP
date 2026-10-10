@@ -63,7 +63,7 @@ export function SignaturePad({ onEnd }: SignaturePadProps) {
         }
 
         ctx.lineTo(x, y)
-        ctx.strokeStyle = '#87CBB9'
+        ctx.strokeStyle = '#0E7490'
         ctx.lineWidth = 2
         ctx.lineCap = 'round'
         ctx.stroke()

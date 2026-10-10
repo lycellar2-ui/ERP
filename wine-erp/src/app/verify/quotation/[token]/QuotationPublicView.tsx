@@ -26,12 +26,12 @@ const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 0 
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
-    DRAFT: { label: 'Bản Nháp', color: '#475569', bg: 'rgba(138,174,187,0.1)', border: 'rgba(138,174,187,0.3)', icon: Clock },
-    SENT: { label: 'Đang Hiệu Lực', color: '#0891B2', bg: 'rgba(135,203,185,0.1)', border: 'rgba(8, 145, 178, 0.25)', icon: Clock },
-    ACCEPTED: { label: 'Đã Chấp Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.1)', border: 'rgba(91,168,138,0.3)', icon: CheckCircle2 },
-    CONVERTED: { label: 'Đã Lên Đơn Hàng', color: '#4A8FAB', bg: 'rgba(74,143,171,0.1)', border: 'rgba(74,143,171,0.3)', icon: CheckCircle2 },
-    EXPIRED: { label: 'Hết Hiệu Lực', color: '#8B1A2E', bg: 'rgba(139,26,46,0.1)', border: 'rgba(139,26,46,0.3)', icon: AlertTriangle },
-    CANCELLED: { label: 'Đã Từ Chối', color: '#8B1A2E', bg: 'rgba(139,26,46,0.1)', border: 'rgba(139,26,46,0.3)', icon: XCircle },
+    DRAFT: { label: 'Bản Nháp', color: '#475569', bg: 'rgba(100,116,139,0.1)', border: 'rgba(100,116,139,0.3)', icon: Clock },
+    SENT: { label: 'Đang Hiệu Lực', color: '#0891B2', bg: 'rgba(8,145,178,0.1)', border: 'rgba(8, 145, 178, 0.25)', icon: Clock },
+    ACCEPTED: { label: 'Đã Chấp Nhận', color: '#15803D', bg: 'rgba(21,128,61,0.1)', border: 'rgba(21,128,61,0.3)', icon: CheckCircle2 },
+    CONVERTED: { label: 'Đã Lên Đơn Hàng', color: '#1D4ED8', bg: 'rgba(29,78,216,0.1)', border: 'rgba(29,78,216,0.3)', icon: CheckCircle2 },
+    EXPIRED: { label: 'Hết Hiệu Lực', color: '#B91C1C', bg: 'rgba(185,28,28,0.1)', border: 'rgba(185,28,28,0.3)', icon: AlertTriangle },
+    CANCELLED: { label: 'Đã Từ Chối', color: '#B91C1C', bg: 'rgba(185,28,28,0.1)', border: 'rgba(185,28,28,0.3)', icon: XCircle },
 }
 
 // Sub-component for individual product cards with rich hover styling and spring transitions
@@ -56,9 +56,9 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                 gap: 24, 
                 alignItems: 'flex-start',
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                background: hovered ? 'linear-gradient(90deg, rgba(20,36,51,0.45) 0%, rgba(27,46,61,0.15) 100%)' : 'transparent',
+                background: hovered ? 'linear-gradient(90deg, rgba(20,36,51,0.45) 0%, #F8FAFC 100%)' : 'transparent',
                 transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
-                boxShadow: hovered ? 'inset 0 0 24px rgba(135,203,185,0.03), 0 12px 30px rgba(0,0,0,0.25)' : 'none',
+                boxShadow: hovered ? 'inset 0 0 24px rgba(8,145,178,0.03), 0 12px 30px rgba(0,0,0,0.25)' : 'none',
             }}
         >
             {/* Product image with sleek premium dark background and shadow */}
@@ -71,7 +71,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                     borderRadius: 4, 
                     flexShrink: 0, 
                     background: 'linear-gradient(135deg, #091520 0%, #112130 100%)', 
-                    border: hovered ? '1px solid rgba(135,203,185,0.35)' : '1px solid #E2E8F0', 
+                    border: hovered ? '1px solid rgba(8,145,178,0.35)' : '1px solid #E2E8F0', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
@@ -103,7 +103,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                     <div>
-                        <h4 className="font-brand" style={{ color: hovered ? '#87CBB9' : '#0F172A', fontWeight: 600, fontSize: 18, margin: 0, lineHeight: 1.25, transition: 'color 0.3s ease' }}>
+                        <h4 className="font-brand" style={{ color: hovered ? '#0E7490' : '#0F172A', fontWeight: 600, fontSize: 18, margin: 0, lineHeight: 1.25, transition: 'color 0.3s ease' }}>
                             {line.productName}
                         </h4>
                         
@@ -115,7 +115,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                             {line.classification && (
                                 <>
                                     <span style={{ color: '#64748B', fontSize: 12 }}>•</span>
-                                    <span style={{ color: '#D4A853', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                                    <span style={{ color: '#B45309', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
                                         {line.classification}
                                     </span>
                                 </>
@@ -138,7 +138,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                                 <>
                                     {line.qty} × {fmt(line.unitPrice)} ₫
                                     {line.discountPct > 0 && (
-                                        <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
+                                        <span style={{ color: '#B91C1C', fontWeight: 600, marginLeft: 4 }}>
                                             (−{line.discountPct}%)
                                         </span>
                                     )}
@@ -147,7 +147,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                                 <>
                                     Unit Price: {fmt(line.unitPrice)} ₫
                                     {line.discountPct > 0 && (
-                                        <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
+                                        <span style={{ color: '#B91C1C', fontWeight: 600, marginLeft: 4 }}>
                                             (−{line.discountPct}%)
                                         </span>
                                     )}
@@ -165,9 +165,9 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                                 display: 'inline-flex', 
                                 alignItems: 'center', 
                                 gap: 4, 
-                                background: 'rgba(212,168,83,0.08)', 
-                                color: '#D4A853', 
-                                border: '1px solid rgba(212,168,83,0.2)',
+                                background: 'rgba(180,83,9,0.08)', 
+                                color: '#B45309', 
+                                border: '1px solid rgba(180,83,9,0.2)',
                                 padding: '3px 10px', 
                                 borderRadius: 2, 
                                 fontSize: 11, 
@@ -252,8 +252,8 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                 }}>
                     {done === 'accepted' ? (
                         <>
-                            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(91,168,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                                <CheckCircle2 size={48} style={{ color: '#5BA88A' }} />
+                            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(21,128,61,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                                <CheckCircle2 size={48} style={{ color: '#15803D' }} />
                             </div>
                             <h2 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, letterSpacing: '0.02em' }}>Thank You!</h2>
                             <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
@@ -263,8 +263,8 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         </>
                     ) : (
                         <>
-                            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(139,26,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                                <XCircle size={48} style={{ color: '#8B1A2E' }} />
+                            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(185,28,28,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                                <XCircle size={48} style={{ color: '#B91C1C' }} />
                             </div>
                             <h2 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16 }}>Feedback Recorded</h2>
                             <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
@@ -318,7 +318,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     padding: 24px;
                     border-radius: 2px;
                     background: linear-gradient(135deg, #081119 0%, #112130 100%);
-                    border: 1px solid rgba(42, 67, 85, 0.5);
+                    border: 1px solid #E2E8F0;
                     min-height: 380px;
                     flex-shrink: 0;
                 }
@@ -375,7 +375,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                 transform: 'translateX(-50%)', 
                 width: '100vw', 
                 height: '700px', 
-                background: 'radial-gradient(circle, rgba(135,203,185,0.03) 0%, rgba(10,25,38,0) 70%)', 
+                background: 'radial-gradient(circle, rgba(8,145,178,0.03) 0%, rgba(10,25,38,0) 70%)', 
                 pointerEvents: 'none',
                 zIndex: 0
             }} />
@@ -393,18 +393,18 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <div style={{ 
                             width: 48, 
                             height: 48, 
-                            border: '1.5px solid #87CBB9', 
+                            border: '1.5px solid #0E7490', 
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            background: 'rgba(135,203,185,0.03)',
+                            background: 'rgba(8,145,178,0.03)',
                             borderRadius: '50%'
                         }}>
                             <svg width="22" height="26" viewBox="0 0 40 48" fill="none">
-                                <path d="M8 4 Q8 20 20 26 Q32 20 32 4 Z" stroke="#87CBB9" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                <line x1="20" y1="26" x2="20" y2="40" stroke="#87CBB9" strokeWidth="2" strokeLinecap="round" />
-                                <line x1="13" y1="40" x2="27" y2="40" stroke="#87CBB9" strokeWidth="2" strokeLinecap="round" />
-                                <path d="M20 22 Q16 16 18 10 Q20 6 22 10" stroke="#D4A853" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                <path d="M8 4 Q8 20 20 26 Q32 20 32 4 Z" stroke="#0E7490" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                <line x1="20" y1="26" x2="20" y2="40" stroke="#0E7490" strokeWidth="2" strokeLinecap="round" />
+                                <line x1="13" y1="40" x2="27" y2="40" stroke="#0E7490" strokeWidth="2" strokeLinecap="round" />
+                                <path d="M20 22 Q16 16 18 10 Q20 6 22 10" stroke="#B45309" strokeWidth="1.5" fill="none" strokeLinecap="round" />
                             </svg>
                         </div>
                         <div>
@@ -454,7 +454,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         </h2>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                        <span className="font-mono" style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <span className="font-mono" style={{ color: '#B45309', fontSize: 16, fontWeight: 700, letterSpacing: '0.05em' }}>
                             {data.quotationNo}
                         </span>
                         <div style={{ 
@@ -485,17 +485,17 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         border: '1px solid #E2E8F0',
                         position: 'relative'
                     }}>
-                        <div style={{ position: 'absolute', top: 18, right: 18, width: 8, height: 8, borderRadius: '50%', background: '#87CBB9' }} />
+                        <div style={{ position: 'absolute', top: 18, right: 18, width: 8, height: 8, borderRadius: '50%', background: '#0E7490' }} />
                         <h4 style={{ color: '#64748B', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>PREPARED FOR</h4>
                         <p className="font-brand" style={{ color: '#0F172A', fontWeight: 600, fontSize: 18, margin: 0 }}>
                             {data.contactPerson || data.customerName}
                         </p>
                         {data.companyName && <p style={{ color: '#475569', fontSize: 14, margin: '6px 0 0' }}>{data.companyName}</p>}
                         <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 11, background: 'rgba(135,203,185,0.05)', color: '#0891B2', padding: '2px 8px', border: '1px solid rgba(135,203,185,0.1)' }}>
+                            <span style={{ fontSize: 11, background: 'rgba(8,145,178,0.05)', color: '#0891B2', padding: '2px 8px', border: '1px solid rgba(8,145,178,0.1)' }}>
                                 Client Code: {data.customerCode}
                             </span>
-                            <span style={{ fontSize: 11, background: 'rgba(74,143,171,0.05)', color: '#475569', padding: '2px 8px', border: '1px solid rgba(74,143,171,0.1)' }}>
+                            <span style={{ fontSize: 11, background: 'rgba(29,78,216,0.05)', color: '#475569', padding: '2px 8px', border: '1px solid rgba(29,78,216,0.1)' }}>
                                 Channel: {data.channel}
                             </span>
                         </div>
@@ -511,17 +511,17 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <h4 style={{ color: '#64748B', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>TIMELINE & TERMS</h4>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: 6 }}>
                                 <span style={{ color: '#475569', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Calendar size={13} style={{ color: '#64748B' }} /> Date Issued
                                 </span>
                                 <strong className="font-mono" style={{ color: '#0F172A', fontSize: 13 }}>{fmtDate(data.createdAt)}</strong>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: 6 }}>
                                 <span style={{ color: '#475569', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Clock size={13} style={{ color: '#64748B' }} /> Valid Until
                                 </span>
-                                <strong className="font-mono" style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13 }}>{fmtDate(data.validUntil)}</strong>
+                                <strong className="font-mono" style={{ color: data.isExpired ? '#B91C1C' : '#B45309', fontSize: 13 }}>{fmtDate(data.validUntil)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#475569', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -581,7 +581,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             {/* Group Header Row */}
                             <div style={{ 
                                 padding: '12px 24px', 
-                                background: 'rgba(135,203,185,0.06)', 
+                                background: 'rgba(8,145,178,0.06)', 
                                 borderBottom: '1px solid #E2E8F0',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -632,8 +632,8 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             
                             {data.orderDiscount > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#EF4444', fontSize: 14 }}>Order Discount ({data.orderDiscount}%)</span>
-                                    <span className="font-mono" style={{ color: '#EF4444', fontWeight: 600, fontSize: 14 }}>−{fmt(discountAmount)} ₫</span>
+                                    <span style={{ color: '#B91C1C', fontSize: 14 }}>Order Discount ({data.orderDiscount}%)</span>
+                                    <span className="font-mono" style={{ color: '#B91C1C', fontWeight: 600, fontSize: 14 }}>−{fmt(discountAmount)} ₫</span>
                                 </div>
                             )}
 
@@ -676,13 +676,13 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         marginBottom: 32 
                     }}>
                         <h3 style={{ 
-                            color: '#D4A853', 
+                            color: '#B45309', 
                             fontSize: 14, 
                             fontWeight: 700, 
                             letterSpacing: '0.12em', 
                             textTransform: 'uppercase',
                             margin: '0 0 20px',
-                            borderBottom: '1px solid rgba(42,67,85,0.5)',
+                            borderBottom: '1px solid #E2E8F0',
                             paddingBottom: 10
                         }}>
                             COMMERCIAL TERMS & CONFIDENTIALITY
@@ -722,24 +722,24 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 minWidth: 260, 
                                 padding: '18px 36px', 
                                 borderRadius: 2, 
-                                background: 'linear-gradient(135deg, #5BA88A 0%, #3D7E65 100%)', 
+                                background: 'linear-gradient(135deg, #15803D 0%, #3D7E65 100%)', 
                                 color: 'white', 
-                                border: '1px solid rgba(135,203,185,0.4)', 
+                                border: '1px solid rgba(8,145,178,0.4)', 
                                 fontSize: 16, 
                                 fontWeight: 700, 
                                 cursor: 'pointer', 
                                 letterSpacing: '0.08em',
                                 textTransform: 'uppercase',
-                                boxShadow: '0 8px 32px rgba(91,168,138,0.2)',
+                                boxShadow: '0 8px 32px rgba(21,128,61,0.2)',
                                 opacity: accepting ? 0.6 : 1,
                                 transition: 'all 0.3s ease'
                             }}
                             onMouseEnter={e => {
-                                e.currentTarget.style.boxShadow = '0 12px 40px rgba(91,168,138,0.35)'
+                                e.currentTarget.style.boxShadow = '0 12px 40px rgba(21,128,61,0.35)'
                                 e.currentTarget.style.transform = 'translateY(-1px)'
                             }}
                             onMouseLeave={e => {
-                                e.currentTarget.style.boxShadow = '0 8px 32px rgba(91,168,138,0.2)'
+                                e.currentTarget.style.boxShadow = '0 8px 32px rgba(21,128,61,0.2)'
                                 e.currentTarget.style.transform = 'translateY(0)'
                             }}
                         >
@@ -754,8 +754,8 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     padding: '18px 36px', 
                                     borderRadius: 2, 
                                     background: 'transparent', 
-                                    color: '#8B1A2E', 
-                                    border: '1px solid #8B1A2E', 
+                                    color: '#B91C1C', 
+                                    border: '1px solid #B91C1C', 
                                     fontSize: 14, 
                                     fontWeight: 700, 
                                     cursor: 'pointer',
@@ -764,14 +764,14 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     transition: 'all 0.3s ease'
                                 }}
                                 onMouseEnter={e => {
-                                    e.currentTarget.style.background = 'rgba(139,26,46,0.05)'
-                                    e.currentTarget.style.color = '#EF4444'
-                                    e.currentTarget.style.borderColor = '#EF4444'
+                                    e.currentTarget.style.background = 'rgba(185,28,28,0.05)'
+                                    e.currentTarget.style.color = '#B91C1C'
+                                    e.currentTarget.style.borderColor = '#B91C1C'
                                 }}
                                 onMouseLeave={e => {
                                     e.currentTarget.style.background = 'transparent'
-                                    e.currentTarget.style.color = '#8B1A2E'
-                                    e.currentTarget.style.borderColor = '#8B1A2E'
+                                    e.currentTarget.style.color = '#B91C1C'
+                                    e.currentTarget.style.borderColor = '#B91C1C'
                                 }}
                             >
                                 Decline Proposal
@@ -788,7 +788,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         padding: '16px 20px', 
                                         borderRadius: 2, 
                                         background: '#FFFFFF', 
-                                        border: '1px solid #8B1A2E', 
+                                        border: '1px solid #B91C1C', 
                                         color: '#0F172A', 
                                         fontSize: 14, 
                                         outline: 'none',
@@ -801,7 +801,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     style={{ 
                                         padding: '16px 28px', 
                                         borderRadius: 2, 
-                                        background: '#8B1A2E', 
+                                        background: '#B91C1C', 
                                         color: 'white', 
                                         border: 'none', 
                                         fontWeight: 700, 
@@ -822,16 +822,16 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
 
                 {data.isExpired && (
                     <div style={{ 
-                        background: 'rgba(139,26,46,0.08)', 
-                        border: '1.5px solid rgba(139,26,46,0.3)', 
+                        background: 'rgba(185,28,28,0.08)', 
+                        border: '1.5px solid rgba(185,28,28,0.3)', 
                         borderRadius: 2, 
                         padding: '24px 32px', 
                         textAlign: 'center', 
                         marginBottom: 40,
                         boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                     }}>
-                        <AlertTriangle size={28} style={{ color: '#EF4444', margin: '0 auto 12px' }} />
-                        <h4 style={{ color: '#EF4444', fontSize: 16, fontWeight: 700, margin: '0 0 6px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>This Proposal has Expired</h4>
+                        <AlertTriangle size={28} style={{ color: '#B91C1C', margin: '0 auto 12px' }} />
+                        <h4 style={{ color: '#B91C1C', fontSize: 16, fontWeight: 700, margin: '0 0 6px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>This Proposal has Expired</h4>
                         <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
                             The validity period for this exclusive pricing has ended. Please contact your Wine Advisor <strong style={{ color: '#0F172A' }}>{data.salesRepName}</strong> or email our support desk to receive an updated proposal.
                         </p>
@@ -886,7 +886,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 transition: 'color 0.2s ease',
                                 zIndex: 10
                             }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                            onMouseEnter={e => e.currentTarget.style.color = '#B91C1C'}
                             onMouseLeave={e => e.currentTarget.style.color = '#475569'}
                         >
                             <XCircle size={24} />
@@ -921,7 +921,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 </div>
 
                                 {/* Wine Title */}
-                                <h3 className="font-brand" style={{ color: '#0F172A', fontSize: 24, fontWeight: 700, margin: '0 0 12px 0', lineHeight: 1.2, borderBottom: '1px solid rgba(42, 67, 85, 0.4)', paddingBottom: '12px' }}>
+                                <h3 className="font-brand" style={{ color: '#0F172A', fontSize: 24, fontWeight: 700, margin: '0 0 12px 0', lineHeight: 1.2, borderBottom: '1px solid #E2E8F0', paddingBottom: '12px' }}>
                                     {activeModalLine.productName}
                                 </h3>
 
@@ -931,9 +931,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     gridTemplateColumns: 'repeat(2, 1fr)', 
                                     gap: '8px 16px',
                                     marginBottom: 16,
-                                    background: 'rgba(27, 46, 61, 0.3)',
+                                    background: '#F8FAFC',
                                     padding: '10px 14px',
-                                    border: '1px solid rgba(42, 67, 85, 0.3)',
+                                    border: '1px solid #E2E8F0',
                                     borderRadius: '2px'
                                 }}>
                                     <span style={{ color: '#64748B', fontSize: 12 }}>
@@ -953,9 +953,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 {/* Tasting Notes Details */}
                                 <div style={{ marginBottom: 18 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                                        <Quote size={12} style={{ color: '#D4A853', transform: 'rotate(180deg)' }} />
+                                        <Quote size={12} style={{ color: '#B45309', transform: 'rotate(180deg)' }} />
                                         <span style={{ 
-                                            color: '#D4A853', 
+                                            color: '#B45309', 
                                             fontSize: 11, 
                                             fontWeight: 700, 
                                             letterSpacing: '0.1em', 
@@ -964,7 +964,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                             Sommelier&apos;s Tasting Notes
                                         </span>
                                     </div>
-                                    <p className="font-brand" style={{ color: '#0F172A', fontSize: 14, lineHeight: 1.6, margin: 0, fontStyle: 'italic', background: 'linear-gradient(135deg, rgba(212,168,83,0.02) 0%, rgba(135,203,185,0.01) 100%)', padding: '12px 16px', borderLeft: '2px solid #D4A853', borderRadius: '2px' }}>
+                                    <p className="font-brand" style={{ color: '#0F172A', fontSize: 14, lineHeight: 1.6, margin: 0, fontStyle: 'italic', background: 'linear-gradient(135deg, rgba(180,83,9,0.02) 0%, rgba(8,145,178,0.01) 100%)', padding: '12px 16px', borderLeft: '2px solid #B45309', borderRadius: '2px' }}>
                                         {activeModalLine.tastingNotes || "No tasting notes available for this specific vintage yet. Please ask our Wine Advisor for professional recommendation."}
                                     </p>
                                 </div>
@@ -977,9 +977,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                                 display: 'inline-flex', 
                                                 alignItems: 'center', 
                                                 gap: 4, 
-                                                background: 'rgba(212,168,83,0.08)', 
-                                                color: '#D4A853', 
-                                                border: '1px solid rgba(212,168,83,0.2)',
+                                                background: 'rgba(180,83,9,0.08)', 
+                                                color: '#B45309', 
+                                                border: '1px solid rgba(180,83,9,0.2)',
                                                 padding: '3px 8px', 
                                                 borderRadius: 2, 
                                                 fontSize: 10, 
@@ -999,7 +999,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ 
                                 marginTop: 20, 
                                 paddingTop: 16, 
-                                borderTop: '1px solid rgba(42, 67, 85, 0.4)', 
+                                borderTop: '1px solid #E2E8F0', 
                                 display: 'flex', 
                                 justifyContent: 'space-between', 
                                 alignItems: 'center' 
@@ -1009,7 +1009,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         Exclusive Proposal Price
                                     </span>
                                     {activeModalLine.discountPct > 0 && (
-                                        <span style={{ color: '#EF4444', fontSize: 11, fontWeight: 600, marginLeft: 6 }}>
+                                        <span style={{ color: '#B91C1C', fontSize: 11, fontWeight: 600, marginLeft: 6 }}>
                                             ({activeModalLine.discountPct}% saving)
                                         </span>
                                     )}

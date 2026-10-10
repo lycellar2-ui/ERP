@@ -49,7 +49,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
         return (
             <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
                 <div className="px-4 pt-6 pb-4 text-center" style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)' }}>
-                    <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-3"
+                    <div className="w-14 h-14 rounded-lg mx-auto flex items-center justify-center mb-3"
                         style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
                         <Truck size={28} style={{ color: '#0891B2' }} />
                     </div>
@@ -67,7 +67,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                         </div>
                     ) : drivers.map(d => (
                         <button key={d.id} onClick={() => handleDriverSelect(d.id)}
-                            className="w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98]"
+                            className="w-full flex items-center gap-3 p-4 rounded-md transition-all active:scale-[0.98]"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
                                 style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
@@ -207,7 +207,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                     const isDelivered = stop.status === 'DELIVERED'
 
                     return (
-                        <div key={stop.id} className="rounded-xl overflow-hidden"
+                        <div key={stop.id} className="rounded-md overflow-hidden"
                             style={{ background: '#FFFFFF', border: `1px solid ${isDelivered ? 'rgba(21,128,61,0.3)' : '#E2E8F0'}` }}>
                             {/* Stop header */}
                             <div className="flex items-start gap-3 p-4">
@@ -459,7 +459,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
             </div>
 
             {/* Stop info card */}
-            <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="mx-4 mt-4 p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{stop.customerName}</p>
                     {stop.customerPhone && (
@@ -544,7 +544,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                             }
                         }} />
                     {photoPreview ? (
-                        <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                        <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                             <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover" />
                             <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
                                 className="absolute top-2 right-2 p-1.5 rounded-full"
@@ -554,7 +554,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                         </div>
                     ) : (
                         <button type="button" onClick={() => fileInputRef.current?.click()}
-                            className="flex flex-col items-center gap-2 w-full py-6 rounded-xl text-sm"
+                            className="flex flex-col items-center gap-2 w-full py-6 rounded-md text-sm"
                             style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0', color: '#64748B' }}>
                             <Camera size={24} />
                             <span>Chụp ảnh hoặc chọn từ thư viện</span>
@@ -567,7 +567,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
             <div className="px-4 pb-6 pt-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                 <button onClick={handleSave}
                     disabled={!name.trim() || !signatureUrl || saving}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md text-sm font-bold disabled:opacity-50 transition-all active:scale-[0.98]"
                     style={{ background: '#0891B2', color: '#FFFFFF' }}>
                     {saving
                         ? <><Loader2 size={16} className="animate-spin" /> Đang lưu...</>

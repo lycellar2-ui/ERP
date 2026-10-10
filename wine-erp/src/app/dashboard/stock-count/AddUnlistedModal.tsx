@@ -85,7 +85,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                     <div>
                         <div className="flex items-center gap-2">

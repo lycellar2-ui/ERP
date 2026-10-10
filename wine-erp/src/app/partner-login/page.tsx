@@ -5,15 +5,15 @@ import { Loader2, Shield, AlertCircle, Ship } from 'lucide-react'
 import { authenticatePartner, getPartnerPortalData, type PartnerShipmentView, type AgencySubmissionRow } from '../dashboard/agency/actions'
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-    BOOKED: { label: 'Đã Đặt', color: '#4A8FAB' },
-    ON_VESSEL: { label: 'Trên Tàu', color: '#D4A853' },
+    BOOKED: { label: 'Đã Đặt', color: '#1D4ED8' },
+    ON_VESSEL: { label: 'Trên Tàu', color: '#B45309' },
     ARRIVED_PORT: { label: 'Đến Cảng', color: '#0891B2' },
-    CUSTOMS_HOLD: { label: 'Chờ HQ', color: '#E05252' },
-    CLEARED: { label: 'Thông Quan', color: '#5BA88A' },
+    CUSTOMS_HOLD: { label: 'Chờ HQ', color: '#B91C1C' },
+    CLEARED: { label: 'Thông Quan', color: '#15803D' },
     COMPLETED: { label: 'Hoàn Tất', color: '#64748B' },
-    PENDING_REVIEW: { label: 'Chờ Duyệt', color: '#D4A853' },
-    APPROVED: { label: 'Đã Duyệt', color: '#5BA88A' },
-    REJECTED: { label: 'Từ Chối', color: '#8B1A2E' },
+    PENDING_REVIEW: { label: 'Chờ Duyệt', color: '#B45309' },
+    APPROVED: { label: 'Đã Duyệt', color: '#15803D' },
+    REJECTED: { label: 'Từ Chối', color: '#B91C1C' },
 }
 
 const PARTNER_TYPE: Record<string, string> = {
@@ -114,8 +114,8 @@ export default function PartnerLoginPage() {
                                                 {shipments.map(s => {
                                                     const st = STATUS_MAP[s.status] ?? { label: s.status, color: '#64748B' }
                                                     return (
-                                                        <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                                        <tr key={s.id} style={{ borderBottom: '1px solid #E2E8F0' }}
+                                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                             <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0891B2' }}>
                                                                 {s.billOfLading}
@@ -138,7 +138,7 @@ export default function PartnerLoginPage() {
 
                             {/* Submissions History */}
                             <div>
-                                <h2 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#D4A853' }}>
+                                <h2 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#B45309' }}>
                                     Lịch Sử Nộp Hồ Sơ ({submissions.length})
                                 </h2>
                                 {submissions.length === 0 ? (
@@ -159,7 +159,7 @@ export default function PartnerLoginPage() {
                                                 {submissions.map(s => {
                                                     const st = STATUS_MAP[s.status] ?? { label: s.status, color: '#64748B' }
                                                     return (
-                                                        <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                                        <tr key={s.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                             <td className="px-4 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>
                                                                 {s.shipmentBol ?? '—'}
                                                             </td>
@@ -192,7 +192,7 @@ export default function PartnerLoginPage() {
             <div className="w-full max-w-sm space-y-6">
                 {/* Logo */}
                 <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    <div className="w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4"
                         style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid #E2E8F0' }}>
                         <Shield size={28} style={{ color: '#0891B2' }} />
                     </div>
@@ -205,10 +205,10 @@ export default function PartnerLoginPage() {
                 </div>
 
                 {/* Login form */}
-                <div className="p-6 rounded-xl space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                <div className="p-6 rounded-md space-y-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                     {error && (
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs"
-                            style={{ background: 'rgba(139,26,46,0.1)', border: '1px solid rgba(139,26,46,0.3)', color: '#E05252' }}>
+                            style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                             <AlertCircle size={14} />
                             {error}
                         </div>
@@ -249,8 +249,8 @@ export default function PartnerLoginPage() {
                         disabled={loading || !email || !password}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => !loading && (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        onMouseEnter={e => !loading && (e.currentTarget.style.background = '#0891B2')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
                         {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                     </button>

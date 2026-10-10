@@ -264,11 +264,12 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
                     <button
+                        type="button"
                         onClick={handleToggleNoti}
                         aria-label="Thông báo"
-                        className="relative flex items-center justify-center w-7 h-7 rounded-md bg-white border border-lys-border text-lys-secondary transition-colors duration-150 hover:border-lys-teal hover:text-lys-teal-strong cursor-pointer"
+                        className="relative flex items-center justify-center w-8 h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-colors duration-150 hover:border-lys-teal hover:text-lys-teal-strong cursor-pointer"
                     >
-                        <Bell size={14} />
+                        <Bell size={15} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white bg-tone-danger-fg">
@@ -299,10 +300,11 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                 ) : (
                                     <>
                                         {notifications.map(n => (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={n.id}
                                                 onClick={() => handleNotificationClick(n)}
-                                                className={`px-4 py-3 transition-colors duration-150 cursor-pointer border-b border-lys-border last:border-b-0 hover:bg-lys-subtle ${n.isRead ? '' : 'bg-lys-teal-soft/60'}`}
+                                                className={`w-full text-left px-4 py-3 transition-colors duration-150 cursor-pointer border-b border-lys-border last:border-b-0 hover:bg-lys-subtle focus:bg-lys-subtle focus:outline-none ${n.isRead ? '' : 'bg-lys-teal-soft/60'}`}
                                             >
                                                 <div className="flex gap-2.5 items-start">
                                                     <span
@@ -328,7 +330,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                         </span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </button>
                                         ))}
                                         {hasMore && (
                                             <button

@@ -38,7 +38,7 @@ export const ACTIVITY_PRESETS = [
     { value: 'WINE_TASTING', label: 'Thử rượu & Giới thiệu mẫu mới', icon: '', color: '#B45309' },
     { value: 'MERCHANDISE_CHECK', label: 'Kiểm tra tồn kho & Trưng bày điểm bán', icon: '', color: '#1D4ED8' },
     { value: 'DEBT_COLLECTION', label: 'Thu hồi công nợ / Đối soát hóa đơn', icon: '', color: '#E57373' },
-    { value: 'CONTRACT_NEGOTIATION', label: 'Ký kết hợp đồng / Đàm phán giá', icon: '', color: '#BA68C8' },
+    { value: 'CONTRACT_NEGOTIATION', label: 'Ký kết hợp đồng / Đàm phán giá', icon: '', color: '#0E7490' },
     { value: 'COMPLAINT_HANDLING', label: 'Xử lý khiếu nại & Hậu mãi', icon: '', color: '#FFB74D' },
     { value: 'OTHER', label: 'Mục đích khác', icon: '', color: '#90A4AE' },
 ]
@@ -100,7 +100,7 @@ function SearchableCustomerCombobox({
         <div className="relative">
             <div
                 onClick={() => setOpen(true)}
-                className="w-full p-2.5 sm:p-3 text-xs outline-none rounded-xl bg-slate-50 border border-slate-300 text-slate-800 hover:border-[#0E7490] cursor-pointer flex items-center justify-between transition group shadow-xs"
+                className="w-full p-2.5 sm:p-3 text-xs outline-none rounded-md bg-slate-50 border border-slate-300 text-slate-800 hover:border-[#0E7490] cursor-pointer flex items-center justify-between transition group shadow-xs"
             >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Search size={14} className="text-[#0891B2] shrink-0" />
@@ -131,7 +131,7 @@ function SearchableCustomerCombobox({
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl shadow-2xl p-2 space-y-2 border border-slate-200 bg-white">
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-md shadow-2xl p-2 space-y-2 border border-slate-200 bg-white">
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1">
                                 <input
@@ -222,11 +222,11 @@ function GpsPermissionGuideModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
-            <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-amber-500/10">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-amber-500 text-white font-bold">
+                        <div className="p-2 rounded-md bg-amber-500 text-white font-bold">
                             <MapPin size={18} />
                         </div>
                         <div>
@@ -252,7 +252,7 @@ function GpsPermissionGuideModal({
                     <button
                         type="button"
                         onClick={() => setTab('IOS')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`flex-1 py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${
                             tab === 'IOS'
                                 ? 'bg-amber-500 text-white shadow-xs'
                                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -263,7 +263,7 @@ function GpsPermissionGuideModal({
                     <button
                         type="button"
                         onClick={() => setTab('ANDROID')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`flex-1 py-2 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${
                             tab === 'ANDROID'
                                 ? 'bg-amber-500 text-white shadow-xs'
                                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -277,7 +277,7 @@ function GpsPermissionGuideModal({
                 <div className="p-4 space-y-3.5 text-xs text-slate-700">
                     {tab === 'IOS' ? (
                         <div className="space-y-3">
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     1
                                 </div>
@@ -290,7 +290,7 @@ function GpsPermissionGuideModal({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     2
                                 </div>
@@ -305,7 +305,7 @@ function GpsPermissionGuideModal({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     3
                                 </div>
@@ -321,7 +321,7 @@ function GpsPermissionGuideModal({
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     1
                                 </div>
@@ -334,7 +334,7 @@ function GpsPermissionGuideModal({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     2
                                 </div>
@@ -347,7 +347,7 @@ function GpsPermissionGuideModal({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <div className="flex items-start gap-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/60">
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0">
                                     3
                                 </div>
@@ -377,7 +377,7 @@ function GpsPermissionGuideModal({
                                 }
                             }}
                             disabled={gettingLocation}
-                            className="w-full py-3 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
+                            className="w-full py-3 text-xs font-bold rounded-md bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
                         >
                             <RefreshCw size={15} className={gettingLocation ? 'animate-spin' : ''} />
                             {gettingLocation ? (isEn ? 'Acquiring GPS location...' : 'Đang xác định vị trí...') : (isEn ? 'Retry GPS Location' : 'Thử lại định vị GPS')}
@@ -404,7 +404,7 @@ function PhotoViewerModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
             <div
-                className="w-full max-w-3xl max-h-[90vh] bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xl flex flex-col space-y-3 animate-in zoom-in-95"
+                className="w-full max-w-3xl max-h-[90vh] bg-white p-4 sm:p-5 rounded-lg border border-slate-200 shadow-2xl flex flex-col space-y-3 animate-in zoom-in-95"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -429,7 +429,7 @@ function PhotoViewerModal({
                         <a
                             href={viewPhoto.url}
                             download={`Sales_Visit_${Date.now()}.jpg`}
-                            className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-teal-600 text-white hover:opacity-90 flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                            className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-teal-600 text-white hover:opacity-90 flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                         >
                             <Download size={14} /> {locale === 'en' ? 'Download' : 'Tải Ảnh'}
                         </a>
@@ -439,7 +439,7 @@ function PhotoViewerModal({
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/70 rounded-xl p-2 border border-slate-200 relative min-h-[260px]">
+                <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/70 rounded-md p-2 border border-slate-200 relative min-h-[260px]">
                     <img
                         src={viewPhoto.url}
                         alt="Enlarged"
@@ -1488,7 +1488,7 @@ export function SalesVisitsClient({
         return (
             <div className="space-y-3 sm:space-y-4 max-w-screen-xl mx-auto pb-16">
                 {/* 1. TOP COMPACT HEADER & CONTROLS */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-md border border-slate-200 shadow-xs">
                     <div className="flex items-center gap-2.5">
                         <div className="p-1.5 rounded-lg bg-teal-50 text-teal-600">
                             <MapPin size={17} />
@@ -1597,7 +1597,7 @@ export function SalesVisitsClient({
                 {/* 2. COMPACT KPI SUMMARY CARDS */}
                 {teamMetrics && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 space-y-0.5 shadow-xs">
+                        <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-slate-500">{t.kpis.totalSalesReps}</span>
                             <div className="text-xl font-black text-slate-900 font-mono">
                                 {teamMetrics.totalSales}
@@ -1605,7 +1605,7 @@ export function SalesVisitsClient({
                             <span className="text-[9px] text-slate-400">{t.kpis.repsDesc}</span>
                         </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 space-y-0.5 shadow-xs">
+                        <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-slate-500">{t.kpis.totalTargetVisits}</span>
                             <div className="text-xl font-black text-slate-900 font-mono">
                                 {teamMetrics.totalPlanned}
@@ -1613,7 +1613,7 @@ export function SalesVisitsClient({
                             <span className="text-[9px] text-slate-400">{t.kpis.targetDesc}</span>
                         </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 space-y-0.5 shadow-xs">
+                        <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-emerald-600">{t.kpis.actualCheckins}</span>
                             <div className="text-xl font-black text-emerald-600 font-mono">
                                 {teamMetrics.totalCompleted}
@@ -1621,7 +1621,7 @@ export function SalesVisitsClient({
                             <span className="text-[9px] text-slate-400">{t.kpis.actualCheckinsDesc}</span>
                         </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 space-y-0.5 shadow-xs">
+                        <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-teal-600">{t.kpis.completionRate}</span>
                             <div className="text-xl font-black text-teal-600 font-mono">
                                 {teamMetrics.overallRate}%
@@ -1629,7 +1629,7 @@ export function SalesVisitsClient({
                             <span className="text-[9px] text-slate-400">{t.kpis.completionDesc}</span>
                         </div>
 
-                        <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 space-y-0.5 shadow-xs">
+                        <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-amber-600">{t.kpis.pendingReports}</span>
                             <div className="text-xl font-black text-amber-600 font-mono">
                                 {teamMetrics.pendingReview}
@@ -1649,7 +1649,7 @@ export function SalesVisitsClient({
                 />
 
                 {/* 3. Team Matrix Table */}
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+                <div className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden">
                     <div className="p-4 bg-slate-50/50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h4 className="text-sm font-black text-slate-900">
@@ -1666,7 +1666,7 @@ export function SalesVisitsClient({
                                 value={teamFilterSearch}
                                 onChange={e => setTeamFilterSearch(e.target.value)}
                                 placeholder={locale === 'en' ? 'Search sales rep name or email...' : 'Tìm tên hoặc email sale...'}
-                                className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-xl bg-white border border-slate-200 text-slate-900 focus:border-teal-500"
+                                className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-md bg-white border border-slate-200 text-slate-900 focus:border-teal-500"
                             />
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                         </div>
@@ -1762,7 +1762,7 @@ export function SalesVisitsClient({
                                                         setInspectSubTab('PHOTOS')
                                                         setInspectFeedbackText(item.managerFeedback || '')
                                                     }}
-                                                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                                    className="px-3 py-1.5 text-xs font-bold rounded-md bg-teal-600 hover:bg-teal-700 text-white inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                                                 >
                                                     <Eye size={13} />
                                                     {locale === 'en' ? 'Audit & Photos' : 'Xem chi tiết & Ảnh'}
@@ -1780,7 +1780,7 @@ export function SalesVisitsClient({
                 {inspectingSale && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs" onClick={() => setInspectingSale(null)}>
                         <div
-                            className="w-full max-w-4xl max-h-[92vh] bg-white p-5 rounded-2xl border border-slate-200 shadow-2xl flex flex-col space-y-4 animate-in zoom-in-95"
+                            className="w-full max-w-4xl max-h-[92vh] bg-white p-5 rounded-lg border border-slate-200 shadow-2xl flex flex-col space-y-4 animate-in zoom-in-95"
                             onClick={e => e.stopPropagation()}
                         >
                             {/* Modal Header */}
@@ -1825,7 +1825,7 @@ export function SalesVisitsClient({
                                 <button
                                     type="button"
                                     onClick={() => setInspectSubTab('PHOTOS')}
-                                    className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition cursor-pointer ${
                                         inspectSubTab === 'PHOTOS'
                                             ? 'bg-teal-600 text-white'
                                             : 'text-slate-500 hover:text-slate-800'
@@ -1838,7 +1838,7 @@ export function SalesVisitsClient({
                                 <button
                                     type="button"
                                     onClick={() => setInspectSubTab('PLAN')}
-                                    className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition cursor-pointer ${
                                         inspectSubTab === 'PLAN'
                                             ? 'bg-teal-600 text-white'
                                             : 'text-slate-500 hover:text-slate-800'
@@ -1851,7 +1851,7 @@ export function SalesVisitsClient({
                                 <button
                                     type="button"
                                     onClick={() => setInspectSubTab('APPROVAL')}
-                                    className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition cursor-pointer ${
                                         inspectSubTab === 'APPROVAL'
                                             ? 'bg-teal-600 text-white'
                                             : 'text-slate-500 hover:text-slate-800'
@@ -1878,7 +1878,7 @@ export function SalesVisitsClient({
                                                 {inspectingSale.actualVisits.map((v: any) => (
                                                     <div
                                                         key={v.id}
-                                                        className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3"
+                                                        className="p-3.5 rounded-md border border-slate-200 bg-slate-50/50 space-y-3"
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div>
@@ -1909,7 +1909,7 @@ export function SalesVisitsClient({
                                                         {/* Photo Thumbnail */}
                                                         {v.checkInPhoto ? (
                                                             <div
-                                                                className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black/40 group cursor-pointer shadow-xs"
+                                                                className="relative aspect-video rounded-md overflow-hidden border border-slate-200 bg-black/40 group cursor-pointer shadow-xs"
                                                                 onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName} (${locale === 'en' ? 'Rep:' : 'Sale:'} ${inspectingSale.salespersonName})`, url: v.checkInPhoto, visitId: v.id })}
                                                             >
                                                                 <img
@@ -1922,7 +1922,7 @@ export function SalesVisitsClient({
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="aspect-video rounded-xl bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
+                                                            <div className="aspect-video rounded-md bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
                                                                 {locale === 'en' ? 'No photo' : 'Chưa có ảnh'}
                                                             </div>
                                                         )}
@@ -1946,7 +1946,7 @@ export function SalesVisitsClient({
                                                         )}
 
                                                         {/* Báo Cáo Nhanh / Ghi Chú Thực Địa */}
-                                                        <div className="p-2.5 rounded-xl bg-white text-[11px] border border-slate-200/80 shadow-2xs space-y-1.5">
+                                                        <div className="p-2.5 rounded-md bg-white text-[11px] border border-slate-200/80 shadow-2xs space-y-1.5">
                                                             <div className="flex items-center justify-between">
                                                                 <span className="font-bold text-[10px] text-teal-700 uppercase flex items-center gap-1">
                                                                     <FileText size={12} className="text-teal-600" />
@@ -1984,7 +1984,7 @@ export function SalesVisitsClient({
                                                 {locale === 'en' ? 'No visits scheduled by sales rep for this week.' : 'Nhân viên chưa lên lịch khách nào trong kế hoạch tuần này.'}
                                             </div>
                                         ) : (
-                                            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
+                                            <div className="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
                                                 {inspectingSale.plannedVisits.map((pv: any, pvIdx: number) => (
                                                     <div key={pv.id || pvIdx} className="p-3 text-xs flex items-center justify-between gap-2 hover:bg-slate-50">
                                                         <div className="min-w-0 flex-1">
@@ -2016,7 +2016,7 @@ export function SalesVisitsClient({
                                 {inspectSubTab === 'APPROVAL' && (
                                     <div className="space-y-4 text-xs">
                                         {/* Self Review Box */}
-                                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                                        <div className="p-4 rounded-md bg-slate-50 border border-slate-200 space-y-1.5">
                                             <div className="font-bold text-slate-700 flex items-center justify-between">
                                                 <span>{locale === 'en' ? 'Sales Rep Self-Evaluation:' : 'Nhân viên tự đánh giá:'}</span>
                                                 <span className="text-[10px] font-mono text-slate-400">
@@ -2037,7 +2037,7 @@ export function SalesVisitsClient({
                                             {/* CEO Exclusive Authority Notice for Jeremie (CBO) */}
                                             {inspectingSale.isCbo && (
                                                 isCeoController ? (
-                                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs flex items-center gap-2">
+                                                    <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs flex items-center gap-2">
                                                         <ShieldCheck size={16} className="text-amber-600 shrink-0" />
                                                         <span className="font-semibold">
                                                             {locale === 'en'
@@ -2046,7 +2046,7 @@ export function SalesVisitsClient({
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 text-xs flex items-center gap-2">
+                                                    <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-800 text-xs flex items-center gap-2">
                                                         <Lock size={16} className="text-rose-600 shrink-0" />
                                                         <span className="font-semibold">
                                                             {locale === 'en'
@@ -2063,7 +2063,7 @@ export function SalesVisitsClient({
                                                 onChange={e => setInspectFeedbackText(e.target.value)}
                                                 disabled={inspectingSale.isCbo && !isCeoController}
                                                 placeholder={locale === 'en' ? 'Enter feedback or notes for this sales rep...' : 'Nhập nhận xét hoặc lưu ý cho nhân viên...'}
-                                                className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 text-xs disabled:opacity-50"
+                                                className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 text-xs disabled:opacity-50"
                                             />
                                             <div className="flex items-center justify-between pt-2">
                                                 <span className="text-[11px] text-slate-400">
@@ -2073,7 +2073,7 @@ export function SalesVisitsClient({
                                                     type="button"
                                                     onClick={handleSaveInspectFeedback}
                                                     disabled={savingInspectFeedback || !inspectingSale.planId || (inspectingSale.isCbo && !isCeoController)}
-                                                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="px-5 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     <CheckCircle2 size={15} />
                                                     {savingInspectFeedback ? (locale === 'en' ? 'Saving...' : 'Đang lưu...') : (locale === 'en' ? 'Save Review & Approve' : 'Lưu đánh giá & Duyệt')}
@@ -2114,7 +2114,7 @@ export function SalesVisitsClient({
     return (
         <div className="space-y-3 sm:space-y-4 max-w-screen-xl mx-auto pb-28 md:pb-16">
             {/* 1. COMPACT UNIFIED TOP BAR & NAVIGATION TABS */}
-            <div className="bg-white px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            <div className="bg-white px-3.5 py-2 sm:px-4 sm:py-2 rounded-md border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
                 {/* Module Identity */}
                 <div className="flex items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2">
@@ -2283,7 +2283,7 @@ export function SalesVisitsClient({
                 <div className="space-y-3.5 sm:space-y-4 animate-in fade-in duration-200">
                     {/* OFFLINE QUEUE STATUS BANNER (hầm rượu / mất sóng 4G) */}
                     {(offlineDrafts.length > 0 || !isNetworkOnline) && (
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs animate-in fade-in">
+                        <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs animate-in fade-in">
                             <div className="flex items-start sm:items-center gap-2.5">
                                 <div className="p-2 rounded-lg bg-amber-500 text-white font-bold shrink-0">
                                     {!isNetworkOnline ? <WifiOff size={16} /> : <UploadCloud size={16} />}
@@ -2324,7 +2324,7 @@ export function SalesVisitsClient({
                     )}
 
                     {/* Header Controls for Today & Integrated GPS Bar */}
-                    <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                    <div className="bg-white p-3 sm:p-3.5 rounded-md border border-slate-200 space-y-2.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] uppercase tracking-wider text-teal-600 font-black font-mono">
@@ -2407,7 +2407,7 @@ export function SalesVisitsClient({
 
                     {/* Today's Scheduled Visits Cards */}
                     {todayPlanVisits.length === 0 ? (
-                        <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 space-y-3">
+                        <div className="p-8 text-center bg-white rounded-lg border border-dashed border-slate-300 space-y-3">
                             <Calendar size={36} className="mx-auto text-slate-400" />
                             <h4 className="text-sm font-bold text-slate-700">
                                 {locale === 'en' ? 'No store visits scheduled for today' : 'Chưa có điểm viếng thăm nào trong kế hoạch ngày hôm nay'}
@@ -2421,14 +2421,14 @@ export function SalesVisitsClient({
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('PLANNING')}
-                                    className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer"
+                                    className="px-4 py-2 text-xs font-bold rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer"
                                 >
                                     {locale === 'en' ? 'Weekly Plan' : 'Lập Kế Hoạch Tuần'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowUnplannedModal(true)}
-                                    className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition cursor-pointer"
+                                    className="px-4 py-2 text-xs font-bold rounded-md bg-teal-600 text-white hover:bg-teal-700 transition cursor-pointer"
                                 >
                                     {locale === 'en' ? 'Check-in Now' : 'Check-in Ngay'}
                                 </button>
@@ -2445,7 +2445,7 @@ export function SalesVisitsClient({
                                 return (
                                     <div
                                         key={item.id || idx}
-                                        className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-3.5 bg-white shadow-xs ${
+                                        className={`p-4 sm:p-5 rounded-lg border transition-all flex flex-col justify-between space-y-3.5 bg-white shadow-xs ${
                                             isItemCompleted
                                                 ? 'border-emerald-500/40 bg-emerald-500/5'
                                                 : 'border-slate-200 hover:border-teal-500/50'
@@ -2481,7 +2481,7 @@ export function SalesVisitsClient({
 
                                             {/* Address & 1-Tap Google Maps Navigation / Call Buttons */}
                                             {(addressStr || phoneStr) && (
-                                                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                                                <div className="p-2.5 rounded-md bg-slate-50 border border-slate-100 space-y-2 text-xs">
                                                     {addressStr && (
                                                         <div className="flex items-start gap-1.5">
                                                             <MapPin size={13} className="text-teal-600 shrink-0 mt-0.5" />
@@ -2496,7 +2496,7 @@ export function SalesVisitsClient({
                                                                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressStr)}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="flex-1 py-2 px-3 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/25 text-teal-700 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
+                                                                className="flex-1 py-2 px-3 rounded-md bg-teal-500/10 hover:bg-teal-500/20 active:bg-teal-500/25 text-teal-700 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
                                                             >
                                                                 <Navigation size={13} /> {locale === 'en' ? 'Directions' : 'Chỉ đường Maps'}
                                                             </a>
@@ -2504,7 +2504,7 @@ export function SalesVisitsClient({
                                                         {phoneStr && (
                                                             <a
                                                                 href={`tel:${phoneStr}`}
-                                                                className="py-2 px-3.5 rounded-xl bg-slate-200 hover:bg-slate-300 active:bg-slate-400/50 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
+                                                                className="py-2 px-3.5 rounded-md bg-slate-200 hover:bg-slate-300 active:bg-slate-400/50 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition min-h-[40px] active:scale-95 shadow-2xs cursor-pointer"
                                                                 title={`${locale === 'en' ? 'Call' : 'Gọi'} ${phoneStr}`}
                                                             >
                                                                 <Phone size={13} className="text-emerald-500" /> {locale === 'en' ? 'Call' : 'Gọi điện'}
@@ -2515,7 +2515,7 @@ export function SalesVisitsClient({
                                             )}
 
                                             {/* Purpose & Activity */}
-                                            <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100 text-xs">
+                                            <div className="p-2.5 rounded-md bg-slate-50/70 border border-slate-100 text-xs">
                                                 <div className="text-slate-400 text-[10px] font-semibold uppercase">
                                                     {locale === 'en' ? 'Planned Activity:' : 'Hoạt động dự kiến:'}
                                                 </div>
@@ -2526,7 +2526,7 @@ export function SalesVisitsClient({
 
                                             {/* Completed result notes if any */}
                                             {item.resultNotes && (
-                                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800">
+                                                <div className="p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800">
                                                     <div className="font-bold text-[10px] uppercase flex items-center gap-1">
                                                         <Check size={11} /> {locale === 'en' ? 'Work Result:' : 'Kết quả làm việc:'}
                                                     </div>
@@ -2539,7 +2539,7 @@ export function SalesVisitsClient({
                                         <div className="pt-1">
                                             {isItemCompleted ? (
                                                 <div className="space-y-2">
-                                                    <div className="py-2.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs font-bold text-emerald-600 flex items-center justify-center gap-1.5 min-h-[42px]">
+                                                    <div className="py-2.5 px-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-center text-xs font-bold text-emerald-600 flex items-center justify-center gap-1.5 min-h-[42px]">
                                                         <CheckCircle2 size={16} /> {locale === 'en' ? 'Visit Completed' : 'Đã Hoàn Thành Viếng Thăm'}
                                                     </div>
                                                     <button
@@ -2556,7 +2556,7 @@ export function SalesVisitsClient({
                                                             }
                                                             setQuickReportTarget(matchVisit)
                                                         }}
-                                                        className="w-full py-2 px-3 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
+                                                        className="w-full py-2 px-3 rounded-md bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
                                                     >
                                                         <FileText size={14} />
                                                         <span>{item.resultNotes ? (locale === 'en' ? 'Edit Quick Report' : 'Sửa Báo Cáo Nhanh') : (locale === 'en' ? '+ Write Quick Report' : '+ Ghi Báo Cáo Nhanh')}</span>
@@ -2567,7 +2567,7 @@ export function SalesVisitsClient({
                                                     type="button"
                                                     disabled={submittingAction}
                                                     onClick={() => startCheckInPlanned(item)}
-                                                    className="w-full py-3.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-[0.98] disabled:opacity-40 cursor-pointer min-h-[48px]"
+                                                    className="w-full py-3.5 px-4 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-[0.98] disabled:opacity-40 cursor-pointer min-h-[48px]"
                                                 >
                                                     <Camera size={18} />
                                                     <span>{locale === 'en' ? 'CHECK-IN & TAKE 1 PHOTO' : 'CHECK-IN & CHỤP 1 ẢNH'}</span>
@@ -2581,10 +2581,10 @@ export function SalesVisitsClient({
                     )}
 
                     {/* SECTION: NHẬT KÝ & ẢNH CHECK-IN THỰC TẾ HÔM NAY */}
-                    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4 shadow-xs">
+                    <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200 space-y-4 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2">
-                                <div className="p-2 rounded-xl bg-teal-50 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-50 text-teal-600">
                                     <Camera size={18} />
                                 </div>
                                 <div>
@@ -2626,7 +2626,7 @@ export function SalesVisitsClient({
                                 {todayActualVisits.map((v) => (
                                     <div
                                         key={v.id}
-                                        className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3 hover:border-teal-500/40 transition shadow-xs"
+                                        className="p-4 rounded-md border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3 hover:border-teal-500/40 transition shadow-xs"
                                     >
                                         <div className="space-y-3">
                                             <div className="flex items-start justify-between gap-2">
@@ -2669,7 +2669,7 @@ export function SalesVisitsClient({
                                                 </span>
                                                 {v.checkInPhoto || v.checkOutPhoto ? (
                                                     <div
-                                                        className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black/40 group cursor-pointer shadow-xs"
+                                                        className="relative aspect-video rounded-md overflow-hidden border border-slate-200 bg-black/40 group cursor-pointer shadow-xs"
                                                         onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
                                                     >
                                                         <img
@@ -2682,7 +2682,7 @@ export function SalesVisitsClient({
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="aspect-video rounded-xl bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
+                                                    <div className="aspect-video rounded-md bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
                                                         {locale === 'en' ? 'No photo' : 'Chưa có ảnh'}
                                                     </div>
                                                 )}
@@ -2707,7 +2707,7 @@ export function SalesVisitsClient({
                                             )}
 
                                             {/* Quick Field Report Box */}
-                                            <div className="p-3 rounded-xl bg-white border border-slate-200/90 text-xs space-y-2 shadow-2xs">
+                                            <div className="p-3 rounded-md bg-white border border-slate-200/90 text-xs space-y-2 shadow-2xs">
                                                 <div className="flex items-center justify-between">
                                                     <div className="font-bold text-[10px] text-teal-700 uppercase flex items-center gap-1.5">
                                                         <FileText size={13} className="text-teal-600" />
@@ -2729,7 +2729,7 @@ export function SalesVisitsClient({
                                                     <button
                                                         type="button"
                                                         onClick={() => setQuickReportTarget(v)}
-                                                        className="w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-300 bg-teal-50/50 hover:bg-teal-50 text-teal-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                                                        className="w-full py-2.5 px-3 rounded-md border border-dashed border-teal-300 bg-teal-50/50 hover:bg-teal-50 text-teal-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                                                     >
                                                         <Plus size={13} />
                                                         <span>{locale === 'en' ? 'Tap to write quick report for manager' : 'Chạm để ghi báo cáo nhanh gửi quản lý'}</span>
@@ -2766,7 +2766,7 @@ export function SalesVisitsClient({
             {activeTab === 'PLANNING' && (
                 <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
                     {/* Ultra-compact Week Navigation & Focus Goal Bar */}
-                    <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs space-y-2">
+                    <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-200 shadow-xs space-y-2">
                         <div className="flex items-center justify-between gap-2">
                             {/* Left: Quick Week Switcher & Range */}
                             <div className="flex items-center gap-1.5 flex-wrap min-w-0">
@@ -2858,7 +2858,7 @@ export function SalesVisitsClient({
                                         key={day.dateStr}
                                         type="button"
                                         onClick={() => setMobileSelectedDate(day.dateStr)}
-                                        className={`shrink-0 snap-center flex flex-col items-center py-1.5 px-2.5 rounded-xl border transition-all text-center min-w-[50px] cursor-pointer active:scale-95 ${
+                                        className={`shrink-0 snap-center flex flex-col items-center py-1.5 px-2.5 rounded-md border transition-all text-center min-w-[50px] cursor-pointer active:scale-95 ${
                                             isSelected
                                                 ? 'bg-teal-600 text-white border-teal-600 shadow-sm font-bold'
                                                 : day.isToday
@@ -2896,7 +2896,7 @@ export function SalesVisitsClient({
                             const dayVisits = planVisits.filter(v => v.visitDate === currentSelectedDay.dateStr)
 
                             return (
-                                <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-2.5 shadow-xs">
+                                <div className="p-3 rounded-md border border-slate-200 bg-white space-y-2.5 shadow-xs">
                                     <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                         <div>
                                             <h4 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
@@ -2935,7 +2935,7 @@ export function SalesVisitsClient({
 
                                     <div className="space-y-1.5">
                                         {dayVisits.length === 0 ? (
-                                            <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                            <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 rounded-md border border-dashed border-slate-200">
                                                 {locale === 'en'
                                                     ? `No visits scheduled for ${getLocalizedDayName(currentSelectedDay.dateStr, locale)}. Tap "Add Stop" to schedule.`
                                                     : `Chưa lên lịch điểm nào cho ngày ${currentSelectedDay.dayName}. Bấm "Thêm Điểm" để lên lịch.`}
@@ -2994,7 +2994,7 @@ export function SalesVisitsClient({
                             return (
                                 <div
                                     key={day.dateStr}
-                                    className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 bg-white transition-all ${
+                                    className={`p-4 rounded-lg border flex flex-col justify-between space-y-3 bg-white transition-all ${
                                         day.isToday
                                             ? 'border-teal-500/60 ring-2 ring-teal-500/20 shadow-sm'
                                             : 'border-slate-200'
@@ -3029,7 +3029,7 @@ export function SalesVisitsClient({
                                                     return (
                                                         <div
                                                             key={item.id || vIdx}
-                                                            className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 relative group"
+                                                            className="p-2.5 rounded-md bg-slate-50 border border-slate-200 text-xs space-y-1 relative group"
                                                         >
                                                             <div className="flex items-start justify-between gap-1">
                                                                 <div className="font-bold text-slate-900 line-clamp-1 pr-4" title={cust?.name}>
@@ -3068,7 +3068,7 @@ export function SalesVisitsClient({
 
                                     {/* Add button for this day */}
                                     {day.dateStr < todayStr && !isManager ? (
-                                        <div className="w-full py-2 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-400 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs">
+                                        <div className="w-full py-2 rounded-md bg-slate-50 border border-slate-200/60 text-slate-400 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs">
                                             <Lock size={12} />
                                             <span>{locale === 'en' ? 'Locked (Past Day)' : 'Đã khóa (Ngày đã qua)'}</span>
                                         </div>
@@ -3081,7 +3081,7 @@ export function SalesVisitsClient({
                                                 setAddActivityType('PERIODIC_CARE')
                                                 setAddCustomPurpose('')
                                             }}
-                                            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition cursor-pointer"
+                                            className="w-full py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition cursor-pointer"
                                         >
                                             <Plus size={13} /> {locale === 'en' ? 'Add Stop' : 'Thêm Điểm'}
                                         </button>
@@ -3099,7 +3099,7 @@ export function SalesVisitsClient({
             {activeTab === 'REVIEW' && (
                 <div className="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
                     {/* 1. Header Controls for Review */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-md border border-slate-200 shadow-xs">
                         <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                                 <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 hover:bg-white cursor-pointer" title={locale === 'en' ? 'Previous week' : 'Tuần trước'}>
@@ -3142,7 +3142,7 @@ export function SalesVisitsClient({
                     </div>
 
                     {/* 2. Compact KPI Metrics Ribbon (Thanh chỉ số KPI liền mạch) */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-2 sm:p-2.5">
+                    <div className="bg-white rounded-md border border-slate-200 shadow-xs p-2 sm:p-2.5">
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                             {/* 1. Kế hoạch */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
@@ -3204,7 +3204,7 @@ export function SalesVisitsClient({
                     </div>
 
                     {/* 3. Detailed Comparison: Planned vs Actual by Day */}
-                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                    <div className="bg-white rounded-md border border-slate-200 overflow-hidden shadow-xs">
                         <div className="px-3.5 py-2.5 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900">
                                 {locale === 'en' ? 'Weekly Schedule Reconciliation Details' : 'Chi Tiết Đối Soát Lịch Trình Tuần'}
@@ -3340,7 +3340,7 @@ export function SalesVisitsClient({
                                                 return (
                                                     <div
                                                         key={item.key}
-                                                        className={`p-2.5 sm:p-3 rounded-xl border transition-all text-xs ${
+                                                        className={`p-2.5 sm:p-3 rounded-md border transition-all text-xs ${
                                                             item.isCompleted
                                                                 ? 'bg-white border-slate-200 shadow-2xs'
                                                                 : 'bg-slate-50/50 border-dashed border-slate-200'
@@ -3470,7 +3470,7 @@ export function SalesVisitsClient({
                     </div>
 
                     {/* 4. Section: Sale Self-Review (Sale Tự Chốt Báo Cáo Tuần) */}
-                    <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-slate-200 space-y-2.5 shadow-xs">
+                    <div className="p-3.5 sm:p-4 rounded-md bg-white border border-slate-200 space-y-2.5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
                                 <Award size={15} className="text-teal-600" />
@@ -3509,7 +3509,7 @@ export function SalesVisitsClient({
                     </div>
 
                     {/* 5. Section: Manager Feedback & Approval */}
-                    <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50/60 border border-slate-200 space-y-2 shadow-xs">
+                    <div className="p-3.5 sm:p-4 rounded-md bg-slate-50/60 border border-slate-200 space-y-2 shadow-xs">
                         <h4 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
                             <ShieldCheck size={15} className="text-teal-600" />
                             {locale === 'en' ? "Manager's Feedback & Review" : 'Nhận Xét Của Quản Lý'}
@@ -3564,7 +3564,7 @@ export function SalesVisitsClient({
             {activeTab === 'HISTORY' && (
                 <div className="space-y-3.5 sm:space-y-4 animate-in fade-in duration-200">
                     {/* 1. Header Toolbar & Filters */}
-                    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs">
+                    <div className="p-3 sm:p-4 rounded-md sm:rounded-lg bg-white border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs">
                         <div className="flex items-center gap-2 flex-1 max-w-md">
                             <div className="relative flex-1">
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -3573,14 +3573,14 @@ export function SalesVisitsClient({
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
                                     placeholder={locale === 'en' ? 'Search by client, code, notes...' : 'Tìm theo tên khách, mã KH, ghi chú...'}
-                                    className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-xl bg-slate-100 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 transition"
+                                    className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-md bg-slate-100 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 transition"
                                 />
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 flex-wrap">
                             {/* Quick Date Filter Chips */}
-                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md border border-slate-200 text-xs">
                                 <button
                                     type="button"
                                     onClick={() => setFilterDate('')}
@@ -3606,7 +3606,7 @@ export function SalesVisitsClient({
                             </div>
 
                             {/* Date Picker Input */}
-                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200">
+                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
                                 <Calendar size={13} className="text-slate-400" />
                                 <input
                                     type="date"
@@ -3630,7 +3630,7 @@ export function SalesVisitsClient({
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                className="px-2.5 py-1.5 text-base sm:text-xs rounded-xl bg-slate-100 border border-slate-200 text-slate-800 outline-none cursor-pointer font-bold"
+                                className="px-2.5 py-1.5 text-base sm:text-xs rounded-md bg-slate-100 border border-slate-200 text-slate-800 outline-none cursor-pointer font-bold"
                             >
                                 <option value="ALL">{locale === 'en' ? 'All statuses' : 'Tất cả trạng thái'}</option>
                                 <option value="IN_PROGRESS">{locale === 'en' ? 'In progress' : 'Đang viếng thăm'}</option>
@@ -3638,7 +3638,7 @@ export function SalesVisitsClient({
                             </select>
 
                             {/* View Switcher: Grid vs Table */}
-                            <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                            <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-md border border-slate-200">
                                 <button
                                     type="button"
                                     onClick={() => setHistoryViewMode('GRID')}
@@ -3671,7 +3671,7 @@ export function SalesVisitsClient({
                             <button
                                 type="button"
                                 onClick={fetchHistoryVisits}
-                                className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition cursor-pointer"
+                                className="p-2 rounded-md bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition cursor-pointer"
                                 title={locale === 'en' ? 'Refresh list' : 'Làm mới danh sách'}
                             >
                                 <RefreshCw size={14} />
@@ -3699,7 +3699,7 @@ export function SalesVisitsClient({
 
                     {/* 3. Main Content: Grid Mode vs Table Mode */}
                     {filteredHistoryVisits.length === 0 ? (
-                        <div className="py-16 text-center rounded-2xl bg-white border border-slate-200 p-6 space-y-3 shadow-xs">
+                        <div className="py-16 text-center rounded-lg bg-white border border-slate-200 p-6 space-y-3 shadow-xs">
                             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                                 <Camera size={24} />
                             </div>
@@ -3731,7 +3731,7 @@ export function SalesVisitsClient({
                                 return (
                                     <div
                                         key={v.id}
-                                        className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col group"
+                                        className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col group"
                                     >
                                         {/* Photo Box with Overlay and Watermark */}
                                         <div
@@ -3896,7 +3896,7 @@ export function SalesVisitsClient({
                         </div>
                     ) : (
                         /* ================== TABLE VIEW (AUDIT MODE) ================== */
-                        <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-xs">
+                        <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-xs text-left">
                                     <thead>
@@ -3932,7 +3932,7 @@ export function SalesVisitsClient({
                                                         <img
                                                             src={v.checkInPhoto || v.checkOutPhoto}
                                                             alt="Check-in"
-                                                            className="w-14 h-14 object-cover rounded-xl border border-slate-200 cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
+                                                            className="w-14 h-14 object-cover rounded-md border border-slate-200 cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
                                                             onClick={() => setViewPhoto({ title: `${locale === 'en' ? 'Check-in Photo:' : 'Ảnh Check-in:'} ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)!, visitId: v.id })}
                                                         />
                                                     ) : <span className="text-slate-400 italic">{locale === 'en' ? 'None' : 'Chưa có'}</span>}
@@ -3995,7 +3995,7 @@ export function SalesVisitsClient({
             {showUnplannedModal && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in" onClick={() => setShowUnplannedModal(false)}>
                     <div
-                        className="w-full max-w-md bg-white p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        className="w-full max-w-md bg-white p-5 rounded-t-lg sm:rounded-lg border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Mobile Pull Handle Indicator */}
@@ -4032,7 +4032,7 @@ export function SalesVisitsClient({
                                 <select
                                     value={unplannedActivityType}
                                     onChange={e => setUnplannedActivityType(e.target.value)}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none font-medium text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none font-medium text-base sm:text-xs"
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
@@ -4051,7 +4051,7 @@ export function SalesVisitsClient({
                                     value={unplannedPurpose}
                                     onChange={e => setUnplannedPurpose(e.target.value)}
                                     placeholder={locale === 'en' ? 'Describe planned tasks at this client...' : 'Ghi rõ việc sẽ làm tại khách này...'}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -4060,14 +4060,14 @@ export function SalesVisitsClient({
                             <button
                                 type="button"
                                 onClick={() => setShowUnplannedModal(false)}
-                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
+                                className="px-4 py-2.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
                             >
                                 {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="button"
                                 onClick={startCheckInUnplanned}
-                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer min-h-[44px]"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-md bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer min-h-[44px]"
                             >
                                 <Camera size={16} /> {locale === 'en' ? 'Open Check-in Camera' : 'Mở Camera Check-in'}
                             </button>
@@ -4085,7 +4085,7 @@ export function SalesVisitsClient({
                     onClick={() => setQuickAddModal(null)}
                 >
                     <div 
-                        className="w-full max-w-md bg-white p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        className="w-full max-w-md bg-white p-5 rounded-t-lg sm:rounded-lg border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Mobile Drag Indicator Bar */}
@@ -4124,7 +4124,7 @@ export function SalesVisitsClient({
                                 <select
                                     value={addActivityType}
                                     onChange={e => setAddActivityType(e.target.value)}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none font-medium text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none font-medium text-base sm:text-xs"
                                 >
                                     {ACTIVITY_PRESETS.map(p => (
                                         <option key={p.value} value={p.value}>
@@ -4143,7 +4143,7 @@ export function SalesVisitsClient({
                                     value={addCustomPurpose}
                                     onChange={e => setAddCustomPurpose(e.target.value)}
                                     placeholder={locale === 'en' ? 'e.g. Introduce new vintage, collect payment...' : 'Ví dụ: Giới thiệu vang trắng mới, thu công nợ 5 triệu...'}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -4152,14 +4152,14 @@ export function SalesVisitsClient({
                             <button
                                 type="button"
                                 onClick={() => setQuickAddModal(null)}
-                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
+                                className="px-4 py-2.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
                             >
                                 {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleAddVisitToPlan}
-                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer min-h-[44px]"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-md bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer min-h-[44px]"
                             >
                                 <Plus size={15} /> {locale === 'en' ? 'Add to Schedule' : 'Thêm Vào Lịch'}
                             </button>
@@ -4178,7 +4178,7 @@ export function SalesVisitsClient({
                 >
                     <form 
                         onSubmit={handleQuickCreateCustomer} 
-                        className="w-full max-w-md bg-white p-5 rounded-t-3xl sm:rounded-2xl border border-slate-200 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
+                        className="w-full max-w-md bg-white p-5 rounded-t-lg sm:rounded-lg border border-slate-200 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 safe-area-pb"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Mobile Drag Indicator Bar */}
@@ -4205,7 +4205,7 @@ export function SalesVisitsClient({
                                     value={quickCustName}
                                     onChange={e => setQuickCustName(e.target.value)}
                                     placeholder={locale === 'en' ? 'e.g. La Maison Restaurant, Wine Bar 1985...' : 'Ví dụ: Nhà hàng La Maison, Wine Bar 1985...'}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none focus:border-teal-500 text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none focus:border-teal-500 text-base sm:text-xs"
                                 />
                             </div>
 
@@ -4217,7 +4217,7 @@ export function SalesVisitsClient({
                                     <select
                                         value={quickCustChannel}
                                         onChange={e => setQuickCustChannel(e.target.value)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
                                     >
                                         <option value="HORECA">{locale === 'en' ? 'HORECA (Restaurant/Bar/Hotel)' : 'HORECA (Nhà hàng/Bar)'}</option>
                                         <option value="WHOLESALE_DISTRIBUTOR">{locale === 'en' ? 'Wholesale Distributor' : 'Đại lý phân phối'}</option>
@@ -4235,7 +4235,7 @@ export function SalesVisitsClient({
                                         value={quickCustContact}
                                         onChange={e => setQuickCustContact(e.target.value)}
                                         placeholder={locale === 'en' ? 'Manager, Sommelier, Owner...' : 'Quản lý, Sommelier...'}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
                                     />
                                 </div>
                             </div>
@@ -4249,7 +4249,7 @@ export function SalesVisitsClient({
                                     value={quickCustPhone}
                                     onChange={e => setQuickCustPhone(e.target.value)}
                                     placeholder="0901234567"
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none font-mono text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none font-mono text-base sm:text-xs"
                                 />
                             </div>
 
@@ -4262,7 +4262,7 @@ export function SalesVisitsClient({
                                     value={quickCustAddress}
                                     onChange={e => setQuickCustAddress(e.target.value)}
                                     placeholder={locale === 'en' ? 'Street, ward, district, city...' : 'Số nhà, đường, phường, quận...'}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-300 text-slate-900 outline-none text-base sm:text-xs"
                                 />
                             </div>
                         </div>
@@ -4271,14 +4271,14 @@ export function SalesVisitsClient({
                             <button
                                 type="button"
                                 onClick={() => setShowQuickCreateModal(false)}
-                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
+                                className="px-4 py-2.5 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 cursor-pointer min-h-[42px]"
                             >
                                 {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 type="submit"
                                 disabled={creatingCustomer}
-                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer disabled:opacity-50 min-h-[44px]"
+                                className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold rounded-md bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer disabled:opacity-50 min-h-[44px]"
                             >
                                 <Plus size={15} />
                                 {creatingCustomer ? (locale === 'en' ? 'Creating...' : 'Đang tạo...') : (locale === 'en' ? 'Create Prospect' : 'Tạo Khách Tiềm Năng')}
@@ -4348,13 +4348,13 @@ export function SalesVisitsClient({
                 <button
                     type="button"
                     onClick={() => setActiveTab('CHECKIN')}
-                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-md transition-all cursor-pointer relative min-h-[46px] ${
                         activeTab === 'CHECKIN'
                             ? 'text-teal-600 font-bold'
                             : 'text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'CHECKIN' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
+                    <div className={`p-1.5 rounded-md transition-all ${activeTab === 'CHECKIN' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <MapPin size={18} />
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Today' : 'Hôm nay'}</span>
@@ -4368,13 +4368,13 @@ export function SalesVisitsClient({
                 <button
                     type="button"
                     onClick={() => setActiveTab('PLANNING')}
-                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-md transition-all cursor-pointer relative min-h-[46px] ${
                         activeTab === 'PLANNING'
                             ? 'text-teal-600 font-bold'
                             : 'text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'PLANNING' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
+                    <div className={`p-1.5 rounded-md transition-all ${activeTab === 'PLANNING' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <Calendar size={18} />
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Plan' : 'Lịch tuần'}</span>
@@ -4388,13 +4388,13 @@ export function SalesVisitsClient({
                 <button
                     type="button"
                     onClick={() => setActiveTab('REVIEW')}
-                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-md transition-all cursor-pointer relative min-h-[46px] ${
                         activeTab === 'REVIEW'
                             ? 'text-teal-600 font-bold'
                             : 'text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'REVIEW' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
+                    <div className={`p-1.5 rounded-md transition-all ${activeTab === 'REVIEW' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <TrendingUp size={18} />
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Summary' : 'Tổng kết'}</span>
@@ -4406,13 +4406,13 @@ export function SalesVisitsClient({
                 <button
                     type="button"
                     onClick={() => setActiveTab('HISTORY')}
-                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                    className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-md transition-all cursor-pointer relative min-h-[46px] ${
                         activeTab === 'HISTORY'
                             ? 'text-teal-600 font-bold'
                             : 'text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'HISTORY' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
+                    <div className={`p-1.5 rounded-md transition-all ${activeTab === 'HISTORY' ? 'bg-teal-500/15 ring-1 ring-teal-500/30' : ''}`}>
                         <Camera size={18} />
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Photos' : 'Hình ảnh'}</span>
@@ -4422,13 +4422,13 @@ export function SalesVisitsClient({
                     <button
                         type="button"
                         onClick={() => setActiveTab('TEAM_OVERVIEW')}
-                        className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer relative min-h-[46px] ${
+                        className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-md transition-all cursor-pointer relative min-h-[46px] ${
                             activeTab === 'TEAM_OVERVIEW'
                                 ? 'text-amber-600 font-bold'
                                 : 'text-slate-500 hover:text-slate-800'
                         }`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'TEAM_OVERVIEW' ? 'bg-amber-500/15 ring-1 ring-amber-500/30' : ''}`}>
+                        <div className={`p-1.5 rounded-md transition-all ${activeTab === 'TEAM_OVERVIEW' ? 'bg-amber-500/15 ring-1 ring-amber-500/30' : ''}`}>
                             <ShieldCheck size={18} />
                         </div>
                         <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Board' : 'Giám sát'}</span>

@@ -24,7 +24,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
     DRAFT: { label: 'Bản Nháp', bg: '#F1F5F9', color: '#475569', border: '#CBD5E1' },
     SUBMITTED: { label: 'Chờ TP Duyệt (Cấp 1)', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
     REVIEWING_L1: { label: 'Chờ Kế Toán Duyệt (Cấp 2)', bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' },
-    REVIEWING_L2: { label: 'Chờ CEO Phê Chuẩn (Cấp 3)', bg: '#FDF4FF', color: '#9333EA', border: '#F5D0FE' },
+    REVIEWING_L2: { label: 'Chờ CEO Phê Chuẩn (Cấp 3)', bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' },
     APPROVED: { label: 'Đã Duyệt — Chờ Chi Tiền', bg: '#ECFDF5', color: '#047857', border: '#A7F3D0' },
     PAID: { label: 'Đã Giải Ngân / Đã Có UNC', bg: '#F0FDF4', color: '#15803D', border: '#86EFAC' },
     REJECTED: { label: 'Bị Từ Chối', bg: '#FEF2F2', color: '#B91C1C', border: '#FECACA' },
@@ -171,11 +171,11 @@ export function PaymentRequestDetailModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="flex h-[92vh] w-full max-w-[1450px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex h-[92vh] w-full max-w-[1450px] flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xl">
                 {/* ═══ Header ═══ */}
                 <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                        <span className="font-mono text-base font-bold text-[#8B1A2E]">{detail.requestNo}</span>
+                        <span className="font-mono text-base font-bold text-[#B91C1C]">{detail.requestNo}</span>
                         <div
                             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                             style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, border: `1px solid ${statusStyle.border}` }}
@@ -214,7 +214,7 @@ export function PaymentRequestDetailModal({
                         {canSettle && (
                             <button
                                 onClick={() => setShowSettleModal(true)}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-3.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#721526] transition"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-3.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#721526] transition"
                             >
                                 <DollarSign className="h-3.5 w-3.5" /> Xác Nhận Giải Ngân (UNC)
                             </button>
@@ -256,7 +256,7 @@ export function PaymentRequestDetailModal({
                                             }}
                                             className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium transition ${
                                                 selectedAttachmentIndex === idx
-                                                    ? 'bg-[#8B1A2E] text-white shadow-xs'
+                                                    ? 'bg-[#B91C1C] text-white shadow-xs'
                                                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                             }`}
                                         >
@@ -389,7 +389,7 @@ export function PaymentRequestDetailModal({
                                 <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex flex-wrap gap-2 items-center text-[11px]">
                                     {detail.supplier && (
                                         <div className="flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2 py-1 text-slate-700">
-                                            <Building2 className="h-3.5 w-3.5 text-[#8B1A2E]" />
+                                            <Building2 className="h-3.5 w-3.5 text-[#B91C1C]" />
                                             <span>NCC: <strong>[{detail.supplier.code}] {detail.supplier.name}</strong></span>
                                             {detail.supplier.taxId && <span className="text-slate-400 font-mono">(MST: {detail.supplier.taxId})</span>}
                                         </div>
@@ -411,10 +411,10 @@ export function PaymentRequestDetailModal({
                         </div>
 
                         {/* Amount Banner */}
-                        <div className="mt-4 flex items-center justify-between rounded-lg bg-gradient-to-r from-[#8B1A2E]/10 via-[#8B1A2E]/5 to-transparent p-4 border border-[#8B1A2E]/20">
+                        <div className="mt-4 flex items-center justify-between rounded-lg bg-gradient-to-r from-[#B91C1C]/10 via-[#B91C1C]/5 to-transparent p-4 border border-[#B91C1C]/20">
                             <div>
                                 <span className="text-xs font-semibold uppercase text-slate-500">Tổng Số Tiền Đề Nghị</span>
-                                <div className="text-2xl font-bold text-[#8B1A2E]">{formatVND(detail.totalAmountVND)}</div>
+                                <div className="text-2xl font-bold text-[#B91C1C]">{formatVND(detail.totalAmountVND)}</div>
                                 {detail.currency !== 'VND' && (
                                     <div className="text-xs text-slate-500">
                                         Nguyên tệ: {detail.totalAmount.toLocaleString()} {detail.currency} (Tỷ giá: {detail.exchangeRate.toLocaleString()})
@@ -555,7 +555,7 @@ export function PaymentRequestDetailModal({
             {/* ═══ Action Modal (Duyệt / Từ chối / Trả lại) ═══ */}
             {actionType && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl border border-slate-200 animate-in zoom-in-95">
+                    <div className="w-full max-w-md rounded-md bg-white p-5 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
                             {actionType === 'APPROVE' ? 'Xác nhận Phê Duyệt Đề Nghị' :
                              actionType === 'REJECT' ? 'Từ Chối Phê Duyệt' : 'Trả Lại Để Sửa Đổi'}
@@ -571,7 +571,7 @@ export function PaymentRequestDetailModal({
                             onChange={e => setComment(e.target.value)}
                             placeholder={actionType === 'APPROVE' ? 'Ý kiến duyệt (tùy chọn)...' : 'Nhập lý do chi tiết...'}
                             rows={3}
-                            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#8B1A2E] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#B91C1C] focus:outline-none"
                         />
 
                         <div className="mt-4 flex justify-end gap-2">
@@ -600,7 +600,7 @@ export function PaymentRequestDetailModal({
             {/* ═══ Settlement Modal (Kế toán chi tiền) ═══ */}
             {showSettleModal && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95">
+                    <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
                             Xác Nhận Giải Ngân & Đính Kèm Ủy Nhiệm Chi (UNC)
                         </h3>
@@ -615,7 +615,7 @@ export function PaymentRequestDetailModal({
                                     type="number"
                                     value={paidAmount}
                                     onChange={e => setPaidAmount(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-sm font-semibold text-slate-900 focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-sm font-semibold text-slate-900 focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -625,7 +625,7 @@ export function PaymentRequestDetailModal({
                                     <select
                                         value={paymentMethod}
                                         onChange={e => setPaymentMethod(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
                                         <option value="CASH">Tiền mặt</option>
@@ -640,7 +640,7 @@ export function PaymentRequestDetailModal({
                                         placeholder="Vd: UNC-2026-VCB-088"
                                         value={uncVoucherNo}
                                         onChange={e => setUncVoucherNo(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -652,7 +652,7 @@ export function PaymentRequestDetailModal({
                                         type="file"
                                         accept=".pdf,image/*"
                                         onChange={e => setUncFile(e.target.files?.[0] || null)}
-                                        className="block w-full text-xs text-slate-500 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#8B1A2E] hover:file:bg-slate-200"
+                                        className="block w-full text-xs text-slate-500 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#B91C1C] hover:file:bg-slate-200"
                                     />
                                 </div>
                                 <p className="mt-1 text-[11px] text-slate-400">Hỗ trợ file PDF hoặc ảnh chụp UNC (tối đa 20MB)</p>
@@ -669,7 +669,7 @@ export function PaymentRequestDetailModal({
                             <button
                                 onClick={handleSettlementSubmit}
                                 disabled={settling}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#721526] transition"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#721526] transition"
                             >
                                 {settling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                 Hoàn Tất Giải Ngân

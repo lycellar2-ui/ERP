@@ -489,11 +489,11 @@ export function DailyCallPlannerView({
     return (
         <div className="space-y-4">
             {/* Top Toolbar & Filter Bar */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200 shadow-xs flex flex-col gap-4">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                            <span className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                 <CalendarCheck size={18} />
                             </span>
                             <h3 className="text-base sm:text-lg font-bold text-slate-900">
@@ -517,7 +517,7 @@ export function DailyCallPlannerView({
                                     if (salesReps[0]) setBatchTargetRepIds([salesReps[0].id])
                                     setAssignBatchModalOpen(true)
                                 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
                             >
                                 <UserCheck size={14} className="text-teal-600" />
                                 <span>Phân Bổ Danh Sách Gọi</span>
@@ -534,7 +534,7 @@ export function DailyCallPlannerView({
                                 setNewNotes('')
                                 setAddModalOpen(true)
                             }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                         >
                             <Plus size={14} />
                             <span>+ Thêm Vào Kế Hoạch</span>
@@ -543,7 +543,7 @@ export function DailyCallPlannerView({
                         <button
                             type="button"
                             onClick={handleExportCSV}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shadow-2xs cursor-pointer"
                             title="Xuất báo cáo kế hoạch gọi ra file CSV"
                         >
                             <Download size={14} className="text-slate-500" />
@@ -554,7 +554,7 @@ export function DailyCallPlannerView({
                             type="button"
                             onClick={loadPlans}
                             disabled={loading}
-                            className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
+                            className="p-2 rounded-md border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
                             title="Làm mới kế hoạch"
                         >
                             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
@@ -566,7 +566,7 @@ export function DailyCallPlannerView({
                 <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
                         {/* Date Picker with Prev/Next Day Quick Arrows */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-md border border-slate-200 shadow-2xs">
                             <button
                                 type="button"
                                 onClick={handlePrevDay}
@@ -602,7 +602,7 @@ export function DailyCallPlannerView({
                         </div>
 
                         {/* Channel switcher (horizontal scroll on mobile) */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-md border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
                             {(['ALL', 'CORPORATE', 'RETAIL'] as const).map(ch => (
                                 <button
                                     key={ch}
@@ -620,7 +620,7 @@ export function DailyCallPlannerView({
                         </div>
 
                         {/* Status switcher (horizontal scroll on mobile) */}
-                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-md border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
                             {(['ALL', 'PENDING', 'COMPLETED', 'RESCHEDULED'] as const).map(st => (
                                 <button
                                     key={st}
@@ -642,7 +642,7 @@ export function DailyCallPlannerView({
                             <select
                                 value={selectedRepId}
                                 onChange={e => setSelectedRepId(e.target.value)}
-                                className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium rounded-xl p-1.5 outline-none focus:border-teal-500 cursor-pointer"
+                                className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium rounded-md p-1.5 outline-none focus:border-teal-500 cursor-pointer"
                             >
                                 <option value="ALL">👤 Toàn bộ Telesale ({salesReps.length})</option>
                                 {salesReps.map(rep => (
@@ -662,14 +662,14 @@ export function DailyCallPlannerView({
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Tìm khách hàng, SĐT, ghi chú..."
-                            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
+                            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 transition"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Mobile Compact Progress Bar */}
-            <div className="sm:hidden bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col gap-2">
+            <div className="sm:hidden bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex flex-col gap-2">
                 <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-800">
                         Tiến độ hôm nay: {stats.completed}/{stats.totalPlanned} khách
@@ -700,8 +700,8 @@ export function DailyCallPlannerView({
 
             {/* Daily Execution Progress Banner */}
             <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${showMobileStats ? 'grid' : 'hidden sm:grid'}`}>
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
+                <div className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
                         <Target size={18} />
                     </div>
                     <div>
@@ -714,8 +714,8 @@ export function DailyCallPlannerView({
                     </div>
                 </div>
 
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                         <CheckCircle2 size={18} />
                     </div>
                     <div>
@@ -733,8 +733,8 @@ export function DailyCallPlannerView({
                     </div>
                 </div>
 
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <div className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
                         <Clock size={18} />
                     </div>
                     <div>
@@ -747,8 +747,8 @@ export function DailyCallPlannerView({
                     </div>
                 </div>
 
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
                         <Building2 size={18} />
                     </div>
                     <div>
@@ -765,12 +765,12 @@ export function DailyCallPlannerView({
             {/* List of Scheduled Calls (Mobile-first Cards) */}
             <div className="space-y-3">
                 {loading ? (
-                    <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+                    <div className="bg-white p-12 rounded-lg border border-slate-200 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
                         <RefreshCw size={24} className="animate-spin text-teal-600" />
                         <span className="text-xs font-medium">Đang tải danh sách kế hoạch gọi...</span>
                     </div>
                 ) : filteredPlans.length === 0 ? (
-                    <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400 space-y-3">
+                    <div className="bg-white p-12 rounded-lg border border-slate-200 text-center text-slate-400 space-y-3">
                         <PhoneCall size={36} className="mx-auto text-slate-300" />
                         <div className="text-sm font-bold text-slate-700">
                             Chưa có khách hàng nào trong kế hoạch gọi ngày này
@@ -781,7 +781,7 @@ export function DailyCallPlannerView({
                         <button
                             type="button"
                             onClick={() => setAddModalOpen(true)}
-                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                            className="px-4 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                         >
                             + Thêm Khách Gọi Đầu Tiên
                         </button>
@@ -795,7 +795,7 @@ export function DailyCallPlannerView({
                         return (
                             <div
                                 key={plan.id}
-                                className={`p-4 sm:p-5 rounded-2xl border transition-all shadow-2xs ${
+                                className={`p-4 sm:p-5 rounded-lg border transition-all shadow-2xs ${
                                     isCompleted
                                         ? 'bg-slate-50/60 border-slate-200/80 opacity-90'
                                         : 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-xs'
@@ -805,7 +805,7 @@ export function DailyCallPlannerView({
                                     {/* Left: Contact Info & Purpose */}
                                     <div className="flex items-start gap-3.5 min-w-0 flex-1">
                                         <div
-                                            className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${
+                                            className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                                                 isCompleted
                                                     ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200'
                                                     : 'bg-teal-500/10 text-teal-600 border border-teal-200'
@@ -897,7 +897,7 @@ export function DailyCallPlannerView({
                                                     🎯 Mục đích: <span className="font-normal text-slate-600">{plan.callType}</span>
                                                 </p>
                                                 {plan.notes && (
-                                                    <p className="text-slate-500 italic bg-slate-50 p-2 rounded-xl border border-slate-100 mt-1">
+                                                    <p className="text-slate-500 italic bg-slate-50 p-2 rounded-md border border-slate-100 mt-1">
                                                         📝 Lưu ý: {plan.notes}
                                                     </p>
                                                 )}
@@ -913,7 +913,7 @@ export function DailyCallPlannerView({
 
                                             {/* Call Outcome if completed */}
                                             {isCompleted && outcomeCfg && (
-                                                <div className="mt-2 p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-2xs space-y-1">
+                                                <div className="mt-2 p-2.5 rounded-md bg-white border border-emerald-200/80 shadow-2xs space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${outcomeCfg.badgeClass}`}>
                                                             {outcomeCfg.label}
@@ -935,7 +935,7 @@ export function DailyCallPlannerView({
                                         <button
                                             type="button"
                                             onClick={() => handleInitiateCall(plan)}
-                                            className="inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer min-h-[44px]"
+                                            className="inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-md bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer min-h-[44px]"
                                             title="Bấm gọi ngay trên điện thoại"
                                         >
                                             <PhoneCall size={16} />
@@ -947,7 +947,7 @@ export function DailyCallPlannerView({
                                             href={`https://zalo.me/${plan.phone.replace(/\D/g, '')}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition cursor-pointer min-h-[44px]"
+                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition cursor-pointer min-h-[44px]"
                                             title="Mở Zalo nhắn tin cho khách"
                                         >
                                             <MessageSquare size={15} className="text-blue-600" />
@@ -958,7 +958,7 @@ export function DailyCallPlannerView({
                                         <button
                                             type="button"
                                             onClick={() => handleOpenManualReport(plan)}
-                                            className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition border cursor-pointer min-h-[44px] ${
+                                            className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-md text-xs font-bold transition border cursor-pointer min-h-[44px] ${
                                                 isCompleted
                                                     ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'
                                                     : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300'
@@ -972,7 +972,7 @@ export function DailyCallPlannerView({
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteItem(plan.id, plan.prospectName)}
-                                            className="p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer self-center"
+                                            className="p-2.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer self-center"
                                             title="Xóa khỏi kế hoạch"
                                         >
                                             <Trash2 size={15} />
@@ -991,7 +991,7 @@ export function DailyCallPlannerView({
             {reportModalOpen && activePlan && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Mobile drag handle indicator */}
@@ -1000,7 +1000,7 @@ export function DailyCallPlannerView({
                         {/* Header */}
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
+                                <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-600">
                                     <CheckCircle2 size={18} />
                                 </div>
                                 <div>
@@ -1024,7 +1024,7 @@ export function DailyCallPlannerView({
                         {/* Body Form */}
                         <form onSubmit={handleSaveCallReport} className="p-4 sm:p-5 space-y-4 overflow-y-auto text-xs">
                             {/* Duration & Call details banner */}
-                            <div className="p-3 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-between gap-3 flex-wrap">
+                            <div className="p-3 rounded-md bg-teal-50 border border-teal-200/80 flex items-center justify-between gap-3 flex-wrap">
                                 <div>
                                     <div className="text-[11px] text-teal-800 font-semibold">
                                         Thời lượng cuộc gọi ước tính:
@@ -1061,7 +1061,7 @@ export function DailyCallPlannerView({
                                                 key={o.id}
                                                 type="button"
                                                 onClick={() => setReportOutcome(o.id)}
-                                                className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition cursor-pointer ${
+                                                className={`p-3 rounded-md border text-left flex items-start gap-2.5 transition cursor-pointer ${
                                                     isSelected
                                                         ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-500/20'
                                                         : 'bg-white border-slate-200 hover:border-slate-300'
@@ -1114,7 +1114,7 @@ export function DailyCallPlannerView({
 
                             {/* Follow-up date (if busy or interested) */}
                             {(reportOutcome.includes('CALLBACK') || reportOutcome.includes('BUSY') || reportOutcome.includes('INTERESTED')) && (
-                                <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1.5 animate-in fade-in duration-150">
+                                <div className="p-3 rounded-md bg-amber-50/70 border border-amber-200/80 space-y-1.5 animate-in fade-in duration-150">
                                     <label className="block font-bold text-amber-900">
                                         📅 Lịch Hẹn Gọi Lại Tiếp Theo (Tự động lên kế hoạch ngày đó)
                                     </label>
@@ -1137,7 +1137,7 @@ export function DailyCallPlannerView({
                                     value={reportNotes}
                                     onChange={e => setReportNotes(e.target.value)}
                                     placeholder="Nội dung khách trao đổi, quan tâm dòng vang nào, mức giá, thời điểm cần hàng..."
-                                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 text-xs"
+                                    className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 text-xs"
                                 />
                             </div>
 
@@ -1146,14 +1146,14 @@ export function DailyCallPlannerView({
                                 <button
                                     type="button"
                                     onClick={() => setReportModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Đóng
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingReport}
-                                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    className="px-5 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
                                     {savingReport ? 'Đang lưu...' : '✓ Lưu Báo Cáo Cuộc Gọi'}
                                 </button>
@@ -1169,13 +1169,13 @@ export function DailyCallPlannerView({
             {addModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                     <CalendarCheck size={18} />
                                 </div>
                                 <div>
@@ -1206,7 +1206,7 @@ export function DailyCallPlannerView({
                                     <select
                                         value={newTargetRepId}
                                         onChange={e => setNewTargetRepId(e.target.value)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500"
                                     >
                                         <option value="">-- Mặc định (Tự nhận việc) --</option>
                                         {salesReps.map(rep => (
@@ -1224,7 +1224,7 @@ export function DailyCallPlannerView({
                                     <label className="block font-bold text-slate-700 mb-1">
                                         Kênh Khách Hàng
                                     </label>
-                                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-md">
                                         <button
                                             type="button"
                                             onClick={() => setNewChannel('CORPORATE')}
@@ -1250,7 +1250,7 @@ export function DailyCallPlannerView({
                                     <label className="block font-bold text-slate-700 mb-1">
                                         Nguồn Dữ Liệu
                                     </label>
-                                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-md">
                                         <button
                                             type="button"
                                             onClick={() => setNewCustType('PROSPECT')}
@@ -1290,7 +1290,7 @@ export function DailyCallPlannerView({
                                                 setNewPhone(cust.phone || '')
                                             }
                                         }}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500 font-medium"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500 font-medium"
                                     >
                                         <option value="">-- Chọn khách hàng trong hệ thống --</option>
                                         {customersList.map(c => (
@@ -1314,7 +1314,7 @@ export function DailyCallPlannerView({
                                         value={newProspectName}
                                         onChange={e => setNewProspectName(e.target.value)}
                                         placeholder="VD: Anh Minh / Chị Lan"
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     />
                                 </div>
                                 <div>
@@ -1327,7 +1327,7 @@ export function DailyCallPlannerView({
                                         value={newPhone}
                                         onChange={e => setNewPhone(e.target.value)}
                                         placeholder="VD: 0912345678"
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
                                     />
                                 </div>
                             </div>
@@ -1343,7 +1343,7 @@ export function DailyCallPlannerView({
                                         value={newProspectCompany}
                                         onChange={e => setNewProspectCompany(e.target.value)}
                                         placeholder="VD: Tập đoàn FPT / Ngân hàng Techcombank"
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     />
                                 </div>
                             )}
@@ -1359,7 +1359,7 @@ export function DailyCallPlannerView({
                                         value={newCallType}
                                         onChange={e => setNewCallType(e.target.value)}
                                         placeholder="VD: Chào set quà tết, mời tasting..."
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     />
                                 </div>
                                 <div>
@@ -1369,7 +1369,7 @@ export function DailyCallPlannerView({
                                     <select
                                         value={newPriority}
                                         onChange={e => setNewPriority(e.target.value as any)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     >
                                         <option value="NORMAL">Bình thường</option>
                                         <option value="HIGH">Ưu tiên cao ⭐</option>
@@ -1390,7 +1390,7 @@ export function DailyCallPlannerView({
                                         value={newScheduledTime}
                                         onChange={e => setNewScheduledTime(e.target.value)}
                                         placeholder="VD: 09:30 hoặc Sáng"
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     />
                                 </div>
                                 <div className="sm:col-span-2">
@@ -1402,7 +1402,7 @@ export function DailyCallPlannerView({
                                         value={newNotes}
                                         onChange={e => setNewNotes(e.target.value)}
                                         placeholder="VD: Khách thích vang Ý, tầm giá 1.5tr..."
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     />
                                 </div>
                             </div>
@@ -1411,14 +1411,14 @@ export function DailyCallPlannerView({
                                 <button
                                     type="button"
                                     onClick={() => setAddModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingSingle}
-                                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    className="px-5 py-2.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
                                     {savingSingle ? 'Đang lưu...' : '+ Thêm Khách Vào Kế Hoạch'}
                                 </button>
@@ -1434,13 +1434,13 @@ export function DailyCallPlannerView({
             {assignBatchModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-xl bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
+                        className="w-full max-w-xl bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                     <UserCheck size={18} />
                                 </div>
                                 <div>
@@ -1467,7 +1467,7 @@ export function DailyCallPlannerView({
                                 <label className="block font-bold text-slate-800 mb-1.5">
                                     1. Chọn Nhân Viên Telesale Nhận Việc <span className="text-rose-500">*</span>
                                 </label>
-                                <div className="flex flex-wrap gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                                <div className="flex flex-wrap gap-2 p-2.5 bg-slate-50 rounded-md border border-slate-200">
                                     {salesReps.map(rep => {
                                         const isSelected = batchTargetRepIds.includes(rep.id)
                                         return (
@@ -1504,7 +1504,7 @@ export function DailyCallPlannerView({
                                     <select
                                         value={batchChannel}
                                         onChange={e => setBatchChannel(e.target.value as any)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                                     >
                                         <option value="CORPORATE">🏢 Corporate (Khách Doanh Nghiệp)</option>
                                         <option value="RETAIL">🍷 Retail (Khách Lẻ VIP / Showroom)</option>
@@ -1518,7 +1518,7 @@ export function DailyCallPlannerView({
                                         type="text"
                                         value={batchCallType}
                                         onChange={e => setBatchCallType(e.target.value)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                                     />
                                 </div>
                             </div>
@@ -1533,7 +1533,7 @@ export function DailyCallPlannerView({
                                     value={batchCustomLeadsText}
                                     onChange={e => setBatchCustomLeadsText(e.target.value)}
                                     placeholder="Ví dụ dán từ Excel:&#10;Nguyễn Văn An, Cty Bất Động Sản Á Châu, 0912345678&#10;Trần Thị Bình, Techcombank Chi nhánh Ba Đình, 0987654321&#10;Lê Hoàng Cường, Khách Lẻ VIP, 0905123456"
-                                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono text-xs outline-none focus:border-teal-500"
+                                    className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono text-xs outline-none focus:border-teal-500"
                                 />
                                 <p className="text-[11px] text-slate-500 mt-1">
                                     💡 Hệ thống sẽ tự động tách từng dòng và chia đều cho {batchTargetRepIds.length || 0} nhân viên đã chọn.
@@ -1544,14 +1544,14 @@ export function DailyCallPlannerView({
                                 <button
                                     type="button"
                                     onClick={() => setAssignBatchModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingBatch}
-                                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    className="px-5 py-2.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
                                     {savingBatch ? 'Đang phân bổ...' : '🚀 Phân Bổ Danh Sách Cho Telesales'}
                                 </button>
@@ -1563,9 +1563,9 @@ export function DailyCallPlannerView({
 
             {/* Continuous Calling Prompt (Cockpit Mode Banner) */}
             {nextLeadPrompt && (
-                <div className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-96 z-40 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700/60 flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-200">
+                <div className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-96 z-40 bg-slate-900 text-white p-3.5 rounded-lg shadow-xl border border-slate-700/60 flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-200">
                     <div className="min-w-0 flex-1">
-                        <div className="text-[10px] uppercase font-bold text-teal-400 tracking-wider flex items-center gap-1">
+                        <div className="text-[10px] uppercase font-bold text-teal-700 tracking-wider flex items-center gap-1">
                             <Zap size={11} /> Khách tiếp theo trong kế hoạch
                         </div>
                         <div className="font-bold text-xs truncate mt-0.5">
@@ -1583,7 +1583,7 @@ export function DailyCallPlannerView({
                                 setNextLeadPrompt(null)
                                 handleInitiateCall(lead)
                             }}
-                            className="px-3 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition"
+                            className="px-3 py-2 rounded-md bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition"
                         >
                             <PhoneCall size={13} />
                             <span>GỌI TIẾP</span>

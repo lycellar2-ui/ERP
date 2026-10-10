@@ -7,9 +7,8 @@ import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPa
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab, TrialBalanceTab, AccountLedgerTab } from './FinanceTabs'
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
-import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
-import { PageHeader } from '@/components/ui'
+import { PageHeader, Pagination } from '@/components/ui'
 
 type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
@@ -366,7 +365,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         onClearAll={() => { setArSearch(''); setArStatus(''); setArPage(1); reloadAR('', '', 1) }}
                     />
                     <ARTable rows={arRows} onPayment={setPaymentModal} />
-                    <DataPagination page={arPage} pageSize={25} total={arTotal}
+                    <Pagination page={arPage} pageSize={25} total={arTotal}
                         onPageChange={p => { setArPage(p); reloadAR(undefined, undefined, p) }} />
                 </div>
             )}
@@ -473,7 +472,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                             </table>
                         </div>
                     </div>
-                    <DataPagination page={apPage} pageSize={25} total={apTotal}
+                    <Pagination page={apPage} pageSize={25} total={apTotal}
                         onPageChange={p => { setApPage(p); reloadAP(undefined, undefined, p) }} />
                 </div>
             )}

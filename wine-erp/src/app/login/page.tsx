@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { signIn } from './actions'
+import { Button } from '@/components/ui'
 
 export default function LoginPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -22,31 +25,26 @@ export default function LoginPage() {
     }
 
     return (
-        <div
-            className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-            style={{
-                background: 'linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%, #FFFFFF 100%)',
-            }}
-        >
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-lys-bg">
             {/* Subtle ambient glows — Navy/Teal */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div
                     className="absolute -right-40 -top-40 w-96 h-96 rounded-full"
                     style={{
-                        background: 'radial-gradient(circle, rgba(135,203,185,0.06), transparent)',
+                        background: 'radial-gradient(circle, rgba(8,145,178,0.08), transparent)',
                     }}
                 />
                 <div
                     className="absolute -left-40 -bottom-40 w-96 h-96 rounded-full"
                     style={{
-                        background: 'radial-gradient(circle, rgba(26,67,99,0.3), transparent)',
+                        background: 'radial-gradient(circle, rgba(14,116,144,0.06), transparent)',
                     }}
                 />
             </div>
 
             <div className="relative w-full max-w-md">
                 {/* Logo */}
-                <div className="text-center mb-10">
+                <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
                         <Image
                             src="/logo/Ly's Cellars - Logo_tagline blue green.png"
@@ -60,31 +58,25 @@ export default function LoginPage() {
                 </div>
 
                 {/* Card */}
-                <div
-                    className="rounded-md p-8"
-                    style={{
-                        background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)',
-                    }}
-                >
-                    <h2 className="text-xl font-semibold mb-6" style={{ color: '#0F172A' }}>
+                <div className="bg-lys-surface border border-lys-border rounded-lg p-8 shadow-lg">
+                    <h2 className="text-xl font-semibold mb-6 text-lys-primary">
                         Đăng nhập
                     </h2>
 
                     {error && (
                         <div
-                            className="mb-4 p-3 rounded text-sm"
-                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+                            role="alert"
+                            className="mb-5 p-3 rounded-md text-sm font-medium bg-tone-danger-bg border border-tone-danger-border text-tone-danger-fg flex items-start gap-2.5"
                         >
-                            {error}
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>{error}</span>
                         </div>
                     )}
 
-                    <form className="space-y-5" onSubmit={handleSubmit}>
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         {/* Email */}
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium" style={{ color: '#475569' }} htmlFor="email">
+                            <label className="block text-sm font-medium text-lys-secondary" htmlFor="email">
                                 Email
                             </label>
                             <input
@@ -94,76 +86,54 @@ export default function LoginPage() {
                                 autoComplete="email"
                                 required
                                 placeholder="ten@company.com"
-                                className="w-full px-4 text-sm"
-                                style={{
-                                    height: '44px',
-                                    background: '#FFFFFF',
-                                    border: '1px solid #E2E8F0',
-                                    color: '#0F172A',
-                                    outline: 'none',
-                                    borderRadius: '6px',
-                                    transition: 'border-color 150ms',
-                                }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                                className="w-full h-11 px-3 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
                             />
                         </div>
 
                         {/* Password */}
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium" style={{ color: '#475569' }} htmlFor="password">
+                                <label className="block text-sm font-medium text-lys-secondary" htmlFor="password">
                                     Mật khẩu
                                 </label>
-                                <a href="/forgot-password" className="text-xs" style={{ color: '#0891B2' }}>
+                                <a href="/forgot-password" className="text-xs text-lys-teal-strong hover:underline">
                                     Quên mật khẩu?
                                 </a>
                             </div>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                placeholder="••••••••"
-                                className="w-full px-4 text-sm"
-                                style={{
-                                    height: '44px',
-                                    background: '#FFFFFF',
-                                    border: '1px solid #E2E8F0',
-                                    color: '#0F172A',
-                                    outline: 'none',
-                                    borderRadius: '6px',
-                                    transition: 'border-color 150ms',
-                                }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                            />
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    autoComplete="current-password"
+                                    required
+                                    placeholder="••••••••"
+                                    className="w-full h-11 pl-3 pr-10 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-lys-muted hover:text-lys-primary transition-colors cursor-pointer"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Submit */}
-                        <button
+                        <Button
                             type="submit"
-                            disabled={loading}
-                            className="w-full font-semibold text-sm mt-2 transition-all duration-200"
-                            style={{
-                                height: '44px',
-                                background: loading ? '#5ba396' : '#87CBB9',
-                                color: '#0F172A',
-                                border: 'none',
-                                cursor: loading ? 'wait' : 'pointer',
-                                borderRadius: '6px',
-                                opacity: loading ? 0.7 : 1,
-                            }}
-                            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#A5DED0' }}
-                            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#87CBB9' }}
+                            variant="primary"
+                            loading={loading}
+                            className="w-full h-11 text-sm font-semibold mt-2"
                         >
                             {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
-                        </button>
+                        </Button>
                     </form>
                 </div>
 
-                <p className="text-center mt-6 text-xs" style={{ color: '#64748B' }}>
+                <p className="text-center mt-6 text-xs text-lys-muted">
                     © 2026 LY&apos;s Cellars · Chỉ dành cho nhân viên nội bộ
                 </p>
             </div>

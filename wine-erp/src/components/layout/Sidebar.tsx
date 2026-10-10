@@ -63,22 +63,27 @@ const NAV_GROUPS: NavGroup[] = [
         ]
     },
     {
-        label: 'Kho & Bán Hàng',
-        labelEn: 'Sales & Inventory',
+        label: 'Bán Hàng & CRM',
+        labelEn: 'Sales & CRM',
         items: [
-            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', labelEn: 'Warehouses & Stock', permission: 'WMS:READ' },
-            { href: '/dashboard/sales/visits', icon: MapPin, label: 'Quản Lý Check-in Thị Trường', labelEn: 'Field Check-in', permission: 'SLS:READ' },
             { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', labelEn: 'Sales Orders', permission: 'SLS:READ' },
             { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', labelEn: 'Quotations', permission: 'SLS:READ' },
             { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', labelEn: 'Price Lists', permission: 'SLS:READ' },
             { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', labelEn: 'Check Margin', permission: 'SLS:READ' },
             { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', labelEn: 'CRM — Customers', permission: 'CRM:READ' },
-            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', labelEn: 'Consignments (CSG)', permission: 'CSG:READ' },
-            // { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
-            // { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
-            { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', labelEn: 'Returns & CN', permission: 'SLS:READ' },
+            { href: '/dashboard/sales/visits', icon: MapPin, label: 'Quản Lý Check-in Thị Trường', labelEn: 'Field Check-in', permission: 'SLS:READ' },
             { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', labelEn: 'POS Showroom', permission: 'POS:READ' },
-            // { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
+        ]
+    },
+    {
+        label: 'Kho Vận & Logistics',
+        labelEn: 'Warehouse & Logistics',
+        items: [
+            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', labelEn: 'Warehouses & Stock', permission: 'WMS:READ' },
+            { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê Kho', labelEn: 'Stock Auditing', permission: 'WMS:READ' },
+            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', labelEn: 'Stock Transfers', permission: 'WMS:READ' },
+            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', labelEn: 'Consignments (CSG)', permission: 'CSG:READ' },
+            { href: '/dashboard/returns', icon: RotateCcw, label: 'Trả Hàng & CN', labelEn: 'Returns & CN', permission: 'SLS:READ' },
         ]
     },
     {

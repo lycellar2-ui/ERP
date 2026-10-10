@@ -85,7 +85,7 @@ export function TodayLiveFeed({
     }, [visits, selectedRepId, filterStatus, searchQuery])
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden space-y-4 p-4 sm:p-5">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden space-y-4 p-4 sm:p-5">
             {/* 1. Header with Live Pulse */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
@@ -110,18 +110,18 @@ export function TodayLiveFeed({
 
                 {/* Counter Badges */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div className="px-3 py-1.5 rounded-md bg-slate-50 border border-slate-200 text-xs">
                         <span className="text-slate-500 mr-1">{locale === 'en' ? 'Check-ins:' : 'Lượt đi:'}</span>
                         <strong className="font-mono text-slate-900">{totalVisits}</strong>
                     </div>
 
-                    <div className="px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200/80 text-xs text-teal-800">
+                    <div className="px-3 py-1.5 rounded-md bg-teal-50 border border-teal-200/80 text-xs text-teal-800">
                         <span className="text-teal-600 mr-1">{locale === 'en' ? 'Reported:' : 'Đã báo cáo:'}</span>
                         <strong className="font-mono text-teal-900">{withNotesCount}</strong>
                     </div>
 
                     {withoutNotesCount > 0 && (
-                        <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200/80 text-xs text-amber-800">
+                        <div className="px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200/80 text-xs text-amber-800">
                             <span className="text-amber-600 mr-1">{locale === 'en' ? 'Pending:' : 'Chưa báo cáo:'}</span>
                             <strong className="font-mono text-amber-900">{withoutNotesCount}</strong>
                         </div>
@@ -137,7 +137,7 @@ export function TodayLiveFeed({
                         <select
                             value={selectedRepId}
                             onChange={e => setSelectedRepId(e.target.value)}
-                            className="w-full pl-3 pr-8 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500 cursor-pointer"
+                            className="w-full pl-3 pr-8 py-1.5 text-xs font-semibold rounded-md bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-teal-500 cursor-pointer"
                         >
                             <option value="ALL">{locale === 'en' ? 'All Sales Reps' : 'Tất cả nhân sự'}</option>
                             {repsList.map(r => (
@@ -149,7 +149,7 @@ export function TodayLiveFeed({
                     </div>
 
                     {/* Filter pills: All / With notes / Without notes */}
-                    <div className="flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold">
+                    <div className="flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-semibold">
                         <button
                             type="button"
                             onClick={() => setFilterStatus('ALL')}
@@ -193,7 +193,7 @@ export function TodayLiveFeed({
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder={locale === 'en' ? 'Search client or note content...' : 'Tìm khách hoặc nội dung báo cáo...'}
-                        className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:bg-white transition"
+                        className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-md bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:bg-white transition"
                     />
                     <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 </div>
@@ -201,7 +201,7 @@ export function TodayLiveFeed({
 
             {/* 3. Cards Grid Feed */}
             {totalVisits === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-400 space-y-2 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                <div className="py-12 text-center text-xs text-slate-400 space-y-2 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
                     <FileText size={32} className="mx-auto text-slate-300" />
                     <p className="font-bold text-slate-700">
                         {locale === 'en' ? 'No field visits recorded today.' : 'Hôm nay chưa có lượt check-in nào từ đội ngũ Sale.'}
@@ -213,7 +213,7 @@ export function TodayLiveFeed({
                     </p>
                 </div>
             ) : filteredVisits.length === 0 ? (
-                <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
                     <p className="font-semibold text-slate-600">
                         {locale === 'en' ? 'No visits match your filter criteria.' : 'Không có lượt viếng thăm nào khớp với bộ lọc.'}
                     </p>
@@ -229,7 +229,7 @@ export function TodayLiveFeed({
                         return (
                             <div
                                 key={v.id}
-                                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 shadow-2xs ${
+                                className={`p-4 rounded-lg border transition-all flex flex-col justify-between space-y-3 shadow-2xs ${
                                     v.notes?.trim()
                                         ? 'bg-white border-slate-200 hover:border-teal-400'
                                         : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
@@ -291,7 +291,7 @@ export function TodayLiveFeed({
                                                     v.checkInPhoto!,
                                                     v.id
                                                 )}
-                                                className="relative w-20 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 cursor-pointer group shadow-2xs border border-slate-200"
+                                                className="relative w-20 h-14 rounded-md overflow-hidden bg-slate-900 shrink-0 cursor-pointer group shadow-2xs border border-slate-200"
                                             >
                                                 <img
                                                     src={v.checkInPhoto}
@@ -303,7 +303,7 @@ export function TodayLiveFeed({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="w-20 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                            <div className="w-20 h-14 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
                                                 <Camera size={16} />
                                             </div>
                                         )}
@@ -335,7 +335,7 @@ export function TodayLiveFeed({
 
                                     {/* 4. Highlighted Quick Report Content */}
                                     {v.notes?.trim() ? (
-                                        <div className="p-3 rounded-xl bg-teal-50/60 border border-teal-200/80 text-xs space-y-1">
+                                        <div className="p-3 rounded-md bg-teal-50/60 border border-teal-200/80 text-xs space-y-1">
                                             <div className="flex items-center justify-between text-[10px] font-bold text-teal-900 uppercase">
                                                 <span className="flex items-center gap-1">
                                                     <FileText size={12} className="text-teal-600" />
@@ -356,7 +356,7 @@ export function TodayLiveFeed({
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="p-2.5 rounded-xl bg-amber-50/50 border border-dashed border-amber-200/80 flex items-center justify-between gap-2 text-xs text-amber-700">
+                                        <div className="p-2.5 rounded-md bg-amber-50/50 border border-dashed border-amber-200/80 flex items-center justify-between gap-2 text-xs text-amber-700">
                                             <div className="flex items-center gap-1.5 truncate text-[11px]">
                                                 <AlertCircle size={13} className="shrink-0 text-amber-500" />
                                                 <span className="truncate">

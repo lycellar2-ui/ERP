@@ -33,14 +33,14 @@ export const POSM_CATEGORY_CONFIG: Record<PosmCategory, { label: string; color: 
     },
     PACKAGING_GIFT: {
         label: 'Bao Bì & Hộp Quà',
-        color: '#7C3AED',
-        bg: '#F5F3FF',
-        border: '#DDD6FE',
+        color: '#0E7490',
+        bg: '#ECFEFF',
+        border: '#A5F3FC',
         icon: '🎁'
     },
     MARKETING_COLLATERAL: {
         label: 'Ấn Phẩm & Marketing',
-        color: '#059669',
+        color: '#15803D',
         bg: '#ECFDF5',
         border: '#A7F3D0',
         icon: '📚'
@@ -318,7 +318,7 @@ export function PosmInventoryTab() {
     return (
         <div className="space-y-5">
             {/* ═══ TOP BANNER & STATS ═══ */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+            <div className="bg-white border border-slate-200 rounded-md p-5 shadow-2xs">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                     <div>
                         <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export function PosmInventoryTab() {
             </div>
 
             {/* ═══ SUB-TAB SWITCHER & FILTER BAR ═══ */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3.5">
+            <div className="bg-white border border-slate-200 rounded-md p-4 shadow-2xs space-y-3.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-2">
                         <button
@@ -495,7 +495,7 @@ export function PosmInventoryTab() {
 
             {/* ═══ TAB CONTENT: MASTER DATA & STOCK LIST ═══ */}
             {subTab === 'ITEMS' && (
-                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
@@ -617,7 +617,7 @@ export function PosmInventoryTab() {
 
             {/* ═══ TAB CONTENT: TRANSACTION LOG ═══ */}
             {subTab === 'TX_LOG' && (
-                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
@@ -702,7 +702,7 @@ export function PosmInventoryTab() {
             {/* ═══ MODAL 1: CREATE / EDIT POSM MASTER DATA ═══ */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
                             <div className="flex items-center gap-2">
                                 <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
@@ -874,7 +874,7 @@ export function PosmInventoryTab() {
             {/* ═══ MODAL 2: INBOUND (NHẬP KHO POSM) ═══ */}
             {showInboundModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-emerald-50/50">
                             <div className="flex items-center gap-2">
                                 <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
@@ -994,7 +994,7 @@ export function PosmInventoryTab() {
             {/* ═══ MODAL 3: OUTBOUND (XUẤT KHO POSM) ═══ */}
             {showOutboundModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-blue-50/50">
                             <div className="flex items-center gap-2">
                                 <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">

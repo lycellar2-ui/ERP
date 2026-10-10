@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag, Search, ChevronDown, CheckCircle2, Building2, Star, Calendar, FileText, ShoppingBag, ShieldCheck, CornerDownRight } from 'lucide-react'
+import { X, Plus, Minus, Trash2, AlertCircle, Loader2, Save, Tag, Search, ChevronDown, CheckCircle2, Building2, Star, Calendar, FileText, ShoppingBag, ShieldCheck, CornerDownRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -678,7 +678,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         <select
                                             value={shippingAddressId}
                                             onChange={e => setShippingAddressId(e.target.value)}
-                                            className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            className="w-full px-3 py-2 text-base sm:text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                         >
                                             <option value="">{t.selectAddressPlaceholder}</option>
                                             {selectedCustomer.addresses.map(addr => (
@@ -755,7 +755,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     <select
                                         value={channel}
                                         onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-base sm:text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         {CHANNELS.map(c => <option key={c.value} value={c.value}>{getSOChannelLabel(c.value, locale)}</option>)}
                                     </select>
@@ -768,7 +768,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     <select
                                         value={paymentTerm}
                                         onChange={e => setPaymentTerm(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-base sm:text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         {['COD', 'NET7', 'NET14', 'NET15', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(term => <option key={term} value={term}>{term}</option>)}
                                     </select>
@@ -781,7 +781,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     <select
                                         value={legalEntityId}
                                         onChange={e => setLegalEntityId(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className="w-full px-3 py-2 text-base sm:text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     >
                                         <option value="">{t.selectEntityPlaceholder}</option>
                                         {entities.map(e => <option key={e.id} value={e.id}>{e.name} ({e.code})</option>)}
@@ -831,7 +831,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     setAddProductSearchQuery(e.target.value)
                                                     setIsAddDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-8 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                                className="w-full pl-3 pr-8 py-2 text-base sm:text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                             />
                                             <div className="absolute right-2.5 text-slate-400 pointer-events-none">
                                                 <Search size={14} />
@@ -849,7 +849,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     getFilteredAddProducts(addProductSearchQuery).map(p => (
                                                         <div
                                                             key={p.id}
-                                                            onMouseDown={() => {
+                                                            onPointerDown={(e) => {
+                                                                e.preventDefault()
                                                                 addLine(p.id)
                                                                 setAddProductSearchQuery('')
                                                                 setIsAddDropdownOpen(false)
@@ -877,14 +878,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 </div>
 
                                 {lines.length === 0 ? (
-                                    <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 bg-white">
+                                    <div className="text-center py-10 rounded-md border-2 border-dashed border-slate-200 bg-white">
                                         <ShoppingBag size={28} className="mx-auto mb-2 text-slate-300" />
                                         <p className="text-xs font-semibold text-slate-600">{t.emptyItemsTitle}</p>
                                         <p className="text-[11px] text-slate-400 mt-0.5">{t.emptyItemsSubtitle}</p>
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
-                                        <table className="w-full text-xs text-left border-collapse min-w-[650px]">
+                                    <>
+                                        {/* Desktop Table View */}
+                                        <div className="hidden sm:block overflow-x-auto rounded-md border border-slate-200 bg-white shadow-xs">
+                                            <table className="w-full text-xs text-left border-collapse min-w-[650px]">
                                             <thead>
                                                 <tr className="bg-slate-100/90 text-slate-700 border-b border-slate-200 font-bold">
                                                     <th className="px-3.5 py-3">{t.thProduct}</th>
@@ -935,6 +938,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <input
                                                                     type="number"
+                                                                    inputMode="numeric"
                                                                     min={1}
                                                                     value={l.qtyOrdered}
                                                                     onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
@@ -947,6 +951,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <input
                                                                     type="number"
+                                                                    inputMode="numeric"
                                                                     min={0}
                                                                     max={100}
                                                                     value={l.lineDiscountPct}
@@ -984,11 +989,158 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+
+                                    {/* Mobile Card View */}
+                                    <div className="block sm:hidden space-y-2.5">
+                                        {lines.map((l, idx) => {
+                                            const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+                                            const lowStock = l.stock < l.qtyOrdered
+                                            const priceSource = priceMap[l.productId]?.source ?? l.priceSource
+                                            const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
+
+                                            return (
+                                                <div key={idx} className="p-3 rounded-md space-y-2.5 bg-white border"
+                                                    style={{ borderColor: lowStock ? 'rgba(185,28,28,0.35)' : '#E2E8F0' }}>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="font-mono font-bold text-xs text-slate-900">[{l.skuCode}]</span>
+                                                                {(l.customerItemCode || customerCodesMap[l.productId]) && (
+                                                                    <span className="font-mono font-bold text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                                        [{l.customerItemCode || customerCodesMap[l.productId]}]
+                                                                    </span>
+                                                                )}
+                                                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${lowStock ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'}`}>
+                                                                    {isEn ? 'Stock' : 'Tồn'}: {l.stock}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-slate-700 font-medium mt-1 leading-snug">{l.productName}</p>
+                                                            {hasPriceBadge && (
+                                                                <div className="mt-1">
+                                                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getPriceBadgeStyle(priceSource)}`}>
+                                                                        <Tag size={9} /> {getPriceBadgeLabelByLocale({ source: priceSource }, channel, locale)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeLine(idx)}
+                                                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                                            title={t.deleteLine}
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Mobile Stepper & Case Shortcuts */}
+                                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-bold text-slate-700">{t.thQty}:</span>
+                                                            <button
+                                                                type="button"
+                                                                disabled={l.qtyOrdered <= 1}
+                                                                onClick={() => updateLine(idx, 'qtyOrdered', Math.max(1, l.qtyOrdered - 1))}
+                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                                                aria-label="Giảm 1"
+                                                            >
+                                                                <Minus size={15} />
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                inputMode="numeric"
+                                                                pattern="[0-9]*"
+                                                                min="1"
+                                                                value={l.qtyOrdered}
+                                                                onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value || 1))}
+                                                                className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 1)}
+                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                                                                aria-label="Tăng 1"
+                                                            >
+                                                                <Plus size={15} />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Case chips */}
+                                                        <div className="flex items-center gap-1.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 6)}
+                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 transition-colors"
+                                                                title={isEn ? "Add 1 case (6 btls)" : "Thêm 1 thùng (6 chai)"}
+                                                            >
+                                                                +6 {isEn ? 'btls' : 'chai'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 12)}
+                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 transition-colors"
+                                                                title={isEn ? "Add 2 cases (12 btls)" : "Thêm 2 thùng (12 chai)"}
+                                                            >
+                                                                +12 {isEn ? 'btls' : 'chai'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {lowStock && (
+                                                        <p className="text-xs text-rose-600 font-medium">⚠️ {t.stockExceeded} ({l.stock})</p>
+                                                    )}
+
+                                                    {/* Unit price, Discount, VAT */}
+                                                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 items-end">
+                                                        <div>
+                                                            <p className="text-[11px] font-semibold text-slate-500 mb-0.5">{t.thUnitPrice}</p>
+                                                            <div className="text-xs font-bold font-mono text-slate-800 py-1.5 px-2 bg-slate-50 rounded border border-slate-200 truncate">
+                                                                {formatCurrency(l.unitPrice)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] font-semibold text-slate-500 mb-0.5">{t.thDiscount} (%)</p>
+                                                            <input
+                                                                type="number"
+                                                                inputMode="numeric"
+                                                                min="0"
+                                                                max="100"
+                                                                value={l.lineDiscountPct}
+                                                                onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value || 0)))}
+                                                                className="w-full px-2 py-1.5 text-base sm:text-xs text-center font-semibold rounded border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-amber-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] font-semibold text-slate-500 mb-0.5">{t.thVat}</p>
+                                                            <select
+                                                                value={l.vatRate ?? 10}
+                                                                onChange={e => updateLine(idx, 'vatRate', Number(e.target.value))}
+                                                                className="w-full px-2 py-1.5 text-base sm:text-xs text-center font-semibold rounded border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-amber-500"
+                                                            >
+                                                                <option value={10}>10%</option>
+                                                                <option value={8}>8%</option>
+                                                                <option value={0}>0%</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Subtotal */}
+                                                    <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                                                        <span className="text-xs font-medium text-slate-500">{t.thTotal}:</span>
+                                                        <p className="text-sm font-bold font-mono text-amber-700">
+                                                            = {formatCurrency(lineTotal)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </>
+                            )}
                             </div>
 
                             {/* Section: Tổng Hợp Tài Chính & Chiết Khấu */}
-                            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="p-4 rounded-md bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-2">
                                     <Tag size={15} className="text-amber-600" />
                                     <span className="text-xs font-bold uppercase text-slate-700">{t.orderDiscountLabel}</span>
@@ -998,7 +1150,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         max={100}
                                         value={orderDiscount}
                                         onChange={e => setOrderDiscount(Math.min(100, Math.max(0, +e.target.value)))}
-                                        className="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                                        className="w-20 px-2 py-1.5 text-base sm:text-xs text-center font-bold rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500" inputMode="numeric"
                                     />
                                     <span className="text-xs font-semibold text-slate-500">%</span>
                                 </div>

@@ -190,7 +190,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                     <span className="font-mono text-base font-bold text-white block mt-0.5">
                         {formatVND(calc.grandTotalLandedVND)}
                     </span>
-                    <span className="text-[10px] text-teal-300 font-mono block">
+                    <span className="text-[10px] text-teal-700 font-mono block">
                         ~{formatVND(calc.landedCostPerBottle)} / chai ({calc.totalBottles} chai)
                     </span>
                 </div>

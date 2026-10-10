@@ -117,7 +117,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'TASTING':
                 return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             case 'INTERNAL_TRAINING':
-                return { label: isEn ? '🎓 Internal Training' : '🎓 Đào Tạo Nội Bộ', bg: 'rgba(16,185,129,0.15)', color: '#059669', border: 'rgba(16,185,129,0.3)' }
+                return { label: isEn ? '🎓 Internal Training' : '🎓 Đào Tạo Nội Bộ', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'SPECIAL_EVENT':
                 return { label: isEn ? '🎪 Special Event' : '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
@@ -1234,7 +1234,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="hidden md:block rounded-md overflow-x-auto w-full shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="w-full">
                     <table className="w-full" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                         <colgroup>
@@ -1760,7 +1760,7 @@ function BatchProductPickerModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-lg flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
                     <h4 className="text-sm sm:text-base font-bold text-slate-900">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
                     <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer"><X size={20} className="text-slate-400" /></button>
@@ -2162,7 +2162,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Promotion Campaign (CTKM 1 Mã, Mua X Tặng Y, Kênh, Quota) */}
                     {form.category === 'PROMOTION_CAMPAIGN' && (
-                        <div className="space-y-4 p-5 rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 shadow-xs">
+                        <div className="space-y-4 p-5 rounded-md border border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 shadow-xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-200/80 pb-3 gap-2">
                                 <div>
                                     <h4 className="text-sm font-black uppercase text-amber-950 flex items-center gap-2 tracking-wide">
@@ -2269,7 +2269,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             </div>
 
                             {/* 3. Buy & Gift Mechanics */}
-                            <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-4">
+                            <div className="p-4 rounded-md bg-white border border-amber-200 space-y-4">
                                 <div>
                                     <div className="flex items-center justify-between mb-1.5">
                                         <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -2389,7 +2389,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             </div>
 
                             {/* 4. Quota Limits */}
-                            <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-3">
+                            <div className="p-4 rounded-md bg-white border border-amber-200 space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
                                     4. {locale === 'en' ? 'Maximum Quantity Limits (Quota) *' : 'Thiết Lập Số Lượng Tối Đa (Quota Hạn Mức) *'}
                                 </label>
@@ -2449,7 +2449,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Tasting / Training Custom Fields */}
                     {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT' || form.category === 'INTERNAL_TRAINING') && (
-                        <div className={`space-y-4 p-4 rounded-xl border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
+                        <div className={`space-y-4 p-4 rounded-md border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
                             <div>
                                 <label className={`text-xs font-bold uppercase mb-1.5 block tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
                                     {form.category === 'INTERNAL_TRAINING' ? '🏢 Đơn Vị / Khách Hàng / Đối Tác Phối Hợp (Tùy Chọn)' : '👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)'}
@@ -3243,7 +3243,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         <div className="space-y-3">
                             {/* Promotion Campaign (Buy X Get Y & Quota) Details */}
                             {detail.category === 'PROMOTION_CAMPAIGN' && parsedPromo && (
-                                <div className="p-4 rounded-xl space-y-3 shadow-xs border border-amber-300 bg-gradient-to-br from-amber-50/90 via-orange-50/50 to-amber-50/90">
+                                <div className="p-4 rounded-md space-y-3 shadow-xs border border-amber-300 bg-gradient-to-br from-amber-50/90 via-orange-50/50 to-amber-50/90">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="p-1.5 rounded-lg bg-amber-500 text-white">
@@ -3324,9 +3324,9 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                             {/* Tasting / Training Proposal Quick Action & Linked SOs */}
                             {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING') && (
-                                <div className="p-4 rounded-xl space-y-2.5 shadow-sm transition-all" style={{
+                                <div className="p-4 rounded-md space-y-2.5 shadow-sm transition-all" style={{
                                     background: detail.category === 'INTERNAL_TRAINING' ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
-                                    border: detail.category === 'INTERNAL_TRAINING' ? '1.5px solid #10B981' : '1.5px solid #F59E0B',
+                                    border: detail.category === 'INTERNAL_TRAINING' ? '1.5px solid #15803D' : '1.5px solid #F59E0B',
                                 }}>
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: detail.category === 'INTERNAL_TRAINING' ? '#065F46' : '#92400E' }}>
@@ -3355,7 +3355,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
 
                             {/* Wine Samples List for Tasting / Internal Training */}
                             {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING') && detail.priceItems && detail.priceItems.length > 0 && (
-                                <div className="p-4 rounded-xl space-y-2.5 bg-white border border-slate-200">
+                                <div className="p-4 rounded-md space-y-2.5 bg-white border border-slate-200">
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                                             <span>🍷</span>
@@ -3453,7 +3453,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         </div>
 
                         {/* Approval Audit Trail Table */}
-                        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                        <div className="p-4 rounded-md border border-slate-200 bg-white space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2] flex items-center justify-between">
                                 <span>📋 {locale === 'en' ? 'Digital Audit Trail' : 'Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)'}</span>
                                 <span className="text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">

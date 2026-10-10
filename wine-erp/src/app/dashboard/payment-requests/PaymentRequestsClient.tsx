@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }
     DRAFT: { label: 'Bản Nháp', bg: '#F1F5F9', color: '#475569' },
     SUBMITTED: { label: 'Chờ TP Duyệt (C1)', bg: '#EFF6FF', color: '#1D4ED8' },
     REVIEWING_L1: { label: 'Chờ Kế Toán (C2)', bg: '#FEF3C7', color: '#B45309' },
-    REVIEWING_L2: { label: 'Chờ CEO (C3)', bg: '#FDF4FF', color: '#9333EA' },
+    REVIEWING_L2: { label: 'Chờ CEO (C3)', bg: '#ECFEFF', color: '#0E7490' },
     APPROVED: { label: 'Đã Duyệt (Chờ Chi)', bg: '#ECFDF5', color: '#047857' },
     PAID: { label: 'Đã Giải Ngân', bg: '#F0FDF4', color: '#15803D' },
     REJECTED: { label: 'Bị Từ Chối', bg: '#FEF2F2', color: '#B91C1C' },
@@ -444,7 +444,7 @@ export function PaymentRequestsClient({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
-                        <CreditCard className="h-7 w-7 text-[#8B1A2E]" />
+                        <CreditCard className="h-7 w-7 text-[#B91C1C]" />
                         Đề Nghị Thanh Toán & Quản Lý Ngân Sách
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -459,14 +459,14 @@ export function PaymentRequestsClient({
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition"
                         title="In mẫu phôi tờ trình / đề nghị thanh toán trắng để ký tay"
                     >
-                        <Printer className="h-4 w-4 text-[#8B1A2E]" /> In Phôi Mẫu Trắng
+                        <Printer className="h-4 w-4 text-[#B91C1C]" /> In Phôi Mẫu Trắng
                     </button>
                     <button
                         onClick={() => {
                             setDrawerInitialSupplierId(undefined)
                             setShowCreateDrawer(true)
                         }}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#8B1A2E] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#B91C1C] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
                     >
                         <Plus className="h-4 w-4" /> Lập Đề Nghị Mới
                     </button>
@@ -480,7 +480,7 @@ export function PaymentRequestsClient({
                         onClick={() => setActiveTab('REQUESTS')}
                         className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
                             activeTab === 'REQUESTS'
-                                ? 'border-[#8B1A2E] text-[#8B1A2E]'
+                                ? 'border-[#B91C1C] text-[#B91C1C]'
                                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                         }`}
                     >
@@ -495,7 +495,7 @@ export function PaymentRequestsClient({
                         onClick={() => setActiveTab('SUPPLIERS')}
                         className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
                             activeTab === 'SUPPLIERS'
-                                ? 'border-[#8B1A2E] text-[#8B1A2E]'
+                                ? 'border-[#B91C1C] text-[#B91C1C]'
                                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                         }`}
                     >
@@ -510,7 +510,7 @@ export function PaymentRequestsClient({
                         onClick={() => setActiveTab('CATEGORIES')}
                         className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
                             activeTab === 'CATEGORIES'
-                                ? 'border-[#8B1A2E] text-[#8B1A2E]'
+                                ? 'border-[#B91C1C] text-[#B91C1C]'
                                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                         }`}
                     >
@@ -525,7 +525,7 @@ export function PaymentRequestsClient({
                         onClick={() => setActiveTab('BUDGETS')}
                         className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
                             activeTab === 'BUDGETS'
-                                ? 'border-[#8B1A2E] text-[#8B1A2E]'
+                                ? 'border-[#B91C1C] text-[#B91C1C]'
                                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                         }`}
                     >
@@ -542,7 +542,7 @@ export function PaymentRequestsClient({
                 <div className="space-y-6">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-slate-500">Tổng Đề Nghị Năm Nay</span>
                                 <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
@@ -553,7 +553,7 @@ export function PaymentRequestsClient({
                             <p className="mt-1 text-xs text-slate-400">Tất cả các khoản chi đã khởi tạo</p>
                         </div>
 
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-amber-700">Đang Chờ Duyệt</span>
                                 <div className="rounded-lg bg-amber-100 p-2 text-amber-700">
@@ -566,7 +566,7 @@ export function PaymentRequestsClient({
                             </p>
                         </div>
 
-                        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-blue-700">Đã Duyệt (Chờ Chi)</span>
                                 <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
@@ -577,7 +577,7 @@ export function PaymentRequestsClient({
                             <p className="mt-1 text-xs text-blue-600">Sẵn sàng để Kế toán lập UNC</p>
                         </div>
 
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-emerald-700">Đã Giải Ngân</span>
                                 <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
@@ -592,7 +592,7 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Filter and Search Bar */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
                         <div className="flex flex-1 items-center gap-2">
                             <div className="relative flex-1 max-w-sm">
                                 <input
@@ -601,7 +601,7 @@ export function PaymentRequestsClient({
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && refreshRequests()}
-                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#B91C1C] focus:outline-none"
                                 />
                                 <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
                             </div>
@@ -609,7 +609,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={statusFilter}
                                 onChange={e => handleFilterChange(e.target.value, undefined)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#8B1A2E] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả trạng thái</option>
                                 <option value="SUBMITTED">Chờ Trưởng phòng (Cấp 1)</option>
@@ -623,7 +623,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={categoryFilter}
                                 onChange={e => handleFilterChange(undefined, e.target.value)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#8B1A2E] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả nhóm chi phí</option>
                                 <option value="VENDOR_PAYMENT">Tiền hàng Nhà cung cấp</option>
@@ -646,7 +646,7 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Table of Requests */}
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
@@ -671,7 +671,7 @@ export function PaymentRequestsClient({
                                                     <td className="p-3.5 font-mono font-bold text-slate-900">
                                                         <button
                                                             onClick={() => openDetail(r.id)}
-                                                            className="hover:text-[#8B1A2E] hover:underline"
+                                                            className="hover:text-[#B91C1C] hover:underline"
                                                         >
                                                             {r.requestNo}
                                                         </button>
@@ -723,7 +723,7 @@ export function PaymentRequestsClient({
                                                         <div className="flex items-center justify-center gap-1.5">
                                                             <button
                                                                 onClick={() => openDetail(r.id)}
-                                                                className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-[#8B1A2E] hover:text-white transition"
+                                                                className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-[#B91C1C] hover:text-white transition"
                                                                 title="Xem chi tiết & Chứng từ scan"
                                                             >
                                                                 <Eye className="h-3.5 w-3.5" />
@@ -741,7 +741,7 @@ export function PaymentRequestsClient({
                                                                 className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
                                                                 title="In Tờ trình / Giấy đề nghị thanh toán"
                                                             >
-                                                                <Printer className="h-3.5 w-3.5 text-[#8B1A2E]" />
+                                                                <Printer className="h-3.5 w-3.5 text-[#B91C1C]" />
                                                             </button>
                                                             {['DRAFT', 'REJECTED'].includes(r.status) && (
                                                                 <button
@@ -778,7 +778,7 @@ export function PaymentRequestsClient({
                 <div className="space-y-6">
                     {/* Master Data Stats Grid */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-slate-500">Tổng Nhà Cung Cấp</span>
                                 <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
@@ -789,7 +789,7 @@ export function PaymentRequestsClient({
                             <p className="mt-1 text-xs text-slate-400">Đang hoạt động trong hệ thống</p>
                         </div>
 
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-emerald-700">Lũy Kế Đã Thanh Toán</span>
                                 <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
@@ -802,7 +802,7 @@ export function PaymentRequestsClient({
                             <p className="mt-1 text-xs text-emerald-600">Tổng tiền đã giải ngân cho NCC</p>
                         </div>
 
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-amber-700">Đơn Hàng PO Mở</span>
                                 <div className="rounded-lg bg-amber-100 p-2 text-amber-700">
@@ -813,7 +813,7 @@ export function PaymentRequestsClient({
                             <p className="mt-1 text-xs text-amber-700">Đơn hàng đang chờ hoặc đang nhận</p>
                         </div>
 
-                        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
+                        <div className="rounded-md border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase text-blue-700">Hóa Đơn AP Chưa Tất Toán</span>
                                 <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
@@ -826,7 +826,7 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Filter and Action Bar */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
                         <div className="flex flex-1 items-center gap-2">
                             <div className="relative flex-1 max-w-md">
                                 <input
@@ -834,7 +834,7 @@ export function PaymentRequestsClient({
                                     placeholder="Tìm theo tên NCC, mã NCC, MST hoặc số tài khoản..."
                                     value={supplierSearchText}
                                     onChange={e => setSupplierSearchText(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#B91C1C] focus:outline-none"
                                 />
                                 <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
                             </div>
@@ -842,7 +842,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={supplierTypeFilter}
                                 onChange={e => setSupplierTypeFilter(e.target.value)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#8B1A2E] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả phân loại NCC</option>
                                 <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
@@ -857,14 +857,14 @@ export function PaymentRequestsClient({
                         <button
                             type="button"
                             onClick={() => setShowQuickAddSupplierModal(true)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
                         >
                             <Plus className="h-4 w-4" /> Thêm Nhà Cung Cấp Mới
                         </button>
                     </div>
 
                     {/* Master Data Table */}
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
@@ -939,7 +939,7 @@ export function PaymentRequestsClient({
                                                         ) : (
                                                             <button
                                                                 onClick={() => handleOpenEditSupplier(s)}
-                                                                className="text-[11px] text-[#8B1A2E] hover:underline font-medium flex items-center gap-1"
+                                                                className="text-[11px] text-[#B91C1C] hover:underline font-medium flex items-center gap-1"
                                                             >
                                                                 <Plus className="h-3 w-3" /> Thêm TK ngân hàng
                                                             </button>
@@ -963,7 +963,7 @@ export function PaymentRequestsClient({
                                                     </td>
                                                     <td className="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
                                                         {s.totalPaidVND > 0 ? (
-                                                            <span className="text-[#8B1A2E]">{formatVND(s.totalPaidVND)}</span>
+                                                            <span className="text-[#B91C1C]">{formatVND(s.totalPaidVND)}</span>
                                                         ) : (
                                                             <span className="text-slate-400">0 ₫</span>
                                                         )}
@@ -972,7 +972,7 @@ export function PaymentRequestsClient({
                                                         <div className="flex items-center justify-center gap-1.5">
                                                             <button
                                                                 onClick={() => handleCreatePaymentForSupplier(s.id)}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-[#8B1A2E] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-2xs hover:bg-[#721526] transition"
+                                                                className="inline-flex items-center gap-1 rounded-md bg-[#B91C1C] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-2xs hover:bg-[#721526] transition"
                                                                 title="Lập Đề Nghị Thanh Toán cho Nhà Cung Cấp này"
                                                             >
                                                                 <Plus className="h-3 w-3" /> Lập Đề Nghị
@@ -1043,7 +1043,7 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Categories Table */}
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
                         <table className="w-full text-left text-xs">
                             <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
                                 <tr>
@@ -1123,7 +1123,7 @@ export function PaymentRequestsClient({
             {/* ═══════════════════════════════════════════════════════ */}
             {activeTab === 'BUDGETS' && (
                 <div className="space-y-6">
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">Tiến Độ Tiêu Thụ Ngân Sách Năm 2026</h3>
@@ -1206,7 +1206,7 @@ export function PaymentRequestsClient({
                                                             warningThresholdPct: b.warningThresholdPct,
                                                             notes: b.notes || '',
                                                         })}
-                                                        className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-[#8B1A2E] hover:text-white transition"
+                                                        className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-[#B91C1C] hover:text-white transition"
                                                     >
                                                         Cài Hạn Mức
                                                     </button>
@@ -1260,7 +1260,7 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Cấu Hình Hạng Mục Chi Phí ═══ */}
             {categoryModalData.open && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl border border-slate-200">
+                    <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-base font-bold text-slate-900">
                                 {categoryModalData.isEdit ? 'Chỉnh Sửa Hạng Mục Chi Phí' : 'Thêm Hạng Mục Chi Phí Mới'}
@@ -1283,7 +1283,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: MKT_TASTING"
                                         value={categoryModalData.code}
                                         onChange={e => setCategoryModalData(prev => ({ ...prev, code: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono uppercase text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono uppercase text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                                 <div>
@@ -1291,7 +1291,7 @@ export function PaymentRequestsClient({
                                     <select
                                         value={categoryModalData.group}
                                         onChange={e => setCategoryModalData(prev => ({ ...prev, group: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="COST_OF_SALES">Tiền Hàng & Nhập Khẩu</option>
                                         <option value="OPERATING">Vận Hành & Kho Bãi</option>
@@ -1310,7 +1310,7 @@ export function PaymentRequestsClient({
                                     placeholder="Vd: Chi phí Thử nếm rượu (Wine Tasting) & Tiếp khách"
                                     value={categoryModalData.name}
                                     onChange={e => setCategoryModalData(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1321,7 +1321,7 @@ export function PaymentRequestsClient({
                                     placeholder="Vd: 641 - Chi phí bán hàng / 642 - Chi phí quản lý"
                                     value={categoryModalData.defaultAccount}
                                     onChange={e => setCategoryModalData(prev => ({ ...prev, defaultAccount: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1332,7 +1332,7 @@ export function PaymentRequestsClient({
                                     placeholder="Mô tả mục đích sử dụng khoản chi này..."
                                     value={categoryModalData.description}
                                     onChange={e => setCategoryModalData(prev => ({ ...prev, description: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1346,7 +1346,7 @@ export function PaymentRequestsClient({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
+                                    className="rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
                                 >
                                     Lưu Hạng Mục
                                 </button>
@@ -1359,11 +1359,11 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Thiết Lập Ngân Sách ═══ */}
             {budgetModalData.open && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl border border-slate-200">
+                    <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900">Thiết Lập Hạn Mức Ngân Sách</h3>
-                                <p className="text-xs text-slate-500 font-semibold text-[#8B1A2E]">{budgetModalData.categoryName}</p>
+                                <p className="text-xs text-slate-500 font-semibold text-[#B91C1C]">{budgetModalData.categoryName}</p>
                             </div>
                             <button
                                 onClick={() => setBudgetModalData(prev => ({ ...prev, open: false }))}
@@ -1381,7 +1381,7 @@ export function PaymentRequestsClient({
                                     required
                                     value={budgetModalData.year}
                                     onChange={e => setBudgetModalData(prev => ({ ...prev, year: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1393,10 +1393,10 @@ export function PaymentRequestsClient({
                                     min="0"
                                     value={budgetModalData.allocatedAmount}
                                     onChange={e => setBudgetModalData(prev => ({ ...prev, allocatedAmount: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-sm font-bold text-slate-900 focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-sm font-bold text-slate-900 focus:border-[#B91C1C] focus:outline-none"
                                 />
                                 <p className="mt-1 text-[11px] text-slate-500">
-                                    Thành tiền: <span className="font-bold text-[#8B1A2E]">{formatVND(budgetModalData.allocatedAmount)}</span>
+                                    Thành tiền: <span className="font-bold text-[#B91C1C]">{formatVND(budgetModalData.allocatedAmount)}</span>
                                 </p>
                             </div>
 
@@ -1408,7 +1408,7 @@ export function PaymentRequestsClient({
                                     max="100"
                                     value={budgetModalData.warningThresholdPct}
                                     onChange={e => setBudgetModalData(prev => ({ ...prev, warningThresholdPct: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                                 <p className="mt-1 text-[11px] text-slate-400">Hệ thống sẽ hiển thị cảnh báo vàng khi chi tiêu đạt mức này</p>
                             </div>
@@ -1423,7 +1423,7 @@ export function PaymentRequestsClient({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
+                                    className="rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
                                 >
                                     Lưu Hạn Mức
                                 </button>
@@ -1436,13 +1436,13 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Chỉnh Sửa Thông Tin Thanh Toán NCC ═══ */}
             {editSupplierModal.open && editSupplierModal.supplier && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Edit3 className="h-4 w-4 text-[#8B1A2E]" /> Cập Nhật Thông Tin Thanh Toán & Ngân Hàng
+                                    <Edit3 className="h-4 w-4 text-[#B91C1C]" /> Cập Nhật Thông Tin Thanh Toán & Ngân Hàng
                                 </h3>
-                                <p className="text-xs font-semibold text-[#8B1A2E] mt-0.5">
+                                <p className="text-xs font-semibold text-[#B91C1C] mt-0.5">
                                     [{editSupplierModal.supplier.code}] {editSupplierModal.supplier.name}
                                 </p>
                             </div>
@@ -1463,7 +1463,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: 0312345678"
                                         value={editSupplierModal.taxId}
                                         onChange={e => setEditSupplierModal(prev => ({ ...prev, taxId: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                                 <div>
@@ -1471,7 +1471,7 @@ export function PaymentRequestsClient({
                                     <select
                                         value={editSupplierModal.paymentTerm}
                                         onChange={e => setEditSupplierModal(prev => ({ ...prev, paymentTerm: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="COD">Thanh toán ngay khi giao (COD)</option>
                                         <option value="NET15">Công nợ 15 ngày (NET15)</option>
@@ -1485,7 +1485,7 @@ export function PaymentRequestsClient({
                             </div>
 
                             {/* Bank details card */}
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5">
+                            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5">
                                 <span className="font-semibold text-slate-800 block text-xs">
                                     Tài Khoản Ngân Hàng Thụ Hưởng Của Nhà Cung Cấp
                                 </span>
@@ -1497,7 +1497,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: Vietcombank CN Kỳ Đồng / BIDV CN TP.HCM"
                                         value={editSupplierModal.bankName}
                                         onChange={e => setEditSupplierModal(prev => ({ ...prev, bankName: e.target.value }))}
-                                        className="w-full rounded border border-slate-300 p-2 text-xs bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded border border-slate-300 p-2 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1509,7 +1509,7 @@ export function PaymentRequestsClient({
                                             placeholder="Vd: 0071001234567"
                                             value={editSupplierModal.bankAccountNo}
                                             onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountNo: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-2 text-xs font-mono font-bold bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-2 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1519,7 +1519,7 @@ export function PaymentRequestsClient({
                                             placeholder="Vd: CTY TNHH PHÂN PHỐI ABC"
                                             value={editSupplierModal.bankAccountName}
                                             onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-2 text-xs font-medium uppercase bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-2 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                 </div>
@@ -1532,7 +1532,7 @@ export function PaymentRequestsClient({
                                     placeholder="Ghi chú thêm về thông tin xuất hóa đơn, đầu mối kế toán của NCC..."
                                     value={editSupplierModal.notes}
                                     onChange={e => setEditSupplierModal(prev => ({ ...prev, notes: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1547,7 +1547,7 @@ export function PaymentRequestsClient({
                                 <button
                                     type="submit"
                                     disabled={savingEditSupplier}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
                                 >
                                     {savingEditSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                     Lưu Thông Tin
@@ -1561,11 +1561,11 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Thêm NCC Mới Từ Tab Master ═══ */}
             {showQuickAddSupplierModal && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Building2 className="h-5 w-5 text-[#8B1A2E]" /> Thêm Nhà Cung Cấp Mới
+                                    <Building2 className="h-5 w-5 text-[#B91C1C]" /> Thêm Nhà Cung Cấp Mới
                                 </h3>
                                 <p className="text-xs text-slate-500">Khởi tạo nhanh hồ sơ Nhà Cung Cấp & tài khoản ngân hàng để phục vụ thanh toán</p>
                             </div>
@@ -1586,7 +1586,7 @@ export function PaymentRequestsClient({
                                     placeholder="Vd: Công ty TNHH Nhập Khẩu Rượu Vang A"
                                     value={quickSupplierForm.name}
                                     onChange={e => setQuickSupplierForm(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1598,7 +1598,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: NCC-0088"
                                         value={quickSupplierForm.code}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, code: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1607,7 +1607,7 @@ export function PaymentRequestsClient({
                                     <select
                                         value={quickSupplierForm.type}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, type: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
                                         <option value="WINERY">Nhà làm rượu (Winery / Hãng rượu)</option>
@@ -1627,7 +1627,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: 0312345678"
                                         value={quickSupplierForm.taxId}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, taxId: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1636,7 +1636,7 @@ export function PaymentRequestsClient({
                                     <select
                                         value={quickSupplierForm.paymentTerm}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, paymentTerm: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="COD">Thanh toán ngay khi giao (COD)</option>
                                         <option value="NET15">Công nợ 15 ngày (NET15)</option>
@@ -1650,7 +1650,7 @@ export function PaymentRequestsClient({
                             </div>
 
                             {/* Bank Details */}
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
+                            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
                                 <span className="font-semibold text-slate-700 block">Tài khoản ngân hàng thụ hưởng</span>
                                 
                                 <div>
@@ -1660,7 +1660,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: Vietcombank - CN Kỳ Đồng"
                                         value={quickSupplierForm.bankName}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankName: e.target.value }))}
-                                        className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1672,7 +1672,7 @@ export function PaymentRequestsClient({
                                             placeholder="Vd: 0071001234567"
                                             value={quickSupplierForm.bankAccountNo}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountNo: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1682,7 +1682,7 @@ export function PaymentRequestsClient({
                                             placeholder="Vd: CTY TNHH ABC"
                                             value={quickSupplierForm.bankAccountName}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                 </div>
@@ -1697,7 +1697,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: 028 3822 xxxx"
                                         value={quickSupplierForm.phone}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                                 <div>
@@ -1707,7 +1707,7 @@ export function PaymentRequestsClient({
                                         placeholder="Vd: accounting@supplier.com"
                                         value={quickSupplierForm.email}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, email: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -1723,7 +1723,7 @@ export function PaymentRequestsClient({
                                 <button
                                     type="submit"
                                     disabled={savingQuickSupplier}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
                                 >
                                     {savingQuickSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                     Lưu Nhà Cung Cấp

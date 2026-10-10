@@ -259,7 +259,7 @@ export function ProcurementCashFlowModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-7xl max-h-[94vh] rounded-xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden">
+            <div className="bg-white w-full max-w-7xl max-h-[94vh] rounded-md shadow-2xl flex flex-col border border-slate-200 overflow-hidden">
                 
                 {/* ── HEADER ──────────────────────────────────────────────── */}
                 <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
@@ -487,7 +487,7 @@ export function ProcurementCashFlowModal({
                         <div className="text-xl font-bold font-mono text-teal-50">
                             {formatVND(totals.grandTotalLandedVND)}
                         </div>
-                        <div className="text-[11px] text-teal-300 mt-0.5 flex items-center justify-between">
+                        <div className="text-[11px] text-teal-700 mt-0.5 flex items-center justify-between">
                             <span>Hàng: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalGoodsVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
                             <span>Thuế: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalTaxVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
                             <span>Logistics: {totals.grandTotalLandedVND > 0 ? Math.round(((totals.totalFreightVND + totals.totalLocalVND) / totals.grandTotalLandedVND) * 100) : 0}%</span>

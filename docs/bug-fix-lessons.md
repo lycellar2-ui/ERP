@@ -3634,6 +3634,52 @@ Người dùng khi lập Đề nghị thanh toán (`/dashboard/payment-requests`
 ### Bài học
 > ⚠️ **RULE 129: (1) Tuyệt đối không hardcode sai tên Bucket mặc định trong các Storage Adapter; (2) Đối với file upload chứng từ / scan / media lớn trên môi trường Serverless (Vercel), BẮT BUỘC sử dụng kiến trúc Direct-to-Storage Presigned PUT URL từ trình duyệt để vượt qua giới hạn trần 4.5MB Payload của Vercel; (3) Mọi Storage Client phải thiết kế cơ chế Fallback an toàn (Graceful Fallback) để hệ thống không bị tê liệt khi triển khai đa môi trường (Dev/Staging/Production).**
 
+---
+
+## BUG-130: Trải Nghiệm Lên Đơn & Sửa Đơn SO Trên Điện Thoại — Lỗi Auto-Zoom Viewport Khi Gõ Khách Hàng, Dropdown Đóng Sớm Khi Chạm Cảm Ứng & Nhập Số Lượng Khó Khăn
+
+**Ngày:** 2026-10-11  
+**Module:** `Sales Orders (SO) / Mobile Responsive UX`  
+**File liên quan:** `src/app/layout.tsx`, `src/app/dashboard/sales/CreateSODrawer.tsx`, `src/app/dashboard/sales/EditSODrawer.tsx`, `src/app/dashboard/sales/i18n.ts`  
+**Trạng thái:** ✅ Đã khắc phục & Kiểm thử tự động thành công  
+
+### Triệu chứng & Bối cảnh
+Người dùng truy cập ERP trên điện thoại thông minh (iOS Safari, Android Chrome) để lên đơn hoặc chỉnh sửa đơn hàng bán (SO):
+1. **Lỗi Auto-Zoom:** Sau khi bấm vào ô tìm kiếm khách hàng hoặc ô tìm sản phẩm và gõ phím, màn hình điện thoại tự động bị phóng to (zoom in) bất thường, làm lệch khung hình giao diện và phải dùng 2 ngón tay thu nhỏ lại.
+2. **Lỗi Dropdown Bị Đóng Sớm (Touch Race Condition):** Khi gõ mã khách hàng hoặc sản phẩm, danh sách gợi ý dropdown hiện ra, nhưng khi người dùng chạm ngón tay để chọn một dòng thì ô tìm kiếm bị mất focus (blur event) kích hoạt `setTimeout(..., 200)` đóng dropdown trước khi sự kiện chọn kịp thực thi.
+3. **Thao tác Nhập & Sửa Số Lượng Kém Thân Thiện:**
+   - Tại `CreateSODrawer.tsx`: Ô nhập số lượng bị co cụm trong lưới 4 cột chật hẹp, kích thước chữ 12px (gây zoom khi bấm), không có nút tăng/giảm số lượng nhanh (`-` / `+`).
+   - Tại `EditSODrawer.tsx`: Danh sách sản phẩm chỉ hỗ trợ dạng bảng ngang máy tính (`min-w-[650px]`), buộc người dùng phải vuốt ngang liên tục trên màn hình điện thoại.
+   - Nhân viên kinh doanh ngành rượu vang thường xuyên lên đơn theo thùng (thùng 6 chai hoặc thùng 12 chai) nhưng phải bấm xóa và gõ số thủ công.
+
+### Nguyên nhân gốc rễ
+1. **Quy tắc Accessibility của Trình Duyệt Di Động (iOS Safari & Android Chrome):**
+   Mọi thẻ `<input>` hoặc `<select>` có `font-size < 16px` (như `text-xs` = 12px, `text-sm` = 14px) sẽ bị trình duyệt di động cưỡng chế kích hoạt tính năng zoom màn hình vào ô nhập liệu để đảm bảo người dùng đọc được. Mặc dù `layout.tsx` khai báo `maximumScale: 1`, iOS Safari vẫn cố tình bỏ qua thuộc tính này nếu cỡ chữ input dưới 16px.
+2. **Sự Kiện Touch Cảm Ứng Bị Tranh Chấp Với `onBlur`:**
+   Dropdown gợi ý khách hàng và sản phẩm sử dụng sự kiện `onMouseDown`. Trên màn hình cảm ứng di động, chuỗi sự kiện chạm gồm `touchstart` -> `touchend` -> `blur` -> `mousedown` -> `click`. Sự kiện `onBlur` của input kích hoạt trước và kích hoạt hàm đóng dropdown sau 200ms, làm thao tác chọn của người dùng bị nuốt hoặc đóng mất gợi ý.
+3. **Thiếu Layout Card Chuyên Biệt & Công Cụ Ergonomics Cho Mobile:**
+   `EditSODrawer.tsx` chưa có Mobile Card View. Cả 2 drawer đều thiếu bộ Stepper bấm ngón tay cái (`[-] [qty] [+]`), thiếu bàn phím số chuyên biệt (`inputMode="numeric"`), và thiếu phím tắt cộng theo thùng rượu (`+6`, `+12`).
+
+### Cách khắc phục
+1. **Triệt Tiêu Hoàn Toàn Auto-Zoom Viewport Bằng Tailwind Responsive Font Size:**
+   - Nâng cấp toàn bộ các trường nhập liệu (`<input>`, `<select>`, `<textarea>`) trong `CreateSODrawer.tsx` và `EditSODrawer.tsx` sang `text-base sm:text-xs` hoặc `text-base sm:text-sm`.
+   - Trên màn hình di động (< 640px), kích thước chữ luôn chuẩn 16px (`text-base`), ngăn 100% việc trình duyệt kích hoạt auto-zoom. Trên máy tính (>= 640px), cỡ chữ tự động thu về 12px/14px nhỏ gọn chuẩn ERP.
+   - Cấu hình thẻ `viewport` chuẩn tại `src/app/layout.tsx` với `{ width: 'device-width', initialScale: 1, maximumScale: 1 }`.
+2. **Sử Dụng `onPointerDown` Thay Thế `onMouseDown`:**
+   - Chuyển toàn bộ các phần tử dropdown item sang `onPointerDown={(e) => { e.preventDefault(); ... }}`.
+   - Hàm `e.preventDefault()` trên `pointerdown` ngăn trình duyệt phát sinh blur event sớm, đảm bảo thao tác chọn sản phẩm/khách hàng được xử lý ngay lập tức trên cả cảm ứng và chuột.
+3. **Thiết Kế Mobile Card View & Bộ Stepper Tối Ưu Cho Ngành Rượu:**
+   - Bổ sung Mobile Card View cho cả `CreateSODrawer.tsx` và `EditSODrawer.tsx` với cơ chế hiển thị responsive (`hidden sm:block` cho bảng máy tính, `block sm:hidden` cho danh sách card di động).
+   - Trang bị bộ điều khiển số lượng cảm ứng lớn:
+     - Nút `[-]` và `[+]` kích thước chạm chuẩn ngón cái (>= 36x36px).
+     - Ô nhập số lượng ở giữa có `inputMode="numeric"`, `pattern="[0-9]*"` mở ngay bàn phím số lớn trên điện thoại.
+     - Phím tắt bán hàng theo thùng rượu vang: `+6` (1 thùng 6 chai) và `+12` (2 thùng 12 chai) giúp nhân viên lên đơn chỉ bằng 1 cú chạm.
+   - Sắp xếp thông tin Đơn giá, Chiết khấu, Thuế VAT và Thành tiền rõ ràng, không bị xô lệch trên mọi kích thước màn hình smartphone.
+
+### Bài học
+> ⚠️ **RULE 130: (1) Trên giao diện Web di động / Responsive, MỌI thẻ `<input>`, `<select>`, `<textarea>` BẮT BUỘC phải dùng cỡ chữ tối thiểu 16px trên mobile (`text-base sm:text-xs` hoặc `text-base sm:text-sm`) để ngăn chặn triệt để hành vi tự động phóng to (Auto-Zoom) của iOS Safari và Android Chrome; (2) Đối với các bộ chọn Autocomplete/Dropdown trên thiết bị cảm ứng, BẮT BUỘC dùng `onPointerDown={(e) => { e.preventDefault(); ... }}` để ngăn `onBlur` đóng menu trước khi người dùng chạm chọn; (3) Các thao tác nhập số lượng trên di động PHẢI có `inputMode="numeric"` và bộ nút bấm tăng giảm Stepper (kích thước tối thiểu 36x36px) cùng phím tắt đơn vị đóng gói (như +6, +12 thùng) để tối ưu công thái học (Ergonomics) cho người dùng.**
+
+
 
 
 

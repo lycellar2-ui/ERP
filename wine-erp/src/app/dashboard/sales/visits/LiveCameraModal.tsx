@@ -265,7 +265,7 @@ export function LiveCameraModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-lg rounded-lg overflow-hidden flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-2.5">
@@ -318,7 +318,7 @@ export function LiveCameraModal({
                                 <button
                                     type="button"
                                     onClick={onOpenGpsGuide}
-                                    className="absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-xl bg-amber-500/90 hover:bg-amber-600 text-white backdrop-blur text-xs font-semibold flex items-center justify-between shadow-lg border border-amber-400/60 transition z-20 cursor-pointer animate-pulse"
+                                    className="absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-md bg-amber-500/90 hover:bg-amber-600 text-white backdrop-blur text-xs font-semibold flex items-center justify-between shadow-lg border border-amber-400/60 transition z-20 cursor-pointer animate-pulse"
                                 >
                                     <span className="flex items-center gap-1.5 truncate">
                                         <AlertCircle size={14} className="shrink-0 text-amber-100" />
@@ -354,7 +354,7 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-5 py-3 text-xs font-bold rounded-xl bg-[#0891B2] text-white flex items-center gap-2 shadow-lg"
+                                className="px-5 py-3 text-xs font-bold rounded-md bg-[#0891B2] text-white flex items-center gap-2 shadow-lg"
                             >
                                 <Camera size={16} /> {locale === 'en' ? 'Open device camera' : 'Mở camera thiết bị'}
                             </button>
@@ -390,7 +390,7 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={() => { stopActiveStream(); onClose(); }}
-                                className="px-4 py-2.5 text-xs font-medium rounded-xl text-slate-600 hover:bg-white"
+                                className="px-4 py-2.5 text-xs font-medium rounded-md text-slate-600 hover:bg-white"
                             >
                                 {locale === 'en' ? 'Cancel' : 'Hủy'}
                             </button>
@@ -400,7 +400,7 @@ export function LiveCameraModal({
                                     type="button"
                                     onClick={takeSnapshot}
                                     disabled={starting}
-                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                                    className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                                     style={{ background: '#0891B2', color: '#FFFFFF' }}
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Take Field Photo' : 'Chụp Ảnh Điểm Bán'}
@@ -409,7 +409,7 @@ export function LiveCameraModal({
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#0891B2] text-white"
+                                    className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0891B2] text-white"
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Open Camera Now' : 'Mở Camera Chụp Ngay'}
                                 </button>
@@ -420,14 +420,14 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={retakePhoto}
-                                className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-white text-slate-600 hover:bg-[#E2E8F0] border border-slate-200"
+                                className="px-4 py-2.5 text-xs font-semibold rounded-md bg-white text-slate-600 hover:bg-[#E2E8F0] border border-slate-200"
                             >
                                 <RefreshCw size={14} className="inline mr-1" /> {locale === 'en' ? 'Retake' : 'Chụp Lại'}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#0891B2] text-white"
+                                className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0891B2] text-white"
                             >
                                 <CheckCircle2 size={16} /> {locale === 'en' ? 'Confirm Photo' : 'Xác Nhận Ảnh Này'}
                             </button>

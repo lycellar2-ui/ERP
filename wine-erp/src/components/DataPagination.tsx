@@ -60,7 +60,7 @@ export function DataPagination({
                         <button key={p} onClick={() => onPageChange(p)}
                             className="min-w-[32px] h-8 px-2 rounded text-xs font-medium transition-all"
                             style={{
-                                background: p === page ? '#87CBB9' : 'transparent',
+                                background: p === page ? '#0E7490' : 'transparent',
                                 color: p === page ? '#F8FAFC' : '#475569',
                             }}>
                             {p}

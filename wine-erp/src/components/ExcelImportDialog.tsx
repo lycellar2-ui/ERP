@@ -120,7 +120,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
         <>
             {/* Backdrop */}
             <div className="fixed inset-0 z-50 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.8)' }}
+                style={{ background: 'rgba(15,23,42,0.4)' }}
                 onClick={handleClose} />
 
             {/* Modal */}
@@ -134,8 +134,8 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         style={{ borderBottom: '1px solid #E2E8F0' }}>
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-                                style={{ background: 'rgba(74,143,171,0.15)' }}>
-                                <FileSpreadsheet size={18} style={{ color: '#4A8FAB' }} />
+                                style={{ background: 'rgba(29,78,216,0.15)' }}>
+                                <FileSpreadsheet size={18} style={{ color: '#1D4ED8' }} />
                             </div>
                             <div>
                                 <h3 className="font-semibold text-base" style={{ color: '#0F172A' }}>
@@ -161,11 +161,11 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         <button onClick={downloadTemplate}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all group"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#4A8FAB')}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#1D4ED8')}
                             onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                style={{ background: 'rgba(74,143,171,0.12)' }}>
-                                <Download size={18} style={{ color: '#4A8FAB' }} />
+                                style={{ background: 'rgba(29,78,216,0.12)' }}>
+                                <Download size={18} style={{ color: '#1D4ED8' }} />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
@@ -182,8 +182,8 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                             <div
                                 className="relative rounded-xl transition-all cursor-pointer"
                                 style={{
-                                    background: dragOver ? 'rgba(74,143,171,0.08)' : '#FFFFFF',
-                                    border: `2px dashed ${dragOver ? '#4A8FAB' : '#E2E8F0'}`,
+                                    background: dragOver ? 'rgba(29,78,216,0.08)' : '#FFFFFF',
+                                    border: `2px dashed ${dragOver ? '#1D4ED8' : '#E2E8F0'}`,
                                     padding: '2rem',
                                 }}
                                 onDragOver={e => { e.preventDefault(); setDragOver(true) }}
@@ -195,7 +195,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                     accept=".xlsx,.xls"
                                     onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }} />
                                 <div className="flex flex-col items-center gap-3 text-center">
-                                    <Upload size={32} style={{ color: dragOver ? '#4A8FAB' : '#64748B' }} />
+                                    <Upload size={32} style={{ color: dragOver ? '#1D4ED8' : '#64748B' }} />
                                     <div>
                                         <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                                             Kéo thả file Excel vào đây
@@ -211,7 +211,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         {/* Step 2b: Importing */}
                         {step === 'importing' && (
                             <div className="flex flex-col items-center gap-4 py-8">
-                                <Loader2 size={36} className="animate-spin" style={{ color: '#4A8FAB' }} />
+                                <Loader2 size={36} className="animate-spin" style={{ color: '#1D4ED8' }} />
                                 <div className="text-center">
                                     <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                                         Đang xử lý {fileName}...
@@ -232,22 +232,22 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                         <p className="text-xl font-bold font-mono" style={{ color: '#0F172A' }}>{result.total}</p>
                                         <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#64748B' }}>Tổng dòng</p>
                                     </div>
-                                    <div className="p-3 rounded-lg text-center" style={{ background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                        <p className="text-xl font-bold font-mono" style={{ color: '#5BA88A' }}>{result.success}</p>
-                                        <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#5BA88A' }}>Thành công</p>
+                                    <div className="p-3 rounded-lg text-center" style={{ background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.3)' }}>
+                                        <p className="text-xl font-bold font-mono" style={{ color: '#15803D' }}>{result.success}</p>
+                                        <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#15803D' }}>Thành công</p>
                                     </div>
-                                    <div className="p-3 rounded-lg text-center" style={{ background: result.errors.length > 0 ? 'rgba(224,82,82,0.08)' : '#FFFFFF', border: `1px solid ${result.errors.length > 0 ? 'rgba(224,82,82,0.3)' : '#E2E8F0'}` }}>
-                                        <p className="text-xl font-bold font-mono" style={{ color: result.errors.length > 0 ? '#E05252' : '#64748B' }}>{result.errors.length}</p>
-                                        <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: result.errors.length > 0 ? '#E05252' : '#64748B' }}>Lỗi</p>
+                                    <div className="p-3 rounded-lg text-center" style={{ background: result.errors.length > 0 ? 'rgba(185,28,28,0.08)' : '#FFFFFF', border: `1px solid ${result.errors.length > 0 ? 'rgba(185,28,28,0.3)' : '#E2E8F0'}` }}>
+                                        <p className="text-xl font-bold font-mono" style={{ color: result.errors.length > 0 ? '#B91C1C' : '#64748B' }}>{result.errors.length}</p>
+                                        <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: result.errors.length > 0 ? '#B91C1C' : '#64748B' }}>Lỗi</p>
                                     </div>
                                 </div>
 
                                 {/* Success banner */}
                                 {result.success > 0 && (
                                     <div className="flex items-center gap-2 px-4 py-3 rounded-lg"
-                                        style={{ background: 'rgba(91,168,138,0.1)', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                        <CheckCircle2 size={16} style={{ color: '#5BA88A' }} />
-                                        <span className="text-sm font-medium" style={{ color: '#5BA88A' }}>
+                                        style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)' }}>
+                                        <CheckCircle2 size={16} style={{ color: '#15803D' }} />
+                                        <span className="text-sm font-medium" style={{ color: '#15803D' }}>
                                             Đã import thành công {result.success}/{result.total} dòng
                                         </span>
                                     </div>
@@ -256,7 +256,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 {/* Error list */}
                                 {result.errors.length > 0 && (
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#E05252' }}>
+                                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#B91C1C' }}>
                                             <AlertTriangle size={12} className="inline mr-1" />
                                             Chi tiết lỗi ({result.errors.length})
                                         </p>
@@ -264,7 +264,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                             {result.errors.map((err, idx) => (
                                                 <div key={idx} className="flex items-start gap-3 px-4 py-2.5 text-xs"
                                                     style={{ borderBottom: idx < result.errors.length - 1 ? '1px solid #FFFFFF' : 'none' }}>
-                                                    <span className="font-bold flex-shrink-0 w-14 font-mono" style={{ color: '#E05252' }}>
+                                                    <span className="font-bold flex-shrink-0 w-14 font-mono" style={{ color: '#B91C1C' }}>
                                                         {err.row > 0 ? `Dòng ${err.row}` : 'Chung'}
                                                     </span>
                                                     <span style={{ color: '#475569' }}>{err.message}</span>
@@ -280,7 +280,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                             XLSX.writeFile(wb, `import_errors_${Date.now()}.xlsx`)
                                         }}
                                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                            style={{ background: 'rgba(224,82,82,0.1)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+                                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                             <FileX2 size={14} /> Tải báo cáo lỗi (.xlsx)
                                         </button>
                                     </div>
@@ -304,8 +304,8 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 <button onClick={handleClose}
                                     className="px-5 py-2.5 rounded-lg text-sm font-semibold"
                                     style={{ background: '#0891B2', color: '#FFFFFF' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
                                     Đóng
                                 </button>
                             </>

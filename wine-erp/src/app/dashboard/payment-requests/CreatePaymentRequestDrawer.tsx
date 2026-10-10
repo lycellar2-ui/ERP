@@ -550,9 +550,9 @@ export function CreatePaymentRequestDrawer({
                 {/* ═══ Scrollable Body ═══ */}
                 <form id="payment-request-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* 1. Thông tin chung */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <div className="rounded-md border border-slate-200 bg-slate-50/50 p-4">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-                            <CreditCard className="h-4 w-4 text-[#8B1A2E]" /> 1. Thông Tin Chung
+                            <CreditCard className="h-4 w-4 text-[#B91C1C]" /> 1. Thông Tin Chung
                         </h3>
                         <div className="space-y-3.5 text-xs">
                             <div>
@@ -565,7 +565,7 @@ export function CreatePaymentRequestDrawer({
                                     placeholder="Vd: Thanh toán tiền hàng vang Ý lô số PO-2026-08 / Chi phí thử nếm Masterclass tháng 10"
                                     value={title}
                                     onChange={e => setTitle(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 font-medium focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 font-medium focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -575,7 +575,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={category}
                                         onChange={e => setCategory(e.target.value as any)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="VENDOR_PAYMENT">Tiền hàng Nhà cung cấp</option>
                                         <option value="IMPORT_TAX_LOGISTICS">Thuế Hải quan & Cước tàu</option>
@@ -591,7 +591,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={primaryCategoryId}
                                         onChange={e => handleCategoryChange(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         {categories.map(c => (
                                             <option key={c.id} value={c.id}>
@@ -606,7 +606,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={priority}
                                         onChange={e => setPriority(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="LOW">Thấp</option>
                                         <option value="NORMAL">Bình thường</option>
@@ -622,7 +622,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={legalEntityId}
                                         onChange={e => setLegalEntityId(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         {legalEntities.map(le => (
                                             <option key={le.id} value={le.id}>{le.name}</option>
@@ -635,7 +635,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={departmentId}
                                         onChange={e => setDepartmentId(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         {departments.map(d => (
                                             <option key={d.id} value={d.id}>{d.name}</option>
@@ -649,7 +649,7 @@ export function CreatePaymentRequestDrawer({
                                         type="date"
                                         value={dueDate}
                                         onChange={e => setDueDate(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -661,7 +661,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={currency}
                                         onChange={e => setCurrency(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="VND">VND (Việt Nam Đồng)</option>
                                         <option value="USD">USD (Đô la Mỹ)</option>
@@ -679,7 +679,7 @@ export function CreatePaymentRequestDrawer({
                                             type="number"
                                             value={exchangeRate}
                                             onChange={e => setExchangeRate(Number(e.target.value))}
-                                            className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono font-bold focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono font-bold focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                 )}
@@ -688,10 +688,10 @@ export function CreatePaymentRequestDrawer({
                     </div>
 
                     {/* 2. Chọn Nhà Cung Cấp & Thông tin thụ hưởng */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <div className="rounded-md border border-slate-200 bg-slate-50/50 p-4">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <Building2 className="h-4 w-4 text-[#8B1A2E]" /> 2. Chọn Nhà Cung Cấp & Người Thụ Hưởng
+                                <Building2 className="h-4 w-4 text-[#B91C1C]" /> 2. Chọn Nhà Cung Cấp & Người Thụ Hưởng
                             </h3>
                             <button
                                 type="button"
@@ -725,7 +725,7 @@ export function CreatePaymentRequestDrawer({
                                             placeholder="Tìm nhanh tên, mã NCC hoặc MST..."
                                             value={supplierSearch}
                                             onChange={e => setSupplierSearch(e.target.value)}
-                                            className="w-full rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs focus:border-[#B91C1C] focus:outline-none"
                                         />
                                         <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
                                     </div>
@@ -733,7 +733,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={supplierId}
                                         onChange={e => selectSupplier(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-1.5 text-xs font-medium focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-1.5 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="">-- Chọn Nhà Cung Cấp ({filteredSuppliers.length}) --</option>
                                         {filteredSuppliers.map(s => (
@@ -766,13 +766,13 @@ export function CreatePaymentRequestDrawer({
                             {/* Pending POs and AP Invoices Banner (Smart Match) */}
                             {loadingPending && (
                                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500">
-                                    <Loader2 className="h-4 w-4 animate-spin text-[#8B1A2E]" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-[#B91C1C]" />
                                     Đang kiểm tra đơn hàng PO và hóa đơn chưa thanh toán của NCC này...
                                 </div>
                             )}
 
                             {pendingData && (pendingData.pos.length > 0 || pendingData.invoices.length > 0) && (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-2.5">
+                                <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3.5 space-y-2.5">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
                                             <Sparkles className="h-4 w-4 text-amber-600" />
@@ -787,7 +787,7 @@ export function CreatePaymentRequestDrawer({
                                     {pendingData.pos.length > 0 && (
                                         <div>
                                             <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1 mb-1.5">
-                                                <Package className="h-3.5 w-3.5 text-[#8B1A2E]" />
+                                                <Package className="h-3.5 w-3.5 text-[#B91C1C]" />
                                                 Đơn đặt hàng (PO) đã duyệt:
                                             </span>
                                             <div className="flex flex-wrap gap-2">
@@ -800,8 +800,8 @@ export function CreatePaymentRequestDrawer({
                                                             onClick={() => handleSelectPO(po)}
                                                             className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition ${
                                                                 isSelected
-                                                                    ? 'border-[#8B1A2E] bg-[#8B1A2E] text-white shadow-xs font-bold'
-                                                                    : 'border-amber-300 bg-white text-slate-800 hover:border-[#8B1A2E]'
+                                                                    ? 'border-[#B91C1C] bg-[#B91C1C] text-white shadow-xs font-bold'
+                                                                    : 'border-amber-300 bg-white text-slate-800 hover:border-[#B91C1C]'
                                                             }`}
                                                         >
                                                             {isSelected ? <Check className="h-3 w-3" /> : <LinkIcon className="h-3 w-3 text-slate-400" />}
@@ -860,7 +860,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: Công ty TNHH Vận Tải Biển / Nguyễn Văn A"
                                         value={beneficiaryName}
                                         onChange={e => setBeneficiaryName(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -871,7 +871,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: 0071001234567"
                                         value={beneficiaryAccount}
                                         onChange={e => setBeneficiaryAccount(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs font-semibold focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs font-semibold focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -882,7 +882,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: Vietcombank CN TP.HCM"
                                         value={beneficiaryBank}
                                         onChange={e => setBeneficiaryBank(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -890,7 +890,7 @@ export function CreatePaymentRequestDrawer({
                     </div>
 
                     {/* 3. Bảng kê chi tiết khoản mục */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-md border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                 3. Bảng Kê Khoản Mục Chi Tiết
@@ -929,14 +929,14 @@ export function CreatePaymentRequestDrawer({
                                                         placeholder="Nội dung khoản chi..."
                                                         value={item.description}
                                                         onChange={e => updateItem(idx, 'description', e.target.value)}
-                                                        className="w-full rounded border border-slate-300 p-1.5 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                                        className="w-full rounded border border-slate-300 p-1.5 text-xs focus:border-[#B91C1C] focus:outline-none"
                                                     />
                                                 </td>
                                                 <td className="p-2">
                                                     <select
                                                         value={item.categoryId}
                                                         onChange={e => updateItem(idx, 'categoryId', e.target.value)}
-                                                        className="w-full rounded border border-slate-300 p-1.5 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                                        className="w-full rounded border border-slate-300 p-1.5 text-xs focus:border-[#B91C1C] focus:outline-none"
                                                     >
                                                         {categories.map(c => (
                                                             <option key={c.id} value={c.id}>
@@ -951,7 +951,7 @@ export function CreatePaymentRequestDrawer({
                                                         min="1"
                                                         value={item.quantity}
                                                         onChange={e => updateItem(idx, 'quantity', Number(e.target.value))}
-                                                        className="w-full rounded border border-slate-300 p-1.5 text-center text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                                        className="w-full rounded border border-slate-300 p-1.5 text-center text-xs focus:border-[#B91C1C] focus:outline-none"
                                                     />
                                                 </td>
                                                 <td className="p-2">
@@ -961,7 +961,7 @@ export function CreatePaymentRequestDrawer({
                                                         value={item.unitPrice || ''}
                                                         onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))}
                                                         placeholder="0"
-                                                        className="w-full rounded border border-slate-300 p-1.5 text-right font-mono text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                                        className="w-full rounded border border-slate-300 p-1.5 text-right font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
                                                     />
                                                 </td>
                                                 <td className="p-2">
@@ -971,7 +971,7 @@ export function CreatePaymentRequestDrawer({
                                                         value={item.vatAmount || ''}
                                                         onChange={e => updateItem(idx, 'vatAmount', Number(e.target.value))}
                                                         placeholder="0"
-                                                        className="w-full rounded border border-slate-300 p-1.5 text-right font-mono text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                                        className="w-full rounded border border-slate-300 p-1.5 text-right font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
                                                     />
                                                 </td>
                                                 <td className="p-2 text-right font-mono font-semibold text-slate-900">
@@ -997,12 +997,12 @@ export function CreatePaymentRequestDrawer({
                         <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs">
                             <div className="text-slate-500">
                                 Số lượng khoản mục: <span className="font-semibold text-slate-800">{items.length}</span>
-                                {poId && <span className="ml-2 text-[#8B1A2E] font-medium">• Đã gắn PO</span>}
+                                {poId && <span className="ml-2 text-[#B91C1C] font-medium">• Đã gắn PO</span>}
                                 {apInvoiceId && <span className="ml-2 text-blue-600 font-medium">• Đã gắn HĐ AP</span>}
                             </div>
                             <div className="flex items-center gap-4">
                                 <span className="text-slate-500">Tổng cộng thanh toán:</span>
-                                <span className="text-base font-bold text-[#8B1A2E]">
+                                <span className="text-base font-bold text-[#B91C1C]">
                                     {currency === 'VND' ? formatVND(grandTotalVND) : `${grandTotal.toLocaleString()} ${currency} (~${formatVND(grandTotalVND)})`}
                                 </span>
                             </div>
@@ -1010,7 +1010,7 @@ export function CreatePaymentRequestDrawer({
                     </div>
 
                     {/* 4. Upload Chứng từ Scan (Cloudflare R2) */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                    <div className="rounded-md border border-slate-200 bg-slate-50/50 p-4">
                         <div className="flex items-center justify-between mb-2">
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -1021,7 +1021,7 @@ export function CreatePaymentRequestDrawer({
                                 </p>
                             </div>
                             {uploadingFiles && (
-                                <div className="flex items-center gap-1.5 text-xs text-[#8B1A2E] font-medium">
+                                <div className="flex items-center gap-1.5 text-xs text-[#B91C1C] font-medium">
                                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tải lên R2...
                                 </div>
                             )}
@@ -1063,7 +1063,7 @@ export function CreatePaymentRequestDrawer({
                                             <select
                                                 value={att.docType}
                                                 onChange={e => updateAttachmentDocType(idx, e.target.value as any)}
-                                                className="rounded border border-slate-300 p-1 text-[11px] focus:border-[#8B1A2E] focus:outline-none"
+                                                className="rounded border border-slate-300 p-1 text-[11px] focus:border-[#B91C1C] focus:outline-none"
                                             >
                                                 <option value="VAT_INVOICE">Hóa đơn GTGT</option>
                                                 <option value="DELIVERY_NOTE">Biên bản bàn giao / Phiếu kho</option>
@@ -1095,7 +1095,7 @@ export function CreatePaymentRequestDrawer({
                             placeholder="Ghi chú thêm về điều khoản hợp đồng, tiến độ hoặc lý do cần thanh toán gấp..."
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#8B1A2E] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#B91C1C] focus:outline-none"
                         />
                     </div>
                 </form>
@@ -1104,7 +1104,7 @@ export function CreatePaymentRequestDrawer({
                 <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
                     <div className="text-xs">
                         <span className="text-slate-500">Tổng thanh toán: </span>
-                        <span className="font-mono text-base font-bold text-[#8B1A2E]">{formatVND(grandTotalVND)}</span>
+                        <span className="font-mono text-base font-bold text-[#B91C1C]">{formatVND(grandTotalVND)}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1119,7 +1119,7 @@ export function CreatePaymentRequestDrawer({
                             type="submit"
                             form="payment-request-form"
                             disabled={submitting}
-                            className="inline-flex items-center gap-2 rounded-lg bg-[#8B1A2E] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#B91C1C] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition disabled:opacity-50"
                         >
                             {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                             Gửi Phê Duyệt Đề Nghị
@@ -1131,11 +1131,11 @@ export function CreatePaymentRequestDrawer({
             {/* ═══ Quick Add Supplier Modal Dialog ═══ */}
             {showQuickAddSupplier && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Building2 className="h-5 w-5 text-[#8B1A2E]" /> Thêm Nhà Cung Cấp Mới (Nhanh)
+                                    <Building2 className="h-5 w-5 text-[#B91C1C]" /> Thêm Nhà Cung Cấp Mới (Nhanh)
                                 </h3>
                                 <p className="text-xs text-slate-500">Khởi tạo nhanh thông tin NCC và tài khoản ngân hàng để thanh toán</p>
                             </div>
@@ -1156,7 +1156,7 @@ export function CreatePaymentRequestDrawer({
                                     placeholder="Vd: Công ty TNHH Nhập Khẩu Rượu Vang A"
                                     value={quickSupplierForm.name}
                                     onChange={e => setQuickSupplierForm(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#8B1A2E] focus:outline-none"
+                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
                                 />
                             </div>
 
@@ -1168,7 +1168,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: NCC-0088"
                                         value={quickSupplierForm.code}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, code: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1177,7 +1177,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={quickSupplierForm.type}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, type: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
                                         <option value="WINERY">Nhà làm rượu (Winery / Hãng rượu)</option>
@@ -1197,7 +1197,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: 0312345678"
                                         value={quickSupplierForm.taxId}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, taxId: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1206,7 +1206,7 @@ export function CreatePaymentRequestDrawer({
                                     <select
                                         value={quickSupplierForm.paymentTerm}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, paymentTerm: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
                                         <option value="COD">Thanh toán ngay khi giao (COD)</option>
                                         <option value="NET15">Công nợ 15 ngày (NET15)</option>
@@ -1220,7 +1220,7 @@ export function CreatePaymentRequestDrawer({
                             </div>
 
                             {/* Bank Details */}
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
+                            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
                                 <span className="font-semibold text-slate-700 block">Tài khoản ngân hàng thụ hưởng</span>
                                 
                                 <div>
@@ -1230,7 +1230,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: Vietcombank - CN Kỳ Đồng"
                                         value={quickSupplierForm.bankName}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankName: e.target.value }))}
-                                        className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
 
@@ -1242,7 +1242,7 @@ export function CreatePaymentRequestDrawer({
                                             placeholder="Vd: 0071001234567"
                                             value={quickSupplierForm.bankAccountNo}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountNo: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1252,7 +1252,7 @@ export function CreatePaymentRequestDrawer({
                                             placeholder="Vd: CTY TNHH ABC"
                                             value={quickSupplierForm.bankAccountName}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#8B1A2E] focus:outline-none"
+                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                 </div>
@@ -1267,7 +1267,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: 028 3822 xxxx"
                                         value={quickSupplierForm.phone}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                                 <div>
@@ -1277,7 +1277,7 @@ export function CreatePaymentRequestDrawer({
                                         placeholder="Vd: accounting@supplier.com"
                                         value={quickSupplierForm.email}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, email: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#8B1A2E] focus:outline-none"
+                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -1293,7 +1293,7 @@ export function CreatePaymentRequestDrawer({
                                 <button
                                     type="submit"
                                     disabled={savingSupplier}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B1A2E] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
                                 >
                                     {savingSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                     Lưu & Chọn Ngay

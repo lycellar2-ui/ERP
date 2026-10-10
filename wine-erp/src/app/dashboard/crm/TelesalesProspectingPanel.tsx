@@ -307,10 +307,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
     return (
         <div className="space-y-5 animate-in fade-in duration-200">
             {/* 1. Header Toolbar & Quick Actions */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                        <span className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                             <PhoneCall size={20} />
                         </span>
                         <div>
@@ -342,7 +342,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 }
                                 setQuotaModalOpen(true)
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
                         >
                             <Target size={14} className="text-teal-600" />
                             <span>Thiết Lập Chỉ Tiêu KPI</span>
@@ -352,7 +352,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     <button
                         type="button"
                         onClick={() => handleOpenLogger('CORPORATE')}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                     >
                         <Plus size={14} />
                         <span>+ Ghi Cuộc Gọi Mới</span>
@@ -362,7 +362,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         type="button"
                         onClick={loadDashboard}
                         disabled={loading}
-                        className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
+                        className="p-2 rounded-md border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
                         title="Làm mới dữ liệu"
                     >
                         <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
@@ -371,11 +371,11 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             </div>
 
             {/* View Sub-Tab Switcher */}
-            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
+            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200 w-fit">
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('planner')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer ${
                         activeSubTab === 'planner'
                             ? 'bg-white text-teal-700 shadow-xs border border-slate-200/60'
                             : 'text-slate-600 hover:text-slate-900'
@@ -387,7 +387,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('metrics')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer ${
                         activeSubTab === 'metrics'
                             ? 'bg-white text-teal-700 shadow-xs border border-slate-200/60'
                             : 'text-slate-600 hover:text-slate-900'
@@ -414,7 +414,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {/* 2. Top Channel Filter & 4 KPI Metric Cards */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 {/* Channel Switcher */}
-                <div className="flex items-center gap-1 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <div className="flex items-center gap-1 p-1 rounded-md bg-white border border-slate-200 shadow-2xs">
                     <button
                         type="button"
                         onClick={() => setChannelFilter('ALL')}
@@ -460,15 +460,15 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Tìm nhân viên, khách hàng, SĐT..."
-                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 transition shadow-2xs"
+                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 transition shadow-2xs"
                     />
                 </div>
             </div>
 
             {/* 4 Metric Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-md bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
                         <PhoneCall size={20} />
                     </div>
                     <div>
@@ -486,8 +486,8 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                         <CheckCircle2 size={20} />
                     </div>
                     <div>
@@ -505,8 +505,8 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
                         <UserPlus size={20} />
                     </div>
                     <div>
@@ -522,8 +522,8 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
                         <TrendingUp size={20} />
                     </div>
                     <div>
@@ -541,7 +541,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             </div>
 
             {/* 3. Team Daily Progress & Matrix Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                 <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <Award size={18} className="text-teal-600" />
@@ -680,7 +680,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             </div>
 
             {/* 4. Live Call Feed (Nhật Ký Cuộc Gọi Trực Tiếp) */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                 <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -715,7 +715,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <div key={log.id} className="p-3.5 sm:p-4 hover:bg-slate-50/70 transition flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                     <div className="flex items-start gap-3 min-w-0 flex-1">
                                         <div
-                                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                                            className="w-10 h-10 rounded-md flex items-center justify-center shrink-0 mt-0.5"
                                             style={{ background: outcomeCfg.bg, color: outcomeCfg.color }}
                                         >
                                             <OutcomeIcon size={18} />
@@ -765,7 +765,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             </div>
 
                                             {log.notes && (
-                                                <div className="text-xs text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
+                                                <div className="text-xs text-slate-700 bg-slate-50 p-2 rounded-md border border-slate-200/80">
                                                     💬 {log.notes}
                                                 </div>
                                             )}
@@ -790,7 +790,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                     setConvertAddress('')
                                                     setConvertModalOpen(true)
                                                 }}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition cursor-pointer border border-teal-200"
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition cursor-pointer border border-teal-200"
                                             >
                                                 <UserPlus size={13} />
                                                 <span>+ Mở Mã Khách</span>
@@ -816,13 +816,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {loggerOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                     <PhoneCall size={18} />
                                 </div>
                                 <div>
@@ -854,7 +854,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     <button
                                         type="button"
                                         onClick={() => setLoggerChannel('CORPORATE')}
-                                        className={`p-2.5 rounded-xl border font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
+                                        className={`p-2.5 rounded-md border font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
                                             loggerChannel === 'CORPORATE'
                                                 ? 'bg-teal-50 border-teal-500 text-teal-800 shadow-2xs'
                                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -866,7 +866,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     <button
                                         type="button"
                                         onClick={() => setLoggerChannel('RETAIL')}
-                                        className={`p-2.5 rounded-xl border font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
+                                        className={`p-2.5 rounded-md border font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
                                             loggerChannel === 'RETAIL'
                                                 ? 'bg-teal-50 border-teal-500 text-teal-800 shadow-2xs'
                                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -910,7 +910,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     <select
                                         value={selectedCustomerId}
                                         onChange={e => handleSelectExistingCustomer(e.target.value)}
-                                        className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 font-bold"
+                                        className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 font-bold"
                                     >
                                         <option value="">-- Chọn khách hàng từ hệ thống --</option>
                                         {data?.customersList.map(c => (
@@ -930,7 +930,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 value={prospectName}
                                                 onChange={e => setProspectName(e.target.value)}
                                                 placeholder="VD: Anh Minh / Chị Linh HR"
-                                                className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                                className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                                 required
                                             />
                                         </div>
@@ -943,7 +943,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 value={prospectCompany}
                                                 onChange={e => setProspectCompany(e.target.value)}
                                                 placeholder="VD: Tập đoàn X / Công ty Y"
-                                                className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                                className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                             />
                                         </div>
                                     </div>
@@ -960,7 +960,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder="VD: 0912345678"
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
                                     required
                                 />
                             </div>
@@ -973,7 +973,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <select
                                     value={callType}
                                     onChange={e => setCallType(e.target.value)}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 font-semibold"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 font-semibold"
                                 >
                                     {CALL_TYPES.map(t => (
                                         <option key={t.id} value={t.label}>
@@ -996,7 +996,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 key={o.id}
                                                 type="button"
                                                 onClick={() => setOutcome(o.id)}
-                                                className={`p-2.5 rounded-xl border text-left flex items-start gap-2 cursor-pointer transition ${
+                                                className={`p-2.5 rounded-md border text-left flex items-start gap-2 cursor-pointer transition ${
                                                     isSelected
                                                         ? 'bg-teal-50/80 border-teal-500 text-teal-900 shadow-2xs ring-1 ring-teal-500/20'
                                                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -1030,13 +1030,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
                                     placeholder="Khách cần báo giá set 100 hộp quà Tết vang Ý, ngân sách 1tr - 1.5tr/hộp..."
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 resize-y"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 resize-y"
                                 />
                             </div>
 
                             {/* Lịch hẹn gọi lại nếu bận */}
                             {outcome === 'CONNECTED_BUSY_CALLBACK' || outcome === 'CONNECTED_MEETING_SET' ? (
-                                <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-200 space-y-1">
+                                <div className="p-3 rounded-md bg-amber-50/60 border border-amber-200 space-y-1">
                                     <label className="block font-bold text-amber-900 text-[11px]">
                                         📅 Đặt Lịch Hẹn / Gọi Lại
                                     </label>
@@ -1054,14 +1054,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <button
                                     type="button"
                                     onClick={() => setLoggerOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingCall}
-                                    className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
                                     {savingCall ? 'Đang lưu...' : 'Lưu Cuộc Gọi'}
                                 </button>
@@ -1077,12 +1077,12 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {quotaModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-md bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                     <Target size={18} />
                                 </div>
                                 <div>
@@ -1119,7 +1119,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             setMonthlyDealTargetInput(rep.monthlyDealTarget)
                                         }
                                     }}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold outline-none"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-bold outline-none"
                                 >
                                     {data?.teamMatrix.map(m => (
                                         <option key={m.repId} value={m.repId}>
@@ -1139,7 +1139,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     max={100}
                                     value={dailyCallTargetInput}
                                     onChange={e => setDailyCallTargetInput(Number(e.target.value))}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
                                     required
                                 />
                                 <span className="text-[11px] text-slate-400 mt-1 block">
@@ -1157,7 +1157,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     max={200}
                                     value={monthlyLeadTargetInput}
                                     onChange={e => setMonthlyLeadTargetInput(Number(e.target.value))}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
                                     required
                                 />
                             </div>
@@ -1172,7 +1172,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     max={100}
                                     value={monthlyDealTargetInput}
                                     onChange={e => setMonthlyDealTargetInput(Number(e.target.value))}
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold outline-none"
                                     required
                                 />
                             </div>
@@ -1181,14 +1181,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <button
                                     type="button"
                                     onClick={() => setQuotaModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingQuota}
-                                    className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer"
+                                    className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer"
                                 >
                                     {savingQuota ? 'Đang lưu...' : 'Lưu Chỉ Tiêu'}
                                 </button>
@@ -1204,12 +1204,12 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {convertModalOpen && convertingLog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
                     <div
-                        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-md bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600">
+                                <div className="p-2 rounded-md bg-teal-500/10 text-teal-600">
                                     <UserPlus size={18} />
                                 </div>
                                 <div>
@@ -1231,7 +1231,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         </div>
 
                         <form onSubmit={handleConvertCustomer} className="p-4 sm:p-5 space-y-3.5 text-xs">
-                            <div className="p-3 rounded-xl bg-teal-50/70 border border-teal-200/80 space-y-1">
+                            <div className="p-3 rounded-md bg-teal-50/70 border border-teal-200/80 space-y-1">
                                 <div className="font-bold text-slate-900 text-sm">
                                     {convertingLog.prospectName}
                                 </div>
@@ -1254,7 +1254,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     value={convertTaxId}
                                     onChange={e => setConvertTaxId(e.target.value)}
                                     placeholder="VD: 0101234567"
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
                                 />
                             </div>
 
@@ -1267,7 +1267,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     value={convertAddress}
                                     onChange={e => setConvertAddress(e.target.value)}
                                     placeholder="VD: Tòa nhà Keangnam, Mễ Trì, Nam Từ Liêm, HN"
-                                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
+                                    className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                 />
                             </div>
 
@@ -1275,14 +1275,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <button
                                     type="button"
                                     onClick={() => setConvertModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
+                                    className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingConvert}
-                                    className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
                                     {savingConvert ? 'Đang tạo...' : 'Tạo Khách Hàng Ngay'}
                                 </button>

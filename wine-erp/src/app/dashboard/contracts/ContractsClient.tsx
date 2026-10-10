@@ -565,7 +565,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                                 className="h-full rounded-full transition-all"
                                                                 style={{
                                                                     width: `${Math.min(utilization.utilizationPct, 100)}%`,
-                                                                    background: utilization.utilizationPct > 90 ? '#DC2626' : utilization.utilizationPct > 60 ? '#D97706' : '#0891B2',
+                                                                    background: utilization.utilizationPct > 90 ? '#B91C1C' : utilization.utilizationPct > 60 ? '#D97706' : '#0891B2',
                                                                 }}
                                                             />
                                                         </div>

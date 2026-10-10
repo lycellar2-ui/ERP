@@ -143,7 +143,7 @@ export function DocumentUploader({
                 style={{
                     background: '#FFFFFF',
                     border: '1px dashed #E2E8F0',
-                    color: uploading ? '#64748B' : '#87CBB9',
+                    color: uploading ? '#64748B' : '#0E7490',
                 }}>
                 {uploading ? (
                     <><Loader2 size={16} className="animate-spin" /> Đang upload...</>

@@ -208,6 +208,15 @@ PAID / CLOSED
 - **Liên kết Tờ Trình Tasting (Proposal)**: Gắn kết nối trực tiếp với Tờ trình Tasting đã được duyệt (`proposalId`), tự động kiểm tra trích yếu và trích dẫn số Tờ trình trên chứng từ xuất kho.
 - **Nhận diện & Bản in**: Hiển thị Badge `🍷 Tasting` trên danh sách, bộ lọc loại đơn hàng, chi tiết SO và phiếu in tiêu đề **"ĐƠN HÀNG TASTING / PHIẾU XUẤT HÀNG MẪU (KHÔNG THU TIỀN)"**.
 
+### E. Giao Diện Di Động & Trải Nghiệm Công Thái Học (Mobile Ergonomics — BUG-130)
+- **Triệt tiêu 100% Auto-Zoom Viewport**: Toàn bộ ô tìm kiếm khách hàng, tìm sản phẩm và các trường nhập liệu trong `CreateSODrawer` và `EditSODrawer` áp dụng `text-base sm:text-xs` hoặc `text-base sm:text-sm` (cỡ chữ 16px trên mobile screens < 640px) kết hợp `viewport: { width: 'device-width', initialScale: 1, maximumScale: 1 }` trong `src/app/layout.tsx`. Ngăn chặn hoàn toàn hiện tượng iOS Safari và Android Chrome tự phóng to (zoom in) khi người dùng gõ phím.
+- **Khắc phục Touch Race Condition trên Dropdown**: Chuyển các phần tử dropdown item sang `onPointerDown={(e) => { e.preventDefault(); ... }}` ngăn sự kiện `onBlur` đóng menu sớm trước khi người dùng kịp chạm chọn khách hàng / sản phẩm.
+- **Mobile Card View Chuyên Biệt**: Tự động chuyển đổi dạng hiển thị (Desktop table vs Mobile cards) trên cả màn hình tạo mới (`CreateSODrawer`) và sửa đơn (`EditSODrawer`), loại bỏ hoàn toàn tình trạng bảng bị tràn ngang trên điện thoại.
+- **Bộ Stepper Tăng/Giảm Số Lượng Bằng Ngón Tay Cái**:
+  - Nút bấm `[-]` và `[+]` kích thước chạm tối thiểu 36x36px.
+  - Ô nhập số lượng ở giữa tích hợp `inputMode="numeric"`, `pattern="[0-9]*"` mở ngay bàn phím số lớn trên điện thoại.
+  - Phím tắt bán hàng theo thùng rượu vang: `+6` (1 thùng 6 chai) và `+12` (2 thùng 12 chai) giúp nhân viên kinh doanh lên đơn siêu nhanh chỉ với 1 cú chạm.
+
 4. **Single VAT Enforcement:** Mỗi Đơn hàng Bán (SO) và Báo Giá (QTN) bắt buộc áp dụng **duy nhất 1 mức thuế suất VAT** trên toàn bộ các dòng sản phẩm để đảm bảo tính hợp lệ của Hóa đơn điện tử GTGT. Khi đổi VAT dòng bất kỳ, hệ thống tự động đồng bộ tất cả các dòng còn lại.
 5. **Approval Trigger:** SO > Ngưỡng giá trị hoặc Chiết khấu > X% → Tự động send Approval Workflow
 

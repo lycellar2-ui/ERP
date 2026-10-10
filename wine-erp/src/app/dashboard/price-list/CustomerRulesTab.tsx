@@ -1119,7 +1119,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {policyModalCustomer && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
@@ -1237,7 +1237,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {createOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
+                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <Plus size={16} className="text-[#0891B2]" /> Thêm Giá Đặc Biệt Cho Khách Hàng
@@ -1374,7 +1374,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {cloneModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
+                    <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <Copy size={16} className="text-[#B45309]" /> Sao Chép Cơ Chế Giá Cho Các Cơ Sở Khác

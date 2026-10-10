@@ -89,7 +89,7 @@ export function ImageUploader({
                             <button onClick={handleRemove}
                                 className="p-2 rounded-lg transition-colors"
                                 title="Xóa ảnh"
-                                style={{ background: 'rgba(139,26,46,0.3)', color: '#E8A0A0' }}>
+                                style={{ background: 'rgba(185,28,28,0.3)', color: '#E8A0A0' }}>
                                 <X size={18} />
                             </button>
                         </div>

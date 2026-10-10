@@ -73,11 +73,11 @@ export function NavigationProgress() {
             <div
                 className="h-full rounded-r-full"
                 style={{
-                    background: 'linear-gradient(90deg, #87CBB9, #5BA88A, #87CBB9)',
+                    background: 'linear-gradient(90deg, #0E7490, #15803D, #0E7490)',
                     width: `${progress}%`,
                     transition: progress === 100 ? 'width 200ms ease-out, opacity 300ms' : 'width 200ms ease-out',
                     opacity: progress === 100 ? 0 : 1,
-                    boxShadow: '0 0 10px rgba(135,203,185,0.5), 0 0 5px rgba(8, 145, 178, 0.25)',
+                    boxShadow: '0 0 10px rgba(8,145,178,0.5), 0 0 5px rgba(8, 145, 178, 0.25)',
                 }}
             />
         </div>

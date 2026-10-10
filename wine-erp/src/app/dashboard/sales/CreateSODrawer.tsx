@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Badge, Button, Drawer } from '@/components/ui'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag, Wine, Sparkles, Calendar, Truck, CornerDownRight, Gift } from 'lucide-react'
+import { X, Plus, Minus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag, Wine, Sparkles, Calendar, Truck, CornerDownRight, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -20,7 +20,7 @@ import { DebouncedInput, DebouncedTextarea } from '@/components/DebouncedInput'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
-    { value: 'WHOLESALE_DISTRIBUTOR', label: 'Äáº¡i LÃ½ / Wholesale' },
+    { value: 'WHOLESALE_DISTRIBUTOR', label: 'Đại Lý / Wholesale' },
     { value: 'VIP_RETAIL', label: 'VIP Retail' },
     { value: 'DIRECT_INDIVIDUAL', label: 'Trực Tiếp' },
 ]
@@ -28,7 +28,7 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
 const getPriceBadgeStyle = (source: string) => {
     switch (source) {
         case 'PROMOTION_GIFT':
-            return { background: 'rgba(16, 185, 129, 0.15)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' }
+            return { background: 'rgba(21,128,61, 0.15)', color: '#15803D', border: '1px solid rgba(21,128,61, 0.3)' }
         case 'TASTING_FREE':
             return { background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }
         case 'SPECIAL_PRICE':
@@ -881,7 +881,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Proposal Selector for Tasting Orders */}
                             {orderType === 'TASTING' && (
-                                <div className="p-4 rounded-xl border-2 border-amber-400/90 bg-amber-50/95 shadow-md space-y-3">
+                                <div className="p-4 rounded-md border-2 border-amber-400/90 bg-amber-50/95 shadow-md space-y-3">
                                     <div className="flex items-center justify-between flex-wrap gap-1">
                                         <label className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
                                             <FileText size={16} className="text-amber-800" />
@@ -1026,13 +1026,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-10 py-2 text-sm font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
+                                                className="w-full pl-3 pr-10 py-2 text-base sm:text-sm font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
                                                 style={{ color: '#0F172A' }}
                                             />
                                             {selectedCustomer ? (
                                                 <button
                                                     type="button"
-                                                    onMouseDown={(e) => {
+                                                    onPointerDown={(e) => {
                                                         e.preventDefault()
                                                         handleCustomerChange('')
                                                         setCustomerSearchInput('')
@@ -1066,7 +1066,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         return (
                                                             <div
                                                                 key={c.id}
-                                                                onMouseDown={(e) => {
+                                                                onPointerDown={(e) => {
                                                                     e.preventDefault()
                                                                     if (isDisabled) {
                                                                         toast.error(t.companyDebtOnlyError)
@@ -1153,7 +1153,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <select
                                                 value={shippingAddressId}
                                                 onChange={e => setShippingAddressId(e.target.value)}
-                                                className="w-full px-3 py-2 text-xs outline-none rounded"
+                                                className="w-full px-3 py-2 text-base sm:text-xs outline-none rounded"
                                                 style={{ ...inputStyle }}
                                             >
                                                 <option value="">{t.selectAddressPlaceholder}</option>
@@ -1176,7 +1176,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         type="date"
                                         value={orderDate}
                                         onChange={e => setOrderDate(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs font-semibold outline-none rounded font-mono"
+                                        className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded font-mono"
                                         style={{ ...inputStyle }}
                                     />
                                 </div>
@@ -1231,7 +1231,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     onChange={setNotes}
                                     placeholder={t.notesPlaceholder}
                                     rows={1}
-                                    className="w-full px-3 py-1.5 text-xs outline-none rounded"
+                                    className="w-full px-3 py-1.5 text-base sm:text-xs outline-none rounded"
                                     style={{ ...inputStyle }}
                                 />
                             </div>
@@ -1251,7 +1251,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                 {/* Promotion Banner (Buy X Get Y) */}
                                 {activePromoInfo && activePromoInfo.totalBought > 0 && (
-                                    <div className="mb-3 p-3.5 rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+                                    <div className="mb-3 p-3.5 rounded-md border border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
                                         <div className="flex items-start gap-2.5">
                                             <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 flex-shrink-0 mt-0.5">
                                                 <Gift size={20} />
@@ -1373,7 +1373,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                 setSearchQueries(prev => ({ ...prev, [i]: val }))
                                                                                 setActiveDropdownIndex(i)
                                                                             }}
-                                                                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
+                                                                            className="w-full px-2.5 py-1.5 text-base sm:text-xs outline-none rounded"
                                                                             style={{ ...inputStyle }}
                                                                         />
                                                                         
@@ -1387,7 +1387,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                     getFilteredProducts(searchQueries[i] ?? '').map(p => (
                                                                                         <div
                                                                                             key={p.id}
-                                                                                            onMouseDown={() => {
+                                                                                            onPointerDown={(e) => {
+                                                                                                e.preventDefault()
                                                                                                 updateLine(i, 'productId', p.id)
                                                                                                 setActiveDropdownIndex(null)
                                                                                             }}
@@ -1428,18 +1429,19 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 {hasCustomerCodes && (
                                                                     <td className="px-3 py-2 text-center">
                                                                         <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                                                            {line.customerItemCode || customerCodesMap[line.productId] || 'â€”'}
+                                                                            {line.customerItemCode || customerCodesMap[line.productId] || '—'}
                                                                         </span>
                                                                     </td>
                                                                 )}
                                                                 <td className="px-3 py-2 text-center">
                                                                     <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-slate-600'}`}>
-                                                                        {line.productId ? line.stock : 'â€”'}
+                                                                        {line.productId ? line.stock : '—'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
                                                                     <input
                                                                         type="number"
+                                                                        inputMode="numeric"
                                                                         min="1"
                                                                         value={line.qtyOrdered}
                                                                         onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
@@ -1454,6 +1456,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 <td className="px-3 py-2 text-center">
                                                                     <input
                                                                         type="number"
+                                                                        inputMode="numeric"
                                                                         min="0"
                                                                         max="100"
                                                                         value={line.lineDiscountPct}
@@ -1517,7 +1520,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         setSearchQueries(prev => ({ ...prev, [i]: val }))
                                                                         setActiveDropdownIndex(i)
                                                                     }}
-                                                                    className="w-full px-3 py-2 text-xs outline-none"
+                                                                    className="w-full px-3 py-2 text-base sm:text-xs outline-none"
                                                                     style={{ ...inputStyle, minWidth: 0 }}
                                                                 />
                                                                 
@@ -1531,7 +1534,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                             getFilteredProducts(searchQueries[i] ?? '').map(p => (
                                                                                 <div
                                                                                     key={p.id}
-                                                                                    onMouseDown={() => {
+                                                                                    onPointerDown={(e) => {
+                                                                                        e.preventDefault()
                                                                                         updateLine(i, 'productId', p.id)
                                                                                         setActiveDropdownIndex(null)
                                                                                     }}
@@ -1574,45 +1578,101 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thQty}</p>
-                                                                <input type="number" min="1" value={line.qtyOrdered}
-                                                                    onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
-                                                                    className="w-full px-2 py-1 text-xs outline-none"
-                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(185,28,28,0.5)' : '#E2E8F0'}` }}
+                                                        {/* Mobile Quantity Stepper & Case Shortcuts */}
+                                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-xs font-bold text-slate-700">{t.thQty}:</span>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={line.qtyOrdered <= 1}
+                                                                    onClick={() => updateLine(i, 'qtyOrdered', Math.max(1, line.qtyOrdered - 1))}
+                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                                                    aria-label="Giảm 1"
+                                                                >
+                                                                    <Minus size={15} />
+                                                                </button>
+                                                                <input
+                                                                    type="number"
+                                                                    inputMode="numeric"
+                                                                    pattern="[0-9]*"
+                                                                    min="1"
+                                                                    value={line.qtyOrdered}
+                                                                    onChange={e => updateLine(i, 'qtyOrdered', Math.max(1, Number(e.target.value) || 1))}
+                                                                    className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                                                                 />
-                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>âš ï¸ {t.stockExceeded} ({line.stock})</p>}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 1)}
+                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                                                                    aria-label="Tăng 1"
+                                                                >
+                                                                    <Plus size={15} />
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Quick add case shortcuts (+6, +12) */}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 6)}
+                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 transition-colors"
+                                                                    title={isEn ? "Add 1 case (6 btls)" : "Thêm 1 thùng (6 chai)"}
+                                                                >
+                                                                    +6 {isEn ? 'btls' : 'chai'}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 12)}
+                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 transition-colors"
+                                                                    title={isEn ? "Add 2 cases (12 btls)" : "Thêm 2 thùng (12 chai)"}
+                                                                >
+                                                                    +12 {isEn ? 'btls' : 'chai'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {lowStock && (
+                                                            <p className="text-xs text-rose-600 font-medium">⚠️ {t.stockExceeded} ({line.stock})</p>
+                                                        )}
+
+                                                        {/* Unit price, Discount, VAT */}
+                                                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 items-end">
+                                                            <div>
+                                                                <p className="text-[11px] font-semibold text-slate-500 mb-0.5">{t.thUnitPrice}</p>
+                                                                <div className="text-xs font-bold font-mono text-slate-800 py-1.5 px-2 bg-slate-50 rounded border border-slate-200 truncate">
+                                                                    {formatCurrency(line.unitPrice)}
+                                                                </div>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thUnitPrice}</p>
-                                                                <input type="number" min="0" value={line.unitPrice}
-                                                                    readOnly
-                                                                    className="w-full px-2 py-1 text-xs outline-none opacity-70 cursor-not-allowed"
-                                                                    style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
+                                                                <p className="text-[11px] font-semibold text-slate-500 mb-0.5">{t.thDiscount} (%)</p>
+                                                                <input
+                                                                    type="number"
+                                                                    inputMode="numeric"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={line.lineDiscountPct}
+                                                                    onChange={e => updateLine(i, 'lineDiscountPct', Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                                                                    className="w-full px-2 py-1.5 text-base sm:text-xs text-center font-semibold rounded border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-teal-500"
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>{t.thDiscount}</p>
-                                                                <input type="number" min="0" max="100" value={line.lineDiscountPct}
-                                                                    onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
-                                                                    className="w-full px-2 py-1 text-xs outline-none"
-                                                                    style={{ ...inputStyle }}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#64748B' }}>VAT (%)</p>
-                                                                <select value={line.vatRate ?? 10}
+                                                                <p className="text-[11px] font-semibold text-slate-500 mb-0.5">VAT</p>
+                                                                <select
+                                                                    value={line.vatRate ?? 10}
                                                                     onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
-                                                                    className="w-full px-2 py-1 text-xs outline-none"
-                                                                    style={{ ...inputStyle }}>
+                                                                    className="w-full px-2 py-1.5 text-base sm:text-xs text-center font-semibold rounded border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-teal-500"
+                                                                >
                                                                     <option value={10}>10%</option>
                                                                     <option value={8}>8%</option>
+                                                                    <option value={0}>0%</option>
                                                                 </select>
                                                             </div>
                                                         </div>
-                                                        <div className="flex justify-end">
-                                                            <p className="text-xs font-bold" style={{ color: '#0891B2' }}>
+
+                                                        {/* Subtotal */}
+                                                        <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                                                            <span className="text-xs font-medium text-slate-500">{t.thTotal}:</span>
+                                                            <p className="text-sm font-bold font-mono text-teal-700">
                                                                 = {formatCurrency(lineTotal)}
                                                             </p>
                                                         </div>
@@ -1631,8 +1691,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <label className="text-xs font-semibold" style={{ color: '#64748B' }}>{t.orderDiscountLabel}</label>
                                         <input type="number" min="0" max="100" value={orderDiscount}
                                             onChange={e => setOrderDiscount(Number(e.target.value))}
-                                            className="w-24 px-2.5 py-1.5 text-sm outline-none text-right"
-                                            style={{ ...inputStyle }}
+                                            className="w-24 px-2.5 py-1.5 text-base sm:text-sm outline-none text-right rounded border border-slate-300 bg-white"
+                                            inputMode="numeric"
                                         />
                                     </div>
                                     {isVatInclusive && (
@@ -1751,16 +1811,16 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">SÄT liÃªn há»‡:</td>
                                                     <td className="font-semibold font-mono text-slate-900 py-0.5">
-                                                        {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || 'â€”'}
+                                                        {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || '—'}
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
-                                                    <td className="py-0.5 text-slate-900">{channel || 'â€”'}</td>
+                                                    <td className="py-0.5 text-slate-900">{channel || '—'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Mã số thuế:</td>
-                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || (selectedCustomer as any)?.parent?.taxId || 'â€”'}</td>
+                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || (selectedCustomer as any)?.parent?.taxId || '—'}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1777,7 +1837,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">SÄT nháº­n hÃ ng:</td>
                                                     <td className="font-bold font-mono text-slate-900 py-0.5">
-                                                        {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || 'â€”'}
+                                                        {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -1798,7 +1858,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     </div>
                                 </div>
 
-                                {/* Ghi chÃº / Diễn giải đơn hàng & LÆ°u Ã½ giao hÃ ng */}
+                                {/* Ghi chú / Diễn giải đơn hàng & Lưu ý giao hàng */}
                                 {((selectedCustomer as any)?.deliveryNotes || notes) && (
                                     <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed space-y-1">
                                         {(selectedCustomer as any)?.deliveryNotes && (
@@ -1843,7 +1903,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     </td>
                                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{l.qtyOrdered}</td>
                                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(l.unitPrice)}</td>
-                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : 'â€”'}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : '—'}</td>
                                                     <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineVal)}</td>
                                                 </tr>
                                             )

@@ -41,7 +41,7 @@ export default function SubPageLoading() {
                 {/* Rows */}
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                     <div key={i} className="flex gap-4 px-4 py-4 items-center"
-                        style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                        style={{ borderBottom: '1px solid #E2E8F0' }}>
                         {[80, 120, 60, 80, 100, 60, 80, 60].map((w, j) => (
                             <div key={j} className="h-3 rounded" style={{ width: w, background: '#FFFFFF' }} />
                         ))}

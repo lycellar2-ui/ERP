@@ -1277,7 +1277,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Create Extended Session Modal — 2-Step Wizard */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-xl max-w-2xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[92vh]">
+                    <div className="bg-white border border-slate-200 rounded-md max-w-2xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[92vh]">
                         {createWizardStep === 1 ? (
                             /* ═══════════ BƯỚC 1: CHỌN HÌNH THỨC KIỂM KÊ ═══════════ */
                             <div className="space-y-4">
@@ -1305,7 +1305,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 1: Toàn bộ */}
                                     <div
                                         onClick={() => handleSelectCategory('FULL')}
-                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1332,7 +1332,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 2: 1 Phần / Khu vực */}
                                     <div
                                         onClick={() => handleSelectCategory('PARTIAL')}
-                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1359,7 +1359,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 3: Ngẫu nhiên / Đột xuất */}
                                     <div
                                         onClick={() => handleSelectCategory('RANDOM')}
-                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1386,7 +1386,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 4: Cuốn chiếu */}
                                     <div
                                         onClick={() => handleSelectCategory('CYCLE')}
-                                        className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">

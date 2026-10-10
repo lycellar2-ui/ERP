@@ -36,7 +36,7 @@ export default function DashboardError({
                     Có thể do mất kết nối database hoặc lỗi server. Vui lòng thử lại.
                 </p>
                 {error.message && (
-                    <p className="font-mono" style={{ color: '#8B1A2E', fontSize: '12px', marginBottom: '16px', background: 'rgba(139,26,46,0.08)', padding: '8px 12px', borderRadius: '6px', textAlign: 'left', wordBreak: 'break-all' }}>
+                    <p className="font-mono" style={{ color: '#B91C1C', fontSize: '12px', marginBottom: '16px', background: 'rgba(185,28,28,0.08)', padding: '8px 12px', borderRadius: '6px', textAlign: 'left', wordBreak: 'break-all' }}>
                         {error.message.slice(0, 300)}
                     </p>
                 )}

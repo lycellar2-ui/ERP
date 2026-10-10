@@ -46,28 +46,32 @@ export function FilterBar({
     return (
         <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                <input type="text" placeholder={searchPlaceholder} value={localSearch}
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted pointer-events-none" />
+                <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={localSearch}
                     onChange={e => handleSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
-                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                    className="w-full pl-9 pr-4 py-2 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
+                />
             </div>
             {filters.map(f => (
-                <select key={f.key} value={f.value} onChange={e => f.onChange(e.target.value)}
-                    className="px-3 py-2.5 text-sm outline-none cursor-pointer"
-                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: f.value ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
+                <select
+                    key={f.key}
+                    value={f.value}
+                    onChange={e => f.onChange(e.target.value)}
+                    className="px-3 py-2 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors cursor-pointer"
+                >
                     <option value="">{f.label}</option>
                     {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
             ))}
             {hasActiveFilters && onClearAll && (
-                <button onClick={onClearAll}
-                    className="flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all"
-                    style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-md border border-lys-border text-lys-secondary hover:bg-lys-subtle transition-colors cursor-pointer"
+                >
                     <X size={12} /> Xóa bộ lọc
                 </button>
             )}

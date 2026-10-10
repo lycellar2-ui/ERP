@@ -179,7 +179,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4">
-            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-lg w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden">
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3">
@@ -618,7 +618,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             {/* ZONE VARIANCE SUMMARY MODAL */}
             {showZoneReportModal && zoneReport && (
                 <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">

@@ -74,7 +74,7 @@ export function PrintablePaymentRequest({
             `}</style>
 
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-[210mm] mx-auto mb-4 bg-white/95 backdrop-blur-md border border-slate-200 text-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
+            <div className="max-w-[210mm] mx-auto mb-4 bg-white/95 backdrop-blur-md border border-slate-200 text-slate-800 rounded-md p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
                 <div className="flex items-center gap-2">
                     <button
                         onClick={onClose}

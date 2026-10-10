@@ -1602,7 +1602,7 @@ function SODetailDrawer({
             {dateWarningModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 animate-fade-in">
                     <div 
-                        className="relative w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border bg-white border-slate-200"
+                        className="relative w-full max-w-lg rounded-md overflow-hidden shadow-2xl border bg-white border-slate-200"
                     >
                         {/* Header */}
                         <div 
@@ -3197,12 +3197,12 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 return (
                     <>
                         <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={closeAcctModal} />
-                        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                             {showEntityConfirm ? (
                                 /* Confirmation View When Entity Differs */
                                 <div className="space-y-5">
                                     <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                                        <div className="w-10 h-10 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
                                             <AlertTriangle size={20} />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -3225,7 +3225,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     </div>
 
                                     {/* Diff Comparison Cards */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-md border border-slate-200 text-xs">
                                         <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs space-y-1">
                                             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide block">
                                                 {isEn ? 'Original Entity' : 'Pháp Nhân Ban Đầu'}
@@ -3297,7 +3297,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     </div>
 
                                     {/* Original Entity Info */}
-                                    <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                                    <div className="mb-4 p-3 bg-slate-50 rounded-md border border-slate-200 flex items-center justify-between text-xs">
                                         <span className="text-slate-500 font-medium">
                                             {isEn ? 'Original Order Entity:' : 'Pháp nhân gốc của đơn:'}
                                         </span>
@@ -3326,7 +3326,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
                                     {/* Real-time change alert */}
                                     {isEntityChanged && (
-                                        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
+                                        <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
                                             <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                                             <div className="space-y-0.5">
                                                 <div className="font-semibold">
@@ -3492,7 +3492,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
@@ -3521,7 +3521,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                         </p>
 
                         {/* Warehouse selector */}
-                        <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex flex-col gap-1.5">
+                        <div className="p-3.5 rounded-md bg-amber-50/70 border border-amber-200 flex flex-col gap-1.5">
                             <label className="text-xs font-bold text-amber-900">
                                 {isEn ? 'Fulfillment Warehouse *' : 'Kho Xuất Bán Hàng *'} ({isEn ? 'Legal Entity:' : 'Pháp nhân:'} {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
                             </label>
@@ -3557,7 +3557,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             {detail.lines.map((line: any) => {
                                 const avail = availableVintages[line.productId] || []
                                 return (
-                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2">
+                                    <div key={line.id} className="p-3 rounded-md bg-slate-50 border border-slate-200 flex flex-col gap-2">
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
                                                 <p className="text-xs font-bold truncate text-slate-900" title={line.product.productName}>
