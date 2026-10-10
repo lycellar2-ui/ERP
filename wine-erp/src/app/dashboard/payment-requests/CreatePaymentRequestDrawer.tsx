@@ -15,7 +15,7 @@ import {
     getSupplierPendingInvoicesAndPOs,
     quickCreateSupplier
 } from './actions'
-import { uploadPaymentDoc } from '@/lib/storage-r2'
+import { uploadPaymentDoc, getPresignedUploadUrl } from '@/lib/storage-r2'
 
 interface CreatePaymentRequestDrawerProps {
     categories: ExpenseCategoryRow[]
@@ -344,11 +344,64 @@ export function CreatePaymentRequestDrawer({
 
         try {
             for (const file of files) {
-                const formData = new FormData()
-                formData.append('file', file)
-                const res = await uploadPaymentDoc(formData, 'scanned-vouchers')
+                let uploadSuccess = false
+                let finalUrl = ''
+                let finalStoragePath = ''
+                let finalFileName = file.name
+                let finalFileSize = file.size
+                let finalMimeType = file.type || 'application/octet-stream'
 
-                if (res.success && res.url && res.storagePath) {
+                // 1. Direct Presigned PUT to Cloudflare R2 (bypasses Vercel 4.5MB Serverless limit, up to 25MB)
+                try {
+                    const presignedRes = await getPresignedUploadUrl(
+                        file.name,
+                        file.type || 'application/octet-stream',
+                        file.size,
+                        'scanned-vouchers'
+                    )
+
+                    if (presignedRes.success && presignedRes.uploadUrl && presignedRes.viewUrl && presignedRes.storagePath) {
+                        const putRes = await fetch(presignedRes.uploadUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': file.type || 'application/octet-stream',
+                            },
+                            body: file,
+                        })
+
+                        if (putRes.ok) {
+                            uploadSuccess = true
+                            finalUrl = presignedRes.viewUrl
+                            finalStoragePath = presignedRes.storagePath
+                            finalFileName = presignedRes.fileName || file.name
+                            finalFileSize = presignedRes.fileSize || file.size
+                            finalMimeType = presignedRes.mimeType || file.type
+                        }
+                    }
+                } catch (directErr) {
+                    console.warn('[Direct Upload] Cloudflare R2 direct PUT failed, falling back to Server Action:', directErr)
+                }
+
+                // 2. Fallback to Server Action upload if direct PUT did not succeed
+                if (!uploadSuccess) {
+                    const formData = new FormData()
+                    formData.append('file', file)
+                    const res = await uploadPaymentDoc(formData, 'scanned-vouchers')
+
+                    if (res.success && res.url && res.storagePath) {
+                        uploadSuccess = true
+                        finalUrl = res.url
+                        finalStoragePath = res.storagePath
+                        finalFileName = res.fileName || file.name
+                        finalFileSize = res.fileSize || file.size
+                        finalMimeType = res.mimeType || file.type
+                    } else {
+                        toast.error(`Lỗi tải file ${file.name}: ${res.error || 'Upload thất bại'}`)
+                        continue
+                    }
+                }
+
+                if (uploadSuccess) {
                     let docType: UploadedDoc['docType'] = 'OTHER'
                     const lowerName = file.name.toLowerCase()
                     if (lowerName.includes('vat') || lowerName.includes('hoa_don') || lowerName.includes('invoice')) {
@@ -363,16 +416,14 @@ export function CreatePaymentRequestDrawer({
                         ...prev,
                         {
                             docType,
-                            fileName: res.fileName || file.name,
-                            fileUrl: res.url!,
-                            storagePath: res.storagePath!,
-                            fileSize: res.fileSize || file.size,
-                            mimeType: res.mimeType || file.type,
+                            fileName: finalFileName,
+                            fileUrl: finalUrl,
+                            storagePath: finalStoragePath,
+                            fileSize: finalFileSize,
+                            mimeType: finalMimeType,
                         },
                     ])
                     successCount++
-                } else {
-                    toast.error(`Lỗi tải file ${file.name}: ${res.error}`)
                 }
             }
 

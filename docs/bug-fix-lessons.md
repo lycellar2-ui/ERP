@@ -81,6 +81,8 @@
 72. [BUG-125: Sales Orders — Kế Toán Duyệt Đơn: Xác Nhận Khi Đổi Pháp Nhân & Đồng Bộ legalEntityId](#bug-125-sales-orders--quy-trình-kế-toán-duyệt-đơn-bắt-buộc-xác-nhận-khi-đổi-pháp-nhân-legal-entity-override-safeguard--đồng-bộ-legalentityid-trên-bảng-danh-sách-đơn)
 73. [BUG-126: WMS — Audit Toàn Diện Kho: Lệch Sổ Sách vs On-hand, Đổi Lô Lỗi DO, Mất QR Auto-Confirm & Ngăn Trừ Kiểm Kê Âm](#bug-126-wms--audit-toàn-diện-kho-lệch-sổ-sách-vs-on-hand-đổi-lô-lỗi-do-mất-qr-auto-confirm--ngăn-trừ-kiểm-kê-âm)
 74. [BUG-127: Khách Hàng (MDM) — Chuẩn Hóa 100% Khách Hàng HORECA Thuộc Mô Hình Cha-Con & Sinh Mã Khách Hàng Cha Dùng Tiền Tố Đầu Mã Thay Vì Hậu Tố -M](#bug-127-khách-hàng-mdm--chuẩn-hóa-100-khách-hàng-horeca-thuộc-mô-hình-cha-con--sinh-mã-khách-hàng-cha-dùng-tiền-tố-đầu-mã-thay-vì-hậu-tố--m)
+75. [BUG-128: Tờ Trình Giá Đặc Biệt (Proposal) Không Hiển Thị Cho Các Cơ Sở Con / Công Ty Mẹ Khi Lên Đơn Bán Hàng & Báo Giá](#bug-128-tờ-trình-giá-đặc-biệt-proposal--customerpricerule-không-hiển-thị--áp-dụng-được-cho-các-cơ-sở-con--công-ty-mẹ-khi-lên-đơn-bán-hàng-so--báo-giá-quotation)
+76. [BUG-129: Lỗi Upload Chứng Từ Scan (Hóa Đơn, UNC) Phân Hệ Đề Nghị Thanh Toán — Sai Tên Bucket R2, Thiếu Fallback Env & Vượt Giới Hạn Payload 4.5MB Serverless](#bug-129-lỗi-upload-chứng-từ-scan-hóa-đơn-unc-giấy-tờ-phân-hệ-đề-nghị-thanh-toán--ngân-sách--sai-tên-bucket-r2-thiếu-fallback-biến-môi-trường--vượt-giới-hạn-payload-45mb-serverless)
 
 ---
 
@@ -3594,6 +3596,44 @@ Khi kế toán hoặc quản trị viên thao tác duyệt đơn bán hàng ở 
 
 ### Bài học
 > ⚠️ **RULE 128: (1) Mọi chính sách giá, chiết khấu và Tờ trình (Proposal) áp dụng cho chuỗi / cơ sở con BẮT BUỘC phải kế thừa và liên kết 2 chiều giữa Công ty Mẹ và các Cơ sở con: Tìm kiếm Tờ trình cho Đơn Hàng / Báo Giá BẮT BUỘC phải quét cả `scope: { contains: customerId }`, `parentId` và danh sách `children`; (2) Khi nạp sản phẩm từ Tờ trình vào Đơn hàng, TUYỆT ĐỐI KHÔNG tự tiện đè mã khách hàng nếu khách hàng hiện tại đã được người dùng chọn và nằm trong phạm vi áp dụng (`scope`) của Tờ trình; (3) Mọi dữ liệu lưu dạng Tag mở rộng trong `scope` (như `BRANCHES:id1,id2...`) BẮT BUỘC phải được resolve tên/mã đầy đủ khi hiển thị chi tiết và in ấn, không được để người dùng nhìn thấy chuỗi thô hoặc nhãn 'N/A'.**
+
+---
+
+## BUG-129: Lỗi Upload Chứng Từ Scan (Hóa Đơn, UNC, Giấy Tờ) Phân Hệ Đề Nghị Thanh Toán & Ngân Sách — Sai Tên Bucket R2, Thiếu Fallback Biến Môi Trường & Vượt Giới Hạn Payload 4.5MB Serverless
+
+**Ngày:** 2026-10-11  
+**Module:** `Payment Requests (PRQ) / Storage & Scans (Cloudflare R2)`  
+**File liên quan:** `src/lib/storage-r2.ts`, `src/app/dashboard/payment-requests/CreatePaymentRequestDrawer.tsx`, `src/app/dashboard/payment-requests/PaymentRequestDetailModal.tsx`  
+**Trạng thái:** ✅ Đã khắc phục & Kiểm thử tự động thành công  
+
+### Triệu chứng & Bối cảnh
+Người dùng khi lập Đề nghị thanh toán (`/dashboard/payment-requests`) hoặc xác nhận giải ngân (Ủy nhiệm chi - UNC) trên môi trường Production (Vercel) kéo thả file chứng từ scan (Hóa đơn GTGT, Biên bản bàn giao, UNC scan) thì hệ thống hiển thị thông báo lỗi (Toast Error):
+- `Lỗi tải file ...: The specified bucket does not exist.`
+- Hoặc `Lỗi tải file ...: Bucket not found`
+- Hoặc trên file PDF / ảnh chụp dung lượng lớn từ điện thoại (> 4.5MB): Báo lỗi `Failed to fetch` hoặc `413 Request Entity Too Large`.
+
+### Nguyên nhân gốc rễ
+1. **Sai Tên Bucket Fallback trong `src/lib/storage-r2.ts`:**
+   Dòng khai báo `const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'lycellar-docs'`. Bucket thực tế được tạo trên Cloudflare R2 là `wine-erp-documents`, không phải `lycellar-docs`. Nếu trên Vercel chưa khai báo biến `R2_BUCKET_NAME`, hệ thống fallback về `lycellar-docs` và Cloudflare R2 trả về mã lỗi `The specified bucket does not exist.`.
+2. **Thiếu biến môi trường R2 trên Vercel dẫn đến Fallback hỏng:**
+   Khi các biến `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` chưa được gán vào Vercel Settings, `getR2Client()` trả về `null` và kích hoạt luồng fallback sang Supabase Storage (`uploadSupabaseFile`). Tuy nhiên trên Supabase Storage, bucket `erp-files` chưa từng được tạo (`Bucket not found - status 400`), đồng thời `SUPABASE_SERVICE_ROLE_KEY` ở `.env.local` là placeholder.
+3. **Giới hạn cứng Payload 4.5MB của Vercel Serverless Function:**
+   Vercel Serverless Functions có giới hạn request body tối đa là 4.5MB. Khi người dùng upload file PDF scan hóa đơn độ phân giải cao hoặc ảnh chụp gốc từ smartphone (thường từ 5MB - 15MB) thông qua Server Action `uploadPaymentDoc(formData)`, Vercel API Gateway ngắt kết nối ngay lập tức trước khi chạm tới code xử lý.
+
+### Cách khắc phục
+1. **Chuẩn Hóa Cấu Hình & Fallback Credentials Cho Cloudflare R2 (`src/lib/storage-r2.ts`):**
+   - Đổi `DEFAULT_R2_BUCKET = 'wine-erp-documents'`.
+   - Bổ sung cấu hình fallback thông minh trong `getR2Config()` với các giá trị dự phòng chuẩn xác, giúp hệ thống hoạt động ổn định trên Production ngay cả khi chưa kịp cấu hình biến môi trường trên Vercel.
+2. **Kiến Trúc Upload Trực Tiếp Browser-to-R2 (Direct Presigned PUT URL):**
+   - Xây dựng Server Action `getPresignedUploadUrl(fileName, mimeType, fileSize, subfolder)`: Client chỉ gửi metadata (tên, kích thước), server sinh Presigned PUT URL bảo mật thời hạn 15 phút từ Cloudflare R2 và trả về client.
+   - Client (`CreatePaymentRequestDrawer.tsx` và `PaymentRequestDetailModal.tsx`) dùng `fetch(uploadUrl, { method: 'PUT', body: file })` tải trực tiếp lên Cloudflare Edge:
+     - **Bypass hoàn toàn giới hạn 4.5MB của Vercel**: Hỗ trợ file scan chất lượng cao lên tới 25MB.
+     - Tốc độ tải lên siêu nhanh do truyền trực tiếp tới CDN Datacenter gần người dùng nhất.
+   - Cơ chế Fallback 2 lớp: Nếu Direct PUT gặp trở ngại về mạng/offline, tự động fallback sang Server Action `uploadPaymentDoc(formData)`.
+
+### Bài học
+> ⚠️ **RULE 129: (1) Tuyệt đối không hardcode sai tên Bucket mặc định trong các Storage Adapter; (2) Đối với file upload chứng từ / scan / media lớn trên môi trường Serverless (Vercel), BẮT BUỘC sử dụng kiến trúc Direct-to-Storage Presigned PUT URL từ trình duyệt để vượt qua giới hạn trần 4.5MB Payload của Vercel; (3) Mọi Storage Client phải thiết kế cơ chế Fallback an toàn (Graceful Fallback) để hệ thống không bị tê liệt khi triển khai đa môi trường (Dev/Staging/Production).**
+
 
 
 

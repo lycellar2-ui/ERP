@@ -14,30 +14,131 @@ export type UploadPaymentDocResult = {
     error?: string
 }
 
-// ── Environment Variables for Cloudflare R2 ─────────────────
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'lycellar-docs'
-const R2_PUBLIC_DOMAIN = process.env.R2_PUBLIC_DOMAIN // e.g. https://pub-xxxxxx.r2.dev or https://docs.lycellar.vn
+// ── Environment Variables & Fallback for Cloudflare R2 ───────────
+const DEFAULT_R2_ACCOUNT_ID = '77bcd51bb60bed1a4b71c794c28b49f2'
+const DEFAULT_R2_ACCESS_KEY_ID = '4642b28f948f8d18f430186f1f7a5e36'
+const DEFAULT_R2_SECRET_ACCESS_KEY = '5e75f7e5f71c5afa72b67b175483e32b397b49a7b1d6aba426fed6c0bbe8ae9d'
+const DEFAULT_R2_BUCKET = 'wine-erp-documents'
 
-function getR2Client(): S3Client | null {
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+function getR2Config() {
+    return {
+        accountId: process.env.R2_ACCOUNT_ID || DEFAULT_R2_ACCOUNT_ID,
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || DEFAULT_R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || DEFAULT_R2_SECRET_ACCESS_KEY,
+        bucketName: process.env.R2_BUCKET_NAME || DEFAULT_R2_BUCKET,
+        publicDomain: process.env.R2_PUBLIC_DOMAIN,
+    }
+}
+
+function getR2Client(): { client: S3Client; bucketName: string; publicDomain?: string } | null {
+    const config = getR2Config()
+    if (!config.accountId || !config.accessKeyId || !config.secretAccessKey) {
         return null
     }
 
-    return new S3Client({
+    const client = new S3Client({
         region: 'auto',
-        endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
         credentials: {
-            accessKeyId: R2_ACCESS_KEY_ID,
-            secretAccessKey: R2_SECRET_ACCESS_KEY,
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
         },
     })
+
+    return { client, bucketName: config.bucketName, publicDomain: config.publicDomain }
+}
+
+export type PresignedUploadResult = {
+    success: boolean
+    uploadUrl?: string
+    storagePath?: string
+    viewUrl?: string
+    fileName?: string
+    fileSize?: number
+    mimeType?: string
+    error?: string
 }
 
 /**
- * Upload a payment document (invoice, receipt, UNC, contract)
+ * Generate a direct Presigned PUT URL for browser-to-R2 upload
+ * Bypasses Vercel Serverless Function 4.5MB request body size limit completely
+ */
+export async function getPresignedUploadUrl(
+    fileName: string,
+    mimeType: string,
+    fileSize: number,
+    subfolder: string = 'general'
+): Promise<PresignedUploadResult> {
+    try {
+        if (!fileName) {
+            return { success: false, error: 'Tên file không hợp lệ' }
+        }
+
+        // Validate max 25MB for high-res PDF / scans
+        const maxBytes = 25 * 1024 * 1024
+        if (fileSize > maxBytes) {
+            return { success: false, error: 'Dung lượng file vượt quá giới hạn 25MB' }
+        }
+
+        const r2 = getR2Client()
+        if (!r2) {
+            return { success: false, error: 'Không thể kết nối máy chủ lưu trữ Cloudflare R2' }
+        }
+
+        const year = new Date().getFullYear()
+        const timestamp = Date.now()
+        const safeName = fileName
+            .replace(/[^a-zA-Z0-9.-]/g, '_')
+            .replace(/_+/g, '_')
+            .slice(0, 80)
+
+        const storagePath = `payment-requests/${year}/${subfolder}/${timestamp}_${safeName}`
+        const contentType = mimeType || 'application/octet-stream'
+
+        // Presigned PUT URL for direct browser upload valid for 15 minutes
+        const uploadUrl = await getSignedUrl(
+            r2.client,
+            new PutObjectCommand({
+                Bucket: r2.bucketName,
+                Key: storagePath,
+                ContentType: contentType,
+            }),
+            { expiresIn: 900 }
+        )
+
+        // Resolve initial view URL (custom public domain or 24h signed GET URL)
+        let viewUrl = ''
+        if (r2.publicDomain) {
+            const domain = r2.publicDomain.replace(/\/+$/, '')
+            viewUrl = `${domain}/${storagePath}`
+        } else {
+            viewUrl = await getSignedUrl(
+                r2.client,
+                new GetObjectCommand({
+                    Bucket: r2.bucketName,
+                    Key: storagePath,
+                }),
+                { expiresIn: 86400 } // 24 hours
+            )
+        }
+
+        return {
+            success: true,
+            uploadUrl,
+            storagePath,
+            viewUrl,
+            fileName,
+            fileSize,
+            mimeType: contentType,
+        }
+    } catch (err: any) {
+        console.error('[Storage R2] Presigned upload URL error:', err)
+        return { success: false, error: err.message || 'Lỗi khi khởi tạo đường dẫn upload chứng từ' }
+    }
+}
+
+/**
+ * Upload a payment document (invoice, receipt, UNC, contract) via Server Action
  * Priority: Cloudflare R2 -> Fallback: Supabase Storage
  */
 export async function uploadPaymentDoc(
@@ -50,10 +151,10 @@ export async function uploadPaymentDoc(
             return { success: false, error: 'Không tìm thấy file tải lên' }
         }
 
-        // Validate max 20MB for high-res PDF / scans
-        const maxBytes = 20 * 1024 * 1024
+        // Validate max 25MB for high-res PDF / scans
+        const maxBytes = 25 * 1024 * 1024
         if (file.size > maxBytes) {
-            return { success: false, error: 'Dung lượng file vượt quá giới hạn 20MB' }
+            return { success: false, error: 'Dung lượng file vượt quá giới hạn 25MB' }
         }
 
         const year = new Date().getFullYear()
@@ -72,9 +173,9 @@ export async function uploadPaymentDoc(
 
         if (r2) {
             // Upload to Cloudflare R2
-            await r2.send(
+            await r2.client.send(
                 new PutObjectCommand({
-                    Bucket: R2_BUCKET_NAME,
+                    Bucket: r2.bucketName,
                     Key: storagePath,
                     Body: buffer,
                     ContentType: contentType,
@@ -83,15 +184,15 @@ export async function uploadPaymentDoc(
 
             // Resolve access URL (public custom domain or pre-signed URL)
             let viewUrl = ''
-            if (R2_PUBLIC_DOMAIN) {
-                const domain = R2_PUBLIC_DOMAIN.replace(/\/+$/, '')
+            if (r2.publicDomain) {
+                const domain = r2.publicDomain.replace(/\/+$/, '')
                 viewUrl = `${domain}/${storagePath}`
             } else {
                 // Generate pre-signed URL valid for 24 hours
                 viewUrl = await getSignedUrl(
-                    r2,
+                    r2.client,
                     new GetObjectCommand({
-                        Bucket: R2_BUCKET_NAME,
+                        Bucket: r2.bucketName,
                         Key: storagePath,
                     }),
                     { expiresIn: 86400 }
@@ -147,15 +248,15 @@ export async function getPresignedDocUrl(
 
         const r2 = getR2Client()
         if (r2) {
-            if (R2_PUBLIC_DOMAIN) {
-                const domain = R2_PUBLIC_DOMAIN.replace(/\/+$/, '')
+            if (r2.publicDomain) {
+                const domain = r2.publicDomain.replace(/\/+$/, '')
                 return `${domain}/${storagePath}`
             }
 
             return await getSignedUrl(
-                r2,
+                r2.client,
                 new GetObjectCommand({
-                    Bucket: R2_BUCKET_NAME,
+                    Bucket: r2.bucketName,
                     Key: storagePath,
                 }),
                 { expiresIn: expiresInSeconds }
@@ -179,9 +280,9 @@ export async function deletePaymentDoc(storagePath: string): Promise<boolean> {
 
         const r2 = getR2Client()
         if (r2) {
-            await r2.send(
+            await r2.client.send(
                 new DeleteObjectCommand({
-                    Bucket: R2_BUCKET_NAME,
+                    Bucket: r2.bucketName,
                     Key: storagePath,
                 })
             )

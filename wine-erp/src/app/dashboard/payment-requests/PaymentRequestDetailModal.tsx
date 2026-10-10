@@ -10,7 +10,7 @@ import {
 import { toast } from 'sonner'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { processPaymentApproval, settlePaymentRequest } from './actions'
-import { uploadPaymentDoc } from '@/lib/storage-r2'
+import { uploadPaymentDoc, getPresignedUploadUrl } from '@/lib/storage-r2'
 import { PrintablePaymentRequest } from './PrintablePaymentRequest'
 
 interface PaymentRequestDetailModalProps {
@@ -105,15 +105,44 @@ export function PaymentRequestDetailModal({
         try {
             let uncUrl = null
             if (uncFile) {
-                const formData = new FormData()
-                formData.append('file', uncFile)
-                const uploadRes = await uploadPaymentDoc(formData, 'unc')
-                if (!uploadRes.success) {
-                    toast.error(uploadRes.error || 'Lỗi tải file UNC lên')
-                    setSettling(false)
-                    return
+                let uploadSuccess = false
+                // 1. Direct Presigned PUT to Cloudflare R2
+                try {
+                    const presignedRes = await getPresignedUploadUrl(
+                        uncFile.name,
+                        uncFile.type || 'application/octet-stream',
+                        uncFile.size,
+                        'unc'
+                    )
+                    if (presignedRes.success && presignedRes.uploadUrl && presignedRes.viewUrl) {
+                        const putRes = await fetch(presignedRes.uploadUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': uncFile.type || 'application/octet-stream',
+                            },
+                            body: uncFile,
+                        })
+                        if (putRes.ok) {
+                            uncUrl = presignedRes.viewUrl
+                            uploadSuccess = true
+                        }
+                    }
+                } catch (directErr) {
+                    console.warn('[Direct UNC Upload] Direct PUT failed, trying server action:', directErr)
                 }
-                uncUrl = uploadRes.url
+
+                // 2. Fallback to Server Action upload
+                if (!uploadSuccess) {
+                    const formData = new FormData()
+                    formData.append('file', uncFile)
+                    const uploadRes = await uploadPaymentDoc(formData, 'unc')
+                    if (!uploadRes.success) {
+                        toast.error(uploadRes.error || 'Lỗi tải file UNC lên')
+                        setSettling(false)
+                        return
+                    }
+                    uncUrl = uploadRes.url
+                }
             }
 
             const res = await settlePaymentRequest({
