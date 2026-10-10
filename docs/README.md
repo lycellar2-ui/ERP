@@ -52,12 +52,12 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 132 |
-| **Prisma enums** | 85 |
-| **Dashboard routes** | 36 folders |
-| **Server Action files** | 44 files |
-| **Module spec files** | 28 files |
-| **Sidebar nav items** | 38 items (7 groups) |
+| **Prisma models** | 138 |
+| **Prisma enums** | 89 |
+| **Dashboard routes** | 37 folders |
+| **Server Action files** | 45 files |
+| **Module spec files** | 29 files |
+| **Sidebar nav items** | 39 items (7 groups) |
 
 ### Bảng Module đầy đủ
 
@@ -93,8 +93,9 @@
 | 28 | `MGN` | Margin Simulation (Mô phỏng biên lợi nhuận) | [margin.md](./modules/margin.md) | `/margin` |
 | 29 | `SFV` | Sales Field Visit (Viếng thăm điểm bán) | [sales-field-visit.md](./modules/sales-field-visit.md) | `/sales/visits` |
 | 30 | `HRM` | Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên | [hr.md](./modules/hr.md) | `/hr` |
+| 31 | `PRQ` | Đề Nghị Thanh Toán & Quản Lý Ngân Sách | [payment-requests.md](./modules/payment-requests.md) | `/payment-requests` |
 
-**Tổng: 30 modules** (29 có spec file riêng, 1 nằm trong spec file khác)
+**Tổng: 31 modules** (30 có spec file riêng, 1 nằm trong spec file khác)
 
 ---
 
@@ -222,7 +223,8 @@ docs/
     ├── audit-log.md               AUD (NEW)
     ├── margin.md                  MGN (NEW)
     ├── sales-field-visit.md       SFV (NEW)
-    └── hr.md                      HRM (NEW)
+    ├── hr.md                      HRM (NEW)
+    └── payment-requests.md        PRQ (NEW)
 ```
 
 ---
@@ -237,5 +239,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-09 22:35 | Wine ERP v12.4 - POSM Master Data & Collateral Inventory Management (PosmProduct, PosmTransaction)*
+*Last updated: 2026-10-10 16:30 | Wine ERP v12.5 - Payment Requests Approval, Scanned Document Archiving via Cloudflare R2 & Expense Budgeting (PRQ)*
 

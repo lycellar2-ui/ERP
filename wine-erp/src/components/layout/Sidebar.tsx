@@ -14,7 +14,7 @@ import {
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
     Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
-    FileCheck2
+    FileCheck2, CreditCard
 } from 'lucide-react'
 
 import { useAppLocale } from '@/lib/i18n'
@@ -85,6 +85,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Tài Chính',
         labelEn: 'Finance',
         items: [
+            { href: '/dashboard/payment-requests', icon: CreditCard, label: 'Đề Nghị Thanh Toán', labelEn: 'Payment Requests', permission: 'FIN:READ' },
             { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', labelEn: 'Finance & Accounting', permission: 'FIN:READ' },
             { href: '/dashboard/reconciliation', icon: FileCheck2, label: 'Đối Chiếu Hóa Đơn', labelEn: 'Reconciliation', permission: 'FIN:READ' },
             // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },

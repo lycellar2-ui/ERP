@@ -43,8 +43,8 @@
 | **Recharts** | latest | Biểu đồ cho CEO Dashboard & RPT |
 | **React Hook Form + Zod** | latest | Form validation với schema (23+ Zod schemas) |
 | **Tanstack Table** | v8 | Bảng dữ liệu lớn (Inventory, Allocation Matrix) |
-| **ExcelJS** | latest | Parse & xuất Excel (import/export toàn hệ thống) |
-| **Prisma** | **7.4.2** | ORM — 113 models, 71 enums |
+| **Prisma** | **7.4.2** | ORM — 138 models, 89 enums |
+| **AWS S3 SDK** | **v3** | `@aws-sdk/client-s3` & `@aws-sdk/s3-request-presigner` (Cloudflare R2 Object Storage) |
 | **TanStack Query** | **v5** | Client-side caching, server hydration, and hover prefetching |
 | **TanStack Persist Cache** | **v5** | localStorage cache persistence (24h) to bypass Vercel cold-starts |
 
@@ -119,9 +119,21 @@ export async function uploadFileToImgBB(file: File): Promise<ImgBBResponse>
 | `invoices` | Hóa đơn logistics | Private (Signed URL) |
 | `documents` | Tài liệu chung | Private (Signed URL) |
 
+**Chứng từ Đề nghị thanh toán & Hóa đơn scan:** Dùng **Cloudflare R2** (S3-compatible, 10 GB free permanent storage, zero egress fee, fallback Supabase):
+- Thư viện: `@aws-sdk/client-s3` & `@aws-sdk/s3-request-presigner`
+- Module adapter: `src/lib/storage-r2.ts`
+- Phân cấp thư mục: `payment-requests/{year}/{category}/{requestId}/{fileName}`
+- Bảo mật: Private bucket, presigned upload URLs (24h) và presigned view URLs (30 phút)
+
 > **Env var cần có:**
 > ```env
 > IMGBB_API_KEY=[imgbb_api_key]
+> # Cloudflare R2 (Khuyến nghị cho lưu trữ chứng từ lớn)
+> R2_ACCOUNT_ID=[cloudflare_account_id]
+> R2_ACCESS_KEY_ID=[r2_access_key_id]
+> R2_SECRET_ACCESS_KEY=[r2_secret_access_key]
+> R2_BUCKET_NAME=[r2_bucket_name]
+> R2_PUBLIC_DOMAIN=[optional_custom_domain]
 > ```
 
 ### 🔄 Real-time — Supabase Realtime

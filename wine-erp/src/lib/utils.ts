@@ -148,3 +148,70 @@ export function calculateDueDate(invoiceDate: Date | string, paymentTerm: string
     return baseDate
 }
 
+// ─── Convert Number to Vietnamese Currency Words ─────
+/**
+ * Chuyển đổi số tiền thành chữ tiếng Việt theo chuẩn kế toán (VAS)
+ * Ví dụ: 15500000 -> "Mười lăm triệu năm trăm nghìn đồng chẵn"
+ */
+export function numberToWordsVN(amount: number): string {
+    if (!amount || isNaN(amount) || amount === 0) return 'Không đồng'
+
+    const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín']
+    const units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ']
+
+    const isNegative = amount < 0
+    let n = Math.abs(Math.round(amount))
+
+    function readGroup(threeDigits: number, isHighest: boolean): string {
+        const h = Math.floor(threeDigits / 100)
+        const t = Math.floor((threeDigits % 100) / 10)
+        const u = threeDigits % 10
+        let s = ''
+
+        if (h > 0 || !isHighest) {
+            s += digits[h] + ' trăm '
+        }
+
+        if (t === 0) {
+            if (u > 0 && (h > 0 || !isHighest)) {
+                s += 'lẻ '
+            }
+        } else if (t === 1) {
+            s += 'mười '
+        } else {
+            s += digits[t] + ' mươi '
+        }
+
+        if (t > 0 && u === 1 && t !== 1) {
+            s += 'mốt'
+        } else if (t > 0 && u === 5) {
+            s += 'lăm'
+        } else if (u > 0) {
+            s += digits[u]
+        }
+
+        return s.trim()
+    }
+
+    const groups: number[] = []
+    while (n > 0) {
+        groups.push(n % 1000)
+        n = Math.floor(n / 1000)
+    }
+
+    let result = ''
+    for (let i = groups.length - 1; i >= 0; i--) {
+        const g = groups[i]
+        if (g > 0) {
+            const isHighest = i === groups.length - 1
+            const str = readGroup(g, isHighest)
+            result += (result ? ' ' : '') + str + (units[i] ? ' ' + units[i] : '')
+        }
+    }
+
+    result = result.trim() + ' đồng chẵn'
+    if (isNegative) result = 'Âm ' + result
+
+    return result.charAt(0).toUpperCase() + result.slice(1)
+}
+

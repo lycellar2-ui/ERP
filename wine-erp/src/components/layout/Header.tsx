@@ -178,6 +178,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/returns', title: locale === 'en' ? 'Returns & CN' : 'Trả Hàng & CN' },
             { path: '/dashboard/pos', title: 'POS Showroom' },
             { path: '/dashboard/qr-codes', title: locale === 'en' ? 'QR Traceability' : 'QR Truy Xuất' },
+            { path: '/dashboard/payment-requests', title: locale === 'en' ? 'Payment Requests & Budgets' : 'Đề Nghị Thanh Toán & Ngân Sách' },
             { path: '/dashboard/finance', title: locale === 'en' ? 'Finance & Accounting' : 'Công Nợ & Kế Toán' },
             { path: '/dashboard/reconciliation', title: locale === 'en' ? 'Reconciliation' : 'Đối Chiếu Hóa Đơn' },
             { path: '/dashboard/declarations', title: locale === 'en' ? 'Customs Declarations' : 'Tờ Khai Thuế' },

@@ -32,6 +32,8 @@ model LegalEntity {
   salesOrders       SalesOrder[]
   arInvoices        ARInvoice[]
   apInvoices        APInvoice[]
+  paymentRequests   PaymentRequest[]
+  expenseBudgets    ExpenseBudget[]
   stockLots         StockLot[]
   warehouses        Warehouse[]
   createdAt         DateTime        @default(now())
@@ -47,10 +49,12 @@ model Department {
   parent    Department?  @relation("DeptParent", fields: [parentId], references: [id])
   children  Department[] @relation("DeptParent")
   users     User[]
-  roles     Role[]
-  proposals Proposal[]
-  employees Employee[]   @relation("DeptEmployees")
-  createdAt DateTime     @default(now())
+  roles           Role[]
+  proposals       Proposal[]
+  employees       Employee[]       @relation("DeptEmployees")
+  paymentRequests PaymentRequest[]
+  expenseBudgets  ExpenseBudget[]
+  createdAt       DateTime         @default(now())
   updatedAt DateTime     @updatedAt
 
   @@map("departments")
@@ -113,6 +117,9 @@ model User {
   callLogs               SalesCallLog[]     @relation("SalesCallLogUser")
   callPlansAsRep         SalesCallPlan[]    @relation("SalesCallPlanRep")
   callPlansAssigned      SalesCallPlan[]    @relation("SalesCallPlanAssigner")
+  paymentRequestsCreated PaymentRequest[]   @relation("PaymentRequestCreator")
+  paymentAttachments     PaymentRequestAttachment[] @relation("PaymentAttachmentUploader")
+  paymentApprovalLogs    PaymentApprovalLog[] @relation("PaymentApprovalActor")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -463,6 +470,7 @@ model Supplier {
   contracts       Contract[]
   regulatedDocs   RegulatedDocument[] @relation("SupplierRegDocs")
   apInvoices      APInvoice[]
+  paymentRequests PaymentRequest[]
   contacts        SupplierContact[]
   addresses       SupplierAddress[]
   activities      SupplierActivity[]
@@ -1120,6 +1128,7 @@ model PurchaseOrder {
   lines             PurchaseOrderLine[]
   shipments         Shipment[]
   apInvoices        APInvoice[]
+  paymentRequests   PaymentRequest[]
   goodsReceipts     GoodsReceipt[]
   documents         PODocument[]
 
@@ -2166,9 +2175,10 @@ model APInvoice {
   currency     String        @default("USD")
   exchangeRate Decimal       @default(1)
   dueDate      DateTime
-  status       InvoiceStatus @default(UNPAID)
-  payments     APPayment[]
-  createdAt    DateTime      @default(now())
+  status          InvoiceStatus @default(UNPAID)
+  payments        APPayment[]
+  paymentRequests PaymentRequest[]
+  createdAt       DateTime      @default(now())
 
   @@map("ap_invoices")
 }
@@ -3161,6 +3171,7 @@ model Proposal {
   priceItems      ProposalPriceItem[]
 
   salesOrders     SalesOrder[]
+  paymentRequests PaymentRequest[]
 
   // ── Sub-models ──
   attachments     ProposalAttachment[]
@@ -3501,3 +3512,208 @@ model EmployeeDocument {
   @@index([expiryDate])
   @@map("employee_documents")
 }
+
+// =============================================================
+// PRQ — Payment Requests & Document Storage & Expense Budgets
+// =============================================================
+
+enum PaymentCategory {
+  VENDOR_PAYMENT         // Thanh toán tiền hàng NCC
+  IMPORT_TAX_LOGISTICS   // Thuế hải quan 3 tầng & Cước vận chuyển
+  OPERATIONS_OFFICE      // Chi phí vận hành, showroom, văn phòng
+  TASTING_MARKETING      // Tiếp khách, sự kiện, thử nếm Tasting
+  EMPLOYEE_ADVANCE       // Tạm ứng & hoàn ứng nhân viên
+  OTHER                  // Khoản chi khác
+}
+
+enum PaymentRequestStatus {
+  DRAFT                  // Bản nháp
+  SUBMITTED              // Đã gửi duyệt (chờ TP duyệt)
+  REVIEWING_L1           // Trưởng phòng đã duyệt, chờ Kế toán
+  REVIEWING_L2           // Kế toán đã duyệt, chờ CEO
+  APPROVED               // Đã duyệt hoàn tất (chờ chi tiền)
+  PAID                   // Đã thanh toán / Đã xuất quỹ / Đã có UNC
+  REJECTED               // Bị từ chối
+  CANCELLED              // Đã hủy
+}
+
+enum PaymentDocType {
+  VAT_INVOICE            // Hóa đơn GTGT
+  DELIVERY_NOTE          // Phiếu giao hàng / Biên bản nghiệm thu
+  CONTRACT_DOC           // Hợp đồng / Báo giá
+  TAX_RECEIPT            // Giấy nộp tiền ngân sách nhà nước
+  BANK_UNC               // Ủy nhiệm chi ngân hàng
+  OTHER                  // Khác
+}
+
+enum BudgetPeriodType {
+  YEARLY
+  QUARTERLY
+  MONTHLY
+}
+
+model ExpenseCategoryMaster {
+  id              String                  @id @default(cuid())
+  code            String                  @unique
+  name            String
+  group           String                  @default("OPERATING") // OPERATING, COST_OF_SALES, MARKETING, ADMINISTRATIVE, CAPEX
+  defaultAccount  String?                 // 641, 642, 635, 811...
+  parentId        String?
+  parent          ExpenseCategoryMaster?  @relation("ExpenseCategoryTree", fields: [parentId], references: [id])
+  children        ExpenseCategoryMaster[] @relation("ExpenseCategoryTree")
+  description     String?
+  isActive        Boolean                 @default(true)
+  sortOrder       Int                     @default(0)
+  
+  paymentRequests PaymentRequest[]
+  paymentItems    PaymentRequestItem[]
+  budgets         ExpenseBudget[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@map("expense_category_masters")
+}
+
+model ExpenseBudget {
+  id                  String                @id @default(cuid())
+  categoryId          String
+  category            ExpenseCategoryMaster @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  departmentId        String?
+  department          Department?           @relation(fields: [departmentId], references: [id])
+  legalEntityId       String?
+  legalEntity         LegalEntity?          @relation(fields: [legalEntityId], references: [id])
+  
+  year                Int                   // 2026
+  periodType          BudgetPeriodType      @default(YEARLY)
+  periodIndex         Int?                  // 1..4 (Quý), 1..12 (Tháng), null (Cả năm)
+  
+  allocatedAmount     Decimal               @db.Decimal(15, 2)
+  warningThresholdPct Decimal               @default(85) @db.Decimal(5, 2)
+  notes               String?
+  
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([categoryId, year, periodType])
+  @@index([departmentId])
+  @@map("expense_budgets")
+}
+
+model PaymentRequest {
+  id                  String               @id @default(cuid())
+  requestNo           String               @unique // PR-2026-0001
+  title               String
+  category            PaymentCategory      @default(OTHER)
+  priority            ProposalPriority     @default(NORMAL)
+  status              PaymentRequestStatus @default(DRAFT)
+  currentLevel        Int                  @default(0) // 0: Nháp, 1: TP, 2: Kế toán, 3: CEO
+  
+  currency            String               @default("VND")
+  exchangeRate        Decimal              @default(1) @db.Decimal(12, 4)
+  totalAmount         Decimal              @db.Decimal(15, 2)
+  totalAmountVND      Decimal              @db.Decimal(15, 2)
+  paidAmount          Decimal              @default(0) @db.Decimal(15, 2)
+  
+  paymentMethod       PaymentMethod        @default(BANK_TRANSFER)
+  dueDate             DateTime?
+  paidDate            DateTime?
+  
+  beneficiaryName     String
+  beneficiaryAccount  String?
+  beneficiaryBank     String?
+  
+  categoryId          String?
+  categoryMaster      ExpenseCategoryMaster? @relation(fields: [categoryId], references: [id])
+  
+  legalEntityId       String?
+  legalEntity         LegalEntity?         @relation(fields: [legalEntityId], references: [id])
+  departmentId        String?
+  department          Department?          @relation(fields: [departmentId], references: [id])
+  createdBy           String
+  creator             User                 @relation("PaymentRequestCreator", fields: [createdBy], references: [id])
+  
+  supplierId          String?
+  supplier            Supplier?            @relation(fields: [supplierId], references: [id])
+  poId                String?
+  po                  PurchaseOrder?       @relation(fields: [poId], references: [id])
+  apInvoiceId         String?
+  apInvoice           APInvoice?           @relation(fields: [apInvoiceId], references: [id])
+  proposalId          String?
+  proposal            Proposal?            @relation(fields: [proposalId], references: [id])
+  
+  notes               String?
+  rejectReason        String?
+  uncVoucherNo        String?
+  uncFileUrl          String?
+  
+  items               PaymentRequestItem[]
+  attachments         PaymentRequestAttachment[]
+  approvalLogs        PaymentApprovalLog[]
+  
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([createdBy])
+  @@index([supplierId])
+  @@index([categoryId])
+  @@map("payment_requests")
+}
+
+model PaymentRequestItem {
+  id             String                 @id @default(cuid())
+  requestId      String
+  request        PaymentRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  categoryId     String?
+  category       ExpenseCategoryMaster? @relation(fields: [categoryId], references: [id])
+  
+  description    String
+  accountCode    String?
+  quantity       Decimal                @default(1) @db.Decimal(10, 2)
+  unitPrice      Decimal                @db.Decimal(15, 2)
+  amount         Decimal                @db.Decimal(15, 2)
+  vatAmount      Decimal                @default(0) @db.Decimal(15, 2)
+  totalAmount    Decimal                @db.Decimal(15, 2)
+  invoiceNo      String?
+  invoiceDate    DateTime?
+
+  @@index([requestId])
+  @@index([categoryId])
+  @@map("payment_request_items")
+}
+
+model PaymentRequestAttachment {
+  id             String         @id @default(cuid())
+  requestId      String
+  request        PaymentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  docType        PaymentDocType @default(VAT_INVOICE)
+  fileName       String
+  fileUrl        String
+  storagePath    String
+  fileSize       Int
+  mimeType       String
+  uploadedBy     String
+  uploader       User           @relation("PaymentAttachmentUploader", fields: [uploadedBy], references: [id])
+  createdAt      DateTime       @default(now())
+
+  @@index([requestId])
+  @@map("payment_request_attachments")
+}
+
+model PaymentApprovalLog {
+  id             String         @id @default(cuid())
+  requestId      String
+  request        PaymentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  level          Int
+  action         String
+  actorId        String
+  actor          User           @relation("PaymentApprovalActor", fields: [actorId], references: [id])
+  comment        String?
+  createdAt      DateTime       @default(now())
+
+  @@index([requestId])
+  @@map("payment_approval_logs")
+}
+

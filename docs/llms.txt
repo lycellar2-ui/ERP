@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-10-09 22:35
-> Status: Production — 30 modules, 132 DB models, 85 enums, 36 dashboard routes, Pure Light Design System v2.2
+> Last updated: 2026-10-10 16:30
+> Status: Production — 31 modules, 138 DB models, 89 enums, 37 dashboard routes, Pure Light Design System v2.2
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
@@ -11,15 +11,15 @@
  
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (132 models, 85 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (138 models, 89 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
-- ImgBB (product images) + Supabase Storage (private docs)
+- ImgBB (product images) + Cloudflare R2 / Supabase Storage (private docs, scans & vouchers)
 - Server Actions — NOT tRPC
 - Vercel deploy + GitHub CI/CD
 - Pre-commit hook (.husky/pre-commit) — docs guardian
 
-## Module Registry (30 modules)
+## Module Registry (31 modules)
 SYS (RBAC/Auth) | MDM (Products/Suppliers/Customers) | CRM (360° + Pipeline)
 CNT (Contracts + RegDocs) | TAX (Tax Rates) | PRC (Procurement)
 SHP (Shipment Tracking) | CST (Product Costing) | AGN (Agency Portal)
@@ -31,6 +31,7 @@ AI (6 live: Pipeline/CRM/Catalog Analysis + CEO Briefing + Admin Toggle + Prompt
 PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 AUD (Audit Log) | MGN (Margin Simulation) | SFV (Sales Field Visit — GPS + Camera)
 HRM (HR & Employee Document Hub — Contracts, National ID, Health Alerts, ERP Linking)
+PRQ (Payment Requests & Expense Budgets — Cloudflare R2 Document Archiving, Threshold-based Multi-level Approval)
 
 ## Wine-Specific Concepts
 - Vintage: Year of grape harvest (managed at StockLot level) — affects pricing, allocation

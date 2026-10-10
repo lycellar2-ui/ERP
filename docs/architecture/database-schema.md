@@ -24,6 +24,7 @@ graph TB
     CSG["🍽️ CSG\nConsignment\nHORECA"]
     TRS["🚚 TRS\nTransport & Delivery"]
     FIN["💰 FIN\nFinance & Accounting"]
+    PRQ["💳 PRQ\nPayment Requests\nBudget & Scan Docs"]
     RPT["📈 RPT\nReporting & BI"]
     DSH["👑 DSH\nCEO Dashboard"]
 
@@ -35,15 +36,18 @@ graph TB
     SYS -->|"Approval Flow"| PRC
     SYS -->|"Approval Flow"| SLS
     SYS -->|"Approval Flow"| FIN
+    SYS -->|"Approval Flow"| PRQ
 
     MDM -->|"Wine Catalog"| PRC
     MDM -->|"Wine Catalog"| WMS
     MDM -->|"Wine Catalog"| SLS
+    MDM -->|"LegalEntity / Supplier"| PRQ
     TAX -->|"Tax Rates"| PRC
     TAX -->|"Market Price"| SLS
 
     AGN -->|"Shipping Info, Costs"| PRC
     PRC -->|"GR from PO"| WMS
+    PRC -->|"PO / AP Invoice"| PRQ
     WMS -->|"Pick/Issue Stock"| SLS
     WMS -->|"Off-site Stock"| CSG
     SLS -->|"Delivery Order"| TRS
@@ -52,8 +56,10 @@ graph TB
     SLS -->|"Invoice"| FIN
     PRC -->|"AP Invoice"| FIN
     WMS -->|"COGS"| FIN
+    PRQ -->|"Ủy nhiệm chi (UNC) & Bút toán"| FIN
 
     FIN -->|"Financial Data"| RPT
+    PRQ -->|"Cost & Budget Data"| RPT
     SLS -->|"Sales Data"| RPT
     WMS -->|"Stock Data"| RPT
     PRC -->|"Tax Data"| RPT
@@ -65,6 +71,7 @@ graph TB
     SLS -->|"Revenue"| DSH
     AGN -->|"ETA In-transit"| DSH
     FIN -->|"AR/AP"| DSH
+    PRQ -->|"Pending Payments"| DSH
     CNT -->|"Compliance Warnings"| DSH
 ```
 
@@ -654,6 +661,73 @@ erDiagram
         reportedBy  uuid FK
     }
 
+    %% ── PRQ DOMAIN (Payment Requests & Expense Budgets) ───────
+    ExpenseCategoryMaster {
+        id                  uuid PK
+        code                string UK
+        name                string
+        category            enum
+        default_vas_account string
+        description         string
+        is_active           boolean
+    }
+    ExpenseBudget {
+        id                  uuid PK
+        category_id         uuid FK
+        entity_id           uuid FK
+        dept_id             uuid FK
+        period_type         enum
+        period_value        int
+        year                int
+        allocated_amount    decimal
+        warning_threshold   decimal
+    }
+    PaymentRequest {
+        id                  uuid PK
+        request_no          string UK
+        entity_id           uuid FK
+        dept_id             uuid FK
+        requested_by_id     uuid FK
+        supplier_id         uuid FK
+        po_id               uuid FK
+        invoice_id          uuid FK
+        proposal_id         uuid FK
+        category            enum
+        total_amount        decimal
+        currency            string
+        status              enum
+        paid_amount         decimal
+        bank_ref_no         string
+    }
+    PaymentRequestItem {
+        id                  uuid PK
+        request_id          uuid FK
+        category_id         uuid FK
+        budget_id           uuid FK
+        description         string
+        amount              decimal
+        vat_amount          decimal
+        account_code        string
+    }
+    PaymentRequestAttachment {
+        id                  uuid PK
+        request_id          uuid FK
+        file_name           string
+        file_url            string
+        file_path           string
+        doc_type            enum
+        storage_bucket      string
+    }
+    PaymentApprovalLog {
+        id                  uuid PK
+        request_id          uuid FK
+        actor_id            uuid FK
+        action              string
+        from_status         enum
+        to_status           enum
+        comments            string
+    }
+
     %% ── RELATIONSHIPS ────────────────────────────────────────
 
     %% MDM
@@ -786,6 +860,20 @@ erDiagram
     WineStampUsage }o--o| Shipment : "dán cho lô hàng"
     WineStampUsage }o--o| StockLot : "dán cho lô tồn kho"
 
+    %% PRQ
+    PaymentRequest }o--|| LegalEntity : "pháp nhân chi"
+    PaymentRequest }o--o| Department : "phòng ban"
+    PaymentRequest }o--|| User : "người lập"
+    PaymentRequest }o--o| Supplier : "nhà cung cấp"
+    PaymentRequest }o--o| PurchaseOrder : "theo PO"
+    PaymentRequest }o--o| APInvoice : "theo hóa đơn AP"
+    PaymentRequest }o--o| Proposal : "theo tờ trình"
+    PaymentRequest ||--o{ PaymentRequestItem : "chi tiết dòng"
+    PaymentRequestItem }o--o| ExpenseCategoryMaster : "hạng mục chi phí"
+    PaymentRequestItem }o--o| ExpenseBudget : "ngân sách dự toán"
+    PaymentRequest ||--o{ PaymentRequestAttachment : "chứng từ đính kèm"
+    PaymentRequest ||--o{ PaymentApprovalLog : "lịch sử duyệt"
+
     %% SYS
     ApprovalRequest }o--|| User : "yêu cầu bởi"
     User }o--|| Department : "thuộc phòng ban"
@@ -848,6 +936,16 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `PosmCategory` (enum) | `GLASSWARE_TOOLS`, `DISPLAY_STAND`, `PACKAGING_GIFT`, `MARKETING_COLLATERAL`, `OTHER` |
 | `PosmTxType` (enum) | `INBOUND`, `OUTBOUND`, `ADJUSTMENT` |
 | `PosmReason` (enum) | `PURCHASE_INBOUND`, `SUPPLIER_SPONSOR`, `EVENT_RETURN`, `SALES_ALLOCATION`, `HORECA_PLACEMENT`, `PROMO_GIFT`, `EVENT_WORKSHOP`, `DAMAGE_LOSS`, `INVENTORY_ADJUST`, `OTHER` |
+| `PaymentCategory` (enum) | `SUPPLIER_PAYMENT`, `CUSTOMS_TAX`, `LOGISTICS_SHIPPING`, `MARKETING_EVENT`, `OFFICE_ADMIN`, `SALARY_BENEFITS`, `CAPEX_EQUIPMENT`, `ADVANCE_REQUEST`, `OTHER` |
+| `PaymentRequestStatus` (enum) | `DRAFT`, `SUBMITTED`, `DEPT_APPROVED`, `ACCT_APPROVED`, `CEO_APPROVED`, `REJECTED`, `PAID`, `CANCELLED` |
+| `PaymentDocType` (enum) | `VAT_INVOICE`, `COMMERCIAL_CONTRACT`, `DELIVERY_NOTE_BL`, `PROPOSAL_SHEET`, `CUSTOMS_DECLARATION`, `QUOTATION_COMPARE`, `PAYMENT_ORDER_UNC`, `EXPENSE_RECEIPT`, `OTHER` |
+| `BudgetPeriodType` (enum) | `MONTH`, `QUARTER`, `YEAR` |
+| `expense_category_masters` | `code`, `name`, `category`, `defaultVasAccount`, `description`, `isActive` (Hạng mục chi phí và tài khoản VAS mặc định) |
+| `expense_budgets` | `categoryId`, `entityId`, `deptId`, `periodType`, `periodValue`, `year`, `allocatedAmount`, `warningThreshold` (Ngân sách dự toán chi phí) |
+| `payment_requests` | `requestNo`, `entityId`, `deptId`, `requestedById`, `supplierId`, `poId`, `invoiceId`, `proposalId`, `category`, `totalAmount`, `status`, `paidAmount`, `bankRefNo`, `paymentDate` |
+| `payment_request_items` | `requestId`, `categoryId`, `budgetId`, `description`, `amount`, `vatAmount`, `accountCode` |
+| `payment_request_attachments` | `requestId`, `fileName`, `fileUrl`, `filePath`, `docType`, `storageBucket` (Chứng từ scan lưu R2/Supabase) |
+| `payment_approval_logs` | `requestId`, `actorId`, `action`, `fromStatus`, `toStatus`, `comments` (Lịch sử phê duyệt đa cấp) |
 
 ### D. Indexes Quan Trọng
 ```sql
@@ -869,4 +967,11 @@ CREATE INDEX idx_arinvoice_period ON ar_invoice(customer_id, status, created_at)
 
 -- Allocation check
 CREATE INDEX idx_quota_campaign ON allocation_quota(campaign_id, target_type, target_id);
+
+-- Đề nghị thanh toán theo trạng thái & pháp nhân
+CREATE INDEX payment_requests_entity_status_idx ON payment_requests(entityId, status);
+CREATE INDEX payment_requests_requested_by_idx ON payment_requests(requestedById);
+
+-- Ngân sách chi phí theo năm và kỳ
+CREATE INDEX expense_budgets_lookup_idx ON expense_budgets(categoryId, entityId, year, periodType);
 ```

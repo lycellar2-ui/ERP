@@ -24,7 +24,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Warehouse**: `wine-erp/src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
 - **Sales & Allocation**: `wine-erp/src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `wine-erp/src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `wine-erp/src/app/dashboard/price-list`, `wine-erp/src/app/dashboard/allocation`, `wine-erp/src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `wine-erp/src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `wine-erp/src/app/dashboard/pipeline`
-- **Finance & Tem**: `wine-erp/src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `wine-erp/src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `wine-erp/src/app/dashboard/stamps`
+- **Finance & Tem**: `wine-erp/src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `wine-erp/src/app/dashboard/payment-requests` (**Đề Nghị Thanh Toán & Ngân Sách**, Cloudflare R2 Scan Viewer, Duyệt đa cấp), `wine-erp/src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `wine-erp/src/app/dashboard/stamps`
 - **Procurement & Operations**: `wine-erp/src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `wine-erp/src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `wine-erp/src/app/dashboard/agency`
 - **Tax & Market Data**: `wine-erp/src/app/dashboard/tax`, `wine-erp/src/app/dashboard/costing`, `wine-erp/src/app/dashboard/market-price`
 - **Logistics**: `wine-erp/src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `wine-erp/src/app/dashboard/consignment`, `wine-erp/src/app/dashboard/transfers`, `wine-erp/src/app/dashboard/returns`, `wine-erp/src/app/dashboard/stock-count`
@@ -46,6 +46,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Notification** | `wine-erp/src/lib/notifications.ts` | 5 email templates via Resend (**lazy init** — không crash khi missing API key) + Telegram |
 | **Excel Export** | `wine-erp/src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
 | **File Upload** | `wine-erp/src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
+| **Cloudflare R2 Storage** | `wine-erp/src/lib/storage-r2.ts` | S3-compatible adapter for payment request scans & vouchers (10GB free, 0 egress) + presigned URLs |
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
 | **SignaturePad** | `wine-erp/src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
 | **AI Service** | `wine-erp/src/lib/ai-service.ts` | Gemini 3.1 Pro API: `callGemini()` + `resolvePromptTemplate(slug)` → DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded |
