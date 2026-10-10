@@ -5,7 +5,7 @@ import {
     X, FileText, Download, ExternalLink, ZoomIn, ZoomOut, RotateCw,
     CheckCircle2, XCircle, RotateCcw, DollarSign, Building2, User,
     Calendar, CreditCard, AlertTriangle, Paperclip, Eye, UploadCloud,
-    Loader2, Printer
+    Loader2, Printer, Package, Receipt
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
@@ -354,6 +354,31 @@ export function PaymentRequestDetailModal({
                                     <p className="font-medium text-slate-800">{detail.legalEntity?.name || 'LYS CELLARS'}</p>
                                 </div>
                             </div>
+
+                            {/* Linked Supplier & PO / AP Invoice Badges */}
+                            {(detail.supplier || detail.po || detail.apInvoice) && (
+                                <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex flex-wrap gap-2 items-center text-[11px]">
+                                    {detail.supplier && (
+                                        <div className="flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2 py-1 text-slate-700">
+                                            <Building2 className="h-3.5 w-3.5 text-[#8B1A2E]" />
+                                            <span>NCC: <strong>[{detail.supplier.code}] {detail.supplier.name}</strong></span>
+                                            {detail.supplier.taxId && <span className="text-slate-400 font-mono">(MST: {detail.supplier.taxId})</span>}
+                                        </div>
+                                    )}
+                                    {detail.po && (
+                                        <div className="flex items-center gap-1.5 rounded-md bg-amber-50 border border-amber-200 px-2 py-1 text-amber-800 font-medium">
+                                            <Package className="h-3.5 w-3.5 text-amber-600" />
+                                            <span>Đơn hàng: <strong>{detail.po.poNo}</strong></span>
+                                        </div>
+                                    )}
+                                    {detail.apInvoice && (
+                                        <div className="flex items-center gap-1.5 rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-blue-800 font-medium">
+                                            <Receipt className="h-3.5 w-3.5 text-blue-600" />
+                                            <span>Hóa đơn AP: <strong>{detail.apInvoice.invoiceNo}</strong></span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Amount Banner */}

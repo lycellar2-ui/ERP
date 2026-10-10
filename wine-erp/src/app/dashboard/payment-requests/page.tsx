@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
 import {
     getPaymentRequests, getPaymentRequestStats,
-    getExpenseCategories, getExpenseBudgets
+    getExpenseCategories, getExpenseBudgets, getSuppliersMaster
 } from './actions'
 import { PaymentRequestsClient } from './PaymentRequestsClient'
 
@@ -20,22 +20,18 @@ export default async function PaymentRequestsPage() {
         stats,
         categories,
         budgets,
-        legalEntities,
         suppliers,
+        legalEntities,
         departments,
     ] = await Promise.all([
         getPaymentRequests({ pageSize: 50 }),
         getPaymentRequestStats(),
         getExpenseCategories(true),
         getExpenseBudgets(),
+        getSuppliersMaster(),
         prisma.legalEntity.findMany({
             select: { id: true, name: true, code: true },
             orderBy: { code: 'asc' },
-        }),
-        prisma.supplier.findMany({
-            where: { status: 'ACTIVE' },
-            select: { id: true, name: true, code: true },
-            orderBy: { name: 'asc' },
         }),
         prisma.department.findMany({
             select: { id: true, name: true },

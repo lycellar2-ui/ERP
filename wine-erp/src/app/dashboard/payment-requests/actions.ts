@@ -1036,3 +1036,236 @@ export async function getPaymentRequestStats() {
         totalPaidVND: Number(sumPaid._sum.paidAmount) || 0,
     }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// 4. SUPPLIER MASTER DATA & PENDING INVOICES / POs
+// ═══════════════════════════════════════════════════════════════
+
+export type SupplierMasterRow = {
+    id: string
+    code: string
+    name: string
+    type: string
+    country: string
+    taxId: string | null
+    paymentTerm: string | null
+    bankAccountInfo: string | null
+    notes: string | null
+    openPOCount: number
+    unpaidInvoiceCount: number
+    paymentRequestCount: number
+    totalPaidVND: number
+}
+
+export async function getSuppliersMaster(): Promise<SupplierMasterRow[]> {
+    const suppliers = await prisma.supplier.findMany({
+        where: { status: 'ACTIVE' },
+        include: {
+            _count: {
+                select: {
+                    purchaseOrders: true,
+                    apInvoices: true,
+                    paymentRequests: true,
+                }
+            },
+            paymentRequests: {
+                where: { status: 'PAID' },
+                select: { paidAmount: true }
+            }
+        },
+        orderBy: { name: 'asc' },
+    })
+
+    return suppliers.map(s => {
+        const totalPaid = s.paymentRequests.reduce((sum, r) => sum + Number(r.paidAmount || 0), 0)
+        return {
+            id: s.id,
+            code: s.code,
+            name: s.name,
+            type: s.type,
+            country: s.country,
+            taxId: s.taxId,
+            paymentTerm: s.paymentTerm,
+            bankAccountInfo: s.bankAccountInfo,
+            notes: s.notes,
+            openPOCount: s._count.purchaseOrders,
+            unpaidInvoiceCount: s._count.apInvoices,
+            paymentRequestCount: s._count.paymentRequests,
+            totalPaidVND: totalPaid,
+        }
+    })
+}
+
+export async function getSupplierPendingInvoicesAndPOs(supplierId: string) {
+    if (!supplierId) return { pos: [], invoices: [] }
+
+    const [pos, invoices] = await Promise.all([
+        prisma.purchaseOrder.findMany({
+            where: {
+                supplierId,
+                status: { in: ['APPROVED', 'PARTIALLY_RECEIVED', 'RECEIVED'] },
+            },
+            select: {
+                id: true,
+                poNo: true,
+                totalAmount: true,
+                currency: true,
+                status: true,
+                paymentTerm: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+        }),
+        prisma.aPInvoice.findMany({
+            where: {
+                supplierId,
+                status: { not: 'PAID' },
+            },
+            select: {
+                id: true,
+                invoiceNo: true,
+                amount: true,
+                currency: true,
+                dueDate: true,
+                status: true,
+                po: { select: { poNo: true } },
+            },
+            orderBy: { dueDate: 'asc' },
+            take: 10,
+        }),
+    ])
+
+    return {
+        pos: pos.map((p: any) => ({
+            id: p.id,
+            poNo: p.poNo,
+            totalAmount: Number(p.totalAmount || 0),
+            currency: p.currency,
+            status: p.status,
+            paymentTerm: p.paymentTerm,
+            createdAt: p.createdAt,
+        })),
+        invoices: invoices.map((i: any) => ({
+            id: i.id,
+            invoiceNo: i.invoiceNo,
+            amount: Number(i.amount || 0),
+            currency: i.currency,
+            dueDate: i.dueDate,
+            status: i.status,
+            poNo: i.po?.poNo || null,
+        })),
+    }
+}
+
+export async function quickCreateSupplier(input: {
+    name: string
+    code?: string
+    type?: string
+    taxId?: string
+    bankName?: string
+    bankAccountNo?: string
+    bankAccountName?: string
+    phone?: string
+    email?: string
+    address?: string
+    paymentTerm?: string
+}): Promise<{ success: boolean; supplier?: any; error?: string }> {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        let code = input.code?.trim().toUpperCase()
+        if (!code) {
+            const count = await prisma.supplier.count()
+            code = `NCC-${String(count + 1).padStart(4, '0')}`
+        }
+
+        // Format bankAccountInfo string: "Ngân hàng: ..., STK: ..., Chủ TK: ..."
+        let bankAccountInfo = ''
+        if (input.bankAccountNo) {
+            const parts: string[] = []
+            if (input.bankName) parts.push(`NH: ${input.bankName.trim()}`)
+            if (input.bankAccountNo) parts.push(`STK: ${input.bankAccountNo.trim()}`)
+            if (input.bankAccountName) parts.push(`Chủ TK: ${input.bankAccountName.trim()}`)
+            bankAccountInfo = parts.join(' - ')
+        }
+
+        const supplier = await prisma.supplier.create({
+            data: {
+                code,
+                name: input.name.trim(),
+                type: (input.type as any) || 'DISTRIBUTOR',
+                country: 'Việt Nam',
+                taxId: input.taxId?.trim() || null,
+                paymentTerm: input.paymentTerm?.trim() || 'NET30',
+                defaultCurrency: 'VND',
+                bankAccountInfo: bankAccountInfo || null,
+                contacts: (input.phone || input.email) ? {
+                    create: {
+                        name: input.name.trim(),
+                        phone: input.phone?.trim() || null,
+                        email: input.email?.trim() || null,
+                        isPrimary: true,
+                    }
+                } : undefined,
+                addresses: input.address ? {
+                    create: {
+                        label: 'Văn phòng chính',
+                        address: input.address.trim(),
+                        isDefault: true,
+                    }
+                } : undefined,
+            },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                type: true,
+                country: true,
+                taxId: true,
+                paymentTerm: true,
+                bankAccountInfo: true,
+                notes: true,
+            }
+        })
+
+        revalidatePath('/dashboard/payment-requests')
+        return { success: true, supplier }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi khi tạo nhà cung cấp' }
+    }
+}
+
+export async function updateSupplierPaymentInfo(input: {
+    id: string
+    taxId?: string
+    bankName?: string
+    bankAccountNo?: string
+    bankAccountName?: string
+    paymentTerm?: string
+    notes?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const parts: string[] = []
+        if (input.bankName) parts.push(`NH: ${input.bankName.trim()}`)
+        if (input.bankAccountNo) parts.push(`STK: ${input.bankAccountNo.trim()}`)
+        if (input.bankAccountName) parts.push(`Chủ TK: ${input.bankAccountName.trim()}`)
+        const bankAccountInfo = parts.join(' - ')
+
+        await prisma.supplier.update({
+            where: { id: input.id },
+            data: {
+                taxId: input.taxId?.trim() || undefined,
+                bankAccountInfo: bankAccountInfo || undefined,
+                paymentTerm: input.paymentTerm?.trim() || undefined,
+                notes: input.notes?.trim() || undefined,
+            }
+        })
+
+        revalidatePath('/dashboard/payment-requests')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi khi cập nhật thông tin nhà cung cấp' }
+    }
+}

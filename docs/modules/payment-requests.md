@@ -85,13 +85,16 @@ Phân hệ quản lý toàn diện quy trình lập đề nghị thanh toán n�
 - **Route:** `/dashboard/payment-requests`
 - **Tabs điều hướng:**
   1. `Phiếu Đề Nghị Thanh Toán`: Thẻ tóm tắt chỉ số tài chính, bộ lọc trạng thái & nhóm chi, bảng danh sách đề nghị, nút tạo mới.
-  2. `Cấu Hình Hạng Mục Chi Phí`: Bảng cấu hình mã hạng mục, nhóm chi, tài khoản VAS mặc định, modal thêm/sửa/ẩn hạng mục.
-  3. `Quản Lý & Theo Dõi Ngân Sách`: Bảng theo dõi tiến độ tiêu thụ ngân sách so với định mức theo năm, thanh tiến độ trực quan (xanh, vàng, đỏ).
+  2. `Danh Mục Nhà Cung Cấp` *(Mới)*: Quản lý Master Data toàn bộ Nhà cung cấp, theo dõi lũy kế đã thanh toán, số đơn PO & hóa đơn mở, cập nhật tài khoản ngân hàng/MST và khởi tạo đề nghị 1-click.
+  3. `Cấu Hình Hạng Mục Chi Phí`: Bảng cấu hình mã hạng mục, nhóm chi, tài khoản VAS mặc định, modal thêm/sửa/ẩn hạng mục.
+  4. `Quản Lý & Theo Dõi Ngân Sách`: Bảng theo dõi tiến độ tiêu thụ ngân sách so với định mức theo năm, thanh tiến độ trực quan (xanh, vàng, đỏ).
 - **Split-View Modal:**
   - Cột trái: Trình xem chứng từ scan trực tiếp (PDF đa trang hoặc ảnh có công cụ Phóng to, Thu nhỏ, Xoay ảnh 90°, Mở tab mới).
-  - Cột phải: Thông tin thanh toán, bảng kê chi tiết, timeline phê duyệt, các nút Duyệt, Trả lại, Từ chối, Chi tiền.
+  - Cột phải: Thông tin thanh toán, bảng kê chi tiết, timeline phê duyệt, thông tin NCC/PO/Hóa đơn liên kết, các nút Duyệt, Trả lại, Từ chối, Chi tiền.
 - **Drawer Lập đề nghị:**
-  - Nhập thông tin người nhận, tài khoản ngân hàng, bảng kê chi tiết khoản mục.
+  - Lựa chọn Nhà cung cấp thông minh: Tự động trích xuất và điền tên thụ hưởng, ngân hàng, STK, chủ TK từ Master Data.
+  - Khớp nối tự động đơn hàng PO đã duyệt & Hóa đơn AP chưa thanh toán dưới dạng các chip tương tác.
+  - Hỗ trợ thêm nhanh NCC mới ngay trong Drawer mà không làm mất dữ liệu biểu mẫu đang nhập dở.
   - Dropzone kéo thả tải lên nhiều file scan PDF/JPG/PNG với tự động phân loại nhãn chứng từ.
 
 ---
@@ -108,4 +111,41 @@ Phân hệ quản lý toàn diện quy trình lập đề nghị thanh toán n�
   - **Chế độ in phôi trắng**: Tùy chọn ẩn mộc hoặc in phôi trắng trống dữ liệu phục vụ trình ký tay thủ công bằng bút mực khi cần.
   - **Khung 5 chữ ký hoàn chỉnh**: Người đề nghị, Trưởng bộ phận, Kế toán thanh toán, Kế toán trưởng, Tổng Giám Đốc/Người duyệt chi kèm phần xác nhận của Thủ quỹ ngân hàng khi chi tiền.
   - **Tiện ích in ấn đa điểm**: Nút in trực tiếp từ Header modal chi tiết, nút in nhanh trên từng dòng bảng danh sách, và nút "In Phôi Mẫu Trắng" trên thanh công cụ chính.
+
+---
+
+## 6. Quản Lý Master Data Nhà Cung Cấp & Lựa Chọn Thanh Toán (Supplier Integration)
+
+### 6.1 Lựa chọn Nhà Cung Cấp khi lập đề nghị thanh toán
+- **Smart Selector & Auto-fill**:
+  - Hộp tìm kiếm kết hợp danh sách lựa chọn cho phép tra cứu nhanh theo Tên NCC, Mã NCC hoặc Mã số thuế (MST).
+  - Khi chọn NCC, hệ thống tự động phân giải chuỗi `bankAccountInfo` (định dạng `NH: <Tên NH> - STK: <Số TK> - Chủ TK: <Tên TK>`) để điền chính xác vào các ô thông tin thụ hưởng:
+    - `beneficiaryName`: Tên NCC hoặc tên chủ tài khoản.
+    - `beneficiaryAccount`: Số tài khoản ngân hàng.
+    - `beneficiaryBank`: Tên ngân hàng & chi nhánh.
+- **Khớp nối Đơn hàng PO & Hóa đơn AP chưa tất toán**:
+  - Tự động gọi Server Action `getSupplierPendingInvoicesAndPOs(supplierId)` để truy vấn các đơn hàng PO đã duyệt (`APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED`) và hóa đơn AP chưa trả (`not PAID`).
+  - Hiển thị bảng chip tương tác nổi bật màu hổ phách/xanh dương.
+  - Người dùng bấm chọn 1 PO hoặc 1 Hóa đơn AP: Hệ thống tự động gắn `poId` / `apInvoiceId`, đồng thời tự động điền nội dung diễn giải và số tiền thanh toán vào dòng khoản mục đầu tiên.
+- **Thêm nhanh Nhà Cung Cấp (Quick Add Modal)**:
+  - Cho phép người dùng tạo ngay NCC mới trực tiếp từ trong Drawer hoặc từ Tab Master Data.
+  - Tự động sinh mã NCC chuẩn ERP (`NCC-00xx`) nếu để trống.
+  - Thu thập đầy đủ: Loại NCC (Nhà phân phối, Hãng rượu, Forwarder, Logistics, Nội địa), MST, Ngân hàng, STK, Chủ TK, Điều khoản thanh toán (COD, NET15, NET30...), Email và Số điện thoại.
+  - Sau khi lưu, NCC mới được tự động chọn và điền thông tin ngay tức thì.
+
+### 6.2 Tab Master Data Nhà Cung Cấp (Tab 4)
+- **KPIs theo dõi Nhà Cung Cấp**:
+  - Tổng số NCC đang hoạt động (`totalSuppliers`).
+  - Lũy kế đã thanh toán thực tế bằng VNĐ (`totalPaidToSuppliersVND`).
+  - Tổng số đơn đặt hàng PO đang theo dõi (`totalOpenPOs`).
+  - Tổng số hóa đơn công nợ AP chưa tất toán (`totalUnpaidInvoices`).
+- **Bảng dữ liệu Master Data**:
+  - Hiển thị Mã NCC, nhãn phân loại màu sắc riêng, Tên NCC, Quốc gia, Mã số thuế, Điều khoản công nợ.
+  - Thẻ thông tin ngân hàng thụ hưởng hiển thị trực quan (STK, Tên ngân hàng, Chủ tài khoản).
+  - Thống kê giao dịch thực tế: Số lượng PO, số lượng HĐ công nợ, số phiếu đề nghị thanh toán đã lập.
+  - Cột Lũy kế đã thanh toán (VND) theo dõi lịch sử dòng tiền chi cho từng nhà cung cấp.
+- **Hành động nghiệp vụ trên từng dòng**:
+  - Nút **"Lập Đề Nghị"** (màu đỏ rượu `#8B1A2E`): Mở ngay Drawer lập đề nghị thanh toán với NCC này được chọn sẵn và ngân hàng tự động điền.
+  - Nút **"Sửa TT Thanh Toán"**: Modal cho phép Kế toán / Mua hàng cập nhật hoặc bổ sung MST, Tên ngân hàng, Số tài khoản, Tên chủ tài khoản, Điều khoản công nợ và Ghi chú nghiệp vụ.
+
 
