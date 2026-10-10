@@ -10,7 +10,7 @@ export default async function SuppliersPage() {
     const [data, stats] = await Promise.all([
         getSuppliers({ pageSize: 25 }).catch(() => ({ rows: [] as any[], total: 0 })),
         getSupplierStats().catch(() => ({
-            total: 0, active: 0, countries: 0, avgLeadTime: 45, topTypes: [] as any[],
+            total: 0, active: 0, countries: 0, avgLeadTime: 45, domesticCount: 0, internationalCount: 0, topTypes: [] as any[],
         })),
     ])
     return (

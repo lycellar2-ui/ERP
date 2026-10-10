@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 129 Rules rút ra từ 93 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 130 Rules rút ra từ 94 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -239,5 +239,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 00:15 | Wine ERP v12.6 - Fix Scanned Document Upload (BUG-129), Direct Cloudflare R2 Presigned PUT & Fallback Credentials*
+*Last updated: 2026-10-11 00:35 | Wine ERP v12.7 - Fix Mobile SO Creation UX (BUG-130), Auto-Zoom Elimination, Touch Dropdowns & Ergonomic Stepper*
 

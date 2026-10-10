@@ -28,6 +28,7 @@ export type SupplierRow = {
     poCount: number
     contactName: string | null
     contactEmail: string | null
+    bankAccountInfo: string | null
     createdAt: Date
 }
 
@@ -36,6 +37,7 @@ export type SupplierFilters = {
     type?: string
     status?: string
     country?: string
+    regionScope?: 'ALL' | 'DOMESTIC' | 'INTERNATIONAL'
     page?: number
     pageSize?: number
     sortBy?: 'name' | 'poCount' | 'leadTimeDays' | 'createdAt'
@@ -47,9 +49,9 @@ export type SupplierFilters = {
 // ═══════════════════════════════════════════════════
 
 export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: SupplierRow[]; total: number }> {
-    const { search, type, status, country, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
+    const { search, type, status, country, regionScope, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
 
-    const isDefaultLoad = page === 1 && !search && !type && !status && !country && sortBy === 'name' && sortDir === 'asc'
+    const isDefaultLoad = page === 1 && !search && !type && !status && !country && (!regionScope || regionScope === 'ALL') && sortBy === 'name' && sortDir === 'asc'
 
     const fetchData = async () => {
         const where: any = { deletedAt: null }
@@ -59,6 +61,7 @@ export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: Su
                 { name: { contains: search, mode: 'insensitive' } },
                 { code: { contains: search, mode: 'insensitive' } },
                 { taxId: { contains: search, mode: 'insensitive' } },
+                { bankAccountInfo: { contains: search, mode: 'insensitive' } },
                 {
                     contacts: {
                         some: {
@@ -75,6 +78,11 @@ export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: Su
         if (type) where.type = type
         if (status) where.status = status
         if (country) where.country = country
+        if (regionScope === 'DOMESTIC') {
+            where.country = { in: ['VN', 'Việt Nam', 'Vietnam'] }
+        } else if (regionScope === 'INTERNATIONAL') {
+            where.country = { notIn: ['VN', 'Việt Nam', 'Vietnam'] }
+        }
 
         let orderBy: any = { name: 'asc' }
         if (sortBy === 'leadTimeDays') orderBy = { leadTimeDays: sortDir }
@@ -104,6 +112,7 @@ export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: Su
             status: s.status, poCount: s.purchaseOrders.length,
             contactName: s.contacts[0]?.name ?? null,
             contactEmail: s.contacts[0]?.email ?? null,
+            bankAccountInfo: s.bankAccountInfo ?? null,
             createdAt: s.createdAt,
         }))
 
@@ -251,6 +260,8 @@ export type SupplierStats = {
     active: number
     countries: number
     avgLeadTime: number
+    domesticCount: number
+    internationalCount: number
     topTypes: { type: string; label: string; count: number }[]
 }
 
@@ -259,10 +270,13 @@ export async function getSupplierStats(): Promise<SupplierStats> {
         const typeLabels: Record<string, string> = {
             WINERY: 'Winery', NEGOCIANT: 'Négociant', DISTRIBUTOR: 'Distributor',
             LOGISTICS: 'Logistics', FORWARDER: 'Forwarder', CUSTOMS_BROKER: 'Customs Broker',
+            PACKAGING: 'Bao bì / In ấn', POSM: 'POSM / Vật phẩm',
+            MARKETING_EVENT: 'Sự kiện / Marketing', OFFICE_SERVICE: 'Văn phòng / IT',
+            OTHER_SERVICE: 'Dịch vụ khác',
         }
         const where = { deletedAt: null } as const
 
-        const [total, active, leadTimeAgg, countriesRaw, typeCounts] = await Promise.all([
+        const [total, active, leadTimeAgg, countriesRaw, typeCounts, domesticCount] = await Promise.all([
             prisma.supplier.count({ where }),
             prisma.supplier.count({ where: { ...where, status: 'ACTIVE' } }),
             prisma.supplier.aggregate({ where, _avg: { leadTimeDays: true } }),
@@ -273,13 +287,18 @@ export async function getSupplierStats(): Promise<SupplierStats> {
                 _count: { id: true },
                 orderBy: { _count: { id: 'desc' } },
             }),
+            prisma.supplier.count({ where: { ...where, country: { in: ['VN', 'Việt Nam', 'Vietnam'] } } }),
         ])
+
+        const internationalCount = Math.max(0, total - domesticCount)
 
         return {
             total,
             active,
             countries: countriesRaw.length,
             avgLeadTime: Math.round(leadTimeAgg._avg.leadTimeDays ?? 45),
+            domesticCount,
+            internationalCount,
             topTypes: typeCounts.map(t => ({
                 type: t.type,
                 label: typeLabels[t.type] ?? t.type,
@@ -335,15 +354,18 @@ export async function exportSuppliersData() {
 const supplierSchema = z.object({
     code: z.string().min(3, 'Mã NCC bắt buộc'),
     name: z.string().min(2, 'Tên NCC bắt buộc'),
-    type: z.enum(['WINERY', 'NEGOCIANT', 'DISTRIBUTOR', 'LOGISTICS', 'FORWARDER', 'CUSTOMS_BROKER']),
-    country: z.string().min(2).max(2),
+    type: z.enum([
+        'WINERY', 'NEGOCIANT', 'DISTRIBUTOR', 'LOGISTICS', 'FORWARDER', 'CUSTOMS_BROKER',
+        'PACKAGING', 'POSM', 'MARKETING_EVENT', 'OFFICE_SERVICE', 'OTHER_SERVICE'
+    ]),
+    country: z.string().min(2).max(10),
     taxId: z.string().nullable().optional(),
     tradeAgreement: z.string().nullable().optional(),
     coFormType: z.string().nullable().optional(),
     paymentTerm: z.string().nullable().optional(),
-    defaultCurrency: z.string().default('USD'),
+    defaultCurrency: z.string().default('VND'),
     incoterms: z.string().nullable().optional(),
-    leadTimeDays: z.number().int().default(45),
+    leadTimeDays: z.number().int().default(7),
     status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED']).default('ACTIVE'),
     website: z.string().nullable().optional(),
     pickupInfo: z.string().nullable().optional(),
@@ -416,7 +438,7 @@ export async function createSupplier(input: SupplierInput) {
         }
 
         revalidateCache('suppliers')
-        revalidatePath('/dashboard/suppliers')
+        try { revalidatePath('/dashboard/suppliers') } catch { }
         const user = await getCurrentUser().catch(() => null)
         logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Supplier', entityId: supplier.id, newValue: { code: data.code, name: data.name, type: data.type, country: data.country, defaultCurrency: data.defaultCurrency } })
         return { success: true }
@@ -523,7 +545,7 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
         }
 
         revalidateCache('suppliers')
-        revalidatePath('/dashboard/suppliers')
+        try { revalidatePath('/dashboard/suppliers') } catch { }
         const oldPlain = oldSupplier ? JSON.parse(JSON.stringify(oldSupplier)) : null
         logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Supplier', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...supplierData } })
         return { success: true }
@@ -553,7 +575,7 @@ export async function deleteSupplier(id: string): Promise<{ success: boolean; er
         const user = await getCurrentUser().catch(() => null)
         logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Supplier', entityId: id, oldValue: { code: supplier?.code, name: supplier?.name, type: supplier?.type } })
         revalidateCache('suppliers')
-        revalidatePath('/dashboard/suppliers')
+        try { revalidatePath('/dashboard/suppliers') } catch { }
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }

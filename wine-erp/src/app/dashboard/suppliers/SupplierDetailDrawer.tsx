@@ -348,16 +348,23 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {/* Info */}
                                     <div className="grid grid-cols-2 gap-5">
                                         <div className="space-y-0">
-                                            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#0891B2' }}>── Thương Mại</p>
-                                            <InfoRow label="Loại" value={detail.supplier.type} />
-                                            <InfoRow label="Quốc gia" value={detail.supplier.country} />
-                                            <InfoRow label="Hiệp định" value={detail.supplier.tradeAgreement ?? 'MFN'} accent={detail.supplier.tradeAgreement ? '#15803D' : '#64748B'} />
-                                            <InfoRow label="C/O Form" value={detail.supplier.coFormType ?? '—'} />
-                                            <InfoRow label="Incoterms" value={detail.supplier.incoterms ?? '—'} />
-                                            <InfoRow label="Thanh toán" value={detail.supplier.paymentTerm ?? '—'} />
-                                            <InfoRow label="Tiền tệ" value={detail.supplier.defaultCurrency} />
+                                            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#0891B2' }}>── Thương Mại & Pháp Lý</p>
+                                            <InfoRow label="Loại đối tác" value={detail.supplier.type} />
+                                            <InfoRow label="Quốc gia" value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? '🇻🇳 Việt Nam (Nội địa)' : detail.supplier.country} />
+                                            <InfoRow 
+                                                label="Hiệp định" 
+                                                value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? 'Nội địa' : (detail.supplier.tradeAgreement ?? 'MFN')} 
+                                                accent={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? '#15803D' : detail.supplier.tradeAgreement ? '#15803D' : '#64748B'} 
+                                            />
+                                            <InfoRow label="C/O Form" value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? 'Không' : (detail.supplier.coFormType ?? '—')} />
+                                            <InfoRow label="Incoterms / Điểm giao" value={detail.supplier.incoterms ?? '—'} />
+                                            <InfoRow label="Điều khoản thanh toán" value={detail.supplier.paymentTerm ?? '—'} />
+                                            <InfoRow label="Tiền tệ mặc định" value={detail.supplier.defaultCurrency} />
                                             <InfoRow label="Lead Time" value={`${detail.supplier.leadTimeDays} ngày`} />
-                                            <InfoRow label="Mã thuế" value={detail.supplier.taxId ?? '—'} />
+                                            <InfoRow label="Mã số thuế" value={detail.supplier.taxId ?? '—'} />
+                                            {detail.supplier.bankAccountInfo && (
+                                                <InfoRow label="Tài khoản NH" value={<span className="font-mono text-xs">{detail.supplier.bankAccountInfo}</span>} />
+                                            )}
                                         </div>
                                         <div className="space-y-4">
                                             {/* Contacts */}

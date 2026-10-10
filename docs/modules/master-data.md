@@ -112,32 +112,38 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 ### A. Thông Tin Cơ Bản
 | Trường | Mô tả |
 |---|---|
-| `supplier_code` | Mã NCC nội bộ |
-| `supplier_name` | Tên pháp lý đầy đủ |
-| `supplier_type` | WINERY / NEGOCIANT / DISTRIBUTOR / LOGISTICS / FORWARDER / CUSTOMS_BROKER |
-| `country` | Quốc gia (Xác định HĐ thương mại áp dụng) |
-| `tax_id` | Mã số thuế tại nước họ |
-| `trade_agreement` | Hiệp định FTA áp dụng khi mua hàng (EVFTA / MFN / AANZFTA / VCFTA / VKFTA...) |
+| `supplier_code` | Mã NCC nội bộ (VD: `SUP-LVMH` hoặc `NCC-LOG-01`) |
+| `supplier_name` | Tên pháp lý đầy đủ của đối tác |
+| `supplier_type` | Phân loại NCC: <br>• **Quốc tế & Nhập khẩu:** `WINERY` (Nhà làm rượu), `NEGOCIANT` (Thương mại rượu), `DISTRIBUTOR` (Phân phối), `FORWARDER` (Giao nhận quốc tế), `CUSTOMS_BROKER` (Thủ tục HQ)<br>• **Trong nước & Dịch vụ (Việt Nam):** `LOGISTICS` (Vận tải & Kho bãi), `PACKAGING` (Bao bì, in ấn, hộp quà), `POSM` (Kệ tủ, ly nếm, decor), `MARKETING_EVENT` (Sự kiện, tasting, media), `OFFICE_SERVICE` (Văn phòng, IT, thiết bị), `OTHER_SERVICE` (Dịch vụ khác) |
+| `country` | Quốc gia (`VN` / `Việt Nam` đối với đối tác trong nước, hoặc mã ISO `FR`, `IT`, `CL`, `AU`, `ES`, `US`, `DE`... cho quốc tế) |
+| `tax_id` | Mã số thuế (MST) doanh nghiệp |
+| `trade_agreement` | Hiệp định FTA áp dụng khi mua hàng quốc tế (EVFTA, AANZFTA, CPTPP, UKVFTA...) — đối với NCC nội địa hiển thị là Nội địa |
 | `preferred_co_form` | Loại C/O thường dùng (EUR.1 / Form AANZ / Form VC...) |
-| `payment_term` | Điều khoản thanh toán (T/T 30 days / L/C at sight...) |
-| `default_currency` | Đồng tiền giao dịch (EUR / AUD / USD...) |
-| `incoterms` | Điều kiện giao hàng mặc định (FOB / CIF / EXW) |
-| `lead_time_days` | Thời gian giao hàng trung bình (ngày) — Dự báo kế hoạch nhập |
+| `payment_term` | Điều khoản thanh toán (COD, NET15, NET30, NET45, NET60, NET90, T/T Advance, L/C...) |
+| `default_currency` | Đồng tiền giao dịch mặc định (`VND`, `USD`, `EUR`, `AUD`, `NZD`, `GBP`, `SGD`...) |
+| `incoterms` | Điều kiện giao hàng hoặc địa điểm nhận hàng (FOB, CIF, EXW, Giao tại kho TP.HCM...) |
+| `lead_time_days` | Thời gian giao hàng trung bình (ngày) — Nhà cung cấp trong nước từ 1-7 ngày, quốc tế 30-60 ngày |
 | `credit_limit_usd` | Hạn mức tín dụng NCC cấp cho công ty (nếu có) |
-| `port_of_loading` | Cảng bốc hàng đi (ví dụ: Melbourne Port, Livorno Port...) |
-| `pickup_info` | Thông tin kho nhận hàng (Pickup Address / Contact...) |
-| `bank_account_info` | Tài khoản ngân hàng giao dịch của NCC |
-| `status` | ACTIVE / INACTIVE / BLACKLISTED |
+| `port_of_loading` | Cảng bốc hàng đi (áp dụng hàng nhập khẩu) |
+| `pickup_info` | Thông tin địa chỉ kho lấy hàng / điểm nhận hàng (Pickup Address) |
+| `bank_account_info` | Thông tin tài khoản ngân hàng thụ hưởng (STK, Ngân hàng, Chi nhánh, Chủ tài khoản) |
+| `status` | Trạng thái: `ACTIVE` / `INACTIVE` / `BLACKLISTED` |
 
-### B. Danh Sách Sản Phẩm Của NCC
+### B. Bộ Lọc Phân Vùng Đối Tác (Segmented Region Filter)
+- **Tất cả đối tác**: Xem toàn bộ danh sách NCC.
+- **🇻🇳 Trong nước (Việt Nam)**: Lọc riêng các nhà cung cấp nội địa (Logistics, Bao bì, POSM, Sự kiện, Dịch vụ văn phòng).
+- **🌍 Quốc tế (Nhập khẩu)**: Lọc các hãng rượu ngoại (Winery, Négociant, Distributor, Forwarder quốc tế).
+- **Tự động điền dữ liệu thông minh khi tạo mới**: Khi chọn Quốc gia là Việt Nam (`VN`), hệ thống tự động thiết lập tiền tệ mặc định là `VND`, thời gian giao hàng (Lead Time) 3-7 ngày, miễn trừ hiệp định thương mại/C-O form.
+
+### C. Danh Sách Sản Phẩm Của NCC
 - Liên kết NCC → Danh sách SKU mà NCC đó cung ứng
-- Ghi nhận Giá mua FOB theo thỏa thuận (Linked to Contract)
+- Ghi nhận Giá mua FOB/giá hợp đồng theo thỏa thuận
 - Lịch sử đặt hàng (Số PO đã đặt, tổng giá trị)
 
-### C. Đánh Giá NCC (Supplier Scorecard)
+### D. Đánh Giá NCC (Supplier Scorecard)
 - Tỷ lệ giao đúng hạn (On-time delivery rate)
 - Tỷ lệ hàng bể vỡ / chất lượng không đạt từ NCC này
-- Điểm đánh giá tổng thể (Rating) → Dùng trong chiến lược đa dạng nguồn hàng
+- Điểm đánh giá tổng thể (Rating A/B/C/D/F) → Dùng trong chiến lược quản lý chuỗi cung ứng và mua sắm
 
 ### D. Supplier 360° Detail Drawer ✅ Đã Triển Khai
 

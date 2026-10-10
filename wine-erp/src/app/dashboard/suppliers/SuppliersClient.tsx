@@ -19,16 +19,22 @@ import { toast } from 'sonner'
 
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
     WINERY: { label: 'Winery', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    NEGOCIANT: { label: 'Négociant', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
-    DISTRIBUTOR: { label: 'Distributor', color: '#15803D', bg: 'rgba(74,124,89,0.12)' },
-    LOGISTICS: { label: 'Logistics', color: '#0891B2', bg: 'rgba(168,130,204,0.12)' },
-    FORWARDER: { label: 'Forwarder', color: '#1D4ED8', bg: 'rgba(46,91,122,0.15)' },
-    CUSTOMS_BROKER: { label: 'Customs Broker', color: '#475569', bg: 'rgba(168,152,128,0.12)' },
+    NEGOCIANT: { label: 'Négociant', color: '#0D9488', bg: 'rgba(13, 148, 136, 0.12)' },
+    DISTRIBUTOR: { label: 'Distributor', color: '#15803D', bg: 'rgba(21, 128, 61, 0.12)' },
+    LOGISTICS: { label: 'Kho bãi & Vận tải', color: '#B45309', bg: 'rgba(180, 83, 9, 0.12)' },
+    FORWARDER: { label: 'Forwarder', color: '#1D4ED8', bg: 'rgba(29, 78, 216, 0.12)' },
+    CUSTOMS_BROKER: { label: 'Thủ tục HQ', color: '#475569', bg: 'rgba(71, 85, 105, 0.12)' },
+    PACKAGING: { label: 'Bao bì & In ấn', color: '#C2410C', bg: 'rgba(194, 65, 12, 0.12)' },
+    POSM: { label: 'POSM & Vật phẩm', color: '#047857', bg: 'rgba(4, 120, 87, 0.12)' },
+    MARKETING_EVENT: { label: 'Sự kiện & MKT', color: '#E11D48', bg: 'rgba(225, 29, 72, 0.12)' },
+    OFFICE_SERVICE: { label: 'Văn phòng & IT', color: '#0284C7', bg: 'rgba(2, 132, 199, 0.12)' },
+    OTHER_SERVICE: { label: 'Dịch vụ khác', color: '#4B5563', bg: 'rgba(75, 85, 99, 0.12)' },
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦', VN: '🇻🇳', SG: '🇸🇬',
+    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
+    VN: '🇻🇳', 'Việt Nam': '🇻🇳', Vietnam: '🇻🇳', SG: '🇸🇬', JP: '🇯🇵', CN: '🇨🇳', GB: '🇬🇧', UK: '🇬🇧',
 }
 
 function TypeBadge({ type }: { type: string }) {
@@ -47,7 +53,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
     open: boolean; editingId: string | null; onClose: () => void; onSaved: () => void
 }) {
     const [form, setForm] = useState<Partial<SupplierInput>>({
-        defaultCurrency: 'USD', leadTimeDays: 45, status: 'ACTIVE', type: 'WINERY',
+        defaultCurrency: 'VND', leadTimeDays: 7, status: 'ACTIVE', type: 'LOGISTICS', country: 'VN',
     })
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -73,7 +79,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                 })
             }).finally(() => setLoading(false))
         } else {
-            setForm({ defaultCurrency: 'USD', leadTimeDays: 45, status: 'ACTIVE', type: 'WINERY' })
+            setForm({ defaultCurrency: 'VND', leadTimeDays: 7, status: 'ACTIVE', type: 'LOGISTICS', country: 'VN' })
         }
         setErrors({})
     }, [open, editingId])
@@ -81,6 +87,29 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
     const set = (k: keyof SupplierInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
+
+    const handleCountryChange = (val: string) => {
+        set('country', val)
+        if (!isEdit) {
+            if (val === 'VN') {
+                setForm(prev => ({
+                    ...prev,
+                    country: 'VN',
+                    defaultCurrency: 'VND',
+                    leadTimeDays: prev.leadTimeDays === 45 ? 3 : (prev.leadTimeDays ?? 3),
+                    tradeAgreement: null,
+                    coFormType: null,
+                }))
+            } else if (val) {
+                setForm(prev => ({
+                    ...prev,
+                    country: val,
+                    defaultCurrency: ['FR', 'IT', 'ES', 'DE', 'PT'].includes(val) ? 'EUR' : 'USD',
+                    leadTimeDays: prev.leadTimeDays === 3 || prev.leadTimeDays === 7 ? 45 : (prev.leadTimeDays ?? 45),
+                }))
+            }
+        }
+    }
 
     const handleSave = async () => {
         const e: Record<string, string> = {}
@@ -125,11 +154,11 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
             />
             <div
                 className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
-                style={{ width: 'min(560px, 95vw)' }}
+                style={{ width: 'min(580px, 95vw)' }}
             >
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-600/10 border border-cyan-600/20 text-cyan-700 font-bold">
                             <Building2 size={16} />
                         </div>
                         <div>
@@ -137,7 +166,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                 {isEdit ? 'Chỉnh Sửa NCC' : 'Thêm Nhà Cung Cấp'}
                             </h3>
                             <p className="text-xs text-slate-500">
-                                {isEdit ? 'Cập nhật thông tin nhà cung cấp' : 'Winery, Négociant, Distributor, Forwarder'}
+                                {isEdit ? 'Cập nhật thông tin đối tác cung ứng' : 'Đối tác trong nước (Việt Nam) & Quốc tế (Nhập khẩu)'}
                             </p>
                         </div>
                     </div>
@@ -162,37 +191,66 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã NCC <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.code ?? ''} disabled={isEdit}
-                                    onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SUP-LVMH" />
+                                    onChange={e => set('code', e.target.value.toUpperCase())} placeholder={form.country === 'VN' ? 'NCC-LOG-01' : 'SUP-LVMH'} />
                                 {errors.code && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.code}</p>}
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Loại NCC</label>
-                                <select className={inputCls} style={inputStyle} value={form.type ?? 'WINERY'} onChange={e => set('type', e.target.value)}>
-                                    <option value="WINERY">Winery</option><option value="NEGOCIANT">Négociant</option>
-                                    <option value="DISTRIBUTOR">Distributor</option><option value="LOGISTICS">Logistics</option>
-                                    <option value="FORWARDER">Forwarder</option><option value="CUSTOMS_BROKER">Customs Broker</option>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phân loại NCC</label>
+                                <select className={inputCls} style={inputStyle} value={form.type ?? 'LOGISTICS'} onChange={e => set('type', e.target.value)}>
+                                    <optgroup label="── Trong nước & Dịch vụ 🇻🇳 ──">
+                                        <option value="LOGISTICS">Kho bãi & Vận tải nội địa (Logistics)</option>
+                                        <option value="PACKAGING">Bao bì & In ấn (Hộp quà, tem nhãn)</option>
+                                        <option value="POSM">POSM & Vật phẩm (Kệ tủ, ly nếm, decor)</option>
+                                        <option value="MARKETING_EVENT">Sự kiện & Marketing (Tasting, Media)</option>
+                                        <option value="OFFICE_SERVICE">Văn phòng & Thiết bị & IT</option>
+                                        <option value="OTHER_SERVICE">Dịch vụ phụ trợ khác</option>
+                                    </optgroup>
+                                    <optgroup label="── Quốc tế & Nhập khẩu 🌍 ──">
+                                        <option value="WINERY">Nhà làm rượu (Winery)</option>
+                                        <option value="NEGOCIANT">Nhà thương mại rượu (Négociant)</option>
+                                        <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
+                                        <option value="FORWARDER">Hãng giao nhận vận tải (Forwarder)</option>
+                                        <option value="CUSTOMS_BROKER">Đại lý thủ tục hải quan</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>
                         <div>
                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên NCC <span style={{ color: '#B91C1C' }}>*</span></label>
-                            <input className={inputCls} style={inputStyle} value={form.name ?? ''} onChange={e => set('name', e.target.value)} placeholder="LVMH Wines & Spirits" />
+                            <input className={inputCls} style={inputStyle} value={form.name ?? ''} onChange={e => set('name', e.target.value)} placeholder={form.country === 'VN' ? 'Công ty TNHH Vận Tải & Tiếp Vận Sài Gòn' : 'LVMH Wines & Spirits'} />
                             {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quốc gia <span style={{ color: '#B91C1C' }}>*</span></label>
-                                <select className={inputCls} style={inputStyle} value={form.country ?? ''} onChange={e => set('country', e.target.value)}>
-                                    <option value="">Chọn...</option>
-                                    <option value="FR">🇫🇷 Pháp</option><option value="IT">🇮🇹 Ý</option><option value="ES">🇪🇸 TBN</option>
-                                    <option value="US">🇺🇸 Mỹ</option><option value="AU">🇦🇺 Úc</option><option value="NZ">🇳🇿 NZ</option>
-                                    <option value="DE">🇩🇪 Đức</option><option value="PT">🇵🇹 BĐN</option><option value="AR">🇦🇷 Argentina</option><option value="CL">🇨🇱 Chile</option>
+                                <select className={inputCls} style={inputStyle} value={form.country ?? 'VN'} onChange={e => handleCountryChange(e.target.value)}>
+                                    <option value="">Chọn quốc gia...</option>
+                                    <optgroup label="── Trong nước 🇻🇳 ──">
+                                        <option value="VN">🇻🇳 Việt Nam</option>
+                                    </optgroup>
+                                    <optgroup label="── Quốc tế (Nhập khẩu) 🌍 ──">
+                                        <option value="FR">🇫🇷 Pháp (France)</option>
+                                        <option value="IT">🇮🇹 Ý (Italy)</option>
+                                        <option value="ES">🇪🇸 Tây Ban Nha (Spain)</option>
+                                        <option value="CL">🇨🇱 Chile</option>
+                                        <option value="AU">🇦🇺 Úc (Australia)</option>
+                                        <option value="NZ">🇳🇿 New Zealand</option>
+                                        <option value="US">🇺🇸 Hoa Kỳ (USA)</option>
+                                        <option value="DE">🇩🇪 Đức (Germany)</option>
+                                        <option value="PT">🇵🇹 Bồ Đào Nha (Portugal)</option>
+                                        <option value="AR">🇦🇷 Argentina</option>
+                                        <option value="ZA">🇿🇦 Nam Phi (South Africa)</option>
+                                        <option value="SG">🇸🇬 Singapore</option>
+                                        <option value="JP">🇯🇵 Nhật Bản (Japan)</option>
+                                        <option value="CN">🇨🇳 Trung Quốc (China)</option>
+                                        <option value="GB">🇬🇧 Vương quốc Anh (UK)</option>
+                                    </optgroup>
                                 </select>
                                 {errors.country && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.country}</p>}
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã thuế</label>
-                                <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} onChange={e => set('taxId', e.target.value || null)} placeholder="FR12345678901" />
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã số thuế (MST)</label>
+                                <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} onChange={e => set('taxId', e.target.value || null)} placeholder={form.country === 'VN' ? '0312345678' : 'FR12345678901'} />
                             </div>
                         </div>
 
@@ -200,87 +258,98 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
-                                <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} onChange={e => set('contactName', e.target.value || null)} placeholder="Jean-Pierre Dupont" />
+                                <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} onChange={e => set('contactName', e.target.value || null)} placeholder={form.country === 'VN' ? 'Nguyễn Văn A' : 'Jean-Pierre Dupont'} />
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Chức vụ</label>
-                                <input className={inputCls} style={inputStyle} value={form.contactTitle ?? ''} onChange={e => set('contactTitle', e.target.value || null)} placeholder="Export Manager" />
+                                <input className={inputCls} style={inputStyle} value={form.contactTitle ?? ''} onChange={e => set('contactTitle', e.target.value || null)} placeholder={form.country === 'VN' ? 'Trưởng phòng kinh doanh' : 'Export Manager'} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
-                                <input className={inputCls} style={inputStyle} value={form.contactEmail ?? ''} onChange={e => set('contactEmail', e.target.value || null)} placeholder="jp@winery.fr" />
+                                <input className={inputCls} style={inputStyle} value={form.contactEmail ?? ''} onChange={e => set('contactEmail', e.target.value || null)} placeholder="lienhe@doitac.vn" />
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Điện thoại</label>
-                                <input className={inputCls} style={inputStyle} value={form.contactPhone ?? ''} onChange={e => set('contactPhone', e.target.value || null)} placeholder="+33 1 23 45 67" />
+                                <input className={inputCls} style={inputStyle} value={form.contactPhone ?? ''} onChange={e => set('contactPhone', e.target.value || null)} placeholder="0903 123 456" />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Điều Khoản Thương Mại</p>
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Điều Khoản Thương Mại & Thanh Toán</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hiệp định</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hiệp định thương mại</label>
                                 <select className={inputCls} style={inputStyle} value={form.tradeAgreement ?? ''} onChange={e => set('tradeAgreement', e.target.value || null)}>
-                                    <option value="">Không / MFN</option><option value="EVFTA">EVFTA (EU)</option>
-                                    <option value="AANZFTA">AANZFTA</option><option value="CPTPP">CPTPP</option><option value="UKVFTA">UKVFTA</option>
+                                    <option value="">{form.country === 'VN' ? 'Nội địa (Không áp dụng)' : 'Không / MFN'}</option>
+                                    <option value="EVFTA">EVFTA (EU - VN)</option>
+                                    <option value="AANZFTA">AANZFTA (Úc, NZ - VN)</option>
+                                    <option value="CPTPP">CPTPP</option>
+                                    <option value="UKVFTA">UKVFTA (Anh - VN)</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>C/O Form</label>
-                                <input className={inputCls} style={inputStyle} value={form.coFormType ?? ''} onChange={e => set('coFormType', e.target.value || null)} placeholder="EUR.1" />
+                                <input className={inputCls} style={inputStyle} value={form.coFormType ?? ''} onChange={e => set('coFormType', e.target.value || null)} placeholder={form.country === 'VN' ? 'Không' : 'EUR.1 / Form AANZ'} />
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thanh toán</label>
-                                <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET60'} onChange={e => set('paymentTerm', e.target.value)}>
-                                    <option value="NET30">NET 30</option><option value="NET45">NET 45</option><option value="NET60">NET 60</option>
-                                    <option value="NET90">NET 90</option><option value="LC">L/C</option><option value="TT_ADVANCE">T/T Advance</option>
+                                <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET30'} onChange={e => set('paymentTerm', e.target.value)}>
+                                    <option value="COD">Thanh toán khi nhận (COD)</option>
+                                    <option value="NET15">Công nợ 15 ngày (NET15)</option>
+                                    <option value="NET30">Công nợ 30 ngày (NET30)</option>
+                                    <option value="NET45">Công nợ 45 ngày (NET45)</option>
+                                    <option value="NET60">Công nợ 60 ngày (NET60)</option>
+                                    <option value="NET90">Công nợ 90 ngày (NET90)</option>
+                                    <option value="TT_ADVANCE">Tạm ứng trước (T/T Advance)</option>
+                                    <option value="LC">Tín dụng thư (L/C)</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tiền tệ</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tiền tệ mặc định</label>
                                 <select 
                                     className={inputCls} 
-                                    style={{ ...inputStyle, opacity: isEdit ? 0.6 : 1, cursor: isEdit ? 'not-allowed' : 'default' }} 
-                                    value={form.defaultCurrency ?? 'USD'} 
+                                    style={inputStyle} 
+                                    value={form.defaultCurrency ?? 'VND'} 
                                     onChange={e => set('defaultCurrency', e.target.value)}
-                                    disabled={isEdit}
                                 >
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="GBP">GBP</option>
-                                    <option value="NZD">NZD</option>
-                                    <option value="AUD">AUD</option>
+                                    <option value="VND">₫ VND (Việt Nam Đồng)</option>
+                                    <option value="USD">$ USD (Đô la Mỹ)</option>
+                                    <option value="EUR">€ EUR (Euro)</option>
+                                    <option value="GBP">£ GBP (Bảng Anh)</option>
+                                    <option value="AUD">A$ AUD (Đô la Úc)</option>
+                                    <option value="NZD">NZ$ NZD (Đô la New Zealand)</option>
+                                    <option value="SGD">S$ SGD (Đô la Singapore)</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lead time (ngày)</label>
-                                <input type="number" className={inputCls} style={inputStyle} value={form.leadTimeDays ?? 45} onChange={e => set('leadTimeDays', Number(e.target.value))} min={1} />
+                                <input type="number" className={inputCls} style={inputStyle} value={form.leadTimeDays ?? (form.country === 'VN' ? 3 : 45)} onChange={e => set('leadTimeDays', Number(e.target.value))} min={1} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Incoterms</label>
-                                <input className={inputCls} style={inputStyle} value={form.incoterms ?? ''} onChange={e => set('incoterms', e.target.value || null)} placeholder="CIF Ho Chi Minh" />
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Incoterms / Điểm giao</label>
+                                <input className={inputCls} style={inputStyle} value={form.incoterms ?? ''} onChange={e => set('incoterms', e.target.value || null)} placeholder={form.country === 'VN' ? 'Giao tại kho TP.HCM' : 'CIF Ho Chi Minh'} />
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Website</label>
-                                <input className={inputCls} style={inputStyle} value={form.website ?? ''} onChange={e => set('website', e.target.value || null)} placeholder="https://winery.fr" />
+                                <input className={inputCls} style={inputStyle} value={form.website ?? ''} onChange={e => set('website', e.target.value || null)} placeholder="https://..." />
                             </div>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Pickup & Ngân Hàng</p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Điểm Nhận Hàng & Tài Khoản Ngân Hàng</p>
+                        <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thông tin Pickup</label>
-                                <input className={inputCls} style={inputStyle} value={form.pickupInfo ?? ''} onChange={e => set('pickupInfo', e.target.value || null)} placeholder="Winery Warehouse, Ex-works Bordeaux..." />
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tài khoản ngân hàng thụ hưởng</label>
+                                <input className={inputCls} style={inputStyle} value={form.bankAccountInfo ?? ''} onChange={e => set('bankAccountInfo', e.target.value || null)} placeholder="VD: 0071001234567 - Vietcombank CN Kỳ Đồng (Chủ TK: CTY TNHH ABC)" />
+                                <p className="text-[11px] text-slate-400 mt-1">Cú pháp gợi ý: Số tài khoản - Tên ngân hàng - Chi nhánh (Chủ tài khoản)</p>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tài khoản ngân hàng</label>
-                                <input className={inputCls} style={inputStyle} value={form.bankAccountInfo ?? ''} onChange={e => set('bankAccountInfo', e.target.value || null)} placeholder="Bank Name, IBAN, Swift Code..." />
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thông tin lấy hàng (Pickup / Kho hàng)</label>
+                                <input className={inputCls} style={inputStyle} value={form.pickupInfo ?? ''} onChange={e => set('pickupInfo', e.target.value || null)} placeholder="Kho Long Hậu, Cần Giuộc, Long An hoặc Kho Tân Bình..." />
                             </div>
                         </div>
 
@@ -333,6 +402,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
+    const [regionScope, setRegionScope] = useState<'ALL' | 'DOMESTIC' | 'INTERNATIONAL'>('ALL')
     const [page, setPage] = useState(1)
     const [loading, setLoading] = useState(false)
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -348,16 +418,21 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     const [dupLoading, setDupLoading] = useState(false)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
-    const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number) => {
+    const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number, r?: 'ALL' | 'DOMESTIC' | 'INTERNATIONAL') => {
         setLoading(true)
         try {
+            const currentRegion = r !== undefined ? r : regionScope
             const result = await getSuppliers({
-                search: (s ?? search) || undefined, type: (t ?? typeFilter) || undefined,
-                status: (st ?? statusFilter) || undefined, page: p ?? page, pageSize: 25,
+                search: (s ?? search) || undefined, 
+                type: (t ?? typeFilter) || undefined,
+                status: (st ?? statusFilter) || undefined, 
+                regionScope: currentRegion === 'ALL' ? undefined : currentRegion,
+                page: p ?? page, 
+                pageSize: 25,
             })
             setRows(result.rows); setTotal(result.total)
         } finally { setLoading(false) }
-    }, [search, typeFilter, statusFilter, page])
+    }, [search, typeFilter, statusFilter, page, regionScope])
 
     const handleDelete = (id: string, name: string) => {
         confirm({
@@ -431,7 +506,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             {/* Header */}
             <PageHeader
                 title="Nhà Cung Cấp"
-                description={`Winery, Négociant, Distributor, Forwarder — ${stats.total} đối tác`}
+                description={`Đối tác cung ứng Trong nước (Việt Nam) & Quốc tế (Nhập khẩu) — ${stats.total} đối tác`}
                 actions={
                     <div className="flex items-center gap-2">
                         <Button variant="secondary" size="sm" onClick={handleExport} disabled={exporting}>
@@ -449,10 +524,31 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
 
             {/* Stats */}
             <StatGrid>
-                <StatCard label="Tổng NCC" value={stats.total} icon={Building2} />
-                <StatCard label="Hoạt động" value={stats.active} icon={Globe} />
-                <StatCard label="Quốc gia" value={stats.countries} icon={Globe} />
-                <StatCard label="Avg Lead Time" value={`${stats.avgLeadTime} ngày`} icon={Clock} />
+                <StatCard 
+                    label="Tổng Đối Tác" 
+                    value={stats.total} 
+                    icon={Building2} 
+                    sub={`${stats.active} đang hoạt động`} 
+                />
+                <StatCard 
+                    label="Trong Nước (Việt Nam)" 
+                    value={stats.domesticCount ?? 0} 
+                    icon={Building2} 
+                    tone="success" 
+                    sub="Vận tải, bao bì, POSM, DV" 
+                />
+                <StatCard 
+                    label="Quốc Tế (Nhập Khẩu)" 
+                    value={stats.internationalCount ?? 0} 
+                    icon={Globe} 
+                    tone="brand" 
+                    sub={`${stats.countries} quốc gia`} 
+                />
+                <StatCard 
+                    label="Lead Time TB" 
+                    value={`${stats.avgLeadTime} ngày`} 
+                    icon={Clock} 
+                />
             </StatGrid>
 
             {/* Tabs */}
@@ -464,7 +560,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 ] as const).map(tab => (
                     <button key={tab.key}
                         onClick={() => tab.key === 'scorecard' ? loadScorecards() : tab.key === 'duplicates' ? loadDuplicates() : setActiveTab('list')}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer"
                         style={{
                             background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
                             color: activeTab === tab.key ? '#0E7490' : '#64748B',
@@ -477,28 +573,94 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
 
             {/* Tab: NCC List */}
             {activeTab === 'list' && (<>
-                {/* Filters */}
-                <div className="flex flex-wrap gap-3">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input type="text" placeholder="Tìm NCC (tên, mã, MST, email)..."
-                            value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
-                            className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
+                {/* Segmented Region Switcher & Filters */}
+                <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="inline-flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRegionScope('ALL')
+                                    setPage(1)
+                                    reload(undefined, undefined, undefined, 1, 'ALL')
+                                }}
+                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                                    regionScope === 'ALL'
+                                        ? 'bg-white text-slate-900 shadow-2xs border border-slate-200'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Tất cả ({stats.total})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRegionScope('DOMESTIC')
+                                    setPage(1)
+                                    reload(undefined, undefined, undefined, 1, 'DOMESTIC')
+                                }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                                    regionScope === 'DOMESTIC'
+                                        ? 'bg-white text-emerald-700 shadow-2xs border border-emerald-200'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>🇻🇳</span> Trong nước ({stats.domesticCount ?? 0})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRegionScope('INTERNATIONAL')
+                                    setPage(1)
+                                    reload(undefined, undefined, undefined, 1, 'INTERNATIONAL')
+                                }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                                    regionScope === 'INTERNATIONAL'
+                                        ? 'bg-white text-cyan-700 shadow-2xs border border-cyan-200'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>🌍</span> Quốc tế ({stats.internationalCount ?? 0})
+                            </button>
+                        </div>
                     </div>
-                    <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
-                        className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
-                        <option value="">Tất cả loại</option>
-                        {Object.entries(SUPPLIER_TYPE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select>
-                    <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
-                        className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
-                        <option value="">Trạng thái</option>
-                        <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Tạm dừng</option><option value="BLACKLISTED">Blacklist</option>
-                    </select>
-                    {(search || typeFilter || statusFilter) && (
-                        <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setPage(1); reload('', '', '', 1) }}
-                            className="px-3 py-2 rounded-md text-sm text-red-600 border border-red-200 hover:bg-red-50 transition-colors">Xóa filter</button>
-                    )}
+
+                    <div className="flex flex-wrap gap-3">
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input type="text" placeholder="Tìm NCC (tên, mã, MST, TK ngân hàng, email)..."
+                                value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
+                                className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
+                        </div>
+                        <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
+                            className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
+                            <option value="">Tất cả phân loại ({Object.keys(SUPPLIER_TYPE).length})</option>
+                            <optgroup label="── Trong nước & Dịch vụ 🇻🇳 ──">
+                                <option value="LOGISTICS">Kho bãi & Vận tải</option>
+                                <option value="PACKAGING">Bao bì & In ấn</option>
+                                <option value="POSM">POSM & Vật phẩm</option>
+                                <option value="MARKETING_EVENT">Sự kiện & MKT</option>
+                                <option value="OFFICE_SERVICE">Văn phòng & IT</option>
+                                <option value="OTHER_SERVICE">Dịch vụ khác</option>
+                            </optgroup>
+                            <optgroup label="── Quốc tế & Nhập khẩu 🌍 ──">
+                                <option value="WINERY">Winery</option>
+                                <option value="NEGOCIANT">Négociant</option>
+                                <option value="DISTRIBUTOR">Distributor</option>
+                                <option value="FORWARDER">Forwarder</option>
+                                <option value="CUSTOMS_BROKER">Thủ tục HQ</option>
+                            </optgroup>
+                        </select>
+                        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
+                            className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Tạm dừng</option><option value="BLACKLISTED">Blacklist</option>
+                        </select>
+                        {(search || typeFilter || statusFilter || regionScope !== 'ALL') && (
+                            <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setRegionScope('ALL'); setPage(1); reload('', '', '', 1, 'ALL') }}
+                                className="px-3 py-2 rounded-md text-sm text-red-600 border border-red-200 hover:bg-red-50 transition-colors cursor-pointer">Xóa filter</button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Table */}
@@ -507,7 +669,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                    {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái', ''].map(h => (
+                                    {['Nhà Cung Cấp', 'Phân Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái', ''].map(h => (
                                         <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
@@ -521,50 +683,77 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                     <tr><td colSpan={9}>
                                         <div className="flex flex-col items-center py-16 gap-3">
                                             <span className="text-3xl">🏭</span>
-                                            <p style={{ color: '#64748B' }} className="text-sm">Chưa có nhà cung cấp nào</p>
+                                            <p style={{ color: '#64748B' }} className="text-sm">Chưa có nhà cung cấp nào phù hợp bộ lọc</p>
                                         </div>
                                     </td></tr>
-                                ) : rows.map(row => (
-                                    <tr key={row.id} className="group transition-colors duration-100 cursor-pointer"
-                                        style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = '')}
-                                        onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
-                                        <td className="px-4 py-3">
-                                            <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>
-                                            <p className="text-xs mt-0.5 font-mono" style={{ color: '#64748B' }}>{row.code}</p>
-                                            {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#1D4ED8' }}>👤 {row.contactName}</p>}
-                                        </td>
-                                        <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
-                                        <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>{COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}</td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#15803D' : '#E2E8F0' }}>{row.tradeAgreement ?? 'MFN'}</p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{row.coFormType ?? '—'}</p>
-                                        </td>
-                                        <td className="px-4 py-3 text-xs font-mono" style={{ color: '#475569' }}>{row.paymentTerm ?? '—'}</td>
-                                        <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#475569' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#0E7490' : '#E2E8F0' }}>{row.poCount}</span>
-                                        </td>
-                                        <td className="px-4 py-3"><StatusDot status={row.status} /></td>
-                                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                <button onClick={() => { setDetailId(row.id); setDetailOpen(true) }}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#1D4ED8' }} title="Chi tiết 360°">
-                                                    <Eye size={14} />
-                                                </button>
-                                                <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#475569' }} title="Chỉnh sửa">
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button onClick={() => handleDelete(row.id, row.name)}
-                                                    className="p-1.5 rounded-lg transition-all" style={{ color: '#64748B' }} title="Xóa">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                ) : rows.map(row => {
+                                    const isDomestic = row.country === 'VN' || row.country === 'Việt Nam' || row.country === 'Vietnam'
+                                    return (
+                                        <tr key={row.id} className="group transition-colors duration-100 cursor-pointer"
+                                            style={{ borderBottom: '1px solid #E2E8F0' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = '')}
+                                            onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-xs font-mono font-bold" style={{ color: '#0E7490' }}>{row.code}</span>
+                                                    {row.taxId && <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-mono text-slate-600">MST: {row.taxId}</span>}
+                                                </div>
+                                                {row.bankAccountInfo && (
+                                                    <p className="text-[11px] mt-1 text-slate-500 truncate max-w-xs font-mono" title={row.bankAccountInfo}>
+                                                        💳 {row.bankAccountInfo}
+                                                    </p>
+                                                )}
+                                                {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#1D4ED8' }}>👤 {row.contactName}</p>}
+                                            </td>
+                                            <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
+                                            <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>
+                                                <span className="inline-flex items-center gap-1.5 font-medium">
+                                                    <span>{COUNTRY_FLAGS[row.country] ?? '🌍'}</span>
+                                                    <span>{isDomestic ? 'Việt Nam' : row.country}</span>
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {isDomestic ? (
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                                        Nội địa
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#15803D' : '#64748B' }}>{row.tradeAgreement ?? 'MFN'}</p>
+                                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{row.coFormType ?? '—'}</p>
+                                                    </>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <p className="text-xs font-mono font-semibold" style={{ color: '#334155' }}>{row.paymentTerm ?? 'NET30'}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{row.defaultCurrency}</p>
+                                            </td>
+                                            <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#475569' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#0E7490' : '#E2E8F0' }}>{row.poCount}</span>
+                                            </td>
+                                            <td className="px-4 py-3"><StatusDot status={row.status} /></td>
+                                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button onClick={() => { setDetailId(row.id); setDetailOpen(true) }}
+                                                        className="p-1.5 rounded-lg transition-all" style={{ color: '#1D4ED8' }} title="Chi tiết 360°">
+                                                        <Eye size={14} />
+                                                    </button>
+                                                    <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
+                                                        className="p-1.5 rounded-lg transition-all" style={{ color: '#475569' }} title="Chỉnh sửa">
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(row.id, row.name)}
+                                                        className="p-1.5 rounded-lg transition-all" style={{ color: '#64748B' }} title="Xóa">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>

@@ -1,5 +1,5 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-10-11 00:15
+> Last updated: 2026-10-11 00:35
 > Status: Production — 31 modules, 138 DB models, 89 enums, 37 dashboard routes, Pure Light Design System v2.2
  
 ## Core Files (MUST READ IN ORDER)
