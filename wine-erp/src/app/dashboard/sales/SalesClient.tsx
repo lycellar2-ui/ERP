@@ -1769,182 +1769,192 @@ function SalesOrderMobileCard({
     const isActLoading = actionLoading === row.id
 
     return (
-        <div className="p-3.5 flex flex-col gap-2.5 rounded-lg border transition-all duration-150 relative bg-slate-50"
+        <div 
+            className="p-2.5 rounded-lg border transition-all duration-150 relative bg-white hover:border-cyan-300 shadow-xs flex flex-col gap-1.5 cursor-pointer"
             style={{ borderColor: '#E2E8F0' }}
-            onClick={onViewDetail}>
-            
-            {/* Header: SO code & Date */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
+            onClick={onViewDetail}
+        >
+            {/* Row 1: SO Code, Badges, Date */}
+            <div className="flex items-center justify-between gap-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <span className="text-xs font-bold font-mono text-[#0891B2] shrink-0">
                         {row.soNo}
                     </span>
+                    {row.legalEntityCode && (
+                        <span 
+                            className="inline-block text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider shrink-0"
+                            style={{ 
+                                background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.1)' : 'rgba(8,145,178,0.1)', 
+                                color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
+                            }}
+                        >
+                            {row.legalEntityCode}
+                        </span>
+                    )}
+                    <span 
+                        className="inline-block text-[9px] px-1.5 py-0.2 rounded font-medium shrink-0"
+                        style={{ background: '#F1F5F9', color: '#475569' }}
+                    >
+                        {getSOChannelLabel(row.channel, locale, true)}
+                    </span>
                     {row.orderType === 'TASTING' && (
-                        <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">
+                        <span className="inline-block px-1.5 py-0.2 text-[9px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
                             Tasting
                         </span>
                     )}
+                    {row.invoiceNo ? (
+                        <span 
+                            className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold shrink-0"
+                            style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.2)' }}
+                            title={`Số hóa đơn: ${row.invoiceNo}`}
+                        >
+                            {isEn ? 'Inv:' : 'HĐ:'} {row.invoiceNo}
+                        </span>
+                    ) : row.isInvoiceExempt ? (
+                        <span 
+                            className="text-[9px] px-1.5 py-0.2 rounded font-medium shrink-0"
+                            style={{ background: 'rgba(245,158,11,0.1)', color: '#B45309', border: '1px solid rgba(245,158,11,0.25)' }}
+                            title={row.invoiceExemptReason || (isEn ? 'Invoice exempt order' : 'Đơn hàng không xuất HĐ VAT')}
+                        >
+                            {isEn ? 'No Inv' : 'Không HĐ'}
+                        </span>
+                    ) : null}
                 </div>
-                <span className="text-[10px]" style={{ color: '#64748B' }}>
+                <span className="text-[10px] text-slate-400 font-mono shrink-0 whitespace-nowrap">
                     {formatDate(row.createdAt, true)}
                 </span>
             </div>
 
-            {/* Customer information */}
-            <div>
-                <p className="text-sm font-semibold leading-snug" style={{ color: '#0F172A' }}>
-                    {row.customerName}
-                </p>
-                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#64748B' }}>
-                    {row.customerCode}
-                </p>
-            </div>
-
-            {/* Channel, Legal Entity, Sales Rep */}
-            <div className="flex flex-wrap items-center gap-2">
-                {/* Channel Badge */}
-                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
-                    style={{ background: 'rgba(8,145,178,0.08)', color: '#475569' }}>
-                    {getSOChannelLabel(row.channel, locale, true)}
-                </span>
-
-                {/* Legal Entity Badge */}
-                {row.legalEntityCode && (
-                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
-                        style={{ 
-                            background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.12)' : 'rgba(8, 145, 178, 0.08)', 
-                            color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
-                        }}>
-                        {row.legalEntityCode}
-                    </span>
-                )}
-
-                {/* Invoice Number Badge */}
-                {row.invoiceNo ? (
-                    <span className="inline-block text-[10px] px-2 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0"
-                        style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)' }}
-                        title={`Số hóa đơn: ${row.invoiceNo}`}>
-                        {isEn ? 'Inv:' : 'HĐ:'} {row.invoiceNo}
-                    </span>
-                ) : row.isInvoiceExempt ? (
-                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0"
-                        style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}
-                        title={row.invoiceExemptReason || (isEn ? 'Invoice exempt order' : 'Đơn hàng không xuất HĐ VAT')}>
-                        {isEn ? 'No Inv' : 'Không HĐ'}
-                    </span>
-                ) : null}
-
-                {/* Sales Rep Name */}
-                <span className="text-[10px] ml-auto" style={{ color: '#475569' }}>
-                    Rep: <span className="font-medium">{row.salesRepName}</span>
-                </span>
-            </div>
-
-            {/* Financial summary & Status */}
-            <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/30">
-                {/* Total amount & discount */}
-                <div>
-                    <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>
-                        {formatCurrency(row.totalAmount)}
-                    </span>
-                    {row.orderDiscount > 0 && (
-                        <span className="text-[10px] ml-1.5 font-semibold" style={{ color: '#15803D' }}>
-                            ({isEn ? 'Disc' : 'CK'} {row.orderDiscount}%)
-                        </span>
-                    )}
+            {/* Row 2: Customer Name, Customer Code, Sales Rep & Total Amount */}
+            <div className="flex items-start justify-between gap-2 min-w-0">
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-900 truncate leading-snug">
+                        {row.customerName}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                        {row.customerCode && (
+                            <span className="font-mono text-slate-400 shrink-0">
+                                {row.customerCode}
+                            </span>
+                        )}
+                        {row.customerCode && row.salesRepName && (
+                            <span className="text-slate-300">•</span>
+                        )}
+                        {row.salesRepName && (
+                            <span className="truncate">
+                                Rep: <span className="font-medium text-slate-700">{row.salesRepName}</span>
+                            </span>
+                        )}
+                    </div>
                 </div>
 
-                {/* StatusBadge component & DeliveryStatusBadge */}
-                <div className="flex items-center gap-1.5 scale-90 origin-right flex-wrap justify-end">
+                {/* Amount on the right */}
+                <div className="text-right shrink-0">
+                    <div className="text-xs font-bold font-mono text-slate-900 whitespace-nowrap">
+                        {formatCurrency(row.totalAmount)}
+                    </div>
+                    {row.orderDiscount > 0 && (
+                        <div className="text-[9px] font-semibold text-emerald-600">
+                            CK {row.orderDiscount}%
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Row 3: Status Badges on left + Action Buttons on right */}
+            <div 
+                className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 min-w-0"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Status Badges */}
+                <div className="flex items-center gap-1 flex-wrap min-w-0 scale-90 origin-left">
                     <StatusBadge status={row.status} approvalStep={row.approvalStep} />
                     <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
                 </div>
-            </div>
 
-            {/* Actions Footer */}
-            <div className="flex items-center justify-end gap-1.5 flex-wrap pt-2 border-t border-slate-200/30"
-                onClick={e => e.stopPropagation() /* Prevent card click onViewDetail */}>
-                
-                {/* Eye Detail button (always shown) */}
-                <button onClick={onViewDetail}
-                    className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(8,145,178,0.06)', color: '#0891B2', borderColor: 'rgba(8, 145, 178, 0.15)' }}
-                    title={isEn ? 'View Details' : 'Chi tiết'}>
-                    <Eye size={12} />
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                    {/* Approval Actions */}
+                    {row.status === 'PENDING_APPROVAL' && canApprove && (
+                        <>
+                            <button onClick={onApprove} disabled={isActLoading}
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border transition-all rounded"
+                                style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)' }}>
+                                {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> {isEn ? 'Approve' : 'Duyệt'}</>}
+                            </button>
+                            <button onClick={onReject} disabled={isActLoading}
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border transition-all rounded"
+                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)' }}>
+                                {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> {isEn ? 'Reject' : 'Từ chối'}</>}
+                            </button>
+                        </>
+                    )}
 
-                {/* Clone button */}
-                <button onClick={onClone} disabled={actionLoading === row.id}
-                    className="p-1.5 rounded transition-all flex items-center justify-center border"
-                    style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', borderColor: 'rgba(100,116,139,0.25)' }}
-                    title={isEn ? 'Clone Order' : 'Nhân bản đơn hàng'}>
-                    <Copy size={12} />
-                </button>
+                    {/* Accountant Approval Actions */}
+                    {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
+                        <>
+                            <button onClick={onAcctApprove} disabled={isActLoading}
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border transition-all rounded"
+                                style={{ background: 'rgba(8,145,178,0.12)', color: '#0891B2', borderColor: 'rgba(8,145,178,0.25)' }}>
+                                <CheckCircle2 size={10} /> KT Duyệt
+                            </button>
+                            <button onClick={onAcctReject} disabled={isActLoading}
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border transition-all rounded"
+                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)' }}>
+                                {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Trả về</>}
+                            </button>
+                        </>
+                    )}
 
-                {/* Approval Actions */}
-                {row.status === 'PENDING_APPROVAL' && canApprove && (
-                    <>
-                        <button onClick={onApprove} disabled={isActLoading}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', borderColor: 'rgba(21,128,61,0.3)', borderRadius: '4px' }}>
-                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> {isEn ? 'Approve' : 'Duyệt'}</>}
-                        </button>
-                        <button onClick={onReject} disabled={isActLoading}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.25)', borderRadius: '4px' }}>
-                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> {isEn ? 'Reject' : 'Từ chối'}</>}
-                        </button>
-                    </>
-                )}
+                    {/* Draft Actions */}
+                    {row.status === 'DRAFT' && (
+                        <>
+                            <button onClick={onConfirm} disabled={isActLoading}
+                                className="px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
+                                style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)' }}>
+                                {isActLoading ? <Loader2 size={10} className="animate-spin" /> : (isEn ? 'Confirm' : 'Xác nhận')}
+                            </button>
+                            <button onClick={onEdit}
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
+                                style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', borderColor: 'rgba(180,83,9,0.2)' }}>
+                                <Pencil size={10} /> {isEn ? 'Edit' : 'Sửa'}
+                            </button>
+                        </>
+                    )}
 
-                {/* Draft Actions */}
-                {row.status === 'DRAFT' && (
-                    <>
-                        <button onClick={onConfirm} disabled={isActLoading}
-                            className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)', borderRadius: '4px' }}>
-                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : (isEn ? 'Confirm' : 'Xác nhận')}
+                    {/* Delete / Cancel Actions */}
+                    {row.status === 'DRAFT' ? (
+                        <button onClick={onDelete} disabled={isActLoading}
+                            className="px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
+                            style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)' }}>
+                            Xóa
                         </button>
-                        <button onClick={onEdit}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', borderColor: 'rgba(180,83,9,0.2)', borderRadius: '4px' }}>
-                            <Pencil size={10} /> {isEn ? 'Edit' : 'Sửa'}
-                        </button>
-                    </>
-                )}
+                    ) : (
+                        ['PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(row.status) && (
+                            <button onClick={onCancel} disabled={isActLoading}
+                                className="px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
+                                style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)' }}>
+                                Huỷ
+                            </button>
+                        )
+                    )}
 
-                {/* Accountant Approval Actions */}
-                {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
-                    <>
-                        <button onClick={onAcctApprove} disabled={isActLoading}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(8,145,178,0.12)', color: '#0891B2', borderColor: 'rgba(8,145,178,0.25)', borderRadius: '4px' }}>
-                            <CheckCircle2 size={10} /> KT Duyệt
-                        </button>
-                        <button onClick={onAcctReject} disabled={isActLoading}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
-                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Trả về</>}
-                        </button>
-                    </>
-                )}
-
-                {/* Delete / Cancel Actions */}
-                {row.status === 'DRAFT' ? (
-                    <button onClick={onDelete} disabled={isActLoading}
-                        className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                        style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
-                        Xóa
+                    {/* Clone button */}
+                    <button onClick={onClone} disabled={actionLoading === row.id}
+                        className="p-1 rounded transition-all flex items-center justify-center border"
+                        style={{ background: '#F8FAFC', color: '#64748B', borderColor: '#E2E8F0' }}
+                        title={isEn ? 'Clone Order' : 'Nhân bản đơn hàng'}>
+                        <Copy size={11} />
                     </button>
-                ) : (
-                    ['PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(row.status) && (
-                        <button onClick={onCancel} disabled={isActLoading}
-                            className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                            style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', borderColor: 'rgba(185,28,28,0.2)', borderRadius: '4px' }}>
-                            Huỷ
-                        </button>
-                    )
-                )}
+
+                    {/* Eye Detail button */}
+                    <button onClick={onViewDetail}
+                        className="p-1 rounded transition-all flex items-center justify-center border"
+                        style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2', borderColor: 'rgba(8,145,178,0.2)' }}
+                        title={isEn ? 'View Details' : 'Chi tiết'}>
+                        <Eye size={11} />
+                    </button>
+                </div>
             </div>
         </div>
     )
@@ -3046,7 +3056,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             </div>
 
             {/* Mobile View */}
-            <div className={`block md:hidden space-y-3 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div className={`block md:hidden space-y-1.5 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                 {rows.length === 0 && loading ? (
                     <Card><TableSkeleton rows={5} cols={3} /></Card>
                 ) : rows.length === 0 ? (
