@@ -20,11 +20,13 @@ import {
     Edit3,
     Download,
     Upload,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Eye
 } from 'lucide-react'
 import { type SopItem, type SopAttachedForm } from '@/data/sops'
 import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'
+import { MarkdownDocModal } from './MarkdownDocModal'
 import { type SopFormFile } from '@/data/forms-data'
 
 interface SopDetailModalProps {
@@ -43,6 +45,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
     const [isEditing, setIsEditing] = useState(false)
     const [uploadTargetFileName, setUploadTargetFileName] = useState<string | null>(null)
     const [showUploadModal, setShowUploadModal] = useState(false)
+    const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string; fileName: string } | null>(null)
 
     // Sync if initialSop changes
     React.useEffect(() => {
@@ -403,15 +406,36 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                 </div>
                                             </div>
 
-                                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                                                <a
-                                                    href={form.downloadUrl}
-                                                    download={form.fileName}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
-                                                >
-                                                    <Download className="w-3.5 h-3.5" />
-                                                    <span>Tải Về File Mẫu</span>
-                                                </a>
+                                             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    {form.fileName.toLowerCase().endsWith('.md') ? (
+                                                        <button
+                                                            onClick={() => setPreviewDoc({
+                                                                title: form.title,
+                                                                url: form.downloadUrl,
+                                                                fileName: form.fileName
+                                                            })}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            <span>Xem Trực Tiếp</span>
+                                                        </button>
+                                                    ) : null}
+
+                                                    <a
+                                                        href={form.downloadUrl}
+                                                        download={form.fileName}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition ${
+                                                            form.fileName.toLowerCase().endsWith('.md')
+                                                                ? 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                                                : 'bg-rose-700 hover:bg-rose-800 text-white shadow-sm'
+                                                        }`}
+                                                    >
+                                                        <Download className="w-3.5 h-3.5" />
+                                                        <span>{form.fileName.toLowerCase().endsWith('.md') ? 'Tải Về' : 'Tải Về File Mẫu'}</span>
+                                                    </a>
+                                                </div>
+
                                                 <button
                                                     onClick={() => {
                                                         setUploadTargetFileName(form.fileName)
@@ -653,6 +677,17 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         setUploadTargetFileName(null)
                     }}
                     onUploaded={handleFormUploaded}
+                />
+            )}
+
+            {/* Markdown Document Preview Modal */}
+            {previewDoc && (
+                <MarkdownDocModal
+                    isOpen={Boolean(previewDoc)}
+                    onClose={() => setPreviewDoc(null)}
+                    title={previewDoc.title}
+                    docUrl={previewDoc.url}
+                    fileName={previewDoc.fileName}
                 />
             )}
         </div>

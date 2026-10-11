@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from '../transfers/actions'
 import { CreateTransferDrawer } from '../transfers/CreateTransferDrawer'
 import { TransferDetailDrawer } from '../transfers/TransferDetailDrawer'
+import { ReplenishmentTab } from './ReplenishmentTab'
 import { formatDate } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
 
@@ -29,6 +30,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string; bor
 }
 
 export function TransfersTab() {
+    const [subTab, setSubTab] = useState<'transfers' | 'replenishment'>('transfers')
     const [rows, setRows] = useState<TransferOrderRow[]>([])
     const [loading, setLoading] = useState(true)
     const [createOpen, setCreateOpen] = useState(false)
@@ -164,9 +166,39 @@ export function TransfersTab() {
     }
 
     return (
-        <div className="space-y-4 pb-20 md:pb-4">
-            {/* Top Toolbar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
+        <div className="space-y-4 pb-8 md:pb-4">
+            {/* Top Sub-Module Switcher */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-fit border border-slate-200">
+                <button
+                    onClick={() => setSubTab('transfers')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer select-none active:scale-95 flex items-center gap-1.5 ${
+                        subTab === 'transfers'
+                            ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                            : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                >
+                    <ArrowRightLeft size={13} className={subTab === 'transfers' ? 'text-amber-600' : 'text-slate-400'} />
+                    <span>Phiếu Điều Chuyển ({rows.length})</span>
+                </button>
+                <button
+                    onClick={() => setSubTab('replenishment')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer select-none active:scale-95 flex items-center gap-1.5 ${
+                        subTab === 'replenishment'
+                            ? 'bg-white text-lys-teal-strong shadow-2xs font-extrabold'
+                            : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                >
+                    <Zap size={13} className={subTab === 'replenishment' ? 'text-lys-teal-strong' : 'text-slate-400'} />
+                    <span>Gợi Ý Bổ Sung Tồn</span>
+                </button>
+            </div>
+
+            {subTab === 'replenishment' ? (
+                <ReplenishmentTab />
+            ) : (
+                <>
+                    {/* Top Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                         <ArrowRightLeft size={20} />
@@ -385,6 +417,8 @@ export function TransfersTab() {
                 onClose={() => setSelectedId(null)}
                 onRefresh={reload}
             />
+            </>
+            )}
 
             {confirmDialog}
         </div>

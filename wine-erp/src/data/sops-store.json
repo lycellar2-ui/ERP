@@ -157,6 +157,12 @@
         "title": "Tờ Trình Cơ Chế Đặc Biệt",
         "fileName": "Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx",
         "downloadUrl": "/forms/Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx"
+      },
+      {
+        "code": "SOP-SFV (MD)",
+        "title": "Văn Bản Quy Trình Đi Tuyến & Check-in Thực Địa",
+        "fileName": "SOP_Sales_Field_Visit_Checkin.md",
+        "downloadUrl": "/forms/SOP_Sales_Field_Visit_Checkin.md"
       }
     ],
     "faqs": [
@@ -1071,6 +1077,12 @@
         "title": "Bảng Theo Dõi Tiến Độ PO",
         "fileName": "Form_3.4-A_Bang_theo_doi_PO.xlsx",
         "downloadUrl": "/forms/Form_3.4-A_Bang_theo_doi_PO.xlsx"
+      },
+      {
+        "code": "SOP-IMP (MD)",
+        "title": "Văn Bản Quy Trình Nhập Khẩu Rượu Mẫu Đầy Đủ",
+        "fileName": "quy_trinh_nhap_khau_mau.md",
+        "downloadUrl": "/forms/quy_trinh_nhap_khau_mau.md"
       }
     ],
     "faqs": [

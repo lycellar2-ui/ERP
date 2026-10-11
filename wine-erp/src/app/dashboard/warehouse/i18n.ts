@@ -117,6 +117,12 @@ export const WAREHOUSE_I18N = {
                 description: 'Quản lý danh mục vật phẩm tiếp thị, quà tặng ly/khui, kệ trưng bày và nhập/xuất kho POSM',
                 actionLabel: 'Kho & Danh Mục POSM',
             },
+            inspection: {
+                title: 'Kiểm Tra Kho & Sổ Nhiệt Ẩm',
+                subtitle: 'Đo nhiệt ẩm 12h, Phiếu định kỳ T2/T5 & Camera TimeMark',
+                description: 'Ghi nhận nhiệt độ 3 vị trí, độ ẩm, chụp ảnh camera có watermark, checklist an toàn & cảnh báo sự cố',
+                actionLabel: 'Kiểm Tra Kho',
+            },
         },
 
         table: {
@@ -322,6 +328,12 @@ export const WAREHOUSE_I18N = {
                 subtitle: 'POSM Master Data & Collateral Cellar',
                 description: 'Dedicated marketing collateral catalog, glassware, display racks, and POSM inventory control',
                 actionLabel: 'Manage POSM',
+            },
+            inspection: {
+                title: 'Warehouse Inspection & Climate Log',
+                subtitle: '12h temp & humidity logs, periodic audit & TimeMark camera',
+                description: 'Log 3-zone temp, humidity, watermark camera photos, safety checklist and incident escalations',
+                actionLabel: 'Inspect Warehouse',
             },
         },
 

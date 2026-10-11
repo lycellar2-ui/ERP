@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
     Sparkles, Plus, ArrowUpRight, ArrowDownLeft, Search, RefreshCw,
     AlertTriangle, Tag, History, X, Layers, Boxes, Edit2, ShieldAlert,
-    CheckCircle2, DollarSign, Package, AlertCircle, Building2, Store
+    CheckCircle2, DollarSign, Package, AlertCircle, Building2, Store,
+    Wine, Gift, BookOpen
 } from 'lucide-react'
 import {
     PosmProductItem, PosmTransactionItem, PosmStats,
@@ -16,41 +17,41 @@ import { toast } from 'sonner'
 import { PosmCategory, PosmReason } from '@prisma/client'
 
 // ── POSM Category Visual Configurations ──────────────────────
-export const POSM_CATEGORY_CONFIG: Record<PosmCategory, { label: string; color: string; bg: string; border: string; icon: string }> = {
+export const POSM_CATEGORY_CONFIG: Record<PosmCategory, { label: string; color: string; bg: string; border: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
     GLASSWARE_TOOLS: {
         label: 'Ly & Dụng Cụ Rượu',
         color: '#0284C7',
         bg: '#F0F9FF',
         border: '#BAE6FD',
-        icon: '🍷'
+        icon: Wine
     },
     DISPLAY_STAND: {
         label: 'Kệ & Trưng Bày',
         color: '#D97706',
         bg: '#FFFBEB',
         border: '#FDE68A',
-        icon: '🏷️'
+        icon: Tag
     },
     PACKAGING_GIFT: {
         label: 'Bao Bì & Hộp Quà',
         color: '#0E7490',
         bg: '#ECFEFF',
         border: '#A5F3FC',
-        icon: '🎁'
+        icon: Gift
     },
     MARKETING_COLLATERAL: {
         label: 'Ấn Phẩm & Marketing',
         color: '#15803D',
         bg: '#ECFDF5',
         border: '#A7F3D0',
-        icon: '📚'
+        icon: BookOpen
     },
     OTHER: {
         label: 'Vật Phẩm Khác',
         color: '#475569',
         bg: '#F8FAFC',
         border: '#E2E8F0',
-        icon: '📦'
+        icon: Package
     }
 }
 
@@ -484,7 +485,7 @@ export function PosmInventoryTab() {
                                 <option value="ALL">Tất cả nhóm POSM</option>
                                 {Object.entries(POSM_CATEGORY_CONFIG).map(([key, cfg]) => (
                                     <option key={key} value={key}>
-                                        {cfg.icon} {cfg.label}
+                                        {cfg.label}
                                     </option>
                                 ))}
                             </select>
@@ -525,6 +526,7 @@ export function PosmInventoryTab() {
                                     products.map(item => {
                                         const cat = POSM_CATEGORY_CONFIG[item.category] || POSM_CATEGORY_CONFIG.OTHER
                                         const isLow = item.isLowStock
+                                        const CatIcon = cat.icon
                                         return (
                                             <tr key={item.id} className="hover:bg-slate-50/80 transition group">
                                                 <td className="py-3 px-4">
@@ -537,14 +539,14 @@ export function PosmInventoryTab() {
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <span
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border"
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border"
                                                         style={{
                                                             background: cat.bg,
                                                             color: cat.color,
                                                             borderColor: cat.border
                                                         }}
                                                     >
-                                                        <span>{cat.icon}</span>
+                                                        <CatIcon size={12} className="shrink-0" />
                                                         <span>{cat.label}</span>
                                                     </span>
                                                 </td>

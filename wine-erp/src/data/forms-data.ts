@@ -477,6 +477,28 @@ export const OFFICIAL_FORMS: SopFormFile[] = [
         "updatedAt": "2026-06-23"
     },
     {
+        "id": "quy-trinh-nhap-khau-mau-md",
+        "code": "Biểu mẫu",
+        "fileName": "quy_trinh_nhap_khau_mau.md",
+        "downloadUrl": "/forms/quy_trinh_nhap_khau_mau.md",
+        "title": "quy trinh nhap khau mau.md",
+        "fileType": "MD",
+        "fileSize": "4 KB",
+        "category": "procurement",
+        "updatedAt": "2026-06-20"
+    },
+    {
+        "id": "sop-sales-field-visit-checkin-md",
+        "code": "Biểu mẫu",
+        "fileName": "SOP_Sales_Field_Visit_Checkin.md",
+        "downloadUrl": "/forms/SOP_Sales_Field_Visit_Checkin.md",
+        "title": "SOP Sales Field Visit Checkin.md",
+        "fileType": "MD",
+        "fileSize": "12 KB",
+        "category": "sales",
+        "updatedAt": "2026-09-23"
+    },
+    {
         "id": "weekly-report-template-26-06-2026-xlsx",
         "code": "Biểu mẫu",
         "fileName": "Weekly report template 26.06.2026.xlsx",

@@ -442,11 +442,51 @@ WMS Mobile App (PWA):
 ```
 Cần thiết vì kho có thể có vùng mù sóng.
 
-*Last updated: 2026-03-04 | Wine ERP v4.0*
+---
+
+## 13. Hệ Thống Kiểm Tra Kho & Sổ Theo Dõi Nhiệt Độ Độ Ẩm (Warehouse Inspection Checklist System)
+
+> **Tab "Kiểm Tra Kho & Sổ Nhiệt Ẩm" trong module WMS** — Bắt nguồn từ thực tế vận hành tại hầm rượu (`So_Theo_Doi_Nhiet_Do_Do_Am.xlsx` Form 5.3-A và `So_Kiem_Tra_Dinh_Ky_Kho_Thanh_Tri.xlsx`). Đảm bảo toàn vẹn chất lượng rượu vang nhập khẩu cao cấp (Grand Cru, Bordeaux, Bourgogne...) vốn cực kỳ nhạy cảm với nhiệt độ và độ ẩm.
+
+### 13.1 Phân Loại Phiếu Kiểm Tra (`WarehouseInspectionType`)
+
+1. **Sổ Theo Dõi Nhiệt Độ & Độ Ẩm 12h (`DAILY_TEMPERATURE_HUMIDITY`)**:
+   - Tần suất: 2 lần/ngày (Ca Sáng 08:00 & Ca Chiều 16:00).
+   - Đo nhiệt độ tại 3 vị trí kho: Gần cửa ra vào (`TEMP_DOOR`), Trung tâm kho (`TEMP_CENTER`), Góc xa / Cuối kho (`TEMP_CORNER`).
+   - Đo độ ẩm tương đối (%) và đánh giá Đạt / Không Đạt.
+   - Ngưỡng an toàn hầm vang: Nhiệt độ 16°C - 20°C (Cảnh báo khi > 22°C hoặc < 14°C), Độ ẩm 60% - 75% (Cảnh báo khi > 80% hoặc < 50%).
+
+2. **Phiếu Kiểm Tra Định Kỳ Tuần (`PERIODIC_AUDIT`)**:
+   - Tần suất: Thứ 2 và Thứ 5 hàng tuần.
+   - Đánh giá 4 nhóm tiêu chuẩn vận hành:
+     - Nhóm A: Môi trường & Thiết bị (Nhiệt kế cơ/điện tử, máy lạnh công nghiệp, máy hút ẩm, quạt thông gió, hệ thống chiếu sáng).
+     - Nhóm B: An ninh & Cơ sở hạ tầng (Cửa kho, khóa niêm phong, bình PCCC, camera an ninh, pallet, lưới chống côn trùng/chuột).
+     - Nhóm C: Tình trạng hàng hóa & Vệ sinh (Sắp xếp theo vintage/pháp nhân, không để rượu sát sàn/sát tường, vệ sinh quét dọn, không mùi lạ).
+     - Nhóm D: Quy trình chụp ảnh hiện trường (Ảnh nhiệt kế, ảnh cụm điều hòa, ảnh 4 góc kho, ảnh sự cố bất thường).
+
+### 13.2 Chụp Ảnh Đóng Dấu Bản Quyền (TimeMark Watermark Camera)
+- Tích hợp HTML5 Canvas chụp ảnh trực tiếp từ camera điện thoại/máy tính bảng.
+- Watermark tự động gồm: Tên kho bãi, Ngày giờ thực tế (ISO/VN format), Tọa độ GPS kinh độ & vĩ độ, Tên nhân viên kiểm tra, và Hạng mục kiểm tra.
+- Tự động nén và sinh ảnh thu nhỏ Thumbnail siêu nhẹ (~25KB) phục vụ hiển thị bảng và danh sách mà không làm phình dung lượng database.
+
+### 13.3 Hàng Đợi Lưu Trữ Offline (Offline Draft Queue)
+- Khắc phục triệt để sự cố mất sóng 4G/WiFi trong hầm rượu ngầm và kho bảo ôn cách nhiệt.
+- Lưu trữ nháp an toàn trên trình duyệt qua LocalStorage (`WAREHOUSE_INSPECTION_OFFLINE_DRAFTS_V1`).
+- Tự động nhận diện mạng internet và kích hoạt đồng bộ (Auto Sync) lên server, hoặc cho phép thủ kho bấm nút "Đồng bộ ngay".
+
+### 13.4 Đánh Giá Tự Động & Bắn Cảnh Báo Telegram Khẩn Cấp
+- Khi nhiệt độ vượt ngưỡng an toàn (> 22°C) hoặc có tiêu chí kiểm tra bị đánh giá `FAILED`:
+  - Phiếu kiểm tra tự động chuyển trạng thái `PENDING_APPROVAL` (Chờ quản lý duyệt xử lý).
+  - Tự động gửi thông báo khẩn cấp tới kênh Telegram Bot Quản lý Kho kèm hình ảnh và vị trí vi phạm.
+  - Ban Quản lý / Giám đốc kho ký duyệt phê duyệt giải pháp khắc phục trực tiếp trên hệ thống.
+
+### 13.5 Xuất Excel Chuẩn Form Doanh Nghiệp
+- Tích hợp thư viện `ExcelJS` sinh file `.xlsx` định dạng chuẩn 100% theo Form 5.3-A và Phiếu kiểm tra Thanh Trì.
+- Đầy đủ tiêu đề, viền ô, màu cảnh báo, chữ ký thủ kho và quản lý duyệt.
 
 ---
 
-## 12. Implementation Status (Trạng Thái Triển Khai)
+## 14. Implementation Status (Trạng Thái Triển Khai)
 
 > Cập nhật 10/03/2026 — **Hoàn thiện 100% + 2 tính năng mới (NXT, 2D Map)**
 
@@ -706,6 +746,38 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Kiểm Soát Tồn Kho & Cảnh Báo Xuất Âm Thông Minh** | `actions-posm.ts`, `PosmInventoryTab.tsx` | Hiển thị cảnh báo màu vàng khi số lượng xuất lớn hơn tồn thực tế nhưng vẫn cho phép thủ kho xác nhận xuất trước và nhập kho bù sau theo đúng thực tế vận hành tại sự kiện |
 | **Tích Hợp Giao Diện Trực Quan Phân Hệ WMS** | `WarehouseClient.tsx`, `PosmInventoryTab.tsx`, `i18n.ts` | Tích hợp thành Tab chuyên biệt "Vật Phẩm POSM" trong WMS, hỗ trợ thẻ chức năng trên Menu Grid, Sub-tab Master Data, Sổ Nhật ký giao dịch và bộ chỉ số KPI giá trị tồn kho dự toán |
 
+#### Phase 22: Kiểm Tra Định Kỳ & Sổ Theo Dõi Nhiệt Độ Độ Ẩm Kho (Warehouse Inspection Checklist, Live Watermarked Camera & Offline Draft Sync) (11/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Mô Hình Dữ Liệu Kiểm Tra Kho (`WarehouseInspection`, `Item`, `Photo`)** | `prisma/schema.prisma` | Bổ sung 3 models và 4 enums (`WarehouseInspectionType`, `WarehouseInspectionStatus`, `InspectionShift`, `InspectionResult`) hỗ trợ 2 loại phiếu: Sổ nhiệt ẩm 12h và Phiếu kiểm tra định kỳ T2/T5 |
+| **Backend Server Actions (`actions-inspection.ts`)** | `actions-inspection.ts` | Triển khai các actions: `getWarehouseInspectionsAction`, `getWarehouseInspectionDetailAction`, `createWarehouseInspectionAction`, `approveWarehouseInspectionAction`, `syncOfflineWarehouseInspectionsAction`, `exportWarehouseInspectionsExcelAction` |
+| **Đánh Giá Tự Động & Bắn Cảnh Báo Telegram** | `actions-inspection.ts` | Nhiệt độ vượt ngưỡng an toàn (>22°C) hoặc tiêu chí FAILED sẽ tự động kích hoạt trạng thái `PENDING_APPROVAL`, đánh dấu `hasIssues: true` và gửi tin nhắn cảnh báo khẩn cấp qua Telegram Bot |
+| **Camera HTML5 Chụp Ảnh Đóng Dấu Bản Quyền (TimeMark Watermark)** | `LiveCameraInspectionModal.tsx` | Chụp ảnh hiện trường tích hợp watermark trực tiếp lên Canvas: Tên kho, Ngày giờ thực tế, Tọa độ GPS, Tên nhân viên và Hạng mục kiểm tra. Tự sinh thumbnail tối ưu (~25KB) chống phình cơ sở dữ liệu |
+| **Hàng Đợi Lưu Trữ Offline Trong Kho Kín (`localStorage Queue`)** | `InspectionTab.tsx`, `actions-inspection.ts` | Cơ chế lưu nháp offline `WAREHOUSE_INSPECTION_OFFLINE_DRAFTS_V1` khi nhân viên kiểm tra trong hầm kín mất sóng 4G/WiFi; hỗ trợ tự động và bấm tay đồng bộ khi có mạng |
+| **Xuất Excel Chuẩn Form 5.3-A & Phiếu Kiểm Tra Kho Thanh Trì** | `actions-inspection.ts` | Xuất file Excel bằng `ExcelJS` với định dạng chuẩn khớp 100% với form mẫu doanh nghiệp (`So_Theo_Doi_Nhiet_Do_Do_Am.xlsx` và `So_Kiem_Tra_Dinh_Ky_Kho_Thanh_Tri.xlsx`) |
+| **Giao Diện Điều Hành & Biểu Đồ Xu Hướng 4 Phân Vùng** | `InspectionTab.tsx`, `WarehouseClient.tsx`, `i18n.ts` | Tab kiểm tra kho gồm 4 chế độ: Sổ nhiệt ẩm 12h, Phiếu định kỳ T2 & T5, Sự cố & Phê duyệt quản lý, và Biểu đồ xu hướng nhiệt/ẩm (Recharts) trực quan |
+
+#### Phase 23: Tinh Gọn Cấu Trúc Menu & Phân Nhóm 4 Trụ Cột Vận Hành WMS (WMS IA Streamlining, 4 Business Categories & Mobile Clutter Removal) (11/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Hợp Nhất 13 Modules Về 10 Trọng Tâm** | `WarehouseClient.tsx`, `TransfersTab.tsx`, `WarehouseMapTab.tsx` | Loại bỏ các module phân mảnh: Gộp *Gợi Ý Bổ Sung Tồn* (`replenishment`) thành sub-tab bên trong *Điều Chuyển Kho* (`transfer`); Gộp *Bảng Danh Sách Vị Trí* (`locations`) thành chế độ xem bên trong *Sơ Đồ Kho 2D* (`map`); Gộp *Hàng Biệt Trữ / Cách Ly* (`quarantine`) thành sub-tab bên trong *Tồn Kho* (`inventory`) |
+| **Phân Nhóm 4 Trụ Cột Nghiệp Vụ Chuẩn B2B ERP** | `WarehouseClient.tsx` | Tổ chức lưới chức năng thành 4 nhóm danh mục có chỉ số đếm rõ ràng: 1. *Vận Hành Xuất Nhập* (Nhập GR, Xuất DO, Điều chuyển, Kiểm kê); 2. *Không Gian & Vị Trí* (Sơ đồ kho 2D & Vị trí); 3. *Quản Lý Tồn Kho* (Tồn kho & Cách ly, Hàng mẫu, POSM); 4. *Kiểm Định & Báo Cáo* (Kiểm tra kho & Sổ nhiệt ẩm, Báo cáo NXT) |
+| **Tối Giản Thanh Điều Hướng Header** | `WarehouseClient.tsx` | Chỉ hiển thị chuông thông báo âm thanh khi ở Menu tổng hoặc phân hệ Xuất kho DO; ẩn nút `+ Tạo kho mới` khi đang thao tác trong workspace chi tiết và chuyển về `variant="secondary"` tránh tranh chấp sự chú ý |
+| **Loại Bỏ Hoàn Toàn Bottom Bar Trên Di Động** | `WarehouseClient.tsx` | Xóa thanh điều hướng cố định 60px dưới đáy màn hình trên mobile, giải phóng 100% không gian hiển thị cho bảng biểu và form nhập liệu; việc điều hướng được tích hợp trực tiếp qua dropdown phân hệ và nút quay lại menu ở thanh tiêu đề trên |
+
+#### Phase 24: Tính Năng Phân Công Ca Kiểm Tra Kho & Cảnh Báo Quá Hạn Ca (Inspection Assignment, Reassignment & Overdue Telegram Alerts) (11/10/2026)
+
+| Tính năng / Cải tiến | File | Chi tiết |
+|---|---|---|
+| **Mở Rộng Schema Phân Công & Quá Hạn** | `prisma/schema.prisma` | Bổ sung trạng thái `ASSIGNED` và `OVERDUE` vào enum `WarehouseInspectionStatus`; thêm quan hệ `assignedById`, `assignedBy`, `assignedAt`, `dueDate` vào model `WarehouseInspection` và liên kết quan hệ `inspectionsAssigned` vào model `User` |
+| **Server Actions Phân Công & Reassign (`actions-inspection.ts`)** | `actions-inspection.ts` | Triển khai: `getWarehouseStaffUsersAction` (lấy danh sách nhân viên), `assignWarehouseInspectionAction` (phân công mới hoặc phân công lại kèm gửi tin nhắn Telegram Bot), `sendInspectionOverdueAlertAction` (bắn cảnh báo Telegram khẩn cấp cho ca quá hạn) |
+| **Bảo Vệ Phân Quyền Thực Hiện (Edge Case 2)** | `actions-inspection.ts`, `InspectionTab.tsx` | Khóa quyền thao tác: Chỉ nhân viên được phân công (`inspectorId === user.id`) hoặc Quản lý kho/Admin (`checkIsManager(user)`) mới có quyền thực hiện và lưu phiếu kiểm tra. Ngăn chặn nhân viên khác can thiệp |
+| **Cơ Chế Tự Động Chuyển Trạng Thái Quá Hạn (Auto-Overdue)** | `actions-inspection.ts` | Khi truy vấn danh sách, hệ thống tự động kiểm tra và chuyển các phiếu `ASSIGNED` có `dueDate < now()` sang trạng thái `OVERDUE` một cách nhất quán |
+| **Giao Diện Phân Công & Quản Lý Ca Kiểm Tra** | `InspectionTab.tsx` | Nút `[+ Phân công kiểm tra]` cho Quản lý; Modal phân công linh hoạt loại kiểm tra, ngày, ca, thời hạn, nhân viên và ghi chú chỉ đạo; Sub-tab chuyên biệt "Phân Công" hiển thị danh sách ca chờ thực hiện; bộ lọc "Được giao cho tôi" và dropdown lọc theo nhân viên |
+| **Hệ Thống Thông Báo Nhắc Nhở Telegram Bot** | `actions-inspection.ts` | Tự động định dạng tin nhắn Telegram HTML báo phân công ca mới với đầy đủ thông tin kho, loại ca, người thực hiện, thời hạn và chỉ đạo của quản lý; nút `[Nhắc Telegram]` gửi cảnh báo nhắc nhở khẩn cấp khi ca bị quá hạn |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -716,7 +788,8 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-10-09 | Wine ERP v12.4 — POSM Master Data & Collateral Inventory Management (PosmProduct, PosmTransaction)*
+*Last updated: 2026-10-11 | Wine ERP v12.7 — Warehouse Inspection Staff Assignment, Role Protection & Overdue Alerts*
+
 
 
 

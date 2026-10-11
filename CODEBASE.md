@@ -21,7 +21,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 ## 3. PHÂN BỔ MODULES (APP ROUTER)
 - **System/Admin**: `wine-erp/src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `wine-erp/src/app/login`
 - **Master Data**: `wine-erp/src/app/dashboard/products` (**Media Upload Gallery**), `wine-erp/src/app/dashboard/customers` (**Address CRUD**, soft-delete), `wine-erp/src/app/dashboard/suppliers` (soft-delete)
-- **Warehouse**: `wine-erp/src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
+- **Warehouse**: `wine-erp/src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**, **Warehouse Inspection & Daily Checklist**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO), `actions-inspection.ts` (Daily & Periodic Inspection)
 - **Sales & Allocation**: `wine-erp/src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `wine-erp/src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `wine-erp/src/app/dashboard/price-list`, `wine-erp/src/app/dashboard/allocation`, `wine-erp/src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `wine-erp/src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `wine-erp/src/app/dashboard/pipeline`
 - **Finance & Tem**: `wine-erp/src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `wine-erp/src/app/dashboard/payment-requests` (**Đề Nghị Thanh Toán & Ngân Sách**, Cloudflare R2 Scan Viewer, Duyệt đa cấp), `wine-erp/src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `wine-erp/src/app/dashboard/stamps`
@@ -123,14 +123,14 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 □ Bug fix đã bổ sung vào bug-fix-lessons.md?
 ```
 
-### Số liệu hiện tại cần đồng nhất (2026-08-07)
+### Số liệu hiện tại cần đồng nhất (2026-10-11)
 
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
-| Prisma models | **143** | README.md, llms.txt, tech-stack.md |
-| Prisma enums | **91** | README.md, llms.txt |
+| Prisma models | **146** | README.md, llms.txt, tech-stack.md |
+| Prisma enums | **95** | README.md, llms.txt |
 | Dashboard routes | **35** | README.md, wine-erp-plan.md |
-| Server Action files | **42** | README.md |
+| Server Action files | **43** | README.md |
 | Module spec files | **27** | README.md |
 | Total modules (codes) | **29** | README.md, llms.txt, wine-erp-plan.md |
 | Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |

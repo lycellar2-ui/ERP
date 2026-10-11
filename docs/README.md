@@ -52,8 +52,8 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 143 |
-| **Prisma enums** | 91 |
+| **Prisma models** | 146 |
+| **Prisma enums** | 95 |
 | **Dashboard routes** | 38 folders |
 | **Server Action files** | 47 files |
 | **Module spec files** | 30 files |
@@ -241,5 +241,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 11:00 | Wine ERP v12.12 - Luxury Quotation Public Viewer & PDF Export Optimization*
+*Last updated: 2026-10-11 12:10 | Wine ERP v12.13 - Warehouse Inspection Staff Assignment, Role Protection & Overdue Alerts*
 

@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (143 models, 91 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (146 models, 95 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -946,6 +946,10 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `payment_request_items` | `requestId`, `categoryId`, `budgetId`, `description`, `amount`, `vatAmount`, `accountCode` |
 | `payment_request_attachments` | `requestId`, `fileName`, `fileUrl`, `filePath`, `docType`, `storageBucket` (Chứng từ scan lưu R2/Supabase) |
 | `payment_approval_logs` | `requestId`, `actorId`, `action`, `fromStatus`, `toStatus`, `comments` (Lịch sử phê duyệt đa cấp) |
+| `WarehouseInspectionStatus` (enum) | `DRAFT`, `ASSIGNED`, `COMPLETED`, `PENDING_APPROVAL`, `RESOLVED`, `OVERDUE` |
+| `warehouse_inspections` | `inspectionNo`, `warehouseId`, `type`, `status`, `inspectionDate`, `shift`, `inspectorId`, `assignedById`, `assignedAt`, `dueDate`, `overallResult`, `hasIssues`, `approvedById`, `approvedAt` |
+| `warehouse_inspection_items` | `inspectionId`, `category`, `itemCode`, `itemName`, `standard`, `actualValue`, `isPassed`, `notes` |
+| `warehouse_inspection_photos` | `inspectionId`, `category`, `photoUrl`, `thumbnailUrl`, `caption`, `takenAt`, `gpsLatitude`, `gpsLongitude` |
 
 ### D. Indexes Quan Trọng
 ```sql
@@ -997,4 +1001,16 @@ bank_accounts (Tài khoản ngân hàng công ty)
 bank_reconciliation_rules (Quy tắc học ghi nhớ từ khóa nội dung CK -> Khách hàng)
   └── N:1 ──> customers
 ```
+
+### F. Warehouse Inspection & Daily Checklist (Phân hệ Kiểm tra Kho & Sổ Nhiệt Ẩm 12h)
+```
+warehouses (Kho hàng)
+  └── 1:N ──> warehouse_inspections (Phiếu kiểm tra: Nhiệt ẩm 12h & Định kỳ T2/T5)
+                ├── N:1 ──> users (inspectorId: Nhân viên / Thủ kho thực hiện kiểm tra)
+                ├── N:1 ──> users (assignedById: Quản lý phân công ca kiểm tra & hạn dueDate)
+                ├── N:1 ──> users (approvedById: Quản lý phê duyệt xử lý sự cố)
+                ├── 1:N ──> warehouse_inspection_items (Chi tiết từng tiêu chí checklist)
+                └── 1:N ──> warehouse_inspection_photos (Ảnh camera kèm watermark TimeMark)
+```
+
 

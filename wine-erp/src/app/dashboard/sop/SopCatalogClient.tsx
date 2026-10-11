@@ -25,13 +25,15 @@ import {
     Plus,
     FileText,
     Calendar,
-    FolderKanban
+    FolderKanban,
+    Eye
 } from 'lucide-react'
 import { SOP_CATEGORIES, type SopCategory, type SopItem } from '@/data/sops'
 import { type SopFormFile } from '@/data/forms-data'
 import { SopDetailModal } from './SopDetailModal'
 import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'
+import { MarkdownDocModal } from './MarkdownDocModal'
 
 const CATEGORY_ICONS: Record<string, React.FC<{ className?: string }>> = {
     Layers,
@@ -66,6 +68,7 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
     const [isCreatingSop, setIsCreatingSop] = useState(false)
     const [showUploadModal, setShowUploadModal] = useState(false)
     const [targetUploadFile, setTargetUploadFile] = useState<string | null>(null)
+    const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string; fileName: string } | null>(null)
 
     // Deep link support via ?code=SOP-XXX
     useEffect(() => {
@@ -527,14 +530,38 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                                 </div>
 
                                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                                    <a
-                                        href={form.downloadUrl}
-                                        download={form.fileName}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
-                                    >
-                                        <Download className="w-3.5 h-3.5" />
-                                        <span>Tải Về</span>
-                                    </a>
+                                    {form.fileType === 'MD' || form.fileName.toLowerCase().endsWith('.md') ? (
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => setPreviewDoc({
+                                                    title: form.title,
+                                                    url: form.downloadUrl,
+                                                    fileName: form.fileName
+                                                })}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
+                                            >
+                                                <Eye className="w-3.5 h-3.5" />
+                                                <span>Xem Trực Tiếp</span>
+                                            </button>
+                                            <a
+                                                href={form.downloadUrl}
+                                                download={form.fileName}
+                                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                                title="Tải tệp .md về máy"
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <a
+                                            href={form.downloadUrl}
+                                            download={form.fileName}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            <span>Tải Về</span>
+                                        </a>
+                                    )}
 
                                     <button
                                         onClick={() => {
@@ -579,6 +606,17 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                         setTargetUploadFile(null)
                     }}
                     onUploaded={handleFormUploaded}
+                />
+            )}
+
+            {/* Markdown Document Preview Modal */}
+            {previewDoc && (
+                <MarkdownDocModal
+                    isOpen={Boolean(previewDoc)}
+                    onClose={() => setPreviewDoc(null)}
+                    title={previewDoc.title}
+                    docUrl={previewDoc.url}
+                    fileName={previewDoc.fileName}
                 />
             )}
         </div>

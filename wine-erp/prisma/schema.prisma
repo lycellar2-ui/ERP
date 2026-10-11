@@ -124,6 +124,9 @@ model User {
   bankBatchesImported    BankStatementBatch[]
   bankTxnsPosted         BankTransaction[]          @relation("BankTxnPoster")
   bankRulesCreated       BankReconciliationRule[]   @relation("BankRuleCreator")
+  warehouseInspections   WarehouseInspection[]      @relation("WarehouseInspector")
+  inspectionsApproved    WarehouseInspection[]      @relation("WarehouseInspectionApprover")
+  inspectionsAssigned    WarehouseInspection[]      @relation("WarehouseInspectionAssigner")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -1403,6 +1406,7 @@ model Warehouse {
   transfersOut   TransferOrder[]  @relation("TransferFrom")
   transfersIn    TransferOrder[]  @relation("TransferTo")
   stockCountSessions StockCountSession[]
+  inspections        WarehouseInspection[]
   allowSales     Boolean         @default(true) // Có thể xuất bán hàng
   allowTransfer  Boolean         @default(true) // Có thể xuất/nhận điều chuyển
   isDefault      Boolean         @default(false) // Kho mặc định của Pháp nhân
@@ -3842,4 +3846,121 @@ model BankReconciliationRule {
 
   @@unique([keyword, customerId])
   @@map("bank_reconciliation_rules")
+}
+
+// =============================================================
+// WMS - Warehouse Inspection & Daily Checklist
+// =============================================================
+
+enum WarehouseInspectionType {
+  DAILY_TEMP_HUMIDITY // Sổ theo dõi nhiệt độ & độ ẩm 12h (Form 5.3-A)
+  PERIODIC_AUDIT      // Phiếu kiểm tra định kỳ T2 & T5 (4 nhóm tiêu chuẩn)
+}
+
+enum WarehouseInspectionStatus {
+  DRAFT               // Đang nhập liệu
+  ASSIGNED            // Đã phân công, chờ nhân viên thực hiện
+  COMPLETED           // Hoàn tất kiểm tra (không có sự cố)
+  PENDING_APPROVAL    // Có sự cố / cảnh báo, chờ Quản lý phê duyệt
+  RESOLVED            // Quản lý đã duyệt phương án xử lý sự cố
+  OVERDUE             // Quá hạn ca kiểm tra
+}
+
+enum InspectionShift {
+  MORNING             // Ca sáng (8:00)
+  AFTERNOON           // Ca chiều (16:00)
+  NIGHT               // Ca bổ sung
+}
+
+enum InspectionResult {
+  PASSED              // Đạt chuẩn
+  WARNING             // Cảnh báo (sát ngưỡng)
+  FAILED              // Không đạt / Sự cố nghiêm trọng
+}
+
+model WarehouseInspection {
+  id                 String                    @id @default(cuid())
+  inspectionNo       String                    @unique // KT-20261011-001
+  warehouseId        String
+  warehouse          Warehouse                 @relation(fields: [warehouseId], references: [id])
+  type               WarehouseInspectionType   @default(DAILY_TEMP_HUMIDITY)
+  inspectionDate     DateTime                  // Ngày kiểm tra
+  shift              InspectionShift           @default(MORNING)
+  inspectorId        String
+  inspector          User                      @relation("WarehouseInspector", fields: [inspectorId], references: [id])
+  status             WarehouseInspectionStatus @default(COMPLETED)
+  
+  // Chỉ số môi trường
+  temp1              Decimal?                  // Vị trí #1 (°C) - Gần cửa
+  temp2              Decimal?                  // Vị trí #2 (°C) - Giữa kho
+  temp3              Decimal?                  // Vị trí #3 (°C) - Góc xa
+  humidity           Decimal?                  // Độ ẩm (%)
+  
+  // Đánh giá chung
+  overallResult      InspectionResult          @default(PASSED)
+  incidentNotes      String?                   // Mô tả sự cố / bất thường
+  actionPlan         String?                   // Đề xuất phương án xử lý
+  targetDate         DateTime?                 // Thời hạn hoàn thành khắc phục
+  
+  // Phê duyệt của Quản lý / BGĐ
+  managerApprovedId  String?
+  managerApproved    User?                     @relation("WarehouseInspectionApprover", fields: [managerApprovedId], references: [id])
+  managerApprovedAt  DateTime?
+  managerFeedback    String?                   // Nhận xét thẩm định của quản lý
+  
+  // Phân công nhân viên kiểm tra
+  assignedById       String?
+  assignedBy         User?                     @relation("WarehouseInspectionAssigner", fields: [assignedById], references: [id])
+  assignedAt         DateTime?
+  dueDate            DateTime?                 // Hạn chót ca kiểm tra (để đánh giá OVERDUE)
+  
+  // Kỹ thuật & Offline sync
+  isOfflineSync      Boolean                   @default(false)
+  
+  items              WarehouseInspectionItem[]
+  photos             WarehouseInspectionPhoto[]
+  
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@index([warehouseId])
+  @@index([inspectionDate])
+  @@index([status])
+  @@index([type])
+  @@map("warehouse_inspections")
+}
+
+model WarehouseInspectionItem {
+  id             String              @id @default(cuid())
+  inspectionId   String
+  inspection     WarehouseInspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  category       String              // ENVIRONMENT, SECURITY, GOODS_HYGIENE, PHOTO_REPORT
+  itemCode       String              // 1.1, 1.2, 2.1...
+  itemName       String              // Nhiệt độ kho, Máy lạnh, Cửa khóa...
+  standard       String              // Đúng ngưỡng 20-22 độ, chạy êm...
+  actualValue    String?             // 21.5°C, Bình thường, Đạt chuẩn...
+  isPassed       Boolean             @default(true)
+  actionProposal String?             // Đề xuất xử lý nếu không đạt
+  createdAt      DateTime            @default(now())
+
+  @@index([inspectionId])
+  @@map("warehouse_inspection_items")
+}
+
+model WarehouseInspectionPhoto {
+  id             String              @id @default(cuid())
+  inspectionId   String
+  inspection     WarehouseInspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  photoUrl       String              // URL hoặc JSON { thumb, full }
+  thumbnailUrl   String?             // Micro-thumbnail tải nhanh
+  category       String              // THERMOMETER, AC_COOLING, CORNER, INCIDENT, GENERAL
+  caption        String?             // Mô tả ảnh
+  takenAt        DateTime            @default(now())
+  gpsLat         Decimal?
+  gpsLng         Decimal?
+  watermarkText  String?             // LYSCELLAR • Kho Thanh Trì • 2026-10-11...
+  createdAt      DateTime            @default(now())
+
+  @@index([inspectionId])
+  @@map("warehouse_inspection_photos")
 }

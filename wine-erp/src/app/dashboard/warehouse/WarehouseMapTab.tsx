@@ -20,6 +20,8 @@ interface WarehouseOption { id: string; code: string; name: string }
 // ═══════════════════════════════════════════════════════════
 // Types for floor plan elements
 // ═══════════════════════════════════════════════════════════
+import { LocationManager } from './LocationManager'
+
 interface Wall { id: string; x1: number; y1: number; x2: number; y2: number; thickness: number }
 interface Door { id: string; x: number; y: number; width: number; rotation: number }
 interface Label { id: string; x: number; y: number; text: string; fontSize: number }
@@ -27,7 +29,7 @@ interface Boundary { width: number; height: number }
 interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[]; boundary?: Boundary }
 
 type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
-type DisplayView = 'map' | 'cards'
+type DisplayView = 'map' | 'cards' | 'locations'
 
 // ═══════════════════════════════════════════════════════════
 // Clean High-Contrast Light Theme Color Tokens
@@ -521,6 +523,14 @@ export function WarehouseMapTab({
                             <LayoutGrid size={13} />
                             <span>Thẻ Vị Trí ({locations.length})</span>
                         </button>
+                        <button
+                            onClick={() => setDisplayView('locations')}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${displayView === 'locations' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Xem và quản lý danh sách vị trí dạng bảng, in barcode"
+                        >
+                            <MapPin size={13} />
+                            <span>Bảng Vị Trí</span>
+                        </button>
                     </div>
                 </div>
 
@@ -734,6 +744,19 @@ export function WarehouseMapTab({
                                 </div>
                             )
                         })}
+                    </div>
+                )}
+
+                {/* ═══════════════════════════════════════════════════ */}
+                {/* VIEW MODE C: TABULAR LOCATION MANAGER & BARCODES */}
+                {/* ═══════════════════════════════════════════════════ */}
+                {displayView === 'locations' && (
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-5 bg-white">
+                        <LocationManager
+                            warehouseId={selectedWH}
+                            warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? (mapData ? mapData.name : '')}
+                            onLocationCreated={() => loadMap(selectedWH)}
+                        />
                     </div>
                 )}
 
