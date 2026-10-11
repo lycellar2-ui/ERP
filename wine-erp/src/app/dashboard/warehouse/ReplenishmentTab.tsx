@@ -151,7 +151,7 @@ export function ReplenishmentTab() {
     const totalSuggestedCases = suggestions.reduce((sum, s) => sum + s.suggestedCases, 0)
 
     return (
-        <div className="w-full space-y-4 pb-20 md:pb-4">
+        <div className="w-full space-y-4 pb-6 md:pb-4">
             {/* Top Info Banner */}
             <div className="p-4 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
                 style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
@@ -217,7 +217,7 @@ export function ReplenishmentTab() {
                         {stats.intraTaCount} <span className="text-xs font-normal text-slate-500 font-sans">SKU</span>
                     </div>
                     <div className="text-[11px] text-blue-600 font-medium mt-1">
-                        Từ Kho Thường Tín ➔ Tầng 2 GVM
+                        Từ Kho Thường Tín → Tầng 2 GVM
                     </div>
                 </div>
 
@@ -230,7 +230,7 @@ export function ReplenishmentTab() {
                         {stats.toShowroomCount} <span className="text-xs font-normal text-slate-500 font-sans">SKU</span>
                     </div>
                     <div className="text-[11px] text-emerald-600 font-medium mt-1">
-                        Từ Kho Thắng Ân ➔ Showroom Lys
+                        Từ Kho Thắng Ân → Showroom Lys
                     </div>
                 </div>
 
@@ -256,8 +256,8 @@ export function ReplenishmentTab() {
                     <div className="flex items-center gap-1.5 p-1 rounded-lg bg-white border border-slate-200 overflow-x-auto">
                         {[
                             { key: 'ALL', label: 'Tất Cả Cảnh Báo', count: stats.totalAlerts },
-                            { key: 'INTRA_TA', label: 'Nội Bộ Thắng Ân (TT ➔ GVM)', count: stats.intraTaCount },
-                            { key: 'TO_SHOWROOM', label: 'Cấp Hàng Showroom (TA ➔ Lys)', count: stats.toShowroomCount },
+                            { key: 'INTRA_TA', label: 'Nội Bộ Thắng Ân (TT → GVM)', count: stats.intraTaCount },
+                            { key: 'TO_SHOWROOM', label: 'Cấp Hàng Showroom (TA → Lys)', count: stats.toShowroomCount },
                         ].map(tab => (
                             <button
                                 key={tab.key}

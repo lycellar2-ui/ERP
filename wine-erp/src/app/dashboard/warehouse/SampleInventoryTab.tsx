@@ -172,7 +172,7 @@ export function SampleInventoryTab() {
     const inputCls = "px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
-        <div className="space-y-5 pb-20 md:pb-4">
+        <div className="space-y-5 pb-6 md:pb-4">
             {/* TOP HEADER & ACTION BAR */}
             <div className="p-4 sm:p-5 rounded-lg space-y-4 bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
@@ -192,11 +192,11 @@ export function SampleInventoryTab() {
 
                     <div className="flex items-center gap-2">
                         <button onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
-                            <Plus size={15} /> Khai Báo / Nhập Mẫu
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs cursor-pointer active:scale-95">
+                            <Plus size={14} className="text-slate-500" /> Khai Báo / Nhập Mẫu
                         </button>
                         <button onClick={() => { setSelectedProductForOutbound(null); setShowOutboundModal(true) }}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer active:scale-95">
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
                             <ArrowUpCircle size={15} /> Xuất Sử Dụng Mẫu
                         </button>
                     </div>
