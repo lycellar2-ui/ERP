@@ -748,7 +748,7 @@ export function PosmInventoryTab() {
                                     >
                                         {Object.entries(POSM_CATEGORY_CONFIG).map(([k, v]) => (
                                             <option key={k} value={k}>
-                                                {v.icon} {v.label}
+                                                {v.label}
                                             </option>
                                         ))}
                                     </select>
