@@ -137,14 +137,14 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                                     <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-start">
                                         <div className="space-y-1.5">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-xs font-mono font-bold">
+                                                <span className="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-xs font-mono font-bold whitespace-nowrap shrink-0">
                                                     SKU: {result.product.skuCode}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold flex items-center gap-1">
+                                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                     <Package className="w-3 h-3" /> Quy cách: {result.product.unitsPerCase} chai/thùng
                                                 </span>
                                                 {result.parsedVintage && (
-                                                    <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 text-xs font-semibold flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 text-xs font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                         <Calendar className="w-3 h-3" /> Vintage {result.parsedVintage}
                                                     </span>
                                                 )}
@@ -199,7 +199,7 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                                                                 Vintage {v.vintage ?? 'NV'}
                                                             </span>
                                                             {v.isScannedVintage && (
-                                                                <span className="text-[9px] px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded font-sans font-bold">
+                                                                <span className="inline-block text-[9px] px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded font-sans font-bold whitespace-nowrap shrink-0">
                                                                     Đang quét
                                                                 </span>
                                                             )}

@@ -389,7 +389,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                                 {new Date(trf.transferDate).toLocaleDateString('vi-VN')}
                                             </td>
                                             <td className="px-3.5 py-3 text-xs">
-                                                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: st.bg, color: st.color }}>
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: st.bg, color: st.color }}>
                                                     {st.label}
                                                 </span>
                                             </td>
@@ -444,7 +444,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="font-bold text-sm text-slate-900">{wh.name}</div>
-                                        <span className="text-[11px] px-2 py-0.5 rounded font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                                        <span className="inline-block text-[11px] px-2 py-0.5 rounded font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 whitespace-nowrap shrink-0">
                                             {wh.totalBottles} chai
                                         </span>
                                     </div>
@@ -477,7 +477,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 <div>
                                     <div className="flex items-start justify-between gap-2 mb-2">
                                         <div className="font-bold text-sm text-slate-900">{wh.name}</div>
-                                        <span className="text-[11px] px-2 py-0.5 rounded font-mono font-bold bg-white text-[#0891B2]">
+                                        <span className="inline-block text-[11px] px-2 py-0.5 rounded font-mono font-bold bg-white text-[#0891B2] whitespace-nowrap shrink-0">
                                             {wh.code}
                                         </span>
                                     </div>
@@ -547,7 +547,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                         </td>
                                         <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#0F172A' }}>{row.customerName}</td>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: st.bg, color: st.color }}>
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: st.bg, color: st.color }}>
                                                 {st.label}
                                             </span>
                                         </td>
@@ -587,7 +587,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                 {alerts.map((a, i) => (
-                                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg text-xs bg-white border border-slate-200">
+                                    <div key={i} className="inline-flex items-center justify-between py-2 px-3 rounded-lg text-xs bg-white border border-slate-200 whitespace-nowrap shrink-0">
                                         <div>
                                             <div className="font-semibold text-slate-900">{a.customerName}</div>
                                             <div className="text-[11px] text-[#0891B2] font-mono">{a.skuCode}</div>
@@ -623,7 +623,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                             <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-[#15803D]">{row.qtySold}</td>
                                             <td className="px-3.5 py-2.5 text-xs font-bold font-mono" style={{ color: isLow ? '#F43F5E' : '#0F172A' }}>
                                                 {row.qtyRemaining}
-                                                {isLow && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-sans font-bold bg-rose-950/60 text-rose-700 border border-rose-800/40">Thấp</span>}
+                                                {isLow && <span className="inline-block ml-1 text-[10px] px-1.5 py-0.5 rounded font-sans font-bold bg-rose-950/60 text-rose-700 border border-rose-800/40 whitespace-nowrap shrink-0">Thấp</span>}
                                             </td>
                                             <td className="px-3.5 py-2.5">
                                                 <div className="flex items-center gap-2">

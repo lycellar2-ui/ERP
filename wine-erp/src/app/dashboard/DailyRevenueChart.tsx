@@ -60,12 +60,12 @@ export function DailyRevenueChart({ data }: Props) {
                 <div className="flex items-center gap-2">
                     <TrendingUp size={16} className="text-[#0891B2]" />
                     <h3 className="font-semibold text-sm text-slate-900">{t.dailyChart.title}</h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] border border-[#0E7490]/20">
+                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] border border-[#0E7490]/20 whitespace-nowrap shrink-0">
                         {items.length} {t.dailyChart.daysUnit}
                     </span>
                 </div>
                 {peakDay && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#B45309] bg-[#B45309]/10 px-2.5 py-1 rounded-md border border-[#B45309]/25 font-medium">
+                    <div className="inline-flex items-center gap-1.5 text-xs text-[#B45309] bg-[#B45309]/10 px-2.5 py-1 rounded-md border border-[#B45309]/25 font-medium whitespace-nowrap shrink-0">
                         <Award size={13} />
                         <span>{t.dailyChart.peakDay}</span>
                         <strong>{translateDayLabel(peakDay.label, isEn)}</strong>
@@ -225,7 +225,7 @@ export function DailyRevenueChart({ data }: Props) {
                                         {translateDayLabel(hoveredItem.dayOfWeek, isEn)}, {hoveredItem.date}
                                     </span>
                                     {hoveredItem.isWeekend && (
-                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#B45309]/15 text-[#B45309] font-medium">
+                                        <span className="inline-block text-[10px] px-1.5 py-0.2 rounded bg-[#B45309]/15 text-[#B45309] font-medium whitespace-nowrap shrink-0">
                                             {isEn ? 'Weekend' : 'Cuối tuần'}
                                         </span>
                                     )}

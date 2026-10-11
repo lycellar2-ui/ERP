@@ -43,7 +43,7 @@
 | **Recharts** | latest | Biểu đồ cho CEO Dashboard & RPT |
 | **React Hook Form + Zod** | latest | Form validation với schema (23+ Zod schemas) |
 | **Tanstack Table** | v8 | Bảng dữ liệu lớn (Inventory, Allocation Matrix) |
-| **Prisma** | **7.4.2** | ORM — 138 models, 89 enums |
+| **Prisma** | **7.4.2** | ORM — 143 models, 91 enums |
 | **AWS S3 SDK** | **v3** | `@aws-sdk/client-s3` & `@aws-sdk/s3-request-presigner` (Cloudflare R2 Object Storage) |
 | **TanStack Query** | **v5** | Client-side caching, server hydration, and hover prefetching |
 | **TanStack Persist Cache** | **v5** | localStorage cache persistence (24h) to bypass Vercel cold-starts |

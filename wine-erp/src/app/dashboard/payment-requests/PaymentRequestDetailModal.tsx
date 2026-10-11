@@ -462,7 +462,7 @@ export function PaymentRequestDetailModal({
                                                 </td>
                                                 <td className="p-2.5 text-slate-600">
                                                     {item.categoryName ? (
-                                                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-700">
+                                                        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 whitespace-nowrap shrink-0">
                                                             {item.categoryName}
                                                         </span>
                                                     ) : (

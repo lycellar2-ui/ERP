@@ -272,7 +272,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         <Bell size={15} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white bg-tone-danger-fg">
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center text-white bg-tone-danger-fg whitespace-nowrap shrink-0">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -386,7 +386,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                             return true
                                         })
                                     )).map(r => (
-                                        <span key={r} className="text-[11px] px-1.5 py-0.5 rounded font-semibold bg-lys-teal-soft text-lys-teal-strong">
+                                        <span key={r} className="inline-block text-[11px] px-1.5 py-0.5 rounded font-semibold bg-lys-teal-soft text-lys-teal-strong whitespace-nowrap shrink-0">
                                             {r}
                                         </span>
                                     ))}
@@ -539,7 +539,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Vai Trò</label>
                             <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 {(currentUser.roles || []).map(r => (
-                                    <span key={r} className="text-xs px-2 py-0.5 rounded font-bold"
+                                    <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                         {r}
                                     </span>

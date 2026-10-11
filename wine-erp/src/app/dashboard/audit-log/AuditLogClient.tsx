@@ -478,7 +478,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                                     {formatEntityType(row.entityType)}
                                                 </span>
                                                 {row.entityId && (
-                                                    <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: '#F8FAFC', color: '#64748B' }}>
+                                                    <span className="inline-block text-xs font-mono px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F8FAFC', color: '#64748B' }}>
                                                         {row.entityId.length > 12 ? `...${row.entityId.slice(-8)}` : row.entityId}
                                                     </span>
                                                 )}

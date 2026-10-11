@@ -218,7 +218,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                                         {report.isPinned && <Pin size={10} style={{ color: '#B45309' }} />}
                                         <ModIcon size={13} style={{ color: '#0891B2' }} />
                                         <span className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{report.title}</span>
-                                        <span className="text-xs px-1.5 py-0.5 rounded capitalize"
+                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded capitalize whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{report.module}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">

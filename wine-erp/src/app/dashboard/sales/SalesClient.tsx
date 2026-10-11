@@ -921,13 +921,13 @@ function SODetailDrawer({
                                         <span className="font-semibold text-right" style={{ color: '#0F172A' }}>{detail.customer.name}</span>
                                     </div>
                                     {detail.orderType === 'TASTING' && (
-                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs">
+                                        <div className="inline-flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs whitespace-nowrap shrink-0">
                                             <span className="font-bold text-amber-800">{isEn ? 'Order Type:' : 'Loại Đơn Hàng:'}</span>
                                             <span className="font-extrabold text-amber-900">{isEn ? 'Tasting Order' : 'Đơn Hàng Tasting'}</span>
                                         </div>
                                     )}
                                     {detail.proposal && (
-                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs mt-1">
+                                        <div className="inline-flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs mt-1 whitespace-nowrap shrink-0">
                                             <span className="font-bold text-amber-800">{isEn ? 'Proposal No:' : 'Số Tờ Trình:'}</span>
                                             <span className="font-extrabold text-amber-900 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
                                         </div>
@@ -1111,7 +1111,7 @@ function SODetailDrawer({
                                                     <td className="px-2.5 py-2">
                                                         <div className="font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                             {custCode && (
-                                                                <span className="text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                                <span className="inline-block text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold whitespace-nowrap shrink-0">
                                                                     [{custCode}]
                                                                 </span>
                                                             )}
@@ -1123,7 +1123,7 @@ function SODetailDrawer({
                                                     <td className="px-2.5 py-2 text-right" style={{ color: '#475569' }}>{formatCurrency(ml.unitPrice)}</td>
                                                     <td className="px-2.5 py-2">
                                                         {ml.priceSource ? (
-                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap shrink-0"
                                                                 style={getPriceBadgeStyle(ml.priceSource)}>
                                                                 {getPriceBadgeLabel(ml.priceSource)}
                                                             </span>
@@ -1145,7 +1145,7 @@ function SODetailDrawer({
                                                     {canSeeMargin && (
                                                         <td className="px-2.5 py-2 text-right">
                                                             {ml.avgCost > 0 ? (
-                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap shrink-0" style={{
                                                                     background: ml.marginPct >= 20 ? 'rgba(21,128,61,0.15)' : ml.marginPct >= 0 ? 'rgba(180,83,9,0.15)' : 'rgba(185,28,28,0.15)',
                                                                     color: ml.marginPct >= 20 ? '#15803D' : ml.marginPct >= 0 ? '#B45309' : '#B91C1C',
                                                                 }}>
@@ -1181,7 +1181,7 @@ function SODetailDrawer({
                                             <div className="min-w-0">
                                                 <p className="text-xs font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
                                                     {custCode && (
-                                                        <span className="text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                        <span className="inline-block text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold whitespace-nowrap shrink-0">
                                                             [{custCode}]
                                                         </span>
                                                     )}
@@ -1190,7 +1190,7 @@ function SODetailDrawer({
                                                 <p className="text-[11px] text-slate-900 truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
                                             </div>
                                             {ml.priceSource && (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold"
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap shrink-0"
                                                     style={getPriceBadgeStyle(ml.priceSource)}>
                                                     {getPriceBadgeLabel(ml.priceSource)}
                                                 </span>
@@ -1253,7 +1253,7 @@ function SODetailDrawer({
                                         {detail.deliveryOrders.map(do_ => (
                                             <div key={do_.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{do_.doNo}</span>
-                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>{do_.status}</span>
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>{do_.status}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1267,7 +1267,7 @@ function SODetailDrawer({
                                             {isEn ? 'AR Invoices' : 'Hóa Đơn Công Nợ (AR)'}
                                         </p>
                                         {detail.arInvoices.length > 0 && (
-                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#E2E8F0]/60 text-[#0891B2]">
+                                            <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#E2E8F0]/60 text-[#0891B2] whitespace-nowrap shrink-0">
                                                 {detail.arInvoices.length}
                                             </span>
                                         )}
@@ -1308,7 +1308,7 @@ function SODetailDrawer({
                                                     <span className="text-xs font-bold text-amber-900">
                                                         {isEn ? 'Order Exempt from VAT Invoice' : 'Đơn Hàng Không Xuất Hóa Đơn VAT'}
                                                     </span>
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                         {isEn ? 'Exemption Approved' : 'Đã duyệt miễn HĐ'}
                                                     </span>
                                                 </div>
@@ -1416,12 +1416,12 @@ function SODetailDrawer({
                                                                     {inv.invoiceNo}
                                                                 </span>
                                                                 {isDraftVnpt ? (
-                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-100 text-blue-800 border border-blue-300 flex items-center gap-1">
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-blue-100 text-blue-800 border border-blue-300 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                         <CloudUpload size={10} />
                                                                         {isEn ? 'VNPT Draft' : 'Nháp VNPT'}
                                                                     </span>
                                                                 ) : isVnptPublished ? (
-                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                         <ShieldCheck size={10} />
                                                                         {isEn ? 'VNPT Signed' : 'VNPT Đã Ký Số'}
                                                                     </span>
@@ -1780,7 +1780,7 @@ function SalesOrderMobileCard({
                         {row.soNo}
                     </span>
                     {row.orderType === 'TASTING' && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-700 border border-amber-500/40">
+                        <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">
                             Tasting
                         </span>
                     )}
@@ -1803,14 +1803,14 @@ function SalesOrderMobileCard({
             {/* Channel, Legal Entity, Sales Rep */}
             <div className="flex flex-wrap items-center gap-2">
                 {/* Channel Badge */}
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
                     style={{ background: 'rgba(8,145,178,0.08)', color: '#475569' }}>
                     {getSOChannelLabel(row.channel, locale, true)}
                 </span>
 
                 {/* Legal Entity Badge */}
                 {row.legalEntityCode && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                         style={{ 
                             background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.12)' : 'rgba(8, 145, 178, 0.08)', 
                             color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
@@ -1821,13 +1821,13 @@ function SalesOrderMobileCard({
 
                 {/* Invoice Number Badge */}
                 {row.invoiceNo ? (
-                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+                    <span className="inline-block text-[10px] px-2 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0"
                         style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)' }}
                         title={`Số hóa đơn: ${row.invoiceNo}`}>
                         {isEn ? 'Inv:' : 'HĐ:'} {row.invoiceNo}
                     </span>
                 ) : row.isInvoiceExempt ? (
-                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1"
+                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0"
                         style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}
                         title={row.invoiceExemptReason || (isEn ? 'Invoice exempt order' : 'Đơn hàng không xuất HĐ VAT')}>
                         {isEn ? 'No Inv' : 'Không HĐ'}
@@ -3211,7 +3211,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                     {isEn ? 'Confirm Legal Entity Change' : 'Xác Nhận Thay Đổi Pháp Nhân'}
                                                 </h3>
                                                 {acctOrderNo && (
-                                                    <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                                    <span className="inline-block font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200 whitespace-nowrap shrink-0">
                                                         {acctOrderNo}
                                                     </span>
                                                 )}
@@ -3233,7 +3233,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                             <div className="font-semibold text-slate-700">
                                                 {origEntity ? `${origEntity.name} (${origEntity.code})` : (isEn ? 'Not specified' : 'Chưa xác định')}
                                             </div>
-                                            <span className="inline-block text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                            <span className="inline-block text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
                                                 {isEn ? 'Set by Sales' : 'Do Sales chọn lúc tạo đơn'}
                                             </span>
                                         </div>
@@ -3245,7 +3245,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                             <div className="font-bold text-amber-900">
                                                 {selectedEntity ? `${selectedEntity.name} (${selectedEntity.code})` : (isEn ? 'None' : 'Chưa chọn')}
                                             </div>
-                                            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
+                                            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                 {isEn ? 'Accounting Override' : 'Kế toán chỉ định mới'}
                                             </span>
                                         </div>
@@ -3290,7 +3290,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                             {isEn ? 'Accounting Order Approval' : 'Kế Toán Duyệt Đơn'}
                                         </h3>
                                         {acctOrderNo && (
-                                            <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                            <span className="inline-block font-mono text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200 whitespace-nowrap shrink-0">
                                                 {acctOrderNo}
                                             </span>
                                         )}

@@ -534,7 +534,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                 </select>
                             ) : (
                                 <div className="p-3 rounded-md flex items-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <span className="text-xs px-2 py-0.5 rounded font-bold"
+                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                         style={{ background: statusCfg.bg, color: statusCfg.color }}>
                                         {statusCfg.label}
                                     </span>
@@ -565,7 +565,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                             ) : (
                                 <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     {user.roles.map(r => (
-                                        <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
+                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             {r}
                                         </span>
@@ -832,7 +832,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <td className="px-3 py-2.5">
                                                 <div className="flex flex-wrap gap-1">
                                                     {u.roles.map(r => (
-                                                        <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
+                                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                             {r}
                                                         </span>
@@ -840,7 +840,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 </div>
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="text-xs px-2 py-0.5 rounded font-bold"
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                     style={{ background: st.bg, color: st.color }}>
                                                     {st.label}
                                                 </span>
@@ -894,11 +894,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 <div className="flex items-center justify-between mb-3">
                                     <h4 className="font-bold" style={{ color: '#0F172A' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs px-2 py-0.5 rounded"
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             {r.permissionCount} quyền
                                         </span>
-                                        <span className="text-xs px-2 py-0.5 rounded"
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
                                             {r.userCount} user
                                         </span>
@@ -951,7 +951,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{req.docType}</span>
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{req.docType}</span>
                                             <button onClick={() => handleApproval(req.id, 'APPROVE')} disabled={processingId === req.id}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                                 style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
@@ -983,7 +983,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <div key={tpl.id} className="p-4 rounded-md" style={card}>
                                         <div className="flex items-center justify-between mb-2">
                                             <h4 className="text-sm font-bold" style={{ color: '#0F172A' }}>{tpl.name}</h4>
-                                            <span className="text-xs px-2 py-0.5 rounded font-bold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                 style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>{tpl.docType}</span>
                                         </div>
                                         <div className="space-y-1">
@@ -1044,7 +1044,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 {log.userName || log.userId || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{
                                                     color: log.action === 'DELETE' ? '#B91C1C' : log.action === 'CREATE' ? '#15803D' : '#B45309',
                                                     background: log.action === 'DELETE' ? 'rgba(185,28,28,0.15)' : log.action === 'CREATE' ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)',
                                                 }}>
@@ -1166,8 +1166,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <div>
                                                     <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
                                                         🏢 {w.name}
-                                                        {w.isDefault && <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">⭐ Kho Mặc Định</span>}
-                                                        {w.allowSales === false && <span className="text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold">⛔ Chỉ Xuất Điều Chuyển</span>}
+                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">⭐ Kho Mặc Định</span>}
+                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">⛔ Chỉ Xuất Điều Chuyển</span>}
                                                     </p>
                                                     <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
                                                 </div>

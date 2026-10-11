@@ -53,7 +53,7 @@ export function AnomalyWidget() {
                                 <p className="text-xs font-bold" style={{ color: severity[a.severity] }}>{a.title}</p>
                                 <p className="text-xs mt-0.5 truncate" style={{ color: '#475569' }}>{a.description}</p>
                             </div>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase whitespace-nowrap shrink-0"
                                 style={{ color: severity[a.severity], background: `${severity[a.severity]}18` }}>
                                 {a.severity}
                             </span>
@@ -189,7 +189,7 @@ export function PricingWidget() {
                                     {formatVND(t.price)}
                                 </span>
                                 {result.recommendedTier === t.label && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                         style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>
                                         ✓ Đề xuất
                                     </span>

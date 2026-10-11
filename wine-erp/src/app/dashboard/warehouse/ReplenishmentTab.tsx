@@ -397,7 +397,7 @@ export function ReplenishmentTab() {
                                         <td className="px-3.5 py-2.5 min-w-[220px]">
                                             <div className="space-y-0.5">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="font-mono font-bold text-amber-900 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 text-[11px]">
+                                                    <span className="inline-block font-mono font-bold text-amber-900 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 text-[11px] whitespace-nowrap shrink-0">
                                                         {row.skuCode}
                                                     </span>
                                                     {row.country && (
@@ -424,7 +424,7 @@ export function ReplenishmentTab() {
                                                     <span className="truncate">{row.targetWarehouseName}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-mono">
+                                                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-mono whitespace-nowrap shrink-0">
                                                         Còn: {row.targetStockAvailable} chai
                                                     </span>
                                                 </div>
@@ -438,7 +438,7 @@ export function ReplenishmentTab() {
                                                     <span className="truncate">{row.sourceWarehouseName}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                                                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono whitespace-nowrap shrink-0">
                                                         Khả dụng: {row.sourceStockAvailable} chai
                                                     </span>
                                                 </div>
@@ -451,7 +451,7 @@ export function ReplenishmentTab() {
                                                 <span className="text-sm font-black font-mono text-lys-teal-strong">
                                                     {row.suggestedQty} <span className="text-[10px] font-sans font-normal text-slate-500">chai</span>
                                                 </span>
-                                                <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded mt-0.5">
+                                                <span className="inline-block text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded mt-0.5 whitespace-nowrap shrink-0">
                                                     ({row.suggestedCases} thùng)
                                                 </span>
                                             </div>
@@ -496,10 +496,10 @@ export function ReplenishmentTab() {
                                 {/* Header: SKU + Category Badge */}
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                                        <span className="inline-block font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs whitespace-nowrap shrink-0">
                                             {row.skuCode}
                                         </span>
-                                        <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                        <span className="inline-block text-xs font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
                                             VTG: {row.vintage ?? 'NV'}
                                         </span>
                                     </div>
@@ -532,7 +532,7 @@ export function ReplenishmentTab() {
                                 </div>
 
                                 {/* Suggested Qty & Reason */}
-                                <div className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+                                <div className="inline-flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 whitespace-nowrap shrink-0">
                                     <div className="text-[11px] text-slate-500 truncate mr-2">
                                         {row.reason}
                                     </div>

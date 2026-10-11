@@ -33,6 +33,24 @@ Phân hệ tài chính phục vụ 2 mục tiêu: **Kế toán quản trị nộ
 
 ---
 
+## 2.1. Bank Statement Reconciliation & AR Payment Entry (Đối Soát Sao Kê Ngân Hàng)
+
+**Mục tiêu:** Tự động hóa quá trình đọc sao kê dòng tiền vào từ ngân hàng, bóc tách nội dung chuyển khoản, gợi ý khớp đơn hàng/hóa đơn nợ với độ tin cậy cao và cho phép Kế toán bấm 1-Click ghi nhận phiếu thu `ARPayment`.
+
+| Thành phần | Đặc điểm & Xử lý |
+|---|---|
+| **Data Ingestion** | Tải lên file Excel/CSV từ các ngân hàng Việt Nam (VCB, TCB, ACB, BIDV, MBBank...). Tự động nhận diện dòng tiêu đề và vị trí các cột Số tiền, Ngày GD, Nội dung, Số dư. |
+| **Deduplication Hash** | Mã hóa `SHA256(bankAccountId + date + amount + balance + rawNarrative)` chống nạp trùng lặp tuyệt đối khi kế toán tải file nhiều lần. |
+| **Entity Extractor** | Regex bóc tách mã đơn hàng `SO-YYYY-XXXX`, mã hóa đơn `HD-YYYY-XXXX`, mã số thuế, số điện thoại, tên khách hàng. |
+| **Confidence Scoring** | Chấm điểm tin cậy từ 0 - 100%: 🟢 100% (Khớp mã đơn + tiền 100%), 🔵 90% (Khớp cọc/thanh toán đợt), 🟠 85% (Thanh toán gộp 2-3 đơn), 🟡 95% (Khớp có lệch phí ngân hàng <= 10k), ⚪ <60% (Chưa rõ). |
+| **Edge Case 1: Gộp đơn** | Thuật toán Subset Sum tìm tổ hợp các hóa đơn mở có tổng tiền bằng đúng số tiền nhận được. Drawer phân bổ cho phép tick chọn gộp nhiều đơn. |
+| **Edge Case 2: Cọc / Từng phần** | Hỗ trợ 1 hóa đơn nhận nhiều phiếu thu `ARPayment`, cập nhật `paidAmount` và chuyển trạng thái `PARTIALLY_PAID`. |
+| **Edge Case 3: Lệch phí ngân hàng** | Cấu hình dung sai chênh lệch phí (vd 5.500đ) để vẫn ghi nhận đủ công nợ hóa đơn chuyển thành `PAID`. |
+| **Edge Case 4: Quy tắc nhớ (Memory Rules)** | Cho phép kế toán lưu lại ánh xạ từ khóa (tên cá nhân, số TK quen) với khách hàng để các lần sao kê sau tự động nhận diện. |
+| **Rollback & Reversal** | Nút "Hủy khớp" cho phép hoàn tác giao dịch đã ghi sổ, phục hồi lại công nợ hóa đơn và xóa `ARPayment` an toàn. |
+
+---
+
 ## 3. COGS & Margin Tracking (Giá Vốn Thực)
 
 Đây là điểm khác biệt của Wine ERP so với phần mềm kế toán thông thường:

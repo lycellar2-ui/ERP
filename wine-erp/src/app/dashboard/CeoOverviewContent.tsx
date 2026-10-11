@@ -234,7 +234,7 @@ export function CeoOverviewContent({
                         icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />}
                         title={preset === 'THIS_MONTH' ? t.pnl.monthlyTitle : `${t.pnl.periodTitle} (${displayRangeText})`}
                         badge={
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold ml-1" style={{ background: pl.grossMargin >= 25 ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)', color: pl.grossMargin >= 25 ? '#15803D' : '#B45309' }}>
+                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 whitespace-nowrap shrink-0" style={{ background: pl.grossMargin >= 25 ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)', color: pl.grossMargin >= 25 ? '#15803D' : '#B45309' }}>
                                 {t.pnl.marginBadge} {pl.grossMargin.toFixed(1)}%
                             </span>
                         }
@@ -312,7 +312,7 @@ export function CeoOverviewContent({
                         <SectionHead
                             icon={<Ship size={15} style={{ color: '#0891B2' }} />}
                             title={t.containers.title}
-                            badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
+                            badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
                         />
                         {stats.inTransitShipments.length === 0 ? (
                             <div className="flex flex-col items-center py-6 gap-1">
@@ -335,7 +335,7 @@ export function CeoOverviewContent({
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0" style={{ background: `${cfg.color}20`, color: cfg.color }}>
                                                         {statusLabel}
                                                     </span>
                                                 </div>
@@ -353,7 +353,7 @@ export function CeoOverviewContent({
                     <SectionHead
                         icon={<DollarSign size={15} style={{ color: '#0891B2' }} />}
                         title={t.arAging.title}
-                        badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
+                        badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
                     />
                     <div className="p-2.5 rounded mb-3" style={{ background: '#FFFFFF' }}>
                         <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
@@ -430,7 +430,7 @@ export function CeoOverviewContent({
                         <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
                             ⏳ {t.approvals.title}
                         </h3>
-                        <span className="px-2 py-0.5 text-xs font-bold rounded-full" style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
+                        <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
                             {totalPending}
                         </span>
                     </div>
@@ -460,8 +460,8 @@ export function CeoOverviewContent({
                                         <FileText size={14} style={{ color: '#B45309' }} className="flex-shrink-0" />
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-1.5 mb-0.5">
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
                                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{p.proposalNo}</span>
                                             </div>
                                             <p className="text-sm truncate" style={{ color: '#0F172A' }}>{p.title}</p>
@@ -483,7 +483,7 @@ export function CeoOverviewContent({
                             <div key={arItem.id} className="flex items-center justify-between py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
                                 <div className="flex items-center gap-2">
                                     <ClipboardCheck size={13} style={{ color: '#0891B2' }} />
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{arItem.docType}</span>
+                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{arItem.docType}</span>
                                     <span className="text-sm" style={{ color: '#0F172A' }}>{arItem.templateName}</span>
                                 </div>
                                 <div className="text-right">
@@ -498,7 +498,7 @@ export function CeoOverviewContent({
                             <div key={so.id} className="flex items-center justify-between py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
                                 <div className="flex items-center gap-2">
                                     {so.status === 'PENDING_APPROVAL' && <AlertCircle size={13} style={{ color: '#B45309' }} />}
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>SO</span>
+                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>SO</span>
                                     <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{so.soNo}</span>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -550,7 +550,7 @@ export function CeoOverviewContent({
                                         icon={<Target size={15} style={{ color: '#0891B2' }} />}
                                         title={t.inDepth.monthlyKpiTargets}
                                         badge={
-                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
+                                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                                 {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {t.inDepth.achieved}
                                             </span>
                                         }
@@ -564,7 +564,7 @@ export function CeoOverviewContent({
                                                 <div key={kpi.metric} className="space-y-1.5">
                                                     <div className="flex items-center justify-between">
                                                         <p className="text-[10px] font-semibold truncate" style={{ color: '#475569' }}>{kpi.label}</p>
-                                                        <span className="text-[10px] px-1 py-0.5 rounded font-bold" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
+                                                        <span className="inline-block text-[10px] px-1 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
                                                     </div>
                                                     <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
                                                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: kpi.color ?? '#0E7490' }} />
@@ -593,7 +593,7 @@ export function CeoOverviewContent({
                                                     <span className="text-xs" style={{ color: '#475569' }}>{ch.label}</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
+                                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
                                                     </div>
                                                 </div>
                                                 <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
@@ -620,7 +620,7 @@ export function CeoOverviewContent({
                                             icon={<TrendingUp size={15} style={{ color: '#0891B2' }} />}
                                             title={`${t.inDepth.revenueYoY} ${yoyData.thisYear} vs ${yoyData.lastYear}`}
                                         >
-                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: yoyData.yoyGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
+                                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: yoyData.yoyGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
                                                 {yoyData.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoyData.yoyGrowth).toFixed(1)}% YoY
                                             </span>
                                         </SectionHead>
@@ -660,7 +660,7 @@ export function CeoOverviewContent({
                             {hasWf && (
                                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.waterfall.title}>
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: wf.netProfit >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C' }}>
+                                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: wf.netProfit >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C' }}>
                                             Net {wf.revenue > 0 ? ((wf.netProfit / wf.revenue) * 100).toFixed(1) : 0}%
                                         </span>
                                     </SectionHead>
@@ -709,7 +709,7 @@ export function CeoOverviewContent({
                                 icon={<Shield size={15} style={{ color: '#B45309' }} />}
                                 title={t.compliance.title}
                                 badge={
-                                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#B91C1C' : '#B45309' }}>
+                                    <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#B91C1C' : '#B45309' }}>
                                         {complianceWarnings.length} {t.compliance.documents}
                                     </span>
                                 }
@@ -778,7 +778,7 @@ export function CeoOverviewContent({
                             <div key={o.soNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF', border: '1px solid #F1F5F9' }}>
                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
                                 <span className="text-xs" style={{ color: '#475569' }}>{o.customerName}</span>
-                                <span className="text-[10px] px-1 py-0.5 rounded" style={{ background: o.status === 'PAID' ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)', color: o.status === 'PAID' ? '#15803D' : '#475569' }}>{o.status}</span>
+                                <span className="inline-block text-[10px] px-1 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: o.status === 'PAID' ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)', color: o.status === 'PAID' ? '#15803D' : '#475569' }}>{o.status}</span>
                                 <span className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(o.amount)}</span>
                             </div>
                         ))}

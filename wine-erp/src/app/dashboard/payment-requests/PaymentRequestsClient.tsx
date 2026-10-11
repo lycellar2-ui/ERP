@@ -486,7 +486,7 @@ export function PaymentRequestsClient({
                     >
                         <CreditCard className="h-4 w-4" />
                         Phiếu Đề Nghị Thanh Toán
-                        <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
                             {stats.totalCount}
                         </span>
                     </button>
@@ -501,7 +501,7 @@ export function PaymentRequestsClient({
                     >
                         <Building2 className="h-4 w-4" />
                         Danh Mục Nhà Cung Cấp
-                        <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
                             {suppliersList.length}
                         </span>
                     </button>
@@ -516,7 +516,7 @@ export function PaymentRequestsClient({
                     >
                         <FolderKanban className="h-4 w-4" />
                         Cấu Hình Hạng Mục Chi Phí
-                        <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
                             {categories.length}
                         </span>
                     </button>
@@ -689,7 +689,7 @@ export function PaymentRequestsClient({
                                                         </div>
                                                     </td>
                                                     <td className="p-3.5 text-slate-600">
-                                                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 inline-block whitespace-nowrap shrink-0">
                                                             {CATEGORY_LABEL_MAP[r.category] || r.category}
                                                         </span>
                                                     </td>
@@ -915,7 +915,7 @@ export function PaymentRequestsClient({
                                                     </td>
                                                     <td className="p-3.5 font-semibold text-slate-800">
                                                         {s.paymentTerm ? (
-                                                            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-800 border border-amber-200">
+                                                            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-800 border border-amber-200 inline-block whitespace-nowrap shrink-0">
                                                                 {s.paymentTerm}
                                                             </span>
                                                         ) : (
@@ -1068,7 +1068,7 @@ export function PaymentRequestsClient({
                                                 {cat.name}
                                             </td>
                                             <td className="p-3.5 text-slate-600">
-                                                <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                                <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 whitespace-nowrap shrink-0">
                                                     {GROUP_LABELS[cat.group] || cat.group}
                                                 </span>
                                             </td>
@@ -1159,7 +1159,7 @@ export function PaymentRequestsClient({
                                                     <div className="font-mono text-[10px] text-slate-400">{b.categoryCode}</div>
                                                 </td>
                                                 <td className="p-3 text-slate-600">
-                                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                                                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 whitespace-nowrap shrink-0">
                                                         {GROUP_LABELS[b.categoryGroup] || b.categoryGroup}
                                                     </span>
                                                 </td>

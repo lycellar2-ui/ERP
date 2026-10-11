@@ -872,7 +872,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 </div>
 
                                 {orderType === 'TASTING' && (
-                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md flex items-center gap-1.5 font-semibold shadow-xs">
+                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs whitespace-nowrap shrink-0">
                                         <Sparkles size={13} className="shrink-0 text-amber-700" />
                                         {t.tastingBanner}
                                     </span>
@@ -887,7 +887,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <FileText size={16} className="text-amber-800" />
                                             {t.tastingProposalTitle}
                                         </label>
-                                        <span className="text-[11px] font-bold text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-full border border-amber-300">
+                                        <span className="inline-block text-[11px] font-bold text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-full border border-amber-300 whitespace-nowrap shrink-0">
                                             {t.tastingProposalBasis}
                                         </span>
                                     </div>
@@ -964,7 +964,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     className="w-full px-3 py-2 text-xs font-extrabold font-mono rounded-lg border-2 border-amber-400 bg-amber-100/90 text-amber-950 placeholder:text-amber-700/60 shadow-xs focus:outline-none"
                                                 />
                                                 {proposalId && (
-                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded border border-emerald-400">
+                                                    <span className="inline-block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded border border-emerald-400 whitespace-nowrap shrink-0">
                                                         {t.proposalLinkedBadge}
                                                     </span>
                                                 )}
@@ -1145,7 +1145,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-700 rounded">
+                                        <div className="inline-block px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-700 rounded whitespace-nowrap shrink-0">
                                             {t.noShippingAddress}
                                         </div>
                                     ) : (
@@ -1195,7 +1195,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <span style={{ color: '#64748B' }}>{t.creditAvailable} <strong className="font-mono" style={{ color: creditWarning ? '#B91C1C' : '#0D9488' }}>{formatCurrency(Math.max(0, creditAvailable))}</strong></span>
                                         </div>
                                         {canOverride && (
-                                            <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', background: 'rgba(180,83,9,0.08)' }}>
+                                            <button onClick={() => setOverrideMode(!overrideMode)} className="inline-block text-[10px] px-1.5 py-0.5 rounded transition-all whitespace-nowrap shrink-0" style={{ color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', background: 'rgba(180,83,9,0.08)' }}>
                                                 {overrideMode ? t.done : t.editInfo}
                                             </button>
                                         )}
@@ -1251,7 +1251,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                 {/* Promotion Banner (Buy X Get Y) */}
                                 {activePromoInfo && activePromoInfo.totalBought > 0 && (
-                                    <div className="mb-3 p-3.5 rounded-md border border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+                                    <div className="mb-3 p-3.5 rounded-md border border-emerald-300 bg-emerald-50/70 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
                                         <div className="flex items-start gap-2.5">
                                             <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 flex-shrink-0 mt-0.5">
                                                 <Gift size={20} />
@@ -1262,7 +1262,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         🎁 {isEn ? 'Promotion Available' : 'Đạt Điều Kiện CTKM'} [{activePromoInfo.proposal.proposalNo}]
                                                     </span>
                                                     {activePromoInfo.isEligible && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs">
+                                                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs whitespace-nowrap shrink-0">
                                                             {isEn ? `Buy ${activePromoInfo.totalBought} Get ${activePromoInfo.eligibleGifts}` : `Mua ${activePromoInfo.totalBought} Tặng ${activePromoInfo.eligibleGifts}`}
                                                         </span>
                                                     )}
@@ -1293,7 +1293,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 </button>
                                             ) : (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 whitespace-nowrap shrink-0">
                                                         <CheckCircle2 size={14} className="text-emerald-600" />
                                                         {isEn ? `Applied ${activePromoInfo.existingGiftLine.qtyOrdered} gifts` : `Đã nhận ${activePromoInfo.existingGiftLine.qtyOrdered} chai tặng`}
                                                     </span>
@@ -1396,7 +1396,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                         >
                                                                                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                                 {customerCodesMap[p.id] && (
-                                                                                                    <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
+                                                                                                    <span className="inline-block font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0 whitespace-nowrap">
                                                                                                         [{customerCodesMap[p.id]}]
                                                                                                     </span>
                                                                                                 )}
@@ -1413,13 +1413,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                                         {alloc && (
-                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 whitespace-nowrap shrink-0">
                                                                                 <ShieldAlert size={10} />
                                                                                 {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
                                                                             </span>
                                                                         )}
                                                                         {hasAutoPrice && (
-                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shrink-0"
                                                                                 style={getPriceBadgeStyle(resolved.source)}>
                                                                                 <Tag size={10} /> {getPriceBadgeLabelByLocale(resolved, channel, locale)}
                                                                             </span>
@@ -1428,7 +1428,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 </td>
                                                                 {hasCustomerCodes && (
                                                                     <td className="px-3 py-2 text-center">
-                                                                        <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                        <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block whitespace-nowrap shrink-0">
                                                                             {line.customerItemCode || customerCodesMap[line.productId] || '—'}
                                                                         </span>
                                                                     </td>
@@ -1543,7 +1543,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                 >
                                                                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                                                         {customerCodesMap[p.id] && (
-                                                                                            <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
+                                                                                            <span className="inline-block font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0 whitespace-nowrap">
                                                                                                 [{customerCodesMap[p.id]}]
                                                                                             </span>
                                                                                         )}
@@ -1565,14 +1565,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         {/* Allocation & Price badges */}
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {alloc && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs whitespace-nowrap shrink-0"
                                                                     style={{ background: quotaExceeded ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.12)', color: quotaExceeded ? '#B91C1C' : '#B45309', border: `1px solid ${quotaExceeded ? 'rgba(185,28,28,0.3)' : 'rgba(180,83,9,0.25)'}` }}>
                                                                     <ShieldAlert size={11} />
                                                                     {alloc.campaignName}: {quotaExceeded ? `${isEn ? 'Exceeded' : 'Vượt'}! ${isEn ? 'Left' : 'Còn'} ${alloc.remaining}` : `${isEn ? 'Left' : 'Còn'} ${alloc.remaining}`}
                                                                 </span>
                                                             )}
                                                             {hasAutoPrice && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs whitespace-nowrap shrink-0"
                                                                     style={getPriceBadgeStyle(resolved.source)}>
                                                                     <Tag size={11} /> {getPriceBadgeLabelByLocale(resolved, channel, locale)}
                                                                 </span>
@@ -1696,7 +1696,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         />
                                     </div>
                                     {isVatInclusive && (
-                                        <div className="mb-2.5 px-2.5 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700">
+                                        <div className="mb-2.5 px-2.5 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 inline-flex items-center justify-between text-xs text-emerald-700 whitespace-nowrap shrink-0">
                                             <span>{t.vatInclusiveNotice(channel)}</span>
                                         </div>
                                     )}

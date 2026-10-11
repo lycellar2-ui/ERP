@@ -120,7 +120,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                             <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{c.name}</p>
                                             <p className="text-xs" style={{ color: '#0891B2' }}>{c.skuCode}</p>
                                         </div>
-                                        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </div>
                                     <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#FFFFFF' }}>
                                         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
@@ -157,7 +157,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                             {selected.skuCode} — {selected.productName} | {new Date(selected.startDate).toLocaleDateString('vi-VN')} → {new Date(selected.endDate).toLocaleDateString('vi-VN')}
                                         </p>
                                     </div>
-                                    <button onClick={() => { setAddQuotaOpen(true) }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
+                                    <button onClick={() => { setAddQuotaOpen(true) }} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                                         style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                         <Plus size={12} /> Thêm Quota
                                     </button>
@@ -199,7 +199,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                             <tr key={q.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>{q.targetName}</td>
                                                 <td className="px-3 py-2.5">
-                                                    <span className="text-xs px-2 py-0.5 rounded" style={{
+                                                    <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{
                                                         background: q.targetType === 'SALES_REP' ? 'rgba(29,78,216,0.15)' : 'rgba(8, 145, 178, 0.08)',
                                                         color: q.targetType === 'SALES_REP' ? '#1D4ED8' : '#0E7490',
                                                     }}>{q.targetType === 'SALES_REP' ? 'Sales Rep' : q.targetType === 'CUSTOMER' ? 'Khách hàng' : 'Kênh'}</span>
@@ -211,7 +211,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                         {q.remaining}
                                                     </span>
                                                     {' '}
-                                                    <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{
+                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
                                                         ...(q.remaining <= 0
                                                             ? { color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }
                                                             : q.pctUsed > 70

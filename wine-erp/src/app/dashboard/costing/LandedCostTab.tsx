@@ -215,7 +215,7 @@ export function LandedCostTab() {
                             </p>
                         </div>
                     </div>
-                    <span className="text-xs px-3 py-1 rounded-full font-bold"
+                    <span className="inline-block text-xs px-3 py-1 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{ color: st.color, background: st.bg }}>
                         {st.label}
                     </span>
@@ -243,7 +243,7 @@ export function LandedCostTab() {
                             Chi Phí Container
                         </p>
                         {!isLocked && !editMode && (
-                            <button onClick={startEdit} className="text-xs px-3 py-1 rounded-md"
+                            <button onClick={startEdit} className="inline-block text-xs px-3 py-1 rounded-md whitespace-nowrap shrink-0"
                                 style={{ color: '#0891B2', border: '1px solid #E2E8F0' }}>
                                 Sửa
                             </button>
@@ -270,7 +270,7 @@ export function LandedCostTab() {
                                 ))}
                             </div>
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setEditMode(false)} className="px-3 py-1.5 text-xs rounded-md"
+                                <button onClick={() => setEditMode(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleSaveEdit} disabled={creating}
                                     className="px-4 py-1.5 text-xs font-semibold rounded-md"
@@ -383,7 +383,7 @@ export function LandedCostTab() {
                                                 onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
                                                 onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                                 <td className="px-3 py-2.5">
-                                                    <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                         style={{ background: `${typeColor}25`, color: typeColor }}>
                                                         {a.skuCode}
                                                     </span>
@@ -505,7 +505,7 @@ export function LandedCostTab() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                         style={{ color: ss.color, background: `${ss.color}18` }}>{ss.label}</span>
                                                     <ChevronRight size={14} style={{ color: '#64748B' }} />
                                                 </div>
@@ -580,7 +580,7 @@ export function LandedCostTab() {
                             )}
 
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowCreate(false)} className="px-3 py-1.5 text-xs rounded-md"
+                                <button onClick={() => setShowCreate(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreate} disabled={creating}
                                     className="px-5 py-2 text-xs font-semibold rounded-md"
@@ -648,7 +648,7 @@ export function LandedCostTab() {
                                             {formatVND(c.totalCost)}
                                         </td>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                 style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                         </td>
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>

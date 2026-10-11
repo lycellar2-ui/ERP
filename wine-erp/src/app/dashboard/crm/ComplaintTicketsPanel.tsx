@@ -90,17 +90,17 @@ export function ComplaintTicketsPanel() {
                     <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Phiếu Khiếu Nại
                     </h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>{tickets.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     {overSLACount > 0 && (
-                        <span className="text-xs px-2 py-1 rounded-full font-semibold flex items-center gap-1"
+                        <span className="text-xs px-2 py-1 rounded-full font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0"
                             style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>
                             <Clock size={11} /> {overSLACount} vượt SLA
                         </span>
                     )}
-                    <span className="text-xs px-2 py-1 rounded-full font-semibold"
+                    <span className="inline-block text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap shrink-0"
                         style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                         {openCount} mở
                     </span>
@@ -161,14 +161,14 @@ export function ComplaintTicketsPanel() {
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: sevCfg.color, background: sevCfg.bg }}>
+                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: sevCfg.color, background: sevCfg.bg }}>
                                             {sevCfg.label}
                                         </span>
-                                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: stCfg.color, background: stCfg.bg }}>
+                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: stCfg.color, background: stCfg.bg }}>
                                             {stCfg.label}
                                         </span>
                                         {t.isOverSLA && (
-                                            <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+                                            <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                 style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>⏰ SLA</span>
                                         )}
                                         <ChevronDown size={14} style={{

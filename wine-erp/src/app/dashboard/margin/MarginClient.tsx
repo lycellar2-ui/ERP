@@ -505,9 +505,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     <div className="flex items-center justify-between gap-2">
                                                         <div className="font-semibold text-slate-900 truncate">{p.productName}</div>
                                                         {p.hasCustomPrice ? (
-                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Đã import</span>
+                                                            <span className="inline-block px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0 whitespace-nowrap">Đã import</span>
                                                         ) : (
-                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 border border-amber-500/20 flex-shrink-0">Chưa import</span>
+                                                            <span className="inline-block px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 border border-amber-500/20 flex-shrink-0 whitespace-nowrap">Chưa import</span>
                                                         )}
                                                     </div>
                                                     <div className="text-[10px] text-slate-400 font-sans mt-0.5 flex items-center gap-1.5">
@@ -573,9 +573,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-[10px] text-slate-600 font-sans font-medium">{activeProduct.skuCode}</span>
                                     {activeProduct.hasCustomPrice ? (
-                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20">Đã có giá import</span>
+                                        <span className="inline-block px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-700 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20 whitespace-nowrap shrink-0">Đã có giá import</span>
                                     ) : (
-                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 uppercase tracking-wide border border-amber-500/20 animate-pulse">Chưa import (Giá giả định)</span>
+                                        <span className="inline-block px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-700 bg-amber-500/10 uppercase tracking-wide border border-amber-500/20 animate-pulse whitespace-nowrap shrink-0">Chưa import (Giá giả định)</span>
                                     )}
                                 </div>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
@@ -734,7 +734,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                     <h3 className="text-base font-bold text-slate-900">
                         Danh sách check margin
                     </h3>
-                    <span className="text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-700 rounded-full font-normal font-sans" style={{ fontFamily: 'var(--font-sans)' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-700 rounded-full font-normal font-sans whitespace-nowrap shrink-0" style={{ fontFamily: 'var(--font-sans)' }}>
                         {addedProducts.length} sản phẩm
                     </span>
                 </div>
@@ -807,7 +807,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     {row.marginPercent === -100 ? (
                                                         <span className="text-xs text-slate-500 font-sans">N/A</span>
                                                     ) : (
-                                                        <span className="px-1.5 py-0.5 rounded text-xs font-bold font-sans"
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-xs font-bold font-sans whitespace-nowrap shrink-0"
                                                             style={{
                                                                 background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
                                                                 color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
@@ -1175,7 +1175,7 @@ function SimulatedTableRow({
                 {row.marginPercent === -100 ? (
                     <span className="text-[11px] text-slate-500 font-sans">N/A</span>
                 ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[11px] font-bold font-sans"
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold font-sans whitespace-nowrap shrink-0"
                         style={{
                             background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
                             color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'
@@ -1418,7 +1418,7 @@ function MobileSimulatedCard({
                 </div>
                 <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[7px] text-slate-400 uppercase">% Margin</span>
-                    <span className="text-[11px] font-bold font-sans px-1 py-0.5 rounded"
+                    <span className="inline-block text-[11px] font-bold font-sans px-1 py-0.5 rounded whitespace-nowrap shrink-0"
                         style={{
                             background: row.marginPercent < 15 ? 'rgba(185,28,28,0.12)' : row.marginPercent >= 35 ? 'rgba(180,83,9,0.12)' : 'rgba(21,128,61,0.12)',
                             color: row.marginPercent < 15 ? '#B91C1C' : row.marginPercent >= 35 ? '#B45309' : '#15803D'

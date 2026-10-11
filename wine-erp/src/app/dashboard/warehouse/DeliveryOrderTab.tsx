@@ -248,7 +248,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     >
                         Chờ Xuất
                         {pendingSOs.length > 0 && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full"
+                            <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded-full whitespace-nowrap shrink-0"
                                 style={{
                                     background: activeSubTab === 'pending' ? 'rgba(180,83,9,0.2)' : '#CBD5E1',
                                     color: activeSubTab === 'pending' ? '#B47816' : '#475569'
@@ -318,11 +318,11 @@ export function DeliveryOrderTab({ warehouses }: {
                                             {/* SO Header */}
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="px-2 py-0.5 text-[11px] font-extrabold font-mono rounded"
+                                                    <span className="inline-block px-2 py-0.5 text-[11px] font-extrabold font-mono rounded whitespace-nowrap shrink-0"
                                                         style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
                                                         {so.soNo}
                                                     </span>
-                                                    <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
+                                                    <span className="inline-block text-[9px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                         style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
                                                         Sẵn Sàng
                                                     </span>
@@ -339,7 +339,7 @@ export function DeliveryOrderTab({ warehouses }: {
 
                                             {/* Default Warehouse Badge */}
                                             <div className="mb-2.5">
-                                                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded flex items-center gap-1 inline-flex"
+                                                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded flex items-center gap-1 inline-flex whitespace-nowrap shrink-0"
                                                     style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
                                                     Kho xuất: <strong style={{ color: '#0F172A' }}>{targetWh?.name || 'Kho Mặc Định'}</strong>
                                                 </span>
@@ -351,7 +351,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     const pName = line.productName || (line as any).product?.productName || ''
                                                     const pCode = line.skuCode || (line as any).product?.skuCode || ''
                                                     return (
-                                                        <div key={line.productId} className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg"
+                                                        <div key={line.productId} className="inline-flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg whitespace-nowrap shrink-0"
                                                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                             <div className="truncate pr-2 flex items-center gap-1.5 min-w-0">
                                                                 {pCode && <span className="font-mono font-extrabold text-slate-500 shrink-0">{pCode}</span>}
@@ -431,7 +431,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                 {d.totalQtyShipped.toLocaleString()}
                                             </td>
                                             <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                                <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                             </td>
                                             <td className="px-3 py-2.5 text-[10px] whitespace-nowrap" style={{ color: '#64748B' }}>{formatDate(d.createdAt)}</td>
                                             <td className="px-3 py-2.5 whitespace-nowrap">
@@ -482,7 +482,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <span className="text-[11px] font-bold font-mono" style={{ color: '#B47816' }}>
                                             {d.doNo}
                                         </span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: st.color, background: st.bg }}>
+                                        <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>
                                             {st.label}
                                         </span>
                                     </div>
@@ -670,7 +670,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <div key={l.id} className="p-3 rounded-lg space-y-1.5 shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</span>
-                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Niên vụ: {(l as any).vintage ?? 'NV'}</span>
+                                                <span className="inline-block text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">Niên vụ: {(l as any).vintage ?? 'NV'}</span>
                                             </div>
                                             <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{l.productName}</p>
                                             <div className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
@@ -995,10 +995,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         {sol.productName}
                                     </p>
                                     <div className="flex items-center gap-2 flex-wrap text-xs">
-                                        <span className="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 border border-slate-200">
+                                        <span className="inline-block font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                             SKU: {sol.skuCode}
                                         </span>
-                                        <span className="font-semibold px-2 py-0.5 rounded text-[11px] bg-amber-50 text-amber-800 border border-amber-200">
+                                        <span className="inline-block font-semibold px-2 py-0.5 rounded text-[11px] bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                             Niên vụ yêu cầu: {sol.vintage ? sol.vintage : 'NV'}
                                         </span>
                                     </div>
@@ -1006,10 +1006,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
                                 {/* Ordered Badge & Status */}
                                 <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
-                                    <span className="text-xs font-mono font-extrabold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
+                                    <span className="inline-block text-xs font-mono font-extrabold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap shrink-0">
                                         ĐẶT: {sol.qtyOrdered} CHAI
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg"
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg whitespace-nowrap shrink-0"
                                         style={
                                             isSufficient
                                                 ? { background: 'rgba(22,163,74,0.1)', color: '#15803D', border: '1px solid rgba(22,163,74,0.3)' }
@@ -1075,7 +1075,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                 </select>
 
                                                 {selectedLot && (
-                                                    <div className="flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-slate-600 flex-wrap">
+                                                    <div className="inline-flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-slate-600 flex-wrap whitespace-nowrap shrink-0">
                                                         <span>Vị trí: <strong className="text-slate-900 font-bold">{selectedLot.locationCode}</strong> ({selectedLot.zone})</span>
                                                         <span className="text-slate-300">·</span>
                                                         <span>Lô: <strong className="font-mono text-slate-800">{selectedLot.lotNo}</strong></span>
@@ -1179,7 +1179,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         <div className="flex items-center gap-2">
                             <h3 className="text-base font-bold text-slate-900">Nhặt Hàng & Tạo DO</h3>
                             {selectedSO && (
-                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                     {selectedSO.soNo}
                                 </span>
                             )}
@@ -1253,7 +1253,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
                                             Kho Xuất Bán
                                         </span>
-                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">
                                             {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
                                         </span>
                                     </div>
@@ -1292,7 +1292,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
                                         <p className="text-xs font-semibold text-slate-600">Sản phẩm trong đơn:</p>
                                         {selectedSO.lines.map(l => (
-                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
+                                            <div key={l.productId} className="inline-flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white whitespace-nowrap shrink-0">
                                                 <span className="truncate pr-2 text-slate-800 font-medium">{l.productName}</span>
                                                 <span className="font-mono font-bold shrink-0 text-amber-800">×{l.qtyOrdered}</span>
                                             </div>
@@ -1371,7 +1371,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             const line = lines[i]
                                             const lot = lotsMap[sol.productId]?.find(l => l.id === line?.lotId)
                                             return (
-                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white">
+                                                <div key={sol.productId} className="inline-flex items-center justify-between text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white whitespace-nowrap shrink-0">
                                                     <div className="min-w-0 pr-2">
                                                         <p className="truncate font-bold text-slate-900">{sol.productName}</p>
                                                         <p className="text-[10px] text-slate-500">

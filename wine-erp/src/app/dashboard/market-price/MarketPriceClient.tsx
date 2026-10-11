@@ -142,7 +142,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>{formatDate(r.priceDate)}</td>
                                 <td className="px-3 py-2.5">
                                     {r.isBelowCost && (
-                                        <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded"
+                                        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C' }}>
                                             <AlertTriangle size={10} /> Lỗ
                                         </span>

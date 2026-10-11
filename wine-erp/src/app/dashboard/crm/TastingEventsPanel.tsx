@@ -69,7 +69,7 @@ export function TastingEventsPanel() {
                     <h3 className="text-lg font-semibold" style={{ color: '#0F172A' }}>
                         Sự Kiện Thử Rượu
                     </h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{ color: '#0891B2', background: 'rgba(8, 145, 178, 0.08)' }}>{events.length}</span>
                 </div>
                 <button onClick={() => setShowCreate(true)}
@@ -132,7 +132,7 @@ export function TastingEventsPanel() {
                                             </span>
                                         </div>
                                     </div>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                    <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                                 </div>
                                 {ev.description && (

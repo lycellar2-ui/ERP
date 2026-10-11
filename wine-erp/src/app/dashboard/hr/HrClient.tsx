@@ -409,7 +409,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
 
                                         {/* Code */}
                                         <td className="px-3 py-3">
-                                             <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-[#0891B2] border border-slate-200">
+                                             <span className="inline-block font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-[#0891B2] border border-slate-200 whitespace-nowrap shrink-0">
                                                  {emp.code}
                                              </span>
                                         </td>
@@ -438,12 +438,12 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                              Hạn: {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
                                                          </span>
                                                          {emp.contractWarning === 'EXPIRING_SOON' && (
-                                                             <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                             <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                  Còn {emp.contractDaysLeft}d
                                                              </span>
                                                          )}
                                                          {emp.contractWarning === 'EXPIRED' && (
-                                                             <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                                             <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap shrink-0">
                                                                  Hết hạn
                                                              </span>
                                                          )}

@@ -400,7 +400,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="flex flex-col items-center py-16 gap-3">
                                     <Ship size={40} style={{ color: '#E2E8F0' }} />
                                     <p style={{ color: '#64748B' }} className="text-sm">Chưa có lô hàng nào</p>
-                                    <button onClick={() => setCreateOpen(true)} className="text-xs px-3 py-1.5 rounded-lg"
+                                    <button onClick={() => setCreateOpen(true)} className="inline-block text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0"
                                         style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                         + Tạo lô hàng đầu tiên
                                     </button>

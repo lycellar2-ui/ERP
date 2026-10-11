@@ -1140,7 +1140,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
                                         {p.proposalNo}
                                     </span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0"
                                         style={{ background: statusCfg.bg, color: statusCfg.color }}>
                                         {statusCfg.label}
                                     </span>
@@ -1158,11 +1158,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </div>
 
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                         {getCategoryBadge(p.category).label}
                                     </span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block whitespace-nowrap shrink-0"
                                         style={{ background: prioCfg.bg, color: prioCfg.color }}>
                                         {prioCfg.label}
                                     </span>
@@ -1324,7 +1324,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 )}
                                             </td>
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full"
+                                                <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full whitespace-nowrap shrink-0"
                                                     style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
                                                     title={getCategoryLabel(p.category, locale)}>
                                                     {catBadge.label}
@@ -1782,9 +1782,9 @@ function BatchProductPickerModal({
                         <span>Đã chọn: <strong className="text-[#0891B2]">{selectedCount}</strong> chai</span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[11px]">Giảm nhanh:</span>
-                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-5%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-10%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer">-15%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-5%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-10%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-15%</button>
                         </div>
                     </div>
 
@@ -2350,7 +2350,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     <span className="font-bold text-amber-950">
                                                         {selectedBuyProduct ? `[${selectedBuyProduct.skuCode}] ${selectedBuyProduct.productName}` : (locale === 'en' ? 'Select purchased product above' : 'Vui lòng chọn sản phẩm mua ở trên')}
                                                     </span>
-                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">
+                                                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 whitespace-nowrap shrink-0">
                                                         {locale === 'en' ? 'Same SKU' : 'Cùng loại'}
                                                     </span>
                                                 </div>
@@ -3081,11 +3081,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 <span className="text-xs sm:text-sm font-bold" style={{ color: '#0891B2' }}>
                                     {detail.proposalNo}
                                 </span>
-                                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold"
+                                <span className="inline-block text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                     style={{ background: getPriorityLabel(detail.priority, locale)?.bg, color: getPriorityLabel(detail.priority, locale)?.color }}>
                                     {getPriorityLabel(detail.priority, locale)?.label}
                                 </span>
-                                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium"
+                                <span className="inline-block text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
                                     style={{ background: getStatusLabel(detail.status, locale)?.bg, color: getStatusLabel(detail.status, locale)?.color }}>
                                     {getStatusLabel(detail.status, locale)?.label}
                                 </span>
@@ -3183,7 +3183,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         </p>
                                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                                             {detail.branchCustomers.map((b: any) => (
-                                                <span key={b.id} className="px-2 py-0.5 rounded bg-white text-slate-800 border border-cyan-200 font-medium text-[11px] shadow-2xs">
+                                                <span key={b.id} className="inline-block px-2 py-0.5 rounded bg-white text-slate-800 border border-cyan-200 font-medium text-[11px] shadow-2xs whitespace-nowrap shrink-0">
                                                     <span className="font-mono text-cyan-800 font-bold">[{b.code}]</span> {b.name}
                                                 </span>
                                             ))}
@@ -3274,7 +3274,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 {parsedPromo.targetChannels?.map((cid: string) => {
                                                     const ch = PROMO_CHANNELS.find(c => c.id === cid)
                                                     return (
-                                                        <span key={cid} className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300/60">
+                                                        <span key={cid} className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300/60 whitespace-nowrap shrink-0">
                                                             {locale === 'en' ? ch?.labelEn || cid : ch?.labelVi || cid}
                                                         </span>
                                                     )
@@ -3361,7 +3361,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             <span>🍷</span>
                                             <span>{locale === 'en' ? `Training & Tasting Wine Samples (${detail.priceItems.length} SKUs)` : `Danh Sách Rượu Xuất Mẫu Thử Nếm (${detail.priceItems.length} sản phẩm)`}</span>
                                         </p>
-                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                        <span className="inline-block text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                             {locale === 'en' ? 'Total: ' : 'Tổng: '} {detail.priceItems.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0)} {locale === 'en' ? 'bottles' : 'chai'}
                                         </span>
                                     </div>
@@ -3412,7 +3412,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-bold text-[#0891B2]">{so.soNo}</span>
                                                     {so.orderType === 'TASTING' && (
-                                                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40">🍷 Tasting</span>
+                                                        <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">🍷 Tasting</span>
                                                     )}
                                                     <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                                 </div>
@@ -3456,7 +3456,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         <div className="p-4 rounded-md border border-slate-200 bg-white space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2] flex items-center justify-between">
                                 <span>📋 {locale === 'en' ? 'Digital Audit Trail' : 'Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)'}</span>
-                                <span className="text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                <span className="inline-block text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                     {locale === 'en' ? '3 Approval Levels' : '3 Cấp Phê Duyệt'}
                                 </span>
                             </p>

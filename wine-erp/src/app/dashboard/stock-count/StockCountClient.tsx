@@ -617,7 +617,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div>
                                 <h2 className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-2">
                                     <span>Kế Hoạch Kiểm Kê Cuốn Chiếu (Cycle Count)</span>
-                                    <span className="text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
+                                    <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         {cycleProgress?.dateFrom && cycleProgress?.dateTo ? (
                                             `Từ ${new Date(cycleProgress.dateFrom).toLocaleDateString('vi-VN')} đến ${new Date(cycleProgress.dateTo).toLocaleDateString('vi-VN')} (${cycleProgress.daysWindow} ngày)`
                                         ) : (
@@ -882,17 +882,17 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                     {/* Stats summary badges */}
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-semibold">
+                                        <span className="inline-block text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-semibold whitespace-nowrap shrink-0">
                                             Tổng: <strong>{cycleProgress.recentSessions?.length || 0}</strong> đợt
                                         </span>
                                         {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => s.hasVariance).length > 0 && (
-                                            <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                                            <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-md font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 <AlertTriangle size={12} />
                                                 {cycleProgress.recentSessions.filter(s => s.hasVariance).length} đợt có lệch
                                             </span>
                                         )}
                                         {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length > 0 && (
-                                            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                                            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 <CheckCircle2 size={12} />
                                                 {cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length} đợt khớp 100%
                                             </span>
@@ -958,12 +958,12 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                 {s.status === 'DRAFT' ? (
                                                                     <span className="text-slate-400 text-[11px]">Chưa đếm</span>
                                                                 ) : s.hasVariance ? (
-                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 whitespace-nowrap shrink-0">
                                                                         <AlertTriangle size={11} />
                                                                         Lệch {s.totalVariance} chai
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 whitespace-nowrap shrink-0">
                                                                         <CheckCircle2 size={11} />
                                                                         Khớp 100% (0 chai)
                                                                     </span>
@@ -1102,13 +1102,13 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                             <td className="p-3 whitespace-nowrap">
                                                 <div className="flex items-center gap-1">
-                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center shrink-0">
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center shrink-0 whitespace-nowrap">
                                                         {row.scopeType === 'FULL_WAREHOUSE' ? 'Toàn bộ kho' :
                                                          row.scopeType === 'CYCLE_COUNT' ? 'Cuốn chiếu' :
                                                          row.scopeType === 'TRANSACTED_ITEMS' ? 'Mã phát sinh' : 'Đột xuất'}
                                                     </span>
                                                     {row.isBlindCount && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center shrink-0">
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center shrink-0 whitespace-nowrap">
                                                             Giấu sổ
                                                         </span>
                                                     )}
@@ -1284,7 +1284,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <div className="flex justify-between items-start pb-3 border-b border-slate-200">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30">
+                                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30 whitespace-nowrap shrink-0">
                                                 BƯỚC 1 / 2
                                             </span>
                                             <h2 className="text-base font-extrabold text-slate-900">Chọn Hình Thức Kiểm Kê</h2>
@@ -1312,7 +1312,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
                                                     <Layers className="w-5 h-5" />
                                                 </div>
-                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wide">
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wide inline-block whitespace-nowrap shrink-0">
                                                     Toàn diện 100%
                                                 </span>
                                             </div>
@@ -1339,7 +1339,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center">
                                                     <MapPin className="w-5 h-5" />
                                                 </div>
-                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 uppercase tracking-wide">
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 uppercase tracking-wide inline-block whitespace-nowrap shrink-0">
                                                     Theo Phân Vùng
                                                 </span>
                                             </div>
@@ -1366,7 +1366,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
                                                     <Shuffle className="w-5 h-5" />
                                                 </div>
-                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wide">
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wide inline-block whitespace-nowrap shrink-0">
                                                     Giám Sát Rủi Ro
                                                 </span>
                                             </div>
@@ -1393,7 +1393,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 <div className="w-10 h-10 rounded-lg bg-cyan-50 border border-cyan-200 text-[#0891B2] flex items-center justify-center">
                                                     <RefreshCw className="w-5 h-5" />
                                                 </div>
-                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase tracking-wide">
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase tracking-wide inline-block whitespace-nowrap shrink-0">
                                                     Chu Kỳ Xoay Vòng
                                                 </span>
                                             </div>
@@ -1424,32 +1424,32 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <ArrowLeft size={14} /> Quay lại chọn hình thức khác
                                         </button>
                                         <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30">
+                                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0891B2]/15 text-[#0E7490] border border-[#0891B2]/30 whitespace-nowrap shrink-0">
                                                 BƯỚC 2 / 2
                                             </span>
                                             <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                                                 {countCategory === 'FULL' && (
                                                     <>
                                                         <span>Kiểm kê toàn bộ kho</span>
-                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">Toàn diện 100%</span>
+                                                        <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">Toàn diện 100%</span>
                                                     </>
                                                 )}
                                                 {countCategory === 'PARTIAL' && (
                                                     <>
                                                         <span>Kiểm kê một phần / Phân khu</span>
-                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">Theo phân vùng</span>
+                                                        <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 whitespace-nowrap shrink-0">Theo phân vùng</span>
                                                     </>
                                                 )}
                                                 {countCategory === 'RANDOM' && (
                                                     <>
                                                         <span>Kiểm kê ngẫu nhiên / Đột xuất</span>
-                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Giám sát rủi ro</span>
+                                                        <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">Giám sát rủi ro</span>
                                                     </>
                                                 )}
                                                 {countCategory === 'CYCLE' && (
                                                     <>
                                                         <span>Kiểm kê cuốn chiếu hàng ngày</span>
-                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">Chu kỳ tuần</span>
+                                                        <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap shrink-0">Chu kỳ tuần</span>
                                                     </>
                                                 )}
                                             </h2>
@@ -1633,7 +1633,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                 previewSampleSkus.map(s => (
                                                                     <div key={s.id} className="p-2 px-3 flex items-center justify-between gap-2 hover:bg-slate-50">
                                                                         <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                                                                            <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] border border-slate-200 shrink-0">
+                                                                            <span className="inline-block font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] border border-slate-200 shrink-0 whitespace-nowrap">
                                                                                 {s.skuCode}
                                                                             </span>
                                                                             <span className="truncate font-semibold text-slate-800">{s.productName}</span>
@@ -1685,7 +1685,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 text-[11px] font-mono">
+                                                    <span className="inline-block font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 text-[11px] font-mono whitespace-nowrap shrink-0">
                                                         Đã kiểm {cycleProgress?.progressPercent || 0}%
                                                     </span>
                                                     <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
@@ -1813,7 +1813,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                         />
                                                                         <div className="min-w-0 flex-1">
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <span className="font-mono font-bold text-lys-teal-strong shrink-0 bg-white px-1.5 py-0.5 rounded border border-lys-teal-subtle text-[11px]">
+                                                                                <span className="inline-block font-mono font-bold text-lys-teal-strong shrink-0 bg-white px-1.5 py-0.5 rounded border border-lys-teal-subtle text-[11px] whitespace-nowrap">
                                                                                     {p.skuCode}
                                                                                 </span>
                                                                                 <span className="truncate text-slate-900">{p.productName}</span>
@@ -1927,7 +1927,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
-                                <span className="text-[10px] font-mono font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                <span className="inline-block text-[10px] font-mono font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 whitespace-nowrap shrink-0">
                                     {assignSessionDetail.sessionNo}
                                 </span>
                                 <h3 className="text-base font-extrabold text-slate-900 mt-1">Phân Công Nhân Sự Theo Vị Trí Kệ</h3>
@@ -1954,7 +1954,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     <MapPin className="w-4 h-4 text-emerald-600" />
                                                     {zoneName}
                                                 </span>
-                                                <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                                <span className="inline-block text-[11px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                                     {totalInZone} sản phẩm
                                                 </span>
                                             </div>
@@ -2026,7 +2026,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     <h3 className="text-base font-extrabold text-slate-900">
                                         Tạo Đợt Kiểm Kê Cuốn Chiếu Hôm Nay
                                     </h3>
-                                    <span className="text-[11px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
+                                    <span className="inline-block text-[11px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         {cycleProgress.warehouseName.startsWith('Kho') ? cycleProgress.warehouseName : `Kho ${cycleProgress.warehouseName}`}
                                     </span>
                                 </div>

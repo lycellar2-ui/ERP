@@ -102,7 +102,7 @@ export function QuickReportModal({
                         </div>
                         <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-teal-700 bg-teal-500/15 px-2 py-0.5 rounded-md font-mono">
+                                <span className="inline-block text-[10px] font-black uppercase tracking-wider text-teal-700 bg-teal-500/15 px-2 py-0.5 rounded-md font-mono whitespace-nowrap shrink-0">
                                     {locale === 'en' ? 'Quick Field Report' : 'Báo Cáo Nhanh Thực Địa'}
                                 </span>
                                 {visit.visitNo && (

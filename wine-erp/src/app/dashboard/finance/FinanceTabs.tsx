@@ -156,7 +156,7 @@ export function JournalEntryTab() {
                                 Xuất file Excel/JSON để import vào MISA, Fast, Bravo hoặc PM kế toán khác
                             </p>
                         </div>
-                        <span className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309' }}>
+                        <span className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309' }}>
                             Export-Only Mode
                         </span>
                     </div>
@@ -210,7 +210,7 @@ export function JournalEntryTab() {
                             {Object.keys(exportStats.docTypes).length > 0 && (
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(exportStats.docTypes as Record<string, number>).map(([type, count]) => (
-                                        <span key={type} className="text-xs px-2 py-1 rounded"
+                                        <span key={type} className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0"
                                             style={{ background: `${DOC_TYPE_COLOR[type] ?? '#64748B'}20`, color: DOC_TYPE_COLOR[type] ?? '#475569' }}>
                                             {DOC_TYPE_LABEL[type] ?? type}: {count}
                                         </span>
@@ -280,7 +280,7 @@ export function JournalEntryTab() {
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</span>
                                         </td>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                 style={{ color: typeColor, background: `${typeColor}20` }}>
                                                 {DOC_TYPE_LABEL[e.docType] ?? e.docType}
                                             </span>
@@ -354,7 +354,7 @@ export function ProfitLossTab() {
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                         Báo Cáo Lãi / Lỗ (P&L)
                     </h3>
-                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
                         ước tính vận hành
                     </span>
                 </div>
@@ -373,7 +373,7 @@ export function ProfitLossTab() {
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
-                    <button onClick={loadPL} className="text-xs px-3 py-1.5 rounded font-semibold"
+                    <button onClick={loadPL} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         Xem
                     </button>
@@ -671,7 +671,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
                                         <td className="px-3 py-2 text-xs max-w-[180px] truncate" style={{ color: '#475569' }}>{e.description}</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.periodLabel}</td>
                                         <td className="px-3 py-2">
-                                            <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                 style={{ color: st.color, background: `${st.color}18` }}>{st.label}</span>
                                         </td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#475569' }}>{e.creatorName}</td>
@@ -766,7 +766,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                         className="text-xs px-3 py-1.5 rounded" style={{ ...input, width: 'auto' }}>
                         {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
-                    <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                    <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}>Kiểm Tra</button>
                 </div>
             </div>
@@ -798,7 +798,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                                             {formatVND(item.amount)}
                                         </span>
                                     )}
-                                    <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
+                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{
                                         color: item.status === 'ok' ? '#15803D' : item.status === 'warning' ? '#B45309' : '#B91C1C',
                                         background: item.status === 'ok' ? 'rgba(21,128,61,0.15)' : item.status === 'warning' ? 'rgba(180,83,9,0.15)' : 'rgba(185,28,28,0.15)',
                                     }}>
@@ -865,7 +865,7 @@ export function BalanceSheetTab() {
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                         Bảng Cân Đối Kế Toán (VAS)
                     </h3>
-                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
                         ước tính vận hành
                     </span>
                 </div>
@@ -884,7 +884,7 @@ export function BalanceSheetTab() {
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
-                    <button onClick={loadBS} className="text-xs px-3 py-1.5 rounded font-semibold"
+                    <button onClick={loadBS} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}>
                         Xem
                     </button>
@@ -1237,7 +1237,7 @@ export function CashFlowTab() {
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Vị Thế Tiền Mặt</h3>
                             <div className="flex gap-2">
-                                <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                                <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                                     style={{ background: '#0891B2', color: '#FFFFFF' }}>Làm Mới</button>
                                 <button onClick={async () => {
                                     setVatExporting(true)
@@ -1404,16 +1404,16 @@ export function CashFlowTab() {
 
                         {creditStats && (
                             <div className="flex gap-3 mb-3">
-                                <span className="text-xs px-3 py-1.5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
+                                <span className="inline-block text-xs px-3 py-1.5 rounded-md whitespace-nowrap shrink-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
                                     Đã kiểm tra: <b>{creditStats.checked}</b> KH
                                 </span>
                                 {creditStats.held > 0 && (
-                                    <span className="text-xs px-3 py-1.5 rounded-md font-bold" style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
+                                    <span className="inline-block text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                                         🔒 Mới HOLD: {creditStats.held}
                                     </span>
                                 )}
                                 {creditStats.released > 0 && (
-                                    <span className="text-xs px-3 py-1.5 rounded-md font-bold" style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)', color: '#15803D' }}>
+                                    <span className="inline-block text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)', color: '#15803D' }}>
                                         🔓 Đã thả: {creditStats.released}
                                     </span>
                                 )}
@@ -1440,13 +1440,13 @@ export function CashFlowTab() {
                                                 </td>
                                                 <td className="px-4 py-2.5">
                                                     {r.overAmount > 0 && (
-                                                        <span className="text-xs px-2 py-0.5 rounded font-bold font-mono" style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
+                                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-bold font-mono whitespace-nowrap shrink-0" style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
                                                             +{formatVND(r.overAmount)}
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-2.5">
-                                                    <span className="text-xs px-2.5 py-1 rounded-full font-bold" style={{
+                                                    <span className="inline-block text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap shrink-0" style={{
                                                         color: r.isOverLimit ? '#B91C1C' : '#15803D',
                                                         background: r.isOverLimit ? 'rgba(185,28,28,0.15)' : 'rgba(21,128,61,0.15)',
                                                     }}>
@@ -1501,7 +1501,7 @@ export function TrialBalanceTab() {
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                         Bảng Cân Đối Phát Sinh (CĐPS)
                     </h3>
-                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
                         ước tính vận hành
                     </span>
                 </div>
@@ -1520,7 +1520,7 @@ export function TrialBalanceTab() {
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
-                    <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                    <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}>Tải lại</button>
                 </div>
             </div>
@@ -1629,7 +1629,7 @@ export function AccountLedgerTab() {
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
-                    <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                    <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0891B2', color: '#FFFFFF' }}>Xem</button>
                 </div>
             </div>
@@ -1694,7 +1694,7 @@ export function AccountLedgerTab() {
                                             <td className="px-3 py-2 text-xs" style={{ color: '#475569' }}>{formatDate(e.date)}</td>
                                             <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</td>
                                             <td className="px-3 py-2">
-                                                <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: '#B45309', background: 'rgba(180,83,9,0.15)' }}>
+                                                <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: '#B45309', background: 'rgba(180,83,9,0.15)' }}>
                                                     {DOC_TYPE_LABEL[e.docType] ?? e.docType}
                                                 </span>
                                             </td>

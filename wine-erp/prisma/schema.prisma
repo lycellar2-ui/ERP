@@ -36,6 +36,7 @@ model LegalEntity {
   expenseBudgets    ExpenseBudget[]
   stockLots         StockLot[]
   warehouses        Warehouse[]
+  bankAccounts      BankAccount[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
@@ -120,6 +121,9 @@ model User {
   paymentRequestsCreated PaymentRequest[]   @relation("PaymentRequestCreator")
   paymentAttachments     PaymentRequestAttachment[] @relation("PaymentAttachmentUploader")
   paymentApprovalLogs    PaymentApprovalLog[] @relation("PaymentApprovalActor")
+  bankBatchesImported    BankStatementBatch[]
+  bankTxnsPosted         BankTransaction[]          @relation("BankTxnPoster")
+  bankRulesCreated       BankReconciliationRule[]   @relation("BankRuleCreator")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -579,6 +583,8 @@ model Customer {
   salesVisits    SalesVisit[]           @relation("CustomerSalesVisits")
   callLogs       SalesCallLog[]
   callPlans      SalesCallPlan[]
+  bankTransactions BankTransaction[]
+  bankReconciliationRules BankReconciliationRule[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -2142,6 +2148,7 @@ model ARInvoice {
   status      InvoiceStatus @default(UNPAID)
   notes       String?
   payments    ARPayment[]
+  bankMatches BankTransactionMatch[]
   createdAt   DateTime      @default(now())
 
   @@map("ar_invoices")
@@ -2158,6 +2165,7 @@ model ARPayment {
   notes       String?
   paymentDate DateTime?
   paidAt      DateTime      @default(now())
+  bankMatch   BankTransactionMatch?
 
   @@map("ar_payments")
 }
@@ -3722,3 +3730,116 @@ model PaymentApprovalLog {
   @@map("payment_approval_logs")
 }
 
+// ==========================================
+// 🏦 BANK RECONCILIATION & AR PAYMENT MODULE
+// ==========================================
+
+enum BankTxnType {
+  CREDIT // Tiền vào (Khách thanh toán)
+  DEBIT  // Tiền ra (Chi phí / Trả NCC)
+}
+
+enum BankTxnStatus {
+  UNMATCHED // Chưa khớp
+  SUGGESTED // Đã có gợi ý thông minh
+  POSTED    // Đã duyệt ghi sổ AR
+  IGNORED   // Bỏ qua (không hạch toán thu nợ)
+}
+
+model BankAccount {
+  id              String               @id @default(cuid())
+  bankCode        String               // VCB, TCB, ACB, BIDV, MBB, VPB...
+  bankName        String               // Tên ngân hàng
+  accountNumber   String               // Số tài khoản
+  accountHolder   String               // Tên chủ tài khoản
+  branch          String?              // Chi nhánh
+  legalEntityId   String
+  legalEntity     LegalEntity          @relation(fields: [legalEntityId], references: [id])
+  currency        String               @default("VND")
+  isActive        Boolean              @default(true)
+  statements      BankStatementBatch[]
+  transactions    BankTransaction[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([bankCode, accountNumber])
+  @@map("bank_accounts")
+}
+
+model BankStatementBatch {
+  id            String            @id @default(cuid())
+  bankAccountId String
+  bankAccount   BankAccount       @relation(fields: [bankAccountId], references: [id])
+  fileName      String            // Tên file gốc
+  fileSize      Int
+  totalRecords  Int               @default(0)
+  totalCredit   Decimal           @default(0) // Tổng tiền vào
+  totalDebit    Decimal           @default(0) // Tổng tiền ra
+  importedById  String
+  importedBy    User              @relation(fields: [importedById], references: [id])
+  transactions  BankTransaction[]
+  createdAt     DateTime          @default(now())
+
+  @@map("bank_statement_batches")
+}
+
+model BankTransaction {
+  id                String                 @id @default(cuid())
+  batchId           String
+  batch             BankStatementBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  bankAccountId     String
+  bankAccount       BankAccount            @relation(fields: [bankAccountId], references: [id])
+  txnDate           DateTime               // Ngày giao dịch
+  txnRef            String?                // Mã tham chiếu giao dịch ngân hàng
+  txnType           BankTxnType            @default(CREDIT)
+  amount            Decimal                // Số tiền giao dịch
+  balanceAfter      Decimal?               // Số dư sau GD
+  rawNarrative      String                 // Nội dung chuyển khoản gốc
+  txnHash           String                 @unique // SHA256 chống trùng lặp
+  status            BankTxnStatus          @default(UNMATCHED)
+  confidenceScore   Int?                   // Điểm tin cậy (0 - 100)
+  suggestedReason   String?                // Giải thích gợi ý
+  matchedCustomerId String?
+  matchedCustomer   Customer?              @relation(fields: [matchedCustomerId], references: [id])
+  paymentMatches    BankTransactionMatch[]
+  postedAt          DateTime?
+  postedById        String?
+  postedBy          User?                  @relation("BankTxnPoster", fields: [postedById], references: [id])
+  createdAt         DateTime               @default(now())
+
+  @@index([txnDate])
+  @@index([status])
+  @@index([bankAccountId])
+  @@map("bank_transactions")
+}
+
+model BankTransactionMatch {
+  id              String          @id @default(cuid())
+  bankTxnId       String
+  bankTxn         BankTransaction @relation(fields: [bankTxnId], references: [id], onDelete: Cascade)
+  invoiceId       String
+  invoice         ARInvoice       @relation(fields: [invoiceId], references: [id])
+  allocatedAmount Decimal         // Số tiền phân bổ vào hóa đơn
+  feeDifference   Decimal         @default(0) // Chênh lệch phí nếu có
+  arPaymentId     String?         @unique
+  arPayment       ARPayment?      @relation(fields: [arPaymentId], references: [id])
+  createdAt       DateTime        @default(now())
+
+  @@index([bankTxnId])
+  @@index([invoiceId])
+  @@map("bank_transaction_matches")
+}
+
+model BankReconciliationRule {
+  id          String   @id @default(cuid())
+  keyword     String   // Từ khóa nhận diện
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  autoSuggest Boolean  @default(true)
+  createdById String
+  createdBy   User     @relation("BankRuleCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([keyword, customerId])
+  @@map("bank_reconciliation_rules")
+}

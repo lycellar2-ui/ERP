@@ -240,12 +240,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                             >
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                        <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                             {c.code}
                                                         </span>
                                                         <span className="font-bold text-slate-900 truncate">{c.name}</span>
                                                         {c.channel && (
-                                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                                            <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-medium bg-cyan-50 text-cyan-700 border border-cyan-200 whitespace-nowrap shrink-0">
                                                                 {c.channel}
                                                             </span>
                                                         )}
@@ -255,7 +255,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         {c.parentName && <span>&bull; {isEn ? 'Group:' : 'Thuộc:'} {c.parentName}</span>}
                                                     </div>
                                                 </div>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 flex-shrink-0">
+                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 flex-shrink-0 whitespace-nowrap">
                                                     {c.orderCount} {isEn ? 'orders' : 'đơn hàng'}
                                                 </span>
                                             </button>
@@ -337,17 +337,17 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* Profile Info (2 cols) */}
                         <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                                <span className="inline-block font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white whitespace-nowrap shrink-0">
                                     {historyData.customer.code}
                                 </span>
                                 <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                                     {historyData.customer.name}
                                 </h3>
-                                <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 whitespace-nowrap shrink-0">
                                     {historyData.customer.channel}
                                 </span>
                                 {historyData.customer.entityType === 'COMPANY' && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                         {isEn ? `Parent Group (${historyData.customer.childrenCount} branches)` : `Công ty Mẹ (${historyData.customer.childrenCount} chi nhánh con)`}
                                     </span>
                                 )}
@@ -521,7 +521,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     {p.endDate ? new Date(p.endDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN') : (isEn ? 'Indefinite' : 'Vô thời hạn')}
                                                 </div>
                                             </div>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+                                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">
                                                 {isEn ? 'Approved' : 'Đã duyệt'}
                                             </span>
                                         </div>
@@ -567,12 +567,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                     <tr key={rule.id} className="hover:bg-slate-50 transition-colors">
                                                         <td className="py-2.5 px-3">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                                <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                     {rule.skuCode}
                                                                 </span>
                                                                 <span className="font-bold text-slate-900">{rule.productName}</span>
                                                                 {rule.wineType && (
-                                                                    <span className="text-[10px] px-1 py-0.2 rounded font-medium bg-cyan-50 text-cyan-800">
+                                                                    <span className="inline-block text-[10px] px-1 py-0.2 rounded font-medium bg-cyan-50 text-cyan-800 whitespace-nowrap shrink-0">
                                                                         {rule.wineType}
                                                                     </span>
                                                                 )}
@@ -599,15 +599,15 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                             {rule.isExpired ? (
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Expired' : 'Đã hết hạn'}
                                                                 </span>
                                                             ) : rule.isExpiringSoon ? (
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Expiring Soon' : 'Sắp hết hạn'}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Active' : 'Đang áp dụng'}
                                                                 </span>
                                                             )}
@@ -811,11 +811,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                     </td>
                                                                     <td className="py-2.5 px-3 whitespace-nowrap">
                                                                         {isTasting ? (
-                                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                                                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                                 🍷 {order.orderType === 'TASTING' ? 'Tasting' : 'Sample'}
                                                                             </span>
                                                                         ) : (
-                                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                                            <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                                 {isEn ? 'Commercial' : 'Đơn bán'}
                                                                             </span>
                                                                         )}
@@ -843,20 +843,20 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                         )}
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block"
+                                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0"
                                                                             style={{ background: statusCfg.bg, color: statusCfg.color, border: `1px solid ${statusCfg.border}` }}>
                                                                             {isEn ? statusCfg.labelEn : statusCfg.labelVi}
                                                                         </span>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded inline-block"
+                                                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded inline-block whitespace-nowrap shrink-0"
                                                                             style={{ background: delivCfg.bg, color: delivCfg.color }}>
                                                                             {isEn ? delivCfg.labelEn : delivCfg.labelVi}
                                                                         </span>
                                                                     </td>
                                                                     <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                                         {order.arInvoices.length > 0 ? (
-                                                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                            <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                                                 {order.arInvoices[0].invoiceNo || (isEn ? 'Has Inv' : 'Có HĐ')}
                                                                             </span>
                                                                         ) : (
@@ -886,7 +886,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                                         {isEn ? `Order items (${order.lines.length} products) in SO ${order.soNo}:` : `Danh sách ${order.lines.length} sản phẩm trong đơn ${order.soNo}:`}
                                                                                     </span>
                                                                                     {order.deliveryNotes && (
-                                                                                        <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                                        <span className="inline-block text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                                                             {isEn ? 'Delivery note: ' : 'Ghi chú giao hàng: '}{order.deliveryNotes}
                                                                                         </span>
                                                                                     )}
@@ -1030,12 +1030,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                 <td className="py-2.5 px-3 text-center text-slate-400 font-bold">{idx + 1}</td>
                                                                 <td className="py-2.5 px-3">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                                        <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                             {wine.skuCode}
                                                                         </span>
                                                                         <span className="font-bold text-slate-900">{wine.name}</span>
                                                                         {wine.wineType && (
-                                                                            <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                                                                            <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                                 {wine.wineType}
                                                                             </span>
                                                                         )}

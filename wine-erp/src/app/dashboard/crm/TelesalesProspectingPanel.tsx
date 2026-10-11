@@ -318,7 +318,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
                                     Mục Tiêu Tìm Kiếm & Cuộc Gọi Bán Hàng
                                 </h3>
-                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-mono">
+                                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-mono whitespace-nowrap shrink-0">
                                     Telesales & Prospecting Hub
                                 </span>
                             </div>
@@ -588,11 +588,11 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             {/* Channel Badge */}
                                             <td className="p-3.5">
                                                 {rep.channel === 'CORPORATE' ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
                                                         <Building2 size={11} /> Corporate
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                                         <Users size={11} /> Retail
                                                     </span>
                                                 )}
@@ -728,11 +728,11 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 </span>
 
                                                 {log.channel === 'CORPORATE' ? (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
                                                         🏢 Corporate
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                                         🍷 Retail
                                                     </span>
                                                 )}
@@ -748,7 +748,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 )}
 
                                                 {log.customerCode && (
-                                                    <span className="text-[10px] font-mono text-teal-600 font-bold bg-teal-50 px-1.5 py-0.2 rounded">
+                                                    <span className="inline-block text-[10px] font-mono text-teal-600 font-bold bg-teal-50 px-1.5 py-0.2 rounded whitespace-nowrap shrink-0">
                                                         [{log.customerCode}]
                                                     </span>
                                                 )}
@@ -771,7 +771,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             )}
 
                                             {log.followUpDate && (
-                                                <div className="text-[11px] text-amber-700 font-medium flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md inline-flex border border-amber-200">
+                                                <div className="text-[11px] text-amber-700 font-medium flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md inline-flex border border-amber-200 whitespace-nowrap shrink-0">
                                                     <Calendar size={11} />
                                                     Lịch hẹn gọi lại: {new Date(log.followUpDate).toLocaleString('vi-VN')}
                                                 </div>
@@ -796,7 +796,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 <span>+ Mở Mã Khách</span>
                                             </button>
                                         ) : (
-                                            <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                            <span className="text-[11px] font-bold text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                                 <Check size={12} /> Đã có hồ sơ KH
                                             </span>
                                         )}

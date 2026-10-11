@@ -123,7 +123,7 @@ export default function PartnerLoginPage() {
                                                             <td className="px-4 py-3 text-sm" style={{ color: '#0F172A' }}>{s.vesselName ?? '—'}</td>
                                                             <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{formatDate(s.eta)}</td>
                                                             <td className="px-4 py-3">
-                                                                <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                                     style={{ color: st.color, background: `${st.color}18` }}>{st.label}</span>
                                                             </td>
                                                             <td className="px-4 py-3 text-xs font-bold" style={{ color: '#475569' }}>{s.submissionCount}</td>
@@ -166,7 +166,7 @@ export default function PartnerLoginPage() {
                                                             <td className="px-4 py-3 text-sm" style={{ color: '#0F172A' }}>{s.declarationNo ?? '—'}</td>
                                                             <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{s.documentCount} file</td>
                                                             <td className="px-4 py-3">
-                                                                <span className="text-xs px-2 py-0.5 rounded font-semibold"
+                                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                                                     style={{ color: st.color, background: `${st.color}18` }}>{st.label}</span>
                                                             </td>
                                                             <td className="px-4 py-3 text-xs" style={{ color: '#64748B' }}>{formatDate(s.submittedAt)}</td>

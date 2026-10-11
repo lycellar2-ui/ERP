@@ -821,7 +821,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                                                 {/* Primary badge */}
                                                 {m.isPrimary && (
-                                                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
+                                                    <div className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold whitespace-nowrap shrink-0"
                                                         style={{ background: 'rgba(8,145,178,0.9)', color: '#0F172A' }}>
                                                         <Star size={8} /> Ảnh chính
                                                     </div>
@@ -1001,7 +1001,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                             </span>
                                                         )}
                                                         {aw.medalLabel && (
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
+                                                            <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
                                                                 {aw.medalLabel}
                                                             </span>
                                                         )}

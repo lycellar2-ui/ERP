@@ -271,7 +271,7 @@ export function ProcurementCashFlowModal({
                             <div>
                                 <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
                                     Kế Hoạch Dòng Tiền & Dự Trù Chi Phí Lô Hàng
-                                    <span className="px-2 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 rounded-full">
+                                    <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 rounded-full whitespace-nowrap shrink-0">
                                         Mô Phỏng Thời Điểm
                                     </span>
                                 </h2>
@@ -338,7 +338,7 @@ export function ProcurementCashFlowModal({
                             </span>
                             <div className="flex items-center gap-1.5">
                                 {['USD', 'EUR', 'AUD'].map(curr => (
-                                    <div key={curr} className="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs">
+                                    <div key={curr} className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0">
                                         <span className="font-bold text-slate-500 mr-1">{curr}:</span>
                                         <input
                                             type="number"
@@ -361,7 +361,7 @@ export function ProcurementCashFlowModal({
                                 <Percent size={13} className="text-amber-600" /> % Thuế Chung:
                             </span>
                             <div className="flex items-center gap-1.5">
-                                <div className="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs" title="Thuế Nhập Khẩu">
+                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Nhập Khẩu">
                                     <span className="font-bold text-slate-500 mr-1">NK:</span>
                                     <input
                                         type="number"
@@ -377,7 +377,7 @@ export function ProcurementCashFlowModal({
                                     />
                                     <span className="text-[10px] text-slate-400 ml-0.5">%</span>
                                 </div>
-                                <div className="flex items-center bg-white border border-amber-300 bg-amber-50/30 rounded-md px-2 py-1 shadow-xs text-xs" title="Thuế Tiêu Thụ Đặc Biệt">
+                                <div className="inline-flex items-center bg-white border border-amber-300 bg-amber-50/30 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Tiêu Thụ Đặc Biệt">
                                     <span className="font-bold text-amber-800 mr-1">TTĐB:</span>
                                     <input
                                         type="number"
@@ -393,7 +393,7 @@ export function ProcurementCashFlowModal({
                                     />
                                     <span className="text-[10px] text-amber-600 ml-0.5">%</span>
                                 </div>
-                                <div className="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs" title="Thuế Giá Trị Gia Tăng (VAT)">
+                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Giá Trị Gia Tăng (VAT)">
                                     <span className="font-bold text-slate-500 mr-1">VAT:</span>
                                     <input
                                         type="number"
@@ -448,7 +448,7 @@ export function ProcurementCashFlowModal({
                     <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-lg">
                         <div className="flex items-center justify-between text-xs text-amber-800 font-semibold mb-1">
                             <span>2. Thuế Hải Quan 3 Tầng</span>
-                            <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">
+                            <span className="inline-block text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold whitespace-nowrap shrink-0">
                                 Nộp Kho Bạc
                             </span>
                         </div>
@@ -480,7 +480,7 @@ export function ProcurementCashFlowModal({
                     <div className="p-3 bg-teal-900 text-white rounded-lg shadow-sm">
                         <div className="flex items-center justify-between text-xs text-teal-200 font-semibold mb-1">
                             <span>Tổng vốn dòng tiền (Landed Cost)</span>
-                            <span className="text-[10px] bg-teal-800 text-teal-100 px-1.5 py-0.2 rounded font-mono">
+                            <span className="inline-block text-[10px] bg-teal-800 text-teal-100 px-1.5 py-0.2 rounded font-mono whitespace-nowrap shrink-0">
                                 100% Vốn
                             </span>
                         </div>
@@ -602,7 +602,7 @@ export function ProcurementCashFlowModal({
                                                     <div className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                                                         {item.po.poNo}
                                                         {item.po.legalEntityCode && (
-                                                            <span className="px-1.5 py-0.2 text-[10px] bg-slate-100 text-slate-600 rounded border border-slate-200">
+                                                            <span className="inline-block px-1.5 py-0.2 text-[10px] bg-slate-100 text-slate-600 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                                                 {item.po.legalEntityCode}
                                                             </span>
                                                         )}
@@ -620,7 +620,7 @@ export function ProcurementCashFlowModal({
                                                     </div>
                                                 </td>
                                                 <td className="p-3 text-center font-sans">
-                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">
+                                                    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                         {item.po.incoterms || 'FOB'}
                                                     </span>
                                                 </td>
@@ -692,7 +692,7 @@ export function ProcurementCashFlowModal({
                                     <div className="text-lg font-bold font-mono text-blue-900 mb-1">
                                         {formatVND(totals.milestones.totalDeposit)}
                                     </div>
-                                    <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-semibold">
+                                    <span className="inline-block text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
                                         Tiền mặt ngoại tệ
                                     </span>
                                 </div>
@@ -700,7 +700,7 @@ export function ProcurementCashFlowModal({
                                 {/* Mốc 2 */}
                                 <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                                        <span className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs">
                                             2
                                         </span>
                                         <h3 className="font-bold text-slate-800 text-xs">ĐỢT 2: TIỀN HÀNG CÒN LẠI</h3>
@@ -708,10 +708,10 @@ export function ProcurementCashFlowModal({
                                     <p className="text-[11px] text-slate-500 mb-3">
                                         Thanh toán 70% - 80% trước khi lấy Bill of Lading gốc hoặc giải phóng điện tử (Telex Release).
                                     </p>
-                                    <div className="text-lg font-bold font-mono text-indigo-900 mb-1">
+                                    <div className="text-lg font-bold font-mono text-sky-900 mb-1">
                                         {formatVND(totals.milestones.totalFinalGoods)}
                                     </div>
-                                    <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-semibold">
+                                    <span className="inline-block text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
                                         Khi tàu khởi hành (ETD)
                                     </span>
                                 </div>
@@ -730,7 +730,7 @@ export function ProcurementCashFlowModal({
                                     <div className="text-lg font-bold font-mono text-amber-900 mb-1">
                                         {formatVND(totals.milestones.totalTax)}
                                     </div>
-                                    <span className="text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-semibold">
+                                    <span className="inline-block text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
                                         Trước ngày cập cảng (ETA)
                                     </span>
                                 </div>
@@ -749,7 +749,7 @@ export function ProcurementCashFlowModal({
                                     <div className="text-lg font-bold font-mono text-cyan-900 mb-1">
                                         {formatVND(totals.milestones.totalLogistics)}
                                     </div>
-                                    <span className="text-[10px] text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded font-semibold">
+                                    <span className="inline-block text-[10px] text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
                                         Khi giao hàng về kho
                                     </span>
                                 </div>
@@ -779,7 +779,7 @@ export function ProcurementCashFlowModal({
                                                 </div>
                                                 <div>
                                                     <span className="text-[10px] text-slate-400 block font-sans">2. Hàng (70%)</span>
-                                                    <span className="text-indigo-800 font-semibold">{formatVND(item.milestones.finalGoodsVND)}</span>
+                                                    <span className="text-sky-800 font-semibold">{formatVND(item.milestones.finalGoodsVND)}</span>
                                                 </div>
                                                 <div>
                                                     <span className="text-[10px] text-slate-400 block font-sans">3. Thuế Hải Quan</span>

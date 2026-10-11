@@ -328,7 +328,7 @@ export function PosmInventoryTab() {
                             <h2 className="text-lg font-bold text-slate-900">
                                 Kho POSM & Master Data Vật Phẩm Tiếp Thị
                             </h2>
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                 Độc Lập Với Tồn Rượu
                             </span>
                         </div>

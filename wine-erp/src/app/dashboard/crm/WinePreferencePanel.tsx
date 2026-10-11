@@ -139,7 +139,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Giống nho</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.grapeVarieties.map(g => (
-                                    <span key={g} className="text-xs px-2 py-0.5 rounded-full"
+                                    <span key={g} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>{g}</span>
                                 ))}
                             </div>
@@ -151,7 +151,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Vùng ưa thích</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.regions.map(r => (
-                                    <span key={r} className="text-xs px-2 py-0.5 rounded-full"
+                                    <span key={r} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>{r}</span>
                                 ))}
                             </div>
@@ -163,7 +163,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                             <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Khẩu vị</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.tasteProfile.map(t => (
-                                    <span key={t} className="text-xs px-2 py-0.5 rounded-full"
+                                    <span key={t} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ color: '#15803D', background: 'rgba(21,128,61,0.12)' }}>{t}</span>
                                 ))}
                             </div>

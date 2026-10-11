@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2 } from 'lucide-react'
+import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab, TrialBalanceTab, AccountLedgerTab } from './FinanceTabs'
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
+import { BankReconciliationTab } from './BankReconciliationTab'
 import { FilterBar } from '@/components/FilterBar'
 import { PageHeader, Pagination } from '@/components/ui'
 
-type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
+type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'bank-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
 const AR_STATUS: Record<string, { label: string; color: string }> = {
     UNPAID: { label: 'Chưa Thu', color: '#B45309' },
@@ -132,7 +133,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                 </td>
                                 <td className="px-3 py-3">
                                     {AR_STATUS[row.status] && (
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
                                             style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
                                             {AR_STATUS[row.status].label}
                                         </span>
@@ -271,6 +272,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         { key: 'ap', label: 'Phải Trả (AP)', icon: ArrowDownRight, group: 'ops' },
         { key: 'aging', label: 'AR Aging', icon: Clock, group: 'ops' },
         { key: 'invoice-reconcile', label: 'Đối Chiếu HĐ VNPT', icon: FileCheck2, group: 'ops' },
+        { key: 'bank-reconcile', label: 'Sao Kê & Thu Nợ', icon: Building2, group: 'ops' },
         // Accounting — Kế toán (export to external SW)
         { key: 'journal', label: 'Sổ Cái', icon: BookOpen, group: 'acct' },
         { key: 'pnl', label: 'P&L', icon: BarChart3, group: 'acct' },
@@ -446,7 +448,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 </td>
                                                 <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>{formatDate(row.dueDate)}</td>
                                                 <td className="px-3 py-3">
-                                                    <span className="text-xs px-2 py-0.5 rounded-full"
+                                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                                         style={{
                                                             background: row.status === 'PAID' ? 'rgba(21,128,61,0.15)' : row.isOverdue ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
                                                             color: row.status === 'PAID' ? '#15803D' : row.isOverdue ? '#B91C1C' : '#B45309',
@@ -502,6 +504,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             )}
 
             {tab === 'invoice-reconcile' && <InvoiceReconciliationTab />}
+
+            {tab === 'bank-reconcile' && <BankReconciliationTab />}
 
             {tab === 'journal' && <JournalEntryTab />}
 

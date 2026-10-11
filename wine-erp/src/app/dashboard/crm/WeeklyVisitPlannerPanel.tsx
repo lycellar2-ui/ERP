@@ -394,7 +394,7 @@ export function WeeklyVisitPlannerPanel() {
                         <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1.5 rounded transition hover:bg-slate-800" style={{ color: '#475569' }}>
                             <ArrowLeft size={15} />
                         </button>
-                        <button onClick={() => setWeekOffset(0)} className="px-2.5 py-1 text-xs rounded transition border font-semibold" style={{ borderColor: '#E2E8F0', color: '#0891B2' }}>
+                        <button onClick={() => setWeekOffset(0)} className="inline-block px-2.5 py-1 text-xs rounded transition border font-semibold whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#0891B2' }}>
                             Tuần Này
                         </button>
                         <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1.5 rounded transition hover:bg-slate-800" style={{ color: '#475569' }}>
@@ -481,8 +481,8 @@ export function WeeklyVisitPlannerPanel() {
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => setShowAddVisit(false)} className="px-3 py-1 text-xs font-semibold rounded border" style={{ borderColor: '#E2E8F0', color: '#64748B' }}>Hủy</button>
-                                    <button onClick={handleAddLocalVisit} className="px-3 py-1 text-xs font-semibold rounded" style={{ background: '#0891B2', color: '#FFFFFF' }}>Thêm</button>
+                                    <button onClick={() => setShowAddVisit(false)} className="inline-block px-3 py-1 text-xs font-semibold rounded border whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#64748B' }}>Hủy</button>
+                                    <button onClick={handleAddLocalVisit} className="inline-block px-3 py-1 text-xs font-semibold rounded whitespace-nowrap shrink-0" style={{ background: '#0891B2', color: '#FFFFFF' }}>Thêm</button>
                                 </div>
                             </div>
                         )}
@@ -527,7 +527,7 @@ export function WeeklyVisitPlannerPanel() {
                                                         <span className="text-[10px] font-mono" style={{ color: '#64748B' }}>
                                                             {v.customer?.code}
                                                         </span>
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: cfg.color, background: cfg.bg }}>
+                                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>
                                                             {cfg.label}
                                                         </span>
                                                     </div>
@@ -621,7 +621,7 @@ export function WeeklyVisitPlannerPanel() {
                             <span className="text-xs font-bold uppercase tracking-wider text-[#B45309]">
                                 Báo cáo tuần đã thăm
                             </span>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2]">
+                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] whitespace-nowrap shrink-0">
                                 {completedVisits.length} lượt
                             </span>
                         </div>

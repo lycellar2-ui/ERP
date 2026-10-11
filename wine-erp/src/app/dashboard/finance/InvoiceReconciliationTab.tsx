@@ -507,7 +507,7 @@ export function InvoiceReconciliationTab() {
                 >
                     <FileText size={14} />
                     <span>Đối Chiếu Theo Đơn Hàng (ERP → VNPT)</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600">
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600 whitespace-nowrap shrink-0">
                         {kpis.totalOrders} đơn
                     </span>
                 </button>
@@ -524,11 +524,11 @@ export function InvoiceReconciliationTab() {
                     <Building2 size={14} />
                     <span>Danh Sách Hóa Đơn VNPT (VNPT → ERP)</span>
                     {vnptKpis.unassignedCount > 0 ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse whitespace-nowrap shrink-0">
                             {vnptKpis.unassignedCount} chưa gán
                         </span>
                     ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600 whitespace-nowrap shrink-0">
                             {vnptKpis.totalInvoices} HĐ
                         </span>
                     )}
@@ -542,7 +542,7 @@ export function InvoiceReconciliationTab() {
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
                         <span>Kiểm Soát & Đối Chiếu Hóa Đơn VAT</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-700 border border-blue-500/30">
+                        <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-700 border border-blue-500/30 whitespace-nowrap shrink-0">
                             VNPT e-Invoice TT78
                         </span>
                     </h3>
@@ -903,7 +903,7 @@ export function InvoiceReconciliationTab() {
 
                                             {/* 3. Legal Entity */}
                                             <td className="py-3 px-2">
-                                                <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}>
+                                                <span className="inline-block text-[10px] px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}>
                                                     {r.legalEntityCode || 'TA'}
                                                 </span>
                                             </td>
@@ -1075,7 +1075,7 @@ export function InvoiceReconciliationTab() {
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
                         <span>Danh Sách Hóa Đơn Điện Tử VNPT</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
+                        <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 whitespace-nowrap shrink-0">
                             Thắng Ân (TA) & Ly's Cellar (LC)
                         </span>
                     </h3>
@@ -1696,11 +1696,11 @@ export function InvoiceReconciliationTab() {
                                         <div className="space-y-0.5">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono font-bold text-[#0891B2]">{order.soNo}</span>
-                                                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-white text-slate-600">
+                                                <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-mono bg-white text-slate-600 whitespace-nowrap shrink-0">
                                                     {new Date(order.orderDate).toLocaleDateString('vi-VN')}
                                                 </span>
                                                 {order.currentInvoiceNo && (
-                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                                    <span className="inline-block text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                         HĐ hiện tại: #{order.currentInvoiceNo}
                                                     </span>
                                                 )}

@@ -298,7 +298,7 @@ export function PipelinePanel() {
                                     <div className="w-2 h-2 rounded-full" style={{ background: stage.color }} />
                                     <span className="text-xs font-bold uppercase tracking-wider" style={{ color: stage.color }}>{stage.label}</span>
                                 </div>
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${stage.color}20`, color: stage.color }}>
+                                <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: `${stage.color}20`, color: stage.color }}>
                                     {stageRows.length}
                                 </span>
                             </div>
@@ -405,7 +405,7 @@ export function PipelinePanel() {
                                         {(() => {
                                             const cfg = getStageConfig(detail.stage)
                                             return cfg ? (
-                                                <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                                                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0" style={{ background: `${cfg.color}20`, color: cfg.color }}>
                                                     {cfg.label}
                                                 </span>
                                             ) : null

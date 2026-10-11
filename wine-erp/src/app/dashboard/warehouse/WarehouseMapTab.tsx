@@ -647,7 +647,7 @@ export function WarehouseMapTab({
                                             </h3>
                                             <span className="text-xs text-slate-500 font-semibold">({zoneLocs.length} vị trí)</span>
                                         </div>
-                                        <span className="text-xs font-extrabold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                                        <span className="inline-block text-xs font-extrabold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                             {formatNumber(totalZoneQty)} chai
                                         </span>
                                     </div>
@@ -819,7 +819,7 @@ export function WarehouseMapTab({
                                         pointerEvents: 'none',
                                         zIndex: 0,
                                     }}>
-                                        <div className="absolute -top-8 left-2 bg-amber-500 text-white px-3 py-0.5 rounded-t-lg text-[10px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm border border-amber-600">
+                                        <div className="absolute -top-8 left-2 bg-amber-500 text-white px-3 py-0.5 rounded-t-lg text-[10px] font-extrabold font-mono inline-flex items-center gap-1.5 shadow-sm border border-amber-600 whitespace-nowrap shrink-0">
                                             <Building2 size={12} className="text-white" />
                                             {mapData.name.toUpperCase()} (MẶT BẰNG KHO)
                                         </div>
@@ -858,7 +858,7 @@ export function WarehouseMapTab({
                                         const zColor = ZONE_COLORS[zone] ?? '#0284C7'
                                         return (
                                             <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX, top: minY - 30, zIndex: 2, pointerEvents: 'none' }}>
-                                                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-extrabold shadow-2xs"
+                                                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-extrabold shadow-2xs whitespace-nowrap shrink-0"
                                                     style={{ background: zColor, color: '#FFFFFF' }}>
                                                     <Layers size={11} />
                                                     ZONE {zone}
@@ -1021,7 +1021,7 @@ export function WarehouseMapTab({
                                     return (
                                         <div key={z} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between shadow-2xs text-xs">
                                             <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 rounded text-[11px] font-extrabold text-white"
+                                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold text-white whitespace-nowrap shrink-0"
                                                     style={{ background: ZONE_COLORS[z] ?? '#0284C7' }}>
                                                     ZONE {z}
                                                 </span>
@@ -1099,7 +1099,7 @@ export function WarehouseMapTab({
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="font-mono font-extrabold text-xs text-amber-700">{p.skuCode}</span>
                                                     {p.vintage && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 font-mono">
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 font-mono whitespace-nowrap shrink-0">
                                                             {p.vintage}
                                                         </span>
                                                     )}

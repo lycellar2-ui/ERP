@@ -337,7 +337,7 @@ export function SampleInventoryTab() {
                                         return (
                                             <tr key={p.id} className="transition-colors hover:bg-slate-50">
                                                 <td className="px-3.5 py-3">
-                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                         {p.sampleCode || p.skuCode || 'N/A'}
                                                     </span>
                                                 </td>
@@ -348,7 +348,7 @@ export function SampleInventoryTab() {
                                                     </div>
                                                 </td>
                                                 <td className="px-3.5 py-3 text-center">
-                                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full border"
+                                                    <span className="inline-block text-[10px] font-extrabold px-2.5 py-1 rounded-full border whitespace-nowrap shrink-0"
                                                         style={{ color: orig.color, background: orig.bg, borderColor: orig.border }}>
                                                         {orig.label}
                                                     </span>

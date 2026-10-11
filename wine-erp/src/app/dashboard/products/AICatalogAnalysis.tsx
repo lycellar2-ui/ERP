@@ -168,7 +168,7 @@ export function AICatalogAnalysis() {
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Wine Types:</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.typeDistribution).map(([type, count]) => (
-                                        <span key={type} className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
+                                        <span key={type} className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(180,83,9,0.08)', color: '#B45309' }}>
                                             {TYPE_LABELS[type] ?? type} ×{count}
                                         </span>
@@ -179,7 +179,7 @@ export function AICatalogAnalysis() {
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Countries:</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.countryDistribution).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([country, count]) => (
-                                        <span key={country} className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
+                                        <span key={country} className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2' }}>
                                             {country} ×{count}
                                         </span>

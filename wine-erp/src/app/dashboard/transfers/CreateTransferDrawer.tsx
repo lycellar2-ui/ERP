@@ -631,7 +631,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isZeroStock ? (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 whitespace-nowrap shrink-0">
                                                                             <AlertCircle size={11} className="text-red-700" /> Tồn = 0 chai
                                                                         </span>
                                                                     ) : (
@@ -655,7 +655,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isOverStock ? (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
                                                                             Vượt tồn ({selectedVintageQty} chai)
                                                                         </span>
                                                                     ) : (
@@ -704,7 +704,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                             <div key={idx} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-3">
                                                 {/* Header: STT + Delete Button */}
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                    <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                                         Mặt hàng #{idx + 1}
                                                     </span>
                                                     <button

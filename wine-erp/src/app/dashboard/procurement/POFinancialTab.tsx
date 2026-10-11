@@ -245,7 +245,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                     <span className="flex items-center gap-1.5">
                         <FileText size={14} className="text-amber-700" /> Bóc Tách Dự Trù 3 Tầng Thuế (Tự Do Điều Chỉnh %)
                     </span>
-                    <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    <span className="inline-block text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded border border-teal-200 whitespace-nowrap shrink-0">
                         Nhập trực tiếp % để mô phỏng
                     </span>
                 </div>
@@ -400,11 +400,11 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                                     <div className="font-bold text-slate-800 flex items-center gap-2">
                                         {ms.title}
                                         {ms.status === 'PAID' ? (
-                                            <span className="px-1.5 py-0.2 text-[10px] bg-emerald-100 text-emerald-800 font-semibold rounded flex items-center gap-1">
+                                            <span className="px-1.5 py-0.2 text-[10px] bg-emerald-100 text-emerald-800 font-semibold rounded inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 <CheckCircle2 size={10} /> Đã hoàn thành
                                             </span>
                                         ) : (
-                                            <span className="px-1.5 py-0.2 text-[10px] bg-slate-200 text-slate-600 font-semibold rounded">
+                                            <span className="inline-block px-1.5 py-0.2 text-[10px] bg-slate-200 text-slate-600 font-semibold rounded whitespace-nowrap shrink-0">
                                                 Dự kiến
                                             </span>
                                         )}

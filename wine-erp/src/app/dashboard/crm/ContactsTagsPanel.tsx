@@ -220,7 +220,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                     <span className="text-xs" style={{ color: '#64748B' }}>Chưa có nhãn</span>
                 )}
                 {tags.map(t => (
-                    <span key={t.id} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-semibold group"
+                    <span key={t.id} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-semibold group whitespace-nowrap shrink-0"
                         style={{ background: `${t.color}20`, color: t.color, border: `1px solid ${t.color}40` }}>
                         {t.tag}
                         <button onClick={() => handleRemove(t.id)}

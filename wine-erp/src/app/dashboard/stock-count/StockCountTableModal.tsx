@@ -188,7 +188,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-md">
+                                <span className="inline-block font-mono text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-md whitespace-nowrap shrink-0">
                                     {detail.sessionNo}
                                 </span>
                                 <span className="text-xs font-bold text-slate-700">
@@ -485,10 +485,10 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                                                 <td className="p-3">
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="font-mono font-bold text-slate-900 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[11px]">
+                                                        <span className="inline-block font-mono font-bold text-slate-900 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[11px] whitespace-nowrap shrink-0">
                                                             {line.skuCode}
                                                         </span>
-                                                        <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded">
+                                                        <span className="inline-block text-[10px] font-mono font-bold text-slate-700 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
                                                             NV: {line.vintage ?? 'NV'}
                                                         </span>
                                                     </div>
@@ -621,7 +621,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                     <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
-                                <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                <span className="inline-block text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
                                     Báo cáo chốt khu vực
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 mt-1">{zoneReport.zoneName}</h3>

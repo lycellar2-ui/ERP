@@ -130,7 +130,7 @@ export function CostingClient({ products }: Props) {
                                                     onMouseLeave={e => !isSelected && (e.currentTarget.style.background = p.isLoss ? 'rgba(185,28,28,0.05)' : 'transparent')}
                                                 >
                                                     <td className="px-3 py-2.5">
-                                                        <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+                                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                             style={{ background: `${typeColor}25`, color: typeColor }}>
                                                             {p.skuCode}
                                                         </span>
@@ -217,7 +217,7 @@ export function CostingClient({ products }: Props) {
                                             <div key={s.channel} className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{CHANNEL_LABEL[s.channel]}</p>
-                                                    <span className="text-xs px-1.5 py-0.5 rounded-full"
+                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                                         {s.margin}% margin
                                                     </span>
@@ -358,7 +358,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{formatVND(r.currentUnitCost)}</td>
                                         <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#B91C1C' : '#15803D' }}>{formatVND(sc.newUnitCost)}</td>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{
+                                            <span className="inline-block text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{
                                                 background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(21,128,61,0.15)',
                                                 color: costUp ? '#B91C1C' : '#15803D',
                                             }}>

@@ -158,7 +158,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                     style={{ background: '#FFFFFF', border: `1px solid ${kpi.progressPct < 70 ? 'rgba(185,28,28,0.4)' : '#E2E8F0'}` }}>
                                     <div className="flex items-start justify-between mb-4">
                                         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{kpi.label}</p>
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                        <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                             style={{ color: cfg.color, background: `${cfg.color}20` }}>{cfg.label}</span>
                                     </div>
                                     <div className="mb-4">
@@ -206,7 +206,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             Cấu hình chỉ tiêu năm {year}
                         </h3>
                         <div className="flex gap-2">
-                            <button onClick={() => setAddOpen(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
+                            <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                                 style={{ background: '#0891B2', color: '#FFFFFF' }}>
                                 <Plus size={12} /> Thêm Chỉ Tiêu
                             </button>

@@ -298,7 +298,7 @@ export function LiveCameraModal({
                             />
                             
                             {/* Live Badge */}
-                            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#0891B2] border border-[#0E7490]/30">
+                            <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-[#0891B2] border border-[#0E7490]/30 whitespace-nowrap shrink-0">
                                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                                 LIVE CAMERA
                             </div>
@@ -326,7 +326,7 @@ export function LiveCameraModal({
                                             {locale === 'en' ? `GPS missing (${gpsError || 'disabled'})` : `Chưa có GPS (${gpsError || 'bị tắt hoặc từ chối'})`}
                                         </span>
                                     </span>
-                                    <span className="shrink-0 text-[11px] underline font-bold ml-1 bg-amber-700/60 px-2 py-0.5 rounded-md">
+                                    <span className="inline-block shrink-0 text-[11px] underline font-bold ml-1 bg-amber-700/60 px-2 py-0.5 rounded-md whitespace-nowrap">
                                         {locale === 'en' ? 'How to enable ➔' : 'Xem cách bật ➔'}
                                     </span>
                                 </button>

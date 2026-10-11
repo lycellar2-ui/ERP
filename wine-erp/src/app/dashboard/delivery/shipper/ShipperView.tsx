@@ -220,7 +220,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                         <p className="font-semibold text-sm truncate" style={{ color: '#0F172A' }}>
                                             {stop.customerName}
                                         </p>
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0"
+                                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 whitespace-nowrap"
                                             style={{ color: cfg.color, background: cfg.bg }}>
                                             {cfg.label}
                                         </span>

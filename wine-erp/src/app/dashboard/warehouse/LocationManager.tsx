@@ -107,7 +107,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => refresh()} className="text-xs px-3 py-2 rounded-lg font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 shadow-2xs">
+                    <button onClick={() => refresh()} className="text-xs px-3 py-2 rounded-lg font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer inline-flex items-center gap-1.5 shadow-2xs whitespace-nowrap shrink-0">
                         <RefreshCw size={13} /> Cập Nhật Heatmap
                     </button>
                     <button onClick={() => setShowCreate(!showCreate)}

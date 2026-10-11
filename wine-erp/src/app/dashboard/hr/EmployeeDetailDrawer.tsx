@@ -95,7 +95,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-lg font-bold text-slate-900">{employee.fullName}</h2>
-                                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#0E7490]/15 text-[#0891B2] border border-[#0E7490]/30">
+                                    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#0E7490]/15 text-[#0891B2] border border-[#0E7490]/30 whitespace-nowrap shrink-0">
                                         {employee.code}
                                     </span>
                                 </div>
@@ -117,7 +117,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                          employee.status === 'ON_LEAVE' ? 'Nghỉ chế độ' : 'Đã nghỉ việc'}
                                     </span>
                                     {employee.user && (
-                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-[#0891B2] border border-teal-500/30">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-[#0891B2] border border-teal-500/30 whitespace-nowrap shrink-0">
                                             <Shield className="w-3 h-3" />
                                             Đã gắn User ERP
                                         </span>
@@ -342,12 +342,12 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Hợp Đồng Lao Động Hiện Tại</p>
                                         {contractStatus === 'EXPIRING_SOON' && (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                 Hết hạn sau {contractDaysLeft} ngày
                                             </span>
                                         )}
                                         {contractStatus === 'EXPIRED' && (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 whitespace-nowrap shrink-0">
                                                 Đã hết hạn
                                             </span>
                                         )}
@@ -392,14 +392,14 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                         <div className="p-3 rounded-lg bg-white border border-slate-200 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <p className="font-bold text-slate-900">{employee.user.name}</p>
-                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">
                                                     {employee.user.status}
                                                 </span>
                                             </div>
                                             <p className="text-slate-500 text-xs">{employee.user.email}</p>
                                             <div className="flex flex-wrap gap-1 pt-1">
                                                 {employee.user.roles?.map((r: any) => (
-                                                    <span key={r.role?.id || r} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/15 text-[#0891B2]">
+                                                    <span key={r.role?.id || r} className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/15 text-[#0891B2] whitespace-nowrap shrink-0">
                                                         {r.role?.name || r}
                                                     </span>
                                                 ))}
@@ -521,16 +521,16 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                                                 <h5 className="font-bold text-slate-900 text-xs truncate max-w-[260px]">
                                                                     {doc.title}
                                                                 </h5>
-                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/10 text-[#0891B2]">
+                                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0E7490]/10 text-[#0891B2] whitespace-nowrap shrink-0">
                                                                     {DOC_TYPE_LABELS[doc.docType] || doc.docType}
                                                                 </span>
                                                                 {isDocExpired && (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 whitespace-nowrap shrink-0">
                                                                         Đã hết hạn
                                                                     </span>
                                                                 )}
                                                                 {isDocExpiring && (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                                         Sắp hết hạn
                                                                     </span>
                                                                 )}

@@ -435,7 +435,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             <h2 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                 Phiếu Nhập Kho (Goods Receipt)
                             </h2>
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold"
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold whitespace-nowrap shrink-0"
                                 style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                 {rows.length} phiếu
                             </span>
@@ -1062,11 +1062,11 @@ export function GoodsReceiptTab({ warehouses }: {
                                         {detailData.lines.map(l => (
                                             <div key={l.id} className="p-3.5 rounded-lg space-y-2 border border-slate-200 bg-white shadow-2xs">
                                                 <div className="flex items-center justify-between gap-1.5">
-                                                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
+                                                    <span className="inline-block font-mono text-xs font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap shrink-0">
                                                         {l.skuCode}
                                                     </span>
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                                        <span className="inline-block text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                             {l.vintage ? `VTG ${l.vintage}` : 'NV'}
                                                         </span>
                                                         {l.variance !== 0 && (
@@ -1139,7 +1139,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                                 {l.unitsPerCase || 6} chai/thùng
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#B45309' }}>
-                                                                {l.vintage ? `VTG ${l.vintage}` : <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">NV</span>}
+                                                                {l.vintage ? `VTG ${l.vintage}` : <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">NV</span>}
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#475569' }}>
                                                                 {l.lotNo}
@@ -1412,7 +1412,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                             {pol.productName || 'Sản phẩm ' + pol.skuCode}
                                                         </p>
                                                         {pol.isFoc && (
-                                                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                                            <span className="inline-block text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                                 FOC {pol.focNote ? `(${pol.focNote})` : ''}
                                                             </span>
                                                         )}

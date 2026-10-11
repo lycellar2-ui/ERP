@@ -151,7 +151,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                         <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-lg group" style={{ background: '#FFFFFF' }}>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] uppercase px-1.5 py-0.5 rounded font-bold" style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
+                                    <span className="inline-block text-[10px] uppercase px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
                                         {COST_CATEGORIES.find(cc => cc.key === c.category)?.label ?? c.category}
                                     </span>
                                     {c.paidTo && <span className="text-[10px]" style={{ color: '#64748B' }}>→ {c.paidTo}</span>}
@@ -194,8 +194,8 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                             className="px-2 py-1.5 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <div className="flex justify-end gap-2">
-                        <button onClick={() => setAdding(false)} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
-                        <button onClick={handleAdd} disabled={saving} className="px-3 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
+                        <button onClick={() => setAdding(false)} className="inline-block px-3 py-1.5 text-xs rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>Huỷ</button>
+                        <button onClick={handleAdd} disabled={saving} className="px-3 py-1.5 text-xs rounded font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0"
                             style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Thêm
                         </button>
@@ -334,7 +334,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                 <option value="DRAFT">Nháp</option><option value="REGISTERED">Đã đăng ký</option><option value="INSPECTING">Đang giám định</option><option value="CLEARED">Thông quan</option><option value="RELEASED">Giải phóng</option>
             </select></div>
             <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
+                <button onClick={() => setEditing(false)} className="inline-block px-3 py-1.5 text-xs rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>Huỷ</button>
                 <button onClick={handleSave} disabled={saving} className="px-4 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
                     style={{ background: '#D97706', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={12} className="animate-spin" /> : <FileCheck size={12} />} Lưu HQ
@@ -415,7 +415,7 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
                 </select></div>
             </div>
             <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
+                <button onClick={() => setEditing(false)} className="inline-block px-3 py-1.5 text-xs rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>Huỷ</button>
                 <button onClick={handleSave} disabled={saving} className="px-4 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
                     style={{ background: '#1D4ED8', color: '#fff' }}>
                     {saving ? <Loader2 size={12} className="animate-spin" /> : <Shield size={12} />} Lưu BH
@@ -543,7 +543,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => { setEditingDoc(null); setForm({}) }} className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Huỷ</button>
+                                        <button onClick={() => { setEditingDoc(null); setForm({}) }} className="inline-block px-3 py-1.5 text-xs rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>Huỷ</button>
                                         <button onClick={() => handleActivate(item.docId!)} disabled={saving}
                                             className="px-3 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
                                             style={{ background: '#15803D', color: '#fff' }}>
@@ -612,7 +612,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                             </h3>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-xs" style={{ color: '#64748B' }}>{data?.poNo}</span>
-                                {statusCfg && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>{statusCfg.label}</span>}
+                                {statusCfg && <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>{statusCfg.label}</span>}
                             </div>
                         </div>
                     </div>

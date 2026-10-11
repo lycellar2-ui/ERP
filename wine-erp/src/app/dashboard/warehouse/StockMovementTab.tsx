@@ -510,7 +510,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                 onClick={() => handleDrillDown(item)}>
                                                 <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">{idx + 1}</td>
                                                 <td className="px-3.5 py-3">
-                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                         {item.skuCode}
                                                     </span>
                                                 </td>
@@ -617,7 +617,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                                            <span className="inline-block font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                                 {item.skuCode}
                                             </span>
                                             <h4 className="text-xs font-black text-slate-900 mt-1">{item.productName}</h4>
@@ -674,7 +674,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                         {selectedProduct.skuCode}
                                     </span>
                                     <h2 className="text-base font-extrabold text-slate-900">{selectedProduct.productName}</h2>
@@ -830,7 +830,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     {stockLocations.map((loc: any, i: number) => (
                                         <div key={i} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1.5">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                     {loc.locationCode}
                                                 </span>
                                                 <span className="text-xs font-bold font-mono text-emerald-600">

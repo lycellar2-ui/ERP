@@ -491,7 +491,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                         </div>
                                     </Td>
                                     <Td>
-                                        <span className="text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary">
+                                        <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary whitespace-nowrap shrink-0">
                                             {TYPE_LABEL[row.type] ?? row.type}
                                         </span>
                                     </Td>
@@ -606,7 +606,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                             <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted">
                                                                 Tài liệu đính kèm ({utilization.documents?.length || 0})
                                                             </p>
-                                                            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30 hover:bg-lys-primary/15 transition-colors">
+                                                            <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30 hover:bg-lys-primary/15 transition-colors whitespace-nowrap shrink-0">
                                                                 {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                                 <span>{uploadingDoc ? 'Đang tải...' : 'Upload File'}</span>
                                                                 <input

@@ -39,7 +39,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 function TypeBadge({ type }: { type: string }) {
     const cfg = SUPPLIER_TYPE[type] ?? { label: type, color: '#475569', bg: 'rgba(168,152,128,0.12)' }
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
 }
 
 function StatusDot({ status }: { status: string }) {
@@ -698,7 +698,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className="text-xs font-mono font-bold" style={{ color: '#0E7490' }}>{row.code}</span>
-                                                    {row.taxId && <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-mono text-slate-600">MST: {row.taxId}</span>}
+                                                    {row.taxId && <span className="inline-block text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-mono text-slate-600 whitespace-nowrap shrink-0">MST: {row.taxId}</span>}
                                                 </div>
                                                 {row.bankAccountInfo && (
                                                     <p className="text-[11px] mt-1 text-slate-500 truncate max-w-xs font-mono" title={row.bankAccountInfo}>
@@ -716,7 +716,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                             </td>
                                             <td className="px-4 py-3">
                                                 {isDomestic ? (
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                                    <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 whitespace-nowrap shrink-0">
                                                         Nội địa
                                                     </span>
                                                 ) : (
@@ -827,7 +827,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         duplicates.map((dup, i) => (
                             <div key={i} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid rgba(180,83,9,0.3)' }}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full" style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
+                                    <span className="inline-block text-xs font-semibold uppercase px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                                         {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
                                     </span>
                                     <span className="text-xs font-bold" style={{ color: '#B45309' }}>{dup.similarity}% giống</span>

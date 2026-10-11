@@ -94,7 +94,7 @@ export function TodayLiveFeed({
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                         </span>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono border border-emerald-200">
+                        <span className="inline-block text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono border border-emerald-200 whitespace-nowrap shrink-0">
                             {locale === 'en' ? 'LIVE FIELD FEED' : 'BẢNG TIN THỰC ĐỊA HÔM NAY'}
                         </span>
                     </div>
@@ -110,18 +110,18 @@ export function TodayLiveFeed({
 
                 {/* Counter Badges */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <div className="px-3 py-1.5 rounded-md bg-slate-50 border border-slate-200 text-xs">
+                    <div className="inline-block px-3 py-1.5 rounded-md bg-slate-50 border border-slate-200 text-xs whitespace-nowrap shrink-0">
                         <span className="text-slate-500 mr-1">{locale === 'en' ? 'Check-ins:' : 'Lượt đi:'}</span>
                         <strong className="font-mono text-slate-900">{totalVisits}</strong>
                     </div>
 
-                    <div className="px-3 py-1.5 rounded-md bg-teal-50 border border-teal-200/80 text-xs text-teal-800">
+                    <div className="inline-block px-3 py-1.5 rounded-md bg-teal-50 border border-teal-200/80 text-xs text-teal-800 whitespace-nowrap shrink-0">
                         <span className="text-teal-600 mr-1">{locale === 'en' ? 'Reported:' : 'Đã báo cáo:'}</span>
                         <strong className="font-mono text-teal-900">{withNotesCount}</strong>
                     </div>
 
                     {withoutNotesCount > 0 && (
-                        <div className="px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200/80 text-xs text-amber-800">
+                        <div className="inline-block px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200/80 text-xs text-amber-800 whitespace-nowrap shrink-0">
                             <span className="text-amber-600 mr-1">{locale === 'en' ? 'Pending:' : 'Chưa báo cáo:'}</span>
                             <strong className="font-mono text-amber-900">{withoutNotesCount}</strong>
                         </div>
@@ -249,11 +249,11 @@ export function TodayLiveFeed({
 
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {v.isUnplanned ? (
-                                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 font-mono">
+                                                <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 font-mono whitespace-nowrap shrink-0">
                                                     {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                 </span>
                                             ) : (
-                                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                                                <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 font-mono whitespace-nowrap shrink-0">
                                                     {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
                                                 </span>
                                             )}
@@ -272,7 +272,7 @@ export function TodayLiveFeed({
                                                 </span>
                                             )}
                                             {v.customerChannel && (
-                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono">
+                                                <span className="inline-block text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono whitespace-nowrap shrink-0">
                                                     {v.customerChannel}
                                                 </span>
                                             )}

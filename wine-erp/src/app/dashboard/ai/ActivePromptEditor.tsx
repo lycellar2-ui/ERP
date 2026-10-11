@@ -124,7 +124,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                     <Icon size={14} style={{ color: meta.color }} />
                                     <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{meta.label}</span>
                                     {template._count && template._count.runs > 0 && (
-                                        <span className="text-xs px-1.5 py-0.5 rounded"
+                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
                                             <Zap size={8} className="inline mr-0.5" />{template._count.runs} runs
                                         </span>

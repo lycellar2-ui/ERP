@@ -103,7 +103,7 @@ export function SignaturePad({ onEnd }: SignaturePadProps) {
                 />
             </div>
             <div className="flex justify-end">
-                <button type="button" onClick={clear} className="text-xs px-2 py-1 rounded hover:bg-white/10" style={{ color: '#64748B' }}>
+                <button type="button" onClick={clear} className="inline-block text-xs px-2 py-1 rounded hover:bg-white/10 whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>
                     Xóa Chữ Ký
                 </button>
             </div>

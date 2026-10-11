@@ -399,7 +399,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>
                                 File Đính Kèm ({files?.length ?? 0})
                             </p>
-                            <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
+                            <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
                                 style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                 <UploadCloud size={12} /> Upload
                                 <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
@@ -620,7 +620,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.docNo}</span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                                 style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2' }}>
                                                 {CATEGORY_ICONS[row.category]} {REG_DOC_CATEGORY_LABELS[row.category] ?? row.category}
                                             </span>
@@ -650,12 +650,12 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                             )}
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>
+                                            <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>
                                                 {row.fileCount}
                                             </span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                                 style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                                         </td>
                                     </tr>

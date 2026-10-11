@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 30 module (132 models, 85 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (143 models, 91 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -974,4 +974,27 @@ CREATE INDEX payment_requests_requested_by_idx ON payment_requests(requestedById
 
 -- Ngân sách chi phí theo năm và kỳ
 CREATE INDEX expense_budgets_lookup_idx ON expense_budgets(categoryId, entityId, year, periodType);
+
+-- Bank Reconciliation & Transactions
+CREATE INDEX bank_transactions_txnDate_idx ON bank_transactions(txnDate);
+CREATE INDEX bank_transactions_status_idx ON bank_transactions(status);
+CREATE INDEX bank_transactions_bankAccountId_idx ON bank_transactions(bankAccountId);
+CREATE INDEX bank_transaction_matches_bankTxnId_idx ON bank_transaction_matches(bankTxnId);
+CREATE INDEX bank_transaction_matches_invoiceId_idx ON bank_transaction_matches(invoiceId);
 ```
+
+### E. Bank Reconciliation & AR Payment (Phân hệ Đối soát Ngân hàng)
+```
+bank_accounts (Tài khoản ngân hàng công ty)
+  ├── 1:N ──> bank_statement_batches (Đợt import sao kê Excel/CSV)
+  │             └── 1:N ──> bank_transactions (Dòng giao dịch sao kê thô)
+  │                           ├── 1:N ──> bank_transaction_matches (Phân bổ hóa đơn)
+  │                           │             ├── N:1 ──> ar_invoices (Hóa đơn công nợ)
+  │                           │             └── 1:1 ──> ar_payments (Phiếu thu ERP)
+  │                           └── N:1 ──> customers (Khách hàng nhận diện được)
+  └── N:1 ──> legal_entities (Pháp nhân sở hữu tài khoản)
+
+bank_reconciliation_rules (Quy tắc học ghi nhớ từ khóa nội dung CK -> Khách hàng)
+  └── N:1 ──> customers
+```
+

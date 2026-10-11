@@ -206,14 +206,14 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
 
                             {/* Primary badge */}
                             {item.isPrimary && (
-                                <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
+                                <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold whitespace-nowrap shrink-0"
                                     style={{ background: 'rgba(8,145,178,0.9)', color: '#0F172A' }}>
                                     <Star size={8} /> Chính
                                 </div>
                             )}
 
                             {/* Type badge */}
-                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-semibold"
+                            <div className="inline-block absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap shrink-0"
                                 style={{ background: 'rgba(15, 23, 42, 0.45)', color: '#475569' }}>
                                 {MEDIA_TYPE_LABELS[item.mediaType]?.emoji ?? '📸'}
                             </div>

@@ -129,7 +129,7 @@ export function QRCodeClient({ initialData, stats }: {
                                     {qr.scanCount}
                                 </td>
                                 <td className="px-3 py-2.5">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{
+                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
                                         ...(qr.scanCount === 0
                                             ? { color: '#64748B', background: 'rgba(100,116,139,0.15)' }
                                             : qr.scanCount === 1

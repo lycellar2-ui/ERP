@@ -158,7 +158,7 @@ export default function DeclarationsPage() {
                         <p className="text-3xl mb-3">{item.icon}</p>
                         <h3 className="font-semibold mb-1" style={{ color: '#0F172A' }}>{item.title}</h3>
                         <p className="text-xs" style={{ color: '#64748B' }}>{item.desc}</p>
-                        <button className="mt-4 text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
+                        <button className="inline-block mt-4 text-xs font-semibold px-3 py-1.5 rounded-md transition-all whitespace-nowrap shrink-0"
                             style={{ background: `${item.color}20`, color: item.color, border: `1px solid ${item.color}40` }}>
                             Tạo Nhanh →
                         </button>
@@ -215,7 +215,7 @@ export default function DeclarationsPage() {
                                         {row.periodMonth ? `T${row.periodMonth}/${row.periodYear}` : row.periodYear}
                                     </td>
                                     <td className="px-3 py-2.5">
-                                        <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: st.bg, color: st.color }}>
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: st.bg, color: st.color }}>
                                             {st.label}
                                         </span>
                                     </td>
@@ -370,7 +370,7 @@ export default function DeclarationsPage() {
                                                                     <td className="px-2 py-1.5 text-[10px] truncate max-w-[100px]" style={{ color: '#0F172A' }}>{line.productName}</td>
                                                                     <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#475569' }}>{line.abvPercent}%</td>
                                                                     <td className="px-2 py-1.5">
-                                                                        <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{
+                                                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{
                                                                             background: line.sctRate === 65 ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)',
                                                                             color: line.sctRate === 65 ? '#C04E65' : '#B45309',
                                                                         }}>{line.sctRate}%</span>
@@ -420,7 +420,7 @@ export default function DeclarationsPage() {
                                     <div>
                                         <div className="flex items-center justify-between mb-3">
                                             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#475569' }}>Tài Liệu Tờ Khai</p>
-                                            <label className="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold"
+                                            <label className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold whitespace-nowrap shrink-0"
                                                 style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
                                                 {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                 Upload PDF

@@ -102,7 +102,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                     <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
-                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>{error}</div>}
+                {error && <div className="inline-block text-xs px-3 py-2 rounded-lg whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>{error}</div>}
 
                 {[
                     { key: 'code', label: t.codeLabel, placeholder: t.codePlaceholder },
@@ -140,7 +140,7 @@ function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
     const color = days > 180 ? '#B91C1C' : days > 90 ? '#B47816' : '#64748B'
     const suffix = WAREHOUSE_I18N[locale].table.daysSuffix
     return (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
             style={{ color, background: `${color}15` }}>
             {days}{suffix}
         </span>
@@ -227,18 +227,18 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block" style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
                                                 {lot.vintage}
                                             </span>
                                         ) : (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200">NV</span>
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0">NV</span>
                                         )}
                                     </td>
                                     <td className="px-3 py-1.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                                         {lot.lotNo}
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
-                                        <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono" style={{ background: '#F1F5F9', color: '#334155' }}>
+                                        <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-md font-mono whitespace-nowrap shrink-0" style={{ background: '#F1F5F9', color: '#334155' }}>
                                             {lot.locationCode}
                                         </span>
                                     </td>
@@ -250,14 +250,14 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     {/* Cột 1: Tồn Sổ Sách */}
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md inline-block">
+                                        <span className="text-xs font-bold font-mono text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md inline-block whitespace-nowrap shrink-0">
                                             {bookQty.toLocaleString()}
                                         </span>
                                     </td>
                                     {/* Cột 2: Tồn On-hand & Cảnh báo lệch */}
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         <div className="flex flex-col items-center">
-                                            <span className="text-xs font-black font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md inline-block">
+                                            <span className="text-xs font-black font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md inline-block whitespace-nowrap shrink-0">
                                                 {onHandQty.toLocaleString()}
                                             </span>
                                             {variance !== 0 && (
@@ -325,10 +325,10 @@ function StockTable({ lots, sortConfig, onSort }: {
                     return (
                         <div key={lot.id} className="p-4 rounded-lg space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                                <span className="inline-block text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                     {lot.lotNo}
                                 </span>
-                                <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200">
+                                <span className="inline-block text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200 whitespace-nowrap shrink-0">
                                     {lot.locationCode}
                                 </span>
                             </div>
@@ -371,7 +371,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                             </div>
                             <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                                 <span className="text-slate-500 font-mono">{formatDateLocale(lot.receivedDate)}</span>
-                                <span className="font-bold px-2 py-0.5 rounded-full text-[10px] uppercase border"
+                                <span className="inline-block font-bold px-2 py-0.5 rounded-full text-[10px] uppercase border whitespace-nowrap shrink-0"
                                     style={{ color: statusCfg.color, background: `${statusCfg.color}15`, borderColor: `${statusCfg.color}30` }}>
                                     {statusCfg.label}
                                 </span>
@@ -405,13 +405,13 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                 <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
                     <ShieldAlert size={16} style={{ color: '#B91C1C' }} /> {t.title}
                     {lots.length > 0 && (
-                        <span className="ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold"
+                        <span className="inline-block ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                             style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
                             {t.lotsCount(lots.length)}
                         </span>
                     )}
                 </h3>
-                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100 cursor-pointer"
+                <button onClick={onRefresh} className="inline-block text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100 cursor-pointer whitespace-nowrap shrink-0"
                     style={{ border: '1px solid #CBD5E1', color: '#475569', background: '#F1F5F9' }}>
                     {t.refresh}
                 </button>
@@ -467,10 +467,10 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                         {lots.map((lot: any) => (
                             <div key={lot.id} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                    <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                         {t.thLot}: {lot.lotNo}
                                     </span>
-                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                    <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                         {lot.location?.locationCode || t.unassigned}
                                     </span>
                                 </div>
@@ -1024,7 +1024,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <BellRing size={14} className="text-emerald-600 animate-pulse shrink-0" />
                                     <span>{t.notifications.titleOn}</span>
                                     {pendingDOCount > 0 && (
-                                        <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-extrabold ml-0.5">
+                                        <span className="inline-block bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-extrabold ml-0.5 whitespace-nowrap shrink-0">
                                             {pendingDOCount}
                                         </span>
                                     )}
@@ -1100,7 +1100,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
                                 {t.menuTitle}
                             </p>
-                            <span className="text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full">
+                            <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                 {t.modulesCount(wmsFeatureModules.length)}
                             </span>
                         </div>
@@ -1120,7 +1120,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                 <Icon size={16} />
                                             </div>
                                             {mod.badge !== undefined && mod.badge > 0 && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white">
+                                                <span className="inline-block text-[9px] px-1.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white whitespace-nowrap shrink-0">
                                                     {mod.badge}
                                                 </span>
                                             )}
@@ -1168,7 +1168,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                     <Icon size={20} />
                                                 </div>
                                                 {mod.badge !== undefined && mod.badge > 0 && (
-                                                    <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white shadow-2xs">
+                                                    <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white shadow-2xs whitespace-nowrap shrink-0">
                                                         {t.modules.quarantine.badgeAlerts(mod.badge)}
                                                     </span>
                                                 )}
@@ -1225,7 +1225,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <Icon size={14} style={{ color: isActive ? undefined : mod.color }} />
                                     <span>{mod.title}</span>
                                     {mod.badge !== undefined && mod.badge > 0 && (
-                                        <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white">
+                                        <span className="inline-block ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white whitespace-nowrap shrink-0">
                                             {mod.badge}
                                         </span>
                                     )}
@@ -1308,25 +1308,25 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                                     return (
                                         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0" style={{ color: '#B47816', background: 'rgba(180,83,9,0.15)' }}>
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0 whitespace-nowrap" style={{ color: '#B47816', background: 'rgba(180,83,9,0.15)' }}>
                                                 {t.lotsCount(filteredLots.length)}
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0 whitespace-nowrap">
                                                 {t.table.tagBook} <strong>{totalBookQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 shrink-0">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 shrink-0 whitespace-nowrap">
                                                 {t.table.tagOnHand} <strong>{totalOnHandQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
-                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 shrink-0">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 shrink-0 whitespace-nowrap">
                                                 {t.table.tagAvailable} <strong>{totalAvailableQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                             </span>
                                             {totalReservedQty > 0 && (
-                                                <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 shrink-0">
+                                                <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 shrink-0 whitespace-nowrap">
                                                     {t.table.tagReserved} <strong>{totalReservedQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
                                                 </span>
                                             )}
                                             {totalVarianceQty !== 0 && (
-                                                <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 ${
+                                                <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 whitespace-nowrap ${
                                                     totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
                                                 }`}>
                                                     {t.table.tagVariance} {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}{t.bottlesUnit.charAt(0)}
@@ -1416,7 +1416,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             )}
 
             {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS - DESIGN SYSTEM THEME */}
-            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-2 z-40 shadow-2xl">
+            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 z-40 shadow-2xl">
                 <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
                     <button
                         onClick={() => setViewMode('grid')}

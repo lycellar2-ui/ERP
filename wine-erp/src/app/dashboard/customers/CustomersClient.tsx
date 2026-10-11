@@ -87,13 +87,13 @@ function CustomerMobileCard({
             {/* Row 1: Code, Badges, Status */}
             <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-lys-teal-strong">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-lys-teal-strong whitespace-nowrap shrink-0">
                         {row.code}
                     </span>
                     <TypeBadge type={row.channel} />
                     {row.entityType === 'COMPANY' || row.childrenCount > 0 ? (
                         <>
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">
                                 <Building2 size={11} className="text-slate-600" /> Công ty Mẹ
                             </span>
                             <button
@@ -105,7 +105,7 @@ function CustomerMobileCard({
                                     }
                                 }}
                                 className={cn(
-                                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold",
+                                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap shrink-0",
                                     row.childrenCount > 0
                                         ? "bg-cyan-50 text-lys-teal-strong border border-cyan-200 active:bg-cyan-100 cursor-pointer"
                                         : "bg-slate-50 text-slate-400 border border-slate-200"
@@ -116,7 +116,7 @@ function CustomerMobileCard({
                             </button>
                         </>
                     ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 whitespace-nowrap shrink-0">
                             <UtensilsCrossed size={11} className="text-emerald-700" /> Nhà hàng
                         </span>
                     )}
@@ -135,7 +135,7 @@ function CustomerMobileCard({
                     </p>
                 )}
                 {row.brandGroup && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold mt-1 text-slate-700 bg-slate-50 border border-slate-200">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold mt-1 text-slate-700 bg-slate-50 border border-slate-200 whitespace-nowrap shrink-0">
                         ✨ Chuỗi: {row.brandGroup}
                     </span>
                 )}
@@ -970,7 +970,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     }}
                                                                 >
                                                                     <div className="flex items-center gap-2 truncate">
-                                                                        <span className="font-mono text-lys-teal-strong bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200">
+                                                                        <span className="inline-block font-mono text-lys-teal-strong bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200 whitespace-nowrap shrink-0">
                                                                             {c.code}
                                                                         </span>
                                                                         <span className="truncate">{c.name}</span>
@@ -981,7 +981,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                         )}
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
-                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 flex items-center gap-1">
+                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 inline-flex items-center gap-1 whitespace-nowrap">
                                                                             <Building2 size={10} /> Công ty Mẹ
                                                                         </span>
                                                                     )}
@@ -1047,7 +1047,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         Khách hàng con trực thuộc ({loadedChildren.length})
                                                     </span>
                                                 </div>
-                                                <span className="text-[11px] font-semibold text-lys-teal-strong bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                                <span className="inline-block text-[11px] font-semibold text-lys-teal-strong bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 whitespace-nowrap shrink-0">
                                                     {loadedChildren.length} cơ sở
                                                 </span>
                                             </div>
@@ -1056,7 +1056,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     {loadedChildren.map(child => (
                                                         <div key={child.id} className="p-2 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
                                                             <div className="flex items-center gap-2 min-w-0">
-                                                                <span className="font-mono font-semibold text-lys-teal-strong px-1.5 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-[10px]">
+                                                                <span className="inline-block font-mono font-semibold text-lys-teal-strong px-1.5 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-[10px] whitespace-nowrap shrink-0">
                                                                     {child.code}
                                                                 </span>
                                                                 <span className="truncate font-medium text-slate-800" title={child.name}>{child.name}</span>
@@ -1118,7 +1118,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     {form.parentId && (() => {
                                         const parent = parentCandidates.find(p => p.id === form.parentId)
                                         return (
-                                            <span className="text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">
+                                            <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
                                                 ℹ️ {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
                                             </span>
                                         )
@@ -1160,7 +1160,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             const parent = parentCandidates.find(p => p.id === form.parentId)
                                             if (parent?.taxId && !form.taxId) {
                                                 return (
-                                                    <div className="mt-1 flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                                                    <div className="mt-1 inline-flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                         <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
                                                         <button
                                                             type="button"
@@ -1179,7 +1179,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             }
                                             if (parent?.taxId && form.taxId === parent.taxId) {
                                                 return (
-                                                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200">
+                                                    <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 whitespace-nowrap shrink-0">
                                                         <span>✅ Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
                                                     </div>
                                                 )

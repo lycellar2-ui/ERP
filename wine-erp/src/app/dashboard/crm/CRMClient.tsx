@@ -69,16 +69,16 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                        <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
+                        <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                             style={{ color: typeCfg.color, background: typeCfg.bg }}>{typeCfg.label}</span>
                         {tier !== 'BRONZE' && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                            <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                 style={{ color: tierCfg.color, background: `${tierCfg.color}15` }}>
                                 {tierCfg.icon} {tierCfg.label}
                             </span>
                         )}
                         {row.openComplaints > 0 && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
+                            <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                 style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
                                 ⚠ {row.openComplaints} KN
                             </span>
@@ -504,7 +504,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {selectedCustomer.code} · {selectedCustomer.paymentTerm}
                                             </p>
                                         </div>
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D' }}>
                                             {selectedCustomer.status}
                                         </span>
@@ -631,7 +631,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                             <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
                                                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
                                                                 <span className="text-xs" style={{ color: '#475569' }}>{formatDate(o.date)}</span>
-                                                                <span className="text-xs px-1.5 py-0.5 rounded" style={{
+                                                                <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{
                                                                     background: o.status === 'PAID' ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)',
                                                                     color: o.status === 'PAID' ? '#15803D' : '#475569',
                                                                 }}>{o.status}</span>
@@ -652,7 +652,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <div key={inv.invoiceNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF' }}>
                                                                     <span className="text-xs font-bold" style={{ color: '#B45309' }}>{inv.invoiceNo}</span>
                                                                     <span className="text-xs" style={{ color: '#475569' }}>{formatDate(inv.date)}</span>
-                                                                    <span className="text-xs px-1.5 py-0.5 rounded" style={{
+                                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{
                                                                         background: inv.status === 'PAID' ? 'rgba(21,128,61,0.15)' :
                                                                             inv.status === 'OVERDUE' ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
                                                                         color: inv.status === 'PAID' ? '#15803D' :

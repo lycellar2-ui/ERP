@@ -187,7 +187,7 @@ function SearchableCustomerCombobox({
                                             <span className="font-semibold">{c.name}</span>
                                         </div>
                                         {c.channel && (
-                                            <span className="text-[10px] uppercase bg-slate-200 px-2 py-0.5 rounded font-mono text-slate-600">
+                                            <span className="inline-block text-[10px] uppercase bg-slate-200 px-2 py-0.5 rounded font-mono text-slate-600 whitespace-nowrap shrink-0">
                                                 {c.channel}
                                             </span>
                                         )}
@@ -446,7 +446,7 @@ function PhotoViewerModal({
                         className="max-w-full max-h-[72vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
                     />
                     {loadingFullPhoto && (
-                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-amber-500/40 shadow-xl animate-pulse">
+                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold inline-flex items-center gap-2 border border-amber-500/40 shadow-xl animate-pulse whitespace-nowrap shrink-0">
                             <RefreshCw size={13} className="animate-spin text-amber-700" />
                             <span>{locale === 'en' ? 'Loading original photo...' : 'Đang tải ảnh gốc...'}</span>
                         </div>
@@ -1498,15 +1498,15 @@ export function SalesVisitsClient({
                                 {t.header.title}
                             </h2>
                             {isCeoController ? (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 uppercase tracking-wider flex items-center gap-1">
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                     <ShieldCheck size={11} /> {locale === 'en' ? 'CEO Oversight Board' : 'Ban Giám Đốc • Kiểm Soát'}
                                 </span>
                             ) : isCboOrExecutiveRep ? (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 uppercase tracking-wider flex items-center gap-1">
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                     <ShieldCheck size={11} /> {locale === 'en' ? 'CBO View' : 'CBO • Giám Sát'}
                                 </span>
                             ) : (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 uppercase tracking-wider">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 uppercase tracking-wider inline-block whitespace-nowrap shrink-0">
                                     {t.header.managerBadge}
                                 </span>
                             )}
@@ -1703,7 +1703,7 @@ export function SalesVisitsClient({
                                                     <User size={13} className="text-teal-600" />
                                                     <span>{item.salespersonName}</span>
                                                     {item.isCbo && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 tracking-wider">
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-300 tracking-wider whitespace-nowrap shrink-0">
                                                             {locale === 'en' ? 'CBO • CEO DIRECT OVERSIGHT' : 'CBO • CEO TRỰC TIẾP KIỂM SOÁT'}
                                                         </span>
                                                     )}
@@ -1787,7 +1787,7 @@ export function SalesVisitsClient({
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
                                 <div>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-teal-500/20 text-teal-600 uppercase">
+                                        <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black bg-teal-500/20 text-teal-600 uppercase whitespace-nowrap shrink-0">
                                             {locale === 'en' ? 'Itinerary Details' : 'Chi Tiết Lịch Trình'}
                                         </span>
                                         <span className="text-xs text-slate-400 font-mono">
@@ -1887,7 +1887,7 @@ export function SalesVisitsClient({
                                                                         {v.visitNo}
                                                                     </span>
                                                                     {v.isUnplanned && (
-                                                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600">
+                                                                        <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600 whitespace-nowrap shrink-0">
                                                                             {locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}
                                                                         </span>
                                                                     )}
@@ -2175,7 +2175,7 @@ export function SalesVisitsClient({
                             <MapPin size={13} className={activeTab === 'CHECKIN' ? 'text-teal-600' : ''} />
                             <span>{t.tabs.today}</span>
                             {todayPlanVisits.length > 0 && (
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 font-mono font-bold">
+                                <span className="inline-block px-1.5 py-0.2 rounded-full text-[10px] bg-teal-500/20 text-teal-600 font-mono font-bold whitespace-nowrap shrink-0">
                                     {todayPlanVisits.length}
                                 </span>
                             )}
@@ -2192,7 +2192,7 @@ export function SalesVisitsClient({
                         >
                             <Calendar size={13} className={activeTab === 'PLANNING' ? 'text-teal-600' : ''} />
                             <span>{t.tabs.planning}</span>
-                            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-600 font-mono font-bold">
+                            <span className="inline-block px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-600 font-mono font-bold whitespace-nowrap shrink-0">
                                 {planVisits.length}
                             </span>
                         </button>
@@ -2295,7 +2295,7 @@ export function SalesVisitsClient({
                                                 ? (locale === 'en' ? 'Offline Mode (No Internet Connection)' : 'Mất kết nối mạng (Chế độ ngoại tuyến)')
                                                 : (locale === 'en' ? `${offlineDrafts.length} check-in drafts pending sync` : `Có ${offlineDrafts.length} lượt check-in đang chờ đồng bộ`)}
                                         </span>
-                                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-600 font-mono">
+                                        <span className="inline-block px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-600 font-mono whitespace-nowrap shrink-0">
                                             {offlineDrafts.length} {locale === 'en' ? 'drafts' : 'bản ghi'}
                                         </span>
                                     </h4>
@@ -2352,7 +2352,7 @@ export function SalesVisitsClient({
                         </div>
 
                         {/* GPS Status Indicator embedded in Today's view */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                        <div className="inline-flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs whitespace-nowrap shrink-0">
                             <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
                                 <Navigation size={13} className={coords.lat ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0 animate-pulse"} />
                                 <span className="font-semibold text-slate-700 shrink-0">
@@ -2460,7 +2460,7 @@ export function SalesVisitsClient({
                                                             [{cust?.code || 'KH'}]
                                                         </span>
                                                         {cust?.channel && (
-                                                            <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-mono">
+                                                            <span className="inline-block text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-mono whitespace-nowrap shrink-0">
                                                                 {cust.channel}
                                                             </span>
                                                         )}
@@ -2590,7 +2590,7 @@ export function SalesVisitsClient({
                                 <div>
                                     <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
                                         {locale === 'en' ? "Today's Photos & Actual Check-ins" : 'Ảnh & Lượt Check-in Thực Tế Hôm Nay'}
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 font-mono">
+                                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 font-mono whitespace-nowrap shrink-0">
                                             {todayActualVisits.length} {locale === 'en' ? 'visits' : 'lượt'}
                                         </span>
                                     </h4>
@@ -2636,11 +2636,11 @@ export function SalesVisitsClient({
                                                             {v.visitNo}
                                                         </span>
                                                         {v.isUnplanned && (
-                                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600">
+                                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600 inline-block whitespace-nowrap shrink-0">
                                                                 {locale === 'en' ? 'Ad-hoc' : 'Đột xuất'}
                                                             </span>
                                                         )}
-                                                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600">
+                                                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 inline-block whitespace-nowrap shrink-0">
                                                             {locale === 'en' ? 'Checked-in' : 'Đã Check-in'}
                                                         </span>
                                                     </div>
@@ -2800,7 +2800,7 @@ export function SalesVisitsClient({
                                     {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
                                 </span>
 
-                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 font-mono">
+                                <span className="inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-600 font-mono whitespace-nowrap shrink-0">
                                     {planVisits.length} {locale === 'en' ? 'stops' : 'điểm'}
                                 </span>
 
@@ -2903,7 +2903,7 @@ export function SalesVisitsClient({
                                                 <span>{getLocalizedDayName(currentSelectedDay.dateStr, locale)}</span>
                                                 <span className="text-[11px] font-mono text-slate-400 font-normal">({currentSelectedDay.dateStr.slice(5).replace('-', '/')})</span>
                                                 {currentSelectedDay.isToday && (
-                                                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600">
+                                                    <span className="inline-block px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600 whitespace-nowrap shrink-0">
                                                         {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
@@ -2914,7 +2914,7 @@ export function SalesVisitsClient({
                                         </div>
 
                                         {currentSelectedDay.dateStr < todayStr && !isManager ? (
-                                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 font-semibold text-xs flex items-center gap-1 border border-slate-200/80">
+                                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 font-semibold text-xs inline-flex items-center gap-1 border border-slate-200/80 whitespace-nowrap shrink-0">
                                                 <Lock size={12} /> {locale === 'en' ? 'Locked' : 'Đã khóa'}
                                             </span>
                                         ) : (
@@ -3012,7 +3012,7 @@ export function SalesVisitsClient({
                                                 </div>
                                             </div>
 
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 font-mono">
+                                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 font-mono whitespace-nowrap shrink-0">
                                                 {dayVisits.length} {locale === 'en' ? 'stops' : 'điểm'}
                                             </span>
                                         </div>
@@ -3105,7 +3105,7 @@ export function SalesVisitsClient({
                                 <button type="button" onClick={handlePrevWeek} className="p-1 rounded-md text-slate-600 hover:bg-white cursor-pointer" title={locale === 'en' ? 'Previous week' : 'Tuần trước'}>
                                     <ChevronLeft size={14} />
                                 </button>
-                                <button type="button" onClick={handleCurrentWeek} className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 hover:bg-white cursor-pointer">
+                                <button type="button" onClick={handleCurrentWeek} className="inline-block px-2.5 py-1 rounded-md text-xs font-bold text-slate-800 hover:bg-white cursor-pointer whitespace-nowrap shrink-0">
                                     {locale === 'en' ? `Week ${currentWeek.week} / ${currentWeek.year}` : `Tuần ${currentWeek.week} / ${currentWeek.year}`}
                                 </button>
                                 <button type="button" onClick={handleNextWeek} className="p-1 rounded-md text-slate-600 hover:bg-white cursor-pointer" title={locale === 'en' ? 'Next week' : 'Tuần sau'}>
@@ -3113,7 +3113,7 @@ export function SalesVisitsClient({
                                 </button>
                             </div>
 
-                            <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                            <span className="inline-block text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 whitespace-nowrap shrink-0">
                                 {weekDates[0]?.dateStr.slice(5).replace('-', '/')} – {weekDates[6]?.dateStr.slice(5).replace('-', '/')}
                             </span>
 
@@ -3235,7 +3235,7 @@ export function SalesVisitsClient({
                                                 <span className="font-semibold text-slate-500">{getLocalizedDayName(day.dateStr, locale)}</span>
                                                 <span className="text-[11px] font-mono">({day.dateStr.slice(5).replace('-', '/')})</span>
                                                 {day.isToday && (
-                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-500/20 text-teal-600">
+                                                    <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-500/20 text-teal-600 whitespace-nowrap shrink-0">
                                                         {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
@@ -3302,7 +3302,7 @@ export function SalesVisitsClient({
                                                     {getLocalizedDayName(day.dateStr, locale)} ({day.dateStr.slice(5).replace('-', '/')})
                                                 </span>
                                                 {day.isToday && (
-                                                    <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500/20 text-teal-600 font-bold">
+                                                    <span className="inline-block px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500/20 text-teal-600 font-bold whitespace-nowrap shrink-0">
                                                         {locale === 'en' ? 'Today' : 'Hôm nay'}
                                                     </span>
                                                 )}
@@ -3350,11 +3350,11 @@ export function SalesVisitsClient({
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div className="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
                                                                 {item.isPlanned ? (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/15 text-blue-600 border border-blue-500/25 shrink-0">
+                                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/15 text-blue-600 border border-blue-500/25 shrink-0 whitespace-nowrap">
                                                                         {locale === 'en' ? 'PLANNED' : 'THEO KẾ HOẠCH'}
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/25 shrink-0">
+                                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/25 shrink-0 whitespace-nowrap">
                                                                         {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                                     </span>
                                                                 )}
@@ -3370,7 +3370,7 @@ export function SalesVisitsClient({
                                                                 </span>
 
                                                                 {item.customerChannel && (
-                                                                    <span className="text-[9px] px-1 py-0.2 rounded bg-slate-100 text-slate-500 shrink-0">
+                                                                    <span className="inline-block text-[9px] px-1 py-0.2 rounded bg-slate-100 text-slate-500 shrink-0 whitespace-nowrap">
                                                                         {item.customerChannel}
                                                                     </span>
                                                                 )}
@@ -3378,12 +3378,12 @@ export function SalesVisitsClient({
 
                                                             <div className="shrink-0">
                                                                 {item.isCompleted ? (
-                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 flex items-center gap-1">
+                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                         <CheckCircle2 size={11} />
                                                                         <span>{locale === 'en' ? 'Completed' : 'Đã hoàn thành'}</span>
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 flex items-center gap-1">
+                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                         <Clock size={11} />
                                                                         <span>{locale === 'en' ? 'Not visited / Missed' : 'Chưa đi / Bỏ lỡ'}</span>
                                                                     </span>
@@ -3606,7 +3606,7 @@ export function SalesVisitsClient({
                             </div>
 
                             {/* Date Picker Input */}
-                            <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
+                            <div className="inline-flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200 whitespace-nowrap shrink-0">
                                 <Calendar size={13} className="text-slate-400" />
                                 <input
                                     type="date"
@@ -3691,7 +3691,7 @@ export function SalesVisitsClient({
                             </span>
                         </div>
                         {filterDate && (
-                            <span className="font-mono text-[11px] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                            <span className="inline-block font-mono text-[11px] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap shrink-0">
                                 {locale === 'en' ? 'Date:' : 'Ngày:'} {filterDate}
                             </span>
                         )}
@@ -3760,17 +3760,17 @@ export function SalesVisitsClient({
 
                                                     {/* Top Badges */}
                                                     <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-1.5 pointer-events-none">
-                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/60 backdrop-blur-xs text-white border border-white/10 flex items-center gap-1 shadow-xs">
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/60 backdrop-blur-xs text-white border border-white/10 inline-flex items-center gap-1 shadow-xs whitespace-nowrap shrink-0">
                                                             <Clock size={10} className="text-teal-700" />
                                                             <span>{timeStr} • {dateStr}</span>
                                                         </span>
 
                                                         {v.isUnplanned ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs">
+                                                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs whitespace-nowrap shrink-0">
                                                                 {locale === 'en' ? 'AD-HOC' : 'ĐỘT XUẤT'}
                                                             </span>
                                                         ) : (
-                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white shadow-xs">
+                                                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white shadow-xs whitespace-nowrap shrink-0">
                                                                 {locale === 'en' ? 'PLANNED' : 'KẾ HOẠCH'}
                                                             </span>
                                                         )}
@@ -3824,7 +3824,7 @@ export function SalesVisitsClient({
                                                             </span>
                                                         </div>
                                                         {v.customerChannel && (
-                                                            <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">
+                                                            <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 whitespace-nowrap shrink-0">
                                                                 {v.customerChannel}
                                                             </span>
                                                         )}
@@ -3975,7 +3975,7 @@ export function SalesVisitsClient({
                                                     </div>
                                                 </td>
                                                 <td className="p-3.5 text-center whitespace-nowrap">
-                                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600">
+                                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 whitespace-nowrap shrink-0">
                                                         {locale === 'en' ? 'Completed' : 'Hoàn thành'}
                                                     </span>
                                                 </td>
@@ -4344,7 +4344,7 @@ export function SalesVisitsClient({
             {/* ============================================================== */}
             {/* MOBILE FIXED BOTTOM NAVIGATION BAR (TOUCH-OPTIMIZED APP SHELL) */}
             {/* ============================================================== */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200 px-1.5 py-1.5 flex items-center justify-around md:hidden shadow-2xl safe-area-pb">
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1.5 py-1.5 flex items-center justify-around md:hidden shadow-2xl safe-area-pb">
                 <button
                     type="button"
                     onClick={() => setActiveTab('CHECKIN')}
@@ -4359,7 +4359,7 @@ export function SalesVisitsClient({
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Today' : 'Hôm nay'}</span>
                     {todayPlanVisits.length > 0 && (
-                        <span className="absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500 text-white font-mono font-bold leading-tight shadow-xs">
+                        <span className="inline-block absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-teal-500 text-white font-mono font-bold leading-tight shadow-xs whitespace-nowrap shrink-0">
                             {todayPlanVisits.length}
                         </span>
                     )}
@@ -4379,7 +4379,7 @@ export function SalesVisitsClient({
                     </div>
                     <span className="text-[10px] mt-0.5 tracking-tight">{locale === 'en' ? 'Plan' : 'Lịch tuần'}</span>
                     {planVisits.length > 0 && (
-                        <span className="absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-slate-200 text-slate-700 font-mono font-bold leading-tight">
+                        <span className="inline-block absolute top-1 right-2 px-1.5 py-0.2 rounded-full text-[9px] bg-slate-200 text-slate-700 font-mono font-bold leading-tight whitespace-nowrap shrink-0">
                             {planVisits.length}
                         </span>
                     )}

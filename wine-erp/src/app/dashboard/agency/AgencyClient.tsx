@@ -351,7 +351,7 @@ export function AgencyClient() {
                             )}
 
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowCreateSub(false)} className="px-3 py-1.5 text-xs rounded-md"
+                                <button onClick={() => setShowCreateSub(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreateSub} disabled={creatingSub || !subForm.partnerId || !subForm.shipmentId}
                                     className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
@@ -397,7 +397,7 @@ export function AgencyClient() {
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                 <td className="px-3 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>{sub.partnerName}</td>
                                                 <td className="px-3 py-3">
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded"
+                                                    <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                                         style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
                                                 </td>
                                                 <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>
@@ -413,7 +413,7 @@ export function AgencyClient() {
                                                     {formatDate(sub.submittedAt)}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                                         style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                                 </td>
                                                 <td className="px-3 py-3">
@@ -513,7 +513,7 @@ export function AgencyClient() {
                                                                             <option value="INSPECTION_CERT">Chứng Nhận GĐ</option>
                                                                             <option value="OTHER">Khác</option>
                                                                         </select>
-                                                                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
+                                                                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
                                                                             style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
                                                                             onClick={e => e.stopPropagation()}>
                                                                             {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
@@ -642,7 +642,7 @@ export function AgencyClient() {
                                             <td className="px-3 py-3 text-xs" style={{ color: '#0F172A' }}>{s.vesselName ?? '—'}</td>
                                             <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{s.eta ? formatDate(s.eta) : '—'}</td>
                                             <td className="px-3 py-3">
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#1D4ED8', background: 'rgba(29,78,216,0.12)' }}>{s.status}</span>
+                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: '#1D4ED8', background: 'rgba(29,78,216,0.12)' }}>{s.status}</span>
                                             </td>
                                         </tr>
                                     ))}
@@ -717,7 +717,7 @@ export function AgencyClient() {
                                 </p>
                             )}
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowCreatePartner(false)} className="px-3 py-1.5 text-xs rounded-md"
+                                <button onClick={() => setShowCreatePartner(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreatePartner} disabled={creatingPartner}
                                     className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
@@ -747,7 +747,7 @@ export function AgencyClient() {
                                                 <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{p.name}</p>
                                                 <p className="text-xs" style={{ color: '#64748B' }}>{p.code}</p>
                                             </div>
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded"
+                                            <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                                 style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
                                         </div>
                                         <div className="space-y-1.5">
@@ -757,7 +757,7 @@ export function AgencyClient() {
                                                     {p.submissionCount} hồ sơ
                                                 </span>
                                                 {p.pendingCount > 0 && (
-                                                    <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                                                    <span className="inline-block text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
                                                         style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
                                                         {p.pendingCount} chờ duyệt
                                                     </span>
@@ -765,7 +765,7 @@ export function AgencyClient() {
                                             </div>
                                         </div>
                                         <div className="mt-3 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                                 style={{
                                                     color: p.status === 'ACTIVE' ? '#15803D' : '#B45309',
                                                     background: p.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(180,83,9,0.12)',

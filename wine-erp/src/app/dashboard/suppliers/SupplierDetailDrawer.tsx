@@ -59,7 +59,7 @@ function MiniCard({ label, value, accent }: { label: string; value: string | num
 
 function StatusBadge({ status }: { status: string }) {
     const cfg = PO_STATUS_COLOR[status] ?? { color: '#64748B', bg: 'rgba(100,116,139,0.15)' }
-    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ color: cfg.color, background: cfg.bg }}>{status}</span>
+    return <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{status}</span>
 }
 
 export function SupplierDetailDrawer({ open, supplierId, onClose }: {
@@ -416,7 +416,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{c.name}</span>
-                                                                {c.isPrimary && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Chính</span>}
+                                                                {c.isPrimary && <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Chính</span>}
                                                             </div>
                                                             {!c.isPrimary && (
                                                                 <button onClick={() => handleDeleteContact(c.id, c.name)}
@@ -507,7 +507,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-xs font-bold" style={{ color: '#475569' }}>{a.label}</span>
-                                                                {a.isDefault && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Mặc định</span>}
+                                                                {a.isDefault && <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>Mặc định</span>}
                                                             </div>
                                                             {!a.isDefault && (
                                                                 <button onClick={() => handleDeleteAddress(a.id, a.label)}
@@ -616,7 +616,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             </p>
                                             <div className="space-y-1">
                                                 {pricing.slice(0, 20).map((p, i) => (
-                                                    <div key={i} className="flex items-center justify-between text-xs py-1.5 px-3 rounded" style={{ background: i % 2 === 0 ? '#FFFFFF' : 'transparent' }}>
+                                                    <div key={i} className="inline-flex items-center justify-between text-xs py-1.5 px-3 rounded whitespace-nowrap shrink-0" style={{ background: i % 2 === 0 ? '#FFFFFF' : 'transparent' }}>
                                                         <span style={{ color: '#64748B' }}>{fmtDate(p.date)}</span>
                                                         <span style={{ color: '#475569' }}>{p.productName.slice(0, 30)}</span>
                                                         <span style={{ color: '#0891B2' }}>{p.currency} {p.unitPrice}</span>
@@ -740,7 +740,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                                     {(isExpired || isExpiring) && <AlertTriangle size={12} style={{ color: borderColor }} />}
                                                                     <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{d.name}</span>
                                                                 </div>
-                                                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ color: statusColor, background: `${statusColor}18` }}>
+                                                                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ color: statusColor, background: `${statusColor}18` }}>
                                                                     {REG_DOC_STATUS_LABELS[d.status] ?? d.status}
                                                                 </span>
                                                             </div>

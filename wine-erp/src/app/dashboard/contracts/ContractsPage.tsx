@@ -46,7 +46,7 @@ export function ContractsPage({
                 title="Trung Tâm Pháp Lý & Tuân Thủ"
                 description="Quản lý hợp đồng, giấy phép, chứng nhận và chứng từ có thời hạn"
                 actions={
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-lys-primary/10 text-lys-primary border border-lys-primary/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-lys-primary/10 text-lys-primary border border-lys-primary/20 whitespace-nowrap shrink-0">
                         <Scale size={14} /> Pháp lý & Tuân thủ
                     </span>
                 }

@@ -671,7 +671,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             {t.noCustomerSelected}
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="px-3 py-2 text-xs bg-rose-50 border border-rose-200 text-rose-600 rounded-lg">
+                                        <div className="inline-block px-3 py-2 text-xs bg-rose-50 border border-rose-200 text-rose-600 rounded-lg whitespace-nowrap shrink-0">
                                             {t.noShippingAddress}
                                         </div>
                                     ) : (
@@ -718,7 +718,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             {selectedAddr.city && `, ${selectedAddr.city}`}
                                         </div>
                                         {selectedAddr.isDefault && (
-                                            <span className="px-2 py-0.5 text-[10px] font-bold bg-teal-200 text-teal-900 rounded-full border border-teal-300">
+                                            <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-teal-200 text-teal-900 rounded-full border border-teal-300 whitespace-nowrap shrink-0">
                                                 {t.defaultAddressBadge}
                                             </span>
                                         )}
@@ -859,7 +859,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                         >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
                                                                 {customerCodesMap[p.id] && (
-                                                                    <span className="font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0">
+                                                                    <span className="inline-block font-bold font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 text-[10px] shrink-0 whitespace-nowrap">
                                                                         [{customerCodesMap[p.id]}]
                                                                     </span>
                                                                 )}
@@ -925,7 +925,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             </td>
                                                             {hasCustomerCodes && (
                                                                 <td className="px-3 py-2.5 text-center">
-                                                                    <span className="font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                    <span className="inline-block font-mono font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                                         {l.customerItemCode || customerCodesMap[l.productId] || '—'}
                                                                     </span>
                                                                 </td>
@@ -1006,7 +1006,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                                 <span className="font-mono font-bold text-xs text-slate-900">[{l.skuCode}]</span>
                                                                 {(l.customerItemCode || customerCodesMap[l.productId]) && (
-                                                                    <span className="font-mono font-bold text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                                    <span className="inline-block font-mono font-bold text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                                         [{l.customerItemCode || customerCodesMap[l.productId]}]
                                                                     </span>
                                                                 )}

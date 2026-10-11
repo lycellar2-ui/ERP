@@ -51,20 +51,20 @@
 
 ## 3. CÁC BƯỚC THỰC HIỆN CHI TIẾT (IMPLEMENTATION PHASES)
 
-- [ ] **Phase 1: Database & Documentation Sync**
-  - Cập nhật `prisma/schema.prisma` với 5 model và 2 enum mới.
-  - Chạy `npx prisma db push` hoặc sync an toàn.
-  - Cập nhật số liệu model (138 -> 143) và enum (89 -> 91) tại `docs/README.md`, `docs/llms.txt`, `CODEBASE.md`, `docs/architecture/database-schema.md`.
-- [ ] **Phase 2: Bank Parser & Smart Matching Engine**
-  - Cài đặt `bank-parser.ts` xử lý Excel/CSV đa ngân hàng.
-  - Cài đặt `bank-matching-engine.ts` với chấm điểm và các bộ quy tắc.
-  - Cài đặt `actions-bank-reconciliation.ts` với đầy đủ Transaction an toàn, `JSON.parse(JSON.stringify())` serialize và Audit logging.
-- [ ] **Phase 3: Giao Diện Người Dùng Đối Soát (UI Workspace)**
-  - Xây dựng component `BankReconciliationTab.tsx`.
-  - Tích hợp vào `FinanceTabs.tsx` và `FinanceClient.tsx`.
-  - Drawer xử lý phân bổ đơn hàng gộp và tạo quy tắc nhớ khách hàng.
-- [ ] **Phase 4: Kiểm Thử & Hoàn Thiện**
-  - Test case: Upload file mẫu sao kê Vietcombank/Techcombank.
-  - Test case: Khớp chính xác 100%, Khớp cọc một phần, Khớp gộp 2 đơn, Khớp lệch phí 5k, Khớp theo quy tắc học.
-  - Test rollback: Hủy khớp và kiểm tra tính toàn vẹn của `ARInvoice` và `ARPayment`.
-  - Type-check và kiểm tra chất lượng mã nguồn.
+- [x] **Phase 1: Database & Documentation Sync**
+  - Cập nhật `prisma/schema.prisma` với 5 model (`BankAccount`, `BankStatementBatch`, `BankTransaction`, `BankTransactionMatch`, `BankReconciliationRule`) và 2 enum mới.
+  - Chạy `npx prisma db push` đồng bộ trực tiếp lên Supabase PostgreSQL thành công.
+  - Cập nhật số liệu model (138 -> 143) và enum (89 -> 91) tại `docs/README.md`, `docs/llms.txt`, `CODEBASE.md`, `docs/architecture/database-schema.md`, `docs/architecture/tech-stack.md`.
+- [x] **Phase 2: Bank Parser & Smart Matching Engine**
+  - Cài đặt `bank-parser.ts` xử lý Excel/CSV đa ngân hàng (VCB, TCB, ACB, BIDV, MBB, Generic) với thư viện `exceljs`, hash SHA-256 chống trùng lặp.
+  - Cài đặt `bank-matching-engine.ts` với chấm điểm và các bộ quy tắc (Exact Match, Partial/Cọc, Subset Sum gộp đơn, Lệch phí, Quy tắc nhớ).
+  - Cài đặt `actions-bank-reconciliation.ts` với đầy đủ Transaction an toàn, `JSON.parse(JSON.stringify())` serialize, audit logging và rollback.
+- [x] **Phase 3: Giao Diện Người Dùng Đối Soát (UI Workspace)**
+  - Xây dựng component `BankReconciliationTab.tsx` theo Pure Light Design System.
+  - Tích hợp vào `FinanceClient.tsx` dưới tab "Sao Kê & Thu Nợ" trong nhóm Vận hành.
+  - Drawer xử lý phân bổ đơn hàng gộp, cấn trừ phí ngân hàng và tạo quy tắc nhớ khách hàng.
+- [x] **Phase 4: Kiểm Thử & Hoàn Thiện**
+  - Chạy unit test tự động xác thực thành công 100% cả 5 kịch bản và Edge Cases (`scratch/test_bank_matching_logic.js`).
+  - Kiểm tra toàn bộ mã nguồn với `tsc --noEmit` đạt 0 lỗi (Exit Code 0).
+  - Cập nhật tài liệu đặc tả phân hệ `docs/modules/finance-accounting.md`.
+

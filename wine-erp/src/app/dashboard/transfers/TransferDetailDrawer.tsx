@@ -295,7 +295,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     PHIẾU CHUYỂN KHO: <span className="font-mono" style={{ color: '#B47816' }}>{detail?.transferNo || '...'}</span>
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0"
                                         style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
                                         {st.label}
                                     </span>
@@ -409,7 +409,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-rose-500"
                                                 />
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setShowRejectInput(false)} className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
+                                                    <button onClick={() => setShowRejectInput(false)} className="inline-block px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg whitespace-nowrap shrink-0">Hủy</button>
                                                     <button onClick={handleReject} disabled={actionLoading} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Xác Nhận Từ Chối</button>
                                                 </div>
                                             </div>
@@ -696,11 +696,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <span className="text-[10px] font-bold text-slate-500 font-mono">#{idx + 1}</span>
-                                                                    <span className="text-xs font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                    <span className="inline-block text-xs font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                                                         {l.skuCode}
                                                                     </span>
                                                                 </div>
-                                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                                                                <span className="inline-block text-xs font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded whitespace-nowrap shrink-0">
                                                                     VTG: {l.vintage || 'NV'}
                                                                 </span>
                                                             </div>
@@ -861,19 +861,19 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                 Yêu cầu: {p.qtyRequested} chai
                                                                             </span>
                                                                             {isReceived ? (
-                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                                     <CheckCircle2 size={10} /> Đã Xuất & Nhận Đủ ({p.qtyRequested} chai)
                                                                                 </span>
                                                                             ) : isInTransit ? (
-                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 flex items-center gap-1">
+                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                                                     <Truck size={10} /> Đã Xuất Kho ({p.qtyRequested} chai)
                                                                                 </span>
                                                                             ) : p.isSufficient ? (
-                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">
+                                                                                <span className="inline-block px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700 whitespace-nowrap shrink-0">
                                                                                     Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
                                                                                 </span>
                                                                             ) : (
-                                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">
+                                                                                <span className="inline-block px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700 whitespace-nowrap shrink-0">
                                                                                     Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
                                                                                 </span>
                                                                             )}
@@ -1353,15 +1353,15 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </td>
                                                 <td className="px-3 py-3 text-center">
                                                     {diff === 0 ? (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">
                                                             <CheckCircle2 size={11} /> Đủ 100%
                                                         </span>
                                                     ) : diff > 0 ? (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">
                                                             <AlertTriangle size={11} /> Thiếu {diff} chai
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">
                                                             Thừa {Math.abs(diff)} chai
                                                         </span>
                                                     )}

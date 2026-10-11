@@ -93,7 +93,7 @@ export default async function AIPage() {
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-start justify-between mb-3">
                             <span className="text-3xl">{f.icon}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                 style={{
                                     color: f.status.includes('✓') ? '#15803D' : '#64748B',
                                     background: f.status.includes('✓') ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)',

@@ -144,7 +144,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                         <span className="text-sm font-bold" style={{ color: prov?.color || '#0F172A' }}>
                                             {k.label}
                                         </span>
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full"
+                                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                             style={{
                                                 background: k.isActive ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)',
                                                 color: k.isActive ? '#15803D' : '#B91C1C',
@@ -184,7 +184,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                 {/* Test Result */}
                                 {testResult && testResult.id === k.id && (
                                     <div className="px-4 pb-2">
-                                        <p className="text-xs px-3 py-2 rounded" style={{
+                                        <p className="inline-block text-xs px-3 py-2 rounded whitespace-nowrap shrink-0" style={{
                                             background: testResult.ok ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.1)',
                                             color: testResult.ok ? '#15803D' : '#B91C1C',
                                             border: `1px solid ${testResult.ok ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
@@ -355,7 +355,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                                     <p className="text-[10px] font-mono" style={{ color: '#1D4ED8' }}>{t.slug}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
                                         {t.runCount} runs
                                     </span>
@@ -367,12 +367,12 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                             {t.variables.length > 0 && (
                                 <div className="flex gap-1 mt-2 flex-wrap">
                                     {t.variables.map(v => (
-                                        <span key={v} className="text-xs px-1.5 py-0.5 rounded font-mono"
+                                        <span key={v} className="inline-block text-xs px-1.5 py-0.5 rounded font-mono whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>
                                             {`{{${v}}}`}
                                         </span>
                                     ))}
-                                    <span className="text-xs px-1.5 py-0.5 rounded"
+                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
                                         style={{ color: '#64748B' }}>
                                         T={t.temperature} | {t.maxTokens} tokens
                                     </span>

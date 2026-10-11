@@ -119,7 +119,7 @@ export function OCRUploadWidget() {
                     </div>
                 </div>
                 {hasResult && (
-                    <button onClick={resetState} className="text-xs px-2 py-1 rounded" style={{ color: '#64748B' }}>
+                    <button onClick={resetState} className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>
                         <X size={14} className="inline mr-1" />Làm Mới
                     </button>
                 )}

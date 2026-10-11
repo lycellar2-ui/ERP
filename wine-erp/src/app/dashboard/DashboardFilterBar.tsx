@@ -183,7 +183,7 @@ export function DashboardFilterBar({
                     </div>
 
                     {isPending && (
-                        <div className="flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#0E7490]/10">
+                        <div className="inline-flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#0E7490]/10 whitespace-nowrap shrink-0">
                             <Loader2 size={12} className="animate-spin" /> {isEn ? 'Loading...' : 'Đang tải...'}
                         </div>
                     )}

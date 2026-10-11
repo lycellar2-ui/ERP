@@ -495,7 +495,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(8,145,178,0.1)', color: '#475569' }}>{row.channel}</span>
+                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(8,145,178,0.1)', color: '#475569' }}>{row.channel}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.totalAmount)}</span>
@@ -506,7 +506,7 @@ export function QuotationClient({ initialData }: Props) {
                                         {isExpired && <span className="ml-1 text-[10px] font-bold">QUÁ HẠN</span>}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-1">
@@ -527,7 +527,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 </button>
                                             )}
                                             {row.viewCount > 0 && (
-                                                <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" title={`KH đã xem ${row.viewCount} lần${row.lastViewedAt ? ` · Lần cuối: ${formatDate(row.lastViewedAt)}` : ''}`}
+                                                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" title={`KH đã xem ${row.viewCount} lần${row.lastViewedAt ? ` · Lần cuối: ${formatDate(row.lastViewedAt)}` : ''}`}
                                                     style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>
                                                     <Eye size={9} /> {row.viewCount}
                                                 </span>
@@ -565,7 +565,7 @@ export function QuotationClient({ initialData }: Props) {
                             {/* Header: Quotation No & Status */}
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                             </div>
 
                             {/* Body: Customer Name & Value */}
@@ -577,7 +577,7 @@ export function QuotationClient({ initialData }: Props) {
                             {/* Financials & Timeline Info */}
                             <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] pt-1" style={{ borderTop: '1px solid #E2E8F0' }}>
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="px-1.5 py-0.2 rounded text-xs font-medium" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>{row.channel}</span>
+                                    <span className="px-1.5 py-0.2 rounded text-xs font-medium inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>{row.channel}</span>
                                     <span style={{ color: '#64748B' }}>{row.customerCode}</span>
                                     <span style={{ color: '#64748B' }}>• Rep: <strong style={{ color: '#475569' }}>{row.salesRepName}</strong></span>
                                 </div>
@@ -592,7 +592,7 @@ export function QuotationClient({ initialData }: Props) {
                             {/* Actions & View count */}
                             <div className="flex items-center justify-end gap-1.5 pt-1.5" style={{ borderTop: '1px solid #E2E8F0' }}>
                                 {row.viewCount > 0 && (
-                                    <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium mr-auto"
+                                    <span className="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium mr-auto whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
                                         title={`KH đã xem ${row.viewCount} lần`}>
                                         <Eye size={10} /> {row.viewCount}
@@ -669,7 +669,7 @@ export function QuotationClient({ initialData }: Props) {
                                     </div>
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xs" style={{ color: '#64748B' }}>Trạng Thái</p>
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block"
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block whitespace-nowrap shrink-0"
                                             style={{ color: STATUS_CFG[detail.status as QuotationStatus]?.color, background: STATUS_CFG[detail.status as QuotationStatus]?.bg }}>
                                             {STATUS_CFG[detail.status as QuotationStatus]?.label}
                                         </span>
@@ -862,7 +862,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 <label className="text-[11px] font-semibold mb-1 block text-slate-600">Email</label>
                                                 <input 
                                                     type="email" 
-                                                    placeholder="VD: huy@example.com"
+                                                    placeholder="VD: huy@nhahang.vn"
                                                     value={formData.customerEmail} 
                                                     onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
                                                     className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -972,7 +972,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             </div>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-[10px] font-mono" style={{ color: '#475569' }}>{prod?.skuCode}</span>
-                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(185,28,28,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
+                                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(185,28,28,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
                                                                     Tồn: {prod?.totalStock}
                                                                 </span>
                                                                 <span className="text-[10px] text-slate-500 truncate">
@@ -1013,7 +1013,7 @@ export function QuotationClient({ initialData }: Props) {
                                                         </div>
                                                         
                                                         {/* Reference metrics row */}
-                                                        <div className="flex items-center justify-between text-[10px] px-1 py-0.5 rounded" style={{ background: '#F8FAFC' }}>
+                                                        <div className="inline-flex items-center justify-between text-[10px] px-1 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F8FAFC' }}>
                                                             <div className="flex items-center gap-1.5">
                                                                 <span style={{ color: '#64748B' }}>Wholesale:</span>
                                                                 <span className="font-mono font-semibold text-[#B45309]">{prod.wholesalePrice.toLocaleString('vi-VN')} đ</span>
@@ -1297,7 +1297,7 @@ export function QuotationClient({ initialData }: Props) {
                                                     <span className="text-[10px] text-slate-500">•</span>
                                                     <span className="text-[10px] text-slate-600">{p.wineType} ({p.country})</span>
                                                     <span className="text-[10px] text-slate-500">•</span>
-                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(185,28,28,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.2 rounded-full whitespace-nowrap shrink-0" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(185,28,28,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
                                                         Tồn: {p.totalStock}
                                                     </span>
                                                 </div>

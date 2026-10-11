@@ -234,7 +234,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                                         {/* Number of steps */}
                                         <td className="px-4 py-3.5 text-center">
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono whitespace-nowrap shrink-0"
                                                 style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.35)' }}>
                                                 <Layers size={12} /> {steps.length} cấp
                                             </span>
@@ -247,7 +247,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             ) : (
                                                 <div className="flex gap-1.5 flex-wrap">
                                                     {creatorRoles.map(rCode => (
-                                                        <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                        <span key={rCode} className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                                             {getRoleName(rCode)}
                                                         </span>
                                                     ))}
@@ -267,7 +267,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         : { bg: 'rgba(180,83,9,0.12)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
                                                     return (
                                                         <span key={i} className="flex items-center gap-1">
-                                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
+                                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 shadow-2xs whitespace-nowrap shrink-0"
                                                                 style={{
                                                                     background: badge.bg,
                                                                     color: badge.color,
@@ -355,7 +355,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                 </td>
 
                                 <td className="px-4 py-3.5 text-center">
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.35)' }}>
                                         <Layers size={12} /> {poRoute.steps.length} cấp
                                     </span>
@@ -367,7 +367,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                     ) : (
                                         <div className="flex gap-1.5 flex-wrap">
                                             {poRoute.creatorRoles.map(rCode => (
-                                                <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                <span key={rCode} className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                                     {getRoleName(rCode)}
                                                 </span>
                                             ))}
@@ -386,7 +386,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                 : { bg: 'rgba(180,83,9,0.12)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
                                             return (
                                                 <span key={i} className="flex items-center gap-1">
-                                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs"
+                                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 shadow-2xs whitespace-nowrap shrink-0"
                                                         style={{
                                                             background: badge.bg,
                                                             color: badge.color,

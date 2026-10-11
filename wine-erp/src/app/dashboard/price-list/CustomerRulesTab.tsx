@@ -382,7 +382,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             return (
                 <div className="flex flex-col">
                     <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
-                        {label} <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">-{defaultDiscountPct}%</span>
+                        {label} <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold whitespace-nowrap shrink-0">-{defaultDiscountPct}%</span>
                     </span>
                     <span className="text-[10px] text-slate-500">Tự động áp dụng cho mọi sản phẩm</span>
                 </div>
@@ -608,11 +608,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: chBadge.color, background: chBadge.bg }}>
+                                                                    <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: chBadge.color, background: chBadge.bg }}>
                                                                         {chBadge.label}
                                                                     </span>
                                                                     {c.brandGroup && (
-                                                                        <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                                                                        <span className="inline-block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium whitespace-nowrap shrink-0">
                                                                             {c.brandGroup}
                                                                         </span>
                                                                     )}
@@ -642,7 +642,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         <div className="space-y-1.5">
                                                             <div className="flex items-center gap-2 flex-wrap">
                                                                 {hasSpecial ? (
-                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shrink-0">
                                                                         <Zap size={12} /> Có {c.specialRuleCount} chai giá riêng
                                                                     </span>
                                                                 ) : (
@@ -650,7 +650,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                 )}
 
                                                                 {hasPending && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                                                         <Clock size={11} /> {c.pendingRuleCount} chờ duyệt
                                                                     </span>
                                                                 )}
@@ -660,7 +660,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             {c.activeRulesSummary && c.activeRulesSummary.length > 0 && (
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     {c.activeRulesSummary.slice(0, 2).map((r, idx) => (
-                                                                        <span key={idx} className="text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                                                                        <span key={idx} className="inline-block text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                                                             {r.productName}: {r.ruleType === 'FIXED_DISCOUNT' ? `-${r.value}%` : formatVND(r.value)}
                                                                         </span>
                                                                     ))}
@@ -811,7 +811,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
                                                     </td>
                                                     <td className="p-3">
-                                                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ color: typeCfg.color, background: typeCfg.bg }}>
+                                                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap shrink-0" style={{ color: typeCfg.color, background: typeCfg.bg }}>
                                                             {typeCfg.label}
                                                         </span>
                                                     </td>
@@ -823,7 +823,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : ' (Vô thời hạn)'}
                                                     </td>
                                                     <td className="p-3 text-center">
-                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ color: statusCfg.color, background: statusCfg.bg }}>
+                                                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                             {statusCfg.label}
                                                         </span>
                                                     </td>
@@ -890,7 +890,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 font-semibold">
+                                        <span className="inline-block font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 font-semibold whitespace-nowrap shrink-0">
                                             {drawerCustomer.code}
                                         </span>
                                         <h3 className="text-base font-bold text-slate-900">{drawerCustomer.name}</h3>
@@ -1033,7 +1033,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         </td>
                                                         <td className="p-3 text-center">
                                                             {rule.savingsPct > 0 ? (
-                                                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                                     -{rule.savingsPct}%
                                                                 </span>
                                                             ) : (
@@ -1047,7 +1047,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                             </div>
                                                         </td>
                                                         <td className="p-3 text-center">
-                                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ color: statusCfg.color, background: statusCfg.bg }}>
+                                                            <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                 {statusCfg.label}
                                                             </span>
                                                         </td>

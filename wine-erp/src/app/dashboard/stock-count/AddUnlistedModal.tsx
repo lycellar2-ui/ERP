@@ -89,10 +89,10 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                 <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            <span className="inline-block text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
                                 {sessionNo}
                             </span>
-                            <span className="text-[10px] font-extrabold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            <span className="inline-block text-[10px] font-extrabold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 whitespace-nowrap shrink-0">
                                 + Chèn Mã Bổ Sung
                             </span>
                         </div>
@@ -147,7 +147,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                             <div className="font-mono text-[11px] font-extrabold text-amber-900">{p.skuCode}</div>
                                             <div className="font-bold text-xs mt-0.5">{p.productName}</div>
                                         </div>
-                                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                        <span className="inline-block text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                             {p.unitsPerCase || 6} chai/thùng
                                         </span>
                                     </div>
@@ -157,7 +157,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         {selectedProduct && (
                             <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-bold flex items-center justify-between text-xs">
                                 <span>Đã chọn: {selectedProduct.productName} ({selectedProduct.skuCode})</span>
-                                <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900 font-mono">Quy cách: {selectedProduct.unitsPerCase || 6}</span>
+                                <span className="inline-block text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900 font-mono whitespace-nowrap shrink-0">Quy cách: {selectedProduct.unitsPerCase || 6}</span>
                             </div>
                         )}
                     </div>

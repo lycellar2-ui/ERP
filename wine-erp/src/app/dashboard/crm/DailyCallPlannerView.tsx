@@ -499,7 +499,7 @@ export function DailyCallPlannerView({
                             <h3 className="text-base sm:text-lg font-bold text-slate-900">
                                 Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)
                             </h3>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-bold">
+                            <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-bold whitespace-nowrap shrink-0">
                                 Pure Light UI
                             </span>
                         </div>
@@ -818,34 +818,34 @@ export function DailyCallPlannerView({
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {/* Channel badge */}
                                                 {plan.channel === 'CORPORATE' ? (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
                                                         🏢 Corporate
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                                         🍷 Retail
                                                     </span>
                                                 )}
 
                                                 {/* Priority badge */}
                                                 {plan.priority === 'URGENT' && (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
                                                         ⚡ Khẩn cấp
                                                     </span>
                                                 )}
                                                 {plan.priority === 'HIGH' && (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                                                         ⭐ Ưu tiên cao
                                                     </span>
                                                 )}
 
                                                 {/* Status badge */}
                                                 {isCompleted ? (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                         ✓ Đã hoàn thành
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0">
                                                         Chưa gọi
                                                     </span>
                                                 )}
@@ -869,7 +869,7 @@ export function DailyCallPlannerView({
                                                     </span>
                                                 )}
                                                 <div className="flex items-center gap-1">
-                                                    <span className="text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
+                                                    <span className="inline-block text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 whitespace-nowrap shrink-0">
                                                         📞 {plan.phone}
                                                     </span>
                                                     <button
