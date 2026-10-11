@@ -421,7 +421,7 @@ export function GoodsReceiptTab({ warehouses }: {
     }
 
     return (
-        <div className="space-y-4 pb-20 md:pb-4">
+        <div className="space-y-4 pb-6 md:pb-4">
             {/* ── 1. Header with Inline Metrics & Quick Actions (Sales/Procurement Style) ── */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-lg border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
@@ -472,29 +472,28 @@ export function GoodsReceiptTab({ warehouses }: {
                 <div className="flex items-center gap-2 self-start lg:self-center flex-wrap">
                     <button
                         onClick={() => setShowStats(!showStats)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer hover:bg-slate-50"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}
-                        title={showStats ? "Ẩn chỉ số" : "Hiện chỉ số"}
+                        title={showStats ? "Ẩn chỉ số thống kê" : "Hiện chỉ số thống kê"}
                     >
                         {showStats ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        <span>Chỉ số</span>
+                        <span className="hidden sm:inline">Chỉ số</span>
                     </button>
 
                     <button
                         onClick={reload}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center justify-center p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer hover:bg-slate-50"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}
                         title="Làm mới dữ liệu"
                     >
                         <RefreshCw size={14} className={loading ? "animate-spin text-emerald-700" : ""} />
-                        <span>Làm mới</span>
                     </button>
 
                     <button
                         onClick={handleExportExcel}
                         disabled={exporting || rows.length === 0}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 hover:bg-slate-50"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0891B2' }}
                     >
                         {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
@@ -503,7 +502,7 @@ export function GoodsReceiptTab({ warehouses }: {
 
                     <button
                         onClick={() => setCreateOpen(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-sm cursor-pointer hover:opacity-90 active:scale-95"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-bold text-xs transition-all shadow-sm cursor-pointer hover:opacity-90 active:scale-95"
                         style={{ background: '#15803D', color: '#FFFFFF' }}
                     >
                         <Plus size={15} />

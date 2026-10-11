@@ -213,7 +213,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     toast.error(res.error || 'Lỗi hoàn tác xuất kho')
                     return
                 }
-                toast.success(`↺ Phiếu ${doNo ?? ''} đã Reverse & khôi phục tồn kho thành công!`)
+                toast.success(`Phiếu ${doNo ?? ''} đã hoàn tác (Reverse) & khôi phục tồn kho thành công!`)
                 reload()
                 setDetailData(null)
             }
@@ -221,7 +221,7 @@ export function DeliveryOrderTab({ warehouses }: {
     }
 
     return (
-        <div className="space-y-3 sm:space-y-5 pb-20 md:pb-4">
+        <div className="space-y-3 sm:space-y-5 pb-6 md:pb-4">
             {/* Header & Sub-tab Navigation */}
             <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between gap-2">
