@@ -181,16 +181,16 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
     })
 
     return (
-        <div className="space-y-5 max-w-7xl mx-auto">
+        <div className="space-y-4 max-w-7xl mx-auto">
 
-            {/* ═══ TOP CONTROL BAR: SEARCH & TIME SELECTOR ═══ */}
-            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs space-y-3">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* ═══ TOP CONTROL BAR: SEARCH, TIME SELECTOR & QUICK PICKS (FLAT & INTEGRATED) ═══ */}
+            <div className="space-y-2.5 pb-3 border-b border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     
-                    {/* Search Combobox */}
+                    {/* Search Combobox - Clean & Minimal */}
                     <div className="relative flex-1 max-w-xl" ref={searchRef}>
                         <div className="relative flex items-center">
-                            <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
+                            <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
                             <input
                                 type="text"
                                 placeholder={t.customer360.searchPlaceholder}
@@ -205,7 +205,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     }
                                 }}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                className="w-full text-xs pl-9 pr-8 py-2.5 rounded-md transition-colors bg-slate-50 border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-600 focus:bg-white"
+                                className="w-full text-xs pl-9 pr-8 py-2 rounded-md transition-colors bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
                             />
                             {searchQuery && (
                                 <button
@@ -222,7 +222,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                             <div className="absolute left-0 right-0 top-full mt-1 z-40 bg-white rounded-md shadow-lg border border-slate-200 max-h-80 overflow-y-auto divide-y divide-slate-100">
                                 {isSearching ? (
                                     <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                                        <RefreshCw size={12} className="animate-spin text-cyan-600" /> {isEn ? 'Searching...' : 'Đang tìm...'}
+                                        <RefreshCw size={12} className="animate-spin text-slate-600" /> {isEn ? 'Searching...' : 'Đang tìm...'}
                                     </div>
                                 ) : searchResults.length === 0 ? (
                                     <div className="py-4 text-center text-xs text-slate-500">
@@ -236,27 +236,27 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                 key={c.id}
                                                 type="button"
                                                 onClick={() => handleSelectCustomer(c.id, c.name)}
-                                                className={`w-full text-left p-3 flex items-center justify-between gap-3 text-xs transition-colors hover:bg-slate-50 ${isSelected ? 'bg-cyan-50/50' : ''}`}
+                                                className={`w-full text-left p-2.5 flex items-center justify-between gap-3 text-xs transition-colors hover:bg-slate-50 ${isSelected ? 'bg-slate-50 font-bold' : ''}`}
                                             >
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                        <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
+                                                        <span className="inline-block font-mono text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-600 whitespace-nowrap shrink-0">
                                                             {c.code}
                                                         </span>
-                                                        <span className="font-bold text-slate-900 truncate">{c.name}</span>
+                                                        <span className="font-semibold text-slate-900 truncate">{c.name}</span>
                                                         {c.channel && (
-                                                            <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-medium bg-cyan-50 text-cyan-700 border border-cyan-200 whitespace-nowrap shrink-0">
+                                                            <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-medium bg-slate-100 text-slate-600 whitespace-nowrap shrink-0">
                                                                 {c.channel}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                                        {c.salesRepName && <span>{isEn ? 'Sales Rep:' : 'Sale phụ trách:'} <strong>{c.salesRepName}</strong></span>}
-                                                        {c.parentName && <span>&bull; {isEn ? 'Group:' : 'Thuộc:'} {c.parentName}</span>}
+                                                        {c.salesRepName && <span>{isEn ? 'Sales Rep:' : 'Sale:'} {c.salesRepName}</span>}
+                                                        {c.parentName && <span>&bull; {c.parentName}</span>}
                                                     </div>
                                                 </div>
-                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 flex-shrink-0 whitespace-nowrap">
-                                                    {c.orderCount} {isEn ? 'orders' : 'đơn hàng'}
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex-shrink-0 whitespace-nowrap font-mono">
+                                                    {c.orderCount} {isEn ? 'orders' : 'đơn'}
                                                 </span>
                                             </button>
                                         )
@@ -267,15 +267,15 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                     </div>
 
                     {/* Time Range Selector */}
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md border border-slate-200 self-start lg:self-auto overflow-x-auto max-w-full">
+                    <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-md self-start sm:self-auto overflow-x-auto max-w-full">
                         {timeRangeOptions.map(opt => (
                             <button
                                 key={opt.key}
                                 type="button"
                                 onClick={() => setTimeRange(opt.key)}
-                                className={`text-xs px-3 py-1.5 rounded transition-all font-medium whitespace-nowrap ${
+                                className={`text-xs px-2.5 py-1 rounded transition-all whitespace-nowrap ${
                                     timeRange === opt.key
-                                        ? 'bg-white text-slate-900 font-bold shadow-xs'
+                                        ? 'bg-white text-slate-900 font-semibold shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
@@ -285,11 +285,11 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                     </div>
                 </div>
 
-                {/* Quick 1-tap picks from Top Customers */}
+                {/* Quick picks from Top Customers */}
                 {topCustomers.length > 0 && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs overflow-x-auto">
-                        <span className="text-[11px] font-semibold text-slate-500 flex-shrink-0 flex items-center gap-1">
-                            <Users size={12} className="text-amber-500" /> {t.customer360.quickPickTitle}
+                    <div className="flex items-center gap-2 text-xs overflow-x-auto no-scrollbar pt-1">
+                        <span className="text-[11px] font-medium text-slate-400 flex-shrink-0">
+                            {t.customer360.quickPickTitle}:
                         </span>
                         <div className="flex items-center gap-1.5 flex-nowrap">
                             {topCustomers.map((tc, idx) => {
@@ -299,15 +299,15 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                         key={tc.id || idx}
                                         type="button"
                                         onClick={() => handleSelectCustomer(tc.id, tc.name)}
-                                        className={`px-2.5 py-1 rounded-md text-xs transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                                        className={`px-2 py-0.5 rounded text-xs transition-all flex items-center gap-1 flex-shrink-0 border ${
                                             isSelected
-                                                ? 'bg-cyan-700 text-white font-bold shadow-xs'
-                                                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                                ? 'bg-slate-900 text-white font-semibold border-slate-900'
+                                                : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
                                         }`}
                                     >
-                                        <span className={`text-[10px] font-bold ${isSelected ? 'text-cyan-200' : 'text-amber-600'}`}>#{idx + 1}</span>
-                                        <span className="truncate max-w-[130px] font-medium">{tc.name}</span>
-                                        <span className={`text-[10px] ${isSelected ? 'text-cyan-200' : 'text-slate-500'}`}>
+                                        <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>#{idx + 1}</span>
+                                        <span className="truncate max-w-[130px]">{tc.name}</span>
+                                        <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
                                             ({formatFriendlyVND(tc.revenue)})
                                         </span>
                                     </button>
@@ -320,220 +320,223 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
             {/* ═══ LOADING STATE ═══ */}
             {isLoadingHistory && (
-                <div className="py-24 text-center bg-white rounded-lg border border-slate-200">
-                    <RefreshCw size={26} className="animate-spin text-cyan-600 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-slate-800">Đang tải dữ liệu khách hàng...</p>
-                    <p className="text-xs text-slate-500 mt-1">Nạp lịch sử đơn hàng, công nợ và chính sách giá riêng</p>
+                <div className="py-20 text-center">
+                    <RefreshCw size={24} className="animate-spin text-slate-400 mx-auto mb-2.5" />
+                    <p className="text-xs font-semibold text-slate-700">Đang tải dữ liệu khách hàng...</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Nạp lịch sử đơn hàng, công nợ và chính sách giá riêng</p>
                 </div>
             )}
 
-            {/* ═══ MAIN DASHBOARD CONTENT ═══ */}
+            {/* ═══ MAIN DASHBOARD CONTENT (ZERO CARD-IN-CARD) ═══ */}
             {!isLoadingHistory && historyData && (
                 <div className="space-y-4">
 
-                    {/* ═══ SECTION 1: CUSTOMER PROFILE & BUYING HEALTH ALERT ═══ */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        
-                        {/* Profile Info (2 cols) */}
-                        <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <span className="inline-block font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white whitespace-nowrap shrink-0">
+                    {/* ═══ 1. CUSTOMER DOSSIER HEADER (CLEAN & INTEGRATED) ═══ */}
+                    <div className="space-y-1.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono text-xs font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
                                     {historyData.customer.code}
                                 </span>
-                                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                                     {historyData.customer.name}
                                 </h3>
-                                <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 whitespace-nowrap shrink-0">
-                                    {historyData.customer.channel}
-                                </span>
+                                {historyData.customer.channel && (
+                                    <span className="text-xs px-2 py-0.5 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+                                        {historyData.customer.channel}
+                                    </span>
+                                )}
                                 {historyData.customer.entityType === 'COMPANY' && (
-                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                        {isEn ? `Parent Group (${historyData.customer.childrenCount} branches)` : `Công ty Mẹ (${historyData.customer.childrenCount} chi nhánh con)`}
+                                    <span className="text-xs px-2 py-0.5 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+                                        {isEn ? `Group (${historyData.customer.childrenCount} branches)` : `Công ty Mẹ (${historyData.customer.childrenCount} chi nhánh)`}
                                     </span>
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
-                                <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                                        {isEn ? 'Assigned Sales Rep' : 'Sale phụ trách'}
+                            {/* Inline Rhythm Indicator - Eliminates the separate yellow card */}
+                            <div className="flex items-center gap-2 text-xs self-start sm:self-auto">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                    historyData.health.status === 'AT_RISK'
+                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                        : historyData.health.status === 'WARNING'
+                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${
+                                        historyData.health.status === 'AT_RISK'
+                                            ? 'bg-rose-600'
+                                            : historyData.health.status === 'WARNING'
+                                            ? 'bg-amber-600'
+                                            : 'bg-emerald-600'
+                                    }`} />
+                                    <span>
+                                        {historyData.health.status === 'AT_RISK'
+                                            ? (isEn ? `Overdue by ${historyData.health.delayDays}d` : `Quá chu kỳ ${historyData.health.delayDays} ngày`)
+                                            : historyData.health.status === 'WARNING'
+                                            ? (isEn ? `Slow by ${historyData.health.delayDays}d` : `Chậm ${historyData.health.delayDays} ngày`)
+                                            : (isEn ? 'Regular cadence' : 'Đặt đều đặn')}
                                     </span>
-                                    <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                                        <User size={13} className="text-slate-400" />
-                                        {historyData.customer.salesRepName || (isEn ? 'Unassigned' : 'Chưa phân bổ')}
+                                    <span className="text-slate-300 font-normal">|</span>
+                                    <span className="text-slate-600 font-mono text-[11px]">
+                                        {historyData.health.daysSinceLastOrder !== null
+                                            ? (isEn ? `${historyData.health.daysSinceLastOrder}d ago` : `Đơn gần nhất cách đây ${historyData.health.daysSinceLastOrder} ngày`)
+                                            : (isEn ? 'No orders' : 'Chưa có đơn')}
+                                        {historyData.health.averageOrderCycleDays ? ` (~${historyData.health.averageOrderCycleDays} ngày/đơn)` : ''}
                                     </span>
-                                </div>
-                                {historyData.customer.parentName && (
-                                    <div>
-                                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                                            {isEn ? 'Parent Company' : 'Công ty mẹ'}
-                                        </span>
-                                        <span className="font-semibold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                                            <Building2 size={13} className="text-slate-400" />
-                                            {historyData.customer.parentName}
-                                        </span>
-                                    </div>
-                                )}
-                                <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                                        {isEn ? 'Purchasing Contact' : 'Liên hệ thu mua'}
-                                    </span>
-                                    <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
-                                        {historyData.customer.purchasingName || '—'}
-                                        {historyData.customer.purchasingPhone && (
-                                            <span className="text-slate-500 font-normal">({historyData.customer.purchasingPhone})</span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                                        {isEn ? 'Site Receiver' : 'Nhận hàng tại điểm'}
-                                    </span>
-                                    <span className="text-slate-800 mt-0.5 font-medium flex items-center gap-1">
-                                        {historyData.customer.receiverName || '—'}
-                                        {historyData.customer.receiverPhone && (
-                                            <span className="text-slate-500 font-normal">({historyData.customer.receiverPhone})</span>
-                                        )}
-                                    </span>
-                                </div>
+                                </span>
                             </div>
                         </div>
 
-                        {/* Buying Frequency & Order Rhythm (1 col) */}
-                        <div className={`rounded-lg border p-4 shadow-xs flex flex-col justify-between ${
-                            historyData.health.status === 'AT_RISK'
-                                ? 'bg-rose-50/40 border-rose-200'
-                                : historyData.health.status === 'WARNING'
-                                ? 'bg-amber-50/40 border-amber-200'
-                                : 'bg-emerald-50/40 border-emerald-200'
-                        }`}>
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        {isEn ? 'Order Rhythm & Frequency' : 'Theo Dõi Nhịp Đặt Hàng'}
+                        {/* Inline Metadata (Omits empty fields) */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                            <span>
+                                <strong className="text-slate-700 font-medium">{isEn ? 'Sales Rep:' : 'Sale phụ trách:'}</strong>{' '}
+                                <span className={historyData.customer.salesRepName ? 'text-slate-800 font-semibold' : 'text-slate-400'}>
+                                    {historyData.customer.salesRepName || (isEn ? 'Unassigned' : 'Chưa phân bổ')}
+                                </span>
+                            </span>
+                            {historyData.customer.parentName && (
+                                <>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong className="text-slate-700 font-medium">{isEn ? 'Parent:' : 'Công ty mẹ:'}</strong>{' '}
+                                        <span className="text-slate-800">{historyData.customer.parentName}</span>
                                     </span>
-                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
-                                        historyData.health.status === 'AT_RISK'
-                                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                            : historyData.health.status === 'WARNING'
-                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                    }`}>
-                                        {historyData.health.status === 'AT_RISK' ? (
-                                            <>
-                                                <AlertTriangle size={11} className="text-rose-700" />
-                                                <span>{isEn ? 'Overdue Cycle' : 'Quá chu kỳ'}</span>
-                                            </>
-                                        ) : historyData.health.status === 'WARNING' ? (
-                                            <>
-                                                <AlertCircle size={11} className="text-amber-700" />
-                                                <span>{isEn ? 'Delay Warning' : 'Đang chậm đơn'}</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle2 size={11} className="text-emerald-700" />
-                                                <span>{isEn ? 'Regular Rhythm' : 'Đặt đều đặn'}</span>
-                                            </>
+                                </>
+                            )}
+                            {historyData.customer.purchasingName && (
+                                <>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong className="text-slate-700 font-medium">{isEn ? 'Purchasing:' : 'Thu mua:'}</strong>{' '}
+                                        <span className="text-slate-800">{historyData.customer.purchasingName}</span>
+                                        {historyData.customer.purchasingPhone && (
+                                            <span className="text-slate-400 font-mono text-[11px] ml-1">({historyData.customer.purchasingPhone})</span>
                                         )}
                                     </span>
-                                </div>
-
-                                <div className="space-y-1.5 mt-2 text-xs">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">{isEn ? 'Last order:' : 'Đơn gần nhất:'}</span>
-                                        <strong className="text-slate-900 font-mono">
-                                            {historyData.health.daysSinceLastOrder !== null
-                                                ? (isEn ? `${historyData.health.daysSinceLastOrder} days ago` : `Cách đây ${historyData.health.daysSinceLastOrder} ngày`)
-                                                : (isEn ? 'No orders recorded' : 'Chưa có đơn')}
-                                        </strong>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-600">{isEn ? 'Average cycle:' : 'Chu kỳ thường đặt:'}</span>
-                                        <strong className="text-slate-900 font-mono">
-                                            {historyData.health.averageOrderCycleDays
-                                                ? `~ ${historyData.health.averageOrderCycleDays} ${isEn ? 'days / order' : 'ngày / đơn'}`
-                                                : (isEn ? 'Insufficient data' : 'Chưa đủ dữ liệu')}
-                                        </strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="pt-3 mt-2 border-t border-slate-200/60 text-xs">
-                                <p className="text-slate-700 leading-snug">
-                                    {historyData.health.status === 'AT_RISK' ? (
-                                        <span className="text-rose-700 font-semibold">
-                                            {isEn
-                                                ? `Exceeded typical order cycle by ${historyData.health.delayDays} days. Sales rep should follow up.`
-                                                : `Đã quá chu kỳ mua ${historyData.health.delayDays} ngày. Sale cần chủ động liên hệ kiểm tra lại nhu cầu của khách.`}
-                                        </span>
-                                    ) : historyData.health.status === 'WARNING' ? (
-                                        <span className="text-amber-800 font-medium">
-                                            {isEn
-                                                ? `Customer ordering slower than usual by ${historyData.health.delayDays} days.`
-                                                : `Khách đang đặt chậm hơn chu kỳ ${historyData.health.delayDays} ngày.`}
-                                        </span>
-                                    ) : (
-                                        <span className="text-emerald-800 font-medium">
-                                            {isEn ? 'Customer maintains a consistent ordering rhythm.' : 'Khách duy trì đặt hàng đúng chu kỳ đều đặn.'}
-                                        </span>
-                                    )}
-                                </p>
-                            </div>
+                                </>
+                            )}
+                            {historyData.customer.receiverName && (
+                                <>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong className="text-slate-700 font-medium">{isEn ? 'Site Contact:' : 'Nhận hàng:'}</strong>{' '}
+                                        <span className="text-slate-800">{historyData.customer.receiverName}</span>
+                                        {historyData.customer.receiverPhone && (
+                                            <span className="text-slate-400 font-mono text-[11px] ml-1">({historyData.customer.receiverPhone})</span>
+                                        )}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    {/* ═══ SECTION 2: CHÍNH SÁCH GIÁ & BẢNG GIÁ RIÊNG ═══ */}
-                    <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center">
-                                    <Tag size={16} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-sm text-slate-900">
-                                        {isEn ? 'Pricing Policy & Special Price Lists' : 'Chính Sách Giá & Bảng Giá Riêng'}
-                                    </h4>
-                                    <p className="text-xs text-slate-500">
-                                        {isEn ? 'Discount terms and wine SKUs with approved custom rates' : 'Chính sách chiết khấu và danh mục mã rượu có giá thỏa thuận riêng'}
-                                    </p>
-                                </div>
+                    {/* ═══ 2. PRIORITY METRIC STRIP: FINANCIAL & ORDER KPI (BROUGHT TO TOP) ═══ */}
+                    <div className="bg-white rounded-lg border border-slate-200 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-2 lg:grid-cols-4 shadow-2xs">
+                        {/* 1. Tổng tiền đã mua */}
+                        <div className="p-3.5 sm:p-4">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+                                {isEn ? 'LIFETIME PURCHASES' : 'Tổng Tiền Đã Mua'}
+                            </span>
+                            <p className="text-lg sm:text-xl font-bold font-mono text-slate-900 tracking-tight">
+                                {formatFriendlyVND(historyData.kpis.totalRevenue)}
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                                {formatVND(historyData.kpis.totalRevenue)}
+                            </p>
+                        </div>
+
+                        {/* 2. Đã thu vs Còn nợ AR */}
+                        <div className="p-3.5 sm:p-4">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+                                {isEn ? 'PAID / OUTSTANDING' : 'Đã Thu / Còn Nợ'}
+                            </span>
+                            <p className="text-lg sm:text-xl font-bold font-mono text-emerald-700 tracking-tight">
+                                {formatFriendlyVND(historyData.kpis.totalPaidAmount)}
+                            </p>
+                            <p className="text-[11px] mt-0.5 font-medium text-slate-600">
+                                {isEn ? 'Debt: ' : 'Nợ: '}<strong className="text-slate-900 font-mono">{formatFriendlyVND(historyData.kpis.totalArDebt)}</strong>
+                                {historyData.kpis.overdueArDebt > 0 && (
+                                    <span className="text-rose-600 font-bold ml-1 font-mono">
+                                        ({formatFriendlyVND(historyData.kpis.overdueArDebt)} {isEn ? 'overdue' : 'quá hạn'})
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+
+                        {/* 3. Sản lượng & Đơn thương mại vs Tasting */}
+                        <div className="p-3.5 sm:p-4">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+                                {isEn ? 'BOTTLES DELIVERED' : 'Tổng Chai Đã Giao'}
+                            </span>
+                            <p className="text-lg sm:text-xl font-bold font-mono text-slate-900 tracking-tight">
+                                {historyData.kpis.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN')} <span className="text-xs font-normal text-slate-500 font-sans">{isEn ? 'btls' : 'chai'}</span>
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                                <strong>{historyData.orderBreakdown.commercialCount}</strong> {isEn ? 'sales' : 'đơn bán'} ({historyData.orderBreakdown.commercialBottles} {isEn ? 'btls' : 'chai'}) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> tasting
+                            </p>
+                        </div>
+
+                        {/* 4. Điều khoản & Hạn mức */}
+                        <div className="p-3.5 sm:p-4">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+                                {isEn ? 'CREDIT LIMIT & TERMS' : 'Hạn Mức & Điều Khoản'}
+                            </span>
+                            <p className="text-base sm:text-lg font-bold text-slate-900 truncate">
+                                {historyData.customer.paymentTerm}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                {isEn ? 'Limit: ' : 'Hạn mức: '}<strong className="text-slate-800 font-mono">{formatFriendlyVND(historyData.customer.creditLimit)}</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* ═══ 3. CHÍNH SÁCH GIÁ & BẢNG GIÁ RIÊNG (FLAT & MINIMAL) ═══ */}
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                            <div>
+                                <h4 className="font-bold text-sm text-slate-900">
+                                    {isEn ? 'Pricing Policy & Custom Price Lists' : 'Chính Sách Giá & Bảng Giá Riêng'}
+                                </h4>
+                                <p className="text-xs text-slate-400">
+                                    {isEn ? 'Discount terms and wine SKUs with approved custom rates' : 'Chính sách chiết khấu và danh mục mã rượu có giá thỏa thuận riêng'}
+                                </p>
                             </div>
 
                             {/* Base Pricing Badges */}
                             <div className="flex items-center gap-2 text-xs">
-                                <span className="text-slate-500">{isEn ? 'Pricing policy:' : 'Chính sách giá:'}</span>
-                                <span className="font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                                <span className="font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                                     {BASE_PRICE_LABELS[historyData.pricing.basePriceType]?.[isEn ? 'en' : 'vi'] ?? historyData.pricing.basePriceType}
                                 </span>
                                 {historyData.pricing.defaultDiscountPct > 0 && (
-                                    <span className="font-bold px-2 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        {isEn ? `Default discount: -${historyData.pricing.defaultDiscountPct}%` : `Chiết khấu mặc định: -${historyData.pricing.defaultDiscountPct}%`}
+                                    <span className="font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                        {isEn ? `Default: -${historyData.pricing.defaultDiscountPct}%` : `Chiết khấu mặc định: -${historyData.pricing.defaultDiscountPct}%`}
                                     </span>
                                 )}
                             </div>
                         </div>
 
-                        {/* Approved Price Proposals (Tờ trình giá đã duyệt) */}
+                        {/* Approved Price Proposals (Flat compact layout) */}
                         {historyData.pricing.proposals.length > 0 && (
-                            <div className="mt-4 p-3 rounded-md bg-amber-50/40 border border-amber-200">
-                                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                    <FileText size={13} className="text-amber-700" />
-                                    <span>{isEn ? `Approved Price Proposals (${historyData.pricing.proposals.length}):` : `Tờ trình duyệt giá riêng (${historyData.pricing.proposals.length}):`}</span>
+                            <div className="border border-slate-200 rounded-md p-3 bg-slate-50/50 space-y-2">
+                                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
+                                    <FileText size={12} className="text-slate-500" />
+                                    <span>{isEn ? `Approved Proposals (${historyData.pricing.proposals.length}):` : `Tờ trình duyệt giá riêng (${historyData.pricing.proposals.length}):`}</span>
                                 </span>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {historyData.pricing.proposals.map(p => (
-                                        <div key={p.id} className="bg-white p-2.5 rounded border border-amber-200/80 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                                        <div key={p.id} className="bg-white p-2.5 rounded border border-slate-200 text-xs flex items-center justify-between gap-2 shadow-2xs">
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 font-bold text-slate-900">
-                                                    <span className="font-mono text-cyan-700">{p.proposalNo}</span>
+                                                    <span className="font-mono text-slate-700">{p.proposalNo}</span>
                                                     <span className="truncate">{p.title}</span>
                                                 </div>
-                                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                                <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
                                                     {p.startDate ? `${new Date(p.startDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')} – ` : ''}
                                                     {p.endDate ? new Date(p.endDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN') : (isEn ? 'Indefinite' : 'Vô thời hạn')}
                                                 </div>
                                             </div>
-                                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">
+                                            <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">
                                                 {isEn ? 'Approved' : 'Đã duyệt'}
                                             </span>
                                         </div>
@@ -543,20 +546,20 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         )}
 
                         {/* Special Price Rules by SKU Table */}
-                        <div className="mt-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold text-slate-800">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-slate-700">
                                     {isEn ? `Custom price rules by SKU (${historyData.pricing.specialRules.length} SKUs):` : `Bảng giá riêng theo từng mã hàng (${historyData.pricing.specialRules.length} SKU):`}
                                 </span>
                                 {historyData.pricing.specialRules.some(r => r.isExpiringSoon || r.isExpired) && (
-                                    <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                                    <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
                                         <AlertTriangle size={12} /> {isEn ? 'Expiring or expired rates exist' : 'Có mã sắp hoặc đã hết hạn'}
                                     </span>
                                 )}
                             </div>
 
                             {historyData.pricing.specialRules.length === 0 ? (
-                                <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded border border-dashed border-slate-200">
+                                <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded border border-dashed border-slate-200">
                                     {isEn ? 'Customer is on standard wholesale pricing. No SKU-specific custom price rules assigned.' : 'Khách hàng đang áp dụng theo bảng giá chung, chưa có giá thỏa thuận riêng cho từng mã.'}
                                 </div>
                             ) : (
@@ -584,7 +587,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                 </span>
                                                                 <span className="font-bold text-slate-900">{rule.productName}</span>
                                                                 {rule.wineType && (
-                                                                    <span className="inline-block text-[10px] px-1 py-0.2 rounded font-medium bg-cyan-50 text-cyan-800 whitespace-nowrap shrink-0">
+                                                                    <span className="inline-block text-[10px] px-1 py-0.2 rounded font-medium bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                         {rule.wineType}
                                                                     </span>
                                                                 )}
@@ -597,29 +600,29 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                         <td className="py-2.5 px-3 text-right font-mono text-slate-500">
                                                             {rule.wholesalePrice ? formatVND(rule.wholesalePrice) : rule.retailPrice ? formatVND(rule.retailPrice) : '—'}
                                                         </td>
-                                                        <td className="py-2.5 px-3 text-right font-bold font-mono text-amber-800 text-sm">
+                                                        <td className="py-2.5 px-3 text-right font-bold font-mono text-slate-900 text-sm">
                                                             {formatVND(rule.specialPrice)}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-right font-semibold text-emerald-700">
                                                             {rule.discountPct > 0 ? (
-                                                                <span>-{rule.discountPct}% <span className="text-[10px] font-normal text-slate-500">({formatVND(rule.discountAmount)})</span></span>
+                                                                <span>-{rule.discountPct}% <span className="text-[10px] font-normal text-slate-500 font-mono">({formatVND(rule.discountAmount)})</span></span>
                                                             ) : (isEn ? 'Fixed rate' : 'Giá ấn định')}
                                                         </td>
-                                                        <td className="py-2.5 px-3 text-center text-slate-600 whitespace-nowrap text-[11px]">
+                                                        <td className="py-2.5 px-3 text-center text-slate-600 whitespace-nowrap text-[11px] font-mono">
                                                             {new Date(rule.startDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}
                                                             {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}` : ` (${isEn ? 'Indefinite' : 'Vô thời hạn'})`}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                                             {rule.isExpired ? (
-                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+                                                                <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Expired' : 'Đã hết hạn'}
                                                                 </span>
                                                             ) : rule.isExpiringSoon ? (
-                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
+                                                                <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Expiring Soon' : 'Sắp hết hạn'}
                                                                 </span>
                                                             ) : (
-                                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                                <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                                     {isEn ? 'Active' : 'Đang áp dụng'}
                                                                 </span>
                                                             )}
@@ -634,113 +637,53 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         </div>
                     </div>
 
-                    {/* ═══ SECTION 3: 4 FINANCIAL & ORDER BREAKDOWN CARDS ═══ */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 1. Tổng tiền đã mua */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-cyan-600">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                {isEn ? 'LIFETIME PURCHASES' : 'Tổng Tiền Hàng Đã Mua'}
-                            </span>
-                            <p className="text-xl font-bold font-mono text-slate-900">
-                                {formatFriendlyVND(historyData.kpis.totalRevenue)}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1 font-mono">
-                                {formatVND(historyData.kpis.totalRevenue)}
-                            </p>
-                        </div>
-
-                        {/* 2. Đã thu vs Còn nợ AR */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-amber-500">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                {isEn ? 'PAID / OUTSTANDING DEBT' : 'Đã Thanh Toán / Còn Nợ'}
-                            </span>
-                            <p className="text-xl font-bold font-mono text-emerald-700">
-                                {formatFriendlyVND(historyData.kpis.totalPaidAmount)}
-                            </p>
-                            <p className="text-[11px] mt-1 font-medium">
-                                {isEn ? 'Balance: ' : 'Còn nợ: '}<strong className="text-amber-800">{formatFriendlyVND(historyData.kpis.totalArDebt)}</strong>
-                                {historyData.kpis.overdueArDebt > 0 && (
-                                    <span className="text-rose-600 font-bold ml-1">
-                                        ({formatFriendlyVND(historyData.kpis.overdueArDebt)} {isEn ? 'overdue' : 'quá hạn'})
-                                    </span>
-                                )}
-                            </p>
-                        </div>
-
-                        {/* 3. Sản lượng & Đơn thương mại vs Tasting */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-emerald-600">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                {isEn ? 'TOTAL BOTTLES DELIVERED' : 'Tổng Số Chai Đã Giao'}
-                            </span>
-                            <p className="text-xl font-bold font-mono text-slate-900">
-                                {historyData.kpis.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN')} <span className="text-xs font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
-                            </p>
-                            <p className="text-[11px] text-slate-600 mt-1">
-                                <strong>{historyData.orderBreakdown.commercialCount}</strong> {isEn ? 'sales orders' : 'đơn bán'} ({historyData.orderBreakdown.commercialBottles} {isEn ? 'btls' : 'chai'}) &bull; <strong>{historyData.orderBreakdown.tastingCount}</strong> {isEn ? 'tasting orders' : 'đơn thử nếm'}
-                            </p>
-                        </div>
-
-                        {/* 4. Điều khoản & Hạn mức */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs border-l-4 border-l-slate-700">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                                {isEn ? 'CREDIT LIMIT & TERMS' : 'Hạn Mức Nợ & Điều Khoản'}
-                            </span>
-                            <p className="text-base font-bold text-slate-900">
-                                {historyData.customer.paymentTerm}
-                            </p>
-                            <p className="text-[11px] text-slate-600 mt-1">
-                                {isEn ? 'Credit limit: ' : 'Hạn mức: '}<strong className="text-slate-800">{formatFriendlyVND(historyData.customer.creditLimit)}</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* ═══ SECTION 4: TABS (ORDERS / WINES / TRENDS) ═══ */}
-                    <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs">
+                    {/* ═══ 4. TABS: ORDERS / WINES / TRENDS (SLEEK UNDERLINE TABS) ═══ */}
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
                         
-                        {/* Tab Switcher */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                            <div className="flex items-center gap-2">
+                        {/* Tab Switcher - Sleek Underline Tabs */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200">
+                            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('ORDERS')}
-                                    className={`flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-md transition-colors ${
+                                    className={`flex items-center gap-1.5 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
                                         activeTab === 'ORDERS'
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
+                                            ? 'border-slate-900 text-slate-900 font-bold'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
                                     }`}
                                 >
                                     <FileText size={14} />
-                                    {isEn ? `Order History (${historyData.orders.length})` : `Lịch Sử Đơn Hàng (${historyData.orders.length})`}
+                                    <span>{isEn ? `Order History (${historyData.orders.length})` : `Lịch Sử Đơn Hàng (${historyData.orders.length})`}</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('WINES')}
-                                    className={`flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-md transition-colors ${
+                                    className={`flex items-center gap-1.5 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
                                         activeTab === 'WINES'
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
+                                            ? 'border-slate-900 text-slate-900 font-bold'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
                                     }`}
                                 >
                                     <Wine size={14} />
-                                    {isEn ? `Purchased Wines (${historyData.topProducts.length})` : `Danh Mục Rượu Đã Mua (${historyData.topProducts.length})`}
+                                    <span>{isEn ? `Purchased Wines (${historyData.topProducts.length})` : `Danh Mục Rượu Đã Mua (${historyData.topProducts.length})`}</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('TREND')}
-                                    className={`flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-md transition-colors ${
+                                    className={`flex items-center gap-1.5 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
                                         activeTab === 'TREND'
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
+                                            ? 'border-slate-900 text-slate-900 font-bold'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
                                     }`}
                                 >
                                     <TrendingUp size={14} />
-                                    {isEn ? `Monthly Purchases (${historyData.monthlyTrend.length} mo)` : `Lịch Sử Nhập Theo Tháng (${historyData.monthlyTrend.length} tháng)`}
+                                    <span>{isEn ? `Monthly Purchases (${historyData.monthlyTrend.length} mo)` : `Lịch Sử Nhập Theo Tháng (${historyData.monthlyTrend.length} tháng)`}</span>
                                 </button>
                             </div>
 
                             <Link
                                 href={`/dashboard/sales?search=${encodeURIComponent(historyData.customer.code)}`}
-                                className="text-xs font-bold text-cyan-700 hover:text-cyan-900 flex items-center gap-1 hover:underline"
+                                className="text-xs font-semibold text-slate-600 hover:text-slate-900 pb-2.5 flex items-center gap-1 hover:underline self-end sm:self-auto"
                             >
                                 {isEn ? 'View in Sales Orders' : 'Xem tại danh sách Bán hàng'} <ExternalLink size={12} />
                             </Link>

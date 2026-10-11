@@ -54,32 +54,30 @@ export function DashboardHeaderNav({
                 </form>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar whitespace-nowrap">
+            {/* Tab Navigation - Sleek Underline Tabs */}
+            <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <Link
                     href={`/dashboard?tab=overview${queryString}`}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
                         currentTab === 'overview'
-                            ? 'bg-slate-900 text-white shadow-xs'
-                            : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-cyan-700' : 'text-slate-400'} />
+                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-slate-900' : 'text-slate-400'} />
                     <span>{t.executiveOverview}</span>
                 </Link>
                 <Link
                     href={`/dashboard?tab=customers${queryString}`}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
                         currentTab === 'customers'
-                            ? 'bg-slate-900 text-white shadow-xs'
-                            : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
-                    <Users size={15} className={currentTab === 'customers' ? 'text-amber-700' : 'text-slate-400'} />
+                    <Users size={15} className={currentTab === 'customers' ? 'text-slate-900' : 'text-slate-400'} />
                     <span>{t.customerAnalytics}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
-                        currentTab === 'customers' ? 'bg-amber-400/20 text-amber-700' : 'bg-amber-100 text-amber-800'
-                    }`}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">
                         {t.customerAnalyticsBadge}
                     </span>
                 </Link>

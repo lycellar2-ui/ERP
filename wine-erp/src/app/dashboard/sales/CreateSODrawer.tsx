@@ -834,23 +834,25 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     {!loadingData && (
                         <>
                             {/* Order Type Selector: Commercial vs Tasting */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{t.orderTypeLabel}</span>
-                                    <div className="flex items-center gap-2">
+                            <div className="p-2.5 sm:p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 whitespace-nowrap">
+                                        {t.orderTypeLabel}
+                                    </span>
+                                    <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setOrderType('STANDARD')
                                             }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
                                                 orderType === 'STANDARD'
-                                                    ? 'bg-emerald-700 text-white shadow-sm border border-emerald-800'
+                                                    ? 'bg-emerald-700 text-white shadow-xs border border-emerald-800'
                                                     : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'
                                             }`}
                                         >
                                             <ShoppingBag size={14} className="shrink-0" />
-                                            {t.commercialOrder}
+                                            <span>{t.commercialOrder}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -859,20 +861,20 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 setPaymentTerm('TASTING - Không thu tiền')
                                                 setLines(prev => prev.map(l => ({ ...l, unitPrice: 0 })))
                                             }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
                                                 orderType === 'TASTING'
-                                                    ? 'bg-amber-600 text-white shadow-sm border border-amber-700 ring-2 ring-amber-500/20'
+                                                    ? 'bg-amber-600 text-white shadow-xs border border-amber-700 ring-2 ring-amber-500/20'
                                                     : 'bg-white text-amber-900 hover:bg-amber-50 border border-amber-400'
                                             }`}
                                         >
                                             <Wine size={14} className="shrink-0" />
-                                            {t.tastingOrder}
+                                            <span>{t.tastingOrder}</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {orderType === 'TASTING' && (
-                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs whitespace-nowrap shrink-0">
+                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs whitespace-nowrap shrink-0">
                                         <Sparkles size={13} className="shrink-0 text-amber-700" />
                                         {t.tastingBanner}
                                     </span>
@@ -1159,7 +1161,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 <option value="">{t.selectAddressPlaceholder}</option>
                                                 {selectedCustomer.addresses.map(addr => (
                                                     <option key={addr.id} value={addr.id}>
-                                                        {addr.label} ({addr.address})
+                                                        {addr.label}{addr.address && addr.address.trim() && addr.address.trim() !== addr.label ? ` (${addr.address})` : ''}
                                                     </option>
                                                 ))}
                                             </select>
@@ -1184,38 +1186,66 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Compact Order Info & Credit Status */}
                             {selectedCustomer && (
-                                <div className="flex flex-col gap-2 p-2 rounded-md" style={{ background: '#FFFFFF/60', border: '1px solid #E2E8F0' }}>
-                                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-bold" style={{ color: creditWarning ? '#B91C1C' : '#15803D' }}>
-                                                {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
-                                            </span>
-                                            <span style={{ color: '#64748B' }}>{t.creditLimit} <strong className="font-mono text-slate-800">{formatCurrency(effectiveCreditLimit)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>{t.arBalance} <strong className="font-mono text-amber-700">{loadingAR ? '...' : formatCurrency(arBalance)}</strong></span>
-                                            <span style={{ color: '#64748B' }}>{t.creditAvailable} <strong className="font-mono" style={{ color: creditWarning ? '#B91C1C' : '#0D9488' }}>{formatCurrency(Math.max(0, creditAvailable))}</strong></span>
-                                        </div>
+                                <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span 
+                                            className="font-bold text-xs px-2 py-0.5 rounded whitespace-nowrap inline-flex items-center gap-1"
+                                            style={{ 
+                                                color: isCreditHold || creditWarning ? '#B91C1C' : '#15803D',
+                                                background: isCreditHold || creditWarning ? 'rgba(185,28,28,0.08)' : 'rgba(21,128,61,0.08)',
+                                                border: `1px solid ${isCreditHold || creditWarning ? 'rgba(185,28,28,0.2)' : 'rgba(21,128,61,0.2)'}`
+                                            }}
+                                        >
+                                            {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
+                                        </span>
                                         {canOverride && (
-                                            <button onClick={() => setOverrideMode(!overrideMode)} className="inline-block text-[10px] px-1.5 py-0.5 rounded transition-all whitespace-nowrap shrink-0" style={{ color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', background: 'rgba(180,83,9,0.08)' }}>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setOverrideMode(!overrideMode)} 
+                                                className="inline-block text-[11px] px-2 py-0.5 rounded font-medium transition-all whitespace-nowrap shrink-0 hover:bg-amber-100" 
+                                                style={{ color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', background: 'rgba(180,83,9,0.08)' }}
+                                            >
                                                 {overrideMode ? t.done : t.editInfo}
                                             </button>
                                         )}
                                     </div>
-                                    <div className="h-px w-full bg-slate-200" />
+
+                                    {/* 3 Metric Chips */}
+                                    <div className="grid grid-cols-3 gap-2 py-1.5 border-y border-slate-100 text-[11px]">
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap">{t.creditLimit}</span>
+                                            <strong className="font-mono text-xs text-slate-800 whitespace-nowrap truncate">{formatCurrency(effectiveCreditLimit)}</strong>
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap">{t.arBalance}</span>
+                                            <strong className="font-mono text-xs text-amber-700 whitespace-nowrap truncate">{loadingAR ? '...' : formatCurrency(arBalance)}</strong>
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap">{t.creditAvailable}</span>
+                                            <strong className="font-mono text-xs whitespace-nowrap truncate" style={{ color: creditWarning ? '#B91C1C' : '#0D9488' }}>
+                                                {formatCurrency(Math.max(0, creditAvailable))}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    {/* Channel, Payment, Entity */}
                                     {!overrideMode ? (
-                                        <div className="flex items-center gap-4 text-[11px] text-slate-600">
-                                            <span>{t.channelLabel} <strong className="text-slate-900">{getSOChannelLabel(channel, locale)}</strong></span>
-                                            <span>{t.paymentLabel} <strong className="text-slate-900">{paymentTerm}</strong></span>
-                                            <span>{t.entityLabel} <strong className="text-slate-900" title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? t.defaultEntity}</strong></span>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                                            <span className="whitespace-nowrap">{t.channelLabel} <strong className="text-slate-900">{getSOChannelLabel(channel, locale, true)}</strong></span>
+                                            <span className="text-slate-300 hidden sm:inline">•</span>
+                                            <span className="whitespace-nowrap">{t.paymentLabel} <strong className="text-slate-900">{paymentTerm}</strong></span>
+                                            <span className="text-slate-300 hidden sm:inline">•</span>
+                                            <span className="whitespace-nowrap">{t.entityLabel} <strong className="text-slate-900" title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? t.defaultEntity}</strong></span>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)} className="w-full px-2 py-1.5 text-xs outline-none rounded border border-slate-300 bg-white" style={{ ...inputStyle }}>
                                                 {CHANNELS.map(c => <option key={c.value} value={c.value}>{getSOChannelLabel(c.value, locale)}</option>)}
                                             </select>
-                                            <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                            <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)} className="w-full px-2 py-1.5 text-xs outline-none rounded border border-slate-300 bg-white" style={{ ...inputStyle }}>
                                                 {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
-                                            <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                            <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)} className="w-full px-2 py-1.5 text-xs outline-none rounded border border-slate-300 bg-white" style={{ ...inputStyle }}>
                                                 <option value="">{t.selectEntityPlaceholder}</option>
                                                 {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
                                             </select>

@@ -730,17 +730,17 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             {selectedCustomer && (
                                 <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs text-xs">
                                     <div className="flex items-center gap-4 flex-wrap">
-                                        <span className={`font-bold flex items-center gap-1.5 ${isCreditHold ? 'text-rose-600' : creditWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                        <span className={`font-bold flex items-center gap-1.5 whitespace-nowrap ${isCreditHold ? 'text-rose-600' : creditWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
                                             {isCreditHold ? t.creditHold : creditWarning ? t.creditOver : t.creditOk}
                                         </span>
-                                        <span className="text-slate-500">
-                                            {t.creditLimit} <strong className="font-mono text-slate-800">{formatCurrency(effectiveCreditLimit)}</strong>
+                                        <span className="text-slate-500 whitespace-nowrap">
+                                            {t.creditLimit} <strong className="font-mono text-slate-800 whitespace-nowrap">{formatCurrency(effectiveCreditLimit)}</strong>
                                         </span>
-                                        <span className="text-slate-500">
-                                            {t.arBalance} <strong className="font-mono text-amber-700">{formatCurrency(arBalance)}</strong>
+                                        <span className="text-slate-500 whitespace-nowrap">
+                                            {t.arBalance} <strong className="font-mono text-amber-700 whitespace-nowrap">{formatCurrency(arBalance)}</strong>
                                         </span>
-                                        <span className="text-slate-500">
-                                            {t.creditAvailable} <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700'}`}>{formatCurrency(Math.max(0, creditAvailable))}</strong>
+                                        <span className="text-slate-500 whitespace-nowrap">
+                                            {t.creditAvailable} <strong className={`font-mono whitespace-nowrap ${creditWarning ? 'text-rose-600' : 'text-emerald-700'}`}>{formatCurrency(Math.max(0, creditAvailable))}</strong>
                                         </span>
                                     </div>
                                 </div>
