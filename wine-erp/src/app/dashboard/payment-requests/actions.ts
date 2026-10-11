@@ -426,9 +426,9 @@ export async function getPaymentRequests(filters: {
     }
 
     // RBAC: If normal user, show own requests + department requests if manager
-    const isCEO = user?.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC'].includes(r.toUpperCase()))
-    const isAccountant = user?.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG'].includes(r.toUpperCase()))
-    const isManager = user?.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR'].includes(r.toUpperCase()))
+    const isCEO = hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý', 'GIAM_DOC') || user?.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC', 'TRO_LY', 'Trợ Lý'].includes(r))
+    const isAccountant = hasRole(user, 'KE_TOAN', 'Kế Toán') || user?.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG', 'Kế Toán'].includes(r))
+    const isManager = hasRole(user, 'SALES_MGR', 'Sales Manager', 'SALES_MANAGER', 'CBO') || user?.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR', 'CBO', 'SALES_MANAGER', 'Sales Manager'].includes(r))
 
     let userDeptId: string | null = null
     if (user && isManager) {
@@ -778,9 +778,9 @@ export async function processPaymentApproval(input: {
             return { success: false, error: `Phiếu đang ở trạng thái ${req.status}, không thể thao tác tiếp` }
         }
 
-        const isCEO = hasRole(user, 'CEO', 'ADMIN', 'TRO_LY') || user.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC'].includes(r.toUpperCase()))
-        const isAccountant = hasRole(user, 'KE_TOAN', 'Kế Toán') || user.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG'].includes(r.toUpperCase()))
-        const isManager = hasRole(user, 'SALES_MGR', 'Sales Manager') || user.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR', 'CBO'].includes(r.toUpperCase()))
+        const isCEO = hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý') || user.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC', 'TRO_LY', 'Trợ Lý'].includes(r))
+        const isAccountant = hasRole(user, 'KE_TOAN', 'Kế Toán') || user.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG', 'Kế Toán'].includes(r))
+        const isManager = hasRole(user, 'SALES_MGR', 'Sales Manager', 'SALES_MANAGER', 'CBO') || user.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR', 'CBO', 'SALES_MANAGER', 'Sales Manager'].includes(r))
 
         if (!isCEO && !isAccountant && !isManager) {
             return { success: false, error: 'Bạn không có quyền thực hiện thao tác này trên đề nghị thanh toán' }

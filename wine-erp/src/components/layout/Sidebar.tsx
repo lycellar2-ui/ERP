@@ -39,7 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
         labelEn: 'Overview',
         items: [
             { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard CEO', labelEn: 'Executive Dashboard' },
-            { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất', labelEn: 'Proposals & Submissions' },
+            { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất', labelEn: 'Proposals & Submissions', permission: 'PRO:READ' },
             { href: '/dashboard/sop', icon: BookOpen, label: 'Quy Trình Chuẩn (SOP)', labelEn: 'SOP & Guidelines' },
         ]
     },
@@ -58,7 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
         labelEn: 'Procurement',
         items: [
             { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng', labelEn: 'Purchase Orders', permission: 'PRC:READ' },
-            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', labelEn: 'Shipments', permission: 'PRC:READ' },
+            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', labelEn: 'Shipments', permission: 'SHP:READ' },
             // { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal', permission: 'AGN:READ' },
             { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)', labelEn: 'Costing (CST)', permission: 'CST:READ' },
         ]
@@ -70,7 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
             { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', labelEn: 'Sales Orders', permission: 'SLS:READ' },
             { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', labelEn: 'Quotations', permission: 'SLS:READ' },
             { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', labelEn: 'Price Lists', permission: 'SLS:READ' },
-            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', labelEn: 'Check Margin', permission: 'SLS:READ' },
+            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', labelEn: 'Check Margin', permission: 'MGN:READ' },
             { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', labelEn: 'CRM — Customers', permission: 'CRM:READ' },
             { href: '/dashboard/sales/visits', icon: MapPin, label: 'Quản Lý Check-in Thị Trường', labelEn: 'Field Check-in', permission: 'SLS:READ' },
             { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', labelEn: 'POS Showroom', permission: 'POS:READ' },
@@ -82,16 +82,16 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', labelEn: 'Warehouses & Stock', permission: 'WMS:READ' },
             { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê Kho', labelEn: 'Stock Auditing', permission: 'WMS:READ' },
-            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', labelEn: 'Stock Transfers', permission: 'WMS:READ' },
+            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', labelEn: 'Stock Transfers', permission: 'STM:READ' },
             { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', labelEn: 'Consignments (CSG)', permission: 'CSG:READ' },
-            { href: '/dashboard/returns', icon: RotateCcw, label: 'Trả Hàng & CN', labelEn: 'Returns & CN', permission: 'SLS:READ' },
+            { href: '/dashboard/returns', icon: RotateCcw, label: 'Trả Hàng & CN', labelEn: 'Returns & CN', permission: 'RTN:READ' },
         ]
     },
     {
         label: 'Tài Chính',
         labelEn: 'Finance',
         items: [
-            { href: '/dashboard/payment-requests', icon: CreditCard, label: 'Đề Nghị Thanh Toán', labelEn: 'Payment Requests', permission: 'FIN:READ' },
+            { href: '/dashboard/payment-requests', icon: CreditCard, label: 'Đề Nghị Thanh Toán', labelEn: 'Payment Requests', permission: 'PAY:READ' },
             { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', labelEn: 'Finance & Accounting', permission: 'FIN:READ' },
             { href: '/dashboard/reconciliation', icon: FileCheck2, label: 'Đối Chiếu Hóa Đơn', labelEn: 'Reconciliation', permission: 'FIN:READ' },
             // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
@@ -269,7 +269,20 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                 if (!item.permission) return true
                 return currentUser.permissions.includes(item.permission)
             })
-            return { ...group, items: visibleItems }
+
+            const isSuperAdmin = currentUser ? currentUser.roles.some(r => ['CEO', 'ADMIN', 'Admin', 'TRO_LY', 'Trợ Lý'].includes(r)) : false
+            const mappedItems = visibleItems.map(item => {
+                if (item.href === '/dashboard' && !isSuperAdmin) {
+                    return {
+                        ...item,
+                        label: 'Tổng Quan',
+                        labelEn: 'Overview',
+                    }
+                }
+                return item
+            })
+
+            return { ...group, items: mappedItems }
         }).filter(group => group.items.length > 0)
     }, [currentUser])
 

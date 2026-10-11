@@ -1028,7 +1028,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
 }
 
 const DASHBOARD_ROLE_MATCHERS: Record<string, string[]> = {
-    CEO: ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin', 'Giám Đốc'],
+    CEO: ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin', 'Giám Đốc', 'Trợ Lý', 'Trợ lý', 'TRO_LY', 'ASSISTANT'],
     KE_TOAN: ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
     SALES_MGR: ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Trưởng Phòng'],
     SALES_ADMIN: ['SALES_ADMIN', 'Sales Admin'],

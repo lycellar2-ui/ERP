@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
     TrendingUp, TrendingDown, Ship, Package, CheckCircle2,
     ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck,
-    Link as LinkIcon, Shield, AlertTriangle, FileText, Users, Wine, Trophy, AlertCircle,
+    Link as LinkIcon, Shield, AlertTriangle, FileText, Users, Wine, Trophy, AlertCircle, Clock, LineChart,
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import { useAppLocale } from '@/lib/i18n'
@@ -169,6 +169,14 @@ export function CeoOverviewContent({
         return label
     }
 
+    const canSeeFinancials = Boolean(!dashConfig?.sections || dashConfig.sections.includes('pl_summary') || dashConfig.sections.includes('cash_position'))
+    const canSeeRevenueChart = Boolean(!dashConfig?.sections || dashConfig.sections.includes('revenue_chart'))
+    const canSeeArAging = Boolean(!dashConfig?.sections || dashConfig.sections.includes('ar_aging'))
+    const canSeePendingApprovals = Boolean(!dashConfig?.sections || dashConfig.sections.includes('pending_approvals'))
+    const canSeeRankings = Boolean(!dashConfig?.sections || dashConfig.sections.includes('top_products'))
+    const isWarehouseOnly = Boolean(dashConfig?.sections?.includes('warehouse_summary') && !canSeeFinancials)
+    const isSalesOnly = Boolean(dashConfig?.sections?.includes('my_sales') && !canSeeFinancials)
+
     const showShipmentTracker = Boolean(!dashConfig?.sections || dashConfig.sections.includes('shipment_tracker'))
     const hasKpis = Array.isArray(kpis) && kpis.length > 0 && Boolean(!dashConfig?.sections || dashConfig.sections.includes('kpi_targets'))
     const hasChannels = Boolean(channels && Array.isArray(channels.channels) && channels.channels.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('revenue_chart')))
@@ -179,57 +187,151 @@ export function CeoOverviewContent({
 
     return (
         <div className="space-y-5">
-            {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <KpiCard
-                    label={revenueKpiLabel}
-                    value={formatFriendlyVND(primaryRevenue, isEn)}
-                    sub={revenueSource}
-                    trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% ${t.kpis.vsPrevPeriod}` : undefined}
-                    trendUp={stats.revenueGrowth >= 0}
-                    accentColor="#0E7490"
-                />
-                <KpiCard
-                    label={t.kpis.grossProfit}
-                    value={formatFriendlyVND(pl.grossProfit, isEn)}
-                    sub={`${t.kpis.margin}: ${pl.grossMargin.toFixed(1)}%`}
-                    trend={pl.grossMargin >= 25 ? t.kpis.good : t.kpis.fair}
-                    trendUp={pl.grossMargin >= 25}
-                    accentColor="#B45309"
-                />
-                <KpiCard
-                    label={t.kpis.netCashFlow}
-                    value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow, isEn)}`}
-                    sub={`${t.kpis.cashIn}: ${formatFriendlyVND(cash.cashIn, isEn)} · ${t.kpis.cashOut}: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses, isEn)}`}
-                    accentColor={cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C'}
-                />
-                <KpiCard
-                    label={t.kpis.inventoryValue}
-                    value={formatFriendlyVND(stats.stockTotalValue, isEn)}
-                    sub={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
-                    accentColor="#1D4ED8"
-                />
-                <KpiCard
-                    label={t.kpis.arOutstanding}
-                    value={formatFriendlyVND(ar.totalOutstanding, isEn)}
-                    sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue, isEn)} ${t.kpis.overdue}` : t.kpis.onTime}
-                    accentColor={arOverdue > 0 ? '#B91C1C' : '#15803D'}
-                />
-                <KpiCard
-                    label={t.kpis.pendingApprovals}
-                    value={String(totalPending)}
-                    sub={pendingSub}
-                    accentColor="#B91C1C"
-                />
-            </div>
+            {/* ═══ LAYER 1 — ROLE-AWARE KPI CARDS ═══ */}
+            {isWarehouseOnly ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <KpiCard
+                        label={t.warehouseOverview.totalBottles}
+                        value={(warehouseData?.totalBottles ?? stats.stockQty).toLocaleString(isEn ? 'en-US' : 'vi-VN')}
+                        sub={`${t.kpis.bottlesUnit} khả dụng`}
+                        accentColor="#0E7490"
+                    />
+                    <KpiCard
+                        label={t.warehouseOverview.lowStockSKUs}
+                        value={String(warehouseData?.lowStockSKUs ?? stats.lowStockCount)}
+                        sub="Cần nhập thêm"
+                        accentColor="#B45309"
+                    />
+                    <KpiCard
+                        label={t.warehouseOverview.quarantined}
+                        value={String(warehouseData?.quarantinedLots ?? 0)}
+                        sub="Chờ kiểm định"
+                        accentColor="#B91C1C"
+                    />
+                    <KpiCard
+                        label={t.warehouseOverview.pendingGRs}
+                        value={String(warehouseData?.pendingGoodsReceipts ?? 0)}
+                        sub="Đang chờ vào kho"
+                        accentColor="#1D4ED8"
+                    />
+                    <KpiCard
+                        label={t.warehouseOverview.pendingDOs}
+                        value={String(warehouseData?.pendingDeliveryOrders ?? 0)}
+                        sub="Đang chờ xuất kho"
+                        accentColor="#15803D"
+                    />
+                </div>
+            ) : isSalesOnly ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <KpiCard
+                        label={isEn ? 'My Revenue' : 'Doanh số của tôi'}
+                        value={formatFriendlyVND(mySales?.totalRevenue ?? 0, isEn)}
+                        sub={isEn ? 'This month sales' : 'Doanh số tháng này'}
+                        accentColor="#0E7490"
+                    />
+                    <KpiCard
+                        label={isEn ? 'My Orders' : 'Đơn hàng của tôi'}
+                        value={String(mySales?.orderCount ?? 0)}
+                        sub={isEn ? 'Total orders' : 'Số đơn phát sinh'}
+                        accentColor="#B45309"
+                    />
+                    <KpiCard
+                        label={isEn ? 'Pending Delivery' : 'Đơn chờ giao'}
+                        value={String(mySales?.orders?.filter((o: any) => o.status === 'CONFIRMED').length ?? 0)}
+                        sub={isEn ? 'Confirmed orders' : 'Chờ kho xuất'}
+                        accentColor="#1D4ED8"
+                    />
+                    <KpiCard
+                        label={isEn ? 'Completed Orders' : 'Đã hoàn tất'}
+                        value={String(mySales?.orders?.filter((o: any) => o.status === 'PAID' || o.status === 'DELIVERED').length ?? 0)}
+                        sub={isEn ? 'Delivered / Paid' : 'Đã thanh toán / giao'}
+                        accentColor="#15803D"
+                    />
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <KpiCard
+                        label={revenueKpiLabel}
+                        value={formatFriendlyVND(primaryRevenue, isEn)}
+                        sub={revenueSource}
+                        trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% ${t.kpis.vsPrevPeriod}` : undefined}
+                        trendUp={stats.revenueGrowth >= 0}
+                        accentColor="#0E7490"
+                    />
+                    {canSeeFinancials ? (
+                        <>
+                            <KpiCard
+                                label={t.kpis.grossProfit}
+                                value={formatFriendlyVND(pl.grossProfit, isEn)}
+                                sub={`${t.kpis.margin}: ${pl.grossMargin.toFixed(1)}%`}
+                                trend={pl.grossMargin >= 25 ? t.kpis.good : t.kpis.fair}
+                                trendUp={pl.grossMargin >= 25}
+                                accentColor="#B45309"
+                            />
+                            <KpiCard
+                                label={t.kpis.netCashFlow}
+                                value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow, isEn)}`}
+                                sub={`${t.kpis.cashIn}: ${formatFriendlyVND(cash.cashIn, isEn)} · ${t.kpis.cashOut}: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses, isEn)}`}
+                                accentColor={cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C'}
+                            />
+                            <KpiCard
+                                label={t.kpis.inventoryValue}
+                                value={formatFriendlyVND(stats.stockTotalValue, isEn)}
+                                sub={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
+                                accentColor="#1D4ED8"
+                            />
+                            <KpiCard
+                                label={t.kpis.arOutstanding}
+                                value={formatFriendlyVND(ar.totalOutstanding, isEn)}
+                                sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue, isEn)} ${t.kpis.overdue}` : t.kpis.onTime}
+                                accentColor={arOverdue > 0 ? '#B91C1C' : '#15803D'}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <KpiCard
+                                label={t.warehouseOverview.totalBottles}
+                                value={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
+                                sub="Chai trong kho"
+                                accentColor="#1D4ED8"
+                            />
+                            <KpiCard
+                                label="Lô hàng đang về"
+                                value={String(stats.inTransitShipments?.length ?? 0)}
+                                sub="Đang trên biển / Cảng"
+                                accentColor="#0E7490"
+                            />
+                            <KpiCard
+                                label="Cảnh báo tồn kho"
+                                value={String(stats.lowStockCount ?? 0)}
+                                sub="SKU dưới định mức"
+                                accentColor="#B45309"
+                            />
+                            <KpiCard
+                                label="Hàng cách ly"
+                                value={String(stats.quarantinedLots ?? 0)}
+                                sub="Chờ kiểm định"
+                                accentColor="#B91C1C"
+                            />
+                        </>
+                    )}
+                    <KpiCard
+                        label={t.kpis.pendingApprovals}
+                        value={String(totalPending)}
+                        sub={pendingSub}
+                        accentColor="#B91C1C"
+                    />
+                </div>
+            )}
 
             {/* ═══ DAILY REVENUE TREND CHART ═══ */}
-            <DailyRevenueChart data={dailyRevenueData} />
+            {canSeeRevenueChart && <DailyRevenueChart data={dailyRevenueData} />}
 
-            {/* ═══ LAYER 2 — FINANCIAL PULSE (2 cols) ═══ */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* P&L Summary */}
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            {/* ═══ LAYER 2 — FINANCIAL PULSE (P&L & Cash Position) ═══ */}
+            {canSeeFinancials && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* P&L Summary */}
+                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <SectionHead
                         icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />}
                         title={preset === 'THIS_MONTH' ? t.pnl.monthlyTitle : `${t.pnl.periodTitle} (${displayRangeText})`}
@@ -303,145 +405,160 @@ export function CeoOverviewContent({
                     </div>
                 </div>
             </div>
+            )}
 
             {/* ═══ LAYER 3 — OPERATIONS ═══ */}
-            <div className={`grid grid-cols-1 ${showShipmentTracker ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4`}>
-                {/* Container Tracker */}
-                {showShipmentTracker && (
-                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead
-                            icon={<Ship size={15} style={{ color: '#0891B2' }} />}
-                            title={t.containers.title}
-                            badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
-                        />
-                        {stats.inTransitShipments.length === 0 ? (
-                            <div className="flex flex-col items-center py-6 gap-1">
-                                <Package size={24} style={{ color: '#E2E8F0' }} />
-                                <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {stats.inTransitShipments.map((s: any) => {
-                                    const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
-                                    const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
-                                    return (
-                                        <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
-                                                    <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
-                                                        {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0" style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                                                        {statusLabel}
-                                                    </span>
+            {([showShipmentTracker, canSeeArAging, canSeeRankings].some(Boolean)) && (
+                <div className={`grid grid-cols-1 ${
+                    [showShipmentTracker, canSeeArAging, canSeeRankings].filter(Boolean).length >= 3
+                        ? 'lg:grid-cols-3'
+                        : [showShipmentTracker, canSeeArAging, canSeeRankings].filter(Boolean).length === 2
+                        ? 'lg:grid-cols-2'
+                        : 'lg:grid-cols-1'
+                } gap-4`}>
+                    {/* Container Tracker */}
+                    {showShipmentTracker && (
+                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <SectionHead
+                                icon={<Ship size={15} style={{ color: '#0891B2' }} />}
+                                title={t.containers.title}
+                                badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
+                            />
+                            {stats.inTransitShipments.length === 0 ? (
+                                <div className="flex flex-col items-center py-6 gap-1">
+                                    <Package size={24} style={{ color: '#E2E8F0' }} />
+                                    <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {stats.inTransitShipments.map((s: any) => {
+                                        const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
+                                        const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
+                                        return (
+                                            <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
+                                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
+                                                            {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
+                                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0" style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                                                            {statusLabel}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* AR Aging */}
+                    {canSeeArAging && (
+                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <SectionHead
+                                icon={<DollarSign size={15} style={{ color: '#0891B2' }} />}
+                                title={t.arAging.title}
+                                badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
+                            />
+                            <div className="p-2.5 rounded mb-3" style={{ background: '#FFFFFF' }}>
+                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
+                                <p className="text-lg font-bold font-mono" style={{ color: '#B45309' }}>{formatCurrency(ar.totalOutstanding)}</p>
+                            </div>
+                            <div className="space-y-2.5">
+                                {ar.buckets.map((b: any) => (
+                                    <div key={b.label}>
+                                        <div className="flex justify-between mb-0.5">
+                                            <span className="text-[11px]" style={{ color: '#475569' }}>{translateBucketLabel(b.label)}</span>
+                                            <span className="text-[11px] font-bold font-mono" style={{ color: b.color }}>{b.amount > 0 ? formatCurrency(b.amount) : '—'}</span>
                                         </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* AR Aging */}
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead
-                        icon={<DollarSign size={15} style={{ color: '#0891B2' }} />}
-                        title={t.arAging.title}
-                        badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
-                    />
-                    <div className="p-2.5 rounded mb-3" style={{ background: '#FFFFFF' }}>
-                        <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
-                        <p className="text-lg font-bold font-mono" style={{ color: '#B45309' }}>{formatCurrency(ar.totalOutstanding)}</p>
-                    </div>
-                    <div className="space-y-2.5">
-                        {ar.buckets.map((b: any) => (
-                            <div key={b.label}>
-                                <div className="flex justify-between mb-0.5">
-                                    <span className="text-[11px]" style={{ color: '#475569' }}>{translateBucketLabel(b.label)}</span>
-                                    <span className="text-[11px] font-bold font-mono" style={{ color: b.color }}>{b.amount > 0 ? formatCurrency(b.amount) : '—'}</span>
-                                </div>
-                                <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
-                                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(b.amount > 0 ? 4 : 0, (b.amount / arMax) * 100)}%`, background: b.color }} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Top Customers & Top Products */}
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead
-                        icon={<Trophy size={15} style={{ color: '#B45309' }} />}
-                        title={preset === 'THIS_MONTH' ? t.rankings.monthTitle : t.rankings.periodTitle}
-                    />
-                    {/* Top Customers */}
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
-                        <Users size={11} className="inline mr-1" />{t.rankings.topCustomers}
-                    </p>
-                    {topCustomers.length === 0 ? (
-                        <p className="text-xs mb-3" style={{ color: '#64748B' }}>{t.noData}</p>
-                    ) : (
-                        <div className="space-y-1 mb-4">
-                            {topCustomers.map((c: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                        <span className="text-xs truncate" style={{ color: '#0F172A' }}>{c.name}</span>
+                                        <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(b.amount > 0 ? 4 : 0, (b.amount / arMax) * 100)}%`, background: b.color }} />
+                                        </div>
                                     </div>
-                                    <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
-                    {/* Top Products */}
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
-                        <Wine size={11} className="inline mr-1" />{t.rankings.topProducts}
-                    </p>
-                    {topProducts.length === 0 ? (
-                        <p className="text-xs" style={{ color: '#64748B' }}>{t.noData}</p>
-                    ) : (
-                        <div className="space-y-1">
-                            {topProducts.map((p: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                        <span className="text-xs truncate" style={{ color: '#0F172A' }}>{p.name}</span>
-                                    </div>
-                                    <span className="text-[10px] font-mono flex-shrink-0" style={{ color: '#475569' }}>
-                                        {p.qty} {t.rankings.bottlesSold} · {formatFriendlyVND(p.revenue, isEn)}
-                                    </span>
+
+                    {/* Top Customers & Top Products */}
+                    {canSeeRankings && (
+                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <SectionHead
+                                icon={<Trophy size={15} style={{ color: '#B45309' }} />}
+                                title={preset === 'THIS_MONTH' ? t.rankings.monthTitle : t.rankings.periodTitle}
+                            />
+                            {/* Top Customers */}
+                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
+                                <Users size={11} className="inline mr-1" />{t.rankings.topCustomers}
+                            </p>
+                            {topCustomers.length === 0 ? (
+                                <p className="text-xs mb-3" style={{ color: '#64748B' }}>{t.noData}</p>
+                            ) : (
+                                <div className="space-y-1 mb-4">
+                                    {topCustomers.map((c: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}>
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
+                                                <span className="text-xs truncate" style={{ color: '#0F172A' }}>{c.name}</span>
+                                            </div>
+                                            <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
+                            {/* Top Products */}
+                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
+                                <Wine size={11} className="inline mr-1" />{t.rankings.topProducts}
+                            </p>
+                            {topProducts.length === 0 ? (
+                                <p className="text-xs" style={{ color: '#64748B' }}>{t.noData}</p>
+                            ) : (
+                                <div className="space-y-1">
+                                    {topProducts.map((p: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
+                                                <span className="text-xs truncate" style={{ color: '#0F172A' }}>{p.name}</span>
+                                            </div>
+                                            <span className="text-[10px] font-mono flex-shrink-0" style={{ color: '#475569' }}>
+                                                {p.qty} {t.rankings.bottlesSold} · {formatFriendlyVND(p.revenue, isEn)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
-            </div>
+            )}
 
             {/* ═══ LAYER 4 — CEO ACTION HUB ═══ */}
-            <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
-                            ⏳ {t.approvals.title}
-                        </h3>
-                        <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
-                            {totalPending}
-                        </span>
+            {canSeePendingApprovals && (
+                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Clock size={15} style={{ color: '#B91C1C' }} />
+                            <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
+                                {t.approvals.title}
+                            </h3>
+                            <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
+                                {totalPending}
+                            </span>
+                        </div>
+                        <Link
+                            href="/dashboard/proposals"
+                            className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
+                            style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.08)' }}
+                        >
+                            {t.approvals.viewAll}
+                        </Link>
                     </div>
-                    <Link
-                        href="/dashboard/proposals"
-                        className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
-                        style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.08)' }}
-                    >
-                        {t.approvals.viewAll}
-                    </Link>
-                </div>
                 {totalPending === 0 ? (
                     <div className="flex flex-col items-center py-6 gap-1">
                         <CheckCircle2 size={24} style={{ color: '#15803D' }} />
@@ -532,12 +649,14 @@ export function CeoOverviewContent({
                     </div>
                 )}
             </div>
+            )}
 
             {/* ═══ LAYER 5 — DEEP ANALYSIS (Grid of cards) ═══ */}
             {hasLayer5 && (
                 <div className="space-y-4">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
-                        📈 {t.inDepth.title}
+                    <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                        <LineChart size={13} style={{ color: '#64748B' }} />
+                        <span>{t.inDepth.title}</span>
                     </h3>
 
                     {/* KPI Progress + Channel Breakdown */}
@@ -765,8 +884,9 @@ export function CeoOverviewContent({
             {mySales && (
                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#B45309' }}>
-                            📊 {t.mySales.title}
+                        <p className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#B45309' }}>
+                            <BarChart3 size={13} style={{ color: '#B45309' }} />
+                            <span>{t.mySales.title}</span>
                         </p>
                         <div className="flex items-center gap-3 font-mono">
                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{mySales.orderCount} {t.mySales.orders}</span>
@@ -790,8 +910,9 @@ export function CeoOverviewContent({
             {/* ═══ ROLE-SPECIFIC: Warehouse ═══ */}
             {warehouseData && (
                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: '#1D4ED8' }}>
-                        📦 {t.warehouseOverview.title}
+                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: '#1D4ED8' }}>
+                        <Package size={13} style={{ color: '#1D4ED8' }} />
+                        <span>{t.warehouseOverview.title}</span>
                     </p>
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
                         {[

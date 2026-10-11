@@ -140,13 +140,13 @@ export function hasPermission(user: SessionUser, module: string, action: string)
     if (!user) return false
     if (hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')) return true
     if (action === 'READ' && hasRole(user, 'Kế Toán', 'KE_TOAN')) {
-        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS'].includes(module)) return true
+        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN'].includes(module)) return true
     }
     return user.permissions.includes(`${module}:${action}`)
 }
 
 // Check if user has any of the specified roles
-export function hasRole(user: SessionUser, ...roleNames: string[]): boolean {
+export function hasRole(user: SessionUser | null | undefined, ...roleNames: string[]): boolean {
     if (!user || !user.roles) return false
     const expandedTargetRoles = roleNames.flatMap(r => ROLE_ALIASES[r] ?? [r])
     return expandedTargetRoles.some(r => user.roles.includes(r))

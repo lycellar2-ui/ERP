@@ -3812,6 +3812,54 @@ Người dùng truy cập ERP trên điện thoại thông minh (iOS Safari, And
 ### Bài học
 > ⚠️ **RULE 132: (1) Tuyệt đối KHÔNG BAO GIỜ áp dụng mô hình "Admin Fallback" (`user?.id ?? admin.id` hoặc lấy user đầu tiên trong DB) trong Server Actions, đặc biệt là các nghiệp vụ Tài chính - Kế toán - Kho; nếu không có session xác thực, Server Action BẮT BUỘC phải throw UnauthorizedError hoặc trả về `{ success: false, error: 'Chưa đăng nhập' }`; (2) Mọi luồng phê duyệt (Approval Steps) phải được kiểm tra thẩm quyền bước duyệt (`hasRole(user, currentStep.role)` hoặc CEO/Admin) trực tiếp trên Server Action, KHÔNG BAO GIỜ tin cậy client-side hay cho phép người tạo tự duyệt; (3) Mọi Route trong Dashboard phải có Route Guard tương ứng trong Middleware được sắp xếp theo độ dài giảm dần; (4) Khi Admin thay đổi phân quyền (Role/Permissions), BẮT BUỘC phải gọi `invalidateUserSession()` cho toàn bộ tài khoản liên quan để tránh tồn tại kẽ hở phân quyền trong thời gian TTL của cache.**
 
+---
+
+## BUG-133: Lỗi Hiển Thị & Bất Đồng Bộ Phân Quyền (RBAC Consistency Across All Account Groups): Lệch Permission Keys Sidebar vs Middleware, Lộ Giá Vốn & Lãi Gộp Cho Sales, Lộ Định Giá Kho Cho Thủ Kho, Bỏ Quên Quyền Trợ Lý/CBO & Dashboard KPI Không Phù Hợp Vai Trò
+
+**Ngày:** 2026-10-11  
+**Severity:** 🔴 High — Rò rỉ dữ liệu tài chính mật (Confidential Margins & Landed Costs) & Đứt gãy điều hướng RBAC đa vai trò (Broken Links / 403 on Navigation)
+
+### Triệu chứng
+1. **Lệch Menu Sidebar & 403 Forbidden:**
+   - Nhiều tài khoản khi click menu hợp lệ trên thanh điều hướng Sidebar thì bị chặn 403 Forbidden hoặc bị ẩn mất menu dù có quyền trong database:
+     - Thủ Kho thấy menu "Tờ Trình" nhưng không có quyền `PRO:READ` -> Bị 403.
+     - Sales Rep / Sales Admin / Thủ Kho thấy menu "Check Margin" nhưng không có `MGN:READ` -> Bị 403.
+     - Thu Mua thấy menu "Chuyển Kho" nhưng không có `STM:READ` -> Bị 403.
+     - Thu Mua và Kế Toán có quyền Đề nghị thanh toán (`PAY:READ`) nhưng bị ẩn menu trên Sidebar.
+     - Thủ Kho có quyền xem Lô hàng (`SHP:READ`) nhưng Sidebar ẩn menu "Lô Hàng".
+2. **Rò Rỉ Dữ Liệu Giá Vốn & Lãi Gộp (Quotation Margins Leak):**
+   - Khi Sales Rep tạo báo giá (`QuotationClient.tsx`), giao diện hiển thị trường Giá vốn (`prod.costPrice`) và Tỷ lệ Lãi gộp (`marginPct`) của từng chai vang, làm lộ bí mật kinh doanh và chính sách chiết khấu của công ty.
+3. **Rò Rỉ Định Giá Kho Cho Nhân Viên Kho (Warehouse Valuation Leak):**
+   - Màn hình Kho hàng (`WarehouseClient.tsx`) hiển thị tổng giá trị hàng tồn kho (VND) và cột giá vốn nhập kho (`unitLandedCost`) cho cả tài khoản thuần Thủ Kho, đồng thời xuất cả 2 cột giá vốn này vào file Excel/CSV.
+4. **Bỏ Quên Vai Trò Trợ Lý (Executive Assistant) & CBO Trong Phê Duyệt:**
+   - Các Server Action của Đề nghị thanh toán (`payment-requests/actions.ts`), Check Margin (`margin/page.tsx`), và Dashboard overview chỉ so sánh cứng `r.toUpperCase() === 'CEO'` hoặc `'ADMIN'`, bỏ quên tài khoản `Trợ Lý` và `CBO` (khiến Trợ lý điều hành không thực hiện được chức năng ủy quyền duyệt).
+5. **Dashboard Hiển Thị Thẻ Tài Chính Cho Mọi Vai Trò & Sai Lệch Báo Cáo:**
+   - Sales Rep và Thủ Kho khi vào Dashboard chính vẫn thấy các thẻ P&L, Dòng tiền ròng, Công nợ AR (thường bị trống hoặc 0đ), trong khi thiếu các KPI tác nghiệp hàng ngày (Đơn chờ xuất, SKU dưới định mức, Doanh số cá nhân).
+
+### Nguyên nhân gốc rễ
+1. **Bất đồng bộ giữa Sidebar `permission` và Middleware Route Guards:** Khai báo khóa phân quyền trên Sidebar không khớp với bảng ánh xạ phân quyền `MODULE:ACTION` trong database và `middleware.ts`.
+2. **Thiếu Role Guard ở cấp Component & Export Data:** Các thành phần UI nhạy cảm chỉ kiểm tra `prod.costPrice > 0` thay vì kiểm tra quyền của người dùng hiện tại `canSeeMargin` / `canSeeCost`.
+3. **So sánh Role Name không chuẩn hóa tiếng Việt:** `user.roles` chứa cả tên tiếng Việt có dấu (`Trợ Lý`, `Kế Toán`) lẫn tên chuẩn hóa (`TRO_LY`, `KE_TOAN`), trong khi code cũ chỉ gọi `.includes(r.toUpperCase())` (dẫn đến `TRỢ LÝ` không khớp với `TRO_LY`).
+
+### Cách khắc phục
+1. **Chuẩn hóa Menu Sidebar ([Sidebar.tsx](file:///d:/Lyruou/wine-erp/src/components/layout/Sidebar.tsx)):**
+   - Cập nhật đúng các permission keys: `proposals` -> `PRO:READ`, `shipments` -> `SHP:READ`, `margin` -> `MGN:READ`, `transfers` -> `STM:READ`, `returns` -> `RTN:READ`, `payment-requests` -> `PAY:READ`.
+   - Kết quả: Đạt 100% `All visible sidebar items are accessible` trên tất cả 11 nhóm tài khoản qua kịch bản kiểm thử giả lập tự động ([audit-rbac-simulation.ts](file:///d:/Lyruou/wine-erp/scratch/audit-rbac-simulation.ts)).
+2. **Bảo mật Giá Vốn & Lãi Gộp Báo Giá ([QuotationClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/quotations/QuotationClient.tsx)):**
+   - Truyền `userRoles` từ server page và định nghĩa `canSeeMargin`. Chỉ CEO, Trợ Lý, Kế Toán, CBO, Sales Manager mới được xem tỷ lệ lãi gộp; ẩn hoàn toàn đối với Sales Reps.
+3. **Bảo vệ Dữ liệu Định Giá Kho ([WarehouseClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/warehouse/WarehouseClient.tsx)):**
+   - Bổ sung `canSeeCost`. Đối với vai trò thuần Thủ Kho: thay thế thẻ tài chính bằng thẻ "Tổng số lô tồn", ẩn cột Giá trị lô trên bảng Desktop, loại bỏ hoàn toàn giá vốn khỏi file CSV tải về.
+4. **Đồng bộ Quyền Phê Duyệt Trợ Lý & CBO ([payment-requests/actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/payment-requests/actions.ts), [margin/page.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/margin/page.tsx)):**
+   - Sử dụng `hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý')` và `hasRole(user, 'SALES_MGR', 'Sales Manager', 'SALES_MANAGER', 'CBO')`.
+   - Cập nhật helper `hasRole` trong [session.ts](file:///d:/Lyruou/wine-erp/src/lib/session.ts) chấp nhận `SessionUser | null | undefined` một cách an toàn.
+5. **Dashboard Layer 1-4 Role-Aware ([CeoOverviewContent.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/CeoOverviewContent.tsx)):**
+   - Tùy biến KPI cards theo vai trò (`isWarehouseOnly`, `isSalesOnly`, `canSeeFinancials`), bao bọc AR Aging và Hub phê duyệt bằng các guard `canSeeArAging` và `canSeePendingApprovals`.
+   - Loại bỏ toàn bộ biểu tượng cảm xúc (emoji) theo quy định chuẩn P0 Anti-emoji.
+
+### Bài học
+> ⚠️ **RULE 133: (1) Mọi thuộc tính nhạy cảm về tài chính (giá vốn `costPrice`, biên lãi gộp `marginPct`, đơn giá nhập kho `unitLandedCost`, định giá kho VND) BẮT BUỘC phải được bảo vệ kép: vừa lọc ở giao diện UI (`canSeeMargin`, `canSeeCost`) vừa phải lọc trong các hàm Export (Excel/CSV/PDF) để tránh rò rỉ dữ liệu mật cho nhân viên cấp thực thi; (2) Menu Sidebar và Route Guards trong Middleware PHẢI dùng chung một bảng danh mục Permission Key duy nhất (`MODULE:ACTION`); TUYỆT ĐỐI không khai báo menu mà không có permission tương ứng; (3) Mọi so sánh vai trò người dùng trong hệ thống có hỗ trợ tiếng Việt BẮT BUỘC phải dùng helper `hasRole()` đã được tích hợp bộ chuẩn hóa (Normalization & Aliases Map) để nhận diện đầy đủ cả `Trợ Lý`, `TRO_LY`, `Kế Toán`, `KE_TOAN`.**
+
+
 
 
 

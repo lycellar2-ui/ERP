@@ -13,7 +13,7 @@ export default async function MarginPage() {
         getCurrentUser().catch(() => null)
     ])
 
-    const isAdmin = user ? hasRole(user, 'CEO', 'ADMIN') : false
+    const isAdmin = user ? hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý', 'CBO') : false
 
     return (
         <Suspense fallback={<MarginPageSkeleton />}>

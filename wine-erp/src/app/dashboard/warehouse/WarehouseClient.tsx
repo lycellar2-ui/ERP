@@ -149,10 +149,11 @@ function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
 }
 
 // ── Stock table ───────────────────────────────────
-function StockTable({ lots, sortConfig, onSort }: {
+function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
     lots: StockLotRow[]
     sortConfig: { key: string; dir: 'asc' | 'desc' }
     onSort: (key: string) => void
+    canSeeCost?: boolean
 }) {
     const { locale, formatCurrency, formatDate: formatDateLocale } = useAppLocale()
     const t = WAREHOUSE_I18N[locale].table
@@ -177,7 +178,7 @@ function StockTable({ lots, sortConfig, onSort }: {
         { key: 'qtyBook', label: t.thBookQty, align: 'center' as const },
         { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const },
         { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const },
-        { key: 'value', label: t.thLotValue, align: 'right' as const },
+        ...(canSeeCost ? [{ key: 'value', label: t.thLotValue, align: 'right' as const }] : []),
         { key: 'status', label: t.thStatus, align: 'center' as const },
     ]
 
@@ -291,15 +292,17 @@ function StockTable({ lots, sortConfig, onSort }: {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-3 py-1.5 text-right whitespace-nowrap">
-                                        {lotValue > 0 ? (
-                                            <span className="text-xs font-mono font-semibold text-slate-900">
-                                                {formatCurrency(lotValue)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-[#94A3B8]">—</span>
-                                        )}
-                                    </td>
+                                    {canSeeCost && (
+                                        <td className="px-3 py-1.5 text-right whitespace-nowrap">
+                                            {lotValue > 0 ? (
+                                                <span className="text-xs font-mono font-semibold text-slate-900">
+                                                    {formatCurrency(lotValue)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-[#94A3B8]">—</span>
+                                            )}
+                                        </td>
+                                    )}
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
                                             style={{ color: statusCfg.color, background: `${statusCfg.color}15`, border: `1px solid ${statusCfg.color}30` }}>
@@ -526,9 +529,10 @@ interface Props {
         lowStockCount: number; slowMovingCount: number
     }
     isAdmin: boolean
+    canSeeCost?: boolean
 }
 
-export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Props) {
+export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canSeeCost = true }: Props) {
     const { locale, formatCurrency, formatDate: formatDateLocale } = useAppLocale()
     const t = WAREHOUSE_I18N[locale]
     const [warehouses, setWarehouses] = useState<WarehouseRow[]>(initialWarehouses ?? [])
@@ -883,7 +887,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     const statCards: { label: string; value: React.ReactNode; sub?: string; tone: Tone; icon: any }[] = [
         { label: t.stats.warehouses, value: stats.warehouses, sub: 'kho hoạt động', tone: 'neutral', icon: Warehouse },
         { label: t.stats.totalStock, value: stats.availableBottles.toLocaleString(), sub: `${t.bottlesUnit} khả dụng`, tone: 'success', icon: Package },
-        { label: t.stats.inventoryValue, value: formatStatCurrency(stats.inventoryValue), sub: formatCurrency(stats.inventoryValue), tone: 'brand', icon: DollarSign },
+        ...(canSeeCost ? [
+            { label: t.stats.inventoryValue, value: formatStatCurrency(stats.inventoryValue), sub: formatCurrency(stats.inventoryValue), tone: 'brand' as Tone, icon: DollarSign }
+        ] : [
+            { label: 'Tổng số lô tồn', value: stats.totalLots.toLocaleString(), sub: 'lô hàng trong kho', tone: 'brand' as Tone, icon: Box }
+        ]),
         { label: t.stats.reserved, value: stats.reservedBottles.toLocaleString(), sub: `${t.bottlesUnit} giữ chỗ`, tone: 'info', icon: Box },
         { label: t.stats.lowStock, value: stats.lowStockCount, sub: stats.lowStockCount > 0 ? 'cần nhập thêm' : 'mức an toàn', tone: stats.lowStockCount > 0 ? 'warning' : 'neutral', icon: AlertTriangle },
         { label: t.stats.slowMoving, value: stats.slowMovingCount, sub: stats.slowMovingCount > 0 ? '> 90 ngày' : 'lưu thông tốt', tone: stats.slowMovingCount > 0 ? 'danger' : 'neutral', icon: Clock },
@@ -1432,13 +1440,17 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                                     )}
                                                     <button onClick={() => {
                                                         if (filteredLots.length === 0) return
-                                                        const headers = locale === 'en'
-                                                            ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
-                                                            : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
+                                                        const headers = canSeeCost
+                                                            ? (locale === 'en'
+                                                                ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
+                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái'])
+                                                            : (locale === 'en'
+                                                                ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Received Date', 'Status']
+                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Ngày Nhập', 'Trạng Thái'])
                                                         const rows = filteredLots.map(l => [
                                                             l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
                                                             l.qtyBook ?? l.qtyReceived, l.qtyOnHand ?? l.qtyAvailable, l.qtyAvailable, l.qtyReserved ?? 0, l.variance ?? 0,
-                                                            l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
+                                                            ...(canSeeCost ? [l.unitLandedCost, l.qtyAvailable * l.unitLandedCost] : []),
                                                             formatDateLocale(l.receivedDate), getLotStatusLabel(l.status, locale),
                                                         ])
                                                         const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
@@ -1499,7 +1511,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                             <Loader2 size={24} className="animate-spin text-lys-teal-strong" />
                                         </div>
                                     ) : selectedWH ? (
-                                        <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} />
+                                        <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} canSeeCost={canSeeCost} />
                                     ) : (
                                         <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs bg-white border border-dashed border-slate-300">
                                             <Warehouse size={36} className="text-slate-400" />

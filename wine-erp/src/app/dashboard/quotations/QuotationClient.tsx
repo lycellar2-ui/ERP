@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail } from 'lucide-react'
+import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail, Wine, BarChart3, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
@@ -25,9 +25,11 @@ interface Props {
         rows: QuotationRow[]
         stats: { total: number; draft: number; sent: number; accepted: number; converted: number; totalValue: number }
     }
+    userRoles?: string[]
 }
 
-export function QuotationClient({ initialData }: Props) {
+export function QuotationClient({ initialData, userRoles = [] }: Props) {
+    const canSeeMargin = ['CEO', 'ADMIN', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager', 'CBO', 'Trợ Lý', 'TRO_LY'].some(r => userRoles.includes(r))
     const queryClient = useQueryClient()
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
@@ -424,7 +426,8 @@ export function QuotationClient({ initialData }: Props) {
                             if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)'
                         }}
                     >
-                        📊 Thống Kê
+                        <BarChart3 size={13} className="inline mr-1" />
+                        <span>Thống Kê</span>
                     </button>
                     <button onClick={openCreate}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150"
@@ -879,7 +882,7 @@ export function QuotationClient({ initialData }: Props) {
                                         style={{ color: '#0F172A' }}>
                                         <option value="">Chọn khách hàng...</option>
                                         {customers.length === 0 ? (
-                                            <option disabled>⏳ Đang tải danh sách khách hàng...</option>
+                                            <option disabled>Đang tải danh sách khách hàng...</option>
                                         ) : (
                                             customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)
                                         )}
@@ -943,7 +946,7 @@ export function QuotationClient({ initialData }: Props) {
                                         style={{ color: '#0F172A' }}>
                                         <option value="">Chọn...</option>
                                         {reps.length === 0 ? (
-                                            <option disabled>⏳ Đang tải...</option>
+                                            <option disabled>Đang tải...</option>
                                         ) : (
                                             reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)
                                         )}
@@ -976,7 +979,7 @@ export function QuotationClient({ initialData }: Props) {
                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sản Phẩm</p>
                                     <div className="flex gap-2">
                                         <button onClick={openPicker} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', borderRadius: '4px' }}>
-                                            {products.length === 0 ? '⏳ Đang tải...' : '🔍 Chọn Nhanh'}
+                                            {products.length === 0 ? 'Đang tải...' : 'Chọn Nhanh'}
                                         </button>
                                         <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(100,116,139,0.15)', color: '#475569', borderRadius: '4px' }}>+ Thêm dòng</button>
                                     </div>
@@ -999,7 +1002,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
                                                             <option value="">Chọn sản phẩm...</option>
                                                             {products.length === 0 ? (
-                                                                <option disabled>⏳ Đang tải sản phẩm...</option>
+                                                                <option disabled>Đang tải sản phẩm...</option>
                                                             ) : (
                                                                 products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)
                                                             )}
@@ -1013,7 +1016,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             {prod?.primaryImageUrl ? (
                                                                 <img src={prod.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
                                                             ) : (
-                                                                <span className="text-xs">🍷</span>
+                                                                <Wine size={16} className="text-slate-400" />
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
@@ -1072,7 +1075,7 @@ export function QuotationClient({ initialData }: Props) {
                                                                     {diffPct >= 0 ? `+${diffPct.toFixed(1)}%` : `${diffPct.toFixed(1)}%`}
                                                                 </span>
                                                             </div>
-                                                            {prod.costPrice > 0 && (
+                                                            {canSeeMargin && prod.costPrice > 0 && (
                                                                 <div className="flex items-center gap-1">
                                                                     <span style={{ color: '#64748B' }}>Lãi gộp:</span>
                                                                     <span className="font-semibold" style={{ color: marginPct >= 15 ? '#0E7490' : marginPct >= 0 ? '#B45309' : '#B91C1C' }}>
@@ -1103,7 +1106,7 @@ export function QuotationClient({ initialData }: Props) {
                                         e.currentTarget.style.background = 'rgba(100,116,139,0.1)';
                                     }}
                                 >
-                                    👁️ Xem Trước
+                                    Xem Trước
                                 </button>
                                 <button onClick={handleCreate} disabled={saving || !formData.customerId || formLines.length === 0}
                                     className="w-[60%] py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
@@ -1152,7 +1155,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <Mail size={18} style={{ color: '#B45309' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>📧 Gửi qua Email</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Gửi qua Email</p>
                                         <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Gửi email HTML đẹp + link xem báo giá online</p>
                                     </div>
                                 </div>
@@ -1179,7 +1182,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <Link2 size={18} style={{ color: '#3B82F6' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>🔗 Copy Link Gửi Zalo / WhatsApp</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Copy Link Gửi Zalo / WhatsApp</p>
                                         <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Copy link → paste vào tin nhắn. KH bấm xem trực tuyến</p>
                                     </div>
                                 </div>
@@ -1198,7 +1201,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <Printer size={18} style={{ color: '#0891B2' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>🖨️ In / Tải PDF</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>In / Tải PDF</p>
                                         <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mở báo giá dạng web → In hoặc lưu PDF</p>
                                     </div>
                                 </div>
@@ -1226,7 +1229,7 @@ export function QuotationClient({ initialData }: Props) {
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
                             <div>
                                 <h3 className="text-lg font-bold font-brand" style={{ color: '#0F172A' }}>
-                                    🔍 Chọn sản phẩm nhanh
+                                    Chọn sản phẩm nhanh
                                 </h3>
                                 <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
                                     Tìm kiếm, lọc danh sách và tích chọn hàng loạt sản phẩm để thêm vào báo giá
@@ -1329,7 +1332,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 {p.primaryImageUrl ? (
                                                     <img src={p.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
                                                 ) : (
-                                                    <span className="text-xs">🍷</span>
+                                                    <Wine size={16} className="text-slate-400" />
                                                 )}
                                             </div>
 

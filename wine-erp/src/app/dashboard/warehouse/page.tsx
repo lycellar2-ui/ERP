@@ -11,7 +11,8 @@ export default async function WarehousePage() {
         getCurrentUser(),
     ])
 
-    const isAdmin = user ? hasRole(user, 'CEO', 'THU_KHO') : false
+    const isAdmin = user ? hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý', 'THU_KHO', 'Thủ Kho') : false
+    const canSeeCost = user ? hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'Trợ Lý', 'CBO', 'KE_TOAN', 'Kế Toán') : false
 
-    return <WarehouseClient initialWarehouses={warehouses} initialStats={stats} isAdmin={isAdmin} />
+    return <WarehouseClient initialWarehouses={warehouses} initialStats={stats} isAdmin={isAdmin} canSeeCost={canSeeCost} />
 }
