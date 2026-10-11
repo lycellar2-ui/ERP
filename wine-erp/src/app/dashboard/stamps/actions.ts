@@ -592,7 +592,10 @@ export async function getStampLogbook(filters?: {
             runningBalance -= (u.qtyUsed + u.qtyDamaged)
 
             let refTitle = 'Xuất dán tem kho'
-            if (u.shipment?.billOfLading) {
+            if (u.notes?.startsWith('[PO ')) {
+                const poMatch = u.notes.match(/^\[PO\s+([\w-]+)\]\s*(.*?)\s*\|/)
+                refTitle = poMatch ? `Đơn ${poMatch[1]}: ${poMatch[2]}` : 'Đơn PO nhập kho'
+            } else if (u.shipment?.billOfLading) {
                 refTitle = `Lô hàng NK: ${u.shipment.billOfLading}`
             } else if (u.lot) {
                 refTitle = `Lô kho ${u.lot.lotNo} (${u.lot.product.productName})`
@@ -767,5 +770,361 @@ export async function exportStampLogbookExcel(filters?: {
     } catch (err: any) {
         return { success: false, error: err.message }
     }
+}
+
+// ═══════════════════════════════════════════════════
+// PO STAMP ALLOCATION (Phân Tem Cho Đơn Hàng PO Nhận Về)
+// ═══════════════════════════════════════════════════
+
+export type ReceivedPOForStamps = {
+    id: string
+    poNo: string
+    status: string
+    createdAt: string
+    supplierName: string
+    totalBottles: number
+    recommendedStampType: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'MIXED'
+    items: Array<{
+        productId: string
+        skuCode: string
+        productName: string
+        abvPercent: number
+        qty: number
+        lotId?: string | null
+        lotNo?: string | null
+    }>
+}
+
+export type POStampAllocationRecord = {
+    poId?: string
+    poNo: string
+    supplierName?: string
+    allocatedDate: string
+    purchaseId: string
+    purchaseSymbol: string
+    stampType: 'UNDER_20_ABV' | 'OVER_20_ABV'
+    serialStart: string
+    serialEnd: string
+    totalQty: number
+    totalDamaged: number
+    reporterName: string
+    notes?: string | null
+    items: Array<{
+        id: string
+        productId?: string
+        productName: string
+        skuCode: string
+        lotNo?: string | null
+        qtyUsed: number
+        qtyDamaged: number
+        serialStart: string
+        serialEnd: string
+    }>
+}
+
+export async function getReceivedPOsForStamps(): Promise<ReceivedPOForStamps[]> {
+    const pos = await prisma.purchaseOrder.findMany({
+        where: {
+            status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] },
+        },
+        include: {
+            supplier: { select: { id: true, name: true } },
+            goodsReceipts: {
+                where: { status: 'CONFIRMED' },
+                include: {
+                    lines: {
+                        include: {
+                            product: {
+                                select: { id: true, skuCode: true, productName: true, abvPercent: true }
+                            },
+                            lot: {
+                                select: { id: true, lotNo: true, qtyAvailable: true }
+                            }
+                        }
+                    }
+                }
+            },
+            lines: {
+                include: {
+                    product: {
+                        select: { id: true, skuCode: true, productName: true, abvPercent: true }
+                    }
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    })
+
+    const result: ReceivedPOForStamps[] = []
+
+    for (const po of pos) {
+        const itemsMap = new Map<string, {
+            productId: string
+            skuCode: string
+            productName: string
+            abvPercent: number
+            qty: number
+            lotId?: string | null
+            lotNo?: string | null
+        }>()
+
+        if (po.goodsReceipts.length > 0) {
+            for (const gr of po.goodsReceipts) {
+                for (const grLine of gr.lines) {
+                    const existing = itemsMap.get(grLine.productId)
+                    const qty = Number(grLine.qtyReceived)
+                    if (existing) {
+                        existing.qty += qty
+                        if (!existing.lotId && grLine.lotId) {
+                            existing.lotId = grLine.lotId
+                            existing.lotNo = grLine.lot?.lotNo || null
+                        }
+                    } else {
+                        itemsMap.set(grLine.productId, {
+                            productId: grLine.productId,
+                            skuCode: grLine.product.skuCode,
+                            productName: grLine.product.productName,
+                            abvPercent: Number(grLine.product.abvPercent),
+                            qty,
+                            lotId: grLine.lotId || null,
+                            lotNo: grLine.lot?.lotNo || null,
+                        })
+                    }
+                }
+            }
+        } else {
+            for (const line of po.lines) {
+                itemsMap.set(line.productId, {
+                    productId: line.productId,
+                    skuCode: line.product.skuCode,
+                    productName: line.product.productName,
+                    abvPercent: Number(line.product.abvPercent),
+                    qty: Number(line.qtyOrdered),
+                    lotId: null,
+                    lotNo: null,
+                })
+            }
+        }
+
+        const items = Array.from(itemsMap.values()).filter(it => it.qty > 0)
+        if (items.length === 0) continue
+
+        const totalBottles = items.reduce((s, it) => s + it.qty, 0)
+        const hasUnder = items.some(it => it.abvPercent < 20)
+        const hasOver = items.some(it => it.abvPercent >= 20)
+        const recommendedStampType: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'MIXED' =
+            hasUnder && hasOver ? 'MIXED' : hasOver ? 'OVER_20_ABV' : 'UNDER_20_ABV'
+
+        result.push({
+            id: po.id,
+            poNo: po.poNo,
+            status: po.status,
+            createdAt: po.createdAt.toISOString(),
+            supplierName: po.supplier?.name || 'Nhà cung cấp',
+            totalBottles,
+            recommendedStampType,
+            items,
+        })
+    }
+
+    return serialize(result)
+}
+
+export async function allocateStampsToPO(data: {
+    purchaseId: string
+    poId: string
+    items: Array<{
+        productId: string
+        lotId?: string | null
+        qty: number
+        qtyDamaged?: number
+        serialStart: string
+        serialEnd: string
+    }>
+    notes?: string
+    reportedBy?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (!data.items || data.items.length === 0) {
+            return { success: false, error: 'Không có sản phẩm nào được chọn để phân tem' }
+        }
+
+        const totalQtyUsed = data.items.reduce((sum, item) => sum + Number(item.qty || 0), 0)
+        const totalQtyDamaged = data.items.reduce((sum, item) => sum + Number(item.qtyDamaged || 0), 0)
+        const totalNeeded = totalQtyUsed + totalQtyDamaged
+
+        if (totalNeeded <= 0) {
+            return { success: false, error: 'Tổng số lượng tem phân bổ phải lớn hơn 0' }
+        }
+
+        for (const item of data.items) {
+            if (item.qty > 0) {
+                if (!item.serialStart?.trim() || !item.serialEnd?.trim()) {
+                    return { success: false, error: 'Tất cả các sản phẩm có số lượng phân bổ phải có số seri đầu và cuối' }
+                }
+            }
+        }
+
+        const po = await prisma.purchaseOrder.findUnique({
+            where: { id: data.poId },
+            include: {
+                shipments: { select: { id: true }, take: 1 },
+                lines: { include: { product: { select: { skuCode: true, productName: true } } } },
+            },
+        })
+
+        if (!po) {
+            return { success: false, error: 'Đơn hàng mua (PO) không tồn tại' }
+        }
+
+        const purchase = await prisma.wineStampPurchase.findUnique({
+            where: { id: data.purchaseId },
+        })
+
+        if (!purchase) {
+            return { success: false, error: 'Lô tem không tồn tại' }
+        }
+
+        const remaining = purchase.totalQty - purchase.usedQty
+        if (totalNeeded > remaining) {
+            return {
+                success: false,
+                error: `Vượt quá tồn kho tem khả dụng của lô ${purchase.symbol}! Tồn khả dụng: ${remaining.toLocaleString('vi-VN')}, Yêu cầu: ${totalNeeded.toLocaleString('vi-VN')}`,
+            }
+        }
+
+        let reporterId = data.reportedBy
+        if (!reporterId || reporterId === 'system') {
+            const defaultUser = await prisma.user.findFirst({ select: { id: true } })
+            reporterId = defaultUser?.id || data.reportedBy || ''
+        }
+
+        await prisma.$transaction(async (tx) => {
+            const shipmentId = po.shipments[0]?.id || null
+
+            const productMap = new Map<string, { skuCode: string; productName: string }>()
+            for (const line of po.lines) {
+                productMap.set(line.productId, {
+                    skuCode: line.product.skuCode,
+                    productName: line.product.productName,
+                })
+            }
+
+            for (const item of data.items) {
+                if (item.qty <= 0 && (!item.qtyDamaged || item.qtyDamaged <= 0)) continue
+
+                const pInfo = productMap.get(item.productId) || { skuCode: 'SKU', productName: 'Sản phẩm' }
+                const itemNotes = `[PO ${po.poNo}] ${pInfo.skuCode} - ${pInfo.productName} | Seri: ${item.serialStart} - ${item.serialEnd} | SL: ${item.qty} chai${data.notes ? ` — ${data.notes}` : ''}`
+
+                await tx.wineStampUsage.create({
+                    data: {
+                        purchaseId: data.purchaseId,
+                        shipmentId,
+                        lotId: item.lotId || null,
+                        serialStart: item.serialStart?.trim() || null,
+                        serialEnd: item.serialEnd?.trim() || null,
+                        qtyUsed: Number(item.qty),
+                        qtyDamaged: Number(item.qtyDamaged || 0),
+                        reportedBy: reporterId,
+                        notes: itemNotes,
+                    },
+                })
+            }
+
+            const newUsedQty = purchase.usedQty + totalNeeded
+            await tx.wineStampPurchase.update({
+                where: { id: data.purchaseId },
+                data: {
+                    usedQty: newUsedQty,
+                    status: newUsedQty >= purchase.totalQty ? 'EXHAUSTED' : 'ACTIVE',
+                },
+            })
+        })
+
+        revalidateCache('stamps')
+        revalidatePath('/dashboard/stamps')
+        revalidatePath('/dashboard/procurement')
+
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getPOStampAllocations(): Promise<POStampAllocationRecord[]> {
+    const usages = await prisma.wineStampUsage.findMany({
+        where: {
+            notes: { startsWith: '[PO ' },
+        },
+        include: {
+            purchase: { select: { id: true, symbol: true, stampType: true } },
+            lot: { select: { lotNo: true, product: { select: { skuCode: true, productName: true } } } },
+            reporter: { select: { name: true } },
+        },
+        orderBy: { usedAt: 'desc' },
+    })
+
+    const groups = new Map<string, POStampAllocationRecord>()
+
+    for (const u of usages) {
+        const poMatch = u.notes?.match(/^\[PO\s+([\w-]+)\]/)
+        const poNo = poMatch ? poMatch[1] : 'PO-KHAC'
+        const dateKey = new Date(u.usedAt).toISOString().split('T')[0]
+        const groupKey = `${poNo}-${u.purchaseId}-${dateKey}`
+
+        let group = groups.get(groupKey)
+        if (!group) {
+            group = {
+                poNo,
+                allocatedDate: u.usedAt.toISOString(),
+                purchaseId: u.purchaseId,
+                purchaseSymbol: u.purchase.symbol,
+                stampType: u.purchase.stampType,
+                serialStart: u.serialStart || '',
+                serialEnd: u.serialEnd || '',
+                totalQty: 0,
+                totalDamaged: 0,
+                reporterName: u.reporter?.name || u.reportedBy || 'Thủ kho',
+                notes: u.notes,
+                items: [],
+            }
+            groups.set(groupKey, group)
+        }
+
+        group.totalQty += u.qtyUsed
+        group.totalDamaged += u.qtyDamaged
+
+        if (!group.serialStart || (u.serialStart && u.serialStart < group.serialStart)) {
+            group.serialStart = u.serialStart || group.serialStart
+        }
+        if (!group.serialEnd || (u.serialEnd && u.serialEnd > group.serialEnd)) {
+            group.serialEnd = u.serialEnd || group.serialEnd
+        }
+
+        let skuCode = u.lot?.product.skuCode || ''
+        let productName = u.lot?.product.productName || ''
+
+        if (!productName && u.notes) {
+            const match = u.notes.match(/^\[PO\s+[\w-]+\]\s+(.*?)\s+-\s+(.*?)\s+\|/)
+            if (match) {
+                skuCode = match[1]
+                productName = match[2]
+            }
+        }
+
+        group.items.push({
+            id: u.id,
+            productName: productName || 'Sản phẩm rượu',
+            skuCode: skuCode || '—',
+            lotNo: u.lot?.lotNo || null,
+            qtyUsed: u.qtyUsed,
+            qtyDamaged: u.qtyDamaged,
+            serialStart: u.serialStart || '—',
+            serialEnd: u.serialEnd || '—',
+        })
+    }
+
+    return serialize(Array.from(groups.values()))
 }
 

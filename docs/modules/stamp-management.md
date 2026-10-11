@@ -54,7 +54,18 @@
   - Nhập số lượng dán và số lượng tem rách/hỏng phát sinh.
   - Giao dịch nguyên tử (Atomic transaction): Khấu trừ trực tiếp số lượng khả dụng của lô tem và tự động chuyển trạng thái `EXHAUSTED` khi hết tem.
 
-### 2.3. Sổ Theo Dõi Tem Điện Tử (Stamp Logbook)
+### 2.3. Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về (PO Stamp Allocation)
+- **Cơ chế hoạt động:**
+  - Áp dụng cho các Đơn mua hàng đã nhận kho (`RECEIVED`, `PARTIALLY_RECEIVED` hoặc đã có Phiếu Nhập Kho `GoodsReceipt`).
+  - Người dùng chọn đơn PO và chọn lô phôi tem xuất kho tương ứng (< 20° ABV hoặc ≥ 20° ABV).
+  - Nhập số seri bắt đầu của PO (ví dụ: `001001`). Hệ thống tự động tính nối tiếp (contiguous sequential) dải số seri (Số đầu → Số cuối) cho từng sản phẩm trong PO theo số lượng thực nhận.
+  - Cho phép người dùng linh hoạt chỉnh sửa số lượng dán, số seri đầu, số seri cuối hoặc số tem hỏng phát sinh của từng sản phẩm.
+  - Hệ thống kiểm soát tồn kho tem khả dụng trong giao dịch nguyên tử (Atomic Transaction), tự động tạo các bản ghi nhật ký cấp phát gắn với từng mã sản phẩm/lô kho và cập nhật số dư tồn tem.
+- **Tab Quản Lý Phân Tem Theo PO:**
+  - Bảng danh sách các đợt phân tem theo PO kèm mã PO, ngày phân bổ, ký hiệu lô tem, dải số seri tổng.
+  - Hỗ trợ xem chi tiết danh sách sản phẩm phân bổ (Accordion), hiển thị rõ số đầu và số cuối tem cho từng dòng sản phẩm.
+
+### 2.4. Sổ Theo Dõi Tem Điện Tử (Stamp Logbook)
 - Trực quan hóa nhật ký nhập - xuất - dán - hủy - tồn lũy kế theo thời gian thực.
 - Cột thông tin chuẩn quy định: STT, Ngày CT, Nghiệp vụ, Ký hiệu, Phân loại độ cồn, Seri đầu, Seri cuối, SL Nhập, SL Dán, SL Hỏng/Hủy, Tồn cuối lô, Lô hàng/Chứng từ liên quan, Người thực hiện, Ghi chú.
 - Bộ lọc đa chiều:
@@ -65,7 +76,7 @@
 - Xuất file Excel (.xlsx):
   - Sinh file Excel chuẩn mẫu thanh tra hải quan / quyết toán thuế tiêu thụ đặc biệt.
 
-### 2.4. Biên Bản Hủy Tem Rách / Hỏng
+### 2.5. Biên Bản Hủy Tem Rách / Hỏng
 - Lập biên bản hủy tem hỏng theo quy định hành chính.
 - Ghi nhận bắt buộc: Số lượng tem hủy, Ngày hủy, Lý do hủy (rách nát, ẩm mốc, lỗi in phôi), Họ tên người chứng kiến.
 - Lưu trữ bảng lịch sử biên bản hủy tem phục vụ hậu kiểm.
@@ -82,6 +93,9 @@
 | `recordStampUsage(data)` | Ghi nhận phân tem và dán tem (Atomic transaction) |
 | `safeRecordStampUsage(data)` | Wrapper an toàn revalidate cache và route `/dashboard/stamps` |
 | `getStampLinkingOptions()` | Truy vấn danh sách Lô hàng NK và Lô kho khả dụng cho phân tem |
+| `getReceivedPOsForStamps()` | Lấy danh sách PO nhận về kèm chi tiết sản phẩm, nồng độ ABV và số lượng nhận |
+| `allocateStampsToPO(data)` | Phân bổ tem cho đơn PO, gán dải seri cho từng sản phẩm (Atomic transaction) |
+| `getPOStampAllocations()` | Lấy danh sách lịch sử phân bổ tem theo PO kèm chi tiết số đầu - số cuối từng mặt hàng |
 | `getStampLogbook(filters)` | Tổng hợp dữ liệu Sổ theo dõi tem điện tử đa chiều |
 | `exportStampLogbookExcel(filters)` | Xuất Sổ theo dõi tem ra định dạng Excel (.xlsx) |
 | `getStampReportData(filters)` | Dữ liệu báo cáo sử dụng tem theo Quý/Năm |

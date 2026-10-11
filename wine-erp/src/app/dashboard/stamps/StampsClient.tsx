@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
     Stamp, Plus, AlertTriangle, CheckCircle, Package, Trash2,
     ShieldAlert, BookOpen, Download, Search, Filter, RefreshCw,
-    Ship, Warehouse, FileSpreadsheet, ArrowRight, Info
+    Ship, Warehouse, FileSpreadsheet, ArrowRight, Info,
+    Layers, ChevronDown, ChevronUp, Check, Hash, Calendar
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import {
     createStampPurchase,
     safeRecordStampUsage,
@@ -17,9 +19,17 @@ import {
     getStampLogbook,
     exportStampLogbookExcel,
     exportStampReportExcel,
+    allocateStampsToPO,
+    getPOStampAllocations,
 } from './actions'
 import { PageHeader, Button } from '@/components/ui'
-import type { StampAlert, StampDestructionRecord, StampLogbookEntry } from './actions'
+import type {
+    StampAlert,
+    StampDestructionRecord,
+    StampLogbookEntry,
+    ReceivedPOForStamps,
+    POStampAllocationRecord,
+} from './actions'
 
 interface StampUsageItem {
     id: string
@@ -66,6 +76,8 @@ interface Props {
     summary: StampSummary
     linkingOptions?: LinkingOptions
     initialLogbook?: StampLogbookEntry[]
+    initialPOs?: ReceivedPOForStamps[]
+    initialPOAllocations?: POStampAllocationRecord[]
 }
 
 const cardStyle: React.CSSProperties = {
@@ -115,12 +127,19 @@ const tdStyle: React.CSSProperties = {
     verticalAlign: 'middle',
 }
 
-export default function StampsClient({ purchases, summary, linkingOptions, initialLogbook = [] }: Props) {
+export default function StampsClient({
+    purchases,
+    summary,
+    linkingOptions,
+    initialLogbook = [],
+    initialPOs = [],
+    initialPOAllocations = [],
+}: Props) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
 
     // Navigation Tabs
-    const [activeTab, setActiveTab] = useState<'batches' | 'logbook' | 'destructions'>('batches')
+    const [activeTab, setActiveTab] = useState<'batches' | 'po_allocations' | 'logbook' | 'destructions'>('batches')
 
     // Modals
     const [showAddForm, setShowAddForm] = useState(false)
@@ -135,6 +154,21 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
     const [logbookLoading, setLogbookLoading] = useState(false)
     const [exportingLogbook, setExportingLogbook] = useState(false)
 
+    // PO Stamp Allocation State
+    const [receivedPOs, setReceivedPOs] = useState<ReceivedPOForStamps[]>(initialPOs)
+    const [poAllocations, setPOAllocations] = useState<POStampAllocationRecord[]>(initialPOAllocations)
+    const [expandedPOId, setExpandedPOId] = useState<string | null>(null)
+    const [poAllocSearch, setPOAllocSearch] = useState<string>('')
+
+    // PO Allocation Modal State
+    const [showPOAllocModal, setShowPOAllocModal] = useState(false)
+    const [selectedPOId, setSelectedPOId] = useState<string>('')
+    const [selectedStampPurchaseId, setSelectedStampPurchaseId] = useState<string>('')
+    const [poBaseSerialStart, setPOBaseSerialStart] = useState<string>('')
+    const [poItemSerials, setPOItemSerials] = useState<Record<string, { qty: number; start: string; end: string; damaged: number }>>({})
+    const [poAllocNotes, setPOAllocNotes] = useState<string>('')
+    const [poAllocSubmitting, setPOAllocSubmitting] = useState(false)
+
     // Logbook filters
     const currentYear = new Date().getFullYear()
     const [logYear, setLogYear] = useState<number>(currentYear)
@@ -146,6 +180,224 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
         getStampAlerts().then(setAlerts)
         getStampDestructions().then(setDestructions)
     }, [])
+
+    // Helper: Contiguous sequential serial calculation
+    function calculateContiguousSerials(
+        baseStart: string,
+        items: Array<{ productId: string; qty: number }>
+    ): Record<string, { start: string; end: string }> {
+        const trimmed = (baseStart || '').trim()
+        if (!trimmed) {
+            return items.reduce((acc, it) => ({ ...acc, [it.productId]: { start: '', end: '' } }), {})
+        }
+        const match = trimmed.match(/^([A-Za-z\-_/]*?)(\d+)$/)
+        if (!match) {
+            return items.reduce((acc, it) => ({ ...acc, [it.productId]: { start: trimmed, end: '' } }), {})
+        }
+        const prefix = match[1]
+        const numStr = match[2]
+        const padLen = numStr.length
+        let current = parseInt(numStr, 10)
+        const result: Record<string, { start: string; end: string }> = {}
+        for (const it of items) {
+            const qty = Math.max(0, Number(it.qty) || 0)
+            if (qty === 0) {
+                result[it.productId] = { start: '', end: '' }
+                continue
+            }
+            const startStr = prefix + String(current).padStart(padLen, '0')
+            const endNum = current + qty - 1
+            const endStr = prefix + String(endNum).padStart(padLen, '0')
+            current = endNum + 1
+            result[it.productId] = { start: startStr, end: endStr }
+        }
+        return result
+    }
+
+    const selectedPO = receivedPOs.find(p => p.id === selectedPOId)
+    const selectedPurchase = purchases.find(p => p.id === selectedStampPurchaseId)
+
+    const handleSelectPO = (poId: string) => {
+        setSelectedPOId(poId)
+        const po = receivedPOs.find(p => p.id === poId)
+        if (!po) return
+
+        let pId = selectedStampPurchaseId
+        if (!pId) {
+            const matchingPurchase = purchases.find(p => {
+                const remaining = p.totalQty - p.usedQty
+                if (remaining <= 0) return false
+                if (po.recommendedStampType === 'MIXED') return true
+                return p.stampType === po.recommendedStampType
+            })
+            if (matchingPurchase) {
+                pId = matchingPurchase.id
+                setSelectedStampPurchaseId(pId)
+                if (!poBaseSerialStart) {
+                    setPOBaseSerialStart(matchingPurchase.serialStart)
+                }
+            }
+        }
+
+        const chosenPurchase = purchases.find(p => p.id === pId)
+        const base = poBaseSerialStart || chosenPurchase?.serialStart || ''
+        const initialItems = po.items.map(it => ({ productId: it.productId, qty: it.qty }))
+        const serials = calculateContiguousSerials(base, initialItems)
+        const nextSerials: Record<string, { qty: number; start: string; end: string; damaged: number }> = {}
+        for (const it of po.items) {
+            nextSerials[it.productId] = {
+                qty: it.qty,
+                start: serials[it.productId]?.start || '',
+                end: serials[it.productId]?.end || '',
+                damaged: 0,
+            }
+        }
+        setPOItemSerials(nextSerials)
+    }
+
+    const handleSelectPurchase = (purchaseId: string) => {
+        setSelectedStampPurchaseId(purchaseId)
+        const p = purchases.find(item => item.id === purchaseId)
+        if (p && !poBaseSerialStart) {
+            setPOBaseSerialStart(p.serialStart)
+            if (selectedPO) {
+                const itemsList = selectedPO.items.map(it => ({
+                    productId: it.productId,
+                    qty: poItemSerials[it.productId]?.qty ?? it.qty,
+                }))
+                const serials = calculateContiguousSerials(p.serialStart, itemsList)
+                const updated = { ...poItemSerials }
+                for (const it of selectedPO.items) {
+                    updated[it.productId] = {
+                        ...(updated[it.productId] || { qty: it.qty, damaged: 0 }),
+                        start: serials[it.productId]?.start || '',
+                        end: serials[it.productId]?.end || '',
+                    }
+                }
+                setPOItemSerials(updated)
+            }
+        }
+    }
+
+    const handleBaseSerialChange = (newBase: string) => {
+        setPOBaseSerialStart(newBase)
+        if (selectedPO) {
+            const itemsList = selectedPO.items.map(it => ({
+                productId: it.productId,
+                qty: poItemSerials[it.productId]?.qty ?? it.qty,
+            }))
+            const serials = calculateContiguousSerials(newBase, itemsList)
+            const updated = { ...poItemSerials }
+            for (const it of selectedPO.items) {
+                updated[it.productId] = {
+                    ...(updated[it.productId] || { qty: it.qty, damaged: 0 }),
+                    start: serials[it.productId]?.start || '',
+                    end: serials[it.productId]?.end || '',
+                }
+            }
+            setPOItemSerials(updated)
+        }
+    }
+
+    const handleItemFieldChange = (productId: string, field: 'qty' | 'start' | 'end' | 'damaged', value: any) => {
+        setPOItemSerials(prev => {
+            const cur = prev[productId] || { qty: 0, start: '', end: '', damaged: 0 }
+            const next = { ...cur, [field]: value }
+            if (field === 'qty' && next.start) {
+                const match = next.start.trim().match(/^([A-Za-z\-_/]*?)(\d+)$/)
+                if (match) {
+                    const prefix = match[1]
+                    const numStr = match[2]
+                    const padLen = numStr.length
+                    const num = parseInt(numStr, 10)
+                    const qty = Math.max(0, Number(value) || 0)
+                    if (qty > 0) {
+                        next.end = prefix + String(num + qty - 1).padStart(padLen, '0')
+                    }
+                }
+            }
+            return { ...prev, [productId]: next }
+        })
+    }
+
+    const handleSubmitPOAllocation = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!selectedPOId || !selectedPO) {
+            toast.error('Vui lòng chọn đơn PO')
+            return
+        }
+        if (!selectedStampPurchaseId || !selectedPurchase) {
+            toast.error('Vui lòng chọn lô tem cấp phát')
+            return
+        }
+
+        const itemsToSubmit = Object.entries(poItemSerials).map(([productId, data]) => {
+            const original = selectedPO.items.find(it => it.productId === productId)
+            return {
+                productId,
+                lotId: original?.lotId || null,
+                qty: Number(data.qty || 0),
+                qtyDamaged: Number(data.damaged || 0),
+                serialStart: data.start?.trim() || '',
+                serialEnd: data.end?.trim() || '',
+            }
+        }).filter(it => it.qty > 0 || it.qtyDamaged > 0)
+
+        if (itemsToSubmit.length === 0) {
+            toast.error('Chưa có sản phẩm nào có số lượng tem dán > 0')
+            return
+        }
+
+        for (const it of itemsToSubmit) {
+            if (it.qty > 0 && (!it.serialStart || !it.serialEnd)) {
+                toast.error('Tất cả sản phẩm phải có số seri đầu và số seri cuối')
+                return
+            }
+        }
+
+        const totalQty = itemsToSubmit.reduce((sum, it) => sum + it.qty + it.qtyDamaged, 0)
+        const remaining = selectedPurchase.totalQty - selectedPurchase.usedQty
+        if (totalQty > remaining) {
+            toast.error(`Vượt quá tồn kho tem khả dụng (${remaining.toLocaleString('vi-VN')} tem)`)
+            return
+        }
+
+        setPOAllocSubmitting(true)
+        try {
+            const res = await allocateStampsToPO({
+                purchaseId: selectedStampPurchaseId,
+                poId: selectedPOId,
+                items: itemsToSubmit,
+                notes: poAllocNotes,
+            })
+
+            if (!res.success) {
+                throw new Error(res.error || 'Lỗi khi phân tem cho PO')
+            }
+
+            toast.success(`Đã phân bổ tem thành công cho đơn PO ${selectedPO.poNo}`)
+            setShowPOAllocModal(false)
+            setSelectedPOId('')
+            setSelectedStampPurchaseId('')
+            setPOBaseSerialStart('')
+            setPOItemSerials({})
+            setPOAllocNotes('')
+
+            startTransition(() => {
+                router.refresh()
+            })
+            const [updatedAllocs] = await Promise.all([
+                getPOStampAllocations(),
+                fetchLogbook(),
+            ])
+            setPOAllocations(updatedAllocs)
+            setActiveTab('po_allocations')
+        } catch (err: any) {
+            toast.error(err.message)
+        } finally {
+            setPOAllocSubmitting(false)
+        }
+    }
 
     // Fetch logbook when filters change
     const fetchLogbook = async () => {
@@ -358,134 +610,149 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
     const pct = (used: number, total: number) =>
         total > 0 ? Math.round((used / total) * 100) : 0
 
+    const modalTotalQtyUsed = Object.values(poItemSerials).reduce((s, it) => s + (Number(it.qty) || 0), 0)
+    const modalTotalQtyDamaged = Object.values(poItemSerials).reduce((s, it) => s + (Number(it.damaged) || 0), 0)
+    const modalTotalNeeded = modalTotalQtyUsed + modalTotalQtyDamaged
+
+    const validStarts = Object.values(poItemSerials).map(it => it.start).filter(Boolean)
+    const validEnds = Object.values(poItemSerials).map(it => it.end).filter(Boolean)
+    const overallComputedRange = {
+        start: validStarts[0] || '',
+        end: validEnds[validEnds.length - 1] || '',
+    }
+
+    const filteredPOAllocations = poAllocations.filter(alloc => {
+        if (!poAllocSearch.trim()) return true
+        const q = poAllocSearch.trim().toLowerCase()
+        return (
+            alloc.poNo.toLowerCase().includes(q) ||
+            alloc.purchaseSymbol.toLowerCase().includes(q) ||
+            alloc.serialStart.toLowerCase().includes(q) ||
+            alloc.serialEnd.toLowerCase().includes(q) ||
+            (alloc.notes && alloc.notes.toLowerCase().includes(q))
+        )
+    })
+
     return (
         <div className="p-3 sm:p-6 md:p-8 max-w-[1440px] mx-auto">
             {/* Header */}
-            <PageHeader
-                title="Quản Lý & Phân Bổ Tem Rượu"
-                description="Quản lý phôi tem, dải số seri, sổ theo dõi tem điện tử theo Nghị định 105/2017 & Thông tư 23/2021"
-                actions={
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleExportLogbook}
-                            disabled={exportingLogbook}
-                        >
-                            <FileSpreadsheet size={14} style={{ marginRight: '6px' }} />
-                            {exportingLogbook ? 'Đang xuất...' : 'Xuất Excel Sổ Tem'}
-                        </Button>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setShowAddForm(!showAddForm)}
-                        >
-                            <Plus size={14} style={{ marginRight: '6px' }} />
-                            Nhập Lô Tem Mới
-                        </Button>
-                    </div>
-                }
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+                <div>
+                    <h1 className="text-lg sm:text-2xl font-bold text-lys-primary tracking-tight">
+                        Quản Lý &amp; Phân Bổ Tem Rượu
+                    </h1>
+                    <p className="hidden sm:block text-xs sm:text-sm text-lys-muted mt-0.5">
+                        Quản lý phôi tem, dải số seri, sổ theo dõi tem điện tử theo Nghị định 105/2017 &amp; Thông tư 23/2021
+                    </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                            if (receivedPOs.length === 0) {
+                                toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                return
+                            }
+                            setShowPOAllocModal(true)
+                            if (!selectedPOId && receivedPOs[0]) {
+                                handleSelectPO(receivedPOs[0].id)
+                            }
+                        }}
+                        className="flex-1 sm:flex-none justify-center"
+                    >
+                        <Stamp size={14} className="mr-1.5" />
+                        Phân Tem Cho PO
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowAddForm(!showAddForm)}
+                        className="flex-1 sm:flex-none justify-center"
+                    >
+                        <Plus size={14} className="mr-1.5" />
+                        Nhập Lô Tem Mới
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleExportLogbook}
+                        disabled={exportingLogbook}
+                        className="flex-1 sm:flex-none justify-center"
+                    >
+                        <FileSpreadsheet size={14} className="mr-1.5" />
+                        <span className="hidden sm:inline">Xuất Excel Sổ Tem</span>
+                        <span className="sm:hidden">Xuất Excel</span>
+                    </Button>
+                </div>
+            </div>
 
             {/* Navigation Tabs */}
-            <div className="flex gap-2 border-b border-lys-border mb-6 pb-0.5 overflow-x-auto no-scrollbar whitespace-nowrap">
-                <button
-                    onClick={() => setActiveTab('batches')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        border: 'none',
-                        background: 'transparent',
-                        borderBottom: activeTab === 'batches' ? '2px solid #0891B2' : '2px solid transparent',
-                        color: activeTab === 'batches' ? '#0891B2' : '#64748B',
-                        fontWeight: activeTab === 'batches' ? 600 : 500,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    <Package size={15} />
-                    Lô Tem Khả Dụng & Cấp Phát ({purchases.length})
-                </button>
-                <button
-                    onClick={() => {
-                        setActiveTab('logbook')
-                        if (logbookEntries.length === 0) fetchLogbook()
-                    }}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        border: 'none',
-                        background: 'transparent',
-                        borderBottom: activeTab === 'logbook' ? '2px solid #0891B2' : '2px solid transparent',
-                        color: activeTab === 'logbook' ? '#0891B2' : '#64748B',
-                        fontWeight: activeTab === 'logbook' ? 600 : 500,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    <BookOpen size={15} />
-                    Sổ Theo Dõi Tem Điện Tử (Logbook)
-                </button>
-                <button
-                    onClick={() => setActiveTab('destructions')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        border: 'none',
-                        background: 'transparent',
-                        borderBottom: activeTab === 'destructions' ? '2px solid #0891B2' : '2px solid transparent',
-                        color: activeTab === 'destructions' ? '#0891B2' : '#64748B',
-                        fontWeight: activeTab === 'destructions' ? 600 : 500,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    <Trash2 size={15} />
-                    Biên Bản Hủy Tem ({destructions.length})
-                </button>
+            <div className="flex items-center gap-1 sm:gap-2 border-b border-lys-border mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-0.5">
+                {[
+                    { id: 'batches', label: `Lô Phôi Tem (${purchases.length})`, icon: Package },
+                    { id: 'po_allocations', label: `Phân Tem Cho PO (${poAllocations.length})`, icon: Stamp },
+                    { id: 'logbook', label: 'Sổ Tem (Logbook)', icon: BookOpen },
+                    { id: 'destructions', label: `Biên Bản Hủy (${destructions.length})`, icon: Trash2 },
+                ].map(tab => {
+                    const Icon = tab.icon
+                    const active = activeTab === tab.id
+                    return (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                                setActiveTab(tab.id as any)
+                                if (tab.id === 'logbook' && logbookEntries.length === 0) fetchLogbook()
+                            }}
+                            className={cn(
+                                '-mb-px flex items-center gap-1.5 py-2.5 px-3 text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors border-b-2 cursor-pointer select-none',
+                                active
+                                    ? 'border-lys-teal text-lys-teal-strong'
+                                    : 'border-transparent text-lys-muted hover:text-lys-primary hover:border-lys-border-strong'
+                            )}
+                        >
+                            <Icon size={14} />
+                            <span>{tab.label}</span>
+                        </button>
+                    )
+                })}
             </div>
 
             {/* TAB 1: BATCHES & ALLOCATION */}
             {activeTab === 'batches' && (
                 <div>
                     {/* Summary KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 sm:mb-6">
                         {[
-                            { label: 'Tem Dưới 20° ABV (Vang thông dụng)', data: summary.under20, color: '#0891B2' },
-                            { label: 'Tem Từ 20° ABV Trở Lên (Mạnh / Fortified)', data: summary.over20, color: '#D97706' },
-                            { label: 'Tổng Cộng Tất Cả Phôi Tem', data: summary.all, color: '#1E293B' },
+                            { label: 'Tem Dưới 20° ABV (Vang)', data: summary.under20, color: '#0891B2' },
+                            { label: 'Tem Từ 20° ABV Trở Lên (Mạnh)', data: summary.over20, color: '#D97706' },
+                            { label: 'Tổng Cộng Tất Cả Phôi Tem', data: summary.all, color: '#0F172A' },
                         ].map(({ label, data, color }) => (
-                            <div key={label} style={cardStyle}>
-                                <p style={labelStyle}>{label}</p>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
-                                    <span style={{ color, fontSize: '28px', fontWeight: 700 }}>
+                            <div key={label} className="bg-white border border-lys-border rounded-lg p-3.5 sm:p-4 shadow-xs">
+                                <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-lys-muted truncate mb-1">
+                                    {label}
+                                </p>
+                                <div className="flex items-baseline justify-between mb-2">
+                                    <span className="text-xl sm:text-2xl font-bold font-mono tracking-tight" style={{ color }}>
                                         {data.remaining.toLocaleString('vi-VN')}
                                     </span>
-                                    <span style={{ color: '#64748B', fontSize: '13px' }}>
+                                    <span className="text-xs text-lys-muted font-medium">
                                         / {data.total.toLocaleString('vi-VN')} tem
                                     </span>
                                 </div>
-                                <div style={{ background: '#F1F5F9', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
-                                    <div style={{
-                                        background: pct(data.used, data.total) > 90 ? '#B91C1C' : color,
-                                        width: `${pct(data.used, data.total)}%`,
-                                        height: '100%',
-                                        borderRadius: '4px',
-                                        transition: 'width 0.4s ease',
-                                    }} />
+                                <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden mb-2">
+                                    <div
+                                        style={{
+                                            background: pct(data.used, data.total) > 90 ? '#B91C1C' : color,
+                                            width: `${pct(data.used, data.total)}%`,
+                                        }}
+                                        className="h-full rounded-full transition-all duration-300"
+                                    />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '12px', color: '#64748B' }}>
+                                <div className="flex items-center justify-between text-[11px] sm:text-xs text-lys-muted">
                                     <span>Đã dùng: {data.used.toLocaleString('vi-VN')}</span>
-                                    <span>{data.activeBatches} lô đang hoạt động</span>
+                                    <span>{data.activeBatches} lô hoạt động</span>
                                 </div>
                             </div>
                         ))}
@@ -774,7 +1041,211 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                 </div>
             )}
 
-            {/* TAB 2: ELECTRONIC LOGBOOK */}
+            {/* TAB: PHÂN TEM THEO ĐƠN PO */}
+            {activeTab === 'po_allocations' && (
+                <div style={cardStyle}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                        <div>
+                            <h3 className="text-sm sm:text-base font-semibold text-lys-primary flex items-center gap-2 m-0">
+                                <Stamp size={16} className="text-lys-teal" />
+                                Quản Lý Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về
+                            </h3>
+                            <p className="text-xs text-lys-muted mt-1 m-0">
+                                Theo dõi dải số seri cấp phát, số đầu và số cuối cho từng sản phẩm trong các đơn mua hàng nhập kho
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative w-full sm:w-60">
+                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm mã PO, lô tem, seri..."
+                                    value={poAllocSearch}
+                                    onChange={e => setPOAllocSearch(e.target.value)}
+                                    style={{ ...inputStyle, paddingLeft: '30px' }}
+                                />
+                            </div>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    if (receivedPOs.length === 0) {
+                                        toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                        return
+                                    }
+                                    setShowPOAllocModal(true)
+                                    if (!selectedPOId && receivedPOs[0]) {
+                                        handleSelectPO(receivedPOs[0].id)
+                                    }
+                                }}
+                            >
+                                <Plus size={14} className="mr-1.5" />
+                                Phân Tem PO Mới
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Danh sách các đợt phân tem cho PO */}
+                    {filteredPOAllocations.length === 0 ? (
+                        <div className="text-center py-12 text-lys-muted">
+                            <Stamp size={40} className="opacity-30 mx-auto mb-2" />
+                            <p className="text-sm">Chưa có đơn hàng PO nào được phân bổ dải số tem rượu.</p>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                    if (receivedPOs.length === 0) {
+                                        toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                        return
+                                    }
+                                    setShowPOAllocModal(true)
+                                    if (!selectedPOId && receivedPOs[0]) {
+                                        handleSelectPO(receivedPOs[0].id)
+                                    }
+                                }}
+                                className="mt-2"
+                            >
+                                <Plus size={13} className="mr-1" />
+                                Phân Tem Cho Đơn PO Nhận Về
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredPOAllocations.map(alloc => {
+                                const expandKey = `${alloc.poNo}-${alloc.purchaseId}-${alloc.allocatedDate}`
+                                const isExpanded = expandedPOId === expandKey
+
+                                return (
+                                    <div
+                                        key={expandKey}
+                                        className="border border-lys-border rounded-lg bg-white overflow-hidden shadow-xs transition-all"
+                                    >
+                                        {/* Row Summary */}
+                                        <div
+                                            onClick={() => setExpandedPOId(isExpanded ? null : expandKey)}
+                                            className="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-50/70 cursor-pointer select-none"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    className="w-7 h-7 rounded flex items-center justify-center text-slate-400 bg-slate-100"
+                                                >
+                                                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                </button>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-sm text-lys-primary font-mono bg-cyan-50 border border-cyan-200 text-lys-teal-strong px-2 py-0.5 rounded">
+                                                            {alloc.poNo}
+                                                        </span>
+                                                        <span className={cn(
+                                                            'text-[11px] font-semibold px-2 py-0.5 rounded',
+                                                            alloc.stampType === 'UNDER_20_ABV'
+                                                                ? 'bg-sky-100 text-sky-800'
+                                                                : 'bg-amber-100 text-amber-800'
+                                                        )}>
+                                                            {alloc.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}
+                                                        </span>
+                                                        <span className="text-xs text-lys-muted font-medium">
+                                                            Lô tem: <strong className="text-slate-700">{alloc.purchaseSymbol}</strong>
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-xs text-lys-muted mt-1">
+                                                        <span>Ngày phân: {new Date(alloc.allocatedDate).toLocaleDateString('vi-VN')}</span>
+                                                        <span>•</span>
+                                                        <span>Người TH: {alloc.reporterName}</span>
+                                                        <span>•</span>
+                                                        <span>{alloc.items.length} sản phẩm</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Serial Range badge */}
+                                            <div className="flex items-center gap-4 text-xs sm:text-sm pl-10 md:pl-0">
+                                                <div className="text-right">
+                                                    <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
+                                                        Dải Seri PO (Số Đầu → Số Cuối)
+                                                    </div>
+                                                    <div className="font-mono font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded inline-block mt-0.5">
+                                                        {alloc.serialStart} → {alloc.serialEnd}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right border-l pl-4 border-slate-200">
+                                                    <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
+                                                        Tổng Tem Dán
+                                                    </div>
+                                                    <div className="font-bold text-lys-teal-strong text-base">
+                                                        {alloc.totalQty.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded Products Breakdown Table */}
+                                        {isExpanded && (
+                                            <div className="border-t border-lys-border bg-slate-50/50 p-3 sm:p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-lys-muted m-0 flex items-center gap-1.5">
+                                                        <Layers size={13} className="text-lys-teal" />
+                                                        Phân chia dải tem cho các sản phẩm trong đơn {alloc.poNo}:
+                                                    </h4>
+                                                    <span className="text-xs text-lys-muted">
+                                                        Tổng {alloc.items.length} mặt hàng
+                                                    </span>
+                                                </div>
+
+                                                <div className="overflow-x-auto rounded border border-lys-border bg-white no-scrollbar">
+                                                    <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
+                                                        <thead>
+                                                            <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
+                                                                <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>STT</th>
+                                                                <th style={thStyle}>Tên Sản Phẩm Rượu</th>
+                                                                <th style={thStyle}>Mã SKU</th>
+                                                                <th style={thStyle}>Lô Kho (StockLot)</th>
+                                                                <th style={{ ...thStyle, textAlign: 'right' }}>SL Dán</th>
+                                                                <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
+                                                                    Số Seri Đầu
+                                                                </th>
+                                                                <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
+                                                                    Số Seri Cuối
+                                                                </th>
+                                                                <th style={{ ...thStyle, textAlign: 'right' }}>Hỏng</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {alloc.items.map((it, itemIdx) => (
+                                                                <tr key={it.id || itemIdx} className="border-b border-slate-100 hover:bg-slate-50">
+                                                                    <td style={{ ...tdStyle, textAlign: 'center', color: '#94A3B8' }}>{itemIdx + 1}</td>
+                                                                    <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{it.productName}</td>
+                                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#64748B' }}>{it.skuCode}</td>
+                                                                    <td style={{ ...tdStyle, color: '#475569' }}>{it.lotNo || '—'}</td>
+                                                                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#0F172A' }}>
+                                                                        {it.qtyUsed.toLocaleString('vi-VN')}
+                                                                    </td>
+                                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#0891B2' }}>
+                                                                        {it.serialStart}
+                                                                    </td>
+                                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#0891B2' }}>
+                                                                        {it.serialEnd}
+                                                                    </td>
+                                                                    <td style={{ ...tdStyle, textAlign: 'right', color: it.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8' }}>
+                                                                        {it.qtyDamaged > 0 ? it.qtyDamaged : '0'}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* TAB 3: ELECTRONIC LOGBOOK */}
             {activeTab === 'logbook' && (
                 <div>
                     {/* Logbook Filters Bar */}
@@ -1258,6 +1729,277 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                                 <Button type="submit" variant="primary" size="sm" disabled={loading} style={{ background: '#B91C1C' }}>
                                     {loading ? 'Đang xử lý...' : 'Xác Nhận Hủy Tem'}
                                 </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: PHÂN BỔ TEM CHO ĐƠN PO NHẬN VỀ */}
+            {showPOAllocModal && (
+                <div
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60,
+                    }}
+                    onClick={() => setShowPOAllocModal(false)}
+                >
+                    <div
+                        style={{ ...cardStyle, width: '840px', maxWidth: '96vw', maxHeight: '92vh', overflowY: 'auto' }}
+                        className="no-scrollbar"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-lys-border">
+                            <div>
+                                <h3 className="text-base font-bold text-lys-primary flex items-center gap-2 m-0">
+                                    <Stamp size={18} className="text-lys-teal" />
+                                    Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về
+                                </h3>
+                                <p className="text-xs text-lys-muted mt-0.5 m-0">
+                                    Tự động chia dải số seri liên tục cho từng sản phẩm trong đơn PO theo số lượng thực nhận
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowPOAllocModal(false)}
+                                className="border-none bg-transparent text-slate-400 hover:text-slate-600 text-lg cursor-pointer p-1"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmitPOAllocation} className="flex flex-col gap-4">
+                            {/* Step 1: Chọn PO */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label style={labelStyle}>1. Chọn Đơn Hàng PO Nhận Về *</label>
+                                    <select
+                                        value={selectedPOId}
+                                        onChange={e => handleSelectPO(e.target.value)}
+                                        required
+                                        style={inputStyle}
+                                    >
+                                        <option value="">-- Chọn đơn hàng PO đã nhận kho --</option>
+                                        {receivedPOs.map(po => (
+                                            <option key={po.id} value={po.id}>
+                                                {po.poNo} — {po.supplierName} ({po.items.length} SP, {po.totalBottles.toLocaleString('vi-VN')} chai)
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style={labelStyle}>2. Chọn Lô Phôi Tem Khả Dụng *</label>
+                                    <select
+                                        value={selectedStampPurchaseId}
+                                        onChange={e => handleSelectPurchase(e.target.value)}
+                                        required
+                                        style={inputStyle}
+                                    >
+                                        <option value="">-- Chọn lô tem cấp phát --</option>
+                                        {purchases
+                                            .filter(p => (p.totalQty - p.usedQty) > 0)
+                                            .map(p => {
+                                                const rem = p.totalQty - p.usedQty
+                                                const typeLabel = p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'
+                                                return (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.symbol} ({typeLabel}) — Tồn: {rem.toLocaleString('vi-VN')} tem (Seri: {p.serialStart} → {p.serialEnd})
+                                                    </option>
+                                                )
+                                            })}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* PO & Stamp Details Card */}
+                            {selectedPO && selectedPurchase && (
+                                <div className="p-3 bg-slate-50 border border-lys-border rounded-md text-xs flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <span className="text-lys-muted">Đơn PO:</span> <strong className="text-lys-primary font-mono">{selectedPO.poNo}</strong>
+                                        <span className="mx-2">•</span>
+                                        <span className="text-lys-muted">Nhà cung cấp:</span> <strong>{selectedPO.supplierName}</strong>
+                                        <span className="mx-2">•</span>
+                                        <span className="text-lys-muted">Tổng chai nhận:</span> <strong className="text-lys-teal-strong">{selectedPO.totalBottles.toLocaleString('vi-VN')} chai</strong>
+                                    </div>
+                                    <div>
+                                        <span className="text-lys-muted">Tồn tem khả dụng:</span> <strong className="text-emerald-700 font-mono">{(selectedPurchase.totalQty - selectedPurchase.usedQty).toLocaleString('vi-VN')}</strong> tem
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 2: Dải Seri Bắt Đầu Tổng */}
+                            <div className="p-3.5 bg-cyan-50/60 border border-cyan-200 rounded-md">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                                    <div>
+                                        <label style={{ ...labelStyle, color: '#0891B2' }}>
+                                            3. Số Seri Bắt Đầu Của Đơn PO *
+                                        </label>
+                                        <input
+                                            placeholder="Ví dụ: 001001 hoặc 000001"
+                                            value={poBaseSerialStart}
+                                            onChange={e => handleBaseSerialChange(e.target.value)}
+                                            required
+                                            style={{ ...inputStyle, borderColor: '#0891B2', fontWeight: 600, fontFamily: 'monospace' }}
+                                        />
+                                        <span className="text-[11px] text-cyan-800 mt-1 block">
+                                            Nhập số đầu, hệ thống sẽ tự động gán nối tiếp dải số cho từng sản phẩm bên dưới.
+                                        </span>
+                                    </div>
+                                    <div className="text-left sm:text-right">
+                                        <div className="text-[11px] uppercase tracking-wider text-cyan-800 font-semibold mb-1">
+                                            Dải Seri Tổng Dự Kiến Của PO
+                                        </div>
+                                        <div className="font-mono text-base font-bold text-lys-primary bg-white border border-cyan-300 rounded px-3 py-1.5 inline-block">
+                                            {overallComputedRange.start && overallComputedRange.end ? (
+                                                <span>{overallComputedRange.start} → {overallComputedRange.end}</span>
+                                            ) : (
+                                                <span className="text-slate-400 font-normal text-xs">Chờ nhập số đầu...</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Step 3: Bảng phân chia cho các sản phẩm trong PO */}
+                            {selectedPO && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label style={labelStyle} className="mb-0">
+                                            4. Phân Chia Tem Cho Các Sản Phẩm Trong PO (Số Đầu - Số Cuối) *
+                                        </label>
+                                        <span className="text-[11px] text-lys-muted">
+                                            (Có thể tự do chỉnh sửa số đầu, số cuối hoặc số lượng dán của từng dòng)
+                                        </span>
+                                    </div>
+
+                                    <div className="border border-lys-border rounded-md overflow-x-auto no-scrollbar">
+                                        <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+                                            <thead>
+                                                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                                    <th style={thStyle}>Sản Phẩm &amp; SKU</th>
+                                                    <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Độ Cồn</th>
+                                                    <th style={{ ...thStyle, width: '90px', textAlign: 'right' }}>SL Dán</th>
+                                                    <th style={{ ...thStyle, width: '130px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
+                                                        Số Seri Đầu
+                                                    </th>
+                                                    <th style={{ ...thStyle, width: '130px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
+                                                        Số Seri Cuối
+                                                    </th>
+                                                    <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tem Hỏng</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {selectedPO.items.map(it => {
+                                                    const data = poItemSerials[it.productId] || {
+                                                        qty: it.qty,
+                                                        start: '',
+                                                        end: '',
+                                                        damaged: 0,
+                                                    }
+
+                                                    return (
+                                                        <tr key={it.productId} className="border-b border-slate-200">
+                                                            <td style={tdStyle}>
+                                                                <div className="font-semibold text-lys-primary">{it.productName}</div>
+                                                                <div className="text-[11px] text-lys-muted font-mono">
+                                                                    SKU: {it.skuCode} {it.lotNo ? `• Lô: ${it.lotNo}` : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                                                <span className={cn(
+                                                                    'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                                                                    it.abvPercent < 20 ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
+                                                                )}>
+                                                                    {it.abvPercent}%
+                                                                </span>
+                                                            </td>
+                                                            <td style={tdStyle}>
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    value={data.qty}
+                                                                    onChange={e => handleItemFieldChange(it.productId, 'qty', parseInt(e.target.value) || 0)}
+                                                                    style={{ ...inputStyle, textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}
+                                                                />
+                                                            </td>
+                                                            <td style={{ ...tdStyle, background: '#F8FAFC' }}>
+                                                                <input
+                                                                    placeholder="VD: 001001"
+                                                                    value={data.start}
+                                                                    onChange={e => handleItemFieldChange(it.productId, 'start', e.target.value)}
+                                                                    style={{ ...inputStyle, textAlign: 'center', padding: '4px 6px', fontFamily: 'monospace', fontWeight: 600, borderColor: '#0891B2' }}
+                                                                />
+                                                            </td>
+                                                            <td style={{ ...tdStyle, background: '#F8FAFC' }}>
+                                                                <input
+                                                                    placeholder="VD: 001348"
+                                                                    value={data.end}
+                                                                    onChange={e => handleItemFieldChange(it.productId, 'end', e.target.value)}
+                                                                    style={{ ...inputStyle, textAlign: 'center', padding: '4px 6px', fontFamily: 'monospace', fontWeight: 600, borderColor: '#0891B2' }}
+                                                                />
+                                                            </td>
+                                                            <td style={tdStyle}>
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    value={data.damaged || 0}
+                                                                    onChange={e => handleItemFieldChange(it.productId, 'damaged', parseInt(e.target.value) || 0)}
+                                                                    style={{ ...inputStyle, textAlign: 'right', padding: '4px 6px', color: '#B91C1C' }}
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Summary & Ghi chú */}
+                            <div>
+                                <label style={labelStyle}>Ghi Chú Đợt Phân Tem</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="Ghi chú thêm về đợt dán tem, thùng hàng, kho nhận..."
+                                    value={poAllocNotes}
+                                    onChange={e => setPOAllocNotes(e.target.value)}
+                                    style={{ ...inputStyle, resize: 'vertical' }}
+                                />
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-lys-border">
+                                <div className="text-xs text-lys-muted">
+                                    Tổng tem yêu cầu: <strong className="text-lys-primary font-mono text-sm">{modalTotalNeeded.toLocaleString('vi-VN')}</strong> tem
+                                    {selectedPurchase && (
+                                        <span className={cn(
+                                            'ml-2 font-medium',
+                                            modalTotalNeeded > (selectedPurchase.totalQty - selectedPurchase.usedQty) ? 'text-rose-600 font-bold' : 'text-emerald-700'
+                                        )}>
+                                            (Tồn kho: {(selectedPurchase.totalQty - selectedPurchase.usedQty).toLocaleString('vi-VN')})
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setShowPOAllocModal(false)}
+                                    >
+                                        Hủy Bỏ
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="sm"
+                                        disabled={poAllocSubmitting || modalTotalNeeded <= 0}
+                                    >
+                                        {poAllocSubmitting ? 'Đang phân tem...' : 'Xác Nhận Phân Tem Cho PO'}
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                     </div>
