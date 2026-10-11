@@ -25,14 +25,14 @@ export function Modal({ open, onClose, title, footer, children, className }: Mod
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/40 animate-fade-in" onClick={onClose} aria-hidden />
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden />
             <div
                 ref={panelRef}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}
                 className={cn(
-                    'relative w-full max-w-md bg-lys-surface border border-lys-border rounded-lg shadow-lg outline-none',
+                    'relative w-full max-w-md bg-lys-surface border border-lys-border rounded-lg shadow-xl outline-none',
                     'animate-modal-in',
                     className,
                 )}
@@ -43,7 +43,7 @@ export function Modal({ open, onClose, title, footer, children, className }: Mod
                         type="button"
                         onClick={onClose}
                         aria-label="Đóng"
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary cursor-pointer"
+                        className="flex items-center justify-center w-8 h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary active:scale-90 transition-all duration-100 cursor-pointer"
                     >
                         <X size={18} />
                     </button>
@@ -86,7 +86,7 @@ export function ConfirmDialog({
         >
             <div className="flex gap-3">
                 {danger && (
-                    <div className="flex items-center justify-center w-9 h-9 rounded-md border shrink-0 text-tone-danger-fg bg-tone-danger-bg border-tone-danger-border">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-md border shrink-0 text-tone-danger-fg bg-tone-danger-bg border-tone-danger-border animate-pop">
                         <AlertTriangle size={18} aria-hidden />
                     </div>
                 )}

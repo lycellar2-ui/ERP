@@ -309,9 +309,10 @@ interface Props {
     initialRows: ContractRow[]
     initialTotal: number
     stats: { total: number; active: number; expiringSoon: number; expired: number }
+    onOpenTemplateDrawer?: (code?: string) => void
 }
 
-export function ContractsClient({ initialRows, initialTotal: _initialTotal, stats }: Props) {
+export function ContractsClient({ initialRows, initialTotal: _initialTotal, stats, onOpenTemplateDrawer }: Props) {
     const [rows, setRows] = useState(initialRows)
     const [loading, setLoading] = useState(false)
     const [search, setSearch] = useState('')
@@ -437,10 +438,21 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                     </div>
                 }
                 right={
-                    <Button variant="primary" size="sm" onClick={() => setDrawerOpen(true)}>
-                        <Plus size={15} />
-                        Tạo Hợp Đồng
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onOpenTemplateDrawer?.()}
+                            className="bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
+                        >
+                            <FileText size={14} className="text-lys-primary mr-1" />
+                            Tạo Từ Biểu Mẫu (.docx)
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={() => setDrawerOpen(true)}>
+                            <Plus size={15} />
+                            Tạo Hợp Đồng
+                        </Button>
+                    </div>
                 }
             />
 

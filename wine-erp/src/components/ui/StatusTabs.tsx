@@ -31,19 +31,19 @@ export function StatusTabs<T extends string>({ items, value, onChange, hideEmpty
                         aria-selected={active}
                         onClick={() => onChange(tab.value)}
                         className={cn(
-                            'relative flex items-center gap-1.5 h-9 px-3 text-[13px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
-                            'after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full',
+                            'relative flex items-center gap-1.5 h-9 px-3 text-[13px] font-semibold whitespace-nowrap transition-all duration-150 active:scale-95 cursor-pointer select-none',
+                            'after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:transition-all after:duration-200 after:ease-out',
                             active
-                                ? 'text-lys-teal-strong after:bg-lys-teal'
-                                : 'text-lys-muted hover:text-lys-primary after:bg-transparent',
+                                ? 'text-lys-teal-strong after:bg-lys-teal after:opacity-100'
+                                : 'text-lys-muted hover:text-lys-primary after:bg-transparent after:opacity-0',
                         )}
                     >
                         {tab.label}
                         {tab.count !== undefined && (
                             <span
                                 className={cn(
-                                    'min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-md text-[11px] font-bold type-number',
-                                    active ? 'bg-lys-teal-soft text-lys-teal-strong' : 'bg-lys-subtle text-lys-muted',
+                                    'min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-md text-[11px] font-bold type-number transition-all duration-150',
+                                    active ? 'bg-lys-teal-soft text-lys-teal-strong animate-pop' : 'bg-lys-subtle text-lys-muted',
                                 )}
                             >
                                 {tab.count}

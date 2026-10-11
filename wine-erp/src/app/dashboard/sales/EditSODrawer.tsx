@@ -840,7 +840,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                                         {/* Autocomplete Product Results */}
                                         {isAddDropdownOpen && (
-                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white border-slate-200 divide-y divide-slate-100">
+                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white border-slate-200 divide-y divide-slate-100 animate-dropdown origin-top">
                                                 {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
                                                     <div className="px-3 py-2.5 text-xs text-slate-400 text-center">
                                                         {t.noProductFoundOrAdded}
@@ -977,7 +977,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => removeLine(idx)}
-                                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-75 rounded transition-all duration-100 cursor-pointer"
                                                                     title={t.deleteLine}
                                                                 >
                                                                     <Trash2 size={15} />
@@ -1026,7 +1026,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                         <button
                                                             type="button"
                                                             onClick={() => removeLine(idx)}
-                                                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-75 rounded transition-all duration-100 cursor-pointer"
                                                             title={t.deleteLine}
                                                         >
                                                             <Trash2 size={15} />
@@ -1041,7 +1041,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 type="button"
                                                                 disabled={l.qtyOrdered <= 1}
                                                                 onClick={() => updateLine(idx, 'qtyOrdered', Math.max(1, l.qtyOrdered - 1))}
-                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 active:scale-90 disabled:opacity-30 disabled:pointer-events-none transition-all duration-75 select-none cursor-pointer"
                                                                 aria-label="Giảm 1"
                                                             >
                                                                 <Minus size={15} />
@@ -1053,12 +1053,12 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 min="1"
                                                                 value={l.qtyOrdered}
                                                                 onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value || 1))}
-                                                                className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                                className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-150"
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 1)}
-                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                                                                className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 active:scale-90 transition-all duration-75 select-none cursor-pointer"
                                                                 aria-label="Tăng 1"
                                                             >
                                                                 <Plus size={15} />
@@ -1070,7 +1070,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 6)}
-                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 transition-colors"
+                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 active:scale-95 transition-all duration-100 select-none cursor-pointer"
                                                                 title={isEn ? "Add 1 case (6 btls)" : "Thêm 1 thùng (6 chai)"}
                                                             >
                                                                 +6 {isEn ? 'btls' : 'chai'}
@@ -1078,7 +1078,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateLine(idx, 'qtyOrdered', l.qtyOrdered + 12)}
-                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 transition-colors"
+                                                                className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 active:bg-amber-200 active:scale-95 transition-all duration-100 select-none cursor-pointer"
                                                                 title={isEn ? "Add 2 cases (12 btls)" : "Thêm 2 thùng (12 chai)"}
                                                             >
                                                                 +12 {isEn ? 'btls' : 'chai'}

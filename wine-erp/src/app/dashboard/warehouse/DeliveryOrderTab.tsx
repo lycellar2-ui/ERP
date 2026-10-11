@@ -513,8 +513,8 @@ export function DeliveryOrderTab({ warehouses }: {
 
             {/* Detail Drawer */}
             {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15,23,42,0.4)' }}>
-                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-hidden shadow-2xl flex flex-col" style={{ background: '#FFFFFF' }}>
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px] animate-fade-in">
+                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-hidden shadow-2xl flex flex-col bg-white animate-drawer-in">
                         <div className="flex items-center justify-between p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
                                 <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -1171,8 +1171,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     )
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
-            <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl bg-white border-l border-slate-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px] animate-fade-in">
+            <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl bg-white border-l border-slate-200 animate-drawer-in">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 sm:p-5 shrink-0 border-b border-slate-200 bg-white">
                     <div className="min-w-0">

@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-// Module → required permission mapping for RBAC enforcement
+// Module → required permission mapping for RBAC enforcement (All 31 Modules)
 const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/products': 'MDM:READ',
-    '/dashboard/suppliers': 'PRC:READ',
+    '/dashboard/suppliers': 'MDM:READ',
     '/dashboard/customers': 'MDM:READ',
     '/dashboard/contracts': 'CNT:READ',
     '/dashboard/procurement': 'PRC:READ',
@@ -12,27 +12,32 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/delivery': 'TRS:READ',
     '/dashboard/finance': 'FIN:READ',
     '/dashboard/reconciliation': 'FIN:READ',
-    '/dashboard/declarations': 'FIN:READ',
-    '/dashboard/costing': 'FIN:READ',
+    '/dashboard/declarations': 'TAX:READ',
+    '/dashboard/costing': 'CST:READ',
     '/dashboard/reports': 'RPT:READ',
     '/dashboard/crm': 'CRM:READ',
     '/dashboard/consignment': 'CSG:READ',
     '/dashboard/agency': 'AGN:READ',
     '/dashboard/settings': 'SYS:ADMIN',
-    '/dashboard/kpi': 'RPT:READ',
-    '/dashboard/ai': 'SYS:ADMIN',
-    // Added for complete coverage
-    '/dashboard/media': 'MDM:READ',
+    '/dashboard/kpi': 'KPI:READ',
+    '/dashboard/ai': 'AI:READ',
+    '/dashboard/audit-log': 'AUD:READ',
+    '/dashboard/hr': 'HRM:READ',
+    '/dashboard/margin': 'MGN:READ',
+    '/dashboard/payment-requests': 'PAY:READ',
+    '/dashboard/proposals': 'PRO:READ',
+    '/dashboard/shipments': 'SHP:READ',
+    '/dashboard/media': 'MKT:READ',
     '/dashboard/pos': 'POS:READ',
     '/dashboard/pipeline': 'CRM:READ',
     '/dashboard/quotations': 'SLS:READ',
     '/dashboard/price-list': 'SLS:READ',
     '/dashboard/allocation': 'SLS:READ',
-    '/dashboard/stamps': 'WMS:READ',
+    '/dashboard/stamps': 'STP:READ',
     '/dashboard/stock-count': 'WMS:READ',
-    '/dashboard/transfers': 'WMS:READ',
-    '/dashboard/returns': 'SLS:READ',
-    '/dashboard/qr-codes': 'MDM:READ',
+    '/dashboard/transfers': 'STM:READ',
+    '/dashboard/returns': 'RTN:READ',
+    '/dashboard/qr-codes': 'QRC:READ',
     '/dashboard/market-price': 'TAX:READ',
 }
 
@@ -50,7 +55,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
-    const publicPaths = ['/login', '/forgot-password', '/reset-password', '/verify']
+    const authOnlyPaths = ['/login', '/forgot-password', '/reset-password']
+    const publicPaths = [...authOnlyPaths, '/verify']
     if (!isProduction && (
         request.nextUrl.pathname.startsWith('/dashboard/sales/visits') ||
         request.nextUrl.pathname.startsWith('/dashboard/price-list') ||
@@ -61,7 +67,9 @@ export async function middleware(request: NextRequest) {
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')
-    const isPublicApi = request.nextUrl.pathname.startsWith('/api/telegram') || request.nextUrl.pathname.startsWith('/api/cron')
+    const isPublicApi = request.nextUrl.pathname.startsWith('/api/telegram') || 
+                        request.nextUrl.pathname.startsWith('/api/cron') ||
+                        request.nextUrl.pathname.startsWith('/api/export/quotation-pdf')
 
     // Determine if we need to verify auth session in the middleware
     // Check auth for protected routes (non-public, non-agency, non-public-api)
@@ -146,9 +154,9 @@ export async function middleware(request: NextRequest) {
 
     // RBAC enforcement — check permissions for dashboard routes
     if (user && request.nextUrl.pathname.startsWith('/dashboard/') && !isApiPath) {
-        const matchedRoute = Object.keys(ROUTE_PERMISSIONS).find(
-            route => request.nextUrl.pathname.startsWith(route)
-        )
+        const matchedRoute = Object.keys(ROUTE_PERMISSIONS)
+            .sort((a, b) => b.length - a.length)
+            .find(route => request.nextUrl.pathname.startsWith(route))
 
         if (matchedRoute) {
             // Store required permission in request header for server layout/components
@@ -158,8 +166,9 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Redirect authenticated users away from login
-    if (user && isPublic) {
+    // Redirect authenticated users away from auth-only pages (/login, /forgot-password, /reset-password)
+    const isAuthOnlyPath = authOnlyPaths.some(p => request.nextUrl.pathname.startsWith(p))
+    if (user && isAuthOnlyPath) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

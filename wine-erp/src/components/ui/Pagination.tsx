@@ -20,7 +20,7 @@ interface PaginationProps {
 }
 
 const navBtn =
-    'inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-md border border-lys-border text-lys-secondary text-xs font-semibold cursor-pointer transition-colors hover:bg-lys-subtle disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent'
+    'inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-md border border-lys-border text-lys-secondary text-xs font-semibold cursor-pointer select-none transition-all duration-150 active:scale-95 hover:bg-lys-subtle disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100'
 
 export function Pagination({
     page, pageSize, total, onPageChange, onPageSizeChange,

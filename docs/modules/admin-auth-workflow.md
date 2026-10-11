@@ -53,5 +53,12 @@ Trên màn hình của CEO và các Trưởng phòng sẽ xuất hiện một Kh
 | **Phân quyền Vai trò (CRUD RBAC)** | `SettingsClient.tsx` + `actions.ts:getRolePermissions` | Hỗ trợ click vào vai trò để mở Drawer phân quyền, tích hợp check/uncheck quyền nhóm theo Module và cập nhật trực tiếp xuống DB qua `updateRolePermissions` |
 | **Audit Logs cho Phân quyền** | `actions.ts` | Ghi nhận nhật ký hệ thống chi tiết khi cập nhật quyền của vai trò |
 | **Nhận diện Thương hiệu & Tab Trình duyệt (Favicon/Icons)** | `src/app/layout.tsx`, `src/app/icon.png`, `src/app/favicon.ico`, `src/app/apple-icon.png` | Bộ icon đa độ phân giải chuẩn hoá thương hiệu LY's Cellars (16x16, 32x32, 48x48, 192x192, 512x512) hiển thị sắc nét trên mọi tab trình duyệt và thiết bị di động |
+| **Route Guards & Middleware Security** | `src/middleware.ts` | Bảo vệ 100% routes dashboard (sắp xếp độ dài giảm dần, chặn truy cập trái phép) |
+| **Server Action Authorization Guards** | `procurement/actions.ts`, `proposals/actions.ts`, `payment-requests/actions.ts`, `finance/actions.ts` | Bắt buộc `requireAuth()`, kiểm tra thẩm quyền bước duyệt, chống tự duyệt, xóa bỏ Admin fallback |
+| **Session Cache Invalidation** | `settings/actions.ts:updateRolePermissions` | Tự động hủy cache phiên người dùng (`invalidateUserSession`) ngay khi quyền hạn vai trò thay đổi |
+| **Data Scoping cho Sales Reps** | `quotations/actions.ts`, `pipeline/actions.ts` | Phân vùng dữ liệu báo giá & cơ hội pipeline theo nhân viên phụ trách |
+| **RBAC Đầy Đủ 31 Phân Hệ (107 Quyền)** | `prisma/seed-rbac.ts`, `SettingsClient.tsx`, `middleware.ts` | Định nghĩa 100% 31 modules, 107 permissions độc lập, Việt hóa giao diện Drawer và phân tách Route Guards 1-1 |
+| **Gom Nhóm Phân Hệ & Thứ Tự Vai Trò** | `SettingsClient.tsx`, `settings/actions.ts` | Gom nhóm 31 phân hệ thành 7 khối nghiệp vụ ERP, thanh tìm kiếm quyền, nút chọn cả nhóm và sắp xếp vai trò theo cấp bậc tổ chức (CEO -> CBO -> Manager -> NV) |
 
-*Last updated: 2026-10-09 14:00 | Wine ERP v12.1*
+*Last updated: 2026-10-11 10:51 | Wine ERP v12.11 - System Settings UI Reorganization & 7-Group Domain RBAC*
+

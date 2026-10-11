@@ -103,6 +103,17 @@ When user's prompt is NOT in English:
 2. **Respond in user's language** - match their communication
 3. **Code comments/variables** remain in English
 
+### 🚫 CẤM LẠM DỤNG EMOJI & ICON (ANTI-EMOJI & ICON OVERUSE — P0 RULE)
+
+> 🔴 **ABSOLUTE RULE: KHÔNG lạm dụng emoji và icon trong cả văn phong giao tiếp chat lẫn giao diện UI/mã nguồn.**
+
+1. **Trong giao tiếp chat của Agent:**
+   - **CẤM** chèn emoji trang trí tràn lan ở tiêu đề, đầu dòng, gạch đầu dòng, danh sách hay thân văn bản (chỉ dùng duy nhất thông báo định tuyến bắt buộc `🤖` theo protocol hoặc ký hiệu trạng thái kỹ thuật tối giản như `[x]`, `Error`, `Warning` khi cần thiết).
+   - Văn phong kỹ thuật, súc tích, chuyên nghiệp, gãy gọn, tập trung vào bản chất logic và sự thật dữ liệu, không màu mè.
+2. **Trong Code & Giao diện UI/UX:**
+   - **CẤM** đưa emoji Unicode (ví dụ: 📊, 📦, 💼, 💰, 🚀, 🛡️, ⚙️, v.v.) vào text giao diện, nút bấm, thẻ badge, tiêu đề, tab, hoặc tên phân hệ trừ khi User yêu cầu rõ ràng.
+   - Luôn sử dụng icon SVG hệ thống chuẩn từ thư viện (như `lucide-react`) với kích thước nhỏ gọn (13px - 16px), màu sắc trung tính trang nhã (`#64748B`, `#0891B2`), chuẩn phong cách B2B Luxury ERP.
+
 ### 🧹 Clean Code (Global Mandatory)
 
 **ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**

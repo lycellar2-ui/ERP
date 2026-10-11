@@ -84,8 +84,8 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-modal-in">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                     <div>
                         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         <h3 className="text-base font-extrabold text-slate-900 mt-1">Chèn Mã / Vintage Ngoài Danh Sách</h3>
                         <p className="text-xs text-slate-500">Ghi nhận sản phẩm thực tế có trong kho nhưng chưa được tạo dòng kiểm kê</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -231,7 +231,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                             <select
                                 value={varianceReason}
                                 onChange={e => setVarianceReason(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none font-semibold cursor-pointer"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-base sm:text-xs outline-none font-semibold cursor-pointer"
                             >
                                 <option value="UNRECORDED_GR">Chưa ghi nhận phiếu nhập GR</option>
                                 <option value="WRONG_LOCATION">Xếp sai vị trí kệ kho</option>
@@ -246,7 +246,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                                 type="text"
                                 value={notes}
                                 onChange={e => setNotes(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none font-semibold"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-base sm:text-xs outline-none font-semibold"
                             />
                         </div>
                     </div>
@@ -256,14 +256,14 @@ export function AddUnlistedModal({ sessionId, sessionNo, zones, onClose, onSucce
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold rounded-lg border border-slate-200 transition-all cursor-pointer"
                         >
                             Hủy Bỏ
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting || !selectedProduct}
-                            className="px-5 py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-5 py-2.5 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-black rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <RefreshCw className="w-4 h-4 animate-spin" />

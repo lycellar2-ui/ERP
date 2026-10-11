@@ -32,6 +32,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Margin & Audit**: `wine-erp/src/app/dashboard/margin` (**Margin Simulation**), `wine-erp/src/app/dashboard/audit-log` (**Audit Log Viewer**)
 - **Sales Field**: `wine-erp/src/app/dashboard/sales/visits` (**Field Visit Check-in/Check-out**, GPS, Camera)
 - **HR & Personnel**: `wine-erp/src/app/dashboard/hr` (**Hồ sơ & Giấy tờ nhân sự**, HĐLĐ, CCCD, KSK, Cảnh báo thời hạn tự động, Liên kết User ERP)
+- **SOP Knowledge Hub**: `wine-erp/src/app/dashboard/sop` (**Quy trình vận hành chuẩn doanh nghiệp**, Sơ đồ luồng trực quan, Ma trận RACI, Self-Audit Checklist, Hướng dẫn tự học không cần training)
 - **AI & Features**: `wine-erp/src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `wine-erp/src/app/api/ceo-summary` (**AI CEO Briefing**), `wine-erp/src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `wine-erp/src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `wine-erp/src/app/api/crm-analysis` (**AI CRM Analysis**), `wine-erp/src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `wine-erp/src/app/api/ai/status` (**AI Toggle Check**), `wine-erp/src/app/api/ai/reports` (**AI Report Save**)
 - **POS & QR**: `wine-erp/src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `wine-erp/src/app/dashboard/pos/loyalty`, `wine-erp/src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `wine-erp/src/app/partner-login` (**External Partner Login & Portal**)
@@ -138,3 +139,8 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | Doc storage | **Supabase Storage** | tech-stack.md, file-storage-plan.md |
 
 > ⚠️ Khi bất kỳ số liệu nào ở trên thay đổi → CẬP NHẬT TẤT CẢ CÁC FILE trong cột "Nơi ghi nhận".
+
+## 8. UI/UX DESIGN & TONE OF VOICE (CẤM LẠM DỤNG EMOJI/ICON)
+- **Cấm lạm dụng Emoji trong UI**: Tuyệt đối KHÔNG chèn emoji Unicode (📊, 📦, 💼, 💰, 🚀, 🛡️, ⚙️, v.v.) vào nhãn nút, thẻ card, dropdown, tiêu đề bảng hay thanh điều hướng. Chỉ sử dụng icon SVG hệ thống chuẩn từ `lucide-react` với thiết kế tối giản, tinh tế, trang nhã theo chuẩn Luxury B2B ERP.
+- **Văn phong giao tiếp của AI Agent**: Giữ phong cách kỹ thuật, súc tích, chuyên nghiệp, đi thẳng vào bản chất vấn đề. Không sử dụng emoji trang trí tràn lan ở tiêu đề hay đầu dòng danh sách.
+

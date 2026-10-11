@@ -244,6 +244,13 @@ These are YOUR favorites from training data, NOT the user's choice:
 
 **Purple is the #1 cliché of AI design. You MUST avoid it to ensure originality.**
 
+### 🚫 NO EMOJI & ICON OVERUSE (EMOJI BAN)
+
+- ❌ NO Unicode emojis in UI cards, buttons, tabs, badges, headers, or dropdowns (no 📊, 📦, 💼, 💰, 🚀, 🛡️, ⚙️, etc.)
+- ❌ NO emoji spam in agent communication or technical documentation
+- ✅ USE SVG icons (e.g. `lucide-react`) sparingly, with precise purpose, muted colors, and 14px-16px sizing
+- **Emojis in a luxury B2B ERP destroy authority and look amateurish. Never use them.**
+
 **ALWAYS ask the user first:** "Which UI approach do you prefer?"
 
 Options to offer:

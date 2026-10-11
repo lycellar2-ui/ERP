@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, hasRole, requirePermission } from '@/lib/session'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
 import { DEFAULT_PO_ROUTING, type PORouteConfig } from '@/app/dashboard/settings/approval-matrix/constants'
@@ -759,6 +759,16 @@ export async function approvePO(id: string, comment?: string) {
 
     const currentStepLevel = req ? req.currentStep : 1
     const currentIdx = routeConfig.steps.findIndex(s => s.level === currentStepLevel)
+    const currentStepDef = currentIdx >= 0 ? routeConfig.steps[currentIdx] : null
+    const isCEO = hasRole(user, 'CEO', 'ADMIN')
+    const hasStepRole = currentStepDef ? hasRole(user, currentStepDef.role) : false
+
+    if (!isCEO && !hasStepRole) {
+        return {
+            success: false,
+            error: `Bạn không có quyền phê duyệt bước này (Yêu cầu vai trò: ${currentStepDef?.label || currentStepDef?.role || 'Phê duyệt'})`
+        }
+    }
     const nextStep = (currentIdx >= 0 && currentIdx < routeConfig.steps.length - 1) ? routeConfig.steps[currentIdx + 1] : null
     const totalVND = po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice) * Number(po.exchangeRate), 0)
 
@@ -871,6 +881,20 @@ export async function rejectPO(id: string, reason: string) {
     const req = await prisma.approvalRequest.findFirst({
         where: { docType: 'PURCHASE_ORDER', docId: id, status: 'PENDING' },
     })
+
+    const routeConfig = await getPORouteConfig()
+    const currentStepLevel = req ? req.currentStep : 1
+    const currentIdx = routeConfig.steps.findIndex(s => s.level === currentStepLevel)
+    const currentStepDef = currentIdx >= 0 ? routeConfig.steps[currentIdx] : null
+    const isCEO = hasRole(user, 'CEO', 'ADMIN')
+    const hasStepRole = currentStepDef ? hasRole(user, currentStepDef.role) : false
+
+    if (!isCEO && !hasStepRole) {
+        return {
+            success: false,
+            error: `Bạn không có quyền từ chối bước này (Yêu cầu vai trò: ${currentStepDef?.label || currentStepDef?.role || 'Phê duyệt'})`
+        }
+    }
 
     if (req) {
         await prisma.approvalLog.create({

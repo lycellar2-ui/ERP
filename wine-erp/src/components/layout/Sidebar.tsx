@@ -14,7 +14,7 @@ import {
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
     Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
-    FileCheck2, CreditCard
+    FileCheck2, CreditCard, BookOpen
 } from 'lucide-react'
 
 import { useAppLocale } from '@/lib/i18n'
@@ -40,6 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard CEO', labelEn: 'Executive Dashboard' },
             { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất', labelEn: 'Proposals & Submissions' },
+            { href: '/dashboard/sop', icon: BookOpen, label: 'Quy Trình Chuẩn (SOP)', labelEn: 'SOP & Guidelines' },
         ]
     },
     {
@@ -112,8 +113,8 @@ const NAV_GROUPS: NavGroup[] = [
         labelEn: 'System',
         items: [
             { href: '/dashboard/hr', icon: Briefcase, label: 'Nhân Sự & Giấy Tờ', labelEn: 'HR & Documents', permission: 'HRM:READ' },
-            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', labelEn: 'Audit Log', permission: 'SYS:READ' },
-            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', labelEn: 'AI & Prompt', permission: 'SYS:ADMIN' },
+            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', labelEn: 'Audit Log', permission: 'AUD:READ' },
+            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', labelEn: 'AI & Prompt', permission: 'AI:READ' },
             { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', labelEn: 'Settings & RBAC', permission: 'SYS:ADMIN' },
         ]
     }
@@ -253,6 +254,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                         '/dashboard/margin',
                         '/dashboard/consignment',
                         '/dashboard/returns',
+                        '/dashboard/payment-requests',
                         '/dashboard/finance',
                         '/dashboard/reconciliation',
                         '/dashboard/reports',
@@ -367,7 +369,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                                         title={collapsed ? itemLabel : undefined}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}
-                                        className={`flex items-center gap-3 mx-2 px-3 py-2 mb-0.5 rounded-md border-l-2 transition-colors duration-150 ${
+                                        className={`flex items-center gap-3 mx-2 px-3 py-2 mb-0.5 rounded-md border-l-2 transition-all duration-150 active:scale-[0.98] select-none ${
                                             isActive
                                                 ? 'bg-lys-teal-soft text-lys-teal-strong border-lys-teal-strong font-semibold'
                                                 : 'text-lys-secondary border-transparent hover:bg-lys-subtle hover:text-lys-primary'

@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth, hasRole } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
 import { createNotification, triggerNotificationForRole } from '@/lib/notifications'
@@ -778,9 +778,13 @@ export async function processPaymentApproval(input: {
             return { success: false, error: `Phiếu đang ở trạng thái ${req.status}, không thể thao tác tiếp` }
         }
 
-        const isCEO = user.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC'].includes(r.toUpperCase()))
-        const isAccountant = user.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG'].includes(r.toUpperCase()))
-        const isManager = user.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR'].includes(r.toUpperCase()))
+        const isCEO = hasRole(user, 'CEO', 'ADMIN', 'TRO_LY') || user.roles.some(r => ['CEO', 'ADMIN', 'GIAM_DOC'].includes(r.toUpperCase()))
+        const isAccountant = hasRole(user, 'KE_TOAN', 'Kế Toán') || user.roles.some(r => ['KE_TOAN', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT', 'KETOAN_TRUONG'].includes(r.toUpperCase()))
+        const isManager = hasRole(user, 'SALES_MGR', 'Sales Manager') || user.roles.some(r => ['TRUONG_PHONG', 'MANAGER', 'DIRECTOR', 'CBO'].includes(r.toUpperCase()))
+
+        if (!isCEO && !isAccountant && !isManager) {
+            return { success: false, error: 'Bạn không có quyền thực hiện thao tác này trên đề nghị thanh toán' }
+        }
 
         let newStatus: PaymentRequestStatus = req.status
         let nextLevel = req.currentLevel
@@ -808,10 +812,19 @@ export async function processPaymentApproval(input: {
         } else if (input.action === 'APPROVE') {
             if (req.currentLevel === 1) {
                 // Manager approved -> move to Accountant
+                if (!isManager && !isCEO) {
+                    return { success: false, error: 'Chỉ Quản lý bộ phận hoặc Ban Giám Đốc mới có quyền duyệt Cấp 1' }
+                }
+                if (req.createdBy === user.id && !isCEO) {
+                    return { success: false, error: 'Người tạo đề nghị không thể tự phê duyệt bước này' }
+                }
                 newStatus = 'REVIEWING_L2'
                 nextLevel = 2
             } else if (req.currentLevel === 2) {
                 // Accountant approved -> check threshold
+                if (!isAccountant && !isCEO) {
+                    return { success: false, error: 'Chỉ Kế toán hoặc Ban Giám Đốc mới có quyền duyệt Cấp 2' }
+                }
                 // If amount >= 20,000,000 VND -> must go to CEO
                 const amountVND = Number(req.totalAmountVND)
                 if (amountVND >= 20_000_000 && !isCEO) {
@@ -823,6 +836,9 @@ export async function processPaymentApproval(input: {
                 }
             } else if (req.currentLevel === 3) {
                 // CEO approved
+                if (!isCEO) {
+                    return { success: false, error: 'Chỉ Ban Giám Đốc (CEO) mới có quyền duyệt Cấp 3' }
+                }
                 newStatus = 'APPROVED'
             }
 

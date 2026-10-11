@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { createNotification, triggerNotificationForRole } from '@/lib/notifications'
+import { requireAuth, hasRole } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // PRO — TỜ TRÌNH (Proposals / Submissions)
@@ -383,10 +384,11 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
 export async function processProposalApproval(input: {
     proposalId: string
     action: 'APPROVE' | 'REJECT' | 'RETURN'
-    approverId: string
+    approverId?: string
     comment?: string
 }): Promise<{ success: boolean; newStatus?: string; error?: string }> {
     try {
+        const user = await requireAuth()
         const proposal = await prisma.proposal.findUnique({ where: { id: input.proposalId } })
         if (!proposal) return { success: false, error: 'Tờ trình không tồn tại' }
         if (!['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(proposal.status)) {
@@ -418,6 +420,17 @@ export async function processProposalApproval(input: {
 
         const currentLevel = proposal.currentLevel
         const currentIdx = steps.findIndex(s => s.level === currentLevel)
+        const currentStep = currentIdx >= 0 ? steps[currentIdx] : null
+
+        const isCEO = hasRole(user, 'CEO', 'ADMIN')
+        const hasStepRole = currentStep ? hasRole(user, currentStep.role) : false
+
+        if (!isCEO && !hasStepRole) {
+            return {
+                success: false,
+                error: `Bạn không có quyền xử lý bước này (Yêu cầu vai trò: ${currentStep?.role || 'Phê duyệt'})`
+            }
+        }
 
         // Log the action
         await prisma.proposalApprovalLog.create({
@@ -425,7 +438,7 @@ export async function processProposalApproval(input: {
                 proposalId: input.proposalId,
                 level: currentLevel,
                 action: input.action === 'RETURN' ? 'REJECT' : input.action,
-                approvedBy: input.approverId,
+                approvedBy: user.id,
                 comment: input.comment ?? null,
             },
         })

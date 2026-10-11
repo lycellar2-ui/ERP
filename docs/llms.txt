@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-10-11 10:25
-> Status: Production — 31 modules, 143 DB models, 91 enums, 37 dashboard routes, Pure Light Design System v2.2
+> Last updated: 2026-10-11 11:00
+> Status: Production — 32 modules, 143 DB models, 91 enums, 38 dashboard routes, 107 RBAC permissions, Pure Light Design System v2.2
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 130 rules from 94 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 132 rules from 96 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)
@@ -19,7 +19,7 @@
 - Vercel deploy + GitHub CI/CD
 - Pre-commit hook (.husky/pre-commit) — docs guardian
 
-## Module Registry (31 modules)
+## Module Registry (32 modules)
 SYS (RBAC/Auth) | MDM (Products/Suppliers/Customers) | CRM (360° + Pipeline)
 CNT (Contracts + RegDocs) | TAX (Tax Rates) | PRC (Procurement)
 SHP (Shipment Tracking) | CST (Product Costing) | AGN (Agency Portal)
@@ -32,6 +32,7 @@ PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 AUD (Audit Log) | MGN (Margin Simulation) | SFV (Sales Field Visit — GPS + Camera)
 HRM (HR & Employee Document Hub — Contracts, National ID, Health Alerts, ERP Linking)
 PRQ (Payment Requests & Expense Budgets — Cloudflare R2 Document Archiving, Threshold-based Multi-level Approval)
+SOP (SOP Knowledge Hub — Standard Operating Procedures, RACI Matrix, Visual Flowcharts & Self-Training Guides)
 
 ## Wine-Specific Concepts
 - Vintage: Year of grape harvest (managed at StockLot level) — affects pricing, allocation

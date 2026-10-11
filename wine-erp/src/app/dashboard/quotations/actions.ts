@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { randomUUID } from 'crypto'
 import { logAudit } from '@/lib/audit'
+import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 
 export type QuotationStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'CONVERTED' | 'EXPIRED' | 'CANCELLED'
 
@@ -33,9 +34,15 @@ export type QuotationRow = {
 
 // ── List quotations ─────────────────────────────
 export async function getQuotations(filters: { search?: string; status?: string; dateFrom?: string; dateTo?: string } = {}): Promise<QuotationRow[]> {
-    const cacheKey = `quotations:list:${filters.search ?? ''}:${filters.status ?? ''}:${filters.dateFrom ?? ''}:${filters.dateTo ?? ''}`
+    const user = await getCurrentUser()
+    const isRestrictedRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN', 'ADMIN', 'TRO_LY')
+    const userScope = isRestrictedRep ? user.id : 'all'
+    const cacheKey = `quotations:list:${userScope}:${filters.search ?? ''}:${filters.status ?? ''}:${filters.dateFrom ?? ''}:${filters.dateTo ?? ''}`
     return cached(cacheKey, async () => {
         const where: any = {}
+        if (isRestrictedRep) {
+            where.salesRepId = user.id
+        }
         if (filters.status) where.status = filters.status
         if (filters.search) {
             where.OR = [
@@ -117,6 +124,14 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
 
         // Force-serialize to plain object (Prisma Decimal → string via JSON, then convert to number)
         const plain = JSON.parse(JSON.stringify(raw))
+        if (!plain.publicToken) {
+            const token = randomUUID()
+            await prisma.salesQuotation.update({
+                where: { id },
+                data: { publicToken: token },
+            })
+            plain.publicToken = token
+        }
         plain.totalAmount = Number(raw.totalAmount)
         plain.orderDiscount = Number(raw.orderDiscount)
         plain.lines = plain.lines.map((l: any, i: number) => ({
@@ -172,7 +187,7 @@ export async function createQuotation(input: {
     customerPhone?: string
     pdfStyle?: string
     lines: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number; vatRate?: number }[]
-}): Promise<{ success: boolean; id?: string; quotationNo?: string; error?: string }> {
+}): Promise<{ success: boolean; id?: string; quotationNo?: string; publicToken?: string | null; error?: string }> {
     try {
         const count = await prisma.salesQuotation.count()
         const quotationNo = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(3, '0')}`
@@ -234,7 +249,7 @@ export async function createQuotation(input: {
         logAudit({ userId: input.salesRepId, action: 'CREATE', entityType: 'Quotation', entityId: qt.id, newValue: { quotationNo: qt.quotationNo, customerId: input.customerId, totalAmount: finalAmount, lineCount: input.lines.length, channel: input.channel } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
-        return { success: true, id: qt.id, quotationNo: qt.quotationNo }
+        return { success: true, id: qt.id, quotationNo: qt.quotationNo, publicToken: qt.publicToken }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
@@ -260,9 +275,15 @@ export async function updateQuotation(id: string, input: {
     lines?: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number; vatRate?: number }[]
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
         const qt = await prisma.salesQuotation.findUnique({ where: { id } })
         if (!qt) return { success: false, error: 'Không tìm thấy báo giá' }
         if (qt.status !== 'DRAFT') return { success: false, error: 'Chỉ có thể sửa báo giá ở trạng thái Nháp' }
+
+        const isManagerOrAdmin = hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'ADMIN', 'TRO_LY')
+        if (!isManagerOrAdmin && qt.salesRepId !== user.id) {
+            return { success: false, error: 'Bạn chỉ có quyền sửa báo giá do chính mình tạo' }
+        }
 
         const updateData: any = {}
         if (input.customerId) {
@@ -330,9 +351,17 @@ export async function updateQuotation(id: string, input: {
 // ── Update status ────────────────────────────────
 export async function updateQuotationStatus(id: string, status: QuotationStatus): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
         const qt = await prisma.salesQuotation.findUnique({ where: { id }, select: { status: true, quotationNo: true, salesRepId: true } })
+        if (!qt) return { success: false, error: 'Không tìm thấy báo giá' }
+
+        const isManagerOrAdmin = hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'ADMIN', 'TRO_LY')
+        if (!isManagerOrAdmin && qt.salesRepId !== user.id) {
+            return { success: false, error: 'Bạn không có quyền thay đổi trạng thái báo giá này' }
+        }
+
         await prisma.salesQuotation.update({ where: { id }, data: { status: status as any } })
-        logAudit({ userId: qt?.salesRepId ?? undefined, action: 'STATUS_CHANGE', entityType: 'Quotation', entityId: id, oldValue: { status: qt?.status, quotationNo: qt?.quotationNo }, newValue: { status } })
+        logAudit({ userId: user.id, action: 'STATUS_CHANGE', entityType: 'Quotation', entityId: id, oldValue: { status: qt?.status, quotationNo: qt?.quotationNo }, newValue: { status } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true }

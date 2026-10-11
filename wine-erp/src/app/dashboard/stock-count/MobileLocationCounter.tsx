@@ -485,7 +485,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 setViewMode('FOCUS')
                                 playFeedbackSound('tap')
                             }}
-                            className="p-4 bg-white rounded-lg border-2 border-[#0E7490] hover:border-[#0891B2] text-left relative overflow-hidden shadow-xs active:scale-98 transition cursor-pointer space-y-2.5"
+                            className="p-4 bg-white rounded-lg border-2 border-[#0E7490] hover:border-[#0891B2] text-left relative overflow-hidden shadow-xs active:scale-95 transition-all duration-100 select-none cursor-pointer space-y-2.5"
                         >
                             <div className="flex justify-between items-center">
                                 <span className="p-2 bg-teal-50 text-[#0E7490] rounded-md">
@@ -518,7 +518,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         setViewMode('FOCUS')
                                         playFeedbackSound('tap')
                                     }}
-                                    className={`p-4 rounded-lg border-2 text-left relative overflow-hidden shadow-xs active:scale-98 transition cursor-pointer space-y-2.5 ${
+                                    className={`p-4 rounded-lg border-2 text-left relative overflow-hidden shadow-xs active:scale-95 transition-all duration-100 select-none cursor-pointer space-y-2.5 ${
                                         isDone
                                             ? 'bg-emerald-50/70 border-emerald-400'
                                             : zStats.hasDiff
@@ -933,7 +933,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => saveCurrentLineAndNext(currentItem)}
                                     disabled={savingLineId === currentItem.id}
-                                    className="w-full min-h-[52px] bg-[#0E7490] hover:bg-[#0A738D] active:scale-98 text-white font-bold text-base rounded-lg flex items-center justify-center gap-2.5 shadow-md transition cursor-pointer disabled:opacity-50"
+                                    className="w-full min-h-[52px] bg-[#0E7490] hover:bg-[#0A738D] active:scale-95 text-white font-bold text-base rounded-lg flex items-center justify-center gap-2.5 shadow-md transition-all duration-100 cursor-pointer disabled:opacity-50 select-none"
                                 >
                                     {savingLineId === currentItem.id ? (
                                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -955,14 +955,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         triggerHaptic('light')
                                         setActiveIdx(prev => Math.max(0, prev - 1))
                                     }}
-                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
                                 >
                                     <ChevronLeft className="w-4 h-4" /> Mã trước
                                 </button>
 
                                 <button
                                     onClick={jumpToNextUncounted}
-                                    className="min-h-[48px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                    className="min-h-[48px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
                                     title="Chuyển tới mã tiếp theo chưa đếm"
                                 >
                                     <span>Chưa đếm ({remainingUncountedInZone})</span>
@@ -975,7 +975,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         triggerHaptic('light')
                                         setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))
                                     }}
-                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                                    className="min-h-[48px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
                                 >
                                     Mã sau <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -986,7 +986,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <button
                                     onClick={() => handleFinishZone(selectedZone)}
                                     disabled={isCompletingZone}
-                                    className="w-full min-h-[48px] bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-md flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
+                                    className="w-full min-h-[48px] bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-md flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-95 transition-all duration-100 select-none"
                                 >
                                     {isCompletingZone ? (
                                         <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
@@ -1089,7 +1089,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             setViewMode('FOCUS')
                                             playFeedbackSound('tap')
                                         }}
-                                        className={`p-3.5 rounded-lg border transition cursor-pointer active:scale-98 ${
+                                        className={`p-3.5 rounded-lg border transition-all duration-100 cursor-pointer active:scale-95 select-none ${
                                             !isCounted
                                                 ? 'bg-white border-slate-200 hover:border-slate-300'
                                                 : isMatched
@@ -1139,8 +1139,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 ZONE VARIANCE REPORT MODAL (ĐỐI SOÁT TẠI CHỖ)
             ═══════════════════════════════════════════════════════════════ */}
             {showZoneReportModal && zoneReport && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-md w-full p-5 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-md w-full p-5 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="inline-block text-[10px] font-mono uppercase font-bold text-[#0E7490] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200 whitespace-nowrap shrink-0">
@@ -1150,7 +1150,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             </div>
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
-                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold hover:bg-slate-200 active:scale-90 transition-all flex items-center justify-center cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
                             </button>

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { getCurrentUser, requireAuth, hasRole } from '@/lib/session'
 
 export type OppStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
 
@@ -24,8 +25,17 @@ export type PipelineRow = {
 
 // ── Get all opportunities ────────────────────────
 export async function getOpportunities(): Promise<PipelineRow[]> {
-    return cached('pipeline:list', async () => {
+    const user = await getCurrentUser()
+    const isRestrictedRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'ADMIN', 'TRO_LY')
+    const userScope = isRestrictedRep ? user.id : 'all'
+
+    return cached(`pipeline:list:${userScope}`, async () => {
+        const where: any = {}
+        if (isRestrictedRep) {
+            where.assignedTo = user.id
+        }
         const rows = await prisma.salesOpportunity.findMany({
+            where,
             include: {
                 customer: { select: { name: true, code: true } },
                 assignee: { select: { name: true } },
@@ -61,13 +71,15 @@ export async function createOpportunity(input: {
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
+        const assignedTo = input.assignedTo || user.id
         await prisma.salesOpportunity.create({
             data: {
                 name: input.name,
                 customerId: input.customerId,
                 expectedValue: input.expectedValue,
                 probability: input.probability ?? 30,
-                assignedTo: input.assignedTo,
+                assignedTo,
                 stage: 'LEAD',
                 closeDate: input.closeDate ? new Date(input.closeDate) : null,
                 notes: input.notes,
@@ -84,9 +96,15 @@ export async function createOpportunity(input: {
 // ── Move stage ───────────────────────────────────
 export async function moveOpportunityStage(id: string, stage: OppStage, lostReason?: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
         const prob: Record<OppStage, number> = { LEAD: 10, QUALIFIED: 30, PROPOSAL: 50, NEGOTIATION: 70, WON: 100, LOST: 0 }
-        const current = await prisma.salesOpportunity.findUnique({ where: { id }, select: { stage: true, notes: true } })
+        const current = await prisma.salesOpportunity.findUnique({ where: { id }, select: { stage: true, notes: true, assignedTo: true } })
         if (!current) return { success: false, error: 'Opportunity not found' }
+
+        const isManagerOrAdmin = hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'ADMIN', 'TRO_LY')
+        if (!isManagerOrAdmin && current.assignedTo !== user.id) {
+            return { success: false, error: 'Bạn chỉ có quyền cập nhật cơ hội bán hàng của chính mình' }
+        }
 
         const updateData: any = {
             stage: stage as any,

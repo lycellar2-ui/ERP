@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 130 Rules rút ra từ 94 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 132 Rules rút ra từ 96 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -54,10 +54,10 @@
 |---|---|
 | **Prisma models** | 143 |
 | **Prisma enums** | 91 |
-| **Dashboard routes** | 37 folders |
-| **Server Action files** | 46 files |
-| **Module spec files** | 29 files |
-| **Sidebar nav items** | 39 items (7 groups) |
+| **Dashboard routes** | 38 folders |
+| **Server Action files** | 47 files |
+| **Module spec files** | 30 files |
+| **Sidebar nav items** | 40 items (7 groups) |
 
 ### Bảng Module đầy đủ
 
@@ -94,8 +94,9 @@
 | 29 | `SFV` | Sales Field Visit (Viếng thăm điểm bán) | [sales-field-visit.md](./modules/sales-field-visit.md) | `/sales/visits` |
 | 30 | `HRM` | Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên | [hr.md](./modules/hr.md) | `/hr` |
 | 31 | `PRQ` | Đề Nghị Thanh Toán & Quản Lý Ngân Sách | [payment-requests.md](./modules/payment-requests.md) | `/payment-requests` |
+| 32 | `SOP` | Quy Trình Doanh Nghiệp (SOP Knowledge Hub) | [sop.md](./modules/sop.md) | `/sop` |
 
-**Tổng: 31 modules** (30 có spec file riêng, 1 nằm trong spec file khác)
+**Tổng: 32 modules** (31 có spec file riêng, 1 nằm trong spec file khác)
 
 ---
 
@@ -224,7 +225,8 @@ docs/
     ├── margin.md                  MGN (NEW)
     ├── sales-field-visit.md       SFV (NEW)
     ├── hr.md                      HRM (NEW)
-    └── payment-requests.md        PRQ (NEW)
+    ├── payment-requests.md        PRQ (NEW)
+    └── sop.md                     SOP (NEW)
 ```
 
 ---
@@ -239,5 +241,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 10:25 | Wine ERP v12.8 - Bank Statement Reconciliation & AR Payment Entry with Smart Matching Engine*
+*Last updated: 2026-10-11 11:00 | Wine ERP v12.12 - Luxury Quotation Public Viewer & PDF Export Optimization*
 

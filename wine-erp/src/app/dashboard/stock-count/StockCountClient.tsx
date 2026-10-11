@@ -567,11 +567,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             )}
 
             {/* ═══ TOP NAVIGATION TABS: PHIẾU KIỂM KÊ vs KẾ HOẠCH CUỐN CHIẾU ═══ */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-fit">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-fit select-none">
                 <button
                     type="button"
                     onClick={() => setViewMode('SESSIONS')}
-                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer active:scale-95 ${
                         viewMode === 'SESSIONS'
                             ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-black'
                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -588,7 +588,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 <button
                     type="button"
                     onClick={() => setViewMode('CYCLE_PLAN')}
-                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer active:scale-95 ${
                         viewMode === 'CYCLE_PLAN'
                             ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-black'
                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -1009,7 +1009,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     {/* Filter Tabs & Search Bar — Matched with Sales Order UI */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200">
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar select-none">
                     {[
                         { key: 'ALL', label: 'Tất cả', count: stats.total },
                         { key: 'ASSIGNED', label: 'Phân công', count: stats.assignedToMe || 0 },
@@ -1021,7 +1021,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key as any)}
-                                className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                                className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 flex items-center gap-1.5 ${
                                     isActive
                                         ? 'bg-[#0E7490]/25 text-slate-900 font-extrabold border border-[#0E7490]/50 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold'
@@ -1044,7 +1044,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         placeholder="Tìm số phiếu, kho, nhân viên..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] focus:ring-1 focus:ring-[#0E7490] text-slate-900 placeholder-slate-400 shadow-2xs"
+                        className="w-full pl-9 pr-3 py-1.5 text-base sm:text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] focus:ring-1 focus:ring-[#0E7490] text-slate-900 placeholder-slate-400 shadow-2xs transition-all"
                     />
                 </div>
             </div>
@@ -1244,25 +1244,25 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
                                     onClick={() => setTableModalSessionId(row.id)}
-                                    className="py-2.5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
                                     <FileText className="w-3.5 h-3.5" /> Bảng kiểm kê
                                 </button>
                                 <button
                                     onClick={() => handleOpenMobileView(row.id)}
-                                    className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
                                     <Smartphone className="w-3.5 h-3.5" /> Đếm di động
                                 </button>
                                 <button
                                     onClick={() => handleOpenAssignModal(row.id)}
-                                    className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
                                     <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
                                 </button>
                                 <button
                                     onClick={() => handleOpenPrintView(row.id)}
-                                    className="py-2 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
                                     <FileText className="w-3.5 h-3.5 text-lys-teal-strong" /> Báo Cáo A4
                                 </button>
@@ -1276,8 +1276,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Create Extended Session Modal — 2-Step Wizard */}
             {showCreateModal && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-md max-w-2xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[92vh]">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[92vh] animate-modal-in">
                         {createWizardStep === 1 ? (
                             /* ═══════════ BƯỚC 1: CHỌN HÌNH THỨC KIỂM KÊ ═══════════ */
                             <div className="space-y-4">
@@ -1295,7 +1295,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     </div>
                                     <button
                                         onClick={() => setShowCreateModal(false)}
-                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
@@ -1305,7 +1305,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 1: Toàn bộ */}
                                     <div
                                         onClick={() => handleSelectCategory('FULL')}
-                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-lg border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between active:scale-[0.98] select-none"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1332,7 +1332,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 2: 1 Phần / Khu vực */}
                                     <div
                                         onClick={() => handleSelectCategory('PARTIAL')}
-                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-lg border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between active:scale-[0.98] select-none"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1359,7 +1359,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 3: Ngẫu nhiên / Đột xuất */}
                                     <div
                                         onClick={() => handleSelectCategory('RANDOM')}
-                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-lg border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between active:scale-[0.98] select-none"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1386,7 +1386,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     {/* Card 4: Cuốn chiếu */}
                                     <div
                                         onClick={() => handleSelectCategory('CYCLE')}
-                                        className="group relative p-4 rounded-md border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between"
+                                        className="group relative p-4 rounded-lg border-2 border-slate-200 bg-white hover:border-[#0891B2] hover:bg-cyan-50/20 transition-all cursor-pointer shadow-2xs hover:shadow-sm flex flex-col justify-between active:scale-[0.98] select-none"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2.5">
@@ -1457,7 +1457,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     </div>
                                     <button
                                         onClick={() => setShowCreateModal(false)}
-                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
@@ -1477,7 +1477,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         <select
                                             value={formWarehouseId}
                                             onChange={e => handleWarehouseChange(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
                                             required
                                         >
                                             {warehouses.map(w => (
@@ -1494,7 +1494,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             placeholder="vd: Kiểm kê toàn bộ hầm rượu, Kiểm kê đột xuất tủ vang..."
                                             value={formTitle}
                                             onChange={e => setFormTitle(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20"
                                             required
                                         />
                                     </div>
@@ -1521,7 +1521,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     <select
                                                         value={formSelectedZone}
                                                         onChange={e => setFormSelectedZone(e.target.value)}
-                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#0E7490]"
+                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs focus:outline-none focus:border-[#0E7490]"
                                                     >
                                                         <option value="">-- Tất cả vị trí trong kho --</option>
                                                         {Array.from(new Set(locationOptions.map(l => l.zone))).map(z => (
@@ -1534,7 +1534,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     <select
                                                         value={formWineType}
                                                         onChange={e => setFormWineType(e.target.value)}
-                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs focus:outline-none focus:border-[#0E7490]"
+                                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs focus:outline-none focus:border-[#0E7490]"
                                                     >
                                                         <option value="">-- Tất cả loại vang --</option>
                                                         <option value="RED">Vang đỏ (Red Wine)</option>
@@ -1774,7 +1774,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         placeholder="Tìm mã SKU, tên rượu vang, vị trí kệ..."
                                                         value={wizardCycleSearchTerm}
                                                         onChange={e => setWizardCycleSearchTerm(e.target.value)}
-                                                        className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong shadow-2xs"
+                                                        className="w-full pl-8 pr-3 py-1.5 text-base sm:text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong shadow-2xs"
                                                     />
                                                 </div>
 
@@ -1844,7 +1844,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <select
                                                 value={formAssignedToId}
                                                 onChange={e => setFormAssignedToId(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs outline-none focus:border-[#0E7490]"
+                                                className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490]"
                                             >
                                                 <option value="">-- Để tự do (Ai đếm cũng được) --</option>
                                                 {staffList.map(u => (
@@ -1873,7 +1873,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         <button
                                             type="button"
                                             onClick={() => setCreateWizardStep(1)}
-                                            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 text-xs cursor-pointer flex items-center gap-1"
+                                            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold rounded-lg border border-slate-200 text-xs cursor-pointer transition-all flex items-center gap-1"
                                         >
                                             <ArrowLeft size={13} /> Chọn lại hình thức
                                         </button>
@@ -1881,14 +1881,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <button
                                                 type="button"
                                                 onClick={() => setShowCreateModal(false)}
-                                                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-lg text-xs cursor-pointer"
+                                                className="px-4 py-2 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-semibold border border-slate-200 rounded-lg text-xs cursor-pointer transition-all"
                                             >
                                                 Hủy
                                             </button>
                                             <button
                                                 type="submit"
                                                 disabled={isSubmitting || (countCategory === 'CYCLE' && selectedDailySkus.length === 0)}
-                                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
                                             >
                                                 <Zap size={14} />
                                                 {isSubmitting
@@ -1923,8 +1923,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Modal Phân Công Vị Trí / Khu Vực Cho Nhân Sự */}
             {showAssignModal && assignSessionDetail && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="inline-block text-[10px] font-mono font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 whitespace-nowrap shrink-0">
@@ -1933,7 +1933,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <h3 className="text-base font-extrabold text-slate-900 mt-1">Phân Công Nhân Sự Theo Vị Trí Kệ</h3>
                                 <p className="text-xs text-slate-500">Giao trách nhiệm phụ trách khu vực kiểm kê cho từng nhân viên</p>
                             </div>
-                            <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                            <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
@@ -1967,7 +1967,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         const val = e.target.value
                                                         setZoneAssignments(prev => ({ ...prev, [zoneName]: val }))
                                                     }}
-                                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-xs outline-none focus:border-cyan-500 font-semibold cursor-pointer"
+                                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2 text-base sm:text-xs outline-none focus:border-cyan-500 font-semibold cursor-pointer"
                                                 >
                                                     <option value="">-- Chưa phân công --</option>
                                                     {staffList.map(st => (
@@ -1987,7 +1987,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <button
                                 type="button"
                                 onClick={() => setShowAssignModal(false)}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold rounded-lg border border-slate-200 transition-all cursor-pointer"
                             >
                                 Hủy Bỏ
                             </button>
@@ -1995,7 +1995,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={handleSaveZoneAssignments}
                                 disabled={isSavingAssignments}
-                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-extrabold rounded-lg shadow-xs cursor-pointer"
+                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs transition-all cursor-pointer"
                             >
                                 {isSavingAssignments ? 'Đang lưu...' : 'Lưu Phân Công Vị Trí'}
                             </button>
@@ -2018,8 +2018,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* ═══ MODAL TẠO ĐỢT KIỂM KÊ CUỐN CHIẾU HÔM NAY (DAILY BATCH CYCLE COUNT) ═══ */}
             {showDailyBatchModal && cycleProgress && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-start pb-3 border-b border-slate-200">
                             <div>
                                 <div className="flex items-center gap-2">
@@ -2036,7 +2036,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             </div>
                             <button
                                 onClick={() => setShowDailyBatchModal(false)}
-                                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer active:scale-90 transition-all"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -2051,7 +2051,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="text"
                                 value={batchCountTitle}
                                 onChange={e => setBatchCountTitle(e.target.value)}
-                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-xs outline-none focus:border-lys-teal-strong font-medium"
+                                className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-base sm:text-xs outline-none focus:border-lys-teal-strong font-medium"
                                 placeholder="vd: Kiểm kê cuốn chiếu ngày..."
                             />
                         </div>
@@ -2074,7 +2074,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         const top5 = cycleProgress.uncountedProducts.slice(0, 5).map(p => p.skuCode)
                                         setSelectedDailySkus(top5)
                                     }}
-                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                                 >
                                     + 5 mã đầu (tồn cao nhất)
                                 </button>
@@ -2084,7 +2084,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         const top10 = cycleProgress.uncountedProducts.slice(0, 10).map(p => p.skuCode)
                                         setSelectedDailySkus(top10)
                                     }}
-                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                                 >
                                     + 10 mã
                                 </button>
@@ -2094,7 +2094,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         const top15 = cycleProgress.uncountedProducts.slice(0, 15).map(p => p.skuCode)
                                         setSelectedDailySkus(top15)
                                     }}
-                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                                 >
                                     + 15 mã
                                 </button>
@@ -2103,14 +2103,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     onClick={() => {
                                         setSelectedDailySkus(cycleProgress.uncountedProducts.map(p => p.skuCode))
                                     }}
-                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                                 >
                                     Tất cả ({cycleProgress.uncountedProducts.length})
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDailySkus([])}
-                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-500 font-semibold border border-slate-200 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-500 font-semibold border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                                 >
                                     Bỏ chọn
                                 </button>
@@ -2126,7 +2126,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     placeholder="Tìm mã SKU hoặc tên sản phẩm..."
                                     value={batchSearchTerm}
                                     onChange={e => setBatchSearchTerm(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong"
+                                    className="w-full pl-8 pr-3 py-1.5 text-base sm:text-xs bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-lys-teal-strong"
                                 />
                             </div>
 
@@ -2138,7 +2138,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         return (
                                             <label
                                                 key={p.id}
-                                                className={`p-2 flex items-center justify-between gap-3 text-xs cursor-pointer transition ${
+                                                className={`p-2 flex items-center justify-between gap-3 text-xs cursor-pointer transition select-none ${
                                                     isSelected ? 'bg-lys-teal-soft/40' : 'hover:bg-slate-50'
                                                 }`}
                                             >
@@ -2185,7 +2185,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <select
                                     value={batchAssigneeId}
                                     onChange={e => setBatchAssigneeId(e.target.value)}
-                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-xs outline-none focus:border-lys-teal-strong"
+                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-base sm:text-xs outline-none focus:border-lys-teal-strong"
                                 >
                                     <option value="">-- Để tự do (chưa gán) --</option>
                                     {staffList.map(st => (
@@ -2202,7 +2202,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     onChange={e => setBatchIsBlind(e.target.checked)}
                                     className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300 cursor-pointer"
                                 />
-                                <label htmlFor="batchBlindToggle" className="cursor-pointer">
+                                <label htmlFor="batchBlindToggle" className="cursor-pointer select-none">
                                     <span className="font-bold text-slate-900 block">Kiểm Kê Mù (Blind Count)</span>
                                     <span className="text-[10px] text-slate-500 block">Giấu tồn sổ sách trên máy nhân viên đếm</span>
                                 </label>
@@ -2214,7 +2214,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <button
                                 type="button"
                                 onClick={() => setShowDailyBatchModal(false)}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 cursor-pointer active:scale-95 transition-all select-none"
                             >
                                 Hủy Bỏ
                             </button>
@@ -2222,7 +2222,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={handleCreateBatchSession}
                                 disabled={isCreatingBatch || selectedDailySkus.length === 0}
-                                className="px-5 py-2 bg-lys-teal-strong hover:bg-lys-teal-hover text-white font-extrabold rounded-lg shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                className="px-5 py-2 bg-lys-teal-strong hover:bg-lys-teal-hover text-white font-extrabold rounded-lg shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-95 transition-all select-none"
                             >
                                 <Zap size={14} />
                                 <span>{isCreatingBatch ? 'Đang khởi tạo...' : `Tạo Phiếu & Bắt Đầu Đếm (${selectedDailySkus.length} mã)`}</span>

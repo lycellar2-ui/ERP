@@ -122,24 +122,20 @@ Contract (HĐ Bán Hàng)
 | **2-Tab Layout** | `ContractsPage.tsx` | "Hợp Đồng" + "Giấy Tờ Có Hạn" with badge counts |
 | **Zod Validations** | `validations.ts` | `RegDocCreateSchema`, `RegDocUpdateSchema`, `RegDocRenewSchema` |
 
-### 📋 Danh Mục 27 Loại Giấy Tờ Theo Luật VN
+### ✅ Đã triển khai — Tạo Hợp Đồng Từ Biểu Mẫu Word (.docx) & Kho Mẫu Biểu
 
-| Nhóm | Loại | Pháp lý |
+> Phiên bản CNT v3. Triển khai ngày 11/10/2026.
+
+| Tính năng | File code | Ghi chú |
 |---|---|---|
-| **GP Doanh nghiệp** | GP Phân phối, Bán buôn, Bán lẻ rượu | NĐ 105/2017 sđbs NĐ 17/2020 |
-| | GP Nhập khẩu tự động | TT 12/2024/TT-BCT |
-| | ĐKKD + MST | Luật DN 2020 |
-| | VSATTP | NĐ 15/2018 |
-| | GP Quảng cáo rượu | Luật Phòng chống tác hại rượu bia |
-| **Kho bãi & PCCC** | PCCC — Đủ ĐK, Thẩm duyệt TK, Nghiệm thu | Luật PCCC sđbs 2013 |
-| | GP Kho bãi | NĐ 68/2017 |
-| | CN Môi trường | Luật BVMT 2020 |
-| | HĐ Thuê kho | — |
-| | Hiệu chuẩn nhiệt kế kho | TCVN/ISO |
-| **Chứng từ NK** | C/O, Phiếu kiểm nghiệm CL, Tờ khai HQ | — |
-| | KT ATTP per lô, Health Cert, Free Sale Cert | — |
-| | Bảo hiểm hàng hóa, Xác nhận tem rượu | NĐ 105/2017 |
-| **Chứng nhận SP** | Tự CBCL SP, Nhãn phụ tiếng Việt, QCVN | NĐ 15/2018 |
+| **DOCX Generator Engine** | `src/lib/docx-generator.ts` | Merge dữ liệu vào template Word với `docxtemplater` + `pizzip`, xử lý bảng sản phẩm lặp dòng `{#san_pham}...{/san_pham}` |
+| **Đọc số tiền thành chữ VN** | `src/lib/vietnamese-words.ts` | Chuẩn kế toán & hành chính Việt Nam (hỗ trợ VNĐ và USD) |
+| **Kho Biểu Mẫu Ngành Rượu** | `public/templates/contracts/` | 3 mẫu chuẩn: `HD_NGUYEN_TAC.docx` (HĐNT B2B), `HD_KY_GUI.docx` (Phụ lục ký gửi), `HD_MOT_LAN.docx` (HĐ mua bán từng đơn có bảng rượu) |
+| **Template Server Actions** | `contracts/template-actions.ts` | `getContractTemplatesAction`, `getCounterpartyDetailAction` (auto-fill Bên B), `getAvailableProductsForContractAction`, `generateContractFromTemplateAction` |
+| **Drawer Tạo HĐ Từ Mẫu** | `CreateFromTemplateDrawer.tsx` | Wizard 3 bước: Chọn mẫu $\rightarrow$ Điền thông tin tự động $\rightarrow$ Sinh & Tải file Word (.docx) và lưu vào `ContractDocument` |
+| **Tab Kho Biểu Mẫu** | `ContractTemplatesTab.tsx` | Quản lý mẫu, tải file mẫu trắng `.docx`, tra cứu bảng biến thay thế (placeholders) |
+| **Tích hợp 3-Tab Layout** | `ContractsPage.tsx` | "Hợp Đồng" + "Kho Biểu Mẫu (.docx)" + "Giấy Tờ Có Hạn" |
 
-*Last updated: 2026-03-08 | Wine ERP v6.0*
+*Last updated: 2026-10-11 | Wine ERP v6.1*
+
 

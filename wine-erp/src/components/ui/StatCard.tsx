@@ -24,9 +24,9 @@ export function StatCard({ label, value, sub, icon: Icon, tone = 'brand', trend,
             type={onClick ? 'button' : undefined}
             onClick={onClick}
             className={cn(
-                'flex items-center gap-3 p-4 text-left bg-lys-card border rounded-lg shadow-xs w-full',
+                'flex items-center gap-3 p-4 text-left bg-lys-card border rounded-lg shadow-xs w-full select-none',
                 active ? 'border-lys-teal ring-1 ring-lys-teal' : 'border-lys-border',
-                onClick && 'cursor-pointer hover:border-lys-border-strong transition-colors',
+                onClick && 'cursor-pointer hover:border-lys-border-strong hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.99] transition-all duration-150',
                 className,
             )}
         >

@@ -44,6 +44,20 @@ const MODULE_NAMES: Record<string, string> = {
     KPI: 'Chỉ tiêu doanh số (KPI)',
     STM: 'Điều chuyển kho (Stock Transfer)',
     SYS: 'Quản trị hệ thống (System)',
+    HRM: 'Nhân sự & Hồ sơ nhân viên (HRM)',
+    PAY: 'Đề nghị thanh toán & Ngân sách (Payment Requests)',
+    PRO: 'Tờ trình & Phê duyệt giá đặc biệt (Proposals)',
+    SHP: 'Theo dõi lô hàng nhập khẩu (Shipments)',
+    POS: 'Bán lẻ Showroom (POS Retail)',
+    AUD: 'Nhật ký kiểm toán (Audit Log)',
+    MGN: 'Giả lập biên lợi nhuận (Margin Simulation)',
+    SFV: 'Thị trường & Check-in Sales (Field Visits)',
+    QRC: 'Mã QR & Truy xuất nguồn gốc (QR Traceability)',
+    STP: 'Quản lý tem rượu nhập khẩu (Wine Stamps)',
+    MKT: 'Thư viện tài nguyên & Marketing (Media Library)',
+    AI: 'Cấu hình & Trợ lý AI (AI Systems)',
+    APM: 'Ma trận phê duyệt đa cấp (Approval Matrix)',
+    RTN: 'Đơn trả hàng & Giảm trừ (Returns & Credit Notes)',
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -54,6 +68,7 @@ const ACTION_LABELS: Record<string, string> = {
     APPROVE: 'Duyệt (Approve)',
     EXPORT: 'Xuất Excel (Export)',
     WRITE: 'Ghi / Giao hàng (Write)',
+    MANAGE: 'Quản lý (Manage)',
     ADMIN: 'Toàn quyền (Admin)',
 }
 const focusHandler = {
@@ -175,6 +190,232 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
     )
 }
 
+// ── Module Business Domain Groups (31 Phân Hệ) ───────────
+interface ModuleGroupDef {
+    name: string
+    modules: string[]
+}
+
+const MODULE_GROUPS: ModuleGroupDef[] = [
+    {
+        name: 'Điều Hành & Báo Cáo',
+        modules: ['DSH', 'RPT', 'KPI'],
+    },
+    {
+        name: 'Dữ Liệu Gốc & Đối Tác',
+        modules: ['MDM', 'CRM', 'CNT'],
+    },
+    {
+        name: 'Kinh Doanh & Bán Hàng',
+        modules: ['SLS', 'PRO', 'MGN', 'POS', 'CSG', 'AGN', 'SFV', 'RTN'],
+    },
+    {
+        name: 'Mua Hàng & Nhập Khẩu',
+        modules: ['PRC', 'SHP', 'CST'],
+    },
+    {
+        name: 'Kho Vận & Chuỗi Cung Ứng',
+        modules: ['WMS', 'STM', 'TRS', 'STP', 'QRC'],
+    },
+    {
+        name: 'Tài Chính & Kế Toán',
+        modules: ['FIN', 'PAY', 'TAX'],
+    },
+    {
+        name: 'Nhân Sự, Marketing & Quản Trị Hệ Thống',
+        modules: ['HRM', 'MKT', 'SYS', 'AUD', 'APM', 'AI'],
+    },
+]
+
+// ── Reusable Grouped Permission Selector ────────────────
+function RolePermissionSelector({
+    permissions,
+    selectedPerms,
+    onChange,
+}: {
+    permissions: PermissionRow[]
+    selectedPerms: string[]
+    onChange: (perms: string[]) => void
+}) {
+    const [search, setSearch] = useState('')
+
+    const togglePerm = (permId: string) => {
+        onChange(selectedPerms.includes(permId) ? selectedPerms.filter(x => x !== permId) : [...selectedPerms, permId])
+    }
+
+    const toggleModule = (mod: string) => {
+        const modPerms = permissions.filter(p => p.module === mod).map(p => p.id)
+        const allSelected = modPerms.length > 0 && modPerms.every(id => selectedPerms.includes(id))
+        if (allSelected) {
+            onChange(selectedPerms.filter(id => !modPerms.includes(id)))
+        } else {
+            onChange([...new Set([...selectedPerms, ...modPerms])])
+        }
+    }
+
+    const toggleGroup = (modList: string[]) => {
+        const groupPerms = permissions.filter(p => modList.includes(p.module)).map(p => p.id)
+        const allSelected = groupPerms.length > 0 && groupPerms.every(id => selectedPerms.includes(id))
+        if (allSelected) {
+            onChange(selectedPerms.filter(id => !groupPerms.includes(id)))
+        } else {
+            onChange([...new Set([...selectedPerms, ...groupPerms])])
+        }
+    }
+
+    const selectAll = () => onChange(permissions.map(p => p.id))
+    const deselectAll = () => onChange([])
+
+    const allModulesInPerms = Array.from(new Set(permissions.map(p => p.module)))
+
+    const groupedModules = MODULE_GROUPS.map(g => ({
+        ...g,
+        modules: g.modules.filter(m => allModulesInPerms.includes(m)),
+    })).filter(g => g.modules.length > 0)
+
+    const categorizedModules = new Set(groupedModules.flatMap(g => g.modules))
+    const otherModules = allModulesInPerms.filter(m => !categorizedModules.has(m))
+    if (otherModules.length > 0) {
+        groupedModules.push({
+            name: 'Phân Hệ Khác',
+            modules: otherModules,
+        })
+    }
+
+    const filteredGroups = groupedModules.map(g => {
+        const filteredMods = g.modules.filter(mod => {
+            if (!search) return true
+            const q = search.toLowerCase()
+            const name = MODULE_NAMES[mod] ?? mod
+            if (mod.toLowerCase().includes(q) || name.toLowerCase().includes(q)) return true
+            const modPerms = permissions.filter(p => p.module === mod)
+            return modPerms.some(p => p.action.toLowerCase().includes(q) || (ACTION_LABELS[p.action] ?? '').toLowerCase().includes(q))
+        })
+        return { ...g, modules: filteredMods }
+    }).filter(g => g.modules.length > 0)
+
+    return (
+        <div className="space-y-3">
+            <div className="space-y-2">
+                <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94A3B8' }} />
+                    <input
+                        style={{ ...inputStyle, paddingLeft: '32px' }}
+                        className="text-xs"
+                        placeholder="Tìm theo tên phân hệ hoặc quyền (VD: Đơn hàng, Mua hàng, READ)..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center justify-between text-xs px-1">
+                    <span className="font-semibold" style={{ color: '#475569' }}>
+                        Đã chọn <strong style={{ color: '#0891B2' }}>{selectedPerms.length}</strong>/{permissions.length} quyền
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={selectAll}
+                            className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
+                            style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}
+                        >
+                            Chọn tất cả
+                        </button>
+                        <button
+                            type="button"
+                            onClick={deselectAll}
+                            className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
+                            style={{ background: '#F1F5F9', color: '#64748B' }}
+                        >
+                            Bỏ chọn hết
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-3 max-h-[58vh] overflow-y-auto pr-1">
+                {filteredGroups.length === 0 ? (
+                    <div className="text-center py-8 text-xs" style={{ color: '#94A3B8' }}>
+                        Không tìm thấy phân hệ phù hợp với từ khóa
+                    </div>
+                ) : (
+                    filteredGroups.map(group => {
+                        const groupPerms = permissions.filter(p => group.modules.includes(p.module)).map(p => p.id)
+                        const groupSelectedCount = groupPerms.filter(id => selectedPerms.includes(id)).length
+                        const isAllGroupSelected = groupPerms.length > 0 && groupSelectedCount === groupPerms.length
+
+                        return (
+                            <div key={group.name} className="rounded-md border border-slate-200 overflow-hidden bg-white shadow-xs">
+                                <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{group.name}</span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-200 text-slate-700">
+                                            {groupSelectedCount}/{groupPerms.length}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleGroup(group.modules)}
+                                        className="text-xs font-medium hover:underline cursor-pointer"
+                                        style={{ color: '#0891B2' }}
+                                    >
+                                        {isAllGroupSelected ? 'Bỏ chọn nhóm' : 'Chọn cả nhóm'}
+                                    </button>
+                                </div>
+
+                                <div className="p-2 space-y-2">
+                                    {group.modules.map(mod => {
+                                        const modPerms = permissions.filter(p => p.module === mod)
+                                        const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
+                                        const isAllModSelected = count === modPerms.length
+
+                                        return (
+                                            <div key={mod} className="rounded-md p-2.5 border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleModule(mod)}
+                                                    className="flex items-center justify-between w-full text-left cursor-pointer"
+                                                >
+                                                    <span className="text-xs font-semibold" style={{ color: '#1E293B' }}>
+                                                        {MODULE_NAMES[mod] ?? mod}
+                                                    </span>
+                                                    <span className="text-xs font-semibold" style={{ color: isAllModSelected ? '#0891B2' : '#94A3B8' }}>
+                                                        {count}/{modPerms.length}
+                                                    </span>
+                                                </button>
+                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                    {modPerms.map(p => {
+                                                        const active = selectedPerms.includes(p.id)
+                                                        return (
+                                                            <button
+                                                                key={p.id}
+                                                                type="button"
+                                                                onClick={() => togglePerm(p.id)}
+                                                                className="text-xs px-2 py-0.5 rounded transition-all cursor-pointer"
+                                                                style={{
+                                                                    background: active ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
+                                                                    color: active ? '#0E7490' : '#64748B',
+                                                                    border: active ? '1px solid rgba(8,145,178,0.4)' : '1px solid #E2E8F0',
+                                                                    fontWeight: active ? '600' : '500',
+                                                                }}
+                                                            >
+                                                                {ACTION_LABELS[p.action] ?? p.action}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── Create Role Drawer ───────────────────────────
 function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     open: boolean; onClose: () => void; onCreated: () => void; permissions: PermissionRow[]
@@ -182,18 +423,6 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     const [saving, setSaving] = useState(false)
     const [name, setName] = useState('')
     const [selectedPerms, setSelectedPerms] = useState<string[]>([])
-
-    const modules = Array.from(new Set(permissions.map(p => p.module))).sort()
-
-    const toggleModule = (mod: string) => {
-        const modPerms = permissions.filter(p => p.module === mod).map(p => p.id)
-        const allSelected = modPerms.every(id => selectedPerms.includes(id))
-        if (allSelected) {
-            setSelectedPerms(s => s.filter(id => !modPerms.includes(id)))
-        } else {
-            setSelectedPerms(s => [...new Set([...s, ...modPerms])])
-        }
-    }
 
     async function handleSave() {
         setSaving(true)
@@ -210,62 +439,34 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Vai Trò</h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Vai Trò</label>
-                        <input style={inputStyle} {...focusHandler} placeholder="VD: IT Admin"
-                            value={name} onChange={e => setName(e.target.value)} />
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Vai Trò Mới</h3>
+                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Quyền Hạn</label>
-                        <div className="space-y-2">
-                            {modules.map(mod => {
-                                const modPerms = permissions.filter(p => p.module === mod)
-                                const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
-                                return (
-                                    <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <button onClick={() => toggleModule(mod)}
-                                            className="flex items-center justify-between w-full text-left">
-                                            <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#0E7490' : '#0F172A' }}>
-                                                {MODULE_NAMES[mod] ?? mod}
-                                            </span>
-                                            <span className="text-xs" style={{ color: '#64748B' }}>
-                                                {count}/{modPerms.length}
-                                            </span>
-                                        </button>
-                                        <div className="flex flex-wrap gap-1.5 mt-2">
-                                            {modPerms.map(p => (
-                                                <button key={p.id}
-                                                    onClick={() => setSelectedPerms(s =>
-                                                        s.includes(p.id) ? s.filter(x => x !== p.id) : [...s, p.id]
-                                                    )}
-                                                    className="text-xs px-2 py-0.5 rounded transition-all"
-                                                    style={{
-                                                        background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : '#E2E8F0',
-                                                        color: selectedPerms.includes(p.id) ? '#0E7490' : '#64748B',
-                                                        border: selectedPerms.includes(p.id) ? '1px solid rgba(8,145,178,0.4)' : '1px solid transparent',
-                                                    }}>
-                                                    {ACTION_LABELS[p.action] ?? p.action}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Vai Trò</label>
+                            <input style={inputStyle} {...focusHandler} placeholder="VD: Trợ Lý Giám Đốc"
+                                value={name} onChange={e => setName(e.target.value)} />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Phân Quyền Theo Phân Hệ Nghiệp Vụ</label>
+                            <RolePermissionSelector
+                                permissions={permissions}
+                                selectedPerms={selectedPerms}
+                                onChange={setSelectedPerms}
+                            />
                         </div>
                     </div>
                 </div>
 
                 <button onClick={handleSave} disabled={saving || !name}
-                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md"
-                    style={{ background: name ? '#0E7490' : '#E2E8F0', color: name ? '#F8FAFC' : '#64748B' }}>
+                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
+                    style={{ background: name ? '#0891B2' : '#E2E8F0', color: name ? '#FFFFFF' : '#64748B' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : `Tạo Vai Trò (${selectedPerms.length} quyền)`}
                 </button>
@@ -302,18 +503,6 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
         }
     }, [open, role])
 
-    const modules = Array.from(new Set(permissions.map(p => p.module))).sort()
-
-    const toggleModule = (mod: string) => {
-        const modPerms = permissions.filter(p => p.module === mod).map(p => p.id)
-        const allSelected = modPerms.every(id => selectedPerms.includes(id))
-        if (allSelected) {
-            setSelectedPerms(s => s.filter(id => !modPerms.includes(id)))
-        } else {
-            setSelectedPerms(s => [...new Set([...s, ...modPerms])])
-        }
-    }
-
     async function handleSave() {
         if (!role) return
         setSaving(true)
@@ -332,72 +521,41 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                            Phân Quyền Vai Trò
-                        </h3>
-                        <p className="text-xs" style={{ color: '#64748B' }}>
-                            Cấu hình quyền hạn cho: <strong style={{ color: '#0891B2' }}>{role.name}</strong>
-                        </p>
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
+                                Phân Quyền Vai Trò
+                            </h3>
+                            <p className="text-xs" style={{ color: '#64748B' }}>
+                                Cấu hình quyền hạn cho: <strong style={{ color: '#0891B2' }}>{role.name}</strong>
+                            </p>
+                        </div>
+                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
-                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
+
+                    {loading ? (
+                        <div className="flex items-center justify-center py-16">
+                            <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <RolePermissionSelector
+                                permissions={permissions}
+                                selectedPerms={selectedPerms}
+                                onChange={setSelectedPerms}
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Quyền Hạn Hệ Thống</label>
-                            <div className="space-y-2">
-                                {modules.map(mod => {
-                                    const modPerms = permissions.filter(p => p.module === mod)
-                                    const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
-                                    return (
-                                        <div key={mod} className="rounded-md p-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <button onClick={() => toggleModule(mod)}
-                                                className="flex items-center justify-between w-full text-left">
-                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#0E7490' : '#0F172A' }}>
-                                                    {MODULE_NAMES[mod] ?? mod}
-                                                </span>
-                                                <span className="text-xs" style={{ color: '#64748B' }}>
-                                                    {count}/{modPerms.length}
-                                                </span>
-                                            </button>
-                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                {modPerms.map(p => (
-                                                    <button key={p.id}
-                                                        onClick={() => setSelectedPerms(s =>
-                                                            s.includes(p.id) ? s.filter(x => x !== p.id) : [...s, p.id]
-                                                        )}
-                                                        className="text-xs px-2 py-0.5 rounded transition-all"
-                                                        style={{
-                                                            background: selectedPerms.includes(p.id) ? 'rgba(8, 145, 178, 0.15)' : '#E2E8F0',
-                                                            color: selectedPerms.includes(p.id) ? '#0E7490' : '#64748B',
-                                                            border: selectedPerms.includes(p.id) ? '1px solid rgba(8,145,178,0.4)' : '1px solid transparent',
-                                                        }}>
-                                                        {ACTION_LABELS[p.action] ?? p.action}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-
-                        <button onClick={handleSave} disabled={saving}
-                            className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                            {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
-                        </button>
-                    </div>
-                )}
+                <button onClick={handleSave} disabled={saving || loading}
+                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
+                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
+                </button>
             </div>
         </div>
     )
@@ -741,14 +899,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 actions={
                     <div className="flex items-center gap-2">
                         <a href="/dashboard/settings/approval-matrix"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                             style={{ textDecoration: 'none' }}>
-                            🛡️ Ma Trận Phân Quyền
+                            <Shield size={13} style={{ color: '#0891B2' }} /> Ma Trận Phân Quyền
                         </a>
                         <a href="/dashboard/settings/telegram"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                             style={{ textDecoration: 'none' }}>
-                            🤖 Telegram Bot
+                            <Bell size={13} style={{ color: '#0891B2' }} /> Cấu Hình Telegram Bot
                         </a>
                     </div>
                 }

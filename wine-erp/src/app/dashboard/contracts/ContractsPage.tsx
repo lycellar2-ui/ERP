@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { FileSignature, Shield, Scale } from 'lucide-react'
+import { FileSignature, Shield, Scale, BookOpen } from 'lucide-react'
 import { PageHeader } from '@/components/ui'
 import { ContractsClient } from './ContractsClient'
 import { RegDocsTab } from './RegDocsTab'
+import { ContractTemplatesTab } from './ContractTemplatesTab'
+import { CreateFromTemplateDrawer } from './CreateFromTemplateDrawer'
 import type { ContractRow } from './actions'
 import type { RegDocRow } from './reg-doc-actions'
 
@@ -22,6 +24,7 @@ interface Props {
 
 const TABS = [
     { key: 'contracts', label: 'Hợp Đồng', icon: FileSignature },
+    { key: 'templates', label: 'Kho Biểu Mẫu (.docx)', icon: BookOpen },
     { key: 'regdocs', label: 'Giấy Tờ Có Hạn', icon: Shield },
 ] as const
 
@@ -32,6 +35,9 @@ export function ContractsPage({
     regDocRows, regDocTotal, regDocStats,
 }: Props) {
     const [activeTab, setActiveTab] = useState<TabKey>('contracts')
+    const [templateDrawerOpen, setTemplateDrawerOpen] = useState(false)
+    const [selectedTemplateCode, setSelectedTemplateCode] = useState<string | undefined>()
+    const [refreshKey, setRefreshKey] = useState(0)
 
     // Badge counts for tabs
     const contractBadge = contractStats.expiringSoon > 0 ? contractStats.expiringSoon : null
@@ -39,12 +45,23 @@ export function ContractsPage({
         ? regDocStats.expiringSoon + regDocStats.expired
         : null
 
+    const handleOpenTemplateDrawer = (code?: string) => {
+        setSelectedTemplateCode(code)
+        setTemplateDrawerOpen(true)
+    }
+
+    const handleTemplateCreated = () => {
+        setTemplateDrawerOpen(false)
+        setActiveTab('contracts')
+        setRefreshKey(k => k + 1)
+    }
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
             <PageHeader
                 title="Trung Tâm Pháp Lý & Tuân Thủ"
-                description="Quản lý hợp đồng, giấy phép, chứng nhận và chứng từ có thời hạn"
+                description="Quản lý hợp đồng, biểu mẫu Word chuẩn hóa, giấy phép và chứng từ có thời hạn"
                 actions={
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-lys-primary/10 text-lys-primary border border-lys-primary/20 whitespace-nowrap shrink-0">
                         <Scale size={14} /> Pháp lý & Tuân thủ
@@ -57,7 +74,7 @@ export function ContractsPage({
                 {TABS.map(tab => {
                     const Icon = tab.icon
                     const isActive = activeTab === tab.key
-                    const badge = tab.key === 'contracts' ? contractBadge : regDocBadge
+                    const badge = tab.key === 'contracts' ? contractBadge : tab.key === 'regdocs' ? regDocBadge : null
                     return (
                         <button
                             key={tab.key}
@@ -85,9 +102,16 @@ export function ContractsPage({
             {/* Tab Content */}
             {activeTab === 'contracts' && (
                 <ContractsClient
+                    key={refreshKey}
                     initialRows={contractRows}
                     initialTotal={contractTotal}
                     stats={contractStats}
+                    onOpenTemplateDrawer={handleOpenTemplateDrawer}
+                />
+            )}
+            {activeTab === 'templates' && (
+                <ContractTemplatesTab
+                    onSelectTemplateToCreate={handleOpenTemplateDrawer}
                 />
             )}
             {activeTab === 'regdocs' && (
@@ -97,6 +121,14 @@ export function ContractsPage({
                     stats={regDocStats}
                 />
             )}
+
+            {/* Global Template Drawer */}
+            <CreateFromTemplateDrawer
+                open={templateDrawerOpen}
+                initialTemplateCode={selectedTemplateCode}
+                onClose={() => setTemplateDrawerOpen(false)}
+                onSuccess={handleTemplateCreated}
+            />
         </div>
     )
 }

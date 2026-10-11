@@ -1216,7 +1216,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     key={mod.key}
                                     onClick={() => handleTabChange(mod.key)}
                                     className={cn(
-                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition shrink-0 cursor-pointer',
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-all duration-150 active:scale-95 shrink-0 cursor-pointer select-none',
                                         isActive
                                             ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-bold'
                                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-semibold border border-transparent'
@@ -1225,7 +1225,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <Icon size={14} style={{ color: isActive ? undefined : mod.color }} />
                                     <span>{mod.title}</span>
                                     {mod.badge !== undefined && mod.badge > 0 && (
-                                        <span className="inline-block ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white whitespace-nowrap shrink-0">
+                                        <span className="inline-block ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white whitespace-nowrap shrink-0 animate-pop">
                                             {mod.badge}
                                         </span>
                                     )}
@@ -1234,6 +1234,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         })}
                     </div>
 
+                    <div key={activeTab} className="animate-fade-in">
                     {/* NXT — Stock Movement Report Tab */}
                     {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} selectedWarehouseId={selectedWH ?? undefined} />}
 
@@ -1412,6 +1413,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
             )}
 
@@ -1420,7 +1422,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition-all duration-100 active:scale-95 select-none cursor-pointer ${viewMode === 'grid' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <LayoutGrid size={16} />
                         {t.bottomNav.menu}
@@ -1431,7 +1433,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('inventory')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition-all duration-100 active:scale-95 select-none cursor-pointer ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <Package size={16} />
                         {t.bottomNav.inventory}
@@ -1442,7 +1444,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('do')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition-all duration-100 active:scale-95 select-none cursor-pointer ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <Truck size={16} />
                         {t.bottomNav.do}
@@ -1453,7 +1455,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('gr')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition-all duration-100 active:scale-95 select-none cursor-pointer ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <PackagePlus size={16} />
                         {t.bottomNav.gr}
@@ -1464,7 +1466,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('stock-count')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
+                        className={`py-2 rounded-lg flex flex-col items-center gap-1 font-bold text-[9px] transition-all duration-100 active:scale-95 select-none cursor-pointer ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900 border border-transparent'}`}
                     >
                         <ClipboardList size={16} />
                         {t.bottomNav.stockCount}

@@ -1,0 +1,1244 @@
+[
+  {
+    "id": "sop-61",
+    "code": "SOP 6.1",
+    "title": "Quy Trình Phát Triển Khách Hàng Mới (Onboarding Khách Hàng)",
+    "titleEn": "New Customer Development & Onboarding Procedure",
+    "category": "sales",
+    "department": "Phòng Kinh Doanh (Sales)",
+    "departmentEn": "Sales Department",
+    "summary": "Quy định các bước phát triển khách hàng mới từ khâu tiếp cận, thẩm định tín dụng, lập tờ trình duyệt cơ chế giá đặc biệt trong 24h, ký hợp đồng mua bán đến khi kích hoạt mã khách hàng trên hệ thống.",
+    "purpose": "Rút ngắn thời gian đưa khách hàng mới vào vận hành, kiểm soát chặt chẽ rủi ro công nợ ban đầu và chuẩn hóa hồ sơ pháp lý.",
+    "scope": "Áp dụng cho toàn bộ nhân viên Sales (kênh HoReCa, Đại lý, Bán lẻ), Trợ lý GĐKD, Kế toán công nợ và Ban Giám Đốc.",
+    "estimatedDuration": "24h duyệt cơ chế • Tối đa 2 ngày hoàn tất HĐMB",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.2",
+    "raci": {
+      "responsible": [
+        "Nhân viên Sales phụ trách địa bàn"
+      ],
+      "accountable": [
+        "Trưởng phòng Kinh doanh",
+        "Giám đốc Điều hành (CEO)"
+      ],
+      "consulted": [
+        "Kế toán công nợ (AR)",
+        "Bộ phận Pháp chế/Hợp đồng"
+      ],
+      "informed": [
+        "Thủ kho",
+        "Đội giao nhận",
+        "Khách hàng"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Khảo Sát Điểm Bán & Thu Thập Hồ Sơ Pháp Lý",
+        "role": "Nhân viên Sales",
+        "action": "Tiếp cận khách hàng mục tiêu, khảo sát quy mô điểm bán (nhà hàng, khách sạn, bar/lounge). Thu thập bản sao Giấy phép ĐKKD (GPKD), giấy phép bán lẻ rượu (nếu có) và điền Phiếu yêu cầu tạo mã khách hàng (Form 8.8-A).",
+        "erpLink": {
+          "path": "/dashboard/customers",
+          "label": "Tạo Hồ Sơ Khách Hàng"
+        },
+        "deliverables": [
+          "Bản scan GPKD có dấu treo",
+          "Form 8.8-A điền đầy đủ thông tin"
+        ],
+        "cautions": [
+          "Bắt buộc phải kiểm tra MST trên trang tra cứu Tổng cục Thuế để xác nhận doanh nghiệp đang hoạt động bình thường."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Đánh Giá Tín Dụng & Lập Tờ Trình Cơ Chế Giá",
+        "role": "Sales & Trưởng nhóm KD",
+        "action": "Đánh giá xếp hạng tín dụng theo Credit Assessment Matrix. Nếu khách hàng đề xuất mức giá/chiết khấu đặc biệt ngoài chính sách chuẩn, Sales lập Tờ trình cơ chế đặc biệt (Form 6.4-C) kèm Phụ lục giá (Form 6.1-B) trong vòng 24h kể từ khi chốt thỏa thuận.",
+        "erpLink": {
+          "path": "/dashboard/proposals",
+          "label": "Mở Phân Hệ Tờ Trình"
+        },
+        "deliverables": [
+          "Tờ trình cơ chế giá đặc biệt đã duyệt",
+          "Phụ lục giá (Form 6.1-B)"
+        ],
+        "cautions": [
+          "Nhân viên Sales đề xuất hạn mức công nợ phải tự chịu trách nhiệm về tính xác thực của hồ sơ và trực tiếp đôn đốc thu hồi nợ."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Soạn Thảo & Ký Kết Hợp Đồng Mua Bán (HĐMB)",
+        "role": "Sales & Pháp chế",
+        "action": "Soạn HĐMB theo mẫu chuẩn của công ty (HĐ HoReCa COD hoặc HĐ HoReCa Công nợ 30 ngày) trong vòng 02 ngày làm việc sau khi Tờ trình được duyệt. Trình ký 2 bên và đóng dấu pháp nhân.",
+        "erpLink": {
+          "path": "/dashboard/contracts",
+          "label": "Quản Lý Hợp Đồng"
+        },
+        "deliverables": [
+          "Hợp đồng mua bán ký kết 02 bản cứng có dấu đỏ"
+        ],
+        "cautions": [
+          "Tuyệt đối không cấp hàng theo diện công nợ trả sau khi chưa nhận lại bản cứng HĐMB có chữ ký và con dấu hợp lệ của khách hàng."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Kích Hoạt Tài Khoản Khách Hàng & Gán Bảng Giá",
+        "role": "Kế toán Công nợ / Admin",
+        "action": "Trong vòng 01 ngày sau khi nhận đủ hợp đồng, kế toán duyệt kích hoạt mã khách hàng (Customer ID) trên ERP, gán đúng bảng giá và hạn mức công nợ được duyệt. Ghi chú điều kiện giao hàng đặc biệt (Delivery Instructions) vào hệ thống.",
+        "erpLink": {
+          "path": "/dashboard/customers",
+          "label": "Kích Hoạt Mã Khách Hàng"
+        },
+        "deliverables": [
+          "Mã khách hàng ACTIVE trên Wine ERP",
+          "Bảng giá & Hạn mức nợ đã gán"
+        ],
+        "cautions": [
+          "Nhân viên giao nhận và kho chỉ xuất hàng khi khách hàng đã có mã hợp lệ trên hệ thống."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "c1",
+        "text": "Có bản sao công chứng hoặc dấu treo GPKD của khách hàng",
+        "critical": true
+      },
+      {
+        "id": "c2",
+        "text": "Đã hoàn tất đánh giá tín dụng và lập Form 8.8-A đầy đủ",
+        "critical": true
+      },
+      {
+        "id": "c3",
+        "text": "Đã có Tờ trình cơ chế giá đặc biệt được CEO phê duyệt (nếu có chiết khấu ngoài khung)",
+        "critical": true
+      },
+      {
+        "id": "c4",
+        "text": "Đã ký Hợp đồng mua bán 02 bên có đầy đủ con dấu pháp nhân",
+        "critical": true
+      },
+      {
+        "id": "c5",
+        "text": "Đã cập nhật hướng dẫn giao hàng đặc biệt (giờ giao, người nhận, số ĐT)"
+      }
+    ],
+    "requiredDocs": [
+      "Form 8.8-A: Yêu cầu Tạo mã Khách hàng",
+      "Form 6.1-A: Danh sách Khách hàng Tiềm năng",
+      "Form 6.1-B: Phụ lục Giá Đặc biệt",
+      "Form 6.4-C: Tờ trình Cơ chế Đặc biệt",
+      "Hợp đồng mua bán HoReCa (COD hoặc Công nợ)"
+    ],
+    "forms": [
+      {
+        "code": "Form 8.8-A",
+        "title": "Yêu Cầu Tạo Mã Khách Hàng",
+        "fileName": "Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx",
+        "downloadUrl": "/forms/Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx"
+      },
+      {
+        "code": "Form 6.1-B",
+        "title": "Phụ Lục Giá Đặc Biệt",
+        "fileName": "Form_6.1-B_Phu_luc_Gia_Dac_biet.xlsx",
+        "downloadUrl": "/forms/Form_6.1-B_Phu_luc_Gia_Dac_biet.xlsx"
+      },
+      {
+        "code": "Form 6.1-A",
+        "title": "Danh Sách Khách Hàng Tiềm Năng",
+        "fileName": "Form_6.1-A_Danh_sach_KH_Tiem_nang.xlsx",
+        "downloadUrl": "/forms/Form_6.1-A_Danh_sach_KH_Tiem_nang.xlsx"
+      },
+      {
+        "code": "Form 6.4-C",
+        "title": "Tờ Trình Cơ Chế Đặc Biệt",
+        "fileName": "Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx",
+        "downloadUrl": "/forms/Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Khách hàng mới cần giao hàng gấp trong ngày trước khi ký hợp đồng thì làm thế nào?",
+        "a": "Áp dụng hình thức thanh toán 100% trước khi giao hàng (chuyển khoản hoặc thu tiền mặt COD khi giao). Không áp dụng bán chịu công nợ khi chưa hoàn thiện HĐMB."
+      },
+      {
+        "q": "Thời hạn hiệu lực của Phụ lục giá đặc biệt là bao lâu?",
+        "a": "Tối đa 12 tháng kể từ ngày ký hoặc theo niên độ tài chính. Khi hết hạn, Sales phải làm tờ trình gia hạn kèm đánh giá sản lượng tiêu thụ thực tế."
+      }
+    ]
+  },
+  {
+    "id": "sop-63",
+    "code": "SOP 6.3",
+    "title": "Quy Trình Xử Lý Đơn Hàng Bán Lẻ & Bán Buôn (Sales Order)",
+    "titleEn": "Sales Order Processing Procedure",
+    "category": "sales",
+    "department": "Phòng Kinh Doanh (Sales)",
+    "departmentEn": "Sales Department",
+    "summary": "Các bước từ tiếp nhận yêu cầu đặt hàng, kiểm tra tồn kho khả dụng FIFO, kiểm tra nợ quá hạn (Credit Hold), lập đơn SO trên hệ thống và chuyển giao cho Kho vận đóng gói giao hàng.",
+    "purpose": "Đảm bảo giao đúng hàng, đúng niên vụ vang, đúng hẹn và không vi phạm điều kiện an toàn công nợ.",
+    "scope": "Áp dụng cho nhân viên Sales, Sales Admin, Thủ kho, Điều phối giao nhận và Kế toán.",
+    "estimatedDuration": "15 - 30 phút tạo & duyệt đơn SO",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.1",
+    "raci": {
+      "responsible": [
+        "Nhân viên Sales phụ trách",
+        "Sales Admin"
+      ],
+      "accountable": [
+        "Trưởng phòng Kinh doanh"
+      ],
+      "consulted": [
+        "Thủ kho (kiểm tra tồn khả dụng)",
+        "Kế toán công nợ"
+      ],
+      "informed": [
+        "Đội giao xe",
+        "Khách hàng"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Tiếp Nhận Đơn Đặt Hàng & Kiểm Tra Tồn Kho",
+        "role": "Sales Executive",
+        "action": "Tiếp nhận đơn hàng qua Email, Zalo hoặc PO của khách. Kiểm tra tồn kho khả dụng (Available Stock) theo niên vụ (Vintage) và lô hàng trên ERP.",
+        "erpLink": {
+          "path": "/dashboard/warehouse",
+          "label": "Tra Cứu Tồn Kho Khả Dụng"
+        },
+        "deliverables": [
+          "Đơn đặt hàng từ khách hàng"
+        ],
+        "cautions": [
+          "Không cam kết giao các mặt hàng đang có số lượng khả dụng bằng 0 hoặc đang trong khu vực cách ly dán tem."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Kiểm Tra Tín Dụng & Khóa Nợ Tự Động (Credit Hold Check)",
+        "role": "Hệ thống / Kế toán AR",
+        "action": "Hệ thống tự động kiểm tra số dư nợ và ngày quá hạn. Nếu khách hàng có hóa đơn quá hạn > 30 ngày hoặc vượt hạn mức tín dụng, đơn hàng bị khóa Credit Hold. Cần giải quyết nợ cũ trước khi xuất đơn mới.",
+        "erpLink": {
+          "path": "/dashboard/customers",
+          "label": "Xem Công Nợ Khách Hàng"
+        },
+        "deliverables": [
+          "Xác nhận kiểm tra tín dụng đạt chuẩn"
+        ],
+        "cautions": [
+          "Nghiêm cấm chia nhỏ đơn hàng để lách hạn mức tín dụng hoặc xuất cho khách nợ xấu khi chưa có phê duyệt đặc biệt của CEO."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Tạo Đơn Bán Hàng (SO) & Xác Nhận Đơn",
+        "role": "Sales Admin / Sales",
+        "action": "Nhập thông tin sản phẩm, số lượng, chọn đúng bảng giá và chiết khấu. Nhấn \"Xác Nhận Đơn Hàng\" (Confirm SO). Tồn kho tự động chuyển sang trạng thái \"Đã giữ chỗ\" (Allocated).",
+        "erpLink": {
+          "path": "/dashboard/sales",
+          "label": "Tạo Đơn Bán Hàng (SO)"
+        },
+        "deliverables": [
+          "Đơn Bán Hàng (Confirmed SO)"
+        ],
+        "cautions": [
+          "Kiểm tra kỹ thông tin người nhận, số điện thoại và ghi chú giao hàng hẹn giờ trước khi xác nhận."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Tự Động Sinh Lệnh Xuất Kho (DO) Chuyển Kho Vận",
+        "role": "Thủ kho & Đội giao hàng",
+        "action": "Ngay khi SO xác nhận, hệ thống sinh Lệnh xuất kho (DO) tại phân hệ Kho. Thủ kho in Pick List, nhặt hàng theo nguyên tắc FIFO, đóng thùng chống sốc và bàn giao cho Đội giao hàng.",
+        "erpLink": {
+          "path": "/dashboard/warehouse",
+          "label": "Xem Lệnh Xuất Kho (DO)"
+        },
+        "deliverables": [
+          "Lệnh xuất kho (DO)",
+          "Phiếu nhặt hàng (Pick List)",
+          "Phiếu giao hàng có mã QR"
+        ],
+        "cautions": [
+          "Kiểm tra nguyên vẹn tem rượu và màng co nắp chai trước khi bàn giao cho tài xế."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "so1",
+        "text": "Sản phẩm có đủ số lượng khả dụng trong kho",
+        "critical": true
+      },
+      {
+        "id": "so2",
+        "text": "Khách hàng không bị khóa công nợ (No Credit Hold)",
+        "critical": true
+      },
+      {
+        "id": "so3",
+        "text": "Giá bán và chiết khấu đúng theo chính sách đã được duyệt",
+        "critical": true
+      },
+      {
+        "id": "so4",
+        "text": "Đầy đủ thông tin địa chỉ giao hàng và số điện thoại người nhận",
+        "critical": true
+      },
+      {
+        "id": "so5",
+        "text": "Đã thông báo lịch giao dự kiến cho khách hàng"
+      }
+    ],
+    "requiredDocs": [
+      "Đơn đặt hàng (Purchase Order từ phía khách)",
+      "Form 6.3-A: Đơn hàng Bán",
+      "Lệnh xuất kho (DO) & Phiếu giao hàng"
+    ],
+    "forms": [
+      {
+        "code": "Form 6.3-A",
+        "title": "Đơn Hàng Bán Chuẩn",
+        "fileName": "Form_6.3-A_Don_hang_Ban.xlsx",
+        "downloadUrl": "/forms/Form_6.3-A_Don_hang_Ban.xlsx"
+      },
+      {
+        "code": "Form 5.6-A",
+        "title": "Phiếu Xuất Kho Kiêm Bàn Giao",
+        "fileName": "Form_5.6-A_Phieu_Xuat_kho.xlsx",
+        "downloadUrl": "/forms/Form_5.6-A_Phieu_Xuat_kho.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Làm thế nào để hủy hoặc sửa đơn hàng đã xác nhận (SO)?",
+        "a": "Nếu kho chưa soạn hàng, Sales có thể mở đơn bấm \"Hủy Đơn\" hoặc \"Chỉnh sửa\". Nếu kho đã tạo Lệnh xuất kho (DO), bắt buộc phải liên hệ thủ kho hủy DO trước."
+      }
+    ]
+  },
+  {
+    "id": "sop-64",
+    "code": "SOP 6.4",
+    "title": "Quy Trình Chính Sách Giá, Phê Duyệt Chiết Khấu & Check Margin",
+    "titleEn": "Pricing Policy, Discount Approval & Margin Checking SOP",
+    "category": "sales",
+    "department": "Phòng Kinh Doanh (Sales)",
+    "departmentEn": "Sales Department",
+    "summary": "Quy chuẩn phân cấp chiết khấu theo phân loại khách hàng, quy trình lập tờ trình xin duyệt chiết khấu đặc biệt vượt khung và công cụ kiểm tra biên lợi nhuận gộp (Gross Margin) trước khi chốt giá.",
+    "purpose": "Bảo vệ biên lợi nhuận kinh doanh, ngăn chặn tình trạng bán dưới giá vốn và minh bạch thẩm quyền phê duyệt.",
+    "scope": "Áp dụng cho Sales Executive, Trưởng phòng Kinh doanh, Kế toán giá vốn và CEO.",
+    "estimatedDuration": "30 phút - 4 giờ tùy mức độ chiết khấu",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.0",
+    "raci": {
+      "responsible": [
+        "Nhân viên Sales phụ trách"
+      ],
+      "accountable": [
+        "Trưởng phòng Kinh doanh (chiết khấu ≤ 15%)",
+        "CEO (chiết khấu > 15% hoặc Margin < 25%)"
+      ],
+      "consulted": [
+        "Kế toán giá vốn (CST)",
+        "Kế toán trưởng"
+      ],
+      "informed": [
+        "Khách hàng"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Tra Cứu Khung Giá Chuẩn Theo Kênh Khách Hàng",
+        "role": "Nhân viên Sales",
+        "action": "Tra cứu bảng giá niêm yết áp dụng cho kênh khách hàng tương ứng (Kênh HoReCa, Kênh Đại lý sỉ, Kênh Doanh nghiệp Quà tặng hoặc Showroom).",
+        "erpLink": {
+          "path": "/dashboard/price-list",
+          "label": "Xem Bảng Giá Hệ Thống"
+        },
+        "deliverables": [
+          "Bảng giá niêm yết áp dụng"
+        ],
+        "cautions": [
+          "Không áp dụng bảng giá sỉ/đại lý cho khách hàng mua lẻ cá nhân."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Mô Phỏng Biên Lợi Nhuận Gộp (Margin Simulation)",
+        "role": "Sales & Trưởng nhóm",
+        "action": "Sử dụng công cụ Margin Simulation trên Wine ERP để kiểm tra biên lợi nhuận thực tế sau chiết khấu. Hệ thống tự động so khớp giá bán đề xuất với Giá vốn Landed Cost.",
+        "erpLink": {
+          "path": "/dashboard/margin",
+          "label": "Mở Công Cụ Check Margin"
+        },
+        "deliverables": [
+          "Chỉ số Gross Margin (%) hiển thị trực quan"
+        ],
+        "cautions": [
+          "Mọi đơn hàng có biên lợi nhuận gộp dưới 20% đều bị hệ thống cảnh báo đỏ và bắt buộc phải có phê duyệt trực tiếp của CEO."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Lập Tờ Trình Cơ Chế Đặc Biệt / CTKM (Nếu Vượt Khung)",
+        "role": "Nhân viên Sales",
+        "action": "Nếu cần chiết khấu thêm vì số lượng đơn lớn hoặc cạnh tranh đối thủ, lập Tờ trình cơ chế đặc biệt (Form 6.4-C) hoặc Tờ trình CTKM (Form 6.4-D), nêu rõ sản lượng cam kết và phương án thu hồi vốn.",
+        "erpLink": {
+          "path": "/dashboard/proposals",
+          "label": "Gửi Tờ Trình Duyệt Giá"
+        },
+        "deliverables": [
+          "Tờ trình phê duyệt cơ chế có chữ ký điện tử"
+        ],
+        "cautions": [
+          "Nghiêm cấm cam kết trước với khách hàng khi Tờ trình chưa có kết quả phê duyệt."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Xuất Báo Giá Chính Thức Kèm Mã Khách Hàng",
+        "role": "Sales Executive",
+        "action": "Sau khi được duyệt, tạo Báo giá chuẩn (Form 6.4-B) trên ERP, xuất file PDF thiết kế thanh lịch có mã QR xác thực và gửi cho khách hàng qua Email/Zalo.",
+        "erpLink": {
+          "path": "/dashboard/quotations",
+          "label": "Mở Màn Hình Báo Giá"
+        },
+        "deliverables": [
+          "Bản báo giá PDF chính thức có dấu xác thực"
+        ],
+        "cautions": [
+          "Báo giá chỉ có hiệu lực trong vòng 15 ngày kể từ ngày ban hành."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "pr1",
+        "text": "Đã kiểm tra đúng bảng giá áp dụng cho phân hạng khách hàng",
+        "critical": true
+      },
+      {
+        "id": "pr2",
+        "text": "Biên lợi nhuận gộp đạt chuẩn (Gross Margin ≥ 25%)",
+        "critical": true
+      },
+      {
+        "id": "pr3",
+        "text": "Đã có Tờ trình được duyệt nếu chiết khấu vượt khung phân quyền",
+        "critical": true
+      },
+      {
+        "id": "pr4",
+        "text": "Báo giá ghi rõ thời hạn hiệu lực và điều khoản thanh toán",
+        "critical": true
+      }
+    ],
+    "requiredDocs": [
+      "Form 6.4-A: Bảng giá Sản phẩm",
+      "Form 6.4-B: Mẫu Báo giá chuẩn Lyscellar (Quotation Template)",
+      "Form 6.4-C: Tờ trình Cơ chế Đặc biệt",
+      "Form 6.4-D: Tờ trình Phê duyệt Chương trình Khuyến mãi"
+    ],
+    "forms": [
+      {
+        "code": "Form 6.4-B",
+        "title": "Mẫu Báo Giá Chuẩn (Quotation Template)",
+        "fileName": "Form_6.4-B_Ly_Cellars_Quotation_Template.xlsx",
+        "downloadUrl": "/forms/Form_6.4-B_Ly_Cellars_Quotation_Template.xlsx"
+      },
+      {
+        "code": "Form 6.4-A",
+        "title": "Bảng Giá Sản Phẩm Niêm Yết",
+        "fileName": "Form_6.4-A_Bang_gia_San_pham.xlsx",
+        "downloadUrl": "/forms/Form_6.4-A_Bang_gia_San_pham.xlsx"
+      },
+      {
+        "code": "Form 6.4-C",
+        "title": "Tờ Trình Cơ Chế Giá Đặc Biệt",
+        "fileName": "Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx",
+        "downloadUrl": "/forms/Form_6.4-C_To_trinh_Co_che_Dac_biet.xlsx"
+      },
+      {
+        "code": "Form 6.4-D",
+        "title": "Tờ Trình Phê Duyệt CTKM",
+        "fileName": "Form_6.4-D_To_trinh_Phe_duyet_CTKM.docx",
+        "downloadUrl": "/forms/Form_6.4-D_To_trinh_Phe_duyet_CTKM.docx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Nếu khách hàng cam kết mua số lượng lớn nhưng chia nhiều lần giao thì áp dụng giá thế nào?",
+        "a": "Sales làm Tờ trình cơ chế đặc biệt cam kết sản lượng tối thiểu trong quý. Nếu kết thúc quý khách không đạt sản lượng cam kết, mức chiết khấu sẽ được điều chỉnh về khung thực tế."
+      }
+    ]
+  },
+  {
+    "id": "sop-68",
+    "code": "SOP 6.8",
+    "title": "Quy Trình Quản Lý Hàng Ký Gửi HoReCa & Kiểm Toán Vỏ Chai",
+    "titleEn": "HoReCa Consignment Stock & Empty Bottle Audit Procedure",
+    "category": "sales",
+    "department": "Phòng Kinh Doanh & Kho Vận",
+    "departmentEn": "Sales & Warehouse Dept",
+    "summary": "Quy định các bước đặt cọc, bàn giao hàng ký gửi tại nhà hàng/khách sạn, quy trình kiểm kê định kỳ hàng tháng và đối soát thu tiền dựa trên số chai đã tiêu thụ.",
+    "purpose": "Kiểm soát chặt chẽ giá trị hàng hóa ký gửi ngoài kho, tránh thất thoát và đối soát công nợ chính xác.",
+    "scope": "Áp dụng cho Sales HoReCa, Thủ kho, Kế toán công nợ và Đối tác nhà hàng ký gửi.",
+    "estimatedDuration": "Kiểm kê định kỳ từ ngày 25 đến 30 hàng tháng",
+    "effectiveDate": "01/01/2026",
+    "version": "v1.6",
+    "raci": {
+      "responsible": [
+        "Nhân viên Sales phụ trách điểm ký gửi"
+      ],
+      "accountable": [
+        "Trưởng phòng Kinh doanh",
+        "Thủ kho tổng"
+      ],
+      "consulted": [
+        "Kế toán công nợ (AR)",
+        "Quản lý nhà hàng đối tác"
+      ],
+      "informed": [
+        "Ban Giám Đốc"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Ký Hợp Đồng Ký Gửi & Phê Duyệt Định Mức Tồn",
+        "role": "Sales & Quản lý điểm bán",
+        "action": "Thỏa thuận danh mục rượu vang ký gửi và định mức tồn kho tối đa tại điểm bán (Par Level). Ký kết Hợp đồng ký gửi kèm điều khoản đền bù mất mát/hỏng hóc.",
+        "erpLink": {
+          "path": "/dashboard/contracts",
+          "label": "Quản Lý Hợp Đồng Ký Gửi"
+        },
+        "deliverables": [
+          "Hợp đồng ký gửi có chữ ký 2 bên"
+        ],
+        "cautions": [
+          "Giá trị hàng ký gửi không vượt quá hạn mức bảo lãnh hoặc tiền đặt cọc của đối tác."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Xuất Kho Ký Gửi (CSG) & Bàn Giao Hiện Trường",
+        "role": "Thủ kho & Nhân viên giao nhận",
+        "action": "Tạo Lệnh xuất kho ký gửi (Consignment Order) trên ERP. Giao hàng đến điểm bán, kiểm đếm số chai thực tế và yêu cầu Quản trị viên nhà hàng ký nhận vào Biên bản bàn giao hàng ký gửi.",
+        "erpLink": {
+          "path": "/dashboard/consignment",
+          "label": "Mở Phân Hệ Ký Gửi (CSG)"
+        },
+        "deliverables": [
+          "Biên bản bàn giao hàng ký gửi có xác nhận"
+        ],
+        "cautions": [
+          "Hàng ký gửi vẫn thuộc sở hữu của Lyscellar cho đến khi xuất hóa đơn bán lẻ thực tế."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Kiểm Kê Định Kỳ & Đối Soát Vỏ Chai Hàng Tháng",
+        "role": "Sales & Quản lý nhà hàng",
+        "action": "Từ ngày 25 đến 30 hàng tháng, Sales đến điểm bán kiểm đếm số chai còn nguyên trên kệ và đối soát số chai đã khui (qua vỏ chai hoặc báo cáo POS nhà hàng). Số lượng tiêu thụ = Tồn đầu kỳ + Nhập trong kỳ - Tồn cuối kỳ.",
+        "erpLink": {
+          "path": "/dashboard/consignment",
+          "label": "Cập Nhật Đối Soát Ký Gửi"
+        },
+        "deliverables": [
+          "Biên bản kiểm kê hàng ký gửi cuối tháng"
+        ],
+        "cautions": [
+          "Nếu có chênh lệch mất mát chai rượu không có vỏ chai đối chứng, đối tác phải bồi thường 100% theo giá bán lẻ niêm yết."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Chuyển Đổi Thành Đơn Bán Hàng & Xuất Hóa Đơn",
+        "role": "Sales Admin & Kế toán",
+        "action": "Căn cứ vào số lượng tiêu thụ thực tế trong tháng, hệ thống tự động chuyển đổi số lượng đó thành Đơn bán hàng (SO). Kế toán xuất hóa đơn VAT và gửi thông báo thanh toán cho đối tác.",
+        "erpLink": {
+          "path": "/dashboard/finance",
+          "label": "Kiểm Tra Hóa Đơn VAT"
+        },
+        "deliverables": [
+          "Hóa đơn VAT cho phần hàng đã tiêu thụ"
+        ],
+        "cautions": [
+          "Đối tác thanh toán dứt điểm tiền hàng đã tiêu thụ trước khi được duyệt bổ sung hàng ký gửi đợt mới."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "cs1",
+        "text": "Có Hợp đồng ký gửi hợp lệ quy định rõ trách nhiệm bồi thường",
+        "critical": true
+      },
+      {
+        "id": "cs2",
+        "text": "Biên bản bàn giao hàng ký gửi có chữ ký xác nhận của đại diện điểm bán",
+        "critical": true
+      },
+      {
+        "id": "cs3",
+        "text": "Kiểm kê thực tế và đối chiếu vỏ chai đầy đủ trước ngày 30 hàng tháng",
+        "critical": true
+      },
+      {
+        "id": "cs4",
+        "text": "Đã xuất hóa đơn VAT cho số lượng chai đã tiêu thụ trong kỳ"
+      }
+    ],
+    "requiredDocs": [
+      "Hợp đồng ký gửi rượu vang",
+      "Form 5.4-A: Bảng theo dõi Tồn kho ký gửi",
+      "Biên bản kiểm kê và đối soát hàng ký gửi"
+    ],
+    "forms": [
+      {
+        "code": "Form 5.4-A",
+        "title": "Bảng Theo Dõi Tồn Kho Ký Gửi",
+        "fileName": "Form_5.4-A_Bang_Ton_kho.xlsx",
+        "downloadUrl": "/forms/Form_5.4-A_Bang_Ton_kho.xlsx"
+      },
+      {
+        "code": "Form 5.5-B",
+        "title": "Biên Bản Kiểm Kê Hàng Hóa",
+        "fileName": "Form_5.5-B_Bien_ban_Kiem_ke.xlsx",
+        "downloadUrl": "/forms/Form_5.5-B_Bien_ban_Kiem_ke.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Nếu rượu ký gửi bị hỏng nút bần hoặc đục màu tại điểm bán thì xử lý thế nào?",
+        "a": "Sales lập Biên bản hàng lỗi (Form 5.7-A), thu hồi chai rượu về kho cách ly để thẩm định chất lượng và đổi chai mới cho đối tác."
+      }
+    ]
+  },
+  {
+    "id": "sop-82",
+    "code": "SOP 8.2",
+    "title": "Quy Trình Quản Lý Công Nợ Phải Thu (AR) & Thu Hồi Nợ Quá Hạn",
+    "titleEn": "Accounts Receivable (AR) & Overdue Debt Recovery SOP",
+    "category": "finance",
+    "department": "Phòng Tài Chính - Kế Toán",
+    "departmentEn": "Finance & Accounting Dept",
+    "summary": "Các bước theo dõi tuổi nợ (Aging Report), đối chiếu công nợ định kỳ từ ngày 01 đến 05 hàng tháng, quy trình nhắc nợ 3 cấp và kích hoạt chặn xuất hàng tự động (Credit Hold).",
+    "purpose": "Đảm bảo dòng tiền thu hồi đúng hạn, giảm thiểu nợ xấu và quy định rõ trách nhiệm đòi nợ của nhân viên kinh doanh.",
+    "scope": "Áp dụng cho Kế toán công nợ (AR), Sales Executive, Trưởng phòng Kinh doanh và Giám đốc Tài chính.",
+    "estimatedDuration": "Theo dõi hàng ngày • Đối soát ngày 01-05 hàng tháng",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.5",
+    "raci": {
+      "responsible": [
+        "Kế toán công nợ (AR)",
+        "Nhân viên Sales phụ trách KH"
+      ],
+      "accountable": [
+        "Kế toán trưởng",
+        "CEO"
+      ],
+      "consulted": [
+        "Trưởng phòng Kinh doanh"
+      ],
+      "informed": [
+        "Khách hàng nợ"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Theo Dõi Tuổi Nợ & Cập Nhật Sổ Theo Dõi Hàng Ngày",
+        "role": "Kế toán Công nợ (AR)",
+        "action": "Hàng ngày lúc 09h00, kế toán trích xuất Báo cáo tuổi nợ (Aging Report 0-30 ngày, 31-60 ngày, >60 ngày) và gửi Báo cáo công nợ hàng ngày (Form 8.2-C) cho Trưởng phòng Kinh doanh.",
+        "erpLink": {
+          "path": "/dashboard/finance",
+          "label": "Xem Báo Cáo Tuổi Nợ (AR Aging)"
+        },
+        "deliverables": [
+          "Báo cáo công nợ hàng ngày (Form 8.2-C)"
+        ],
+        "cautions": [
+          "Đối chiếu ngay các khoản tiền chuyển khoản về tài khoản ngân hàng để cấn trừ hóa đơn tương ứng (COD to AR Sync)."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Gửi Biên Bản Đối Chiếu Công Nợ Định Kỳ (Ngày 01-05)",
+        "role": "Kế toán AR & Sales",
+        "action": "Đầu tháng, kế toán xuất Biên bản đối chiếu công nợ (Form 8.2-B) chi tiết từng số hóa đơn, số tiền đã trả và số còn nợ. Sales gửi cho khách hàng ký xác nhận và thu hồi biên bản trước ngày 10.",
+        "erpLink": {
+          "path": "/dashboard/reconciliation",
+          "label": "Phân Hệ Đối Chiếu Hóa Đơn"
+        },
+        "deliverables": [
+          "Biên bản đối chiếu công nợ có chữ ký xác nhận 2 bên"
+        ],
+        "cautions": [
+          "Nếu khách hàng có phản hồi sai lệch số liệu, kế toán phải tra soát đối chiếu chứng từ gốc trong vòng 24 giờ."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Quy Trình Nhắc Nợ 3 Cấp & Kích Hoạt Khóa Tín Dụng",
+        "role": "Sales & Kế toán trưởng",
+        "action": "Cấp 1: Trước hạn 3 ngày (Sales gửi email nhắc lịch). Cấp 2: Quá hạn 1-7 ngày (Kế toán gửi thông báo đôn đốc). Cấp 3: Quá hạn > 15 ngày (Hệ thống tự động khóa Credit Hold, gửi Công văn đòi nợ có dấu đỏ).",
+        "erpLink": {
+          "path": "/dashboard/customers",
+          "label": "Quản Lý Khóa Tín Dụng"
+        },
+        "deliverables": [
+          "Công văn đôn đốc công nợ quá hạn",
+          "Trạng thái Credit Hold kích hoạt"
+        ],
+        "cautions": [
+          "Khách hàng đang bị Credit Hold tuyệt đối không được duyệt xuất thêm bất kỳ đơn hàng nào trừ khi thanh toán dứt điểm."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Xử Lý Nợ Xấu & Chuyển Hồ Sơ Pháp Lý",
+        "role": "CEO & Pháp chế",
+        "action": "Đối với các khoản nợ quá hạn trên 60 ngày không có cam kết thanh toán hợp tác, kế toán lập tờ trình trích lập dự phòng nợ phải thu khó đòi và chuyển hồ sơ cho bộ phận Pháp lý khởi kiện thu hồi.",
+        "erpLink": {
+          "path": "/dashboard/proposals",
+          "label": "Lập Tờ Trình Xử Lý Nợ"
+        },
+        "deliverables": [
+          "Hồ sơ pháp lý thu hồi nợ",
+          "Quyết định trích lập dự phòng"
+        ],
+        "cautions": [
+          "Nhân viên Sales phụ trách khách hàng bị trừ điểm KPI và chịu chế tài theo quy chế tài chính công ty."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "ar1",
+        "text": "Cập nhật tiền về ngân hàng và cấn trừ hóa đơn trong ngày",
+        "critical": true
+      },
+      {
+        "id": "ar2",
+        "text": "Biên bản đối chiếu công nợ được gửi và thu hồi ký nhận trước ngày 10",
+        "critical": true
+      },
+      {
+        "id": "ar3",
+        "text": "Hệ thống tự động kích hoạt Credit Hold khi nợ quá hạn > 15 ngày",
+        "critical": true
+      },
+      {
+        "id": "ar4",
+        "text": "Có biên bản làm việc và cam kết lịch thanh toán cụ thể của khách nợ"
+      }
+    ],
+    "requiredDocs": [
+      "Form 8.2-A: Sổ theo dõi Công nợ Phải thu",
+      "Form 8.2-B: Biên bản Đối chiếu Công nợ",
+      "Form 8.2-C: Báo cáo Công nợ Hàng ngày",
+      "Công văn đôn đốc thanh toán công nợ"
+    ],
+    "forms": [
+      {
+        "code": "Form 8.2-A",
+        "title": "Sổ Theo Dõi Công Nợ Phải Thu",
+        "fileName": "Form_8.2-A_Cong_no_Phai_thu.xlsx",
+        "downloadUrl": "/forms/Form_8.2-A_Cong_no_Phai_thu.xlsx"
+      },
+      {
+        "code": "Form 8.2-B",
+        "title": "Biên Bản Đối Chiếu Công Nợ",
+        "fileName": "Form_8.2-B_Doi_chieu_Cong_no.xlsx",
+        "downloadUrl": "/forms/Form_8.2-B_Doi_chieu_Cong_no.xlsx"
+      },
+      {
+        "code": "Form 8.2-C",
+        "title": "Báo Cáo Công Nợ Hàng Ngày",
+        "fileName": "Form_8.2-C_Bao_cao_Cong_no_Hang_ngay.xlsx",
+        "downloadUrl": "/forms/Form_8.2-C_Bao_cao_Cong_no_Hang_ngay.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Khách hàng chuyển khoản thanh toán nhưng nội dung không ghi mã đơn thì xử lý sao?",
+        "a": "Kế toán tra soát số tài khoản người gửi, đối chiếu số tiền trùng khớp với hóa đơn nào và liên hệ Sales phụ trách xác nhận trong ngày để tránh treo tiền chưa phân bổ."
+      }
+    ]
+  },
+  {
+    "id": "sop-84",
+    "code": "SOP 8.4",
+    "title": "Quy Trình Tính Giá Vốn Thực Tế Hàng Nhập Khẩu (Landed Cost & COGS)",
+    "titleEn": "Landed Cost & Import COGS Calculation Procedure",
+    "category": "finance",
+    "department": "Phòng Tài Chính - Kế Toán",
+    "departmentEn": "Finance & Accounting Dept",
+    "summary": "Quy chuẩn phân bổ chi phí giá vốn toàn diện cho từng chai rượu: Giá CIF hóa đơn + Thuế nhập khẩu + Thuế tiêu thụ đặc biệt (TTĐB theo độ cồn) + Thuế VAT + Chi phí vận tải biển, bảo hiểm hàng hải, lưu kho bãi và phí kiểm nghiệm ATTP.",
+    "purpose": "Xác định chính xác giá vốn thực tế (True Landed Cost) cho từng chai vang để phòng kinh doanh định giá bán và bảo vệ biên lợi nhuận.",
+    "scope": "Áp dụng cho Kế toán giá vốn (CST), Chuyên viên xuất nhập khẩu, Kế toán trưởng và Giám đốc điều hành.",
+    "estimatedDuration": "Hoàn tất trong vòng 48h sau khi thông quan lô hàng",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.0",
+    "raci": {
+      "responsible": [
+        "Kế toán giá vốn (CST)"
+      ],
+      "accountable": [
+        "Kế toán trưởng"
+      ],
+      "consulted": [
+        "Chuyên viên Mua hàng/XNK",
+        "Đại lý Forwarder"
+      ],
+      "informed": [
+        "Phòng Kinh doanh (để cập nhật bảng giá bán)"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Tập Hợp Bộ Chứng Từ Nhập Khẩu & Tờ Khai Hải Quan",
+        "role": "Chuyên viên XNK & Kế toán",
+        "action": "Tập hợp toàn bộ chứng từ gốc: Commercial Invoice, Packing List, Vận đơn đường biển (B/L), Tờ khai hải quan thông quan và Giấy chứng nhận xuất xứ (C/O EUR.1/AK hưởng thuế ưu đãi).",
+        "erpLink": {
+          "path": "/dashboard/procurement",
+          "label": "Xem Đơn Mua Hàng & Lô Hàng"
+        },
+        "deliverables": [
+          "Bộ chứng từ hải quan đầy đủ và hợp pháp"
+        ],
+        "cautions": [
+          "Kiểm tra tỷ giá tính thuế hải quan và tỷ giá thực tế thanh toán ngân hàng để ghi nhận chênh lệch tỷ giá."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Tính Thuế Nhập Khẩu & Thuế TTĐB Qua Tax Engine",
+        "role": "Kế toán giá vốn",
+        "action": "Nhập thông tin nồng độ cồn (ABV%) và mã HS Code vào Tax Engine trên Wine ERP. Thuế TTĐB = (Giá CIF + Thuế NK) * Thuế suất TTĐB (35% cho rượu <20° hoặc 65% cho rượu ≥20°).",
+        "erpLink": {
+          "path": "/dashboard/costing",
+          "label": "Mở Công Cụ Tính Giá Vốn (CST)"
+        },
+        "deliverables": [
+          "Bảng tính thuế chi tiết theo mã chai"
+        ],
+        "cautions": [
+          "Rượu vang có nồng độ cồn khác nhau chịu thuế suất TTĐB khác nhau, tuyệt đối không áp dụng bình quân."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Phân Bổ Chi Phí Phụ Trợ (Logistics, Kho Bãi, Kiểm Nghiệm)",
+        "role": "Kế toán giá vốn",
+        "action": "Tập hợp các chi phí phát sinh: Cước tàu, bảo hiểm hàng hải, phí lưu bãi Demurrage, phí kiểm nghiệm ATTP, chi phí tem rượu. Phân bổ vào từng mã chai theo giá trị CIF hoặc số lượng chai thực nhập.",
+        "erpLink": {
+          "path": "/dashboard/costing",
+          "label": "Phân Bổ Chi Phí Lô Hàng"
+        },
+        "deliverables": [
+          "Bảng phân bổ chi phí Landed Cost (Form 4.5-A)"
+        ],
+        "cautions": [
+          "Không bỏ sót các chi phí phát sinh tại cảng để tránh làm sai lệch giá vốn thực tế."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Cập Nhật Giá Vốn Vào Tồn Kho Lô (StockLot Cost) & Khóa Sổ",
+        "role": "Kế toán trưởng",
+        "action": "Sau khi kiểm tra bảng tính, Kế toán trưởng phê duyệt cập nhật giá vốn thực tế vào từng mã Lô hàng (StockLot). Giá vốn này là căn cứ để tính giá vốn hàng bán (COGS) khi xuất kho theo nguyên tắc FIFO.",
+        "erpLink": {
+          "path": "/dashboard/costing",
+          "label": "Khóa Sổ Giá Vốn Lô Hàng"
+        },
+        "deliverables": [
+          "Giá vốn StockLot chính thức trên ERP"
+        ],
+        "cautions": [
+          "Khi đã khóa sổ giá vốn lô hàng, mọi điều chỉnh hồi tố phải có biên bản phê duyệt của Ban Giám Đốc."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "lc1",
+        "text": "Có đầy đủ Tờ khai hải quan thông quan và chứng từ nộp thuế",
+        "critical": true
+      },
+      {
+        "id": "lc2",
+        "text": "Thuế TTĐB được tính chính xác theo từng nồng độ cồn (ABV%)",
+        "critical": true
+      },
+      {
+        "id": "lc3",
+        "text": "Đã phân bổ đủ chi phí logistics, tem rượu và kiểm nghiệm ATTP",
+        "critical": true
+      },
+      {
+        "id": "lc4",
+        "text": "Giá vốn Landed Cost được Kế toán trưởng phê duyệt trước khi xuất bán"
+      }
+    ],
+    "requiredDocs": [
+      "Tờ khai hải quan thông quan điện tử",
+      "Form 4.5-A: Bảng tính Landed Cost nhập khẩu",
+      "Form 8.4-A: Bảng tính Giá vốn hàng bán (COGS)",
+      "Hóa đơn cước vận chuyển quốc tế & nội địa"
+    ],
+    "forms": [
+      {
+        "code": "Form 4.5-A",
+        "title": "Bảng Tính Landed Cost Nhập Khẩu",
+        "fileName": "Form_4.5-A_Landed_Cost.xlsx",
+        "downloadUrl": "/forms/Form_4.5-A_Landed_Cost.xlsx"
+      },
+      {
+        "code": "Form 8.4-A",
+        "title": "Bảng Tính Giá Vốn Hàng Bán (COGS)",
+        "fileName": "Form_8.4-A_COGS.xlsx",
+        "downloadUrl": "/forms/Form_8.4-A_COGS.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Tại sao phải phân bổ chi phí theo giá trị thay vì chỉ chia đều theo số chai?",
+        "a": "Chai Grand Cru giá trị cao chịu mức thuế và rủi ro bảo hiểm lớn hơn nhiều so với chai vang phổ thông, việc phân bổ theo giá trị phản ánh đúng bản chất chi phí của từng dòng sản phẩm."
+      }
+    ]
+  },
+  {
+    "id": "sop-31",
+    "code": "SOP 3.1",
+    "title": "Quy Trình Dự Báo Nhu Cầu & Lập Kế Hoạch Mua Hàng Quốc Tế",
+    "titleEn": "International Demand Forecasting & Purchase Order SOP",
+    "category": "procurement",
+    "department": "Phòng Mua Hàng & Xuất Nhập Khẩu",
+    "departmentEn": "Procurement & Import Dept",
+    "summary": "Các bước dự báo tiêu thụ theo mùa vụ, lập kế hoạch đặt hàng quốc tế (PO) trước 60 ngày, đàm phán điều kiện bảo quản container có lót cách nhiệt (Thermal Liner) mùa mát T10 - T3 để tối ưu chi phí vận chuyển.",
+    "purpose": "Chủ động nguồn hàng cung ứng, tối ưu chi phí logistics và đảm bảo chất lượng rượu vang nguyên vẹn khi về kho.",
+    "scope": "Áp dụng cho Chuyên viên mua hàng quốc tế, Giám đốc điều hành (CEO), Kế toán thanh toán quốc tế.",
+    "estimatedDuration": "4 - 8 tuần từ lúc đặt hàng đến khi hàng về kho",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.0",
+    "raci": {
+      "responsible": [
+        "Chuyên viên Mua hàng quốc tế (Purchaser)"
+      ],
+      "accountable": [
+        "Giám đốc Điều hành (CEO)"
+      ],
+      "consulted": [
+        "Trưởng phòng Kinh doanh (dự báo sản lượng)",
+        "Kế toán trưởng"
+      ],
+      "informed": [
+        "Thủ kho tổng"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Tổng Hợp Dự Báo Nhu Cầu Tiêu Thụ & Tồn An Toàn",
+        "role": "Purchaser & Sales Lead",
+        "action": "Phân tích số liệu tiêu thụ 3 tháng gần nhất và dự báo mùa vụ (Form 3.1-A). Xác định mức tồn kho tối thiểu (Safety Stock) để lập Kế hoạch đặt hàng (Form 3.1-B).",
+        "erpLink": {
+          "path": "/dashboard/reports",
+          "label": "Xem Báo Cáo Phân Tích Tiêu Thụ"
+        },
+        "deliverables": [
+          "Form 3.1-A: Dự báo nhu cầu",
+          "Form 3.1-B: Kế hoạch đặt hàng"
+        ],
+        "cautions": [
+          "Tính toán lead time đặt hàng quốc tế tối thiểu 60 ngày đối với rượu vang nhập khẩu từ Châu Âu (Pháp, Ý, Tây Ban Nha)."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Tạo Đơn Mua Hàng (PO) & Đàm Phán Incoterms",
+        "role": "Chuyên viên mua hàng",
+        "action": "Lập Đơn mua hàng (Form 3.2-A / Purchase Order trên ERP). Đàm phán giá cả, niên vụ (Vintage), điều kiện thanh toán và điều kiện vận chuyển: Bắt buộc lót tấm cách nhiệt (Thermal Liner) trong cont thường và chạy vào mùa mát từ Tháng 10 đến Tháng 3.",
+        "erpLink": {
+          "path": "/dashboard/procurement",
+          "label": "Tạo Đơn Mua Hàng (PO)"
+        },
+        "deliverables": [
+          "Đơn mua hàng chính thức (Purchase Order)",
+          "Proforma Invoice từ Nhà làm vang"
+        ],
+        "cautions": [
+          "Tránh vận chuyển cont thường vào các tháng hè nóng đỉnh điểm để không làm hỏng chất lượng vang."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Trình Duyệt PO & Mở Thanh Toán Đặt Cọc",
+        "role": "CEO & Kế toán TT",
+        "action": "Trình duyệt PO qua hệ thống Approval Workflow. Sau khi CEO phê duyệt, kế toán lập Yêu cầu thanh toán (Form 3.3-A), chuyển khoản đặt cọc 30% bằng điện chuyển tiền T/T hoặc mở L/C.",
+        "erpLink": {
+          "path": "/dashboard/payment-requests",
+          "label": "Tạo Yêu Cầu Thanh Toán PO"
+        },
+        "deliverables": [
+          "Điện chuyển tiền đặt cọc Swift MT103"
+        ],
+        "cautions": [
+          "Kiểm tra chính xác thông tin tài khoản ngân hàng quốc tế của hãng vang trên Proforma Invoice."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Theo Dõi Hành Trình Lô Hàng (Shipment Tracking)",
+        "role": "Purchaser & Logistics",
+        "action": "Cập nhật tiến độ sản xuất, ngày đóng hàng (ETD) và ngày tàu đến cảng (ETA) vào Bảng theo dõi PO (Form 3.4-A). Đôn đốc hãng gửi trước bản scan bộ chứng từ để chuẩn bị hồ sơ công bố ATTP.",
+        "erpLink": {
+          "path": "/dashboard/shipments",
+          "label": "Theo Dõi Lô Hàng (Shipments)"
+        },
+        "deliverables": [
+          "Bản scan Bill of Lading, Invoice, Packing List, C/O"
+        ],
+        "cautions": [
+          "Nếu có biến động ngày tàu cập cảng, phải thông báo ngay cho phòng Kinh doanh để điều chỉnh cam kết giao hàng với khách."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "prc1",
+        "text": "Dự báo nhu cầu và kế hoạch đặt hàng được CEO phê duyệt",
+        "critical": true
+      },
+      {
+        "id": "prc2",
+        "text": "Hợp đồng mua bán quy định rõ niên vụ (Vintage) và điều kiện đóng gói cách nhiệt",
+        "critical": true
+      },
+      {
+        "id": "prc3",
+        "text": "Đã hoàn tất thanh toán đặt cọc đúng hạn cam kết với nhà sản xuất",
+        "critical": true
+      },
+      {
+        "id": "prc4",
+        "text": "Đầy đủ bộ chứng từ gốc hợp lệ (B/L, C/O ưu đãi thuế, Giấy chứng nhận sức khỏe)"
+      }
+    ],
+    "requiredDocs": [
+      "Form 3.1-A: Dự báo Nhu cầu",
+      "Form 3.1-B: Kế hoạch Đặt hàng",
+      "Form 3.2-A: Purchase Order",
+      "Form 3.3-A: Yêu cầu Thanh toán Đặt cọc",
+      "Form 3.4-A: Bảng theo dõi tiến độ PO"
+    ],
+    "forms": [
+      {
+        "code": "Form 3.2-A",
+        "title": "Mẫu Đơn Mua Hàng Quốc Tế (Purchase Order)",
+        "fileName": "Form_3.2-A_Purchase_Order.xlsx",
+        "downloadUrl": "/forms/Form_3.2-A_Purchase_Order.xlsx"
+      },
+      {
+        "code": "Form 3.1-A",
+        "title": "Dự Báo Nhu Cầu Hàng Hóa",
+        "fileName": "Form_3.1-A_Du_bao_Nhu_cau.xlsx",
+        "downloadUrl": "/forms/Form_3.1-A_Du_bao_Nhu_cau.xlsx"
+      },
+      {
+        "code": "Form 3.1-B",
+        "title": "Kế Hoạch Đặt Hàng Quốc Tế",
+        "fileName": "Form_3.1-B_Ke_hoach_Dat_hang.xlsx",
+        "downloadUrl": "/forms/Form_3.1-B_Ke_hoach_Dat_hang.xlsx"
+      },
+      {
+        "code": "Form 3.3-A",
+        "title": "Phiếu Yêu Cầu Thanh Toán",
+        "fileName": "Form_3.3-A_Yeu_cau_Thanh_toan.xlsx",
+        "downloadUrl": "/forms/Form_3.3-A_Yeu_cau_Thanh_toan.xlsx"
+      },
+      {
+        "code": "Form 3.4-A",
+        "title": "Bảng Theo Dõi Tiến Độ PO",
+        "fileName": "Form_3.4-A_Bang_theo_doi_PO.xlsx",
+        "downloadUrl": "/forms/Form_3.4-A_Bang_theo_doi_PO.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Tại sao công ty chọn giải pháp cont thường lót tấm cách nhiệt (Thermal Liner)?",
+        "a": "Chi phí cont lạnh (Reefer Container) từ Châu Âu về Việt Nam rất đắt đỏ. Sử dụng tấm lót cách nhiệt kết hợp chọn lịch tàu chạy vào mùa mát từ tháng 10 đến tháng 3 giúp nhiệt độ trong cont duy trì ổn định mà tiết kiệm hàng ngàn USD tiền cước."
+      }
+    ]
+  },
+  {
+    "id": "sop-51",
+    "code": "SOP 5.1",
+    "title": "Quy Trình Kiểm Nhận Nhập Kho, Dán Tem Rượu & Bảo Quản Kho Mát",
+    "titleEn": "Goods Receipt, Wine Stamping & Cool Storage SOP",
+    "category": "warehouse",
+    "department": "Phòng Kho Vận (Warehouse)",
+    "departmentEn": "Warehouse Department",
+    "summary": "Quy chuẩn các bước tiếp nhận xe cont hàng về kho, kiểm đếm thực tế (Form 5.1-A), chuyển vào khu cách ly dán tem rượu nhập khẩu (Form 5.2-A), kiểm soát nhiệt độ kho mát 16°C – 18°C (Form 5.3-A) và hoàn tất nhập kho chính.",
+    "purpose": "Đảm bảo 100% chai rượu vang được kiểm soát chất lượng, lưu kho đúng tiêu chuẩn nhiệt độ quốc tế và đầy đủ tem nhãn hợp pháp.",
+    "scope": "Áp dụng cho Thủ kho, Kế toán kho, Nhân viên bốc dỡ và Nhân viên dán tem.",
+    "estimatedDuration": "2 - 4 giờ / Lô hàng",
+    "effectiveDate": "01/01/2026",
+    "version": "v2.2",
+    "raci": {
+      "responsible": [
+        "Thủ kho chính",
+        "Tổ dán tem"
+      ],
+      "accountable": [
+        "Trưởng bộ phận Kho vận & Logistics"
+      ],
+      "consulted": [
+        "Kế toán kho",
+        "Chuyên viên mua hàng/XNK"
+      ],
+      "informed": [
+        "Phòng Kinh doanh (hàng sẵn sàng bán)"
+      ]
+    },
+    "flowSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Kiểm Tra Tình Trạng Niêm Chì & Mở Thùng Hàng",
+        "role": "Thủ kho & Đội vận chuyển",
+        "action": "Khi xe tải chở hàng về kho, kiểm tra số niêm chì (Seal), tình trạng thùng xe. Chụp ảnh hiện trường, dỡ các pallet hàng cẩn thận vào Khu vực kiểm nhận.",
+        "deliverables": [
+          "Ảnh chụp hiện trường niêm chì",
+          "Biên bản bàn giao vận tải"
+        ],
+        "cautions": [
+          "Nếu phát hiện thùng hàng bị móp méo nặng, ướt đáy hoặc nghe tiếng vỡ chai, lập tức lập Biên bản bất thường có chữ ký tài xế trước khi dỡ."
+        ]
+      },
+      {
+        "stepNumber": 2,
+        "title": "Kiểm Đếm Số Lượng & Lập Biên Bản Kiểm Nhận (Form 5.1-A)",
+        "role": "Thủ kho & Kế toán kho",
+        "action": "Đối chiếu số lượng thực tế từng mã chai, niên vụ vang so với Packing List và Tờ khai hải quan. Lập Biên bản kiểm nhận hàng hóa (Form 5.1-A). Chai vỡ/lỗi tách riêng vào khu vực hàng hỏng (Form 5.7-A).",
+        "erpLink": {
+          "path": "/dashboard/warehouse",
+          "label": "Tạo Phiếu Nhập Kho (GR)"
+        },
+        "deliverables": [
+          "Form 5.1-A: Biên bản kiểm nhận",
+          "Phiếu nhập kho tạm trên ERP"
+        ],
+        "cautions": [
+          "Tuyệt đối không xếp chung hàng chưa kiểm đếm vào khu vực hàng sẵn sàng xuất bán."
+        ]
+      },
+      {
+        "stepNumber": 3,
+        "title": "Dán Tem Rượu Nhập Khẩu & Nhãn Phụ Tiếng Việt",
+        "role": "Tổ dán tem & Kế toán tem",
+        "action": "Cấp phát tem rượu điện tử từ kế toán, ghi chép vào Sổ theo dõi tem (Form 5.2-A). Tiến hành dán tem rượu vắt qua miệng chai và nhãn phụ tiếng Việt vào mặt sau chai theo đúng quy chuẩn pháp luật.",
+        "erpLink": {
+          "path": "/dashboard/stamps",
+          "label": "Quản Lý Tem Rượu"
+        },
+        "deliverables": [
+          "Form 5.2-A: Sổ theo dõi sử dụng tem"
+        ],
+        "cautions": [
+          "Toàn bộ tem bị rách/hỏng trong lúc dán phải dán lại vào giấy trắng lưu giữ xác tem để phục vụ báo cáo cơ quan Thuế."
+        ]
+      },
+      {
+        "stepNumber": 4,
+        "title": "Lưu Kho Mát 16°C – 18°C & Ghi Sổ Nhiệt Độ Hàng Ngày",
+        "role": "Thủ kho",
+        "action": "Chuyển các pallet rượu đã dán tem vào kệ kho mát (Cool Cellar). Duy trì nhiệt độ ổn định từ 16°C đến 18°C, độ ẩm 60-70%. Ghi chép nhiệt độ 2 lần/ngày (09h00 và 15h00) vào Sổ nhiệt độ kho (Form 5.3-A).",
+        "erpLink": {
+          "path": "/dashboard/warehouse",
+          "label": "Xem Danh Mục Vị Trí Kệ Kho"
+        },
+        "deliverables": [
+          "Form 5.3-A: Sổ theo dõi nhiệt độ kho",
+          "Tồn kho khả dụng cập nhật"
+        ],
+        "cautions": [
+          "Các chai vang nút bần tự nhiên (cork) bắt buộc phải xếp nằm ngang để giữ ẩm cho nút bần, ngăn không khí lọt vào chai."
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "wh1",
+        "text": "Số lượng chai thực nhập khớp với Packing List và Tờ khai hải quan",
+        "critical": true
+      },
+      {
+        "id": "wh2",
+        "text": "Đã hoàn tất dán 100% tem rượu nhập khẩu và nhãn phụ hợp quy",
+        "critical": true
+      },
+      {
+        "id": "wh3",
+        "text": "Nhiệt độ kho mát luôn duy trì ổn định 16°C – 18°C",
+        "critical": true
+      },
+      {
+        "id": "wh4",
+        "text": "Ghi chép sổ theo dõi nhiệt độ đầy đủ 2 lần mỗi ngày",
+        "critical": true
+      },
+      {
+        "id": "wh5",
+        "text": "Đã lập biên bản tách riêng hàng hư hỏng vỡ chai nếu có"
+      }
+    ],
+    "requiredDocs": [
+      "Form 5.1-A: Biên bản Kiểm nhận Hàng hóa",
+      "Form 5.2-A: Sổ theo dõi Sử dụng Tem rượu",
+      "Form 5.3-A: Sổ theo dõi Nhiệt độ & Độ ẩm Kho",
+      "Form 5.7-A: Biên bản Hàng lỗi / Hư hỏng",
+      "Phiếu nhập kho hoàn tất (Goods Receipt)"
+    ],
+    "forms": [
+      {
+        "code": "Form 5.1-A",
+        "title": "Biên Bản Kiểm Nhận Hàng Hóa",
+        "fileName": "Form_5.1-A_Bien_ban_Kiem_nhan.xlsx",
+        "downloadUrl": "/forms/Form_5.1-A_Bien_ban_Kiem_nhan.xlsx"
+      },
+      {
+        "code": "Form 5.2-A",
+        "title": "Sổ Theo Dõi Tem Rượu Nhập Khẩu",
+        "fileName": "Form_5.2-A_So_theo_doi_Tem.xlsx",
+        "downloadUrl": "/forms/Form_5.2-A_So_theo_doi_Tem.xlsx"
+      },
+      {
+        "code": "Form 5.3-A",
+        "title": "Sổ Theo Dõi Nhiệt Độ Kho Vang",
+        "fileName": "Form_5.3-A_So_Nhiet_do_Kho.xlsx",
+        "downloadUrl": "/forms/Form_5.3-A_So_Nhiet_do_Kho.xlsx"
+      },
+      {
+        "code": "Form 5.7-A",
+        "title": "Biên Bản Hàng Lỗi / Chai Vỡ",
+        "fileName": "Form_5.7-A_Bien_ban_Hang_loi.xlsx",
+        "downloadUrl": "/forms/Form_5.7-A_Bien_ban_Hang_loi.xlsx"
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Nếu phát hiện nhiệt độ kho tăng vọt trên 22°C thì xử lý khẩn cấp thế nào?",
+        "a": "Thủ kho kiểm tra ngay hệ thống máy lạnh, bật quạt thông gió dự phòng và báo cho bộ phận kỹ thuật bảo trì trong vòng 30 phút để tránh làm biến chất vang."
+      }
+    ]
+  }
+]

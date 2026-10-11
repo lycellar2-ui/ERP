@@ -142,20 +142,32 @@ PAID / CLOSED
 - Auto-expire: DRAFT/SENT quá validUntil → EXPIRED
 
 ### Gửi Báo Giá (Multi-channel Delivery)
-- **📧 Email**: Gửi HTML email chuyên nghiệp qua Resend + Telegram notification
-- **🔗 Copy Link Zalo/WhatsApp**: Copy public URL → paste vào tin nhắn
-- **🖨️ In/Tải PDF**: Mở tab dạng web → browser Print/Save PDF
+- **Email**: Gửi HTML email chuyên nghiệp qua Resend + Telegram notification
+- **Copy Link Zalo/WhatsApp**: Copy public URL → paste vào tin nhắn
+- **In/Tải PDF**: Mở tab dạng web → browser Print/Save PDF khổ A4
 
-### PDF Export (3 Styles)
-- **Professional** (nền trắng) — tối ưu cho in giấy
-- **Elegant** (dark theme) — gửi digital, KH cao cấp
-- Nội dung: Logo + header công ty, MST, ảnh sản phẩm (hiển thị dạng **nằm ngang - landscape** với tỷ lệ `contain` hoàn hảo không móp méo), thông tin wine (vintage, appellation, awards, tasting notes), VAT tách riêng 10%, chiết khấu, điều khoản.
-- Định dạng xuất bản: Hỗ trợ tự động gom nhóm sản phẩm theo **Nhà Cung Cấp + Quốc Gia** trước khi hiển thị trên các tài liệu PDF chuyên nghiệp.
+### PDF Export (2 Luxury Styles)
+- **Professional** (Bản trắng Alabaster) — tối ưu cho in ấn khổ A4 và gửi hồ sơ thương mại chính thức.
+- **Elegant / Sommelier Slate** (Bản tối hầm vang cao cấp) — định dạng số gửi qua iPad/Email cho khách hàng Private Client / VVIP.
+- **Tiêu chuẩn thiết kế Fine Wine**:
+  - Typography: Sử dụng cặp font kinh điển `Cormorant Garamond` (tiêu đề, tên vang, nhà sản xuất) và `Inter` (thông số kỹ thuật, số liệu tabular).
+  - Nhận diện thương hiệu: Header Deep Navy Slate (`#0B1924`) viền chỉ vàng dual gold hairlines (`#C5A059`), biểu tượng gia huy LY's Cellars, MST và địa chỉ trụ sở Pasteur Q.1.
+  - Mã QR Tra Cứu Tự Động (Dynamic Scannable QR): Tự động bắt đúng `origin` (localhost, staging, production domain) để tạo QR độ phân giải cao 160x160 cho phép quét trực tiếp từ điện thoại.
+  - Phân nhóm Maison & Terroir: Tự động gom nhóm sản phẩm theo **Nhà Sản Xuất + Vùng/Quốc Gia**.
+  - Chi tiết sản phẩm: Tên vang, Vintage, Appellation, Phân hạng (`Grand Cru Classé en 1855`, `DOCG`, `Premier Cru`), giải thưởng (`Robert Parker`, `Decanter`), ghi chú thử nếm Sommelier.
+  - Thẻ thông tin thanh toán: Tài khoản Vietcombank chính thức của công ty và cú pháp chuyển khoản.
+  - Tiêu chuẩn dịch vụ 4 trụ cột Cellar Master: 100% Chính ngạch CO/CQ, Kho lạnh 14-16°C & 70% độ ẩm, Giao xe thùng lạnh chuyên dụng, Bảo hiểm nút bần đổi mới (sử dụng icon SVG vector thanh lịch, chuẩn B2B Luxury).
+  - **Khối Chữ Ký & Con Dấu Pháp Nhân (Executive Signature & Seal Block)**: Cung cấp 2 cột ký duyệt chính thức (**Đại diện Khách Hàng** và **Công ty TNHH LY's Cellars - Ban Giám Đốc Phê Duyệt & Đóng Dấu**) đáp ứng tính pháp lý và độ trang trọng thương mại.
 
 ### Public Quotation Viewer
-- **URL**: `/verify/quotation/[publicToken]` — KH xem trực tuyến không cần login
-- **View Tracking**: viewCount, firstViewedAt, lastViewedAt → Sale thấy badge 👁️ trên list
-- **Accept/Reject online**: KH bấm chấp nhận/từ chối + nhập lý do
+- **URL**: `/verify/quotation/[publicToken]` — Khách hàng xem trực tuyến không cần login qua token mã hóa an toàn.
+- **Không gian thẩm mỹ Fine Wine Salon**: Nền Alabaster thanh lịch (`#FDFCF9`), thẻ thông tin viền chỉ vàng, loại bỏ hoàn toàn các mảng tương phản lỗi.
+- **Quy trình giao dịch VIP 4 bước**: Stepper trực quan dẫn lối từ Khởi tạo → Duyệt & ký tên → Niêm phong hầm vang → Giao nhận xe chuyên dụng.
+- **Grand Cru Dossier Modal**: Khách bấm vào ảnh chai vang để mở popup hồ sơ Sommelier chi tiết (ảnh lớn sắc nét, giống nho, quy cách chai, nồng độ cồn, nhiệt độ phục vụ, tầng hương Aromas, cấu trúc vị giác Palate, ẩm thực đề xuất, giải thưởng quốc tế).
+- **Tiện ích liên hệ & thanh toán**: Nút gọi tư vấn và nhắn Zalo trực tiếp với chuyên viên phụ trách; thông tin chuyển khoản Vietcombank với nút sao chép STK nhanh 1-chạm.
+- **View Tracking**: viewCount, firstViewedAt, lastViewedAt → Sale thấy badge trên danh sách.
+- **Phê duyệt trực tuyến**: Nút ký duyệt phong cách con dấu sáp (Executive Seal CTA) và form phản hồi / từ chối lịch thiệp, tự động revalidate cache hệ thống ngay khi thao tác.
+- **Empty State Guard**: Hiển thị thông báo thẩm mỹ khi danh mục báo giá chưa có dòng sản phẩm.
 
 ### Schema Additions
 - `publicToken` (UUID) — unique public URL

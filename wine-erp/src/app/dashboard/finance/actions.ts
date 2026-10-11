@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth, hasRole, hasPermission } from '@/lib/session'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, ARPaymentCreateSchema, APPaymentSchema, ExpenseCreateSchema, JournalEntrySchema, CODCollectionSchema, BadDebtWriteOffSchema } from '@/lib/validations'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
@@ -185,6 +185,11 @@ export async function getARAgingBuckets() {
 // ── Record AR payment + AUTO-UPDATE SO status ────
 export async function recordARPayment(invoiceId: string, amount: number, method: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán') && !hasPermission(user, 'FIN', 'CREATE') && !hasPermission(user, 'FIN', 'APPROVE')) {
+            return { success: false, error: 'Bạn không có quyền ghi nhận thanh toán tài chính' }
+        }
+
         // ── Zod validation ──
         parseOrThrow(ARPaymentCreateSchema.pick({ invoiceId: true, amount: true, method: true }), { invoiceId, amount, method })
 
@@ -205,11 +210,7 @@ export async function recordARPayment(invoiceId: string, amount: number, method:
         ])
 
         // ── Auto Journal: DR 112 (Tiền gửi NH) / CR 131 (Phải thu KH) ──
-        const user = await getCurrentUser()
-        const userId = user?.id ?? (await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } }))?.id
-        if (userId) {
-            await generatePaymentInJournal(payment.id, amount, inv.invoiceNo, userId)
-        }
+        await generatePaymentInJournal(payment.id, amount, inv.invoiceNo, user.id)
 
         // ── EVENT-DRIVEN: Auto-update SO status when fully paid ──
         if (newStatus === 'PAID' && inv.soId) {
@@ -305,6 +306,11 @@ export async function collectCODPayment(input: {
 // ── Record AP payment ────────────────────────────
 export async function recordAPPayment(invoiceId: string, amount: number, method: string, reference?: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán') && !hasPermission(user, 'FIN', 'CREATE') && !hasPermission(user, 'FIN', 'APPROVE')) {
+            return { success: false, error: 'Bạn không có quyền thanh toán công nợ nhà cung cấp' }
+        }
+
         // ── Zod validation ──
         parseOrThrow(APPaymentSchema, { invoiceId, amount, method, reference })
 
@@ -332,11 +338,7 @@ export async function recordAPPayment(invoiceId: string, amount: number, method:
         ])
 
         // ── Auto Journal: DR 331 (Phải trả NCC) / CR 112 (Tiền gửi NH) ──
-        const user = await getCurrentUser()
-        const userId = user?.id ?? (await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } }))?.id
-        if (userId) {
-            await generateAPPaymentJournal(payment.id, amount, inv.invoiceNo, inv.supplier?.name ?? 'NCC', userId)
-        }
+        await generateAPPaymentJournal(payment.id, amount, inv.invoiceNo, inv.supplier?.name ?? 'NCC', user.id)
 
         revalidateCache('finance')
         revalidatePath('/dashboard/finance')
@@ -432,7 +434,10 @@ export async function createManualJournal(input: {
 
         const date = postedAt ?? new Date()
         const period = await getOrCreatePeriod(date.getFullYear(), date.getMonth() + 1)
-        const user = await getCurrentUser()
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán') && !hasPermission(user, 'FIN', 'CREATE')) {
+            return { success: false, error: 'Chỉ Kế toán hoặc Ban Giám Đốc mới có quyền tạo bút toán thủ công' }
+        }
         const entryNo = await nextEntryNo('JE-MAN')
 
         const entry = await prisma.journalEntry.create({
@@ -442,7 +447,7 @@ export async function createManualJournal(input: {
                 docId: `MAN-${entryNo}`,
                 description,
                 periodId: period.id,
-                createdBy: user?.id ?? 'system',
+                createdBy: user.id,
                 postedAt: date,
                 lines: {
                     create: lines.map(l => ({
@@ -860,16 +865,11 @@ export async function closeAccountingPeriod(
     closedBy?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        let userId = closedBy
-        if (!userId) {
-            const user = await getCurrentUser()
-            userId = user?.id
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán')) {
+            return { success: false, error: 'Chỉ Kế toán trưởng hoặc Ban Giám Đốc mới có quyền khóa sổ kỳ kế toán' }
         }
-        if (!userId) {
-            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
-            userId = admin?.id
-        }
-        if (!userId) return { success: false, error: 'No user found' }
+        const userId = user.id
 
         await prisma.accountingPeriod.update({
             where: { id: periodId },
@@ -1826,17 +1826,8 @@ export async function createExpense(data: {
             category: data.category, amount: data.amount, description: data.description,
         })
 
-        let userId = data.createdBy
-        if (!userId) {
-            const user = await getCurrentUser()
-            userId = user?.id
-        }
-        // Dev fallback: use first admin user when session unavailable
-        if (!userId) {
-            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
-            userId = admin?.id
-        }
-        if (!userId) return { success: false, error: 'No user found' }
+        const user = await requireAuth()
+        const userId = user.id
         const now = new Date()
         const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
         const count = await prisma.expense.count()
@@ -1880,16 +1871,11 @@ export async function approveExpense(
     approverId?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        let userId = approverId
-        if (!userId) {
-            const user = await getCurrentUser()
-            userId = user?.id
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán')) {
+            return { success: false, error: 'Chỉ Kế toán hoặc Ban Giám Đốc mới có quyền duyệt chi phí' }
         }
-        if (!userId) {
-            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
-            userId = admin?.id
-        }
-        if (!userId) return { success: false, error: 'No user found' }
+        const userId = user.id
 
         await prisma.expense.update({
             where: { id: expenseId },
@@ -1915,16 +1901,11 @@ export async function rejectExpense(
     approverId?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        let userId = approverId
-        if (!userId) {
-            const user = await getCurrentUser()
-            userId = user?.id
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán')) {
+            return { success: false, error: 'Chỉ Kế toán hoặc Ban Giám Đốc mới có quyền từ chối chi phí' }
         }
-        if (!userId) {
-            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
-            userId = admin?.id
-        }
-        if (!userId) return { success: false, error: 'No user found' }
+        const userId = user.id
 
         await prisma.expense.update({
             where: { id: expenseId },
@@ -2102,16 +2083,11 @@ export async function writeOffBadDebt(input: {
         // ── Zod validation ──
         parseOrThrow(BadDebtWriteOffSchema, { invoiceId: input.invoiceId, reason: input.reason })
 
-        let userId = input.approvedBy
-        if (!userId) {
-            const user = await getCurrentUser()
-            userId = user?.id
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'KE_TOAN', 'Kế Toán')) {
+            return { success: false, error: 'Chỉ Kế toán trưởng hoặc Ban Giám Đốc mới có quyền xóa nợ xấu' }
         }
-        if (!userId) {
-            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
-            userId = admin?.id
-        }
-        if (!userId) return { success: false, error: 'No user found' }
+        const userId = user.id
 
         const invoice = await prisma.aRInvoice.findUnique({
             where: { id: input.invoiceId },

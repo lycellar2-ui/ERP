@@ -158,11 +158,22 @@ export async function updateUserRoles(
 }
 
 // ─── List Roles ───────────────────────────────────
+const ROLE_PRIORITY: Record<string, number> = {
+    'CEO': 1,
+    'CBO': 2,
+    'Sales Manager': 3,
+    'Kế Toán': 4,
+    'Thu Mua': 5,
+    'Thủ Kho': 6,
+    'Nhân Sự': 7,
+    'Marketing': 8,
+    'Sales Admin': 9,
+    'Sales Rep': 10,
+}
+
 export async function getRoles(): Promise<RoleRow[]> {
     await requirePermission('SYS', 'ADMIN')
-    const roles = await prisma.role.findMany({
-        orderBy: { name: 'asc' },
-    })
+    const roles = await prisma.role.findMany()
 
     const result: RoleRow[] = []
     for (const r of roles) {
@@ -178,6 +189,15 @@ export async function getRoles(): Promise<RoleRow[]> {
             userCount: userCount,
         })
     }
+
+    // Sắp xếp theo cấp bậc tổ chức & số lượng quyền hạn
+    result.sort((a, b) => {
+        const pA = ROLE_PRIORITY[a.name] ?? 99
+        const pB = ROLE_PRIORITY[b.name] ?? 99
+        if (pA !== pB) return pA - pB
+        return b.permissionCount - a.permissionCount
+    })
+
     return result
 }
 
@@ -242,6 +262,7 @@ export async function updateRolePermissions(
         ])
         const currentUser = await getCurrentUser().catch(() => null)
         logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'UPDATE', entityType: 'RolePermission', entityId: roleId, oldValue: { permissions: oldPerms.map(p => p.permission.code) }, newValue: { permissionCount: permissionIds.length } })
+        invalidateUserSession()
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }

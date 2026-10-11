@@ -80,8 +80,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
     if (isLoading || !detail) {
         return (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                <div className="bg-white p-6 rounded-lg flex items-center gap-3 text-slate-700 font-bold shadow-2xl">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="bg-white p-6 rounded-lg flex items-center gap-3 text-slate-700 font-bold shadow-2xl animate-modal-in">
                     <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
                     Đang tải Bảng Theo Dõi Kiểm Kê Real-time...
                 </div>
@@ -178,8 +178,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4">
-            <div className="bg-white border border-slate-200 rounded-lg w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
+            <div className="bg-white border border-slate-200 rounded-lg w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden animate-modal-in">
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 onClose()
                                 onOpenMobileView(sessionId)
                             }}
-                            className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                            className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                         >
                             <Smartphone className="w-4 h-4" /> Mở giao diện di động
                         </button>
@@ -250,7 +250,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                     onClose()
                                     onOpenAssignModal(sessionId)
                                 }}
-                                className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                                 title="Phân công nhân viên phụ trách khu vực"
                             >
                                 <UserCheck className="w-3.5 h-3.5 text-cyan-700" /> Phân công
@@ -263,7 +263,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                     onClose()
                                     onOpenPrintView(sessionId)
                                 }}
-                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                                 title="In biên bản kiểm kê"
                             >
                                 <Printer className="w-3.5 h-3.5 text-slate-600" /> In phiếu
@@ -272,12 +272,12 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                         <button
                             onClick={() => setShowAddUnlistedModal(true)}
-                            className="px-3.5 py-2 bg-[#0E7490] hover:bg-[#0891B2] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                            className="px-3.5 py-2 bg-[#0E7490] hover:bg-[#0891B2] active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                         >
                             <Plus className="w-4 h-4" /> Chèn mã bổ sung
                         </button>
 
-                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg cursor-pointer">
+                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 active:scale-90 transition-all rounded-lg cursor-pointer">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -375,7 +375,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <select
                             value={selectedZone}
                             onChange={e => setSelectedZone(e.target.value)}
-                            className="bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
+                            className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
                             <option value="ALL">Tất cả vị trí ({zones.length} khu vực)</option>
                             {zones.map((z: string) => {
@@ -392,7 +392,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <select
                             value={selectedStaff}
                             onChange={e => setSelectedStaff(e.target.value)}
-                            className="bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
+                            className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
                             <option value="ALL">Tất cả nhân viên</option>
                             {staffMembers.map(st => (
@@ -406,7 +406,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <select
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value as any)}
-                            className="bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
+                            className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
                             <option value="ALL">Tất cả trạng thái</option>
                             <option value="UNCOUNTED">Chưa đếm</option>
@@ -423,7 +423,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 placeholder="Tìm SKU, tên rượu, nhân viên..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-[#0E7490]"
+                                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-lg pl-9 pr-3 py-2 text-base sm:text-xs outline-none focus:border-[#0E7490]"
                             />
                         </div>
 
@@ -431,7 +431,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             <button
                                 onClick={handleFinishZone}
                                 disabled={isCompletingZone}
-                                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-lg shadow-xs flex items-center gap-1 shrink-0 cursor-pointer"
+                                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs rounded-lg shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-all"
                             >
                                 {isCompletingZone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                 Chốt Khu Vực Này
@@ -525,7 +525,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                                         <button
                                                             type="button"
                                                             onClick={() => handleQtyChange(line.id, (line.qtyActual || 0) - 1)}
-                                                            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95 shadow-2xs"
+                                                            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-90 transition-transform select-none touch-manipulation shadow-2xs"
                                                         >
                                                             -
                                                         </button>
@@ -538,12 +538,12 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                                                 const val = parseInt(e.target.value, 10)
                                                                 handleQtyChange(line.id, isNaN(val) ? 0 : val)
                                                             }}
-                                                            className="w-20 text-center font-mono font-bold text-sm text-[#0E7490] bg-white border border-slate-300 rounded-lg p-1 outline-none focus:border-[#0E7490]"
+                                                            className="w-20 text-center font-mono font-bold text-base sm:text-sm text-[#0E7490] bg-white border border-slate-300 rounded-lg p-1 outline-none focus:border-[#0E7490]"
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => handleQtyChange(line.id, (line.qtyActual || 0) + 1)}
-                                                            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95 shadow-2xs"
+                                                            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-90 transition-transform select-none touch-manipulation shadow-2xs"
                                                         >
                                                             +
                                                         </button>
@@ -594,7 +594,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white font-black text-xs rounded-lg shadow-xs cursor-pointer"
+                        className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
                     >
                         Hoàn Tất & Đóng Bảng
                     </button>
@@ -617,8 +617,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
             {/* ZONE VARIANCE SUMMARY MODAL */}
             {showZoneReportModal && zoneReport && (
-                <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="inline-block text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
@@ -626,7 +626,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 mt-1">{zoneReport.zoneName}</h3>
                             </div>
-                            <button onClick={() => setShowZoneReportModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                            <button onClick={() => setShowZoneReportModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>

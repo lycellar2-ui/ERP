@@ -1,6 +1,7 @@
 // API Route: Import products from LYs Cellars crawled JSON data
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser, hasRole, hasPermission } from '@/lib/session'
 
 // Vendor → Country mapping
 const VENDOR_COUNTRY: Record<string, string> = {
@@ -39,6 +40,11 @@ function extractFromHtml(html: string | null, pattern: RegExp): string | null {
 
 export async function POST(req: NextRequest) {
     try {
+        const user = await getCurrentUser()
+        if (!user || (!hasRole(user, 'CEO', 'ADMIN') && !hasPermission(user, 'MDM', 'WRITE'))) {
+            return NextResponse.json({ error: 'Forbidden: MDM write permission required' }, { status: 403 })
+        }
+
         const body = await req.json()
         const products = body.products as any[]
         if (!products?.length) {

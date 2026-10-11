@@ -267,12 +267,12 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         type="button"
                         onClick={handleToggleNoti}
                         aria-label="Thông báo"
-                        className="relative flex items-center justify-center w-8 h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-colors duration-150 hover:border-lys-teal hover:text-lys-teal-strong cursor-pointer"
+                        className="relative flex items-center justify-center w-8 h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-all duration-150 hover:border-lys-teal hover:text-lys-teal-strong active:scale-90 cursor-pointer"
                     >
                         <Bell size={15} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center text-white bg-tone-danger-fg whitespace-nowrap shrink-0">
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center text-white bg-tone-danger-fg whitespace-nowrap shrink-0 animate-pop">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -280,7 +280,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
                     {/* Popover Dropdown */}
                     {showNoti && (
-                        <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 overflow-hidden bg-lys-card border border-lys-border">
+                        <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
                             <div className="flex items-center justify-between px-4 py-3 border-b border-lys-border">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-lys-secondary">Thông Báo</span>
                                 {unreadCount > 0 && (
@@ -352,7 +352,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 <div className="relative" ref={profileRef}>
                     <button
                         onClick={() => setShowProfile(!showProfile)}
-                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-md bg-white border border-lys-border transition-colors duration-150 hover:border-lys-teal cursor-pointer"
+                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-md bg-white border border-lys-border transition-all duration-150 hover:border-lys-teal active:scale-95 cursor-pointer"
                     >
                         <div className="w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                             {(currentUser?.name?.[0] || 'A').toUpperCase()}
@@ -364,7 +364,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
                     {/* Profile Dropdown */}
                     {showProfile && (
-                        <div className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 overflow-hidden bg-lys-card border border-lys-border">
+                        <div className="absolute right-0 mt-2 w-64 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
                             <div className="p-4 border-b border-lys-border">
                                 <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-lys-secondary">Thông Tin Cá Nhân</p>
                                 <p className="text-sm font-semibold truncate text-lys-primary">

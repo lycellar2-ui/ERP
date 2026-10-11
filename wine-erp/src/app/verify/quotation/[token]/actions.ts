@@ -1,6 +1,8 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { revalidatePath } from 'next/cache'
+import { revalidateCache } from '@/lib/cache'
 
 // Get quotation by public token + track view
 export async function getQuotationByToken(token: string) {
@@ -74,6 +76,8 @@ export async function acceptQuotationPublic(token: string): Promise<{ success: b
             data: { status: 'ACCEPTED' },
         })
 
+        revalidateCache('quotations')
+        revalidatePath('/dashboard/quotations')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -91,6 +95,8 @@ export async function rejectQuotationPublic(token: string, reason: string): Prom
             data: { status: 'CANCELLED', rejectedReason: reason },
         })
 
+        revalidateCache('quotations')
+        revalidatePath('/dashboard/quotations')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }

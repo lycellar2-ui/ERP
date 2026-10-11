@@ -1243,7 +1243,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         {t.productsLabel}
                                     </label>
                                     <button onClick={addLine}
-                                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold transition-all"
+                                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded active:scale-95 transition-all duration-100 cursor-pointer"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}>
                                         <Plus size={13} /> {t.addLine}
                                     </button>
@@ -1378,7 +1378,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
-                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white border border-slate-200 w-[520px] shadow-xl">
+                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white border border-slate-200 w-[520px] shadow-xl animate-dropdown origin-top-left">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                                     <div className="px-3 py-2 text-xs text-slate-500">
                                                                                         {t.noProductFound}
@@ -1469,7 +1469,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     {formatCurrency(lineTotal)}
                                                                 </td>
                                                                 <td className="px-3 py-2 text-center">
-                                                                    <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700 p-1.5 rounded transition-all" type="button">
+                                                                    <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-700 active:scale-75 p-1.5 rounded transition-all duration-100 cursor-pointer" type="button" aria-label="Xóa dòng">
                                                                         <Trash2 size={14} />
                                                                     </button>
                                                                 </td>
@@ -1524,8 +1524,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     style={{ ...inputStyle, minWidth: 0 }}
                                                                 />
                                                                 
-                                                                {activeDropdownIndex === i && (
-                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white border-slate-200">
+                                                                 {activeDropdownIndex === i && (
+                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-xl border bg-white border-slate-200 animate-dropdown origin-top">
                                                                         {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                             <div className="px-3 py-2 text-xs text-slate-500">
                                                                                 {t.noProductFound}
@@ -1557,7 +1557,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <button onClick={() => removeLine(i)} style={{ color: '#B91C1C', padding: '8px' }} type="button">
+                                                            <button onClick={() => removeLine(i)} className="active:scale-75 transition-all duration-100 cursor-pointer" style={{ color: '#B91C1C', padding: '8px' }} type="button" aria-label="Xóa dòng">
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         </div>
@@ -1586,7 +1586,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     type="button"
                                                                     disabled={line.qtyOrdered <= 1}
                                                                     onClick={() => updateLine(i, 'qtyOrdered', Math.max(1, line.qtyOrdered - 1))}
-                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 active:scale-90 disabled:opacity-30 disabled:pointer-events-none transition-all duration-75 select-none cursor-pointer"
                                                                     aria-label="Giảm 1"
                                                                 >
                                                                     <Minus size={15} />
@@ -1598,12 +1598,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     min="1"
                                                                     value={line.qtyOrdered}
                                                                     onChange={e => updateLine(i, 'qtyOrdered', Math.max(1, Number(e.target.value) || 1))}
-                                                                    className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                                                    className="w-14 h-9 px-1 text-center font-bold text-base text-slate-900 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-150"
                                                                 />
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 1)}
-                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                                                                    className="w-9 h-9 flex items-center justify-center rounded-md bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 active:bg-slate-300 active:scale-90 transition-all duration-75 select-none cursor-pointer"
                                                                     aria-label="Tăng 1"
                                                                 >
                                                                     <Plus size={15} />
@@ -1615,7 +1615,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 6)}
-                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 transition-colors"
+                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 active:scale-95 transition-all duration-100 select-none cursor-pointer"
                                                                     title={isEn ? "Add 1 case (6 btls)" : "Thêm 1 thùng (6 chai)"}
                                                                 >
                                                                     +6 {isEn ? 'btls' : 'chai'}
@@ -1623,7 +1623,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => updateLine(i, 'qtyOrdered', line.qtyOrdered + 12)}
-                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 transition-colors"
+                                                                    className="px-2.5 h-9 flex items-center justify-center text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 active:bg-teal-200 active:scale-95 transition-all duration-100 select-none cursor-pointer"
                                                                     title={isEn ? "Add 2 cases (12 btls)" : "Thêm 2 thùng (12 chai)"}
                                                                 >
                                                                     +12 {isEn ? 'btls' : 'chai'}

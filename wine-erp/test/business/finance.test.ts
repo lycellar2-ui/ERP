@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-vi.mock('@/lib/session', () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: 'admin-1' }) }))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
+vi.mock('@/lib/cache', () => ({
+    cached: vi.fn((key, fn) => fn()),
+    revalidateCache: vi.fn(),
+}))
+vi.mock('@/lib/session', () => ({
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'admin-1', role: 'ADMIN' }),
+    requireAuth: vi.fn().mockResolvedValue({ id: 'admin-1', role: 'ADMIN' }),
+    hasRole: vi.fn(() => true),
+    hasPermission: vi.fn(() => true),
+    requirePermission: vi.fn().mockResolvedValue({ id: 'admin-1', role: 'ADMIN' }),
+}))
 
 const mockPrisma = {
     aRInvoice: {
@@ -15,7 +25,7 @@ const mockPrisma = {
     aRPayment: { create: vi.fn() },
     aPPayment: { create: vi.fn() },
     salesOrder: { update: vi.fn() },
-    journalEntry: { count: vi.fn(), create: vi.fn() },
+    journalEntry: { count: vi.fn(), create: vi.fn(), findFirst: vi.fn().mockResolvedValue(null) },
     journalLine: { findMany: vi.fn() },
     accountingPeriod: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
     goodsReceipt: { findUnique: vi.fn() },

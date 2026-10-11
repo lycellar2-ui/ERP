@@ -97,7 +97,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
     const legalName = detail.legalEntityName || 'CÔNG TY TNHH LY CELLARS'
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static animate-fade-in">
             <style>{`
                 @media print {
                     @page {
@@ -116,9 +116,9 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
             `}</style>
 
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
+            <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden animate-modal-in print:animate-none">
                 <div className="flex items-center gap-3">
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors cursor-pointer">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 active:scale-90 transition-all cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                     <div>
@@ -132,7 +132,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         <button
                             onClick={handleApprove}
                             disabled={isApproving}
-                            className="px-4 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white text-xs font-black rounded-lg flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                            className="px-4 py-2 bg-[#0891B2] hover:bg-[#0E7490] text-white text-xs font-black rounded-lg flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
                         >
                             <ShieldCheck className="w-4 h-4" />
                             {isApproving ? 'Đang duyệt...' : 'Duyệt & Tạo Bút Toán ADJ'}
@@ -141,7 +141,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
 
                     <button
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-lg flex items-center gap-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
                     >
                         <Printer className="w-4 h-4" />
                         In Biên Bản (A4)

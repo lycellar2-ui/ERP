@@ -45,6 +45,8 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
         customerCode: qt.customer.code,
         salesRepName: qt.salesRep.name,
         salesRepEmail: qt.salesRep.email,
+        customerPhone: qt.customerPhone || null,
+        customerEmail: qt.customerEmail || null,
         isExpired,
         isActionable,
         lines: qt.lines.map((l, i) => {
@@ -52,6 +54,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
             const qty = Number(l.qtyOrdered)
             const disc = Number(l.lineDiscountPct)
             const lineTotal = qty * unitPrice * (1 - disc / 100)
+            const p = (l.product as any).profile
             return {
                 index: i + 1,
                 productName: l.product.productName,
@@ -60,8 +63,24 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 volumeMl: l.product.volumeMl,
                 country: l.product.country,
                 abvPercent: Number(l.product.abvPercent),
+                format: (l.product as any).format || null,
+                packagingType: (l.product as any).packagingType || null,
+                producerName: l.product.producer?.name || null,
+                supplierName: (l.product as any).supplier?.name || "Ly's Cellars",
+                appellationName: l.product.appellation?.name || null,
+                regionName: l.product.appellation?.region?.name || null,
+                classification: l.product.classification || null,
+                profile: p ? {
+                    grapes: p.grapes || null,
+                    color: p.color || null,
+                    aromas: p.aromas || null,
+                    palate: p.palate || null,
+                    style: p.style || null,
+                    foodPairings: p.foodPairings || null,
+                    servingTemp: p.servingTemp || null,
+                    bestSuitedFor: p.bestSuitedFor || null,
+                } : null,
                 tastingNotes: (() => {
-                    const p = (l.product as any).profile
                     if (!p) return null
                     return [
                         p.grapes ? `Giống nho: ${p.grapes}` : null,
@@ -73,16 +92,12 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                         p.servingTemp ? `Phục vụ: ${p.servingTemp}` : null,
                     ].filter(Boolean).join('. ')
                 })(),
-                classification: l.product.classification,
-                producerName: l.product.producer?.name,
-                supplierName: (l.product as any).supplier?.name || "Ly's Cellars",
-                appellationName: l.product.appellation?.name,
-                regionName: l.product.appellation?.region?.name,
                 imageUrl: l.product.media?.[0]?.url || l.product.media?.[0]?.thumbnailUrl || null,
                 awards: l.product.awards?.map(a => ({
                     source: a.source,
                     score: a.score ? Number(a.score) : null,
                     medal: a.medal as string | null,
+                    vintage: (a as any).vintage || null,
                 })) || [],
                 qty,
                 unitPrice,

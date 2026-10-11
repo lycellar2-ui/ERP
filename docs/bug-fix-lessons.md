@@ -83,6 +83,9 @@
 74. [BUG-127: Khách Hàng (MDM) — Chuẩn Hóa 100% Khách Hàng HORECA Thuộc Mô Hình Cha-Con & Sinh Mã Khách Hàng Cha Dùng Tiền Tố Đầu Mã Thay Vì Hậu Tố -M](#bug-127-khách-hàng-mdm--chuẩn-hóa-100-khách-hàng-horeca-thuộc-mô-hình-cha-con--sinh-mã-khách-hàng-cha-dùng-tiền-tố-đầu-mã-thay-vì-hậu-tố--m)
 75. [BUG-128: Tờ Trình Giá Đặc Biệt (Proposal) Không Hiển Thị Cho Các Cơ Sở Con / Công Ty Mẹ Khi Lên Đơn Bán Hàng & Báo Giá](#bug-128-tờ-trình-giá-đặc-biệt-proposal--customerpricerule-không-hiển-thị--áp-dụng-được-cho-các-cơ-sở-con--công-ty-mẹ-khi-lên-đơn-bán-hàng-so--báo-giá-quotation)
 76. [BUG-129: Lỗi Upload Chứng Từ Scan (Hóa Đơn, UNC) Phân Hệ Đề Nghị Thanh Toán — Sai Tên Bucket R2, Thiếu Fallback Env & Vượt Giới Hạn Payload 4.5MB Serverless](#bug-129-lỗi-upload-chứng-từ-scan-hóa-đơn-unc-giấy-tờ-phân-hệ-đề-nghị-thanh-toán--ngân-sách--sai-tên-bucket-r2-thiếu-fallback-biến-môi-trường--vượt-giới-hạn-payload-45mb-serverless)
+77. [BUG-130: Trải Nghiệm Lên Đơn & Sửa Đơn SO Trên Điện Thoại — Lỗi Auto-Zoom Viewport Khi Gõ Khách Hàng, Dropdown Đóng Sớm Khi Chạm Cảm Ứng & Nhập Số Lượng Khó Khăn](#bug-130-trải-nghiệm-lên-đơn--sửa-đơn-so-trên-điện-thoại--lỗi-auto-zoom-viewport-khi-gõ-khách-hàng-dropdown-đóng-sớm-khi-chạm-cảm-ứng--nhập-số-lượng-khó-khăn)
+78. [BUG-131: Lỗi Truy Cập Web Báo Giá Công Khai — Middleware Chuyển Hướng Ảo Người Đã Đăng Nhập Về Dashboard, Chặn 401 API PDF Khách Chưa Đăng Nhập & Trải Nghiệm Mở Link Báo Giá](#bug-131-lỗi-truy-cập-web-báo-giá-công-khai--middleware-chuyển-hướng-ảo-người-đã-đăng-nhập-về-dashboard-chặn-401-api-pdf-khách-chưa-đăng-nhập--trải-nghiệm-mở-link-báo-giá)
+79. [BUG-132: Lỗ Hổng Kiểm Soát Truy Cập RBAC (Broken Access Control) Đa Tầng: Thiếu Route Guards, Server Action Bỏ Quên Xác Thực Quyền, Tự Duyệt Trái Thẩm Quyền & Cache Stale Quyền Hạn](#bug-132-lỗ-hổng-kiểm-soát-truy-cập-rbac-broken-access-control-đa-tầng-thiếu-route-guards-server-action-bỏ-quên-xác-thực-quyền-tự-duyệt-trái-thẩm-quyền--cache-stale-quyền-hạn)
 
 ---
 
@@ -3678,6 +3681,137 @@ Người dùng truy cập ERP trên điện thoại thông minh (iOS Safari, And
 
 ### Bài học
 > ⚠️ **RULE 130: (1) Trên giao diện Web di động / Responsive, MỌI thẻ `<input>`, `<select>`, `<textarea>` BẮT BUỘC phải dùng cỡ chữ tối thiểu 16px trên mobile (`text-base sm:text-xs` hoặc `text-base sm:text-sm`) để ngăn chặn triệt để hành vi tự động phóng to (Auto-Zoom) của iOS Safari và Android Chrome; (2) Đối với các bộ chọn Autocomplete/Dropdown trên thiết bị cảm ứng, BẮT BUỘC dùng `onPointerDown={(e) => { e.preventDefault(); ... }}` để ngăn `onBlur` đóng menu trước khi người dùng chạm chọn; (3) Các thao tác nhập số lượng trên di động PHẢI có `inputMode="numeric"` và bộ nút bấm tăng giảm Stepper (kích thước tối thiểu 36x36px) cùng phím tắt đơn vị đóng gói (như +6, +12 thùng) để tối ưu công thái học (Ergonomics) cho người dùng.**
+
+---
+
+## BUG-131: Lỗi Truy Cập Web Báo Giá Công Khai — Middleware Chuyển Hướng Ảo Người Đã Đăng Nhập Về Dashboard, Chặn 401 API PDF Khách Chưa Đăng Nhập & Trải Nghiệm Mở Link Báo Giá
+
+**Ngày:** 2026-10-11  
+**Module:** `Sales Quotations (SLS) / Public Web & Middleware`  
+**File liên quan:** `src/middleware.ts`, `src/app/api/export/quotation-pdf/route.ts`, `src/app/verify/quotation/[token]/page.tsx`, `src/app/verify/quotation/[token]/QuotationPublicView.tsx`, `src/app/verify/quotation/[token]/actions.ts`, `src/app/dashboard/quotations/actions.ts`, `src/app/dashboard/quotations/QuotationClient.tsx`  
+**Trạng thái:** ✅ Đã khắc phục & Kiểm thử tự động thành công  
+
+### Triệu chứng & Bối cảnh
+1. Nhân viên kinh doanh tạo báo giá trong ERP và copy link web công khai (`/verify/quotation/[token]`) để kiểm tra hoặc gửi khách hàng.
+2. Khi nhân viên click thử link trên cùng trình duyệt (nơi đã đăng nhập tài khoản ERP), trình duyệt ngay lập tức bị cưỡng chế chuyển hướng (redirect) ngược về `/dashboard`, không thể xem được giao diện web của khách.
+3. Khi khách hàng vãng lai (hoàn toàn không đăng nhập) mở xem link web báo giá và muốn in/tải PDF chính thức từ hệ thống, API xuất PDF trả về mã lỗi `401 Unauthorized`.
+4. Trên giao diện danh sách báo giá của Sales (`QuotationClient.tsx`), thiếu nút mở xem trực tiếp trang web báo giá, và giao diện khách xem bị hardcode nhiều thuật ngữ tiếng Anh, thiếu nút in/tải bản PDF trực tiếp.
+
+### Nguyên nhân gốc rễ
+1. **Lẫn lộn giữa Auth-Only Routes và Public Routes trong Next.js Middleware:**
+   - `publicPaths` trong `middleware.ts` khai báo gộp cả `['/login', '/forgot-password', '/reset-password', '/verify']`.
+   - Khối điều kiện chuyển hướng người đã đăng nhập viết: `if (user && isPublic) { return NextResponse.redirect('/dashboard') }`.
+   - Vì `/verify` nằm trong `publicPaths`, khi người dùng đã đăng nhập ERP truy cập `/verify/quotation/[token]`, middleware coi đó là trang login và tự động đuổi về `/dashboard`.
+2. **API Export PDF Bị Chặn Quyền Khách Vãng Lai:**
+   - Tuyến API `/api/export/quotation-pdf` không nằm trong danh sách ngoại lệ `isPublicApi` của middleware, dẫn đến việc bất kỳ request nào không có cookie session đều bị chặn ở dòng 143 với `401 Unauthorized`.
+   - Ngoài ra, endpoint GET chỉ chấp nhận query param nội bộ `?id=...` thay vì hỗ trợ `?token=...` công khai an toàn.
+3. **Thiếu Revalidation & Trải nghiệm Sales:**
+   - Server Actions phía khách xem (`acceptQuotationPublic`, `rejectQuotationPublic`) cập nhật DB nhưng không revalidate cache của ERP dashboard.
+   - Nhân viên sales sau khi tạo báo giá không có link xem nhanh mà phải trải qua nhiều bước bấm drawer.
+
+### Cách khắc phục
+1. **Tách Biệt Tuyến Auth-Only Khỏi Tuyến Public:**
+   - Khai báo rõ ràng trong `src/middleware.ts`:
+     ```typescript
+     const authOnlyPaths = ['/login', '/forgot-password', '/reset-password']
+     const publicPaths = [...authOnlyPaths, '/verify']
+     ```
+   - Chỉ redirect người đã đăng nhập khi truy cập `authOnlyPaths`:
+     ```typescript
+     const isAuthOnlyPath = authOnlyPaths.some(p => request.nextUrl.pathname.startsWith(p))
+     if (user && isAuthOnlyPath) {
+         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
+     }
+     ```
+   - Thêm `/api/export/quotation-pdf` vào danh sách `isPublicApi` trong middleware.
+2. **Nâng Cấp API PDF Hỗ Trợ Cả `token` và `id`:**
+   - Hỗ trợ `const token = req.nextUrl.searchParams.get('token')` để khách công khai có thể tải PDF trực tiếp mà không lộ ID hệ thống và không cần đăng nhập.
+3. **Tối Ưu Giao Diện Khách Xem & Sales Dashboard:**
+   - Bổ sung nút **"In / Tải PDF"** trực tiếp trên đầu trang web báo giá khách xem ([QuotationPublicView.tsx](file:///d:/Lyruou/wine-erp/src/app/verify/quotation/[token]/QuotationPublicView.tsx)).
+   - Việt hóa hoàn chỉnh và song ngữ các tiêu đề, thông tin đơn giá, điều khoản thương mại, trạng thái xác nhận.
+   - Tự động sinh `publicToken` trong `getQuotationDetail` nếu là dữ liệu báo giá cũ.
+   - Thêm nút icon **Mở Web Báo Giá** (`ExternalLink`) ở từng dòng bảng danh sách báo giá (cả Desktop & Mobile) và trong Drawer Chi tiết.
+   - Bổ sung nút **Copy Link** & **Mở Web** nhanh trong thông báo toast ngay khi tạo báo giá thành công.
+   - Bổ sung `revalidateCache('quotations')` và `revalidatePath('/dashboard/quotations')` khi khách bấm chấp thuận/từ chối trên web.
+
+### Bài học
+> ⚠️ **RULE 131: (1) Trong Middleware định tuyến xác thực (Auth Routing), TUYỆT ĐỐI không gộp các trang công khai (như `/verify`, `/portal`) chung một biến với các trang chỉ dành cho khách chưa login (như `/login`, `/register`, `/forgot-password`), vì việc redirect `if (user && isPublic)` sẽ khóa cứng người dùng nội bộ không thể truy cập hoặc xem trước các tài liệu công khai do chính họ tạo ra; (2) Mọi tài liệu công khai cho khách xem cần hỗ trợ tải/in PDF phải được mở quyền public API trong middleware và sử dụng token ngẫu nhiên bảo mật (`publicToken` UUID) thay vì ID tuần tự của cơ sở dữ liệu; (3) Mọi thao tác tương tác của khách bên ngoài (Public Acceptance/Rejection) BẮT BUỘC phải kích hoạt revalidation cache để bảng điều khiển ERP của nhân viên cập nhật tức thì.**
+
+---
+
+## BUG-132: Lỗ Hổng Kiểm Soát Truy Cập RBAC (Broken Access Control) Đa Tầng: Thiếu Route Guards, Server Action Bỏ Quên Xác Thực Quyền, Tự Duyệt Trái Thẩm Quyền & Cache Stale Quyền Hạn
+
+**Ngày:** 2026-10-11
+**Severity:** 🔴 Critical — Broken Access Control (OWASP Top 10 A01:2021), Thất thoát thẩm quyền tài chính & phê duyệt nội bộ
+
+### Triệu chứng
+1. Nhân viên có vai trò cấp thấp (hoặc tài khoản Sales/Kho) có thể gõ trực tiếp URL các phân hệ nhạy cảm như `/dashboard/audit-log`, `/dashboard/hr`, `/dashboard/margin`, `/dashboard/payment-requests`, `/dashboard/proposals`, `/dashboard/shipments` mà không bị Middleware chặn nếu không có header tùy biến hoặc khi duyệt web bình thường.
+2. Tại các Server Action duyệt PO (`approvePO`, `rejectPO`), duyệt Tờ trình (`processProposalApproval`), duyệt Đề nghị thanh toán (`processPaymentApproval`):
+   - Không kiểm tra vai trò người dùng hiện tại có khớp với bước duyệt (`currentStep.role`) hay không.
+   - Bất kỳ nhân viên nào có tài khoản đăng nhập đều có thể gửi payload Server Action để tự duyệt hoặc duyệt hộ hồ sơ tài chính hàng trăm triệu đồng.
+   - Người tạo đề nghị thanh toán có thể tự duyệt cho chính mình mà không cần qua quản lý hoặc kế toán.
+3. Trong phân hệ Kế toán - Tài chính (`finance/actions.ts`), xuất hiện mô hình nguy hiểm:
+   ```typescript
+   // LỖ HỔNG: Nếu không có session, tự fallback sang Admin đầu tiên trong database!
+   const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
+   const userId = user?.id ?? admin?.id
+   ```
+   Điều này khiến các thao tác ghi nhận thanh toán AR/AP, tạo bút toán sổ cái, đóng kỳ kế toán, tạo/duyệt chi phí, xóa nợ khó đòi có thể được thực hiện nặc danh và tự mạo danh Admin.
+4. Nhân viên Sales có thể truy vấn và chỉnh sửa toàn bộ Báo giá (Quotations) và Cơ hội bán hàng (Pipeline Opportunities) của đồng nghiệp do thiếu Data Scoping theo `salesRepId` / `assignedTo`.
+5. Khi Admin cập nhật phân quyền cho một vai trò trong Settings (`updateRolePermissions`), người dùng thuộc vai trò đó vẫn giữ quyền cũ trong vòng 5 phút do cơ chế Session Caching (`cached('user:session:${email}')`) không được xóa (invalidate).
+6. Bảng phân quyền Role-Permission trong database seed (`seed-rbac.ts`) bị thiếu hàng loạt Module mới (`HRM`, `PAY`, `PRO`, `SHP`, `POS`).
+
+### Nguyên nhân gốc rễ
+1. **Thiếu Route Guards trong Middleware:**
+   - Biến `ROUTE_PERMISSIONS` trong `src/middleware.ts` chỉ khai báo một phần các route, bỏ sót 6 route nhạy cảm.
+   - Các matcher route chưa được sắp xếp theo độ dài giảm dần, dẫn đến nguy cơ các prefix ngắn khớp trước.
+2. **Hardcode Role String & Bypass Dynamic Permissions trong Layout:**
+   - File `app/dashboard/layout.tsx` kiểm tra quyền CEO bằng `roles.includes('CEO')` thô thiển thay vì dùng helper `hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')` (bỏ qua alias và normalization), và không kiểm tra dynamic permission của từng module con.
+3. **Broken Access Control trong Server Actions:**
+   - Server Actions tin cậy hoàn toàn tham số gửi lên từ Client (`approverId`, `closedBy`) hoặc chỉ gọi `getCurrentUser()` mà không gọi `requireAuth()` và không kiểm tra thẩm quyền bước duyệt.
+4. **Admin Fallback Anti-Pattern:**
+   - Do tàn dư của quá trình phát triển nhanh (rapid prototyping), developer đã viết fallback `user?.id ?? admin.id` ở 8 Server Actions quan trọng trong `finance/actions.ts`.
+5. **Session Cache Invalidation Failure:**
+   - Hàm `updateRolePermissions` cập nhật bản ghi trong PostgreSQL nhưng quên gọi `invalidateUserSession()` cho những người dùng thuộc vai trò đó, khiến thay đổi quyền bị trễ 5 phút.
+
+### Cách khắc phục
+1. **Cập nhật Toàn Diện Route Guards trong `src/middleware.ts`:**
+   - Bổ sung đầy đủ 6 routes vào `ROUTE_PERMISSIONS`:
+     - `/dashboard/audit-log` -> `AUD:READ`
+     - `/dashboard/hr` -> `HRM:READ`
+     - `/dashboard/margin` -> `MGN:READ`
+     - `/dashboard/payment-requests` -> `PAY:READ`
+     - `/dashboard/proposals` -> `PRO:READ`
+     - `/dashboard/shipments` -> `SHP:READ`
+   - Sắp xếp thứ tự kiểm tra route theo độ dài giảm dần: `Object.entries(ROUTE_PERMISSIONS).sort((a, b) => b[0].length - a[0].length)`.
+2. **Chuẩn Hóa Kiểm Tra Quyền trong Layout & Components:**
+   - Sửa `app/dashboard/layout.tsx` sử dụng `hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')` và `hasPermission(user, module, 'READ')`.
+   - Cập nhật [Sidebar.tsx](file:///d:/Lyruou/wine-erp/src/components/layout/Sidebar.tsx) cho phép Kế toán truy cập `/dashboard/payment-requests`.
+3. **Thắt Chặt Phê Duyệt PO, Tờ Trình, Đề Nghị Thanh Toán:**
+   - Tại `procurement/actions.ts` (`approvePO`, `rejectPO`): Sử dụng `requireAuth()`, kiểm tra `hasRole(user, currentStep.role)` hoặc CEO/ADMIN, ghi nhận `approvedBy: user.id`.
+   - Tại `proposals/actions.ts` (`processProposalApproval`): Bắt buộc `requireAuth()`, kiểm tra vai trò khớp bước duyệt, ngăn chặn hoàn toàn việc can thiệp trái thẩm quyền.
+   - Tại `payment-requests/actions.ts` (`processPaymentApproval`): Kiểm tra cấp độ duyệt (Level 1: Manager, Level 2: Accountant, Level 3: CEO) và cấm người lập tự duyệt hồ sơ của chính mình (`user.id === paymentReq.createdById`).
+4. **Triệt Tiêu Hoàn Toàn Admin Fallback trong `finance/actions.ts`:**
+   - Xóa bỏ tất cả các dòng `prisma.user.findFirst(...)` và `user?.id ?? admin?.id`.
+   - Thêm `requireAuth()` và các guard `hasRole()` / `hasPermission()` chặt chẽ:
+     - `recordARPayment`, `recordAPPayment`: Yêu cầu `ACCOUNTANT` hoặc `FIN:WRITE`.
+     - `createJournalEntry`, `closeAccountingPeriod`: Yêu cầu `CHIEF_ACCOUNTANT` hoặc `ADMIN`/`CEO`.
+     - `createExpense`, `approveExpense`, `rejectExpense`: Kiểm tra thẩm quyền quản lý/kế toán/CEO theo ngưỡng.
+     - `writeOffBadDebt`: Yêu cầu quyền phê duyệt cấp cao nhất (`CEO` hoặc `CHIEF_ACCOUNTANT`).
+5. **Data Scoping cho Sales Reps:**
+   - Trong `quotations/actions.ts`: `getQuotations` tự động áp bộ lọc `{ salesRepId: user.id }` nếu user không phải Admin/Manager/Kế toán. `updateQuotation` và `updateQuotationStatus` chỉ cho phép người tạo hoặc cấp quản lý sửa.
+   - Trong `pipeline/actions.ts`: `getOpportunities` tự động áp bộ lọc `{ assignedTo: user.id }` cho Sales.
+6. **Xóa Cache Session Tức Thì Khi Sửa Phân Quyền:**
+   - Trong `settings/actions.ts` (`updateRolePermissions`), truy vấn tất cả users thuộc `roleId` và gọi `invalidateUserSession(u.email)` để hủy session cache ngay lập tức.
+7. **Bổ Sung Module & Phân Quyền Trong `seed-rbac.ts`:**
+   - Thêm các module: `HRM`, `PAY`, `PRO`, `SHP`, `POS`.
+   - Ánh xạ đầy đủ quyền READ/WRITE/APPROVE cho các Role tương ứng.
+8. **Bảo Vệ Các API Routes:**
+   - Thêm session guard và role check cho `/api/ai/config`, `/api/ceo-summary`, `/api/import-lyscellars`.
+
+### Bài học
+> ⚠️ **RULE 132: (1) Tuyệt đối KHÔNG BAO GIỜ áp dụng mô hình "Admin Fallback" (`user?.id ?? admin.id` hoặc lấy user đầu tiên trong DB) trong Server Actions, đặc biệt là các nghiệp vụ Tài chính - Kế toán - Kho; nếu không có session xác thực, Server Action BẮT BUỘC phải throw UnauthorizedError hoặc trả về `{ success: false, error: 'Chưa đăng nhập' }`; (2) Mọi luồng phê duyệt (Approval Steps) phải được kiểm tra thẩm quyền bước duyệt (`hasRole(user, currentStep.role)` hoặc CEO/Admin) trực tiếp trên Server Action, KHÔNG BAO GIỜ tin cậy client-side hay cho phép người tạo tự duyệt; (3) Mọi Route trong Dashboard phải có Route Guard tương ứng trong Middleware được sắp xếp theo độ dài giảm dần; (4) Khi Admin thay đổi phân quyền (Role/Permissions), BẮT BUỘC phải gọi `invalidateUserSession()` cho toàn bộ tài khoản liên quan để tránh tồn tại kẽ hở phân quyền trong thời gian TTL của cache.**
+
 
 
 

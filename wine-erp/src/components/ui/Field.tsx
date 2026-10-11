@@ -15,16 +15,18 @@ function borderFor(invalid?: boolean) {
 interface FieldProps {
     label?: ReactNode
     hint?: ReactNode
+    description?: ReactNode
     error?: ReactNode
     required?: boolean
     className?: string
-    /** Render prop receives the generated id to bind label → control. */
-    children: (id: string) => ReactNode
+    /** Render prop receives the generated id to bind label → control, or direct ReactNode. */
+    children: ReactNode | ((id: string) => ReactNode)
 }
 
 /** Label + control + hint/error, consistent across all forms. */
-export function Field({ label, hint, error, required, className, children }: FieldProps) {
+export function Field({ label, hint, description, error, required, className, children }: FieldProps) {
     const id = useId()
+    const helperText = error ? null : (hint || description)
     return (
         <div className={cn('flex flex-col gap-1', className)}>
             {label && (
@@ -33,11 +35,11 @@ export function Field({ label, hint, error, required, className, children }: Fie
                     {required && <span className="text-tone-danger-fg ml-0.5">*</span>}
                 </label>
             )}
-            {children(id)}
+            {typeof children === 'function' ? children(id) : children}
             {error ? (
                 <p className="type-caption text-tone-danger-fg" role="alert">{error}</p>
-            ) : hint ? (
-                <p className="type-caption text-lys-muted">{hint}</p>
+            ) : helperText ? (
+                <p className="type-caption text-lys-muted">{helperText}</p>
             ) : null}
         </div>
     )

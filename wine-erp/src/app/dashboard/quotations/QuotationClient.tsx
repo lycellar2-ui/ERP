@@ -258,7 +258,36 @@ export function QuotationClient({ initialData }: Props) {
             }),
             {
                 loading: 'Đang tạo báo giá...',
-                success: 'Đã tạo báo giá thành công!',
+                success: (res: any) => {
+                    if (res?.publicToken) {
+                        return (
+                            <div className="flex flex-col gap-1.5 py-1">
+                                <span className="font-semibold text-slate-900">Đã tạo {res.quotationNo} thành công!</span>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <button
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/verify/quotation/${res.publicToken}`
+                                            navigator.clipboard.writeText(url)
+                                            toast.success('Đã copy link báo giá!')
+                                        }}
+                                        className="text-xs px-2.5 py-1 rounded font-medium transition"
+                                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                    >
+                                        Copy Link
+                                    </button>
+                                    <button
+                                        onClick={() => window.open(`/verify/quotation/${res.publicToken}`, '_blank')}
+                                        className="text-xs px-2.5 py-1 rounded font-medium transition"
+                                        style={{ background: '#F1F5F9', color: '#334155' }}
+                                    >
+                                        Mở Web
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    }
+                    return 'Đã tạo báo giá thành công!'
+                },
                 error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setSaving(false)
             }
@@ -519,6 +548,13 @@ export function QuotationClient({ initialData }: Props) {
                                                 style={{ background: 'rgba(100,116,139,0.1)', color: '#475569' }}>
                                                 <Printer size={13} />
                                             </button>
+                                            {row.publicToken && (
+                                                <button onClick={() => window.open(`/verify/quotation/${row.publicToken}`, '_blank')}
+                                                    className="p-1.5 rounded" title="Mở xem Web Báo Giá của khách"
+                                                    style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}>
+                                                    <ExternalLink size={13} />
+                                                </button>
+                                            )}
                                             {['DRAFT', 'SENT'].includes(row.status) && (
                                                 <button onClick={() => setSendDrawerOpen(row.id)}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
@@ -606,6 +642,12 @@ export function QuotationClient({ initialData }: Props) {
                                         className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#475569' }} title="Xem PDF">
                                         <Printer size={12} />
                                     </button>
+                                    {row.publicToken && (
+                                        <button onClick={() => window.open(`/verify/quotation/${row.publicToken}`, '_blank')}
+                                            className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#3B82F6' }} title="Mở Web Báo Giá">
+                                            <ExternalLink size={12} />
+                                        </button>
+                                    )}
                                     {['DRAFT', 'SENT'].includes(row.status) && (
                                         <button onClick={() => setSendDrawerOpen(row.id)}
                                             className="flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded bg-white/80 hover:bg-white border"
@@ -749,6 +791,15 @@ export function QuotationClient({ initialData }: Props) {
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)', borderRadius: '6px' }}>
                                         <Printer size={13} /> PDF Dark
                                     </button>
+
+                                    {/* Open Web */}
+                                    {(detail as any).publicToken && (
+                                        <button onClick={() => window.open(`/verify/quotation/${(detail as any).publicToken}`, '_blank')}
+                                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
+                                            style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '6px' }}>
+                                            <ExternalLink size={13} /> Xem Web
+                                        </button>
+                                    )}
 
                                     {/* Copy link */}
                                     {(detail as any).publicToken && (
