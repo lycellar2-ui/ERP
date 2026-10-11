@@ -14,7 +14,7 @@ import {
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
     Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
-    FileCheck2, CreditCard, BookOpen
+    FileCheck2, CreditCard, BookOpen, X
 } from 'lucide-react'
 
 import { useAppLocale } from '@/lib/i18n'
@@ -169,12 +169,12 @@ const DATA_PREFETCH_MAP: Record<string, (qc: any) => void> = {
 }
 
 // LY's Cellars — Wine glass PNG logo
-function LysLogo({ collapsed }: { collapsed: boolean }) {
-    if (collapsed) {
+function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; isMobile?: boolean; onCloseMobile?: () => void }) {
+    if (collapsed && !isMobile) {
         return (
             <div
                 className="flex items-center justify-center w-full"
-                style={{ borderBottom: '1px solid #E2E8F0', height: '42px' }}
+                style={{ borderBottom: '1px solid #E2E8F0', height: '48px' }}
             >
                 <Image
                     src="/logo/Ly's Cellars - Logo_icon blue green.png"
@@ -190,8 +190,8 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
 
     return (
         <div
-            className="flex items-center px-4 w-full"
-            style={{ borderBottom: '1px solid #E2E8F0', height: '42px' }}
+            className="flex items-center justify-between px-4 w-full"
+            style={{ borderBottom: '1px solid #E2E8F0', height: '48px' }}
         >
             <Image
                 src="/logo/Ly's Cellars - Logo_tagline blue green.png"
@@ -201,6 +201,16 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
                 priority
                 className="object-contain max-h-7"
             />
+            {isMobile && onCloseMobile && (
+                <button
+                    type="button"
+                    onClick={onCloseMobile}
+                    aria-label="Đóng menu"
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                    <X size={18} />
+                </button>
+            )}
         </div>
     )
 }
@@ -210,9 +220,11 @@ interface SidebarProps {
     collapsed: boolean
     onToggle: () => void
     onNavigate?: () => void
+    isMobile?: boolean
+    onCloseMobile?: () => void
 }
 
-export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: SidebarProps) {
+export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile, onCloseMobile }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const queryClient = useQueryClient()
@@ -350,13 +362,18 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
         return () => timers.forEach(clearTimeout)
     }, [pathname, router, filteredGroups])
 
+    const effectiveCollapsed = isMobile ? false : collapsed
+
     return (
         <aside
-            className="flex flex-col h-screen sticky top-0 transition-all duration-200 bg-lys-surface border-r border-lys-border"
-            style={{ width: collapsed ? '64px' : '240px' }}
+            className={`flex flex-col h-screen sticky top-0 transition-all duration-200 bg-lys-surface border-r border-lys-border select-none ${
+                isMobile
+                    ? 'w-[280px] max-w-[85vw]'
+                    : (collapsed ? 'w-[64px]' : 'w-[240px]')
+            }`}
         >
             {/* Logo */}
-            <LysLogo collapsed={collapsed} />
+            <LysLogo collapsed={effectiveCollapsed} isMobile={isMobile} onCloseMobile={onCloseMobile} />
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-3">
@@ -364,7 +381,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                     const groupLabel = (locale === 'en' && group.labelEn) ? group.labelEn : group.label
                     return (
                         <div key={group.label} className="mb-1">
-                            {!collapsed && (
+                            {!effectiveCollapsed && (
                                 <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-lys-muted">
                                     {groupLabel}
                                 </p>
@@ -378,10 +395,10 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        title={collapsed ? itemLabel : undefined}
+                                        title={effectiveCollapsed ? itemLabel : undefined}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}
-                                        className={`flex items-center gap-3 mx-2 px-3 py-2 mb-0.5 rounded-md border-l-2 transition-all duration-150 active:scale-[0.98] select-none ${
+                                        className={`group relative flex items-center gap-3 mx-2 px-3 py-2 mb-0.5 rounded-md border-l-2 transition-all duration-150 active:scale-[0.98] select-none ${
                                             isActive
                                                 ? 'bg-lys-teal-soft text-lys-teal-strong border-lys-teal-strong font-semibold'
                                                 : 'text-lys-secondary border-transparent hover:bg-lys-subtle hover:text-lys-primary'
@@ -389,8 +406,13 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                                         onMouseEnter={() => handlePrefetch(item.href)}
                                     >
                                         <Icon size={18} className="flex-shrink-0" />
-                                        {!collapsed && (
+                                        {!effectiveCollapsed && (
                                             <span className="text-[13px] truncate">{itemLabel}</span>
+                                        )}
+                                        {effectiveCollapsed && (
+                                            <span className="pointer-events-none absolute left-full ml-2.5 z-50 hidden md:group-hover:flex items-center px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-lg whitespace-nowrap">
+                                                {itemLabel}
+                                            </span>
                                         )}
                                     </Link>
                                 )
@@ -405,10 +427,10 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                 {/* Language Switcher */}
                 <div
                     className={`flex items-center transition-all border-b border-lys-border bg-lys-subtle/60 ${
-                        collapsed ? 'justify-center py-2 px-1' : 'justify-between px-4 py-2.5'
+                        effectiveCollapsed ? 'justify-center py-2 px-1' : 'justify-between px-4 py-2.5'
                     }`}
                 >
-                    {!collapsed && (
+                    {!effectiveCollapsed && (
                         <div className="flex items-center gap-2 text-xs font-semibold text-lys-muted">
                             <Globe size={14} className="text-lys-teal-strong" />
                             <span>{locale === 'en' ? 'Language' : 'Ngôn ngữ'}</span>
@@ -446,10 +468,10 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                     onClick={handleLogout}
                     disabled={isLoggingOut}
                     className="flex items-center gap-3 w-full px-5 py-3 transition-colors duration-150 disabled:opacity-50 cursor-pointer text-lys-muted enabled:hover:text-tone-danger-fg"
-                    title={collapsed ? (locale === 'en' ? 'Log Out' : 'Đăng Xuất') : undefined}
+                    title={effectiveCollapsed ? (locale === 'en' ? 'Log Out' : 'Đăng Xuất') : undefined}
                 >
                     <LogOut size={16} className={`flex-shrink-0 ${isLoggingOut ? 'animate-spin' : ''}`} />
-                    {!collapsed && (
+                    {!effectiveCollapsed && (
                         <span className="text-sm">
                             {locale === 'en'
                                 ? (isLoggingOut ? 'Logging Out...' : 'Log Out')
@@ -459,16 +481,18 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                     )}
                 </button>
 
-                <button
-                    onClick={onToggle}
-                    className="flex items-center justify-center w-full py-2 transition-colors duration-150 cursor-pointer text-lys-muted hover:text-lys-teal-strong border-t border-lys-border"
-                    title={collapsed ? (locale === 'en' ? 'Expand sidebar' : 'Mở rộng menu') : (locale === 'en' ? 'Collapse sidebar' : 'Thu gọn menu')}
-                >
-                    {collapsed
-                        ? <ChevronRight size={16} />
-                        : <ChevronLeft size={16} />
-                    }
-                </button>
+                {!isMobile && (
+                    <button
+                        onClick={onToggle}
+                        className="hidden md:flex items-center justify-center w-full py-2 transition-colors duration-150 cursor-pointer text-lys-muted hover:text-lys-teal-strong border-t border-lys-border"
+                        title={collapsed ? (locale === 'en' ? 'Expand sidebar' : 'Mở rộng menu') : (locale === 'en' ? 'Collapse sidebar' : 'Thu gọn menu')}
+                    >
+                        {collapsed
+                            ? <ChevronRight size={16} />
+                            : <ChevronLeft size={16} />
+                        }
+                    </button>
+                )}
             </div>
         </aside>
     )

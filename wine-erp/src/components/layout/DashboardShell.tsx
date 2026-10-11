@@ -35,12 +35,19 @@ function PageSkeleton() {
 export function DashboardShell({ children, currentUser }: { children: React.ReactNode; currentUser: SessionUser | null }) {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
 
-    // Auto-collapse on smaller viewports on mount / resize if desired
+    // Auto-collapse on tablet viewports, keep mobile drawer expanded and large desktop expanded
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 1024) {
+            const mobile = window.innerWidth < 768
+            setIsMobile(mobile)
+            if (mobile) {
+                setCollapsed(false)
+            } else if (window.innerWidth < 1024) {
                 setCollapsed(true)
+            } else {
+                setCollapsed(false)
             }
         }
         handleResize()
@@ -70,8 +77,10 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                 <Sidebar
                     currentUser={currentUser}
                     collapsed={collapsed}
+                    isMobile={isMobile}
                     onToggle={() => setCollapsed(!collapsed)}
                     onNavigate={() => setMobileOpen(false)}
+                    onCloseMobile={() => setMobileOpen(false)}
                 />
             </div>
 
