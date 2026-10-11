@@ -37,10 +37,16 @@ export function StockVelocityReport({ isEn = false }: Props) {
         try {
             setLoading(true)
             const res = await getStockVelocityReport({ cycleMonths: cycle })
-            setData(res)
+            if (res.success && res.data) {
+                setData(res.data)
+            } else {
+                console.error('[StockVelocityReport] Server error:', res.error)
+                toast.error(res.error || (isEn ? 'Failed to load stock report' : 'Lỗi khi tải báo cáo tồn kho'))
+            }
         } catch (err: unknown) {
-            console.error(err)
-            toast.error(isEn ? 'Failed to load stock report' : 'Lỗi khi tải báo cáo tồn kho')
+            console.error('[StockVelocityReport] Network/Client error:', err)
+            const msg = err instanceof Error ? err.message : String(err)
+            toast.error(msg || (isEn ? 'Failed to load stock report' : 'Lỗi khi tải báo cáo tồn kho'))
         } finally {
             setLoading(false)
         }

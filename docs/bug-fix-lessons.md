@@ -86,6 +86,9 @@
 77. [BUG-130: Trải Nghiệm Lên Đơn & Sửa Đơn SO Trên Điện Thoại — Lỗi Auto-Zoom Viewport Khi Gõ Khách Hàng, Dropdown Đóng Sớm Khi Chạm Cảm Ứng & Nhập Số Lượng Khó Khăn](#bug-130-trải-nghiệm-lên-đơn--sửa-đơn-so-trên-điện-thoại--lỗi-auto-zoom-viewport-khi-gõ-khách-hàng-dropdown-đóng-sớm-khi-chạm-cảm-ứng--nhập-số-lượng-khó-khăn)
 78. [BUG-131: Lỗi Truy Cập Web Báo Giá Công Khai — Middleware Chuyển Hướng Ảo Người Đã Đăng Nhập Về Dashboard, Chặn 401 API PDF Khách Chưa Đăng Nhập & Trải Nghiệm Mở Link Báo Giá](#bug-131-lỗi-truy-cập-web-báo-giá-công-khai--middleware-chuyển-hướng-ảo-người-đã-đăng-nhập-về-dashboard-chặn-401-api-pdf-khách-chưa-đăng-nhập--trải-nghiệm-mở-link-báo-giá)
 79. [BUG-132: Lỗ Hổng Kiểm Soát Truy Cập RBAC (Broken Access Control) Đa Tầng: Thiếu Route Guards, Server Action Bỏ Quên Xác Thực Quyền, Tự Duyệt Trái Thẩm Quyền & Cache Stale Quyền Hạn](#bug-132-lỗ-hổng-kiểm-soát-truy-cập-rbac-broken-access-control-đa-tầng-thiếu-route-guards-server-action-bỏ-quên-xác-thực-quyền-tự-duyệt-trái-thẩm-quyền--cache-stale-quyền-hạn)
+80. [BUG-133: Lỗ Hổng Kiểm Soát Truy Cập RBAC Bổ Sung](#bug-133-lỗ-hổng-kiểm-soát-truy-cập-rbac-broken-access-control-đa-tầng)
+81. [BUG-134: Lỗi Giao Diện Tab & Trải Nghiệm Mobile Viewport Màn Hình Quản Lý Tem Rượu (/dashboard/stamps)](#bug-134-lỗi-giao-diện-tab--trải-nghiệm-mobile-viewport-màn-hình-quản-lý-tem-rượu-dashboardstamps--thanh-cuộn-ngang-thừa-vỡ-gạch-chân-tab--bổ-sung-phân-tem-tự-động-theo-đơn-po-nhận-về)
+82. [BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception](#bug-135-lỗi-tải-báo-cáo-tồn-kho--nhịp-độ-bán-hàng-trên-vercel-production--dbpoolend-beforeexit-freeze--unhandled-server-action-exception)
 
 ---
 
@@ -3858,6 +3861,68 @@ Người dùng truy cập ERP trên điện thoại thông minh (iOS Safari, And
 
 ### Bài học
 > ⚠️ **RULE 133: (1) Mọi thuộc tính nhạy cảm về tài chính (giá vốn `costPrice`, biên lãi gộp `marginPct`, đơn giá nhập kho `unitLandedCost`, định giá kho VND) BẮT BUỘC phải được bảo vệ kép: vừa lọc ở giao diện UI (`canSeeMargin`, `canSeeCost`) vừa phải lọc trong các hàm Export (Excel/CSV/PDF) để tránh rò rỉ dữ liệu mật cho nhân viên cấp thực thi; (2) Menu Sidebar và Route Guards trong Middleware PHẢI dùng chung một bảng danh mục Permission Key duy nhất (`MODULE:ACTION`); TUYỆT ĐỐI không khai báo menu mà không có permission tương ứng; (3) Mọi so sánh vai trò người dùng trong hệ thống có hỗ trợ tiếng Việt BẮT BUỘC phải dùng helper `hasRole()` đã được tích hợp bộ chuẩn hóa (Normalization & Aliases Map) để nhận diện đầy đủ cả `Trợ Lý`, `TRO_LY`, `Kế Toán`, `KE_TOAN`.**
+
+---
+
+## BUG-134: Lỗi Giao Diện Tab & Trải Nghiệm Mobile Viewport Màn Hình Quản Lý Tem Rượu (/dashboard/stamps) — Thanh Cuộn Ngang Thừa, Vỡ Gạch Chân Tab & Bổ Sung Phân Tem Tự Động Theo Đơn PO Nhận Về
+
+### Bối cảnh
+Người dùng truy cập màn hình Quản Lý Tem Rượu (`/dashboard/stamps`) trên thiết bị di động (Chrome Android). Giao diện gặp các lỗi hiển thị:
+1. Thanh điều hướng Tab (`overflow-x-auto`) bị hiển thị thanh cuộn ngang (scrollbar) thô kệch bên dưới gạch chân tab do thiếu CSS ẩn scrollbar chuẩn WebKit.
+2. Đường gạch chân tab active cyan bị tách rời với đường viền đáy của container bởi padding `pb-0.5`, tạo thành 2 đường kẻ song song lệch nhau.
+3. Tiêu đề trang quá to và lặp lại với thanh Header của hệ thống, chiếm dụng quá nhiều chiều cao màn hình. 3 thẻ KPI quá cao làm đẩy toàn bộ nội dung dữ liệu ra khỏi tầm nhìn màn hình đầu tiên.
+4. Thiếu chức năng phân tem cho đơn hàng PO nhận về, cần phân chia dải số seri (số đầu và số cuối) tự động nối tiếp cho từng sản phẩm trong đơn PO.
+
+### Nguyên nhân gốc rễ
+1. CSS thiếu class `.no-scrollbar` đầy đủ (`-ms-overflow-style: none; scrollbar-width: none;` và `::-webkit-scrollbar { display: none; }`), dẫn đến việc trình duyệt nhân WebKit/Blink trên mobile tự động vẽ thumb cuộn ngang.
+2. Nút tab dùng inline style `borderBottom: 2px solid #0891B2` trong khi container cha có `pb-0.5` và `border-b border-lys-border`, làm cho đường viền của nút không nằm đè lên đường viền của container (`-mb-px`).
+3. Thiếu server action và modal chuyên biệt để bóc tách sản phẩm từ PO/Phiếu nhập kho `GoodsReceipt`, tính toán dải số seri nối tiếp liên tục và ghi nhận atomic transaction vào `WineStampUsage`.
+
+### Giải pháp
+1. **Bổ sung Utility .no-scrollbar ([globals.css](file:///d:/Lyruou/wine-erp/src/app/globals.css)):**
+   - Định nghĩa `.no-scrollbar` chuẩn đa trình duyệt (hỗ trợ cả WebKit display none và chuẩn CSS scrollbar-width: none).
+2. **Chuẩn hóa Giao diện Tab & Mobile Header ([StampsClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/stamps/StampsClient.tsx)):**
+   - Thiết kế lại Tab Bar với `-mb-px border-b-2`, gạch chân active dính liền đường viền container, không còn đường kẻ đôi.
+   - Header thu gọn trên mobile, responsive actions với nút bấm phân tem PO nổi bật.
+   - Thẻ KPI compact, tối ưu hóa chiều cao, số liệu font-mono dễ đọc.
+3. **Phân Bổ Tem Đơn PO Tự Động ([actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/stamps/actions.ts), [StampsClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/stamps/StampsClient.tsx)):**
+   - Thêm `getReceivedPOsForStamps()`: Lấy PO trạng thái `RECEIVED`/`PARTIALLY_RECEIVED` kèm chi tiết sản phẩm, nồng độ cồn ABV và số lượng nhận từ `GoodsReceipt`.
+   - Thuật toán `calculateContiguousSerials`: Nhập số đầu của PO, tự động chia dải số seri (Số đầu → Số cuối) liên tục cho từng sản phẩm theo số lượng chai, cho phép chỉnh sửa tay linh hoạt.
+   - Thêm `allocateStampsToPO()`: Ghi nhận giao dịch nguyên tử, khấu trừ tồn tem, sinh nhật ký `WineStampUsage` cho từng dòng sản phẩm.
+   - Tab "Phân Tem Cho PO": Quản lý danh sách PO đã phân tem và mở rộng Accordion xem chi tiết số đầu - số cuối của từng mặt hàng.
+
+### Bài học
+> ⚠️ **RULE 134: Mọi thanh Tab ngang có tính năng cuộn trên thiết bị di động (`overflow-x-auto`) BẮT BUỘC phải áp dụng class `.no-scrollbar` (bao gồm cả `::-webkit-scrollbar { display: none; }` và `scrollbar-width: none`), đồng thời gạch chân tab active PHẢI sử dụng class âm đáy `-mb-px` để nằm đè hoàn toàn lên đường border đáy của thanh tab, tránh phát sinh lỗi hiển thị 2 vạch kẻ song song hoặc vệt scrollbar chắn ngang.**
+
+---
+
+## BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception
+
+### Bối cảnh
+Người dùng truy cập màn hình Báo cáo Tồn kho & Nhịp độ bán hàng (`/dashboard/reports`) trên môi trường production Vercel (`lyscellars.io.vn`). Màn hình xuất hiện thông báo lỗi màu đỏ:
+`[!] Lỗi khi tải báo cáo tồn kho` và toàn bộ thân bảng dữ liệu không hiển thị.
+
+### Nguyên nhân gốc rễ
+1. **Xung đột vòng đời Serverless Function & dbPool.query:**
+   - Trong `src/lib/db.ts`, có hook `process.once('beforeExit', cleanup)` gọi `dbPool.end()` khi container Vercel Serverless Function chuyển sang trạng thái đóng băng (idle freeze).
+   - Khác với toàn bộ codebase (vốn dùng `prisma` được khởi tạo và cache singleton qua `globalThis.prisma`), file `actions-stock-velocity.ts` trước đó đã gọi trực tiếp `dbPool.query(...)`. Khi instance serverless tái sử dụng (warm start) sau `beforeExit`, gọi `dbPool.query()` sẽ phát sinh lỗi `Error: Cannot use a pool after calling end on the pool` hoặc timeout kết nối do pgBouncer bị giới hạn `connection_limit=1`.
+2. **Unhandled Server Action Exception:**
+   - Server Action `getStockVelocityReport` không được bọc trong khối `try ... catch` an toàn và trả về một kiểu kết quả định nghĩa rõ ràng. Khi xảy ra ngoại lệ cơ sở dữ liệu, Next.js che giấu toàn bộ thông tin lỗi (ẩn danh lỗi nội bộ thành HTTP 500 unhandled), khiến client chỉ nhận được phản hồi lỗi chung chung mà không rõ nguyên nhân.
+
+### Giải pháp
+1. **Chuyển Toàn Bộ Truy Vấn Trực Tiếp Sang Prisma Raw Query Kèm Retry ([actions-stock-velocity.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/actions-stock-velocity.ts)):**
+   - Thay thế `dbPool.query(...)` bằng `withRetry(() => prisma.$queryRawUnsafe<any[]>(...))`, tận dụng cơ chế quản lý vòng đời kết nối và tự phục hồi (retry với exponential backoff) của Prisma adapter singleton.
+   - Chuyển `uploadHistoricalStockExcel` sang dùng `withRetry(() => prisma.$executeRawUnsafe(...))`.
+2. **Bọc Server Action An Toàn & Chuẩn Hóa Phản Hồi ([actions-stock-velocity.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/actions-stock-velocity.ts)):**
+   - Định nghĩa `StockVelocityReportResponse` gồm `{ success: boolean; data?: StockVelocityReportResult; error?: string }`.
+   - Bọc toàn bộ hàm `getStockVelocityReport` trong `try ... catch`, ghi log lỗi chi tiết ra serverless runtime console và trả về `{ success: false, error: message }` về phía giao diện.
+3. **Cải Thiện Trải Nghiệm & Thông Báo Lỗi Client ([StockVelocityReport.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/StockVelocityReport.tsx)):**
+   - Cập nhật hàm `loadReport` để kiểm tra `res.success` và bóc tách dữ liệu từ `res.data`.
+   - Hiển thị trực tiếp thông báo lỗi chi tiết qua `toast.error(res.error)` thay vì thông báo mặc định.
+
+### Bài học
+> ⚠️ **RULE 135: Trên môi trường Serverless (Vercel Lambda), TUYỆT ĐỐI KHÔNG import và gọi trực tiếp `dbPool.query(...)` từ `pg.Pool` khi hệ thống đã có singleton Prisma Adapter (`prisma.$queryRawUnsafe`); vòng đời serverless freeze/unfreeze (`beforeExit`) sẽ tự động ngắt `dbPool.end()`, làm cho các truy vấn raw sau đó bị sập. Mọi câu lệnh SQL Raw phải đi qua `withRetry(() => prisma.$queryRawUnsafe(...))` và Server Action PHẢI bọc trong `try ... catch` trả về struct chuẩn `{ success: boolean; data?: T; error?: string }`.**
+
 
 
 

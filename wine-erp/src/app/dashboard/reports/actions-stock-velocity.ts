@@ -1,6 +1,6 @@
 'use server'
 
-import { dbPool } from '@/lib/db'
+import { prisma, withRetry } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
@@ -57,6 +57,12 @@ export interface StockVelocitySummary {
 export interface StockVelocityReportResult {
     items: StockVelocityItem[]
     summary: StockVelocitySummary
+}
+
+export interface StockVelocityReportResponse {
+    success: boolean
+    data?: StockVelocityReportResult
+    error?: string
 }
 
 export const CANONICAL_PRODUCERS = [
@@ -155,316 +161,328 @@ export const EXCEL_INCOMING_FALLBACK: Record<string, { qty: number; po: string; 
 }
 
 // ── GET STOCK VELOCITY REPORT DATA ──────────────────────────────────────────
-export async function getStockVelocityReport(options?: { cycleMonths?: number }): Promise<StockVelocityReportResult> {
-    const cycle = options?.cycleMonths ?? 6
+export async function getStockVelocityReport(options?: { cycleMonths?: number }): Promise<StockVelocityReportResponse> {
+    try {
+        const cycle = options?.cycleMonths ?? 6
 
-    const [
-        prodRes,
-        lotsRes,
-        doRes,
-        histRes,
-        liveRes,
-        incomingRes
-    ] = await Promise.all([
-        // 1. Products
-        dbPool.query(`
-            SELECT p.id, p."skuCode", p."productName", p."wineType", p."producerId", pr.name as "producerName"
-            FROM products p
-            LEFT JOIN producers pr ON p."producerId" = pr.id
-            WHERE p.status = 'ACTIVE' OR p."skuCode" IN (SELECT DISTINCT "skuCode" FROM historical_monthly_sales)
-            ORDER BY p."skuCode" ASC
-        `),
+        const [
+            prodRows,
+            lotsRows,
+            doRows,
+            histRows,
+            liveRows,
+            incomingRows
+        ] = await Promise.all([
+            // 1. Products
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT p.id, p."skuCode", p."productName", p."wineType", p."producerId", pr.name as "producerName"
+                FROM products p
+                LEFT JOIN producers pr ON p."producerId" = pr.id
+                WHERE p.status = 'ACTIVE' OR p."skuCode" IN (SELECT DISTINCT "skuCode" FROM historical_monthly_sales)
+                ORDER BY p."skuCode" ASC
+            `)),
 
-        // 2. Stock lots by warehouse & vintage
-        dbPool.query(`
-            SELECT sl."productId", p."skuCode", w.code as "whCode", sl.vintage,
-                   SUM(sl."qtyAvailable") as "qtyAvail"
-            FROM stock_lots sl
-            JOIN products p ON sl."productId" = p.id
-            JOIN locations l ON sl."locationId" = l.id
-            JOIN warehouses w ON l."warehouseId" = w.id
-            WHERE sl.status IN ('AVAILABLE', 'RESERVED')
-            GROUP BY sl."productId", p."skuCode", w.code, sl.vintage
-        `),
+            // 2. Stock lots by warehouse & vintage
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT sl."productId", p."skuCode", w.code as "whCode", sl.vintage,
+                       SUM(sl."qtyAvailable") as "qtyAvail"
+                FROM stock_lots sl
+                JOIN products p ON sl."productId" = p.id
+                JOIN locations l ON sl."locationId" = l.id
+                JOIN warehouses w ON l."warehouseId" = w.id
+                WHERE sl.status IN ('AVAILABLE', 'RESERVED')
+                GROUP BY sl."productId", p."skuCode", w.code, sl.vintage
+            `)),
 
-        // 3. Draft DO quantities
-        dbPool.query(`
-            SELECT dol."productId", w.code as "whCode",
-                   SUM(dol."qtyPicked") as "draftQty"
-            FROM delivery_order_lines dol
-            JOIN delivery_orders d ON dol."doId" = d.id
-            JOIN locations l ON dol."locationId" = l.id
-            JOIN warehouses w ON l."warehouseId" = w.id
-            WHERE d.status IN ('DRAFT', 'PICKING', 'PACKED')
-            GROUP BY dol."productId", w.code
-        `),
+            // 3. Draft DO quantities
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT dol."productId", w.code as "whCode",
+                       SUM(dol."qtyPicked") as "draftQty"
+                FROM delivery_order_lines dol
+                JOIN delivery_orders d ON dol."doId" = d.id
+                JOIN locations l ON dol."locationId" = l.id
+                JOIN warehouses w ON l."warehouseId" = w.id
+                WHERE d.status IN ('DRAFT', 'PICKING', 'PACKED')
+                GROUP BY dol."productId", w.code
+            `)),
 
-        // 4. Historical monthly sales
-        dbPool.query(`
-            SELECT "skuCode", month, "salesQty", "tastingQty"
-            FROM historical_monthly_sales
-            ORDER BY month ASC
-        `),
+            // 4. Historical monthly sales
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT "skuCode", month, "salesQty", "tastingQty"
+                FROM historical_monthly_sales
+                ORDER BY month ASC
+            `)),
 
-        // 5. Live ERP sales (from 2026-08-01 onwards)
-        dbPool.query(`
-            SELECT p."skuCode", to_char(so."createdAt", 'YYYY-MM') as month,
-                   SUM(sol."qtyOrdered") as sales_qty
-            FROM sales_order_lines sol
-            JOIN sales_orders so ON sol."soId" = so.id
-            JOIN products p ON sol."productId" = p.id
-            WHERE so.status != 'CANCELLED' AND so."createdAt" >= '2026-08-01 00:00:00'
-            GROUP BY p."skuCode", to_char(so."createdAt", 'YYYY-MM')
-            ORDER BY month ASC
-        `),
+            // 5. Live ERP sales (from 2026-08-01 onwards)
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT p."skuCode", to_char(so."createdAt", 'YYYY-MM') as month,
+                       SUM(sol."qtyOrdered") as sales_qty
+                FROM sales_order_lines sol
+                JOIN sales_orders so ON sol."soId" = so.id
+                JOIN products p ON sol."productId" = p.id
+                WHERE so.status != 'CANCELLED' AND so."createdAt" >= '2026-08-01 00:00:00'
+                GROUP BY p."skuCode", to_char(so."createdAt", 'YYYY-MM')
+                ORDER BY month ASC
+            `)),
 
-        // 6. Incoming stock from PO / Shipments
-        dbPool.query(`
-            SELECT pol."productId", p."skuCode", po."poNo", s.etd, s.eta, po."estimatedDelivery",
-                   SUM(pol."qtyOrdered") as incoming_qty
-            FROM purchase_order_lines pol
-            JOIN purchase_orders po ON pol."poId" = po.id
-            JOIN products p ON pol."productId" = p.id
-            LEFT JOIN shipments s ON s."poId" = po.id
-            WHERE po.status IN ('APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED')
-            GROUP BY pol."productId", p."skuCode", po."poNo", s.etd, s.eta, po."estimatedDelivery"
-        `).catch(() => ({ rows: [] }))
-    ])
+            // 6. Incoming stock from PO / Shipments
+            withRetry(() => prisma.$queryRawUnsafe<any[]>(`
+                SELECT pol."productId", p."skuCode", po."poNo", s.etd, s.eta, po."estimatedDelivery",
+                       SUM(pol."qtyOrdered") as incoming_qty
+                FROM purchase_order_lines pol
+                JOIN purchase_orders po ON pol."poId" = po.id
+                JOIN products p ON pol."productId" = p.id
+                LEFT JOIN shipments s ON s."poId" = po.id
+                WHERE po.status IN ('APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED')
+                GROUP BY pol."productId", p."skuCode", po."poNo", s.etd, s.eta, po."estimatedDelivery"
+            `)).catch(() => [])
+        ])
 
-    // Generate month keys
-    const historicalMonthKeysSet = new Set<string>()
-    histRes.rows.forEach(r => historicalMonthKeysSet.add(r.month))
-    const historicalMonthKeys = Array.from(historicalMonthKeysSet).sort()
+        // Generate month keys
+        const historicalMonthKeysSet = new Set<string>()
+        histRows.forEach(r => historicalMonthKeysSet.add(r.month))
+        const historicalMonthKeys = Array.from(historicalMonthKeysSet).sort()
 
-    const liveMonthKeysSet = new Set<string>()
-    liveRes.rows.forEach(r => liveMonthKeysSet.add(r.month))
-    // Always include at least 2026-08, 2026-09, 2026-10 if not present
-    ;['2026-08', '2026-09', '2026-10'].forEach(m => liveMonthKeysSet.add(m))
-    const liveMonthKeys = Array.from(liveMonthKeysSet).sort()
+        const liveMonthKeysSet = new Set<string>()
+        liveRows.forEach(r => liveMonthKeysSet.add(r.month))
+        // Always include at least 2026-08, 2026-09, 2026-10 if not present
+        ;['2026-08', '2026-09', '2026-10'].forEach(m => liveMonthKeysSet.add(m))
+        const liveMonthKeys = Array.from(liveMonthKeysSet).sort()
 
-    const allMonthKeys = [...historicalMonthKeys, ...liveMonthKeys]
+        const allMonthKeys = [...historicalMonthKeys, ...liveMonthKeys]
 
-    // Determine the months to use for calculating average sales (last `cycle` months)
-    const calculationMonths = allMonthKeys.slice(-cycle)
+        // Determine the months to use for calculating average sales (last `cycle` months)
+        const calculationMonths = allMonthKeys.slice(-cycle)
 
-    // Build lookup maps
-    // Stock by SKU & Warehouse
-    const stockMap = new Map<string, { tt: number; gvm: number; sr: number; vintage: number | null }>()
-    for (const lot of lotsRes.rows) {
-        const sku = lot.skuCode
-        if (!stockMap.has(sku)) {
-            stockMap.set(sku, { tt: 0, gvm: 0, sr: 0, vintage: lot.vintage ? Number(lot.vintage) : null })
-        }
-        const entry = stockMap.get(sku)!
-        const qty = Number(lot.qtyAvail || 0)
-        if (lot.whCode === 'WH-TA-TT') {
-            entry.tt += qty
-        } else if (lot.whCode === 'WH-TA-GVM') {
-            entry.gvm += qty
-        } else {
-            entry.sr += qty
-        }
-        if (lot.vintage && !entry.vintage) {
-            entry.vintage = Number(lot.vintage)
-        }
-    }
-
-    // Add draft DOs
-    for (const d of doRes.rows) {
-        const prod = prodRes.rows.find(p => p.id === d.productId)
-        if (!prod) continue
-        const sku = prod.skuCode
-        if (!stockMap.has(sku)) {
-            stockMap.set(sku, { tt: 0, gvm: 0, sr: 0, vintage: null })
-        }
-        const entry = stockMap.get(sku)!
-        const qty = Number(d.draftQty || 0)
-        if (d.whCode === 'WH-TA-TT') entry.tt += qty
-        else if (d.whCode === 'WH-TA-GVM') entry.gvm += qty
-        else entry.sr += qty
-    }
-
-    // Historical sales map: Map<`${sku}_${month}`, { sales: number, taste: number }>
-    const histSalesMap = new Map<string, { sales: number; taste: number }>()
-    for (const r of histRes.rows) {
-        histSalesMap.set(`${r.skuCode}_${r.month}`, {
-            sales: Number(r.salesQty || 0),
-            taste: Number(r.tastingQty || 0),
-        })
-    }
-
-    // Live sales map: Map<`${sku}_${month}`, number>
-    const liveSalesMap = new Map<string, number>()
-    for (const r of liveRes.rows) {
-        liveSalesMap.set(`${r.skuCode}_${r.month}`, Number(r.sales_qty || 0))
-    }
-
-    // Incoming stock map
-    const incomingMap = new Map<string, { qty: number; poNo: string | null; etd: string | null; eta: string | null }>()
-    for (const r of incomingRes.rows) {
-        incomingMap.set(r.skuCode, {
-            qty: Number(r.incoming_qty || 0),
-            poNo: r.poNo || null,
-            etd: r.etd ? new Date(r.etd).toLocaleDateString('vi-VN') : null,
-            eta: (r.eta || r.estimatedDelivery) ? new Date(r.eta || r.estimatedDelivery).toLocaleDateString('vi-VN') : null,
-        })
-    }
-
-    // Transform products into report items
-    const items: StockVelocityItem[] = []
-    let totalStockQty = 0
-    let criticalCount = 0
-    let optimalCount = 0
-    let abundantCount = 0
-    let overstockCount = 0
-    let outOfStockCount = 0
-
-    // Latest live month
-    const latestMonth = liveMonthKeys[liveMonthKeys.length - 1] || '2026-10'
-    let totalSalesLastMonth = 0
-
-    for (const prod of prodRes.rows) {
-        const sku = prod.skuCode
-        const stockInfo = stockMap.get(sku) || { tt: 0, gvm: 0, sr: 0, vintage: null }
-        const totalStock = stockInfo.tt + stockInfo.gvm + stockInfo.sr
-        totalStockQty += totalStock
-
-        let historicalTotal = 0
-        let historicalTastingTotal = 0
-        const allMonths: MonthSalesData[] = []
-
-        // Fill historical
-        for (const hm of historicalMonthKeys) {
-            const hData = histSalesMap.get(`${sku}_${hm}`) || { sales: 0, taste: 0 }
-            historicalTotal += hData.sales
-            historicalTastingTotal += hData.taste
-            allMonths.push({
-                month: hm,
-                salesQty: hData.sales,
-                tastingQty: hData.taste,
-                isHistorical: true,
-            })
-        }
-
-        // Fill live
-        for (const lm of liveMonthKeys) {
-            const lSales = liveSalesMap.get(`${sku}_${lm}`) || 0
-            if (lm === latestMonth) {
-                totalSalesLastMonth += lSales
+        // Build lookup maps
+        // Stock by SKU & Warehouse
+        const stockMap = new Map<string, { tt: number; gvm: number; sr: number; vintage: number | null }>()
+        for (const lot of lotsRows) {
+            const sku = lot.skuCode
+            if (!stockMap.has(sku)) {
+                stockMap.set(sku, { tt: 0, gvm: 0, sr: 0, vintage: lot.vintage ? Number(lot.vintage) : null })
             }
-            allMonths.push({
-                month: lm,
-                salesQty: lSales,
-                tastingQty: 0,
-                isHistorical: false,
-            })
-        }
-
-        // Calculate average monthly sales in chosen cycle
-        let cycleSalesSum = 0
-        for (const cm of calculationMonths) {
-            const found = allMonths.find(m => m.month === cm)
-            if (found) {
-                cycleSalesSum += found.salesQty
-            }
-        }
-        const avgMonthlySales = Number((cycleSalesSum / calculationMonths.length).toFixed(1))
-
-        // Calculate Stock of Month (Runout time)
-        let stockMonths = 0
-        let riskStatus: StockRiskStatus = 'OPTIMAL'
-
-        if (totalStock <= 0) {
-            stockMonths = 0
-            riskStatus = 'OUT_OF_STOCK'
-            outOfStockCount++
-        } else if (avgMonthlySales <= 0) {
-            stockMonths = 999
-            riskStatus = 'NO_SALES'
-            overstockCount++
-        } else {
-            stockMonths = Number((totalStock / avgMonthlySales).toFixed(1))
-            if (stockMonths < 2) {
-                riskStatus = 'CRITICAL'
-                criticalCount++
-            } else if (stockMonths <= 6) {
-                riskStatus = 'OPTIMAL'
-                optimalCount++
-            } else if (stockMonths <= 12) {
-                riskStatus = 'ABUNDANT'
-                abundantCount++
+            const entry = stockMap.get(sku)!
+            const qty = Number(lot.qtyAvail || 0)
+            if (lot.whCode === 'WH-TA-TT') {
+                entry.tt += qty
+            } else if (lot.whCode === 'WH-TA-GVM') {
+                entry.gvm += qty
             } else {
-                riskStatus = 'OVERSTOCK'
-                overstockCount++
+                entry.sr += qty
+            }
+            if (lot.vintage && !entry.vintage) {
+                entry.vintage = Number(lot.vintage)
             }
         }
 
-        const liveIncoming = incomingMap.get(sku)
-        const fallbackIncoming = EXCEL_INCOMING_FALLBACK[sku]
+        // Add draft DOs
+        for (const d of doRows) {
+            const prod = prodRows.find(p => p.id === d.productId)
+            if (!prod) continue
+            const sku = prod.skuCode
+            if (!stockMap.has(sku)) {
+                stockMap.set(sku, { tt: 0, gvm: 0, sr: 0, vintage: null })
+            }
+            const entry = stockMap.get(sku)!
+            const qty = Number(d.draftQty || 0)
+            if (d.whCode === 'WH-TA-TT') entry.tt += qty
+            else if (d.whCode === 'WH-TA-GVM') entry.gvm += qty
+            else entry.sr += qty
+        }
 
-        const incomingQty = liveIncoming ? liveIncoming.qty : (fallbackIncoming ? fallbackIncoming.qty : 0)
-        const incomingPo = liveIncoming ? liveIncoming.poNo : (fallbackIncoming ? fallbackIncoming.po : null)
-        const incomingEtd = liveIncoming ? liveIncoming.etd : (fallbackIncoming ? fallbackIncoming.etd : null)
-        const incomingEta = liveIncoming ? liveIncoming.eta : (fallbackIncoming ? fallbackIncoming.eta : null)
+        // Historical sales map: Map<`${sku}_${month}`, { sales: number, taste: number }>
+        const histSalesMap = new Map<string, { sales: number; taste: number }>()
+        for (const r of histRows) {
+            histSalesMap.set(`${r.skuCode}_${r.month}`, {
+                sales: Number(r.salesQty || 0),
+                taste: Number(r.tastingQty || 0),
+            })
+        }
 
-        const producerGroup = EXCEL_PRODUCER_MAP[sku] || prod.producerName || 'Khác'
-        const note = EXCEL_SKU_NOTES[sku] || null
+        // Live sales map: Map<`${sku}_${month}`, number>
+        const liveSalesMap = new Map<string, number>()
+        for (const r of liveRows) {
+            liveSalesMap.set(`${r.skuCode}_${r.month}`, Number(r.sales_qty || 0))
+        }
 
-        items.push({
-            id: prod.id,
-            skuCode: sku,
-            productName: prod.productName,
-            producerName: prod.producerName || 'Khác',
-            producerGroup,
-            wineType: prod.wineType || 'RED',
-            vintage: stockInfo.vintage,
-            stockTT: stockInfo.tt,
-            stockGVM: stockInfo.gvm,
-            stockSR: stockInfo.sr,
-            totalStock,
-            historicalTotal,
-            historicalTastingTotal,
-            allMonths,
-            avgMonthlySales,
-            stockMonths,
-            riskStatus,
-            incomingQty,
-            incomingPo,
-            incomingEtd,
-            incomingEta,
-            note,
+        // Incoming stock map
+        const incomingMap = new Map<string, { qty: number; poNo: string | null; etd: string | null; eta: string | null }>()
+        for (const r of incomingRows) {
+            incomingMap.set(r.skuCode, {
+                qty: Number(r.incoming_qty || 0),
+                poNo: r.poNo || null,
+                etd: r.etd ? new Date(r.etd).toLocaleDateString('vi-VN') : null,
+                eta: (r.eta || r.estimatedDelivery) ? new Date(r.eta || r.estimatedDelivery).toLocaleDateString('vi-VN') : null,
+            })
+        }
+
+        // Transform products into report items
+        const items: StockVelocityItem[] = []
+        let totalStockQty = 0
+        let criticalCount = 0
+        let optimalCount = 0
+        let abundantCount = 0
+        let overstockCount = 0
+        let outOfStockCount = 0
+
+        // Latest live month
+        const latestMonth = liveMonthKeys[liveMonthKeys.length - 1] || '2026-10'
+        let totalSalesLastMonth = 0
+
+        for (const prod of prodRows) {
+            const sku = prod.skuCode
+            const stockInfo = stockMap.get(sku) || { tt: 0, gvm: 0, sr: 0, vintage: null }
+            const totalStock = stockInfo.tt + stockInfo.gvm + stockInfo.sr
+            totalStockQty += totalStock
+
+            let historicalTotal = 0
+            let historicalTastingTotal = 0
+            const allMonths: MonthSalesData[] = []
+
+            // Fill historical
+            for (const hm of historicalMonthKeys) {
+                const hData = histSalesMap.get(`${sku}_${hm}`) || { sales: 0, taste: 0 }
+                historicalTotal += hData.sales
+                historicalTastingTotal += hData.taste
+                allMonths.push({
+                    month: hm,
+                    salesQty: hData.sales,
+                    tastingQty: hData.taste,
+                    isHistorical: true,
+                })
+            }
+
+            // Fill live
+            for (const lm of liveMonthKeys) {
+                const lSales = liveSalesMap.get(`${sku}_${lm}`) || 0
+                if (lm === latestMonth) {
+                    totalSalesLastMonth += lSales
+                }
+                allMonths.push({
+                    month: lm,
+                    salesQty: lSales,
+                    tastingQty: 0,
+                    isHistorical: false,
+                })
+            }
+
+            // Calculate average monthly sales in chosen cycle
+            let cycleSalesSum = 0
+            for (const cm of calculationMonths) {
+                const found = allMonths.find(m => m.month === cm)
+                if (found) {
+                    cycleSalesSum += found.salesQty
+                }
+            }
+            const avgMonthlySales = Number((cycleSalesSum / calculationMonths.length).toFixed(1))
+
+            // Calculate Stock of Month (Runout time)
+            let stockMonths = 0
+            let riskStatus: StockRiskStatus = 'OPTIMAL'
+
+            if (totalStock <= 0) {
+                stockMonths = 0
+                riskStatus = 'OUT_OF_STOCK'
+                outOfStockCount++
+            } else if (avgMonthlySales <= 0) {
+                stockMonths = 999
+                riskStatus = 'NO_SALES'
+                overstockCount++
+            } else {
+                stockMonths = Number((totalStock / avgMonthlySales).toFixed(1))
+                if (stockMonths < 2) {
+                    riskStatus = 'CRITICAL'
+                    criticalCount++
+                } else if (stockMonths <= 6) {
+                    riskStatus = 'OPTIMAL'
+                    optimalCount++
+                } else if (stockMonths <= 12) {
+                    riskStatus = 'ABUNDANT'
+                    abundantCount++
+                } else {
+                    riskStatus = 'OVERSTOCK'
+                    overstockCount++
+                }
+            }
+
+            const liveIncoming = incomingMap.get(sku)
+            const fallbackIncoming = EXCEL_INCOMING_FALLBACK[sku]
+
+            const incomingQty = liveIncoming ? liveIncoming.qty : (fallbackIncoming ? fallbackIncoming.qty : 0)
+            const incomingPo = liveIncoming ? liveIncoming.poNo : (fallbackIncoming ? fallbackIncoming.po : null)
+            const incomingEtd = liveIncoming ? liveIncoming.etd : (fallbackIncoming ? fallbackIncoming.etd : null)
+            const incomingEta = liveIncoming ? liveIncoming.eta : (fallbackIncoming ? fallbackIncoming.eta : null)
+
+            const producerGroup = EXCEL_PRODUCER_MAP[sku] || prod.producerName || 'Khác'
+            const note = EXCEL_SKU_NOTES[sku] || null
+
+            items.push({
+                id: prod.id,
+                skuCode: sku,
+                productName: prod.productName,
+                producerName: prod.producerName || 'Khác',
+                producerGroup,
+                wineType: prod.wineType || 'RED',
+                vintage: stockInfo.vintage,
+                stockTT: stockInfo.tt,
+                stockGVM: stockInfo.gvm,
+                stockSR: stockInfo.sr,
+                totalStock,
+                historicalTotal,
+                historicalTastingTotal,
+                allMonths,
+                avgMonthlySales,
+                stockMonths,
+                riskStatus,
+                incomingQty,
+                incomingPo,
+                incomingEtd,
+                incomingEta,
+                note,
+            })
+        }
+
+        // Sort items exactly according to Excel stock report producer bands
+        items.sort((a, b) => {
+            const aGroupIdx = CANONICAL_PRODUCERS.indexOf(a.producerGroup)
+            const bGroupIdx = CANONICAL_PRODUCERS.indexOf(b.producerGroup)
+
+            const aIdx = aGroupIdx !== -1 ? aGroupIdx : 999
+            const bIdx = bGroupIdx !== -1 ? bGroupIdx : 999
+
+            if (aIdx !== bIdx) return aIdx - bIdx
+            if (a.producerGroup !== b.producerGroup) return a.producerGroup.localeCompare(b.producerGroup)
+            return a.skuCode.localeCompare(b.skuCode)
         })
-    }
 
-    // Sort items exactly according to Excel stock report producer bands
-    items.sort((a, b) => {
-        const aGroupIdx = CANONICAL_PRODUCERS.indexOf(a.producerGroup)
-        const bGroupIdx = CANONICAL_PRODUCERS.indexOf(b.producerGroup)
-
-        const aIdx = aGroupIdx !== -1 ? aGroupIdx : 999
-        const bIdx = bGroupIdx !== -1 ? bGroupIdx : 999
-
-        if (aIdx !== bIdx) return aIdx - bIdx
-        if (a.producerGroup !== b.producerGroup) return a.producerGroup.localeCompare(b.producerGroup)
-        return a.skuCode.localeCompare(b.skuCode)
-    })
-
-    return {
-        items,
-        summary: {
-            totalProducts: items.length,
-            totalStockQty,
-            criticalCount,
-            optimalCount,
-            abundantCount,
-            overstockCount,
-            outOfStockCount,
-            totalSalesLastMonth,
-            allMonthKeys,
-            historicalMonthKeys,
-            liveMonthKeys,
-            cycleMonths: cycle,
-        },
+        return {
+            success: true,
+            data: {
+                items,
+                summary: {
+                    totalProducts: items.length,
+                    totalStockQty,
+                    criticalCount,
+                    optimalCount,
+                    abundantCount,
+                    overstockCount,
+                    outOfStockCount,
+                    totalSalesLastMonth,
+                    allMonthKeys,
+                    historicalMonthKeys,
+                    liveMonthKeys,
+                    cycleMonths: cycle,
+                },
+            },
+        }
+    } catch (err: unknown) {
+        console.error('[getStockVelocityReport] Critical error:', err)
+        const message = err instanceof Error ? err.message : String(err)
+        return {
+            success: false,
+            error: message,
+        }
     }
 }
 
@@ -593,7 +611,7 @@ export async function uploadHistoricalStockExcel(formData: FormData): Promise<{ 
                               "productName" = COALESCE(EXCLUDED."productName", historical_monthly_sales."productName"),
                               "updatedAt" = NOW()
             `
-            await dbPool.query(query, params)
+            await withRetry(() => prisma.$executeRawUnsafe(query, ...params))
         }
 
         revalidatePath('/dashboard/reports')
@@ -606,8 +624,11 @@ export async function uploadHistoricalStockExcel(formData: FormData): Promise<{ 
 
 // ── EXPORT STOCK VELOCITY REPORT TO EXCEL ───────────────────────────────────
 export async function exportStockVelocityExcel(options?: { cycleMonths?: number }): Promise<{ base64: string; filename: string }> {
-    const data = await getStockVelocityReport(options)
-    const { items, summary } = data
+    const res = await getStockVelocityReport(options)
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Không thể tạo dữ liệu báo cáo để xuất Excel')
+    }
+    const { items, summary } = res.data
 
     const wb = new ExcelJS.Workbook()
     wb.creator = 'Wine ERP'
