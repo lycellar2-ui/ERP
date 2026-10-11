@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown, Zap } from 'lucide-react'
+import { ArrowRightLeft, ArrowRight, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from '../transfers/actions'
 import { CreateTransferDrawer } from '../transfers/CreateTransferDrawer'
@@ -382,7 +382,7 @@ export function TransfersTab() {
                                 {/* Route indicator */}
                                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between text-xs font-semibold gap-1">
                                     <span className="text-rose-700 font-bold truncate min-w-0 flex-1">{r.fromWarehouse}</span>
-                                    <span className="text-slate-400 px-1 font-bold shrink-0">➔</span>
+                                    <ArrowRight size={13} className="text-slate-400 shrink-0 mx-1" />
                                     <span className="text-emerald-700 font-bold truncate min-w-0 flex-1 text-right">{r.toWarehouse}</span>
                                 </div>
 
