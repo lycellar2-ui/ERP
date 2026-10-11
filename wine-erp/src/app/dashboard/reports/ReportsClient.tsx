@@ -13,6 +13,7 @@ import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type Sched
 import { REPORT_CATALOG, type ReportKey } from './constants'
 import { getReportsDictionary } from './i18n'
 import { StockVelocityReport } from './StockVelocityReport'
+import type { StockVelocityReportResult } from './actions-stock-velocity'
 
 const CHANNEL_COLOR: Record<string, string> = {
     HORECA: '#0E7490',
@@ -53,6 +54,7 @@ interface Props {
     financialSummary: { ar: { unpaid: number; overdue: number }; ap: { unpaid: number; overdue: number } }
     lowStockAlerts: { productId: string; skuCode: string; productName: string; qtyAvailable: number }[]
     salesRepPerformance: { salesRepId: string; name: string; email: string; revenue: number; orders: number }[]
+    initialVelocityReport?: StockVelocityReportResult
 }
 
 function formatFriendlyShort(val: number, isEn: boolean): string {
@@ -74,6 +76,7 @@ export function ReportsClient({
     financialSummary,
     lowStockAlerts,
     salesRepPerformance,
+    initialVelocityReport,
 }: Props) {
     const { locale, isEn, formatCurrency, formatDate } = useAppLocale()
     const t = getReportsDictionary(locale)
@@ -634,7 +637,7 @@ export function ReportsClient({
             )}
 
             {tab === 'velocity' && (
-                <StockVelocityReport isEn={isEn} />
+                <StockVelocityReport isEn={isEn} initialData={initialVelocityReport} />
             )}
 
             {tab === 'export' && (

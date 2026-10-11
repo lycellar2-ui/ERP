@@ -9,10 +9,10 @@ const mockPrisma = {
     user: { findFirst: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
         const tx = {
-            wineStampUsage: { create: vi.fn() },
+            wineStampUsage: { create: mockPrisma.wineStampUsage.create },
             wineStampPurchase: { 
                 findUnique: mockPrisma.wineStampPurchase.findUnique,
-                update: vi.fn() 
+                update: mockPrisma.wineStampPurchase.update,
             },
         }
         return cb(tx)
@@ -144,6 +144,56 @@ describe('STM-02: PO Stamp Allocation', () => {
         })
 
         expect(res.success).toBe(true)
+    })
+
+    it('should support warehouse split (Kho chính vs Showroom) during PO allocation', async () => {
+        mockPrisma.purchaseOrder.findUnique.mockResolvedValue({
+            id: 'po-sa-1',
+            poNo: 'PO-ANTHONIJ-01',
+            shipments: [{ id: 'ship-sa-1' }],
+            lines: [
+                { productId: 'prod-sa-1', product: { skuCode: 'L80004', productName: 'Protea Chenin Blanc' } },
+            ],
+        })
+        mockPrisma.wineStampPurchase.findUnique.mockResolvedValue({
+            id: 'p-sa-1',
+            symbol: 'AA/20P',
+            totalQty: 1000,
+            usedQty: 0,
+        })
+        mockPrisma.user.findFirst.mockResolvedValue({ id: 'user-admin' })
+
+        const res = await allocateStampsToPO({
+            purchaseId: 'p-sa-1',
+            poId: 'po-sa-1',
+            items: [
+                {
+                    productId: 'prod-sa-1',
+                    qty: 27,
+                    serialStart: '1254080',
+                    serialEnd: '1254106',
+                    qtyMain: 3,
+                    mainSerialStart: '1254080',
+                    mainSerialEnd: '1254082',
+                    qtySR: 24,
+                    srSerialStart: '1254083',
+                    srSerialEnd: '1254106',
+                },
+            ],
+            notes: 'Chia tem Kho Thanh Tri & Showroom',
+        })
+
+        expect(res.success).toBe(true)
+        expect(mockPrisma.wineStampUsage.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    qtyUsed: 27,
+                    serialStart: '1254080',
+                    serialEnd: '1254106',
+                    notes: expect.stringContaining('[Kho: 3 (1254080 - 1254082) | SR: 24 (1254083 - 1254106)]'),
+                }),
+            })
+        )
     })
 })
 

@@ -39,14 +39,14 @@ dbPool.on('error', (err) => {
     console.error('[DB Pool] Unexpected error on idle client:', err.message)
 })
 
-// Graceful shutdown — release connections back to pgBouncer on process exit
+// Graceful shutdown — release connections back to pgBouncer on actual process termination
 const cleanup = () => {
     dbPool.end().catch(() => { })
 }
 process.once('SIGTERM', cleanup)
 process.once('SIGINT', cleanup)
-// Vercel serverless functions receive beforeExit when the function is about to freeze
-process.once('beforeExit', cleanup)
+// Note: DO NOT hook beforeExit in serverless; Node emits beforeExit whenever event loop empties,
+// which prematurely destroys the pool during warm start container lifecycle.
 
 function createPrismaClient() {
     const adapter = new PrismaPg(dbPool)
@@ -91,7 +91,9 @@ export async function withRetry<T>(
                 message.includes('ECONNREFUSED') ||
                 message.includes('too many connections') ||
                 message.includes('self-signed certificate') ||
-                message.includes('TLS connection')
+                message.includes('TLS connection') ||
+                message.includes('Connection terminated') ||
+                message.includes('connection ended')
 
             if (isConnectionError && attempt < retries) {
                 console.warn(

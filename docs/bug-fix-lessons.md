@@ -3896,32 +3896,37 @@ Người dùng truy cập màn hình Quản Lý Tem Rượu (`/dashboard/stamps`
 
 ---
 
-## BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception
+## BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — "use server" Export Object, dbPool.end() BeforeExit & Chuyển Sang Server Component Pre-load + API Route
 
 ### Bối cảnh
 Người dùng truy cập màn hình Báo cáo Tồn kho & Nhịp độ bán hàng (`/dashboard/reports`) trên môi trường production Vercel (`lyscellars.io.vn`). Màn hình xuất hiện thông báo lỗi màu đỏ:
-`[!] Lỗi khi tải báo cáo tồn kho` và toàn bộ thân bảng dữ liệu không hiển thị.
+`An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.` và thân bảng dữ liệu không hiển thị.
 
 ### Nguyên nhân gốc rễ
-1. **Xung đột vòng đời Serverless Function & dbPool.query:**
-   - Trong `src/lib/db.ts`, có hook `process.once('beforeExit', cleanup)` gọi `dbPool.end()` khi container Vercel Serverless Function chuyển sang trạng thái đóng băng (idle freeze).
-   - Khác với toàn bộ codebase (vốn dùng `prisma` được khởi tạo và cache singleton qua `globalThis.prisma`), file `actions-stock-velocity.ts` trước đó đã gọi trực tiếp `dbPool.query(...)`. Khi instance serverless tái sử dụng (warm start) sau `beforeExit`, gọi `dbPool.query()` sẽ phát sinh lỗi `Error: Cannot use a pool after calling end on the pool` hoặc timeout kết nối do pgBouncer bị giới hạn `connection_limit=1`.
-2. **Unhandled Server Action Exception:**
-   - Server Action `getStockVelocityReport` không được bọc trong khối `try ... catch` an toàn và trả về một kiểu kết quả định nghĩa rõ ràng. Khi xảy ra ngoại lệ cơ sở dữ liệu, Next.js che giấu toàn bộ thông tin lỗi (ẩn danh lỗi nội bộ thành HTTP 500 unhandled), khiến client chỉ nhận được phản hồi lỗi chung chung mà không rõ nguyên nhân.
+1. **Lỗi `export const` dạng Object trong file `'use server'` (Next.js Turbopack):**
+   - File `actions-stock-velocity.ts` bắt đầu bằng `'use server'`, nhưng lại xuất các hằng số mảng/object (`export const CANONICAL_PRODUCERS`, `export const EXCEL_PRODUCER_MAP`, `export const EXCEL_SKU_NOTES`, `export const EXCEL_INCOMING_FALLBACK`).
+   - Trong Turbopack / Next.js 16, file `'use server'` chỉ được phép export `async function`. Việc export object gây lỗi biên dịch/runtime: `Error: A "use server" file can only export async functions, found object`, dẫn đến Server Action bị Next.js che giấu thành unhandled Server Component render exception ở môi trường production.
+2. **Hủy Pool Trước Hạn Do Hook `beforeExit` ([db.ts](file:///d:/Lyruou/wine-erp/src/lib/db.ts)):**
+   - Hook `process.once('beforeExit', cleanup)` gọi `dbPool.end()`. Trong môi trường Node.js Serverless (Vercel Lambda), sự kiện `beforeExit` được phát ra mỗi khi event loop rỗng sau khi xử lý xong request đầu tiên.
+   - Khi container Lambda chuyển sang trạng thái đóng băng (idle freeze) rồi thức dậy (warm start), `globalForPrisma.prisma` tái sử dụng pool đã bị kết thúc, dẫn đến mọi câu truy vấn sau đó đều bị sập.
+3. **Gọi Server Action Trong `useEffect` (Client Component Anti-pattern):**
+   - Client Component gọi Server Action qua `useEffect` khi mount dễ gặp lỗi mismatch hash Server Action manifest khi vừa deploy bản mới hoặc network timeout.
 
 ### Giải pháp
-1. **Chuyển Toàn Bộ Truy Vấn Trực Tiếp Sang Prisma Raw Query Kèm Retry ([actions-stock-velocity.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/actions-stock-velocity.ts)):**
-   - Thay thế `dbPool.query(...)` bằng `withRetry(() => prisma.$queryRawUnsafe<any[]>(...))`, tận dụng cơ chế quản lý vòng đời kết nối và tự phục hồi (retry với exponential backoff) của Prisma adapter singleton.
-   - Chuyển `uploadHistoricalStockExcel` sang dùng `withRetry(() => prisma.$executeRawUnsafe(...))`.
-2. **Bọc Server Action An Toàn & Chuẩn Hóa Phản Hồi ([actions-stock-velocity.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/actions-stock-velocity.ts)):**
-   - Định nghĩa `StockVelocityReportResponse` gồm `{ success: boolean; data?: StockVelocityReportResult; error?: string }`.
-   - Bọc toàn bộ hàm `getStockVelocityReport` trong `try ... catch`, ghi log lỗi chi tiết ra serverless runtime console và trả về `{ success: false, error: message }` về phía giao diện.
-3. **Cải Thiện Trải Nghiệm & Thông Báo Lỗi Client ([StockVelocityReport.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/StockVelocityReport.tsx)):**
-   - Cập nhật hàm `loadReport` để kiểm tra `res.success` và bóc tách dữ liệu từ `res.data`.
-   - Hiển thị trực tiếp thông báo lỗi chi tiết qua `toast.error(res.error)` thay vì thông báo mặc định.
+1. **Loại Bỏ Hoàn Toàn `export` Khỏi Các Hằng Số Trong File `'use server'` ([actions-stock-velocity.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/actions-stock-velocity.ts)):**
+   - Chuyển `export const CANONICAL_PRODUCERS`, `EXCEL_PRODUCER_MAP`, `EXCEL_SKU_NOTES`, `EXCEL_INCOMING_FALLBACK` thành biến hằng nội bộ file `const`.
+2. **Xóa Bỏ `beforeExit` Pool Termination ([db.ts](file:///d:/Lyruou/wine-erp/src/lib/db.ts)):**
+   - Xóa bỏ `process.once('beforeExit', cleanup)`. Chỉ giữ lại `SIGTERM` và `SIGINT` khi container thực sự bị tiêu hủy. Cấu hình `allowExitOnIdle: true` đã đủ để Node.js tự giải phóng khi không còn tác vụ mà không làm chết pool.
+   - Mở rộng retry trong `withRetry` cho lỗi `Connection terminated` và `connection ended`.
+3. **Pre-load Dữ Liệu Tại Server Component & Xây Dựng API Route Chuẩn ([page.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/page.tsx), [route.ts](file:///d:/Lyruou/wine-erp/src/app/api/reports/stock-velocity/route.ts)):**
+   - Trong `ReportsPage()` (`page.tsx`), gọi nạp trước `getStockVelocityReport({ cycleMonths: 6 })` và truyền qua prop `initialVelocityReport`. Màn hình Tồn Kho & Nhịp Độ Bán hiển thị tức thì (0ms, không cần chờ loading spinner).
+   - Tạo Route Handler GET `/api/reports/stock-velocity?cycleMonths=...` có xác thực quyền `RPT:READ`. Khi người dùng đổi bộ lọc chu kỳ (3T/12T) hoặc nạp lại Excel, client gọi API route chuẩn HTTP thay vì phụ thuộc Server Action hash.
+4. **Phòng Vệ Ép Kiểu Toàn Diện Trên Giao Diện ([StockVelocityReport.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/reports/StockVelocityReport.tsx)):**
+   - Áp dụng nullish coalescing `(val ?? 0).toLocaleString('vi-VN')` trên tất cả các cột tổng con (`subtotalStock`, `subtotalTT`, `subtotalGVM`, `subtotalAvgSales`) và tổng cộng (`grandTotals`).
 
 ### Bài học
-> ⚠️ **RULE 135: Trên môi trường Serverless (Vercel Lambda), TUYỆT ĐỐI KHÔNG import và gọi trực tiếp `dbPool.query(...)` từ `pg.Pool` khi hệ thống đã có singleton Prisma Adapter (`prisma.$queryRawUnsafe`); vòng đời serverless freeze/unfreeze (`beforeExit`) sẽ tự động ngắt `dbPool.end()`, làm cho các truy vấn raw sau đó bị sập. Mọi câu lệnh SQL Raw phải đi qua `withRetry(() => prisma.$queryRawUnsafe(...))` và Server Action PHẢI bọc trong `try ... catch` trả về struct chuẩn `{ success: boolean; data?: T; error?: string }`.**
+> ⚠️ **RULE 135: (1) Trong Next.js 16 / Turbopack, file có chỉ thị `'use server'` TUYỆT ĐỐI CHỈ export các `async function`; KHÔNG export object, array hoặc hằng số tĩnh (vi phạm sẽ phát sinh lỗi ngầm `A "use server" file can only export async functions, found object` khiến toàn bộ action bị sập); (2) Trong môi trường Serverless, TUYỆT ĐỐI KHÔNG lắng nghe sự kiện `beforeExit` để gọi `dbPool.end()`, vì `beforeExit` kích hoạt sau mỗi lần event loop rỗng, làm phá hủy pool trước khi warm start request tiếp theo đến; (3) Với các báo cáo dữ liệu lớn, luôn ưu tiên pre-load ngay tại Server Component (`page.tsx`) kết hợp với API Route GET (`/api/...`) thay vì gọi Server Action trong client `useEffect` để tránh lỗi mismatch hash bản build.**
+
 
 
 

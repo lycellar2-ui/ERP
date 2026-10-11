@@ -65,7 +65,7 @@ export interface StockVelocityReportResponse {
     error?: string
 }
 
-export const CANONICAL_PRODUCERS = [
+const CANONICAL_PRODUCERS = [
     'SARTORI',
     'EUGENIO COLLAVINI',
     'ETHICA WINES',
@@ -84,7 +84,7 @@ export const CANONICAL_PRODUCERS = [
     'Calabria',
 ]
 
-export const EXCEL_PRODUCER_MAP: Record<string, string> = {
+const EXCEL_PRODUCER_MAP: Record<string, string> = {
     L10001: 'SARTORI', L10004: 'SARTORI', L10005: 'SARTORI', L10006: 'SARTORI', L10007: 'SARTORI',
     L10008: 'SARTORI', L10009: 'SARTORI', L10010: 'SARTORI', L10011: 'SARTORI', L10012: 'SARTORI',
     L10013: 'SARTORI', L10014: 'SARTORI', L10037: 'SARTORI', L10038: 'SARTORI',
@@ -125,7 +125,7 @@ export const EXCEL_PRODUCER_MAP: Record<string, string> = {
     L40010: 'Calabria', L40011: 'Calabria', L40012: 'Calabria', L40013: 'Calabria', L40014: 'Calabria',
 }
 
-export const EXCEL_SKU_NOTES: Record<string, string> = {
+const EXCEL_SKU_NOTES: Record<string, string> = {
     L10001: 'discontinued',
     L10004: 'discontinued',
     L10005: 'discontinued',
@@ -144,7 +144,7 @@ export const EXCEL_SKU_NOTES: Record<string, string> = {
     L50002: 'Giữ hàng cho Same',
 }
 
-export const EXCEL_INCOMING_FALLBACK: Record<string, { qty: number; po: string; etd: string; eta: string }> = {
+const EXCEL_INCOMING_FALLBACK: Record<string, { qty: number; po: string; etd: string; eta: string }> = {
     L10023: { qty: 360, po: '', etd: '', eta: '' },
     L10025: { qty: 240, po: '', etd: '', eta: '' },
     L10035: { qty: 360, po: '', etd: '', eta: '' },

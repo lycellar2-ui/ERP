@@ -819,6 +819,12 @@ export type POStampAllocationRecord = {
         qtyDamaged: number
         serialStart: string
         serialEnd: string
+        qtyMain?: number
+        mainSerialStart?: string
+        mainSerialEnd?: string
+        qtySR?: number
+        srSerialStart?: string
+        srSerialEnd?: string
     }>
 }
 
@@ -941,6 +947,12 @@ export async function allocateStampsToPO(data: {
         qtyDamaged?: number
         serialStart: string
         serialEnd: string
+        qtyMain?: number
+        mainSerialStart?: string
+        mainSerialEnd?: string
+        qtySR?: number
+        srSerialStart?: string
+        srSerialEnd?: string
     }>
     notes?: string
     reportedBy?: string
@@ -1015,7 +1027,12 @@ export async function allocateStampsToPO(data: {
                 if (item.qty <= 0 && (!item.qtyDamaged || item.qtyDamaged <= 0)) continue
 
                 const pInfo = productMap.get(item.productId) || { skuCode: 'SKU', productName: 'Sản phẩm' }
-                const itemNotes = `[PO ${po.poNo}] ${pInfo.skuCode} - ${pInfo.productName} | Seri: ${item.serialStart} - ${item.serialEnd} | SL: ${item.qty} chai${data.notes ? ` — ${data.notes}` : ''}`
+                let splitNote = ''
+                if (item.qtySR && item.qtySR > 0) {
+                    const qMain = item.qtyMain ?? Math.max(0, item.qty - item.qtySR)
+                    splitNote = ` | [Kho: ${qMain} (${item.mainSerialStart || '—'} - ${item.mainSerialEnd || '—'}) | SR: ${item.qtySR} (${item.srSerialStart || '—'} - ${item.srSerialEnd || '—'})]`
+                }
+                const itemNotes = `[PO ${po.poNo}] ${pInfo.skuCode} - ${pInfo.productName} | Seri: ${item.serialStart} - ${item.serialEnd} | SL: ${item.qty} chai${splitNote}${data.notes ? ` — ${data.notes}` : ''}`
 
                 await tx.wineStampUsage.create({
                     data: {
@@ -1113,6 +1130,25 @@ export async function getPOStampAllocations(): Promise<POStampAllocationRecord[]
             }
         }
 
+        let qtyMain = u.qtyUsed
+        let mainSerialStart = u.serialStart || '—'
+        let mainSerialEnd = u.serialEnd || '—'
+        let qtySR = 0
+        let srSerialStart = ''
+        let srSerialEnd = ''
+
+        if (u.notes) {
+            const splitMatch = u.notes.match(/\[Kho:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\s*\|\s*SR:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\]/)
+            if (splitMatch) {
+                qtyMain = parseInt(splitMatch[1], 10)
+                mainSerialStart = splitMatch[2].trim()
+                mainSerialEnd = splitMatch[3].trim()
+                qtySR = parseInt(splitMatch[4], 10)
+                srSerialStart = splitMatch[5].trim()
+                srSerialEnd = splitMatch[6].trim()
+            }
+        }
+
         group.items.push({
             id: u.id,
             productName: productName || 'Sản phẩm rượu',
@@ -1122,9 +1158,32 @@ export async function getPOStampAllocations(): Promise<POStampAllocationRecord[]
             qtyDamaged: u.qtyDamaged,
             serialStart: u.serialStart || '—',
             serialEnd: u.serialEnd || '—',
+            qtyMain,
+            mainSerialStart,
+            mainSerialEnd,
+            qtySR,
+            srSerialStart,
+            srSerialEnd,
         })
     }
 
-    return serialize(Array.from(groups.values()))
+    const groupList = Array.from(groups.values())
+    const poNos = Array.from(new Set(groupList.map(g => g.poNo).filter(no => no !== 'PO-KHAC')))
+    if (poNos.length > 0) {
+        const pos = await prisma.purchaseOrder.findMany({
+            where: { poNo: { in: poNos } },
+            select: { id: true, poNo: true, supplier: { select: { name: true } } },
+        })
+        const poMap = new Map(pos.map(p => [p.poNo, { id: p.id, supplierName: p.supplier?.name }]))
+        for (const g of groupList) {
+            const pInfo = poMap.get(g.poNo)
+            if (pInfo) {
+                g.poId = pInfo.id
+                g.supplierName = pInfo.supplierName
+            }
+        }
+    }
+
+    return serialize(groupList)
 }
 

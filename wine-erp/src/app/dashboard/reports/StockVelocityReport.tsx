@@ -16,12 +16,13 @@ import {
 
 interface Props {
     isEn?: boolean
+    initialData?: StockVelocityReportResult
 }
 
-export function StockVelocityReport({ isEn = false }: Props) {
-    const [loading, setLoading] = useState(true)
-    const [data, setData] = useState<StockVelocityReportResult | null>(null)
-    const [cycleMonths, setCycleMonths] = useState<number>(6)
+export function StockVelocityReport({ isEn = false, initialData }: Props) {
+    const [loading, setLoading] = useState<boolean>(!initialData)
+    const [data, setData] = useState<StockVelocityReportResult | null>(initialData ?? null)
+    const [cycleMonths, setCycleMonths] = useState<number>(initialData?.summary?.cycleMonths ?? 6)
     const [showOldHistory, setShowOldHistory] = useState<boolean>(false) // Mặc định thu gọn dữ liệu cũ theo yêu cầu
     const [showTasting, setShowTasting] = useState<boolean>(false)
     const [searchQuery, setSearchQuery] = useState<string>('')
@@ -36,6 +37,27 @@ export function StockVelocityReport({ isEn = false }: Props) {
     const loadReport = async (cycle: number = cycleMonths) => {
         try {
             setLoading(true)
+
+            // 1. Prioritize HTTP API Route for resilient client fetching
+            try {
+                const apiRes = await fetch(`/api/reports/stock-velocity?cycleMonths=${cycle}`, {
+                    cache: 'no-store',
+                })
+                if (apiRes.ok) {
+                    const json = await apiRes.json()
+                    if (json.success && json.data) {
+                        setData(json.data)
+                        return
+                    } else if (json.error) {
+                        toast.error(json.error)
+                        return
+                    }
+                }
+            } catch (apiErr) {
+                console.warn('[StockVelocityReport] API route fetch failed, trying server action fallback:', apiErr)
+            }
+
+            // 2. Fallback to Server Action if API route is unreachable
             const res = await getStockVelocityReport({ cycleMonths: cycle })
             if (res.success && res.data) {
                 setData(res.data)
@@ -53,6 +75,10 @@ export function StockVelocityReport({ isEn = false }: Props) {
     }
 
     useEffect(() => {
+        // If initialData is already present and matches the cycle, do not re-fetch on first mount
+        if (initialData && data && cycleMonths === (initialData.summary?.cycleMonths ?? 6)) {
+            return
+        }
         loadReport(cycleMonths)
     }, [cycleMonths])
 
@@ -533,10 +559,10 @@ export function StockVelocityReport({ isEn = false }: Props) {
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-6 text-[11px] font-semibold pr-4">
-                                                        <span>Tổng tồn: {group.subtotalStock.toLocaleString('vi-VN')}</span>
-                                                        <span>Kho TT: {group.subtotalTT.toLocaleString('vi-VN')}</span>
-                                                        <span>Kho GVM: {group.subtotalGVM.toLocaleString('vi-VN')}</span>
-                                                        <span>TB bán: {group.subtotalAvgSales.toLocaleString('vi-VN')}</span>
+                                                        <span>Tổng tồn: {(group.subtotalStock ?? 0).toLocaleString('vi-VN')}</span>
+                                                        <span>Kho TT: {(group.subtotalTT ?? 0).toLocaleString('vi-VN')}</span>
+                                                        <span>Kho GVM: {(group.subtotalGVM ?? 0).toLocaleString('vi-VN')}</span>
+                                                        <span>TB bán: {(group.subtotalAvgSales ?? 0).toLocaleString('vi-VN')}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -691,33 +717,33 @@ export function StockVelocityReport({ isEn = false }: Props) {
                                         Total / Tổng cộng
                                     </td>
                                     <td className="px-2.5 py-1.5 text-right border-r border-slate-300 sticky left-[325px] bg-[#E2E8F0]">
-                                        {grandTotals.totalStock.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalStock ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300">
-                                        {grandTotals.totalTT.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalTT ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300">
-                                        {grandTotals.totalGVM.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalGVM ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300">
-                                        {grandTotals.totalSR.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalSR ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td className="px-1.5 py-1.5 text-center border-r border-slate-300">-</td>
 
                                     {/* Historical Grand Total */}
                                     {!showOldHistory ? (
                                         <td className="px-2.5 py-1.5 text-right border-r-2 border-slate-400">
-                                            {grandTotals.totalHistorical.toLocaleString('vi-VN')}
+                                            {(grandTotals.totalHistorical ?? 0).toLocaleString('vi-VN')}
                                         </td>
                                     ) : (
                                         historicalMonthKeys.map(m => (
                                             <React.Fragment key={m}>
                                                 <td className="px-1.5 py-1.5 text-right border-r border-slate-300 font-mono text-[10px]">
-                                                    {grandTotals.monthTotals[m]?.sales.toLocaleString('vi-VN') || 0}
+                                                    {(grandTotals.monthTotals[m]?.sales ?? 0).toLocaleString('vi-VN')}
                                                 </td>
                                                 {showTasting && (
                                                     <td className="px-1 py-1.5 text-right border-r border-slate-300 font-mono text-[10px]">
-                                                        {grandTotals.monthTotals[m]?.taste.toLocaleString('vi-VN') || 0}
+                                                        {(grandTotals.monthTotals[m]?.taste ?? 0).toLocaleString('vi-VN')}
                                                     </td>
                                                 )}
                                             </React.Fragment>
@@ -728,11 +754,11 @@ export function StockVelocityReport({ isEn = false }: Props) {
                                     {liveMonthKeys.map(m => (
                                         <React.Fragment key={m}>
                                             <td className="px-2 py-1.5 text-right border-r border-slate-300 font-mono text-[#073763]">
-                                                {grandTotals.monthTotals[m]?.sales.toLocaleString('vi-VN') || 0}
+                                                {(grandTotals.monthTotals[m]?.sales ?? 0).toLocaleString('vi-VN')}
                                             </td>
                                             {showTasting && (
                                                 <td className="px-1 py-1.5 text-right border-r border-slate-300 font-mono">
-                                                    {grandTotals.monthTotals[m]?.taste.toLocaleString('vi-VN') || 0}
+                                                    {(grandTotals.monthTotals[m]?.taste ?? 0).toLocaleString('vi-VN')}
                                                 </td>
                                             )}
                                         </React.Fragment>
@@ -740,10 +766,10 @@ export function StockVelocityReport({ isEn = false }: Props) {
 
                                     {/* Avg sales total */}
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300">
-                                        {grandTotals.totalAvgSales.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalAvgSales ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td className="px-2 py-1.5 text-center border-r border-slate-300">
-                                        {(grandTotals.totalStock / (grandTotals.totalAvgSales || 1)).toFixed(1)}
+                                        {((grandTotals.totalStock ?? 0) / ((grandTotals.totalAvgSales ?? 0) || 1)).toFixed(1)}
                                     </td>
                                     {/* Expected Average Sales */}
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300 font-mono text-slate-400">
@@ -751,7 +777,7 @@ export function StockVelocityReport({ isEn = false }: Props) {
                                     </td>
                                     {/* Incoming Quantity */}
                                     <td className="px-2 py-1.5 text-right border-r border-slate-300 font-mono text-emerald-800">
-                                        {grandTotals.totalIncoming.toLocaleString('vi-VN')}
+                                        {(grandTotals.totalIncoming ?? 0).toLocaleString('vi-VN')}
                                     </td>
                                     {/* PO, ETD, ETA, Note */}
                                     <td colSpan={4} className="px-3 py-1.5 text-right text-slate-500 text-[10px]">

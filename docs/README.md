@@ -242,6 +242,6 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 21:35 | Wine ERP v12.19 - Stock Velocity Report Serverless Fix & Safe Response*
+*Last updated: 2026-10-12 00:05 | Wine ERP v12.20 - Stock Velocity Turbopack Export & Vercel Warm Start Fix*
 
 
