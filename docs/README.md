@@ -52,10 +52,10 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 146 |
+| **Prisma models** | 147 |
 | **Prisma enums** | 95 |
 | **Dashboard routes** | 38 folders |
-| **Server Action files** | 47 files |
+| **Server Action files** | 48 files |
 | **Module spec files** | 31 files |
 | **Sidebar nav items** | 41 items (7 groups) |
 
@@ -242,6 +242,6 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 18:00 | Wine ERP v12.16 - Full Responsive Standardization (Mobile/Desktop) & Zero-Emoji Luxury B2B Design Net*
+*Last updated: 2026-10-11 19:15 | Wine ERP v12.17 - Stock & Sales Velocity Report (Historical Excel + Live ERP Data Integration)*
 
 

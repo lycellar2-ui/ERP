@@ -3966,3 +3966,23 @@ model WarehouseInspectionPhoto {
   @@index([inspectionId])
   @@map("warehouse_inspection_photos")
 }
+
+// -------------------------------------------------------------
+// HISTORICAL MONTHLY SALES (Báo cáo tồn kho & nhịp độ bán hàng)
+// -------------------------------------------------------------
+model HistoricalMonthlySales {
+  id          String   @id @default(cuid())
+  skuCode     String
+  productName String?
+  month       String   // "YYYY-MM", ví dụ: "2023-01", "2026-07"
+  salesQty    Decimal  @default(0) // Số lượng bán thương mại
+  tastingQty  Decimal  @default(0) // Số lượng tasting/hỏng vỡ/mẫu
+  source      String?  @default("EXCEL_STOCK_REPORT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([skuCode, month])
+  @@index([skuCode])
+  @@index([month])
+  @@map("historical_monthly_sales")
+}

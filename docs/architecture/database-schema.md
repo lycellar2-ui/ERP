@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (146 models, 95 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (147 models, 95 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -1013,6 +1013,17 @@ warehouses (Kho hàng)
                 ├── N:1 ──> users (approvedById: Quản lý phê duyệt xử lý sự cố)
                 ├── 1:N ──> warehouse_inspection_items (Chi tiết từng tiêu chí checklist)
                 └── 1:N ──> warehouse_inspection_photos (Ảnh camera kèm watermark TimeMark)
+```
+
+### G. Historical Monthly Sales (Dữ liệu Lịch sử Nhịp độ Bán & Tồn kho)
+```
+historical_monthly_sales (Lưu trữ sản lượng bán & tasting lịch sử từ file Stock Report Excel trước T08/2026)
+  ├── skuCode: Mã SKU sản phẩm
+  ├── productName: Tên sản phẩm
+  ├── month: Tháng kỳ báo cáo ("YYYY-MM", e.g. "2023-01" -> "2026-07")
+  ├── salesQty: Sản lượng bán thương mại
+  ├── tastingQty: Sản lượng tasting / hỏng vỡ
+  └── source: Nguồn file nhập liệu (EXCEL_STOCK_REPORT)
 ```
 
 

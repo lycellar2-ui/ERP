@@ -8,6 +8,7 @@ export const REPORTS_I18N = {
 
         tabs: {
             overview: 'Tổng Quan',
+            velocity: 'Tồn Kho & Nhịp Độ Bán',
             export: 'Xuất Excel (16 Báo Cáo)',
             schedule: 'Lịch Tự Động',
         },
@@ -116,6 +117,7 @@ export const REPORTS_I18N = {
 
         tabs: {
             overview: 'Executive Overview',
+            velocity: 'Stock & Velocity',
             export: 'Excel Export (16 Reports)',
             schedule: 'Automated Schedules',
         },

@@ -166,7 +166,7 @@ Phân hệ Báo cáo & Điều hành BI Quản trị được trang bị giải 
 | **R15** | Sổ Nhật Ký Kế Toán | General Journal & Ledger | FIN |
 | **R16** | Doanh Thu Theo Brand | Revenue by Wine Brand | SLS |
 
-### 2. Trải Nghiệm Giao Diện 3 Tabs Bản Địa Hóa
+### 2. Trải Nghiệm Giao Diện 4 Tabs Bản Địa Hóa
 1. **Executive BI Overview (`overview`):**
    - KPI cards (Doanh thu 6 tháng, Giá trị tồn kho, Tổng lượng chai, SKU đang có hàng).
    - Thống kê công nợ AR/AP đối soát song song.
@@ -174,7 +174,15 @@ Phân hệ Báo cáo & Điều hành BI Quản trị được trang bị giải 
    - Cơ cấu kênh bán phân loại chuẩn quốc tế: `HORECA`, `Wholesale / Distributor`, `VIP Retail`, `Direct / Retail`.
    - Top 10 SKU bán chạy kèm phân loại vang: Red, White, Rosé, Sparkling, Fortified, Dessert.
    - Phân rã doanh thu theo Brand, xếp hạng Top 5 Khách hàng, Top Sales Rep và Cảnh báo tồn kho thấp.
-2. **Xuất Excel 16 Báo Cáo (`export`):**
+2. **Tồn Kho & Nhịp Độ Bán (`velocity` - Stock & Sales Velocity Report):**
+   - Số hóa toàn diện mô hình báo cáo quản trị kho từ file `LY's Cellars - Stock Report.xlsx`.
+   - Kết hợp tự động dữ liệu quá khứ (trước T08/2026 từ bảng `historical_monthly_sales`) và dữ liệu bán ERP realtime (`sales_order_lines` từ T08/2026 trở đi).
+   - Tồn kho thời gian thực phân bổ theo các kho: Thường Tín (`WH-TA-TT`), Giang Văn Minh (`WH-TA-GVM`), Showroom / Ký gửi (`WH-LYS-SR`).
+   - Nhịp độ bán TB tháng linh hoạt: Chu kỳ 3 tháng, 6 tháng (chuẩn), 12 tháng.
+   - Số tháng bán hàng dự trữ (Stock of Month = Tổng tồn / TB bán): Cảnh báo màu phân cấp: Nguy cơ thiếu (<2T), Tối ưu (2-6T), Dồi dào (6-12T), Tồn đọng (>12T).
+   - Chế độ thu gọn dữ liệu cũ: Mặc định thu gọn 43 tháng lịch sử (2023 - 07/2026) thành 1 cột tổng, có nút mở rộng chi tiết khi đối soát sâu.
+   - Nút Xuất Excel báo cáo tổng hợp và Modal Đồng bộ/Upload lại file Excel lịch sử.
+3. **Xuất Excel 16 Báo Cáo (`export`):**
    - Bảng kê 16 báo cáo chuẩn hóa, hiển thị mã, tên báo cáo theo ngôn ngữ đã chọn, module phụ trách và trạng thái tải file.
-3. **Lịch Báo Cáo Tự Động (`schedule`):**
+4. **Lịch Báo Cáo Tự Động (`schedule`):**
    - Giám sát tiến độ cron job gửi email, tần suất Hàng ngày / Hàng tuần / Hàng tháng (Daily / Weekly / Monthly).

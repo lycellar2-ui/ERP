@@ -12,6 +12,7 @@ import { PageHeader, StatGrid, StatCard } from '@/components/ui'
 import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
 import { REPORT_CATALOG, type ReportKey } from './constants'
 import { getReportsDictionary } from './i18n'
+import { StockVelocityReport } from './StockVelocityReport'
 
 const CHANNEL_COLOR: Record<string, string> = {
     HORECA: '#0E7490',
@@ -40,7 +41,7 @@ const MODULE_COLORS: Record<string, string> = {
     TAX: '#B91C1C',
 }
 
-type TabKey = 'overview' | 'export' | 'schedule'
+type TabKey = 'overview' | 'velocity' | 'export' | 'schedule'
 
 interface Props {
     topSKUs: { productId: string; skuCode: string; productName: string; wineType: string; qtyOrdered: number }[]
@@ -85,6 +86,7 @@ export function ReportsClient({
 
     const tabs = [
         { key: 'overview' as const, label: t.tabs.overview, icon: BarChart3 },
+        { key: 'velocity' as const, label: t.tabs.velocity, icon: TrendingUp },
         { key: 'export' as const, label: t.tabs.export, icon: FileSpreadsheet },
         { key: 'schedule' as const, label: t.tabs.schedule, icon: Calendar },
     ]
@@ -629,6 +631,10 @@ export function ReportsClient({
                         </div>
                     </div>
                 </>
+            )}
+
+            {tab === 'velocity' && (
+                <StockVelocityReport isEn={isEn} />
             )}
 
             {tab === 'export' && (
