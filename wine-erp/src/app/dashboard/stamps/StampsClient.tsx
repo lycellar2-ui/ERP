@@ -6,7 +6,8 @@ import {
     Stamp, Plus, AlertTriangle, CheckCircle, Package, Trash2,
     ShieldAlert, BookOpen, Download, Search, Filter, RefreshCw,
     Ship, Warehouse, FileSpreadsheet, ArrowRight, Info,
-    Layers, ChevronDown, ChevronUp, Check, Hash, Calendar
+    Layers, ChevronDown, ChevronUp, Check, Hash, Calendar,
+    Printer, FileText, Store, CheckCircle2, Eye, CheckSquare, Square
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -160,14 +161,30 @@ export default function StampsClient({
     const [expandedPOId, setExpandedPOId] = useState<string | null>(null)
     const [poAllocSearch, setPOAllocSearch] = useState<string>('')
 
-    // PO Allocation Modal State
+    // PO Allocation & Sticking Guide State
     const [showPOAllocModal, setShowPOAllocModal] = useState(false)
     const [selectedPOId, setSelectedPOId] = useState<string>('')
     const [selectedStampPurchaseId, setSelectedStampPurchaseId] = useState<string>('')
     const [poBaseSerialStart, setPOBaseSerialStart] = useState<string>('')
-    const [poItemSerials, setPOItemSerials] = useState<Record<string, { qty: number; start: string; end: string; damaged: number }>>({})
+    const [poItemSerials, setPOItemSerials] = useState<Record<string, {
+        qty: number
+        qtySR: number
+        qtyMain: number
+        start: string
+        end: string
+        mainStart: string
+        mainEnd: string
+        srStart: string
+        srEnd: string
+        damaged: number
+    }>>({})
     const [poAllocNotes, setPOAllocNotes] = useState<string>('')
     const [poAllocSubmitting, setPOAllocSubmitting] = useState(false)
+
+    // Sticking Guide Worker View Modal
+    const [stickingGuideAlloc, setStickingGuideAlloc] = useState<POStampAllocationRecord | null>(null)
+    const [stickingDoneMap, setStickingDoneMap] = useState<Record<string, boolean>>({})
+    const [stickingViewMode, setStickingViewMode] = useState<'cards' | 'table'>('cards')
 
     // Logbook filters
     const currentYear = new Date().getFullYear()
@@ -181,35 +198,99 @@ export default function StampsClient({
         getStampDestructions().then(setDestructions)
     }, [])
 
-    // Helper: Contiguous sequential serial calculation
+    // Helper: Contiguous sequential serial calculation with optional Showroom split
     function calculateContiguousSerials(
         baseStart: string,
-        items: Array<{ productId: string; qty: number }>
-    ): Record<string, { start: string; end: string }> {
+        items: Array<{ productId: string; qty: number; qtySR?: number }>
+    ): Record<string, {
+        start: string
+        end: string
+        mainStart: string
+        mainEnd: string
+        srStart: string
+        srEnd: string
+        qtyMain: number
+        qtySR: number
+    }> {
         const trimmed = (baseStart || '').trim()
-        if (!trimmed) {
-            return items.reduce((acc, it) => ({ ...acc, [it.productId]: { start: '', end: '' } }), {})
-        }
+        const defaultEmpty = items.reduce((acc, it) => {
+            const qty = Math.max(0, Number(it.qty) || 0)
+            const qtySR = Math.min(qty, Math.max(0, Number(it.qtySR) || 0))
+            const qtyMain = qty - qtySR
+            return {
+                ...acc,
+                [it.productId]: {
+                    start: '', end: '',
+                    mainStart: '', mainEnd: '',
+                    srStart: '', srEnd: '',
+                    qtyMain, qtySR,
+                },
+            }
+        }, {})
+
+        if (!trimmed) return defaultEmpty
+
         const match = trimmed.match(/^([A-Za-z\-_/]*?)(\d+)$/)
-        if (!match) {
-            return items.reduce((acc, it) => ({ ...acc, [it.productId]: { start: trimmed, end: '' } }), {})
-        }
+        if (!match) return defaultEmpty
+
         const prefix = match[1]
         const numStr = match[2]
         const padLen = numStr.length
         let current = parseInt(numStr, 10)
-        const result: Record<string, { start: string; end: string }> = {}
+        const result: Record<string, any> = {}
+
         for (const it of items) {
             const qty = Math.max(0, Number(it.qty) || 0)
+            const qtySR = Math.min(qty, Math.max(0, Number(it.qtySR) || 0))
+            const qtyMain = qty - qtySR
+
             if (qty === 0) {
-                result[it.productId] = { start: '', end: '' }
+                result[it.productId] = {
+                    start: '', end: '',
+                    mainStart: '', mainEnd: '',
+                    srStart: '', srEnd: '',
+                    qtyMain: 0, qtySR: 0,
+                }
                 continue
             }
+
             const startStr = prefix + String(current).padStart(padLen, '0')
             const endNum = current + qty - 1
             const endStr = prefix + String(endNum).padStart(padLen, '0')
+
+            let mainStart = ''
+            let mainEnd = ''
+            let srStart = ''
+            let srEnd = ''
+
+            if (qtyMain > 0 && qtySR > 0) {
+                // Split between Kho Thanh Trì and Showroom
+                mainStart = startStr
+                mainEnd = prefix + String(current + qtyMain - 1).padStart(padLen, '0')
+                srStart = prefix + String(current + qtyMain).padStart(padLen, '0')
+                srEnd = endStr
+            } else if (qtySR > 0 && qtyMain === 0) {
+                // 100% Showroom
+                srStart = startStr
+                srEnd = endStr
+            } else {
+                // 100% Kho Thanh Trì (kho chính)
+                mainStart = startStr
+                mainEnd = endStr
+            }
+
             current = endNum + 1
-            result[it.productId] = { start: startStr, end: endStr }
+
+            result[it.productId] = {
+                start: startStr,
+                end: endStr,
+                mainStart,
+                mainEnd,
+                srStart,
+                srEnd,
+                qtyMain,
+                qtySR,
+            }
         }
         return result
     }
@@ -241,14 +322,21 @@ export default function StampsClient({
 
         const chosenPurchase = purchases.find(p => p.id === pId)
         const base = poBaseSerialStart || chosenPurchase?.serialStart || ''
-        const initialItems = po.items.map(it => ({ productId: it.productId, qty: it.qty }))
+        const initialItems = po.items.map(it => ({ productId: it.productId, qty: it.qty, qtySR: 0 }))
         const serials = calculateContiguousSerials(base, initialItems)
-        const nextSerials: Record<string, { qty: number; start: string; end: string; damaged: number }> = {}
+        const nextSerials: Record<string, any> = {}
         for (const it of po.items) {
+            const s = serials[it.productId]
             nextSerials[it.productId] = {
                 qty: it.qty,
-                start: serials[it.productId]?.start || '',
-                end: serials[it.productId]?.end || '',
+                qtySR: 0,
+                qtyMain: it.qty,
+                start: s?.start || '',
+                end: s?.end || '',
+                mainStart: s?.mainStart || '',
+                mainEnd: s?.mainEnd || '',
+                srStart: s?.srStart || '',
+                srEnd: s?.srEnd || '',
                 damaged: 0,
             }
         }
@@ -264,14 +352,22 @@ export default function StampsClient({
                 const itemsList = selectedPO.items.map(it => ({
                     productId: it.productId,
                     qty: poItemSerials[it.productId]?.qty ?? it.qty,
+                    qtySR: poItemSerials[it.productId]?.qtySR ?? 0,
                 }))
                 const serials = calculateContiguousSerials(p.serialStart, itemsList)
                 const updated = { ...poItemSerials }
                 for (const it of selectedPO.items) {
+                    const s = serials[it.productId]
                     updated[it.productId] = {
-                        ...(updated[it.productId] || { qty: it.qty, damaged: 0 }),
-                        start: serials[it.productId]?.start || '',
-                        end: serials[it.productId]?.end || '',
+                        ...(updated[it.productId] || { qty: it.qty, qtySR: 0, qtyMain: it.qty, damaged: 0 }),
+                        start: s?.start || '',
+                        end: s?.end || '',
+                        mainStart: s?.mainStart || '',
+                        mainEnd: s?.mainEnd || '',
+                        srStart: s?.srStart || '',
+                        srEnd: s?.srEnd || '',
+                        qtyMain: s?.qtyMain ?? it.qty,
+                        qtySR: s?.qtySR ?? 0,
                     }
                 }
                 setPOItemSerials(updated)
@@ -285,37 +381,81 @@ export default function StampsClient({
             const itemsList = selectedPO.items.map(it => ({
                 productId: it.productId,
                 qty: poItemSerials[it.productId]?.qty ?? it.qty,
+                qtySR: poItemSerials[it.productId]?.qtySR ?? 0,
             }))
             const serials = calculateContiguousSerials(newBase, itemsList)
             const updated = { ...poItemSerials }
             for (const it of selectedPO.items) {
+                const s = serials[it.productId]
                 updated[it.productId] = {
-                    ...(updated[it.productId] || { qty: it.qty, damaged: 0 }),
-                    start: serials[it.productId]?.start || '',
-                    end: serials[it.productId]?.end || '',
+                    ...(updated[it.productId] || { qty: it.qty, qtySR: 0, qtyMain: it.qty, damaged: 0 }),
+                    start: s?.start || '',
+                    end: s?.end || '',
+                    mainStart: s?.mainStart || '',
+                    mainEnd: s?.mainEnd || '',
+                    srStart: s?.srStart || '',
+                    srEnd: s?.srEnd || '',
+                    qtyMain: s?.qtyMain ?? it.qty,
+                    qtySR: s?.qtySR ?? 0,
                 }
             }
             setPOItemSerials(updated)
         }
     }
 
-    const handleItemFieldChange = (productId: string, field: 'qty' | 'start' | 'end' | 'damaged', value: any) => {
+    const handleItemFieldChange = (
+        productId: string,
+        field: 'qty' | 'qtySR' | 'start' | 'end' | 'mainStart' | 'mainEnd' | 'srStart' | 'srEnd' | 'damaged',
+        value: any
+    ) => {
         setPOItemSerials(prev => {
-            const cur = prev[productId] || { qty: 0, start: '', end: '', damaged: 0 }
+            const cur = prev[productId] || {
+                qty: 0, qtySR: 0, qtyMain: 0,
+                start: '', end: '', mainStart: '', mainEnd: '',
+                srStart: '', srEnd: '', damaged: 0
+            }
             const next = { ...cur, [field]: value }
-            if (field === 'qty' && next.start) {
-                const match = next.start.trim().match(/^([A-Za-z\-_/]*?)(\d+)$/)
-                if (match) {
-                    const prefix = match[1]
-                    const numStr = match[2]
-                    const padLen = numStr.length
-                    const num = parseInt(numStr, 10)
-                    const qty = Math.max(0, Number(value) || 0)
-                    if (qty > 0) {
-                        next.end = prefix + String(num + qty - 1).padStart(padLen, '0')
+
+            if (field === 'qty' || field === 'qtySR') {
+                const total = Math.max(0, field === 'qty' ? (Number(value) || 0) : next.qty)
+                const sr = Math.min(total, Math.max(0, field === 'qtySR' ? (Number(value) || 0) : next.qtySR))
+                next.qty = total
+                next.qtySR = sr
+                next.qtyMain = total - sr
+
+                if (selectedPO && poBaseSerialStart) {
+                    const itemsList = selectedPO.items.map(it => {
+                        if (it.productId === productId) {
+                            return { productId: it.productId, qty: total, qtySR: sr }
+                        }
+                        const existing = prev[it.productId]
+                        return {
+                            productId: it.productId,
+                            qty: existing?.qty ?? it.qty,
+                            qtySR: existing?.qtySR ?? 0,
+                        }
+                    })
+                    const computed = calculateContiguousSerials(poBaseSerialStart, itemsList)
+                    const updated = { ...prev }
+                    for (const it of selectedPO.items) {
+                        const c = computed[it.productId]
+                        const baseObj = it.productId === productId ? next : (prev[it.productId] || { qty: it.qty, qtySR: 0, damaged: 0 })
+                        updated[it.productId] = {
+                            ...baseObj,
+                            start: c?.start || '',
+                            end: c?.end || '',
+                            mainStart: c?.mainStart || '',
+                            mainEnd: c?.mainEnd || '',
+                            srStart: c?.srStart || '',
+                            srEnd: c?.srEnd || '',
+                            qtyMain: c?.qtyMain ?? (baseObj.qty - (baseObj.qtySR || 0)),
+                            qtySR: c?.qtySR ?? (baseObj.qtySR || 0),
+                        }
                     }
+                    return updated
                 }
             }
+
             return { ...prev, [productId]: next }
         })
     }
@@ -340,6 +480,12 @@ export default function StampsClient({
                 qtyDamaged: Number(data.damaged || 0),
                 serialStart: data.start?.trim() || '',
                 serialEnd: data.end?.trim() || '',
+                qtyMain: Number(data.qtyMain ?? (data.qty - (data.qtySR || 0))),
+                mainSerialStart: data.mainStart?.trim() || '',
+                mainSerialEnd: data.mainEnd?.trim() || '',
+                qtySR: Number(data.qtySR || 0),
+                srSerialStart: data.srStart?.trim() || '',
+                srSerialEnd: data.srEnd?.trim() || '',
             }
         }).filter(it => it.qty > 0 || it.qtyDamaged > 0)
 
@@ -378,22 +524,18 @@ export default function StampsClient({
             toast.success(`Đã phân bổ tem thành công cho đơn PO ${selectedPO.poNo}`)
             setShowPOAllocModal(false)
             setSelectedPOId('')
-            setSelectedStampPurchaseId('')
             setPOBaseSerialStart('')
             setPOItemSerials({})
             setPOAllocNotes('')
 
+            // Refresh allocations
+            const freshAllocations = await getPOStampAllocations()
+            setPOAllocations(freshAllocations)
             startTransition(() => {
                 router.refresh()
             })
-            const [updatedAllocs] = await Promise.all([
-                getPOStampAllocations(),
-                fetchLogbook(),
-            ])
-            setPOAllocations(updatedAllocs)
-            setActiveTab('po_allocations')
         } catch (err: any) {
-            toast.error(err.message)
+            toast.error(err.message || 'Lỗi không xác định khi phân tem')
         } finally {
             setPOAllocSubmitting(false)
         }
@@ -691,7 +833,7 @@ export default function StampsClient({
             <div className="flex items-center gap-1 sm:gap-2 border-b border-lys-border mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-0.5">
                 {[
                     { id: 'batches', label: `Lô Phôi Tem (${purchases.length})`, icon: Package },
-                    { id: 'po_allocations', label: `Phân Tem Cho PO (${poAllocations.length})`, icon: Stamp },
+                    { id: 'po_allocations', label: `Phân & Dán Tem PO (${poAllocations.length})`, icon: Stamp },
                     { id: 'logbook', label: 'Sổ Tem (Logbook)', icon: BookOpen },
                     { id: 'destructions', label: `Biên Bản Hủy (${destructions.length})`, icon: Trash2 },
                 ].map(tab => {
@@ -1048,10 +1190,10 @@ export default function StampsClient({
                         <div>
                             <h3 className="text-sm sm:text-base font-semibold text-lys-primary flex items-center gap-2 m-0">
                                 <Stamp size={16} className="text-lys-teal" />
-                                Quản Lý Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về
+                                Phân Tem &amp; Bảng Chỉ Dẫn Dán Tem Theo PO
                             </h3>
                             <p className="text-xs text-lys-muted mt-1 m-0">
-                                Theo dõi dải số seri cấp phát, số đầu và số cuối cho từng sản phẩm trong các đơn mua hàng nhập kho
+                                Nơi nhân viên kho tra cứu dải số seri theo từng đơn PO để dán tem chuẩn xác (Kho Thanh Trì &amp; Showroom)
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1159,8 +1301,8 @@ export default function StampsClient({
                                                 </div>
                                             </div>
 
-                                            {/* Serial Range badge */}
-                                            <div className="flex items-center gap-4 text-xs sm:text-sm pl-10 md:pl-0">
+                                            {/* Serial Range badge & Quick Sheet action */}
+                                            <div className="flex flex-wrap items-center gap-3 pl-10 md:pl-0">
                                                 <div className="text-right">
                                                     <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
                                                         Dải Seri PO (Số Đầu → Số Cuối)
@@ -1169,13 +1311,28 @@ export default function StampsClient({
                                                         {alloc.serialStart} → {alloc.serialEnd}
                                                     </div>
                                                 </div>
-                                                <div className="text-right border-l pl-4 border-slate-200">
+                                                <div className="text-right border-l pl-3 border-slate-200">
                                                     <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
                                                         Tổng Tem Dán
                                                     </div>
                                                     <div className="font-bold text-lys-teal-strong text-base">
                                                         {alloc.totalQty.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
                                                     </div>
+                                                </div>
+                                                <div className="border-l pl-3 border-slate-200">
+                                                    <Button
+                                                        type="button"
+                                                        variant="primary"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setStickingGuideAlloc(alloc)
+                                                        }}
+                                                        className="bg-lys-teal hover:bg-lys-teal-strong text-white font-medium shadow-xs"
+                                                    >
+                                                        <FileText size={14} className="mr-1.5" />
+                                                        Xem Phiếu Dán Tem
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1198,40 +1355,66 @@ export default function StampsClient({
                                                         <thead>
                                                             <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                                                                 <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>STT</th>
-                                                                <th style={thStyle}>Tên Sản Phẩm Rượu</th>
-                                                                <th style={thStyle}>Mã SKU</th>
-                                                                <th style={thStyle}>Lô Kho (StockLot)</th>
-                                                                <th style={{ ...thStyle, textAlign: 'right' }}>SL Dán</th>
-                                                                <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
-                                                                    Số Seri Đầu
+                                                                <th style={thStyle}>Tên Sản Phẩm Rượu &amp; SKU</th>
+                                                                <th style={{ ...thStyle, width: '90px' }}>Lô Kho</th>
+                                                                <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                                                <th style={{ ...thStyle, background: '#F0FDFA', color: '#0F766E', textAlign: 'center' }}>
+                                                                    Kho Thanh Trì (SL &amp; Dải Seri)
+                                                                </th>
+                                                                <th style={{ ...thStyle, background: '#FFFBEB', color: '#B45309', textAlign: 'center' }}>
+                                                                    Showroom (SL &amp; Dải Seri)
                                                                 </th>
                                                                 <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
-                                                                    Số Seri Cuối
+                                                                    Dải Seri Tổng
                                                                 </th>
-                                                                <th style={{ ...thStyle, textAlign: 'right' }}>Hỏng</th>
+                                                                <th style={{ ...thStyle, width: '50px', textAlign: 'right' }}>Hỏng</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {alloc.items.map((it, itemIdx) => (
-                                                                <tr key={it.id || itemIdx} className="border-b border-slate-100 hover:bg-slate-50">
-                                                                    <td style={{ ...tdStyle, textAlign: 'center', color: '#94A3B8' }}>{itemIdx + 1}</td>
-                                                                    <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{it.productName}</td>
-                                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#64748B' }}>{it.skuCode}</td>
-                                                                    <td style={{ ...tdStyle, color: '#475569' }}>{it.lotNo || '—'}</td>
-                                                                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#0F172A' }}>
-                                                                        {it.qtyUsed.toLocaleString('vi-VN')}
-                                                                    </td>
-                                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#0891B2' }}>
-                                                                        {it.serialStart}
-                                                                    </td>
-                                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#0891B2' }}>
-                                                                        {it.serialEnd}
-                                                                    </td>
-                                                                    <td style={{ ...tdStyle, textAlign: 'right', color: it.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8' }}>
-                                                                        {it.qtyDamaged > 0 ? it.qtyDamaged : '0'}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
+                                                            {alloc.items.map((it, itemIdx) => {
+                                                                const hasSplit = !!(it.qtySR && it.qtySR > 0)
+                                                                return (
+                                                                    <tr key={it.id || itemIdx} className="border-b border-slate-100 hover:bg-slate-50">
+                                                                        <td style={{ ...tdStyle, textAlign: 'center', color: '#94A3B8' }}>{itemIdx + 1}</td>
+                                                                        <td style={tdStyle}>
+                                                                            <div className="font-semibold text-slate-900">{it.productName}</div>
+                                                                            <div className="text-[11px] text-slate-500 font-mono">SKU: {it.skuCode}</div>
+                                                                        </td>
+                                                                        <td style={{ ...tdStyle, color: '#475569' }}>{it.lotNo || '—'}</td>
+                                                                        <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#0F172A' }}>
+                                                                            {it.qtyUsed.toLocaleString('vi-VN')}
+                                                                        </td>
+                                                                        <td style={{ ...tdStyle, textAlign: 'center', background: '#F0FDFA' }}>
+                                                                            <div className="font-mono font-bold text-teal-800">
+                                                                                {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
+                                                                            </div>
+                                                                            <div className="text-[10px] text-teal-600 font-semibold">
+                                                                                SL: {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                                            </div>
+                                                                        </td>
+                                                                        <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
+                                                                            {hasSplit ? (
+                                                                                <>
+                                                                                    <div className="font-mono font-bold text-amber-800">
+                                                                                        {it.srSerialStart} → {it.srSerialEnd}
+                                                                                    </div>
+                                                                                    <div className="text-[10px] text-amber-600 font-semibold">
+                                                                                        SL: {it.qtySR} chai
+                                                                                    </div>
+                                                                                </>
+                                                                            ) : (
+                                                                                <span className="text-slate-400 text-xs italic">Không tách SR</span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
+                                                                            {it.serialStart} → {it.serialEnd}
+                                                                        </td>
+                                                                        <td style={{ ...tdStyle, textAlign: 'right', color: it.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8' }}>
+                                                                            {it.qtyDamaged > 0 ? it.qtyDamaged : '0'}
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            })}
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -1878,28 +2061,41 @@ export default function StampsClient({
                                             <thead>
                                                 <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
                                                     <th style={thStyle}>Sản Phẩm &amp; SKU</th>
-                                                    <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Độ Cồn</th>
-                                                    <th style={{ ...thStyle, width: '90px', textAlign: 'right' }}>SL Dán</th>
-                                                    <th style={{ ...thStyle, width: '130px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
-                                                        Số Seri Đầu
+                                                    <th style={{ ...thStyle, width: '55px', textAlign: 'center' }}>Độ Cồn</th>
+                                                    <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                                    <th style={{ ...thStyle, width: '85px', textAlign: 'right', background: '#FFFBEB', color: '#B45309' }}>
+                                                        Tách SR
                                                     </th>
-                                                    <th style={{ ...thStyle, width: '130px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
-                                                        Số Seri Cuối
+                                                    <th style={{ ...thStyle, width: '150px', textAlign: 'center', background: '#F0FDFA', color: '#0F766E' }}>
+                                                        Kho Thanh Trì (SL &amp; Dải)
                                                     </th>
-                                                    <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tem Hỏng</th>
+                                                    <th style={{ ...thStyle, width: '150px', textAlign: 'center', background: '#FFFBEB', color: '#B45309' }}>
+                                                        Showroom (SL &amp; Dải)
+                                                    </th>
+                                                    <th style={{ ...thStyle, width: '140px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
+                                                        Dải Seri Tổng
+                                                    </th>
+                                                    <th style={{ ...thStyle, width: '60px', textAlign: 'right' }}>Hỏng</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {selectedPO.items.map(it => {
                                                     const data = poItemSerials[it.productId] || {
                                                         qty: it.qty,
+                                                        qtySR: 0,
+                                                        qtyMain: it.qty,
                                                         start: '',
                                                         end: '',
+                                                        mainStart: '',
+                                                        mainEnd: '',
+                                                        srStart: '',
+                                                        srEnd: '',
                                                         damaged: 0,
                                                     }
+                                                    const hasSR = (data.qtySR || 0) > 0
 
                                                     return (
-                                                        <tr key={it.productId} className="border-b border-slate-200">
+                                                        <tr key={it.productId} className="border-b border-slate-200 hover:bg-slate-50/50">
                                                             <td style={tdStyle}>
                                                                 <div className="font-semibold text-lys-primary">{it.productName}</div>
                                                                 <div className="text-[11px] text-lys-muted font-mono">
@@ -1923,21 +2119,43 @@ export default function StampsClient({
                                                                     style={{ ...inputStyle, textAlign: 'right', padding: '4px 6px', fontWeight: 600 }}
                                                                 />
                                                             </td>
-                                                            <td style={{ ...tdStyle, background: '#F8FAFC' }}>
+                                                            <td style={{ ...tdStyle, background: '#FFFDF5' }}>
                                                                 <input
-                                                                    placeholder="VD: 001001"
-                                                                    value={data.start}
-                                                                    onChange={e => handleItemFieldChange(it.productId, 'start', e.target.value)}
-                                                                    style={{ ...inputStyle, textAlign: 'center', padding: '4px 6px', fontFamily: 'monospace', fontWeight: 600, borderColor: '#0891B2' }}
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={data.qty}
+                                                                    placeholder="0"
+                                                                    value={data.qtySR || ''}
+                                                                    onChange={e => handleItemFieldChange(it.productId, 'qtySR', parseInt(e.target.value) || 0)}
+                                                                    style={{ ...inputStyle, textAlign: 'right', padding: '4px 6px', fontWeight: 600, borderColor: '#F59E0B' }}
                                                                 />
                                                             </td>
-                                                            <td style={{ ...tdStyle, background: '#F8FAFC' }}>
-                                                                <input
-                                                                    placeholder="VD: 001348"
-                                                                    value={data.end}
-                                                                    onChange={e => handleItemFieldChange(it.productId, 'end', e.target.value)}
-                                                                    style={{ ...inputStyle, textAlign: 'center', padding: '4px 6px', fontFamily: 'monospace', fontWeight: 600, borderColor: '#0891B2' }}
-                                                                />
+                                                            <td style={{ ...tdStyle, textAlign: 'center', background: '#F0FDFA' }}>
+                                                                <div className="font-mono font-bold text-teal-900">
+                                                                    {data.mainStart && data.mainEnd ? `${data.mainStart} → ${data.mainEnd}` : '—'}
+                                                                </div>
+                                                                <div className="text-[10px] text-teal-700 font-medium">
+                                                                    SL: {data.qtyMain ?? (data.qty - (data.qtySR || 0))} chai
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
+                                                                {hasSR ? (
+                                                                    <>
+                                                                        <div className="font-mono font-bold text-amber-900">
+                                                                            {data.srStart && data.srEnd ? `${data.srStart} → ${data.srEnd}` : '—'}
+                                                                        </div>
+                                                                        <div className="text-[10px] text-amber-700 font-medium">
+                                                                            SL: {data.qtySR} chai
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-slate-400 text-[11px] italic">0 chai</span>
+                                                                )}
+                                                            </td>
+                                                            <td style={{ ...tdStyle, textAlign: 'center', background: '#F8FAFC' }}>
+                                                                <div className="font-mono font-bold text-lys-teal-strong">
+                                                                    {data.start && data.end ? `${data.start} → ${data.end}` : '—'}
+                                                                </div>
                                                             </td>
                                                             <td style={tdStyle}>
                                                                 <input
@@ -2002,6 +2220,361 @@ export default function StampsClient({
                                 </div>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL / VIEW: PHIẾU CHỈ DẪN DÁN TEM CHO NHÂN VIÊN */}
+            {stickingGuideAlloc && (
+                <div
+                    className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar print:p-0 print:bg-white print:static"
+                    onClick={() => setStickingGuideAlloc(null)}
+                >
+                    <div
+                        className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/70 sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:static print:bg-transparent print:border-b-2 print:border-slate-800">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-xs font-mono uppercase bg-cyan-100 text-cyan-900 border border-cyan-300 px-2.5 py-0.5 rounded">
+                                        {stickingGuideAlloc.poNo}
+                                    </span>
+                                    <span className={cn(
+                                        'text-xs font-semibold px-2 py-0.5 rounded',
+                                        stickingGuideAlloc.stampType === 'UNDER_20_ABV' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
+                                    )}>
+                                        {stickingGuideAlloc.stampType === 'UNDER_20_ABV' ? '< 20° ABV (Vang)' : '≥ 20° ABV (Mạnh)'}
+                                    </span>
+                                    <span className="text-xs text-slate-500 font-medium">
+                                        Lô tem: <strong className="text-slate-800">{stickingGuideAlloc.purchaseSymbol}</strong>
+                                    </span>
+                                </div>
+                                <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-1 m-0">
+                                    Phiếu Chỉ Dẫn Dán Tem Rượu Nhập Khẩu
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5 m-0">
+                                    Nhà cung cấp: <strong className="text-slate-700">{stickingGuideAlloc.supplierName || '—'}</strong> • Ngày phân: {new Date(stickingGuideAlloc.allocatedDate).toLocaleDateString('vi-VN')} • Người TH: {stickingGuideAlloc.reporterName}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 print:hidden">
+                                {/* Toggle view mode */}
+                                <div className="bg-slate-200 p-0.5 rounded-lg flex items-center text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStickingViewMode('cards')}
+                                        className={cn(
+                                            'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer',
+                                            stickingViewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                                        )}
+                                    >
+                                        Thẻ Mobile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStickingViewMode('table')}
+                                        className={cn(
+                                            'px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer',
+                                            stickingViewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                                        )}
+                                    >
+                                        Bảng Chi Tiết
+                                    </button>
+                                </div>
+
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => window.print()}
+                                    className="print:hidden"
+                                >
+                                    <Printer size={14} className="mr-1.5" />
+                                    In Phiếu
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStickingGuideAlloc(null)}
+                                    className="text-slate-400 hover:text-slate-700 text-lg p-1.5 rounded hover:bg-slate-100 transition-colors cursor-pointer print:hidden"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* KPI Overview Banner */}
+                        {(() => {
+                            const completedCount = stickingGuideAlloc.items.filter((it, idx) => stickingDoneMap[`${stickingGuideAlloc.poNo}-${it.id || idx}`]).length
+                            const totalItems = stickingGuideAlloc.items.length
+                            const isAllDone = totalItems > 0 && completedCount === totalItems
+
+                            return (
+                                <div className="p-4 sm:p-6 bg-slate-50/50 border-b border-slate-200">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                                                Tổng Chai Cần Dán
+                                            </div>
+                                            <div className="text-xl sm:text-2xl font-bold font-mono text-lys-teal-strong mt-0.5">
+                                                {stickingGuideAlloc.totalQty.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white border border-cyan-200 rounded-lg p-3.5 shadow-xs bg-cyan-50/40">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-cyan-800">
+                                                Dải Seri Tổng Đơn PO
+                                            </div>
+                                            <div className="text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
+                                                {stickingGuideAlloc.serialStart} → {stickingGuideAlloc.serialEnd}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+                                            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                                <span>Tiến Độ Dán Thực Tế</span>
+                                                <span className="font-mono text-slate-800 font-bold">
+                                                    {completedCount}/{totalItems} SP
+                                                </span>
+                                            </div>
+                                            <div className="bg-slate-100 rounded-full h-2 overflow-hidden mb-1">
+                                                <div
+                                                    className="h-full bg-emerald-600 transition-all duration-300 rounded-full"
+                                                    style={{ width: `${(completedCount / (totalItems || 1)) * 100}%` }}
+                                                />
+                                            </div>
+                                            <div className="text-[11px] text-slate-500">
+                                                {isAllDone ? (
+                                                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                                        <CheckCircle2 size={12} /> Đã hoàn tất dán tem toàn bộ
+                                                    </span>
+                                                ) : (
+                                                    'Chạm vào từng dòng để tick hoàn tất khi dán xong'
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })()}
+
+                        {/* Sticking Content: Cards View (Default mobile/tablet friendly) */}
+                        {stickingViewMode === 'cards' && (
+                            <div className="p-4 sm:p-6 space-y-3.5">
+                                {stickingGuideAlloc.items.map((it, idx) => {
+                                    const itemKey = `${stickingGuideAlloc.poNo}-${it.id || idx}`
+                                    const isDone = !!stickingDoneMap[itemKey]
+                                    const hasSplit = !!(it.qtySR && it.qtySR > 0)
+
+                                    return (
+                                        <div
+                                            key={itemKey}
+                                            className={cn(
+                                                'border rounded-xl p-4 transition-all shadow-xs',
+                                                isDone
+                                                    ? 'bg-emerald-50/40 border-emerald-300'
+                                                    : 'bg-white border-slate-200 hover:border-slate-300'
+                                            )}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className={cn(
+                                                        'w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0',
+                                                        isDone ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'
+                                                    )}>
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 m-0">
+                                                            {it.productName}
+                                                        </h3>
+                                                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
+                                                            <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                                                                SKU: {it.skuCode}
+                                                            </span>
+                                                            {it.lotNo && (
+                                                                <span>Lô: <strong className="text-slate-700">{it.lotNo}</strong></span>
+                                                            )}
+                                                            <span>•</span>
+                                                            <span className="text-slate-800 font-semibold">
+                                                                Tổng dán: {it.qtyUsed} chai
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStickingDoneMap(prev => ({ ...prev, [itemKey]: !prev[itemKey] }))}
+                                                    className={cn(
+                                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors shrink-0 print:hidden self-start sm:self-auto',
+                                                        isDone
+                                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    )}
+                                                >
+                                                    <CheckCircle2 size={15} />
+                                                    <span>{isDone ? 'Đã Dán Xong' : 'Đánh Dấu Xong'}</span>
+                                                </button>
+                                            </div>
+
+                                            {/* Serial Ranges */}
+                                            <div className="mt-3.5 pt-3 border-t border-slate-100">
+                                                {hasSplit ? (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                        {/* Kho Thanh Trì */}
+                                                        <div className="p-3 rounded-lg bg-teal-50/70 border border-teal-200">
+                                                            <div className="flex items-center justify-between text-xs font-bold text-teal-900 mb-1">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Warehouse size={13} className="text-teal-700" />
+                                                                    Kho Thanh Trì (Kho Chính)
+                                                                </span>
+                                                                <span className="font-mono bg-teal-100 text-teal-800 px-2 py-0.5 rounded">
+                                                                    {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs text-teal-700 font-medium">Dải số tem:</div>
+                                                            <div className="font-mono text-base sm:text-lg font-extrabold text-teal-950 mt-0.5">
+                                                                {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Showroom */}
+                                                        <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200">
+                                                            <div className="flex items-center justify-between text-xs font-bold text-amber-900 mb-1">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Store size={13} className="text-amber-700" />
+                                                                    Chuyển Showroom (SR)
+                                                                </span>
+                                                                <span className="font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                                                                    {it.qtySR} chai
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs text-amber-700 font-medium">Dải số tem:</div>
+                                                            <div className="font-mono text-base sm:text-lg font-extrabold text-amber-950 mt-0.5">
+                                                                {it.srSerialStart} → {it.srSerialEnd}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                        <div>
+                                                            <div className="text-xs text-slate-500 font-medium">Dải số tem cần dán (Toàn bộ lưu kho chính):</div>
+                                                            <div className="font-mono text-base sm:text-lg font-extrabold text-lys-teal-strong mt-0.5">
+                                                                {it.serialStart} → {it.serialEnd}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-xs font-semibold text-slate-700 font-mono bg-white px-2.5 py-1 rounded border border-slate-200 inline-block self-start sm:self-auto">
+                                                            Số lượng: {it.qtyUsed} chai
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+
+                        {/* Sticking Content: Table View */}
+                        {stickingViewMode === 'table' && (
+                            <div className="p-4 sm:p-6 overflow-x-auto no-scrollbar">
+                                <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                                            <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>STT</th>
+                                            <th style={thStyle}>Tên Sản Phẩm Rượu &amp; SKU</th>
+                                            <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                            <th style={{ ...thStyle, background: '#F0FDFA', color: '#0F766E', textAlign: 'center' }}>
+                                                Kho Thanh Trì (SL &amp; Dải Seri)
+                                            </th>
+                                            <th style={{ ...thStyle, background: '#FFFBEB', color: '#B45309', textAlign: 'center' }}>
+                                                Showroom (SL &amp; Dải Seri)
+                                            </th>
+                                            <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
+                                                Dải Seri Tổng
+                                            </th>
+                                            <th style={{ ...thStyle, width: '90px', textAlign: 'center' }}>Tiến Độ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {stickingGuideAlloc.items.map((it, idx) => {
+                                            const itemKey = `${stickingGuideAlloc.poNo}-${it.id || idx}`
+                                            const isDone = !!stickingDoneMap[itemKey]
+                                            const hasSplit = !!(it.qtySR && it.qtySR > 0)
+
+                                            return (
+                                                <tr
+                                                    key={itemKey}
+                                                    onClick={() => setStickingDoneMap(prev => ({ ...prev, [itemKey]: !prev[itemKey] }))}
+                                                    className={cn(
+                                                        'border-b border-slate-100 hover:bg-slate-50/80 cursor-pointer transition-colors',
+                                                        isDone && 'bg-emerald-50/40'
+                                                    )}
+                                                >
+                                                    <td style={{ ...tdStyle, textAlign: 'center', color: '#94A3B8' }}>{idx + 1}</td>
+                                                    <td style={tdStyle}>
+                                                        <div className="font-semibold text-slate-900">{it.productName}</div>
+                                                        <div className="text-[11px] text-slate-500 font-mono">SKU: {it.skuCode}</div>
+                                                    </td>
+                                                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#0F172A' }}>
+                                                        {it.qtyUsed.toLocaleString('vi-VN')}
+                                                    </td>
+                                                    <td style={{ ...tdStyle, textAlign: 'center', background: '#F0FDFA' }}>
+                                                        <div className="font-mono font-bold text-teal-900">
+                                                            {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
+                                                        </div>
+                                                        <div className="text-[10px] text-teal-700 font-semibold">
+                                                            SL: {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
+                                                        {hasSplit ? (
+                                                            <>
+                                                                <div className="font-mono font-bold text-amber-900">
+                                                                    {it.srSerialStart} → {it.srSerialEnd}
+                                                                </div>
+                                                                <div className="text-[10px] text-amber-700 font-semibold">
+                                                                    SL: {it.qtySR} chai
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-slate-400 text-xs italic">Không tách SR</span>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
+                                                        {it.serialStart} → {it.serialEnd}
+                                                    </td>
+                                                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                                        <span className={cn(
+                                                            'inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded',
+                                                            isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                                                        )}>
+                                                            <CheckCircle2 size={13} />
+                                                            {isDone ? 'Đã xong' : 'Chưa'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500 print:hidden">
+                            <span>
+                                Lưu ý: Kiểm tra kỹ số seri in trên phôi tem vật lý trước khi dán vào chai.
+                            </span>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setStickingGuideAlloc(null)}
+                            >
+                                Đóng Phiếu
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

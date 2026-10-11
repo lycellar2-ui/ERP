@@ -54,16 +54,26 @@
   - Nhập số lượng dán và số lượng tem rách/hỏng phát sinh.
   - Giao dịch nguyên tử (Atomic transaction): Khấu trừ trực tiếp số lượng khả dụng của lô tem và tự động chuyển trạng thái `EXHAUSTED` khi hết tem.
 
-### 2.3. Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về (PO Stamp Allocation)
+### 2.3. Phân Bổ Tem Rượu & Phiếu Chỉ Dẫn Dán Tem Theo PO (PO Stamp Allocation & Sticking Guide)
 - **Cơ chế hoạt động:**
   - Áp dụng cho các Đơn mua hàng đã nhận kho (`RECEIVED`, `PARTIALLY_RECEIVED` hoặc đã có Phiếu Nhập Kho `GoodsReceipt`).
   - Người dùng chọn đơn PO và chọn lô phôi tem xuất kho tương ứng (< 20° ABV hoặc ≥ 20° ABV).
-  - Nhập số seri bắt đầu của PO (ví dụ: `001001`). Hệ thống tự động tính nối tiếp (contiguous sequential) dải số seri (Số đầu → Số cuối) cho từng sản phẩm trong PO theo số lượng thực nhận.
-  - Cho phép người dùng linh hoạt chỉnh sửa số lượng dán, số seri đầu, số seri cuối hoặc số tem hỏng phát sinh của từng sản phẩm.
+  - Nhập số seri bắt đầu của PO (ví dụ: `001001` hoặc `1254080`). Hệ thống tự động tính nối tiếp (contiguous sequential) dải số seri (Số đầu → Số cuối) cho từng sản phẩm trong PO theo số lượng thực nhận.
+  - **Phân chia theo điểm đến (Kho Thanh Trì & Showroom):**
+    - Hỗ trợ nhập số lượng chuyển về Showroom (`qtySR`) cho từng dòng sản phẩm.
+    - Hệ thống tự động chia dải tem thành 2 dải con liên tục:
+      - *Kho Thanh Trì (Kho chính):* `SL = Tổng - SR`, dải tem từ `Bắt đầu` đến `Bắt đầu + SL Kho - 1`.
+      - *Showroom (SR):* `SL = SR`, dải tem từ `Kết thúc Kho + 1` đến `Kết thúc tổng`.
+    - Chuẩn hóa theo quy trình thực tế từ file đối soát phân tem.
   - Hệ thống kiểm soát tồn kho tem khả dụng trong giao dịch nguyên tử (Atomic Transaction), tự động tạo các bản ghi nhật ký cấp phát gắn với từng mã sản phẩm/lô kho và cập nhật số dư tồn tem.
-- **Tab Quản Lý Phân Tem Theo PO:**
-  - Bảng danh sách các đợt phân tem theo PO kèm mã PO, ngày phân bổ, ký hiệu lô tem, dải số seri tổng.
-  - Hỗ trợ xem chi tiết danh sách sản phẩm phân bổ (Accordion), hiển thị rõ số đầu và số cuối tem cho từng dòng sản phẩm.
+- **Tab Phân & Dán Tem Cho PO:**
+  - Bảng danh sách các đợt phân tem theo PO kèm mã PO, ngày phân bổ, nhà cung cấp, ký hiệu lô tem, dải số seri tổng.
+  - Hỗ trợ xem chi tiết danh sách sản phẩm phân bổ (Accordion), hiển thị rõ số lượng và dải số seri cho cả Kho Thanh Trì và Showroom.
+- **Phiếu Chỉ Dẫn Dán Tem Cho Nhân Viên Kho (Work Order Sheet):**
+  - Giao diện trực quan, đơn giản, tập trung vào nhiệm vụ dán tem tại kho, hiển thị đầy đủ thông tin: Mã đơn PO, Nhà cung cấp, Lô tem, Tổng chai, Dải seri tổng.
+  - **Chế độ xem Thẻ (Cards):** Tối ưu đặc biệt cho nhân viên cầm điện thoại hoặc máy tính bảng trong kho, font chữ lớn, dải số seri to rõ ràng, phân biệt rõ hộp dán Kho Thanh Trì và hộp dán Showroom.
+  - **Checklist tiến độ dán:** Nhân viên chạm một chạm vào nút `[✓] Đã dán xong` để theo dõi tiến độ từng dòng sản phẩm, có thanh tiến độ tổng thể cập nhật tức thì.
+  - **Chế độ xem Bảng (Table) & In ấn (Print):** Bố cục gọn gàng, hỗ trợ in ra khổ A4 sạch đẹp (`@media print`) phục vụ kẹp hồ sơ lô hàng hoặc dán lên kệ kho.
 
 ### 2.4. Sổ Theo Dõi Tem Điện Tử (Stamp Logbook)
 - Trực quan hóa nhật ký nhập - xuất - dán - hủy - tồn lũy kế theo thời gian thực.
