@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
     Search, Package, ArrowDownCircle, ArrowUpCircle, Loader2,
     Calendar, Filter, Download, MapPin, BarChart3, TrendingUp, TrendingDown,
-    FileText, X, ChevronDown, ArrowLeft, Eye, CheckSquare, Boxes, Layers, RefreshCw,
+    FileText, X, ChevronDown, ChevronRight, ArrowLeft, Eye, CheckSquare, Boxes, Layers, RefreshCw,
     ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react'
 import {
