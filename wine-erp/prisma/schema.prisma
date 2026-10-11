@@ -2263,6 +2263,8 @@ model WineStampUsage {
   shipment   Shipment?         @relation(fields: [shipmentId], references: [id])
   lotId      String? // Hoặc theo StockLot
   lot        StockLot?         @relation(fields: [lotId], references: [id])
+  serialStart String? // Seri bắt đầu của đợt dán
+  serialEnd   String? // Seri kết thúc của đợt dán
   qtyUsed    Int
   qtyDamaged Int               @default(0)
   usedAt     DateTime          @default(now())

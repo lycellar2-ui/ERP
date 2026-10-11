@@ -56,8 +56,8 @@
 | **Prisma enums** | 95 |
 | **Dashboard routes** | 38 folders |
 | **Server Action files** | 47 files |
-| **Module spec files** | 30 files |
-| **Sidebar nav items** | 40 items (7 groups) |
+| **Module spec files** | 31 files |
+| **Sidebar nav items** | 41 items (7 groups) |
 
 ### Bảng Module đầy đủ
 
@@ -79,7 +79,7 @@
 | 14 | `CSG` | Consignment (Hàng ký gửi HORECA) | [consignment.md](./modules/consignment.md) | `/consignment` |
 | 15 | `TRS` | Transportation & Delivery (E-POD) | [transport-delivery.md](./modules/transport-delivery.md) | `/delivery` |
 | 16 | `FIN` | Finance & Accounting | [finance-accounting.md](./modules/finance-accounting.md) | `/finance`, `/reconciliation`, `/declarations` |
-| 17 | `STP` | Quản Lý Tem Rượu | [finance-accounting.md#6](./modules/finance-accounting.md) | `/stamps` |
+| 17 | `STP` | Quản Lý Tem Rượu | [stamp-management.md](./modules/stamp-management.md) | `/stamps` |
 | 18 | `RPT` | Reporting & Business Intelligence | [reporting-bi.md](./modules/reporting-bi.md) | `/reports` |
 | 19 | `DSH` | CEO Executive Dashboard | [ceo-dashboard.md](./modules/ceo-dashboard.md) | `/dashboard` (root) |
 | 20 | `KPI` | KPI Target Management | [kpi-targets.md](./modules/kpi-targets.md) | `/kpi` |
@@ -96,7 +96,7 @@
 | 31 | `PRQ` | Đề Nghị Thanh Toán & Quản Lý Ngân Sách | [payment-requests.md](./modules/payment-requests.md) | `/payment-requests` |
 | 32 | `SOP` | Quy Trình Doanh Nghiệp (SOP Knowledge Hub) | [sop.md](./modules/sop.md) | `/sop` |
 
-**Tổng: 32 modules** (31 có spec file riêng, 1 nằm trong spec file khác)
+**Tổng: 32 modules** (tất cả 32 đều có spec file riêng)
 
 ---
 
@@ -226,6 +226,7 @@ docs/
     ├── sales-field-visit.md       SFV (NEW)
     ├── hr.md                      HRM (NEW)
     ├── payment-requests.md        PRQ (NEW)
+    ├── stamp-management.md        STP (NEW)
     └── sop.md                     SOP (NEW)
 ```
 
@@ -241,5 +242,6 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 14:00 | Wine ERP v12.14 - Full RBAC Consistency, Confidential Cost/Margin Protection & Role-Aware Navigation*
+*Last updated: 2026-10-11 16:00 | Wine ERP v12.15 - Stamp Management & Electronic Logbook with Serial Tracking & Excel Export*
+
 

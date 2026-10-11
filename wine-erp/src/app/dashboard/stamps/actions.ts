@@ -10,13 +10,19 @@ export async function getStampPurchases() {
             usages: {
                 select: {
                     id: true,
+                    serialStart: true,
+                    serialEnd: true,
                     qtyUsed: true,
                     qtyDamaged: true,
                     usedAt: true,
                     shipmentId: true,
                     lotId: true,
                     notes: true,
+                    shipment: { select: { id: true, billOfLading: true } },
+                    lot: { select: { id: true, lotNo: true, product: { select: { skuCode: true, productName: true } } } },
+                    reporter: { select: { id: true, name: true } },
                 },
+                orderBy: { usedAt: 'desc' },
             },
         },
         orderBy: { purchaseDate: 'desc' },
@@ -32,14 +38,17 @@ export async function createStampPurchase(data: {
     serialEnd: string
     totalQty: number
 }) {
+    if (data.totalQty <= 0) {
+        throw new Error('Tổng số lượng tem mua phải lớn hơn 0')
+    }
     return prisma.wineStampPurchase.create({
         data: {
             purchaseDate: new Date(data.purchaseDate),
             stampType: data.stampType,
-            symbol: data.symbol,
-            serialStart: data.serialStart,
-            serialEnd: data.serialEnd,
-            totalQty: data.totalQty,
+            symbol: data.symbol.trim(),
+            serialStart: data.serialStart.trim(),
+            serialEnd: data.serialEnd.trim(),
+            totalQty: Number(data.totalQty),
             usedQty: 0,
             status: 'ACTIVE',
         },
@@ -50,11 +59,21 @@ export async function recordStampUsage(data: {
     purchaseId: string
     shipmentId?: string
     lotId?: string
+    serialStart?: string
+    serialEnd?: string
     qtyUsed: number
     qtyDamaged: number
-    reportedBy: string
+    reportedBy?: string
     notes?: string
 }) {
+    if (data.qtyUsed < 0 || data.qtyDamaged < 0) {
+        throw new Error('Số lượng dán hoặc số lượng hỏng không được là số âm')
+    }
+    const totalRequest = Number(data.qtyUsed) + Number(data.qtyDamaged)
+    if (totalRequest <= 0) {
+        throw new Error('Vui lòng nhập số lượng dán hoặc số lượng hỏng lớn hơn 0')
+    }
+
     // Transaction: tạo usage + cập nhật usedQty (atomic - tránh race condition)
     return prisma.$transaction(async (tx) => {
         const purchase = await tx.wineStampPurchase.findUnique({
@@ -65,9 +84,18 @@ export async function recordStampUsage(data: {
             throw new Error('Không tìm thấy lô tem.')
         }
 
-        const totalAfter = Number(purchase.usedQty) + data.qtyUsed + data.qtyDamaged
+        const totalAfter = Number(purchase.usedQty) + totalRequest
         if (totalAfter > Number(purchase.totalQty)) {
-            throw new Error(`Vượt quá số lượng tem khả dụng! Tồn kho tem: ${Number(purchase.totalQty) - Number(purchase.usedQty)}, yêu cầu: ${data.qtyUsed + data.qtyDamaged}`)
+            const remaining = Number(purchase.totalQty) - Number(purchase.usedQty)
+            throw new Error(`Vượt quá số lượng tem khả dụng! Tồn kho tem còn: ${remaining}, yêu cầu: ${totalRequest}`)
+        }
+
+        let validReporterId = data.reportedBy
+        if (!validReporterId || validReporterId === 'system') {
+            const defaultUser = await tx.user.findFirst({
+                select: { id: true },
+            })
+            validReporterId = defaultUser?.id || data.reportedBy || ''
         }
 
         const usage = await tx.wineStampUsage.create({
@@ -75,10 +103,12 @@ export async function recordStampUsage(data: {
                 purchaseId: data.purchaseId,
                 shipmentId: data.shipmentId || null,
                 lotId: data.lotId || null,
-                qtyUsed: data.qtyUsed,
-                qtyDamaged: data.qtyDamaged,
-                reportedBy: data.reportedBy,
-                notes: data.notes || null,
+                serialStart: data.serialStart?.trim() || null,
+                serialEnd: data.serialEnd?.trim() || null,
+                qtyUsed: Number(data.qtyUsed),
+                qtyDamaged: Number(data.qtyDamaged),
+                reportedBy: validReporterId,
+                notes: data.notes?.trim() || null,
             },
         })
 
@@ -118,24 +148,27 @@ export async function getStampSummary() {
 
 // ── Stamp Linking Options ─────────────────────────
 export async function getStampLinkingOptions() {
-    const [shipments, lots] = await Promise.all([
-        prisma.shipment.findMany({
-            where: { status: { not: 'DELIVERED_TO_WAREHOUSE' } },
-            select: { id: true, billOfLading: true, status: true },
-            orderBy: { createdAt: 'desc' },
-            take: 50,
-        }),
-        prisma.stockLot.findMany({
-            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-            select: {
-                id: true, lotNo: true,
-                product: { select: { skuCode: true, productName: true } },
-            },
-            orderBy: { receivedDate: 'desc' },
-            take: 100,
-        }),
-    ])
-    return { shipments, lots }
+    return cached('stamps:linking-options', async () => {
+        const [shipments, lots] = await Promise.all([
+            prisma.shipment.findMany({
+                select: { id: true, billOfLading: true, status: true, vesselName: true },
+                orderBy: { createdAt: 'desc' },
+                take: 60,
+            }),
+            prisma.stockLot.findMany({
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                select: {
+                    id: true,
+                    lotNo: true,
+                    qtyAvailable: true,
+                    product: { select: { skuCode: true, productName: true } },
+                },
+                orderBy: { receivedDate: 'desc' },
+                take: 120,
+            }),
+        ])
+        return serialize({ shipments, lots })
+    }, 30_000)
 }
 
 // ── Safe Record Stamp Usage ───────────────────────
@@ -145,9 +178,11 @@ export async function safeRecordStampUsage(data: {
     purchaseId: string
     shipmentId?: string
     lotId?: string
+    serialStart?: string
+    serialEnd?: string
     qtyUsed: number
     qtyDamaged: number
-    reportedBy: string
+    reportedBy?: string
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
@@ -481,3 +516,256 @@ export async function getStampAlerts(): Promise<StampAlert[]> {
         return alerts.sort((a, b) => (a.severity === 'CRITICAL' ? -1 : 1) - (b.severity === 'CRITICAL' ? -1 : 1))
     }, 60_000) // 1 min cache
 }
+
+// ═══════════════════════════════════════════════════
+// STAMP LOGBOOK (Sổ Theo Dõi Sử Dụng Tem Điện Tử)
+// ═══════════════════════════════════════════════════
+
+export type StampLogbookEntry = {
+    id: string
+    date: string
+    txType: 'NHAP_KHO' | 'XUAT_DAN' | 'HUY_TEM'
+    txLabel: string
+    purchaseId: string
+    symbol: string
+    stampType: 'UNDER_20_ABV' | 'OVER_20_ABV'
+    stampTypeLabel: string
+    serialStart: string
+    serialEnd: string
+    qtyIn: number
+    qtyUsed: number
+    qtyDamaged: number
+    balanceAfter: number
+    referenceTitle: string
+    reporterName: string
+    notes: string | null
+}
+
+export async function getStampLogbook(filters?: {
+    year?: number
+    quarter?: number
+    stampType?: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'ALL'
+    search?: string
+}): Promise<StampLogbookEntry[]> {
+    const purchases = await prisma.wineStampPurchase.findMany({
+        include: {
+            usages: {
+                include: {
+                    shipment: { select: { billOfLading: true } },
+                    lot: { select: { lotNo: true, product: { select: { productName: true, skuCode: true } } } },
+                    reporter: { select: { name: true } },
+                },
+                orderBy: { usedAt: 'asc' },
+            },
+        },
+        orderBy: { purchaseDate: 'asc' },
+    })
+
+    const entries: StampLogbookEntry[] = []
+
+    for (const p of purchases) {
+        // Nhập lô tem mới từ Cơ quan Thuế/HQ
+        entries.push({
+            id: `p-${p.id}`,
+            date: p.purchaseDate.toISOString(),
+            txType: 'NHAP_KHO',
+            txLabel: 'Nhập mua phôi tem',
+            purchaseId: p.id,
+            symbol: p.symbol,
+            stampType: p.stampType,
+            stampTypeLabel: p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV',
+            serialStart: p.serialStart,
+            serialEnd: p.serialEnd,
+            qtyIn: p.totalQty,
+            qtyUsed: 0,
+            qtyDamaged: 0,
+            balanceAfter: p.totalQty,
+            referenceTitle: 'Tổng cục Hải quan / Chi cục Thuế',
+            reporterName: 'Kế toán quản lý tem',
+            notes: `Mua lô tem ký hiệu ${p.symbol}, tổng ${p.totalQty.toLocaleString('vi-VN')} tem`,
+        })
+
+        let runningBalance = p.totalQty
+
+        for (const u of p.usages) {
+            const isDestruction = u.notes?.startsWith('[HỦY TEM]')
+            runningBalance -= (u.qtyUsed + u.qtyDamaged)
+
+            let refTitle = 'Xuất dán tem kho'
+            if (u.shipment?.billOfLading) {
+                refTitle = `Lô hàng NK: ${u.shipment.billOfLading}`
+            } else if (u.lot) {
+                refTitle = `Lô kho ${u.lot.lotNo} (${u.lot.product.productName})`
+            } else if (isDestruction) {
+                refTitle = 'Biên bản hủy tem rách/hỏng'
+            }
+
+            entries.push({
+                id: `u-${u.id}`,
+                date: u.usedAt.toISOString(),
+                txType: isDestruction ? 'HUY_TEM' : 'XUAT_DAN',
+                txLabel: isDestruction ? 'Biên bản hủy tem' : 'Xuất dán tem rượu',
+                purchaseId: p.id,
+                symbol: p.symbol,
+                stampType: p.stampType,
+                stampTypeLabel: p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV',
+                serialStart: u.serialStart || '—',
+                serialEnd: u.serialEnd || '—',
+                qtyIn: 0,
+                qtyUsed: u.qtyUsed,
+                qtyDamaged: u.qtyDamaged,
+                balanceAfter: Math.max(0, runningBalance),
+                referenceTitle: refTitle,
+                reporterName: u.reporter?.name || u.reportedBy || 'Thủ kho',
+                notes: u.notes,
+            })
+        }
+    }
+
+    // Sắp xếp giảm dần theo thời gian ghi sổ
+    let filtered = entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    if (filters?.year) {
+        filtered = filtered.filter(e => new Date(e.date).getFullYear() === filters.year)
+    }
+
+    if (filters?.quarter && filters.quarter >= 1 && filters.quarter <= 4) {
+        const q = filters.quarter
+        filtered = filtered.filter(e => {
+            const month = new Date(e.date).getMonth() + 1
+            const itemQ = Math.ceil(month / 3)
+            return itemQ === q
+        })
+    }
+
+    if (filters?.stampType && filters.stampType !== 'ALL') {
+        filtered = filtered.filter(e => e.stampType === filters.stampType)
+    }
+
+    if (filters?.search?.trim()) {
+        const q = filters.search.trim().toLowerCase()
+        filtered = filtered.filter(e =>
+            e.symbol.toLowerCase().includes(q) ||
+            e.serialStart.toLowerCase().includes(q) ||
+            e.serialEnd.toLowerCase().includes(q) ||
+            e.referenceTitle.toLowerCase().includes(q) ||
+            (e.notes && e.notes.toLowerCase().includes(q))
+        )
+    }
+
+    return serialize(filtered)
+}
+
+export async function exportStampLogbookExcel(filters?: {
+    year?: number
+    quarter?: number
+    stampType?: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'ALL'
+    search?: string
+}): Promise<{ success: boolean; base64?: string; filename?: string; error?: string }> {
+    try {
+        const ExcelJS = (await import('exceljs')).default
+        const entries = await getStampLogbook(filters)
+
+        const wb = new ExcelJS.Workbook()
+        wb.creator = 'Wine ERP - LYS Cellars'
+        const ws = wb.addWorksheet('Sổ Theo Dõi Tem')
+
+        const periodLabel = filters?.quarter
+            ? `QUÝ ${filters.quarter}/${filters.year || new Date().getFullYear()}`
+            : filters?.year ? `NĂM ${filters.year}` : 'TOÀN BỘ KỲ THEO DÕI'
+
+        // 1. Header
+        ws.mergeCells('A1:N1')
+        const title1 = ws.getCell('A1')
+        title1.value = 'CÔNG TY CỔ PHẦN LYS CELLARS'
+        title1.font = { bold: true, size: 14 }
+        title1.alignment = { horizontal: 'center' }
+
+        ws.mergeCells('A2:N2')
+        const title2 = ws.getCell('A2')
+        title2.value = `SỔ THEO DÕI SỬ DỤNG TEM RƯỢU NHẬP KHẨU — ${periodLabel}`
+        title2.font = { bold: true, size: 12 }
+        title2.alignment = { horizontal: 'center' }
+
+        ws.mergeCells('A3:N3')
+        const title3 = ws.getCell('A3')
+        title3.value = '(Theo dõi theo quy định tại Nghị định 105/2017/NĐ-CP & Thông tư 23/2021/TT-BTC)'
+        title3.font = { italic: true, size: 10, color: { argb: 'FF64748B' } }
+        title3.alignment = { horizontal: 'center' }
+
+        ws.addRow([])
+
+        // Table headers
+        const headerRow = ws.addRow([
+            'STT', 'Ngày Ghi Sổ', 'Loại Nghiệp Vụ', 'Ký Hiệu Tem', 'Độ Cồn',
+            'Seri Bắt Đầu', 'Seri Kết Thúc', 'SL Nhập', 'SL Dán', 'SL Hỏng/Hủy',
+            'Tồn Sau Giao Dịch', 'Lô Hàng / Chứng Từ', 'Người Thực Hiện', 'Ghi Chú',
+        ])
+        headerRow.eachCell(c => {
+            c.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+            c.alignment = { horizontal: 'center', vertical: 'middle' }
+            c.border = {
+                top: { style: 'thin' }, bottom: { style: 'thin' },
+                left: { style: 'thin' }, right: { style: 'thin' },
+            }
+        })
+
+        entries.forEach((e, i) => {
+            const row = ws.addRow([
+                i + 1,
+                new Date(e.date).toLocaleDateString('vi-VN'),
+                e.txLabel,
+                e.symbol,
+                e.stampTypeLabel,
+                e.serialStart,
+                e.serialEnd,
+                e.qtyIn,
+                e.qtyUsed,
+                e.qtyDamaged,
+                e.balanceAfter,
+                e.referenceTitle,
+                e.reporterName,
+                e.notes || '',
+            ])
+
+            row.eachCell(c => {
+                c.border = {
+                    top: { style: 'thin' }, bottom: { style: 'thin' },
+                    left: { style: 'thin' }, right: { style: 'thin' },
+                }
+            })
+
+            // Format numbers
+            ;[8, 9, 10, 11].forEach(col => {
+                row.getCell(col).numFmt = '#,##0'
+                row.getCell(col).alignment = { horizontal: 'right' }
+            })
+        })
+
+        // Column widths
+        ws.getColumn(1).width = 6   // STT
+        ws.getColumn(2).width = 14  // Ngày
+        ws.getColumn(3).width = 24  // Nghiệp vụ
+        ws.getColumn(4).width = 14  // Ký hiệu
+        ws.getColumn(5).width = 14  // Độ cồn
+        ws.getColumn(6).width = 14  // Seri đầu
+        ws.getColumn(7).width = 14  // Seri cuối
+        ws.getColumn(8).width = 12  // Nhập
+        ws.getColumn(9).width = 12  // Dán
+        ws.getColumn(10).width = 12 // Hỏng
+        ws.getColumn(11).width = 14 // Tồn
+        ws.getColumn(12).width = 28 // Lô hàng / CT
+        ws.getColumn(13).width = 20 // Người TH
+        ws.getColumn(14).width = 30 // Ghi chú
+
+        const buffer = await wb.xlsx.writeBuffer()
+        const base64 = Buffer.from(buffer).toString('base64')
+        const filename = `so-theo-doi-tem-ruou-${periodLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}.xlsx`
+
+        return { success: true, base64, filename }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+

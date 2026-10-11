@@ -655,6 +655,8 @@ erDiagram
         purchaseId  uuid FK
         shipmentId  uuid FK
         lotId       uuid FK
+        serialStart string
+        serialEnd   string
         qtyUsed     int
         qtyDamaged  int
         usedAt      datetime
